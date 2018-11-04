@@ -16,7 +16,10 @@ class PerformGLM():
         name = ['Avg-Intercept','Diff-Intercept',]
         sim_direction = ['neg', 'pos', 'abs']
 
-        self.RUN_GLM(self.make_fsgd_1group(), thresh[0], meas[0], name[0], hemi[0], self.make_contrasts(hemi[0], name[0], meas[0], contrast[name[0]]),self.PATH+'fsglm')
+        self.RUN_GLM(self.make_fsgd_1group(), 
+                     thresh[0], meas[0], name[1], hemi[0], 
+                     self.make_contrasts(contrast[name[1]]),
+                     self.PATH+'fsglm')
     # 'lh-Avg-Intercept-thickness.mat': '1.00000 +0.00000 ')#Does the average thickness/area differ from zero?
     # 'lh-Diff-f-m-Intercept-thickness.mat': '0.00000 1.00000 ')#Does the correlation between thickness/area and Value differ from zero?
     #the slope is the change of thickness with age
@@ -47,8 +50,8 @@ class PerformGLM():
         #            DefaultVariable Age\n')
         return file
 
-    def make_contrasts(self, hemi, name, meas, contrast):
-        file = hemi+'-'+name+'-'+meas+'.mat'
+    def make_contrasts(self, contrast):
+        file = self.PATH+'C1.mat'
         with open(file, 'a') as f:
             f.write(contrast)
         return file
