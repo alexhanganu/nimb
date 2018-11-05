@@ -12,14 +12,15 @@ class PerformGLM():
         hemi = ['lh','rh']
         thresh = [10,]
         meas = ['thickness',]
-        contrast = {'Avg-Intercept':'1 0', 'Diff-Intercept':'0 1'}
+        contrast = {'Avg-Intercept':'1 0', 'Diff-Intercept':'+0.00000 +1.00000 '}
         name = ['Avg-Intercept','Diff-Intercept',]
         sim_direction = ['neg', 'pos', 'abs']
+        glmdir = self.PATH+'fsglm'
 
         self.RUN_GLM(self.make_fsgd_1group(), 
                      thresh[0], meas[0], name[1], hemi[0], 
-                     self.make_contrasts(contrast[name[1]]),
-                     self.PATH+'fsglm')
+                     self.make_contrasts(glmdir, contrast[name[1]]),
+                     glmdir)
     # 'lh-Avg-Intercept-thickness.mat': '1.00000 +0.00000 ')#Does the average thickness/area differ from zero?
     # 'lh-Diff-f-m-Intercept-thickness.mat': '0.00000 1.00000 ')#Does the correlation between thickness/area and Value differ from zero?
     #the slope is the change of thickness with age
@@ -50,15 +51,19 @@ class PerformGLM():
         #            DefaultVariable Age\n')
         return file
 
-    def make_contrasts(self, contrast):
-        file = self.PATH+'C1.mat'
+    def make_contrasts(self, glmdir, contrast):
+        file = glmdir+'/'+'C1.mat'
+        open(file, 'w').close()
         with open(file, 'a') as f:
+            print('writing to C1.mat')
             f.write(contrast)
         return file
 
     def RUN_GLM(self, fsgd, thresh, meas, name, hemi, mat, glmdir):
-        system('mris_preproc --fsgd '+fsgd+' --cache-in thickness.fwhm'+str(thresh)+'.fsaverage --target fsaverage --hemi '+hemi+' --out '+hemi+'.'+name+'.'+meas+'.'+str(thresh)+'.mgh')
-        system('mri_glmfit --y '+hemi+'.'+name+'.'+meas+'.'+str(thresh)+'.mgh --fsgd '+fsgd+' dods --glmdir '+glmdir+' --surf fsaverage '+hemi+' --label '+self.local_maindir+'freesurfer/subjects/fsaverage/label/lh.aparc.label --C '+mat)
+        mgh_f = glmdir+'/'+hemi+'.'+name+'.'+meas+'.'+str(thresh)+'.mgh'
+        system('mris_preproc --fsgd '+fsgd+' --cache-in thickness.fwhm'+str(thresh)+'.fsaverage --target fsaverage --hemi '+hemi+' --out '+mgh_f)
+        print('mri_glmfit --y '+mgh_f+' --fsgd '+fsgd+' dods --glmdir '+glmdir+' --surf fsaverage '+hemi+' --label '+self.local_maindir+'freesurfer/subjects/fsaverage/label/lh.aparc.label --C '+mat)
+        system('mri_glmfit --y '+mgh_f+' --fsgd '+fsgd+' dods --glmdir '+glmdir+' --surf fsaverage '+hemi+' --label '+self.local_maindir+'freesurfer/subjects/fsaverage/label/lh.aparc.label --C '+mat)
 
     def RUN_sim(self, glmdir,sim_direction):
         system('--glmdir '+glmdir+' --cache 4 '+sim_direction+' --cwp 0.05 --2spaces')
