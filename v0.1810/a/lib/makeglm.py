@@ -13,15 +13,16 @@ class PerformGLM():
         thresh = [10,]
         meas = ['thickness',]
         gd2mtx = ['doss','dods']
+        contrast2groups = {'Avg-Intercept':'+1.00000 +1.00000', 'Diff-groups-Intercept':'+1.00000 -1.00000'}
         contrast = {'Avg-Intercept':'1 0', 'Diff-Intercept':'+0.00000 +1.00000 '}
-        name = ['Avg-Intercept','Diff-Intercept',]
+        name = ['Avg-Intercept','Diff-Intercept', 'Diff-groups-Intercept']
         sim_direction = ['neg', 'pos', 'abs']
         glmdir = self.PATH+'fsglm'
 
         self.RUN_GLM(self.make_fsgd_1group(), 
                      thresh[0],
-                     glmdir, hemi[0], name[1], meas[0], gd2mtx[0],
-                     self.make_contrasts(glmdir, contrast[name[1]]))
+                     glmdir, hemi[0], name[2], meas[0], gd2mtx[1],
+                     self.make_contrasts(glmdir, contrast2groups[name[2]]))
     # 'lh-Avg-Intercept-thickness.mat': '1.00000 +0.00000 ')#Does the average thickness/area differ from zero?
     # 'lh-Diff-f-m-Intercept-thickness.mat': '0.00000 1.00000 ')#Does the correlation between thickness/area and Value differ from zero?
     #the slope is the change of thickness with age
@@ -30,7 +31,7 @@ class PerformGLM():
 
 
     def make_fsgd_2groups(self, variable,d_subjid):
-        file = self.PATH+'file2groups.fsgd'
+        file = self.PATH+'qdec.fsgd'
         with open(file, 'a') as f:
             f.write('GroupDescriptorFile 1\nClass Class1 plus blue\nClass Class2 circle green\nVariables ')
             f.write(variable+'\n')
@@ -40,7 +41,7 @@ class PerformGLM():
         return file
 
     def make_fsgd_1group(self):
-        file = self.PATH+'y.fsgd'#file1group.fsgd'
+        file = self.PATH+'qdec.fsgd'#file1group.fsgd'
         #with open(file, 'a') as f:
         #    f.write('
         #            GroupDescriptorFile 1\n
