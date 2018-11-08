@@ -22,7 +22,7 @@ class PerformGLM():
         self.RUN_GLM(self.make_fsgd_1group(), 
                      thresh[0],
                      glmdir, hemi[0], name[2], meas[0], gd2mtx[1],
-                     self.make_contrasts(glmdir, contrast2groups[name[2]]))
+                     self.make_contrasts(glmdir, name[2], contrast2groups[name[2]]))
     # 'lh-Avg-Intercept-thickness.mat': '1.00000 +0.00000 ')#Does the average thickness/area differ from zero?
     # 'lh-Diff-f-m-Intercept-thickness.mat': '0.00000 1.00000 ')#Does the correlation between thickness/area and Value differ from zero?
     #the slope is the change of thickness with age
@@ -53,8 +53,8 @@ class PerformGLM():
         #            DefaultVariable Age\n')
         return file
 
-    def make_contrasts(self, glmdir, contrast):
-        file = glmdir+'/'+'C1.mat'
+    def make_contrasts(self, glmdir, contrast_name, contrast):
+        file = glmdir+'/'+contrast_name+'.mat'
         open(file, 'w').close()
         with open(file, 'a') as f:
             print('writing to C1.mat')
@@ -70,12 +70,14 @@ class PerformGLM():
     def RUN_sim(self, glmdir,sim_direction):
         system('--glmdir '+glmdir+' --cache 4 '+sim_direction+' --cwp 0.05 --2spaces')
 
-    def make_images_results(self):
+    def make_images_results(self, glmdir, contrast_name):
         with open('run.txt', 'a') as f:
-            f.write('-v /usr/local/freesurfer/subjects/qdec/corrt1t1/lh-Avg-thickness/sig.mgh\n'+
+            f.write('freeview -v '+glmdir+'/'+contrast_name+'/sig.mgh\n'+
                 '-viewport sagittal -slice 80 127, 127 -ss sag1\n'+
                 '-viewport sagittal -slice 127 127, 127 -ss sag2\n'+
                 '-quit')
+            # freeview -f $SUBJECTS_DIR/fsaverage/surf/lh.inflated:annot=aparc.annot:annot_outline=1:overlay=/home/fsl/Desktop/fsglm/C1/sig.mgh:overlay_threshold=1,5 -viewport 3d
+
 
 
 
