@@ -70,18 +70,15 @@ class PerformGLM():
     def RUN_sim(self, glmdir,sim_direction):
         system('--glmdir '+glmdir+' --cache 4 '+sim_direction+' --cwp 0.05 --2spaces')
 
-    def make_images_results(self, glmdir, contrast_name):
-        with open('cmd.txt', 'a') as f:
-            f.write(
-                # freeview -f $SUBJECTS_DIR/fsaverage/surf/lh.inflated:annot=aparc.annot:annot_outline=1:overlay=/home/fsl/Desktop/fsglm/C1/sig.mgh:overlay_threshold=1,5 -viewport sagittal -slice 80 127, 127 -ss sag1 -noquit
+    def make_images_results(self, hemi, glmdir, contrast_name):
+        average = {'lh':''$SUBJECTS_DIR/fsaverage/surf/lh.inflated'',
+                    'rh':'$SUBJECTS_DIR/fsaverage/surf/rh.inflated'}
+        thresh = '4'
+        img_name = 'sag1'
+        system('freeview -f '+average[hemi]+':annot=aparc.annot:annot_outline=1:overlay='+glmdir+'/'+contrast_name+'/sig.mgh:overlay_threshold='+thresh+',5 -viewport 3d --ss '+img_name)
 
-                '-v '+glmdir+'/'+contrast_name+'/sig.mgh\n'+
-                '-viewport sagittal -slice 80 127, 127 -ss sag1 -noquit\n'+
-                '-viewport sagittal -slice 127 127, 127 -ss sag2\n'+
-                '-quit')
-        system('freeview -cmd cmd.txt')
-            # freeview -f $SUBJECTS_DIR/fsaverage/surf/lh.inflated:annot=aparc.annot:annot_outline=1:overlay=/home/fsl/Desktop/fsglm/C1/sig.mgh:overlay_threshold=1,5 -viewport 3d
-            # freeview -f $SUBJECTS_DIR/fsaverage/surf/lh.inflated:annot=aparc.annot:annot_outline=1:overlay=lh.gender_age.glmdir/lh-Avg-thickness-age-Cor/sig.mgh:overlay_threshold=4,5 -viewport 3d -viewport sagittal -slice 80 127, 127 -ss sag1 -viewport sagittal -slice 127 127, 127 -ss sag2 -quit
+
+
 
 # X = np.linspace(-5.0, 5.0, 100)
 # plt.title("PDF from Template")
