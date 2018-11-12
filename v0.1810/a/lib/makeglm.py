@@ -71,14 +71,17 @@ class PerformGLM():
         system('--glmdir '+glmdir+' --cache 4 '+sim_direction+' --cwp 0.05 --2spaces')
 
     def make_images_results(self, hemi, glmdir, contrast_name):
-        freeview_average = {'lh':''$SUBJECTS_DIR/fsaverage/surf/lh.inflated'',
-                    'rh':'$SUBJECTS_DIR/fsaverage/surf/rh.inflated'}
-        thresh = '4'
-        img_name = 'sag1'
-        system('tksurfer fsaverage '+hemi+' inflated -overlay '+glmdir+'/'+contrast_name+'/sig.mgh -fthresh '+thresh)
-        # tksurfer: rotate surface, take screenshots;
-        # system('freeview -f '+freeview_average[hemi]+':annot=aparc.annot:annot_outline=1:overlay='+glmdir+'/'+contrast_name+'/sig.mgh:overlay_threshold='+thresh+',5 -viewport 3d --ss '+img_name)
-        # for freeview need to find how to rotate surface
+        cmds = ['set colscalebarflag 1', 'set scalebarflag 1', 'save_tiff /home/fsl/Desktop/'+contrast_name+'_30_lat.tiff',
+        'rotate_brain_y 180', 'redraw', 'save_tiff /home/fsl/Desktop/'+contrast_name+'_30_med.tiff',
+        'sclv_set_current_threshold_using_fdr 0.05 0', 'redraw', 'save_tiff /home/fsl/Desktop/'+contrast_name+'_fdr_med.tiff',
+        'rotate_brain_y 180', 'redraw', 'save_tiff /home/fsl/Desktop/'+contrast_name+'_fdr_lat.tiff',]
+        open('scr.tcl','w').close()
+        with open('scr.tcl','a') as f:
+            for line in cmds:
+                f.write(line+'\n')
+        system('tksurfer fsaverage '+hemi+' inflated -overlay '+glmdir+'/'+contrast_name+'/sig.mgh -fthresh 3.0 -tcl scr.tcl')
+
+
 
 
 
