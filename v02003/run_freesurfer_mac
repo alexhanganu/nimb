@@ -1,3 +1,0 @@
-#!/bin/sh
-cd /Volumes/pcanlab/freesurfer/app
-python3 exe.pyw
