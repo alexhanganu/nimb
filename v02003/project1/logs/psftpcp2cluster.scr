@@ -1,0 +1,3 @@
+put -r subj2fs /home/hvt/projects/def-hanganua/a/subj2fs
+put -r not definedraw_t1/Z:/iugm_hoangvantien/nimb_MRI_folder/pls_hc000/02-MPRAGE /home/hvt/projects/def-hanganua/subjects/Z:/iugm_hoangvantien/nimb_MRI_folder/pls_hc000/02-MPRAGE
+put -r not definedraw_t1/Z:/iugm_hoangvantien/nimb_MRI_folder/pls_hc001/02-MPRAGE /home/hvt/projects/def-hanganua/subjects/Z:/iugm_hoangvantien/nimb_MRI_folder/pls_hc001/02-MPRAGE
