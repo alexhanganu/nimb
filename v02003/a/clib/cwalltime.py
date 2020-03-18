@@ -1,5 +1,6 @@
 #!/bin/python
-#Alexandru Hanganu, 2019 november 3
+# 2019.11.03
+# Alexandru Hanganu
 
 from var import max_walltime
 
@@ -8,6 +9,9 @@ def Get_walltime(process):
     suggested_times = {
         'registration':'01:00:00',
         'recon':'30:00:00',
+        'autorecon1':'5:00:00',
+        'autorecon2':'12:00:00',
+        'autorecon3':'12:00:00',
         'recbase':'30:00:00',
         'reclong':'23:00:00',
         'qcache':'03:00:00',
