@@ -6,7 +6,6 @@ from a.build import build
 from a.lib import interface_cluster
 from a.lib import database
 import SSHHelper
-import config
 from tkinter import Tk, Frame, ttk, Label, Menu, N, W, E, S, StringVar, HORIZONTAL, VERTICAL
 from sys import platform, exit, version_info
 
