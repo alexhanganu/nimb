@@ -192,7 +192,7 @@ def run(Project):
     from a.lib.data_processing_local import cp2cluster
     from a.lib.data_processing_local import cpFromCluster
     status.set('Copying data to cluster ...block for now')
-    cp2cluster()
+    # cp2cluster()
     status.set('Cluster analysis started')
     status.set("Cluster analysing running....")
     run_processing_on_cluster_2()
@@ -207,10 +207,10 @@ def run(Project):
         print('starting local analysis')
         from os import system
         # define LocalProcessing folder
-        print("here: " + database._get_folder('LocalProcessing'))
-        # system('python '+database._get_folder('LocalProcessing')+'a/local_run.py')
-        path = 'a/lib/local_run.py '
-        system('python a/lib/local_run.py')
+        # print("here: " + database._get_folder('LocalProcessing'))
+        system('python '+database._get_folder('LocalProcessing')+'a/local_run.py')
+        # path = 'a/lib/local_run.py '
+        # system('python a/lib/local_run.py')
 def run_copy_subject_to_cluster(Project):
     '''
     copy the subjects from subject json file to cluster
