@@ -199,7 +199,7 @@ def run(Project):
     print("Do processing here, temporary block that function")
 
     # fix this one
-    # cpFromCluster()
+    cpFromCluster()
 
     status.set('Copying processed data from cluster')
 
@@ -207,7 +207,7 @@ def run(Project):
         print('starting local analysis')
         from os import system
         # define LocalProcessing folder
-        # print("here: " + database._get_folder('LocalProcessing'))
+        print("here is the error: " + database._get_folder('LocalProcessing'))
         system('python '+database._get_folder('LocalProcessing')+'a/local_run.py')
         # path = 'a/lib/local_run.py '
         # system('python a/lib/local_run.py')
