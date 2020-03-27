@@ -480,14 +480,14 @@ def cpFromCluster():
     if len(clusters) == 1:
 
         for cred in clusters:
-            cuser = clusters[cred][0]
-            caddress = clusters[cred][1]
-            cmaindir = clusters[cred][2]
-            cpw =  clusters[cred][4]
-
+            cuser = clusters[cred]['Username']
+            caddress = clusters[cred]['remote_address']
+            cmaindir = clusters[cred]['HOME']
+            cpw =  clusters[cred]['Password']
+            from sys import platform
             # platform_linux_darwin(cuser, caddress, cmaindir)
-            platform_win(cuser, caddress, cmaindir,cpw)
-            # if platform == 'darwin' or platform == 'linux' or platform == 'linux2':
-            #     platform_linux_darwin(cuser, caddress, cmaindir)
-            # elif platform == 'win32':
-            #     platform_win(cuser, caddress, cmaindir)
+            # platform_win(cuser, caddress, cmaindir,cpw)
+            if platform == 'darwin' or platform == 'linux' or platform == 'linux2':
+                platform_linux_darwin(cuser, caddress, cmaindir)
+            elif platform == 'win32':
+                platform_win(cuser, caddress, cmaindir)
