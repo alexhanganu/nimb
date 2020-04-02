@@ -486,8 +486,8 @@ def cpFromCluster():
             cpw =  clusters[cred]['Password']
             from sys import platform
             # platform_linux_darwin(cuser, caddress, cmaindir)
-            # platform_win(cuser, caddress, cmaindir,cpw)
-            if platform == 'darwin' or platform == 'linux' or platform == 'linux2':
-                platform_linux_darwin(cuser, caddress, cmaindir)
-            elif platform == 'win32':
-                platform_win(cuser, caddress, cmaindir)
+            platform_win(cuser, caddress, cmaindir,cpw)
+            # if platform == 'darwin' or platform == 'linux' or platform == 'linux2':
+            #     platform_linux_darwin(cuser, caddress, cmaindir)
+            # elif platform == 'win32':
+            #     platform_win(cuser, caddress, cmaindir)

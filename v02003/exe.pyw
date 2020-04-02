@@ -61,6 +61,7 @@ def set_MainFolder(Project):
     from a.setup import set_MainFolder
     freesurfer = set_MainFolder(Project)
     freesurfer_address_var.set(freesurfer)
+    print(freesurfer)
 
 
 def set_LocalProcessingFolder():
@@ -188,6 +189,7 @@ def run_processing_on_cluster_2():
                                     cmd_run_crun_on_cluster=cmd_run_crun_on_cluster)
 
 def run(Project):
+    print("Project name: " + Project)
     print(Project)
     from a.lib.data_processing_local import cp2cluster
     from a.lib.data_processing_local import cpFromCluster
@@ -195,20 +197,20 @@ def run(Project):
     # cp2cluster()
     status.set('Cluster analysis started')
     status.set("Cluster analysing running....")
-    run_processing_on_cluster_2()
+    # run_processing_on_cluster_2()
     print("Do processing here, temporary block that function")
-
+    set_MainFolder(Project)
     # fix this one
-    cpFromCluster()
-
-    status.set('Copying processed data from cluster')
-
-    if platform == 'darwin' or platform == 'linux' or platform == 'linux2':
-        print('starting local analysis')
-        from os import system
-        # define LocalProcessing folder
-        print("here is the error: " + database._get_folder('LocalProcessing'))
-        system('python '+database._get_folder('LocalProcessing')+'a/local_run.py')
+    # cpFromCluster()
+    #
+    # status.set('Copying processed data from cluster')
+    #
+    # if platform == 'darwin' or platform == 'linux' or platform == 'linux2':
+    #     print('starting local analysis')
+    #     from os import system
+    #     # define LocalProcessing folder
+    #     print("here is the error: " + database._get_folder('LocalProcessing'))
+    #     system('python '+database._get_folder('LocalProcessing')+'a/local_run.py')
         # path = 'a/lib/local_run.py '
         # system('python a/lib/local_run.py')
 def run_copy_subject_to_cluster(Project):

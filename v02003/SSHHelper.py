@@ -399,7 +399,7 @@ def upload_all_subjects(subjects_json_file, subjects_folder, a_folder):
     # upload the new json file (path file) to the "a" folder in the remote cluster
     with open(new_file, 'w') as outfile:
         json.dump(subject_dicts_a, outfile)
-
+    # do the final job!
     upload_subject_json_to_server(new_file, a_folder, ssh_session)
 
 
@@ -407,6 +407,27 @@ def upload_subject_json_to_server(new_subjects_json_file, dest_folder, ssh_sessi
     scp = SCPClient(ssh_session.get_transport(), progress=__progress)
     upload_single_file_to_cluster(scp, dest_folder, new_subjects_json_file, failed_upload_files=FAILED_UPLOAD_FILE)
     scp.close()
+
+
+
+
+def download_files_from_server(local_folder, remote_folder):
+    """
+    download files from server
+    :param local_folder:
+    :type local_folder:
+    :param remote_folder:
+    :type remote_folder:
+    """
+    ssh_session = getSSHSession(host_name, user_name, user_password)
+    scp = SCPClient(ssh_session.get_transport(), progress=__progress)
+    #     ftp_client=ssh_client.open_sftp()
+    # ftp_client.get(‘remotefileth’,’localfilepath’)
+    # ftp_client.close()
+    ftp_client = ssh_session.open_sftp()
+    ftp_client.get('/home/hvt/projects/def-hanganua/a','/Users/van/Downloads/git/nimb/v02003/tmp/make_subj2fs.py')
+
+
 
 # kp for testing
 def test():
