@@ -8,7 +8,8 @@ try:
 except ImportError:
     pass
 import shutil, time
-
+from SSHHelper import *
+import pathlib
 from a.lib import database
 
 MainFolder = database._get_folder('Main')
@@ -440,23 +441,32 @@ def cp2cluster():
 
     else:
         print('no subj2fs file, no subjects to copy to cluster')
-    
+
+#
 def cpFromCluster():
-    def platform_linux_darwin(cuser, caddress, cmaindir):
-            ls_complete_name = []
-            system('sftp '+cuser+'@'+caddress)
-            time.sleep(10)
-            for dir2cp in listdir():
-                system('get '+cmaindir+'/freesurfer/subjects/'+dir2cp+' '+MainFolder+'/processed/')
-            system('exit')
-        # system('scp '+cuser+'@'+caddress+':'+cmaindir+'status_cluster '+freesurfer+'logs/')
+    """
+    it copy the files from the cluster to the local folder
+    the remote location : source dir: is in the configuration, how?
+    the local location : dest dir: is in the configuration also
+
+    :return: None, nothing
+    """
+    # todo: for now, only working on windows
+    # def platform_linux_darwin(cuser, caddress, cmaindir):
+    #         ls_complete_name = []
+    #         system('sftp '+cuser+'@'+caddress)
+    #         time.sleep(10)
+    #         for dir2cp in listdir():
+    #             system('get '+cmaindir+'/freesurfer/subjects/'+dir2cp+' '+MainFolder+'/processed/')
+    #         system('exit')
+    #     # system('scp '+cuser+'@'+caddress+':'+cmaindir+'status_cluster '+freesurfer+'logs/')
 
     def platform_win(cuser, caddress, cmaindir,cpw):
         print(MainFolder)
         file = MainFolder+'logs/psftpcpdb_from_cluster.scr'
         open(file, 'w').close()
         with open(file,'a') as f:
-            f.write('get '+cmaindir+'a/db.py a/db.py\n')
+            f.write('get '+cmaindir+'a/db.py a/db.py\n') # this is the batch command: get a/db.py a/db.py
             f.write('quit')
         count = 0
         system('psftp '+cuser+'@'+caddress+' -pw '+cpw+' -b '+file)
@@ -465,7 +475,7 @@ def cpFromCluster():
             count += 1
         #remove(file)
         if path.exists('a/db.py'):
-            from a.db import PROCESSED
+            from a.db import PROCESSED # so cmaindir folder is the current folder :)
             if len(PROCESSED['cp2local']) > 0:
                 file2cp = MainFolder+'logs/cp_processed_from_cluster.scr'
                 open(file2cp, 'w').close()
@@ -475,10 +485,12 @@ def cpFromCluster():
                 system('psftp '+cuser+'@'+caddress+' -pw '+cpw+' -b '+file2cp)
                 #remove(file2cp)
 
-			 
     clusters = database._get_credentials('all')
-    if len(clusters) == 1:
+    ssh_session = getSSHSession(host_name, user_name, user_password)
+    scp = SCPClient(ssh_session.get_transport())
+    ftp_client = ssh_session.open_sftp()
 
+    if len(clusters) == 1:
         for cred in clusters:
             cuser = clusters[cred]['Username']
             caddress = clusters[cred]['remote_address']
@@ -486,8 +498,48 @@ def cpFromCluster():
             cpw =  clusters[cred]['Password']
             from sys import platform
             # platform_linux_darwin(cuser, caddress, cmaindir)
-            platform_win(cuser, caddress, cmaindir,cpw)
-            # if platform == 'darwin' or platform == 'linux' or platform == 'linux2':
-            #     platform_linux_darwin(cuser, caddress, cmaindir)
-            # elif platform == 'win32':
-            #     platform_win(cuser, caddress, cmaindir)
+            # platform_win(cuser, caddress, cmaindir,cpw)
+            # 1. download a/a.db to a/a.db
+            remote_path = os.path.join(cmaindir,'a/db.py')
+            # remote path is ????/projects/def-hanganua/a/db.py: subject folder
+            current_path = pathlib.Path(__file__).parents[1] # it is v02003/a
+
+            print(current_path)
+            local_path = os.path.join(current_path,'db.py') #MainFolder+'processed/'
+            print((remote_path,local_path))
+            # local path is processed in this folder
+            ftp_client.get(remote_path,local_path)
+            print("downloaded {0} to {1}".format(remote_path, local_path))
+            # 2. after download a.db
+            if not path.exists('a/db.py'):
+                print("a/db.py file does not exist")
+                return
+            # here db.py exist
+            # todo: get user to input path to subject folder
+            # set the cmaindir values: it is the location that contains the subjects
+            result, _ = runCommandOverSSH(ssh_session, "echo $FREESURFER_HOME")
+            if result:
+                path_to_subjects = result
+            else:
+                print("Please set the FREESURFER_HOME in cluster environment to free surfer home."
+                      " Try to search for subjects folder in ~/subjects ")
+                result, _ = runCommandOverSSH(ssh_session, "file ~/subjects")
+                if 'No such file or directory' in result:
+                    print("The set the location of subjects: either is ~/subjects or FREESURFER_HOME/subjects before "
+                          "downloading results")
+                    return
+            # path_to_subjects = '/home/hvt/projects/def-hanganua/' # for debug purpose
+            MainFolder = "./" # current folder of the scripts
+            from a.db import PROCESSED
+            if len(PROCESSED['cp2local']) > 0:
+                # file2cp = MainFolder+'logs/cp_processed_from_cluster.scr'
+                # open(file2cp, 'w').close()
+                ftp_client = ssh_session.open_sftp()
+                for subjid in PROCESSED['cp2local']:
+                    remote_path = os.path.join(path_to_subjects,'subjects/',subjid)
+                    local_path = os.path.join(MainFolder,'processed/', subjid)
+                    print("___", remote_path, local_path)
+                    ftp_client.get(remote_path,local_path)
+                    print("downloaded {0} to {1}".format(remote_path, local_path))
+            # scp.close()
+            ssh_session.close()

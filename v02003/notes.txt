@@ -1,0 +1,6 @@
+- 22/4/2020
+1. File downloaded from cluster will be at v02003/processed
+2. The FREESURFER_HOME environment must be set at cluster, like FREESURFER_HOME /usr/local/freesurfer
+This setting is based on https://surfer.nmr.mgh.harvard.edu/fswiki/DownloadAndInstall
+3. the subjects folder will be at FREESURFER_HOME/subjects or ~/subjects
+

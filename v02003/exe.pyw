@@ -199,9 +199,8 @@ def run(Project):
     status.set("Cluster analysing running....")
     # run_processing_on_cluster_2()
     print("Do processing here, temporary block that function")
-    set_MainFolder(Project)
-    # fix this one
-    # cpFromCluster()
+    # set_MainFolder(Project)
+    cpFromCluster()
     #
     # status.set('Copying processed data from cluster')
     #

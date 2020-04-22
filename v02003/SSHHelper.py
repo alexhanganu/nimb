@@ -1,6 +1,7 @@
 """
 This module is to execute the remote commands in cluster
 notes: code is modified from hw5
+# todo: make this script becomes a class in Singleton design pattern for the SSH session
 """
 import json
 import logging
