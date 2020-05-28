@@ -1,14 +1,13 @@
 #!/bin/python
-# 2020.03.03
-# Alexandru Hanganu
+# 2020.05.27
 
 from os import path, listdir, remove, rename
 from pathlib import Path
 import time, shutil
-from var import cscratch_dir, max_nr_running_batches, process_order, base_name, DO_LONG
-import crunfs, cdb, cwalltime
+from var import cscratch_dir, max_nr_running_batches, process_order, base_name, DO_LONG, freesurfer_version
+import crunfs, cdb, cwalltime, var
 
-_, _ , _, SUBJECTS_DIR , processed_SUBJECTS_DIR, _ = cdb.get_vars()
+_, _ , _, SUBJECTS_DIR , processed_SUBJECTS_DIR, _, _ , _ = var.get_vars()
 
 
 def get_len_Queue_Running():
@@ -52,9 +51,17 @@ class Get_cmd:
 
     def qcache(_id): return "recon-all -qcache -s %s" % _id
 
-    def brstem(_id): return "recon-all -s %s -brainstem-structures" % _id
+    def brstem(_id): 
+        if freesurfer_version>6:
+            return 'segmentBS.sh {}'.format(_id)
+        else:
+            return "recon-all -s %s -brainstem-structures" % _id
 
-    def hip(_id): return "recon-all -s %s -hippocampal-subfields-T1" % _id
+    def hip(_id):
+        if freesurfer_version>6:
+            return 'segmentHA_T1.sh {}'.format(_id)
+        else:
+            return "recon-all -s %s -hippocampal-subfields-T1" % _id
 
     def tha(_id): return "segmentThalamicNuclei.sh %s" % _id
 

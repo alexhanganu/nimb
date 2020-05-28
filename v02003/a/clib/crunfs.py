@@ -1,6 +1,5 @@
 #!/bin/python
-# 2020.03.03
-# Alexandru Hanganu
+# 2020.05.27
 
 '''
 add FS QA tools to rm scans with low SNR (Koh et al 2017)
@@ -14,11 +13,12 @@ print('SUBMITTING is: ', SUBMIT)
 from os import listdir, path, mkdir, system
 import shutil
 import datetime
-from var import supervisor_ccri, text4_scheduler, batch_walltime_cmd, max_walltime, batch_output_cmd, pbs_file_FS_setup, submit_cmd
-import cdb
+from var import supervisor_ccri, text4_scheduler, batch_walltime_cmd, max_walltime, batch_output_cmd, submit_cmd
+import cdb, var
 import subprocess
 
-_, nimb_dir , nimb_scratch_dir, SUBJECTS_DIR , _, dir_new_subjects = cdb.get_vars()
+_, nimb_dir , nimb_scratch_dir, SUBJECTS_DIR , _, _, export_FreeSurfer_cmd, source_FreeSurfer_cmd = var.get_vars()
+
 
 
 def makesubmitpbs(cmd, subjid, run, walltime):
@@ -39,8 +39,8 @@ def makesubmitpbs(cmd, subjid, run, walltime):
         f.write('\n')
         f.write('cd '+nimb_dir+'\n')
         f.write('\n')
-        for line in pbs_file_FS_setup:
-            f.write(line+'\n')
+        f.write(export_FreeSurfer_cmd+'\n')
+        f.write('source '+source_FreeSurfer_cmd+'\n')
         f.write('export SUBJECTS_DIR='+SUBJECTS_DIR+'\n')
         f.write('\n')
         f.write(cmd+'\n')

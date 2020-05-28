@@ -394,87 +394,97 @@ def update_ls_subj2fs(SUBJECT_ID):
 
 def Commands_cluster_scheduler(cluster, supervisor_ccri):
 
+    # CEDAR-SimonFraser cedar.computecanada.ca
+    if cluster == 'cedar':
+        # install freesurfer 6.0 with epub and use module load freesurfer/6.0.0, https://docs.computecanada.ca/wiki/FreeSurfer
+        # use 'diskusage_report' to get the available space for the user
+        remote_type = 'slurm'
+
+        FreeSurfer_Install = True
+        FreeSurfer_Source = freesurfer71_centos7_download_address
+        freesurfer_version = 7
+
+        batch_file_header = (
+            '#!/bin/sh',
+            '#SBATCH --account=def-hanganua',
+            '#SBATCH --mem=8G',)
+        cusers_list = ['hanganua','hvt','lucaspsy',]
+        chome_dir = '/home'
+        cprojects_dir = 'projects/def-hanganua'
+        cscratch_dir = '/scratch'
+        batch_walltime_cmd = '#SBATCH --time='
+        max_walltime='99:00:00'
+        batch_output_cmd = '#SBATCH --output='
+        export_FreeSurfer_cmd = 'export FREESURFER_HOME='+chome_dir+'/'+cuser+'/'+cprojects_dir+'/freesurfer'
+        source_FreeSurfer_cmd = '$FREESURFER_HOME/SetUpFreeSurfer.sh'
+        nimb_dir=chome_dir+'/'+cuser+'/'+cprojects_dir+'/a/'
+        dir_new_subjects=chome_dir+'/'+cuser+'/'+cprojects_dir+'/subjects/'
+        nimb_scratch_dir=cscratch_dir+'/'+cuser+'/a_tmp/'
+        SUBJECTS_DIR = chome_dir+'/'+cuser+'/'+cprojects_dir+'/fs-subjects/'
+        processed_SUBJECTS_DIR = cscratch_dir+'/'+cuser+'/subjects_processed/'
+        avail_processes = ['registration','autorecon1','autorecon2','autorecon3','qcache','brstem','hip']
+        max_nr_running_batches=10
+        submit_cmd = 'sbatch'
+
     # BELUGA-McGill beluga.calculquebec.ca
     if cluster == 'beluga':
         # install freesurfer 6.0 with epub and use module load freesurfer/6.0.0
         # use 'diskusage_report' to get the available space for the user
         remote_type = 'slurm'
 
+        FreeSurfer_Install = False
+        FreeSurfer_Source = ''
+        freesurfer_version = 6
+
         batch_file_header = (
             '#!/bin/sh',
             '#SBATCH --account=def-hanganua',
-            '#SBATCH --mem=16G',)
+            '#SBATCH --mem=8G',)
+        cusers_list = ['hanganua','hvt','lucaspsy',]
+        chome_dir = '/home'
+        cprojects_dir = 'projects/def-hanganua'
+        cscratch_dir = '/scratch'
         batch_walltime_cmd = '#SBATCH --time='
         max_walltime='99:00:00'
         batch_output_cmd = '#SBATCH --output='
-        pbs_file_FS_setup = (
-            'module load freesurfer/6.0.0',
-            'source $EBROOTFREESURFER/FreeSurferEnv.sh',)
-        avail_processes = ['registration','recon','qcache','brstem','hip']
+        export_FreeSurfer_cmd = 'module load freesurfer/6.0.0'
+        source_FreeSurfer_cmd = '$EBROOTFREESURFER/FreeSurferEnv.sh'
+        nimb_dir=chome_dir+'/'+cuser+'/'+cprojects_dir+'/a/'
+        dir_new_subjects=chome_dir+'/'+cuser+'/'+cprojects_dir+'/subjects/'
+        nimb_scratch_dir=cscratch_dir+'/'+cuser+'/a_tmp/'
+        SUBJECTS_DIR = chome_dir+'/'+cuser+'/'+cprojects_dir+'/fs-subjects/'
+        processed_SUBJECTS_DIR = cscratch_dir+'/'+cuser+'/subjects_processed/'
+        avail_processes = ['registration','autorecon1','autorecon2','autorecon3','qcache','brstem','hip']
         max_nr_running_batches=45#allows only up to 15 batches to run simultaneously
         submit_cmd = 'sbatch'
 
-    # MAMMOUTH-Sherbrooke mp2b.ccs.usherbrooke.ca
-    elif cluster == 'mammouth':
-        # use 'diskusage_report' to get the available space for the user
-        remote_type = 'slurm'
-
-        batch_file_header = (
-            '#!/bin/bash',
-            '#SBATCH --mem=16G',
-            '#SBATCH --account=def-hanganua')
-        batch_walltime_cmd = '#SBATCH --time='
-        max_walltime='99:00:00'
-        batch_output_cmd = '#SBATCH --output='
-        pbs_file_FS_setup = (
-            'module load freesurfer/6.0.0',
-            'export PATH=$PATH:$FREESURFER_HOME/mni/bin',
-            'export PERL5LIB=$PERL5LIB:$FREESURFER_HOME/mni/lib/perl5/5.8.5',)
-        avail_processes = ['registration','recon','qcache','brstem','hip']
-        max_nr_running_batches=15
-        submit_cmd = 'sbatch'
-
-    # CEDAR-SimonFraser cedar.computecanada.ca
-    if cluster == 'cedar':
-        # install freesurfer 6.0 with epub and use module load freesurfer/6.0.0
-        remote_type = 'slurm'
-
-        batch_file_header = (
-            '#!/bin/sh',
-            '#SBATCH --account=def-hanganua',
-            '#SBATCH --mem=16G',
-            '#SBATCH --mail-type=FAIL',)
-        batch_walltime_cmd = '#SBATCH --time='
-        max_walltime='99:00:00'
-        batch_output_cmd = '#SBATCH --output='
-        pbs_file_FS_setup = (
-            'module load freesurfer/6.0.0',
-            'source $EBROOTFREESURFER/FreeSurferEnv.sh',)
-        avail_processes = ['registration','recon','qcache','brstem','hip']
-        max_nr_running_batches=10
-        submit_cmd = 'sbatch'
 
     # HELIOS-Laval helios.calculquebec.ca
     elif cluster == 'helios':
         # install freesurfer 6.0 by downloading
-        remote_type = 'pbs'
+        remote_type = 'slurm'
 
         batch_file_header = (
-            '#PBS -S /bin/bash',
-            '#PBS -A '+supervisor_ccri,
-            '#PBS -l nodes=1:gpus=8',
-            '#PBS -l mem=8192mb',
-            '#PBS -v MOAB_JOBARRAYINDEX',
-            '#PBS -j oe',)
-        batch_walltime_cmd = '#PBS -l walltime='
-        max_walltime='12:00:00'
-        batch_output_cmd = '#PBS -o '
-        pbs_file_FS_setup = (
-            'export FREESURFER_HOME='+chomedir+'freesurfer',
-            'source $FREESURFER_HOME/SetUpFreeSurfer.sh',)
-        avail_processes = ['registration','recon','qcache','brstem','hip']
-        max_nr_running_batches=5
-        submit_cmd = 'msub'
+            '#!/bin/sh',
+            '#SBATCH --account=def-hanganua',
+            '#SBATCH --mem=8G',)
+        cusers_list = ['hanganua','hvt','lucaspsy',]
+        chome_dir = '/home'
+        cprojects_dir = 'projects/def-hanganua'
+        cscratch_dir = '/scratch'
+        batch_walltime_cmd = '#SBATCH --time='
+        max_walltime='99:00:00'
+        batch_output_cmd = '#SBATCH --output='
+        export_FreeSurfer_cmd = 'export FREESURFER_HOME='+chome_dir+'/'+cuser+'/'+cprojects_dir+'/freesurfer'
+        source_FreeSurfer_cmd = '$FREESURFER_HOME/SetUpFreeSurfer.sh'
+        nimb_dir=chome_dir+'/'+cuser+'/'+cprojects_dir+'/a/'
+        dir_new_subjects=chome_dir+'/'+cuser+'/'+cprojects_dir+'/subjects/'
+        nimb_scratch_dir=cscratch_dir+'/'+cuser+'/a_tmp/'
+        SUBJECTS_DIR = chome_dir+'/'+cuser+'/'+cprojects_dir+'/fs-subjects/'
+        processed_SUBJECTS_DIR = cscratch_dir+'/'+cuser+'/subjects_processed/'
+        avail_processes = ['registration','autorecon1','autorecon2','autorecon3','qcache','brstem','hip']
+        max_nr_running_batches=10
+        submit_cmd = 'sbatch'
 
     # NIAGARA-Toronto niagara.scinet.utoronto.ca
     elif cluster == 'niagara':
@@ -494,7 +504,7 @@ def Commands_cluster_scheduler(cluster, supervisor_ccri):
         batch_output_cmd = '#SBATCH --output='
         pbs_file_FS_setup = (
             'module load freesurfer')
-        avail_processes = ['registration','recon','qcache','brstem','hip']
+        avail_processes = ['registration','autorecon1','autorecon2','autorecon3','qcache','brstem','hip']
         max_nr_running_batches=10
         submit_cmd = 'sbatch'
 		
@@ -513,7 +523,7 @@ def Commands_cluster_scheduler(cluster, supervisor_ccri):
         pbs_file_FS_setup = (
             'module load freesurfer/6.0.0',
             'source $EBROOTFREESURFER/FreeSurferEnv.sh',)
-        avail_processes = ['registration','recon','qcache','brstem','hip']
+        avail_processes = ['registration','autorecon1','autorecon2','autorecon3','qcache','brstem','hip']
         max_nr_running_batches=10
         submit_cmd = 'sbatch'
 
@@ -527,7 +537,7 @@ def Commands_cluster_scheduler(cluster, supervisor_ccri):
         max_walltime='none'
         batch_output_cmd = 'screen -S minecraft -p 0 -X stuff "stop^M" '
         pbs_file_FS_setup = ('module load freesurfer/6.0.1') #https://unix.stackexchange.com/questions/409861/its-possible-to-send-input-to-a-tmux-session-without-connecting-to-it
-        avail_processes = ['registration','recon','qcache','brstem','hip']
+        avail_processes = ['registration','autorecon1','autorecon2','autorecon3','qcache','brstem','hip']
         max_nr_running_batches=5
         submit_cmd = 'tmux'
 
