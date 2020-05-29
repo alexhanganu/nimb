@@ -1,5 +1,5 @@
 #!/bin/python
-# 2020.05.27
+# 2020.05.29
 
 from os import path, listdir, remove, rename
 from pathlib import Path
@@ -550,7 +550,7 @@ def Count_TimeSleep():
         if len(db['QUEUE'][process])>0:
             time2sleep = 1800
             break
-    if len(db['RUNNING']['hip'])>0 or len(db['RUNNING']['brstem'])>0 or len(db['RUNNING']['qcache'])>0:
+    if 'hip' in db['RUNNING'] and len(db['RUNNING']['hip'])>0 or 'brstem' in db['RUNNING'] and len(db['RUNNING']['brstem'])>0 or 'qcache' in db['RUNNING'] and len(db['RUNNING']['qcache'])>0:
         time2sleep = 3600
     elif 'recon' in db['RUNNING']:
         if len(db['RUNNING']['recon'])>0:
