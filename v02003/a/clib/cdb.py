@@ -1,36 +1,38 @@
 #!/bin/python
-# 2020.03.03
-# Alexandru Hanganu
+# 2020.05.27
 
 from os import path, listdir, remove, getenv, rename, mkdir, environ, system
 from var import process_order, long_name, base_name
 import time, shutil
+import var
 
 environ['TZ'] = 'US/Eastern'
 time.tzset()
 
-def get_vars():
-    from var import cname, cusers_list, chome_dir, cprojects_dir, cscratch_dir
-    cuser = 'not_defined'
-    for user in cusers_list:
-        if user in getenv('HOME'):
-            cuser = user
-            break
-    else:
-        print('ERROR - user not defined')
+# def get_vars():
+#     from var import cname, cusers_list, chome_dir, cprojects_dir, cscratch_dir
+#     cuser = 'not_defined'
+#     for user in cusers_list:
+#         if user in getenv('HOME'):
+#             cuser = user
+#             break
+#     else:
+#         print('ERROR - user not defined')
 
-    if cname=='beluga' or cname=='mammouth':
-        nimb_dir=chome_dir+'/'+cuser+'/'+cprojects_dir+'/a/'
-        dir_new_subjects=chome_dir+'/'+cuser+'/'+cprojects_dir+'/subjects/'
-        nimb_scratch_dir=cscratch_dir+'/'+cuser+'/a_tmp/'
-        SUBJECTS_DIR = cscratch_dir+'/'+cuser+'/fs-subjects/'
-        processed_SUBJECTS_DIR = cscratch_dir+'/'+cuser+'/subjects_processed/'
-    else:
-        print(cname, 'variables not defined for this cluster')
+#     if cname=='beluga' or cname=='cedar':
+#         nimb_dir=chome_dir+'/'+cuser+'/'+cprojects_dir+'/a/'
+#         dir_new_subjects=chome_dir+'/'+cuser+'/'+cprojects_dir+'/subjects/'
+#         nimb_scratch_dir=cscratch_dir+'/'+cuser+'/a_tmp/'
+#         SUBJECTS_DIR = chome_dir+'/'+cuser+'/'+cprojects_dir+'/fs-subjects/'
+#         processed_SUBJECTS_DIR = cscratch_dir+'/'+cuser+'/subjects_processed/'
+#         export_FreeSurfer_cmd = 'export FREESURFER_HOME='+chome_dir+'/'+cuser+'/'+cprojects_dir+'/freesurfer'
+#         source_FreeSurfer_cmd = '$FREESURFER_HOME/SetUpFreeSurfer.sh'
+#     else:
+#         print(cname, 'variables not defined for this cluster')
 
-    return cuser, nimb_dir, nimb_scratch_dir, SUBJECTS_DIR, processed_SUBJECTS_DIR, dir_new_subjects
+#     return cuser, nimb_dir, nimb_scratch_dir, SUBJECTS_DIR, processed_SUBJECTS_DIR, dir_new_subjects, export_FreeSurfer_cmd, source_FreeSurfer_cmd
 
-cuser, nimb_dir , nimb_scratch_dir, SUBJECTS_DIR, _, _ = get_vars()
+cuser, nimb_dir, nimb_scratch_dir, SUBJECTS_DIR, _, _, _, _ = var.get_vars()
 
 
 def Get_DB():

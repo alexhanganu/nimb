@@ -13,9 +13,14 @@ win_netframework_download_address = 'https://www.microsoft.com/en-us/download/de
 win_visualstudio_download_address = 'http://landinghub.visualstudio.com/visual-cpp-build-tools'
 win_visualstudio_download_address2 = 'https://www.visualstudio.com/thank-you-downloading-visual-studio/?sku=BuildTools&rel=15'
 win_putty_download_address = 'https://www.ssh.com/a/putty-0.70-installer.msi'
-freesurfer_download_address = 'ftp://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/6.0.0/freesurfer-Linux-centos6_x86_64-stable-pub-v6.0.0.tar.gz'
+freesurfer71_centos6_download_address = 'https://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/7.1.0/freesurfer-linux-centos6_x86_64-7.1.0.tar.gz'
+freesurfer71_centos7_download_address = 'https://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/7.1.0/freesurfer-linux-centos7_x86_64-7.1.0.tar.gz'
+freesurfer71_centos8_download_address = 'https://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/7.1.0/freesurfer-linux-centos8_x86_64-7.1.0.tar.gz'
+freesurfer60_download_address = 'ftp://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/6.0.0/freesurfer-Linux-centos6_x86_64-stable-pub-v6.0.0.tar.gz'
 matlab_runtime_download_address = 'http://surfer.nmr.mgh.harvard.edu/fswiki/MatlabRuntime?action=AttachFile&do=get&target=runtime2012bLinux.tar.gz'
 anaconda_installation = 'http://anaconda3-5.1.0-linux-x86_64.sh/'
+
+freesurfer_download_address = freesurfer71_download_address
 
 '''chmod +x Anaconda3-5
 ./Anaconda3-5
