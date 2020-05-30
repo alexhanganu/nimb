@@ -398,6 +398,7 @@ def Commands_cluster_scheduler(cluster, supervisor_ccri):
     if cluster == 'cedar':
         # install freesurfer 6.0 with epub and use module load freesurfer/6.0.0, https://docs.computecanada.ca/wiki/FreeSurfer
         # use 'diskusage_report' to get the available space for the user
+        # check priority with: sshare -l -A def-prof1_cpu -u prof1,grad2,postdoc3
         remote_type = 'slurm'
 
         FreeSurfer_Install = True
@@ -413,7 +414,7 @@ def Commands_cluster_scheduler(cluster, supervisor_ccri):
         cprojects_dir = 'projects/def-hanganua'
         cscratch_dir = '/scratch'
         batch_walltime_cmd = '#SBATCH --time='
-        max_walltime='99:00:00'
+        max_walltime='99:00:00' # up to 600, 28 days
         batch_output_cmd = '#SBATCH --output='
         export_FreeSurfer_cmd = 'export FREESURFER_HOME='+chome_dir+'/'+cuser+'/'+cprojects_dir+'/freesurfer'
         source_FreeSurfer_cmd = '$FREESURFER_HOME/SetUpFreeSurfer.sh'
@@ -445,7 +446,7 @@ def Commands_cluster_scheduler(cluster, supervisor_ccri):
         cprojects_dir = 'projects/def-hanganua'
         cscratch_dir = '/scratch'
         batch_walltime_cmd = '#SBATCH --time='
-        max_walltime='99:00:00'
+        max_walltime='99:00:00' # up to 168, 7 days
         batch_output_cmd = '#SBATCH --output='
         export_FreeSurfer_cmd = 'module load freesurfer/6.0.0'
         source_FreeSurfer_cmd = '$EBROOTFREESURFER/FreeSurferEnv.sh'
@@ -518,7 +519,7 @@ def Commands_cluster_scheduler(cluster, supervisor_ccri):
             '#SBATCH --account=def-hanganua',
             '#SBATCH --mem=16G',)
         batch_walltime_cmd = '#SBATCH --time='
-        max_walltime='99:00:00'
+        max_walltime='99:00:00' # up to 600, 28 days
         batch_output_cmd = '#SBATCH --output='
         pbs_file_FS_setup = (
             'module load freesurfer/6.0.0',
