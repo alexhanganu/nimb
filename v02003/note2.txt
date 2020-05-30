@@ -27,3 +27,5 @@ if len(Project_Data) > 0:
 1. sect json file instead of select folder
 2. get the path to that json file
 3. call the function from the sshelp
+
+this location is just temporary 
