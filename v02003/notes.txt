@@ -1,3 +1,33 @@
+- 31/5/2020
+1. The processing  button works theorectically! hope so because there are some error cannot fix:
+    + cdb.py: cpy the db to db.py inside the 'a' folder (/project/6034982/a)-->
+        + error: PermissionError: [Errno 13] Permission denied: '/home/hvt/projects/def-hanganua/a/db.py'
+        + reason: user hvt does not have permission to write/create new file in that folder (/home/hvt/projects/def-hanganua/a/)
+        + fix: temporary replicate 'a' folder in my home and change the code manually to test if it works
+        + results: function processing_in_cluster_2 works
+    + functionality: copy files from cluster, cannot test this function now because of permission problems
+        location: cpFromCluster from data_processing_local.py
+        + solutions: make it work on my personal home folder
+        + results: on investigating because of folders name
+    + get_MRIs_ppmi_v2 is using to generate the json file
+
+    Summary the work flow:
+    Important: must load python 3 to run
+    a0. configure the project using the database
+        - to make sure the understanding of the dabase structure and value inside
+        - i included the win32.db as an example.
+    a. use get_MRIs_ppmi_v2.py to generate the json file
+        - must set the json file location at `f_new_subjects`
+
+        - command: python get_MRIs_ppmi_v2.py <path to the unzip folder>
+        - on windows: the json will be create at new_subjects.json of this folder
+        - on linux: /home/hvt/projects/def-hanganua/hvt_ppmi_tmp --> change the line 37 to correct location
+    b. run the application exe.pw
+        - click the copy to cluster button to copy subjects to cluster
+        - click do-processing to execute python a/crun.py
+        - the function to copy from cluster to local is not available yet
+
+
 - 28/5/2020
 1. get_MRIs_ppmi_v2 is the file to generate json file
 2. how the system works

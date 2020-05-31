@@ -136,6 +136,7 @@ def running_command_ssh_2(host_name, user_name, user_password, cmd_run_crun_on_c
 
     (out, err) = runCommandOverSSH(ssh_session, cmd_run_crun_on_cluster)
     print(out, err)
+    print("Finish running on cluster: {0}".format(cmd_run_crun_on_cluster))
 
 def read_json(json_file_name):
     """

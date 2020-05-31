@@ -38,7 +38,8 @@ cuser, nimb_dir, nimb_scratch_dir, SUBJECTS_DIR, _, _, _, _ = var.get_vars()
 def Get_DB():
 
     db = dict()
-
+    print("nimb_scratch_dir is:" + nimb_scratch_dir)
+    # change to local dev folder instead of supervisor folder due to no-writing-file permission
     if path.isfile(nimb_scratch_dir+'db'):
         shutil.copy(nimb_scratch_dir+'db',nimb_dir+'db.py')
         time.sleep(2)

@@ -7,5 +7,11 @@
       <jdbc-driver>org.sqlite.JDBC</jdbc-driver>
       <jdbc-url>jdbc:sqlite:D:\PROGRAMMING\Alex\win32.db</jdbc-url>
     </data-source>
+    <data-source source="LOCAL" name="darwin" uuid="71b1a102-4370-4484-9c5d-f35b7749f107">
+      <driver-ref>sqlite.xerial</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>org.sqlite.JDBC</jdbc-driver>
+      <jdbc-url>jdbc:sqlite:D:\PROGRAMMING\Alex\nimb\v02003\darwin.db</jdbc-url>
+    </data-source>
   </component>
 </project>

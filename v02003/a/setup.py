@@ -20,7 +20,7 @@ freesurfer60_download_address = 'ftp://surfer.nmr.mgh.harvard.edu/pub/dist/frees
 matlab_runtime_download_address = 'http://surfer.nmr.mgh.harvard.edu/fswiki/MatlabRuntime?action=AttachFile&do=get&target=runtime2012bLinux.tar.gz'
 anaconda_installation = 'http://anaconda3-5.1.0-linux-x86_64.sh/'
 
-freesurfer_download_address = freesurfer71_download_address
+#freesurfer_download_address = freesurfer71_download_address
 
 '''chmod +x Anaconda3-5
 ./Anaconda3-5
