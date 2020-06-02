@@ -1,5 +1,5 @@
 #!/bin/python
-# 2020.05.27
+# 2020.06.02
 
 '''
 add FS QA tools to rm scans with low SNR (Koh et al 2017)
@@ -211,8 +211,11 @@ def chkbrstemf(subjid):
                 line2read=[line]
                 if any('Everything done' in i for i in line2read):
                     lsmri=listdir(SUBJECTS_DIR+subjid+'/mri/')
-                    if any('brainstemSsVolumes' in i for i in lsmri):
-                        shutil.copy(SUBJECTS_DIR+subjid+'/mri/brainstemSsVolumes.v10.txt', SUBJECTS_DIR+subjid+'/stats/aseg.brainstem.volume.stats')
+                    bs_f_stats = [i for in in lsmri if 'brainstemSsVolumes' in i][0]
+                    if bs_f_stats:
+                    # if any('brainstemSsVolumes' in i for i in lsmri):
+                        shutil.copy(SUBJECTS_DIR+subjid+'/'+bs_f_stats, SUBJECTS_DIR+subjid+'/stats/aseg.brainstem.volume.stats')
+                        # shutil.copy(SUBJECTS_DIR+subjid+'/mri/brainstemSsVolumes.v10.txt', SUBJECTS_DIR+subjid+'/stats/aseg.brainstem.volume.stats')
                         return True
                     else:
                         return False
@@ -234,6 +237,15 @@ def chkhipf(subjid):
                         if any('rh.hippoSfVolumes-T1.v10.txt' in i for i in lsmri):
                             shutil.copy(SUBJECTS_DIR+subjid+'/mri/rh.hippoSfVolumes-T1.v10.txt',SUBJECTS_DIR+subjid+'/stats/aseg.hippo.rh.volume.stats')
                             return True
+                    elif any('lh.hippoSfVolumes-T1.v21.txt' in i for i in lsmri):
+                        shutil.copy(SUBJECTS_DIR+subjid+'/mri/lh.hippoSfVolumes-T1.v21.txt',SUBJECTS_DIR+subjid+'/stats/aseg.hippo.lh.volume.stats')
+                        if any('rh.hippoSfVolumes-T1.v21.txt' in i for i in lsmri):
+                            shutil.copy(SUBJECTS_DIR+subjid+'/mri/rh.hippoSfVolumes-T1.v21.txt',SUBJECTS_DIR+subjid+'/stats/aseg.hippo.rh.volume.stats')
+                        if any('lh.amygNucVolumes-T1.v21.txt ' in i for i in lsmri):
+                            shutil.copy(SUBJECTS_DIR+subjid+'/mri/lh.amygNucVolumes-T1.v21.txt',SUBJECTS_DIR+subjid+'/stats/aseg.amyg.lh.volume.stats')
+                        if any('rh.amygNucVolumes-T1.v21.txt' in i for i in lsmri):
+                            shutil.copy(SUBJECTS_DIR+subjid+'/mri/rh.amygNucVolumes-T1.v21.txt',SUBJECTS_DIR+subjid+'/stats/aseg.amyg.rh.volume.stats')
+                            return True
                     else:
                         return False
     else:
@@ -243,17 +255,15 @@ def chkhipf(subjid):
 def chkthaf(subjid):
 
     lsscripts=listdir(SUBJECTS_DIR+subjid+'/scripts/')
-    if any('hippocampal-subfields-T1' in i for i in lsscripts):
-        with open(SUBJECTS_DIR+subjid+'/scripts/hippocampal-subfields-T1.log','rt') as readlog:
+    if any('thalamic-nuclei-mainFreeSurferT1.log' in i for i in lsscripts):
+        with open(SUBJECTS_DIR+subjid+'/scripts/thalamic-nuclei-mainFreeSurferT1.log','rt') as readlog:
             for line in readlog:
                 line2read=[line]
                 if any('Everything done' in i for i in line2read):
                     lsmri=listdir(SUBJECTS_DIR+subjid+'/mri/')
-                    if any('lh.hippoSfVolumes-T1.v10.txt' in i for i in lsmri):
-                        shutil.copy(SUBJECTS_DIR+subjid+'/mri/lh.hippoSfVolumes-T1.v10.txt',SUBJECTS_DIR+subjid+'/stats/aseg.hippo.lh.volume.stats')
-                        if any('rh.hippoSfVolumes-T1.v10.txt' in i for i in lsmri):
-                            shutil.copy(SUBJECTS_DIR+subjid+'/mri/rh.hippoSfVolumes-T1.v10.txt',SUBJECTS_DIR+subjid+'/stats/aseg.hippo.rh.volume.stats')
-                            return True
+                    if any('ThalamicNuclei.v12.T1.volumes.txt' in i for i in lsmri):
+                        shutil.copy(SUBJECTS_DIR+subjid+'/mri/ThalamicNuclei.v12.T1.volumes.txt',SUBJECTS_DIR+subjid+'/stats/aseg.tha.volume.stats')
+                        return True
                     else:
                         return False
     else:

@@ -517,7 +517,7 @@ def Commands_cluster_scheduler(cluster, supervisor_ccri):
         batch_file_header = (
             '#!/bin/sh',
             '#SBATCH --account=def-hanganua',
-            '#SBATCH --mem=16G',)
+            '#SBATCH --mem=8G',)
         batch_walltime_cmd = '#SBATCH --time='
         max_walltime='99:00:00' # up to 600, 28 days
         batch_output_cmd = '#SBATCH --output='
