@@ -211,7 +211,7 @@ def chkbrstemf(subjid):
                 line2read=[line]
                 if any('Everything done' in i for i in line2read):
                     lsmri=listdir(SUBJECTS_DIR+subjid+'/mri/')
-                    bs_f_stats = [i for in in lsmri if 'brainstemSsVolumes' in i][0]
+                    bs_f_stats = [i for i in lsmri if 'brainstemSsVolumes' in i][0]
                     if bs_f_stats:
                     # if any('brainstemSsVolumes' in i for i in lsmri):
                         shutil.copy(SUBJECTS_DIR+subjid+'/'+bs_f_stats, SUBJECTS_DIR+subjid+'/stats/aseg.brainstem.volume.stats')
