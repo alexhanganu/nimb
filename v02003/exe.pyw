@@ -179,7 +179,7 @@ def run_processing_on_cluster_2():
     project_folder = clusters[list(clusters)[0]]['HOME']
     cmd_run = " python a/crun.py -submit false" #submit=true
     load_python_3 = 'module load python/3.7.4;'
-    cmd_run_crun_on_cluster = load_python_3 +"cd " + project_folder + "; " + cmd_run
+    cmd_run_crun_on_cluster = load_python_3 +"cd " + "/home/hvt/" + "; " + cmd_run
     print("command: "+ cmd_run_crun_on_cluster)
     host_name = clusters[list(clusters)[0]]['remote_address']
 
@@ -197,10 +197,10 @@ def run(Project):
     # cp2cluster()
     status.set('Cluster analysis started')
     status.set("Cluster analysing running....")
-    # run_processing_on_cluster_2()
+    run_processing_on_cluster_2()
     print("Do processing here, temporary block that function")
     # set_MainFolder(Project)
-    cpFromCluster()
+    # cpFromCluster() # todo: dead here
     #
     # status.set('Copying processed data from cluster')
     #

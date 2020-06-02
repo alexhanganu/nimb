@@ -6,6 +6,7 @@
 3) extract paths for the anat MRIs
 4) classify according to BIDS classification
 5) create the BIDS json file that will be used by NIMB on the cluster
+6)
 '''
 
 project = 'ppmi'
@@ -17,23 +18,30 @@ if platform == 'linux' or platform == 'linux2':
 	path_scratch = getenv('SCRATCH')
 	SUBJECTS_DIR_RAW = path_home+'/source/mri_unzipped'
 if platform == 'win32':
-	p = input('please write the path')
+	p = input('please write the path of mri_unzipped: ')
 	if path.isdir(p):
 		path_home = p
-		SUBJECTS_DIR_RAW = 'none'
+		SUBJECTS_DIR_RAW = p
 
+if platform == 'darwin':
+	# p = input('please write the path') #'/Users/van/Downloads/git/ppmi_data'
+	SUBJECTS_DIR_RAW = path_home = '/Users/van/Downloads/git/ppmi_data'
 import datetime as dt
 import time, json
 
 print('PATH_HOME is: ',path_home)
-print('PATH_SCRATCH is: ',path_scratch)
+# ?print('PATH_SCRATCH is: ',path_scratch)
 
 #f_with_downloaded_ids = '/materials/1.ls_subjects_downloaded.txt' # file with id of the downloaded participants
+if platform == 'linux' or platform == 'linux2' :
+	f_new_subjects = '/home/hvt/projects/def-hanganua/hvt_ppmi_tmp' + '/new_subjects.json'
+	logf = path_scratch+'/log_'+project+'_'+str(time.strftime('%Y%m%d_%H_%M',time.localtime()))+'.txt'
+	open(logf,'w')
+if platform == 'darwin':
+	f_new_subjects = '/Users/van/Downloads/git/ppmi_data' + '/new_subjects.json'
+if platform == 'win32':
+	f_new_subjects = 'new_subjects.json'
 
-
-f_new_subjects = '/home/hvt/projects/def-hanganua/hvt_ppmi_tmp'+'/new_subjects.json'
-logf = path_scratch+'/log_'+project+'_'+str(time.strftime('%Y%m%d_%H_%M',time.localtime()))+'.txt'
-open(logf,'w')
 def adni_get_list_downloaded_subjects(file):
 	subjects = list()
 	for line in open(file,'r').readlines():
@@ -182,10 +190,16 @@ def make_BIDS_structure(d_ses_MR_types):
 
 
 def get_dict_MR_files2process():
+	"""
+	# only search for 2 number
+	:return:
+	"""
 	d_subjects = dict()
 	#for subject in ls_subjects:
 		#if subject in listdir(SUBJECTS_DIR_RAW):
-	for subject in listdir(SUBJECTS_DIR_RAW)[:2]:
+	for subject in listdir(SUBJECTS_DIR_RAW):
+			if subject.startswith("."):
+				continue
 			d_subjects[subject] = {}
 			ls_MR_paths = exclude_MR_types(get_paths2dcm_files(SUBJECTS_DIR_RAW+'/'+subject))
 			print(ls_MR_paths)
