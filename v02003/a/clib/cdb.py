@@ -1,8 +1,8 @@
 #!/bin/python
-# 2020.05.27
+# 2020.06.03
 
 from os import path, listdir, remove, getenv, rename, mkdir, environ, system
-from var import process_order, long_name, base_name
+from var import process_order, long_name, base_name, cusers_list
 import time, shutil
 import var
 
@@ -431,17 +431,27 @@ def chk_subj_in_SUBJECTS_DIR(db):
 
 
 def get_batch_jobs_status():
+
+    def get_jobs(jobs, queue):
+
+        for line in queue[1:]:
+                vals = list(filter(None,line.split(' ')))
+                if vals[0] not in jobs:
+                    jobs[vals[0]] = vals[4]
+        return jobs
+
+
     from var import cname
     import subprocess
 
-    queue = list(filter(None,subprocess.run(['squeue','-u',cuser], stdout=subprocess.PIPE).stdout.decode('utf-8').split('\n')))
-
     jobs = dict()
-    for line in queue[1:]:
-            vals = list(filter(None,line.split(' ')))
-            jobs[vals[0]] = vals[4]
+    for cuser in cusers_list:
+        queue = list(filter(None,subprocess.run(['squeue','-u',cuser], stdout=subprocess.PIPE).stdout.decode('utf-8').split('\n')))
+        jobs = get_jobs(jobs, queue)
 
     return jobs
+
+
 
 def get_mask_codes():
     structure_codes = {'left_hippocampus':17,'right_hippocampus':53,
