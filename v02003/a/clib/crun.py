@@ -1,7 +1,7 @@
 #!/bin/python
-# 2020.05.29
+# 2020.06.04
 
-from os import path, listdir, remove, rename
+from os import path, listdir, remove, rename, system
 from pathlib import Path
 import time, shutil
 from var import cscratch_dir, max_nr_running_batches, process_order, base_name, DO_LONG, freesurfer_version
@@ -374,7 +374,7 @@ def check_error():
 					if crunfs.chkIsRunning(subjid):
 						print('            removing IsRunning file')
 						remove(SUBJECTS_DIR+subjid+'/scripts/IsRunning.lh+rh')
-					print('        checking if all files were created for: ')
+					print('        checking if all files were created for: '+process)
 					if not crunfs.checks_from_runfs(process, subjid):
 						print('            some files were not created. Excluding subject from pipeline.')
 						db['PROCESSED']['error_'+process].remove(subjid)
@@ -425,12 +425,10 @@ def move_processed_subjects():
         if size_src == size_dst:
             print('    ',subject,' moved correctly, ',size_src, size_dst)
             cdb.Update_status_log('    '+subject+' moved correctly, '+str(size_src)+' '+str(size_dst))
-        #    shutil.rmtree(SUBJECTS_DIR+subject)
-        #    db['PROCESSED']['cp2local'].remove(subject)
-        #    cdb.Update_DB(db)
         else:
             print('    something was wrong, not moved correctly', size_src, size_dst)
             cdb.Update_status_log('    something went wrong, not moved correctly '+str(size_src)+' '+str(size_dst))
+
     print('moving DONE')
 
 

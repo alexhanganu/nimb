@@ -1,5 +1,5 @@
 #!/bin/python
-# 2020.06.03
+# 2020.06.04
 
 '''
 add FS QA tools to rm scans with low SNR (Koh et al 2017)
@@ -13,7 +13,7 @@ print('SUBMITTING is: ', SUBMIT)
 from os import listdir, path, mkdir, system
 import shutil
 import datetime
-from var import supervisor_ccri, text4_scheduler, batch_walltime_cmd, max_walltime, batch_output_cmd, submit_cmd
+from var import text4_scheduler, batch_walltime_cmd, max_walltime, batch_output_cmd, submit_cmd, freesurfer_version
 import cdb, var
 import subprocess
 
@@ -150,23 +150,28 @@ def chkIsRunning(subjid):
 
 def chkreconf_if_without_error(subjid):
 
-    if 'recon-all-status.log' in listdir(SUBJECTS_DIR+subjid+'/scripts/'):
-        f = open(SUBJECTS_DIR+subjid+'/scripts/recon-all-status.log','r').readlines()
+    file_2read = 'recon-all-status.log'
+    try:
+        if file_2read in listdir(SUBJECTS_DIR+subjid+'/scripts/'):
+            f = open(SUBJECTS_DIR+subjid+'/scripts/'+file_2read,'r').readlines()
 
-        for line in reversed(f):
-                    if 'exited with ERRORS' in line:
-                        cdb.Update_status_log(subjid+' exited with ERRORS line is present')
-                        return False
-                    elif 'finished without error' in line:
-                        return True
-                    elif 'recon-all -s' in line:
-                        return False
-                        break
-                    else:
-                        cdb.Update_status_log(subjid+' it\'s not clear whether subject finished with or without ERROR')
-                        return False
-    else:
-        return False        
+            for line in reversed(f):
+                if 'exited with ERRORS' in line:
+                    cdb.Update_status_log(subjid+' exited with ERRORS line is present')
+                    return False
+                elif 'finished without error' in line:
+                    return True
+                elif 'recon-all -s' in line:
+                    return False
+                    break
+                else:
+                    cdb.Update_status_log(subjid+' it\'s not clear whether subject finished with or without ERROR')
+                    return False
+        else:
+            return False
+    except FileNotFoundError as e:
+        print(e)
+        cdb.Update_status_log(subjid+' '+str(e))
 
 
 def chk_if_autorecon_done(lvl, subjid):
@@ -201,12 +206,26 @@ def chk_if_qcache_done(subjid):
         return False
 
 
+log_files = {
+    'bs':{
+    7:'brainstem-substructures-T1.log', 6:'brainstem-structures.log',
+    },
+    'hip':{
+    7:'hippocampal-subfields-T1.log', 6:'hippocampal-subfields-T1.log',
+    },
+    'tha':{
+    7:'thalamic-nuclei-mainFreeSurferT1.log', 6:'',
+    },
+}
+
+# 117711151
 
 def chkbrstemf(subjid):
 
     lsscripts=listdir(SUBJECTS_DIR+subjid+'/scripts/')
-    if any('brainstem-structures' in i for i in lsscripts):
-        with open(SUBJECTS_DIR+subjid+'/scripts/brainstem-structures.log','rt') as readlog:
+    log_file = log_files['bs'][freesurfer_version]
+    if any(log_file in i for i in lsscripts):
+        with open(SUBJECTS_DIR+subjid+'/scripts/'+log_file,'rt') as readlog:
             for line in readlog:
                 line2read=[line]
                 if any('Everything done' in i for i in line2read):
@@ -226,6 +245,7 @@ def chkhipf(subjid):
 
     lsscripts=listdir(SUBJECTS_DIR+subjid+'/scripts/')
     if any('hippocampal-subfields-T1' in i for i in lsscripts):
+        # if 'IsRunningHPsubT1.lh+rh' not in lsscripts
         with open(SUBJECTS_DIR+subjid+'/scripts/hippocampal-subfields-T1.log','rt') as readlog:
             for line in readlog:
                 line2read=[line]
