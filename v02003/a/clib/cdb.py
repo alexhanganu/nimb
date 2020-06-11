@@ -453,6 +453,31 @@ def get_batch_jobs_status():
 
 
 
+def get_diskusage_report():
+    '''script to read the available space
+    on compute canada clusters
+    the command diskusage_report is used'''
+
+    def get_jobs(diskusage, queue):
+
+        for line in queue[1:]:
+                vals = list(filter(None,line.split(' ')))
+                diskusage[vals[0]] = vals[4][:-5].strip('k')
+        return diskusage
+
+
+    from var import cname
+    import subprocess
+
+    diskusage = dict()
+    for cuser in cusers_list:
+        queue = list(filter(None,subprocess.run(['diskusage_report'], stdout=subprocess.PIPE).stdout.decode('utf-8').split('\n')))
+        diskusage = get_jobs(diskusage, queue)
+
+    return diskusage
+
+
+
 def get_mask_codes():
     structure_codes = {'left_hippocampus':17,'right_hippocampus':53,
                     'left_thalamus':10,'right_thalamus':49,'left_caudate':11,'right_caudate':50,

@@ -1,13 +1,13 @@
 #!/bin/python
-# 2020.06.04
+# 2020.06.10
 
-from os import path, listdir, remove, rename, system
+from os import path, listdir, remove, rename, system, chdir
 from pathlib import Path
 import time, shutil
-from var import cscratch_dir, max_nr_running_batches, process_order, base_name, DO_LONG, freesurfer_version
+from var import cscratch_dir, max_nr_running_batches, process_order, base_name, DO_LONG, freesurfer_version, max_walltime, submit_cmd
 import crunfs, cdb, cwalltime, var
 
-_, _ , _, SUBJECTS_DIR , processed_SUBJECTS_DIR, _, _ , _ = var.get_vars()
+_, nimb_dir, _, SUBJECTS_DIR , processed_SUBJECTS_DIR, _, _ , _ = var.get_vars()
 
 
 def get_len_Queue_Running():
@@ -493,50 +493,70 @@ def check_active_tasks(db):
 
 
 def Count_TimeSleep():
-    time2sleep = 100
-    for process in db['QUEUE']:
-        if len(db['QUEUE'][process])>0:
-            time2sleep = 1800
-            break
-    if 'hip' in db['RUNNING'] and len(db['RUNNING']['hip'])>0 or 'brstem' in db['RUNNING'] and len(db['RUNNING']['brstem'])>0 or 'qcache' in db['RUNNING'] and len(db['RUNNING']['qcache'])>0:
-        time2sleep = 3600
-    elif 'recon' in db['RUNNING']:
-        if len(db['RUNNING']['recon'])>0:
-            time2sleep = 7200
-    elif 'autorecon2' in db['RUNNING']:
-        if len(db['RUNNING']['autorecon2'])>0:
-            time2sleep = 7200
+    if get_len_Queue_Running() >= max_nr_running_batches:
+        for process in db['QUEUE']:
+            if len(db['QUEUE'][process])>0:
+                time2sleep = 1800
+                break
+        if 'hip' in db['RUNNING'] and len(db['RUNNING']['hip'])>0 or 'brstem' in db['RUNNING'] and len(db['RUNNING']['brstem'])>0 or 'qcache' in db['RUNNING'] and len(db['RUNNING']['qcache'])>0:
+            time2sleep = 3600
+        elif 'recon' in db['RUNNING']:
+            if len(db['RUNNING']['recon'])>0:
+                time2sleep = 7200
+        elif 'autorecon2' in db['RUNNING']:
+            if len(db['RUNNING']['autorecon2'])>0:
+                time2sleep = 7200
+    else:
+        time2sleep = 100
+
     return time2sleep
 
 
 if crunfs.FS_ready(SUBJECTS_DIR):
-	print('updating status')
-	cdb.Update_status_log('',True)
+    print('updating status')
+    cdb.Update_status_log('',True)
 
-	print('pipeline started')
-	cdb.Update_running(1)
+    if max_walltime > '24:00:00':
+        max_walltime = '23:00:00'
 
-	print('reading database')
-	db = cdb.Get_DB()
+    t0 = time.time()
+    time_elapsed = 0
+    count_run = 0
 
-	print('reading files SUBJECTS_DIR, subj2fs')
-	db = cdb.Update_DB_new_subjects_and_SUBJECTS_DIR(db)
-	cdb.Update_DB(db)
+    print('pipeline started')
+    cdb.Update_running(1)
+
+    print('reading database')
+    db = cdb.Get_DB()
+
+    print('reading files SUBJECTS_DIR, subj2fs')
+    db = cdb.Update_DB_new_subjects_and_SUBJECTS_DIR(db)
+    cdb.Update_DB(db)
+    active_subjects = check_active_tasks(db)
 
 
-	active_subjects = check_active_tasks(db)
-	count_run = 0
+    while active_subjects >0 and time.strftime("%H",time.gmtime(time_elapsed)) < max_walltime[:-6]:
+        time_to_sleep = Count_TimeSleep()
+        count_run += 1
+        cdb.Update_status_log('restarting run, '+str(count_run))
+        run()
+        print('sleeping: ',time_to_sleep)
+        cdb.Update_status_log('waiting before next run '+str(time_to_sleep))
 
-	while active_subjects >0 and count_run<10: # to rm
-		time_to_sleep = Count_TimeSleep()
-		count_run += 1
-		cdb.Update_status_log('restarting run, '+str(count_run))
-		run()
-		print('sleeping: ',time_to_sleep)
-		cdb.Update_status_log('waiting before next run '+str(time_to_sleep))
+        time.sleep(time_to_sleep)
+        time_elapsed = time.time() - t0
 
-		time.sleep(time_to_sleep)
-		active_subjects = check_active_tasks(db)
+        if count_run % 5 == 0:
+            print('reading files SUBJECTS_DIR, subj2fs')
+            db = cdb.Update_DB_new_subjects_and_SUBJECTS_DIR(db)
 
-	cdb.Update_running(0)
-	cdb.Update_status_log('ALL TASKS FINISHED')
+        active_subjects = check_active_tasks(db)
+
+    if active_subjects == 0:
+        cdb.Update_running(0)
+        cdb.Update_status_log('ALL TASKS FINISHED')
+    else:
+        cdb.Update_status_log('Starting new batch')
+        chdir(nimb_dir)
+        system(submit_cmd+' run.sh')
+

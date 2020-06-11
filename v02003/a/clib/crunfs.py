@@ -1,5 +1,5 @@
 #!/bin/python
-# 2020.06.04
+# 2020.06.10
 
 '''
 add FS QA tools to rm scans with low SNR (Koh et al 2017)
@@ -17,7 +17,7 @@ from var import text4_scheduler, batch_walltime_cmd, max_walltime, batch_output_
 import cdb, var
 import subprocess
 
-_, nimb_dir , nimb_scratch_dir, SUBJECTS_DIR , _, _, export_FreeSurfer_cmd, source_FreeSurfer_cmd = var.get_vars()
+_, nimb_dir, nimb_scratch_dir, SUBJECTS_DIR , _, _, export_FreeSurfer_cmd, source_FreeSurfer_cmd = var.get_vars()
 
 
 
@@ -49,7 +49,7 @@ def makesubmitpbs(cmd, subjid, run, walltime):
         resp = subprocess.run([submit_cmd,nimb_scratch_dir+'usedpbs/'+sh_file], stdout=subprocess.PIPE).stdout.decode('utf-8')
         return list(filter(None, resp.split(' ')))[-1].strip('\n')
     else:
-    	return ''
+        return ''
 
 
 def submit_4_run(cmd, subjid, run, walltime): #to join with makesubmitpbs
@@ -83,15 +83,16 @@ def run_make_masks(subjid):
 
 
 def FS_ready(SUBJECTS_DIR):
-    ready = False
-    if 'fsaverage' not in listdir(SUBJECTS_DIR):
+    if 'fsaverage' in listdir(SUBJECTS_DIR):
+        if 'xhemi' in listdir(path.join(SUBJECTS_DIR,'fsaverage')):
+            return True
+        else:
+            print(' fsaverage/xhemi is missing')
+            return False
+    else:
         print(' fsaverage is missing in SUBJECTS_DIR')
-    if path.isdir(SUBJECTS_DIR+'fsaverage'):
-        if 'xhemi' not in listdir(SUBJECTS_DIR+'fsaverage'):
-            print(' fsaverage/xhemi is mising')
-    if 'fsaverage' in listdir(SUBJECTS_DIR) and 'xhemi' in listdir(SUBJECTS_DIR+'fsaverage'):
-        ready = True
-    return ready
+        return False
+
 
 
 def checks_from_runfs(process, subjid):
@@ -300,3 +301,16 @@ def chk_masks(subjid):
                 return True
     else:
         return False
+
+
+
+# def FS_ready(SUBJECTS_DIR): #changed, old version
+#     ready = False
+#     if 'fsaverage' not in listdir(SUBJECTS_DIR):
+#         print(' fsaverage is missing in SUBJECTS_DIR')
+#     if path.isdir(SUBJECTS_DIR+'fsaverage'):
+#         if 'xhemi' not in listdir(SUBJECTS_DIR+'fsaverage'):
+#             print(' fsaverage/xhemi is missing')
+#     if 'fsaverage' in listdir(SUBJECTS_DIR) and 'xhemi' in listdir(SUBJECTS_DIR+'fsaverage'):
+#         ready = True
+#     return ready
