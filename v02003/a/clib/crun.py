@@ -498,14 +498,13 @@ def Count_TimeSleep():
             if len(db['QUEUE'][process])>0:
                 time2sleep = 1800
                 break
-        if 'hip' in db['RUNNING'] and len(db['RUNNING']['hip'])>0 or 'brstem' in db['RUNNING'] and len(db['RUNNING']['brstem'])>0 or 'qcache' in db['RUNNING'] and len(db['RUNNING']['qcache'])>0:
+        if 'autorecon2' in db['RUNNING']:
+            if len(db['RUNNING']['autorecon2']) + len(db['RUNNING']['autorecon3']) >= max_nr_running_batches:
+                time2sleep = 7200
+        elif 'recon' in db['RUNNING'] and len(db['RUNNING']['recon']) >= max_nr_running_batches:
+                time2sleep = 7200
+        elif 'hip' in db['RUNNING'] and len(db['RUNNING']['hip'])>0 or 'brstem' in db['RUNNING'] and len(db['RUNNING']['brstem'])>0 or 'qcache' in db['RUNNING'] and len(db['RUNNING']['qcache'])>0:
             time2sleep = 3600
-        elif 'recon' in db['RUNNING']:
-            if len(db['RUNNING']['recon'])>0:
-                time2sleep = 7200
-        elif 'autorecon2' in db['RUNNING']:
-            if len(db['RUNNING']['autorecon2'])>0:
-                time2sleep = 7200
     else:
         time2sleep = 100
 
@@ -540,8 +539,8 @@ if crunfs.FS_ready(SUBJECTS_DIR):
         count_run += 1
         cdb.Update_status_log('restarting run, '+str(count_run))
         run()
-        print('sleeping: ',time_to_sleep)
-        cdb.Update_status_log('waiting before next run '+str(time_to_sleep))
+        print('waiting. Next run at: ',str(time.strftime("%H:%M",time.gmtime(time.time()+time_to_sleep))))
+        cdb.Update_status_log('waiting. Next run at: '+str(time.strftime("%H:%M",time.gmtime(time.time()+time_to_sleep))))
 
         time.sleep(time_to_sleep)
         time_elapsed = time.time() - t0
@@ -556,7 +555,7 @@ if crunfs.FS_ready(SUBJECTS_DIR):
         cdb.Update_running(0)
         cdb.Update_status_log('ALL TASKS FINISHED')
     else:
-        cdb.Update_status_log('Starting new batch')
+        cdb.Update_status_log('Sending new batch to scheduler')
         chdir(nimb_dir)
         system(submit_cmd+' run.sh')
 
