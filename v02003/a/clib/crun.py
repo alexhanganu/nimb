@@ -1,7 +1,7 @@
 #!/bin/python
 # 2020.06.12
 
-from os import path, listdir, remove, rename, system, chdir
+from os import path, listdir, remove, rename, system, chdir, environ
 from pathlib import Path
 import time, shutil
 from var import cscratch_dir, max_nr_running_batches, process_order, base_name, DO_LONG, freesurfer_version, max_walltime, submit_cmd
