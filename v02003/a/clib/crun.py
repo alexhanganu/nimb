@@ -495,7 +495,7 @@ def check_active_tasks(db):
 def Count_TimeSleep():
     time2sleep = 100
     if get_len_Queue_Running() >= max_nr_running_batches:
-        cdb.Update_status_log('queue and running: ',get_len_Queue_Running(),' max: ',max_nr_running_batches)
+        cdb.Update_status_log('queue and running: '+get_len_Queue_Running()+' max: '+max_nr_running_batches)
         for process in db['QUEUE']:
             if len(db['QUEUE'][process])>0:
                 time2sleep = 1800
@@ -543,7 +543,7 @@ if crunfs.FS_ready(SUBJECTS_DIR):
 
         time.sleep(time_to_sleep)
         time_elapsed = time.time() - t0
-        cdb.Update_status_log('    elapsed time: ',time.strftime("%H",time.gmtime(time_elapsed)),' max walltime: ',max_walltime[:-6])
+        cdb.Update_status_log('    elapsed time: '+time.strftime("%H",time.gmtime(time_elapsed))+' max walltime: '+max_walltime[:-6])
 
         if count_run % 5 == 0:
             print('reading files SUBJECTS_DIR, subj2fs')
