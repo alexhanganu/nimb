@@ -495,7 +495,7 @@ def check_active_tasks(db):
 def Count_TimeSleep():
     time2sleep = 100
     if get_len_Queue_Running() >= max_nr_running_batches:
-        cdb.Update_status_log('queue and running: '+get_len_Queue_Running()+' max: '+max_nr_running_batches)
+        cdb.Update_status_log('queue and running: '+str(get_len_Queue_Running())+' max: '+str(max_nr_running_batches))
         for process in db['QUEUE']:
             if len(db['QUEUE'][process])>0:
                 time2sleep = 1800
