@@ -375,6 +375,9 @@ def check_error():
 						print('            removing IsRunning file')
 						remove(SUBJECTS_DIR+subjid+'/scripts/IsRunning.lh+rh')
 					print('        checking if all files were created for: '+process)
+                    print('        checking the recon-all-status.log for error for: ',process)
+                    if not crunfs.chkreconf_if_without_error(subjid):
+                        print('            recon-all.log file exited with ERRORS. Please check the file')
 					if not crunfs.checks_from_runfs(process, subjid):
 						print('            some files were not created. Excluding subject from pipeline.')
 						db['PROCESSED']['error_'+process].remove(subjid)
@@ -396,9 +399,6 @@ def check_error():
 						db['PROCESSED']['cp2local'].append(error_name)
 					else:
 						print('            all files were created for process: ', process)
-					print('        checking the recon-all.log for error for: ',process)
-					if not crunfs.chkreconf_if_without_error(subjid):
-						print('            recon-all.log file exited with ERRORS. Please check the file')
 				else:
 					print('    not in SUBJECTS_DIR')
 	#ls of errors:
