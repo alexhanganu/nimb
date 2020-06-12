@@ -6,6 +6,8 @@ from pathlib import Path
 import time, shutil
 from var import cscratch_dir, max_nr_running_batches, process_order, base_name, DO_LONG, freesurfer_version, max_walltime, submit_cmd
 import crunfs, cdb, cwalltime, var
+environ['TZ'] = 'US/Eastern'
+time.tzset()
 
 _, nimb_dir, _, SUBJECTS_DIR , processed_SUBJECTS_DIR, _, _ , _ = var.get_vars()
 
