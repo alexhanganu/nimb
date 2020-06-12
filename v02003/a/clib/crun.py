@@ -1,5 +1,5 @@
 #!/bin/python
-# 2020.06.10
+# 2020.06.12
 
 from os import path, listdir, remove, rename, system, chdir
 from pathlib import Path
@@ -493,7 +493,9 @@ def check_active_tasks(db):
 
 
 def Count_TimeSleep():
+    time2sleep = 100
     if get_len_Queue_Running() >= max_nr_running_batches:
+        cdb.Update_status_log('queue and running: ',get_len_Queue_Running(),' max: ',max_nr_running_batches)
         for process in db['QUEUE']:
             if len(db['QUEUE'][process])>0:
                 time2sleep = 1800
@@ -505,9 +507,6 @@ def Count_TimeSleep():
                 time2sleep = 7200
         elif 'hip' in db['RUNNING'] and len(db['RUNNING']['hip'])>0 or 'brstem' in db['RUNNING'] and len(db['RUNNING']['brstem'])>0 or 'qcache' in db['RUNNING'] and len(db['RUNNING']['qcache'])>0:
             time2sleep = 3600
-    else:
-        time2sleep = 100
-
     return time2sleep
 
 
@@ -516,7 +515,7 @@ if crunfs.FS_ready(SUBJECTS_DIR):
     cdb.Update_status_log('',True)
 
     if max_walltime > '24:00:00':
-        max_walltime = '23:00:00'
+        max_walltime = '03:00:00'
 
     t0 = time.time()
     time_elapsed = 0
@@ -544,6 +543,7 @@ if crunfs.FS_ready(SUBJECTS_DIR):
 
         time.sleep(time_to_sleep)
         time_elapsed = time.time() - t0
+        cdb.Update_status_log('    elapsed time: ',time.strftime("%H",time.gmtime(time_elapsed)),' max walltime: ',max_walltime[:-6])
 
         if count_run % 5 == 0:
             print('reading files SUBJECTS_DIR, subj2fs')

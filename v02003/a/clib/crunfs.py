@@ -1,5 +1,5 @@
 #!/bin/python
-# 2020.06.10
+# 2020.06.12
 
 '''
 add FS QA tools to rm scans with low SNR (Koh et al 2017)
@@ -46,8 +46,12 @@ def makesubmitpbs(cmd, subjid, run, walltime):
         f.write(cmd+'\n')
     print('submitting '+sh_file)
     if SUBMIT:
-        resp = subprocess.run([submit_cmd,nimb_scratch_dir+'usedpbs/'+sh_file], stdout=subprocess.PIPE).stdout.decode('utf-8')
-        return list(filter(None, resp.split(' ')))[-1].strip('\n')
+        try:
+            resp = subprocess.run([submit_cmd,nimb_scratch_dir+'usedpbs/'+sh_file], stdout=subprocess.PIPE).stdout.decode('utf-8')
+            return list(filter(None, resp.split(' ')))[-1].strip('\n')
+        except Exception as e:
+            print(e)
+            return ''
     else:
         return ''
 
