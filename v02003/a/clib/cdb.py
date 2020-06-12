@@ -378,8 +378,8 @@ def chk_subj_in_SUBJECTS_DIR(db):
         if not chkIsRunning(subjid):
             for process in process_order[1:]:
                 if not checks_from_runfs(process, subjid):
-                    Update_status_log('    adding '+subjid+' to '+process)
-                    print('    adding ',subjid,' to ',process)
+                    Update_status_log('        '+subjid+' sent for '+process)
+                    print('        ',subjid,' sent for ',process)
                     db['DO'][process].append(subjid)
                     break
         else:
@@ -398,7 +398,7 @@ def chk_subj_in_SUBJECTS_DIR(db):
             Update_status_log('    '+subjid+' not in PROCESSED')
             print(subjid,'\n    not in PROCESSED')
             _id, longitud = get_id_long(subjid, db['LONG_DIRS'])
-            Update_status_log('   adding '+subjid+', '+_id+', '+longitud)
+            Update_status_log('        adding to database: id: '+_id+', long name: '+longitud)
             print('    ',_id, longitud)
             if _id == subjid:
                 subjid = _id+'_'+longitud
@@ -406,22 +406,21 @@ def chk_subj_in_SUBJECTS_DIR(db):
                 print('   no ',long_name,' in ',_id,' Changing name to: ',subjid)
                 rename(SUBJECTS_DIR+_id, SUBJECTS_DIR+subjid)
             if _id not in db['LONG_DIRS']:
-                Update_status_log('    adding '+_id+' to LONG_DIRS')
-                print('    adding ',_id, ' to LONG_DIRS')
+                # print('    adding ',_id, ' to LONG_DIRS')
                 db['LONG_DIRS'][_id] = list()
             if _id in db['LONG_DIRS']:
                 if subjid not in db['LONG_DIRS'][_id]:
-                    Update_status_log('    adding '+subjid+' to LONG_DIRS[\''+_id+'\']')
-                    print('    adding ',subjid, ' to LONG_DIRS[\''+_id+'\']')
+                    # Update_status_log('        '+subjid+' to LONG_DIRS[\''+_id+'\']')
+                    # print('    adding ',subjid, ' to LONG_DIRS[\''+_id+'\']')
                     db['LONG_DIRS'][_id].append(subjid)
             if _id not in db['LONG_TPS']:
-                Update_status_log('    adding '+_id+' to LONG_TPS')
-                print('    adding ',_id, ' to LONG_TPS')
+                # Update_status_log('    adding '+_id+' to LONG_TPS')
+                # print('    adding ',_id, ' to LONG_TPS')
                 db['LONG_TPS'][_id] = list()
             if _id in db['LONG_TPS']:
                 if longitud not in db['LONG_TPS'][_id]:
-                    Update_status_log('    adding '+longitud+' to LONG_TPS[\''+_id+'\']')
-                    print('    adding ',longitud, ' to LONG_TPS[\''+_id+'\']')
+                    # Update_status_log('    adding '+longitud+' to LONG_TPS[\''+_id+'\']')
+                    # print('    adding ',longitud, ' to LONG_TPS[\''+_id+'\']')
                     db['LONG_TPS'][_id].append(longitud)
             if base_name not in subjid:
                 if subjid not in ls_SUBJECTS_running:

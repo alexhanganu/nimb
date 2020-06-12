@@ -94,54 +94,48 @@ def do(process):
                         job_id = crunfs.makesubmitpbs(Get_cmd.registration(subjid, t1_ls_f, flair_ls_f, t2_ls_f), subjid, process, cwalltime.Get_walltime(process))
                         db['RUNNING_JOBS'][subjid] = job_id
                         db['QUEUE'][process].append(subjid)
-                        cdb.Update_status_log('submit batch '+subjid+', '+process+', '+str(job_id))
 
             if process == 'recon':
                             job_id = crunfs.makesubmitpbs(Get_cmd.recon(subjid), subjid, 'recon', cwalltime.Get_walltime('recon'))
                             db['RUNNING_JOBS'][subjid] = job_id
                             db['QUEUE'][process].append(subjid)
-                            cdb.Update_status_log('submit batch '+subjid+', '+process+', '+str(job_id))
             if process == 'autorecon1':
                             job_id = crunfs.makesubmitpbs(Get_cmd.autorecon(subjid, '1'), subjid, 'autorecon1', cwalltime.Get_walltime('autorecon1'))
                             db['RUNNING_JOBS'][subjid] = job_id
                             db['QUEUE'][process].append(subjid)
-                            cdb.Update_status_log('submit batch '+subjid+', '+process+', '+str(job_id))
             if process == 'autorecon2':
                             job_id = crunfs.makesubmitpbs(Get_cmd.autorecon(subjid, '2'), subjid, 'autorecon2', cwalltime.Get_walltime('autorecon2'))
                             db['RUNNING_JOBS'][subjid] = job_id
                             db['QUEUE'][process].append(subjid)
-                            cdb.Update_status_log('submit batch '+subjid+', '+process+', '+str(job_id))
             if process == 'autorecon3':
                             job_id = crunfs.makesubmitpbs(Get_cmd.autorecon(subjid, '3'), subjid, 'autorecon3', cwalltime.Get_walltime('autorecon3'))
                             db['RUNNING_JOBS'][subjid] = job_id
                             db['QUEUE'][process].append(subjid)
-                            cdb.Update_status_log('submit batch '+subjid+', '+process+', '+str(job_id))
             if process == 'qcache':
                         job_id = crunfs.makesubmitpbs(Get_cmd.qcache(subjid), subjid, process, cwalltime.Get_walltime(process))
                         db['RUNNING_JOBS'][subjid] = job_id
                         db['QUEUE'][process].append(subjid)
-                        cdb.Update_status_log('submit batch '+subjid+', '+process+', '+str(job_id))
             elif process == 'brstem':
                         job_id = crunfs.makesubmitpbs(Get_cmd.brstem(subjid), subjid, process, cwalltime.Get_walltime(process))
                         db['RUNNING_JOBS'][subjid] = job_id
                         db['QUEUE'][process].append(subjid)
-                        cdb.Update_status_log('submit batch '+subjid+', '+process+', '+str(job_id))
             elif process == 'hip':
                         job_id = crunfs.makesubmitpbs(Get_cmd.hip(subjid), subjid, process, cwalltime.Get_walltime(process))
                         db['RUNNING_JOBS'][subjid] = job_id
                         db['QUEUE'][process].append(subjid)
-                        cdb.Update_status_log('submit batch '+subjid+', '+process+', '+str(job_id))
             elif process == 'tha':
                         job_id = crunfs.makesubmitpbs(Get_cmd.tha(subjid), subjid, process, cwalltime.Get_walltime(process))
                         db['RUNNING_JOBS'][subjid] = job_id
                         db['QUEUE'][process].append(subjid)
-                        cdb.Update_status_log('submit batch '+subjid+', '+process+', '+str(job_id))
             elif process == 'masks':
                         db['RUNNING'][process].append(subjid)
                         cdb.Update_status_log('RUNNING masks for: '+subjid)
                         cdb.Update_DB(db)
                         crunfs.run_make_masks(subjid)
-            cdb.Update_status_log('RUNNING '+process+' for: '+subjid)
+            try:
+            	cdb.Update_status_log(subjid+', '+process+', submited id: '+str(job_id))
+            except Exception as e:
+            	print('    err in do: ',e)
     cdb.Update_DB(db)
 
 
@@ -159,20 +153,20 @@ def queue(process, all_running):
             status = Get_status_for_subjid_in_queue(subjid, all_running)
             if crunfs.checks_from_runfs('registration',subjid):
                 if status =='R' or status == 'none':
-                    print(subjid,' status: ',status,'; moving from '+ACTION+' '+process+' to RUNNING '+process)
-                    cdb.Update_status_log('moving '+subjid+' from '+ACTION+' '+process+' to RUNNING '+process)
+                    print(subjid,' status: ',status,'; moving from '+ACTION+' to RUNNING '+process)
+                    cdb.Update_status_log('   '+subjid+' moving from '+ACTION+' to RUNNING '+process)
                     db[ACTION][process].remove(subjid)
                     db['RUNNING'][process].append(subjid)
             elif status == 'none':
                 db[ACTION][process].remove(subjid)
-                cdb.Update_status_log('moving '+subjid+' to error_'+process)
+                cdb.Update_status_log('   '+subjid+' '+process+' moving to ERROR')
                 db['PROCESSED']['error_'+process].append(subjid)
             else:
                 print(subjid,' is NOT registered yet !!!!!!!')
-                cdb.Update_status_log(subjid+'    is NOT registered yet !!!!!!!!!!!!!!!!!!!!!!!!!!!')
+                cdb.Update_status_log('   '+subjid+'    is NOT registered yet')
         else:
             print(subjid,'    queue, NOT in RUNNING_JOBS')
-            cdb.Update_status_log(subjid+'    queue, NOT in RUNNING_JOBS !!!!!!!!!!!!!!!!!!!!!!!!!!!')
+            cdb.Update_status_log('   '+subjid+'    queue, NOT in RUNNING_JOBS')
     cdb.Update_DB(db)
 
 
@@ -195,7 +189,7 @@ def running(process, all_running):
                 if base_name in subjid:
                     print(' reading ',process,subjid,' subjid is long or base ')
                     if crunfs.chkIsRunning(subjid) or not crunfs.checks_from_runfs('recon', subjid):
-                        cdb.Update_status_log('moving '+subjid+' to error_'+process)
+                        cdb.Update_status_log('   '+subjid+' '+process+' moving to ERROR')
                         print('moving '+subjid+' to error_'+process)
                         db['PROCESSED']['error_recon'].append(subjid)
                 else:
@@ -204,25 +198,25 @@ def running(process, all_running):
                             next_process = process_order[process_order.index(process)+1]
                             if not crunfs.checks_from_runfs(next_process, subjid):
                                 db['DO'][next_process].append(subjid)
-                                cdb.Update_status_log('        moving '+subjid+' from '+ACTION+' '+process+' to DO '+next_process)
+                                cdb.Update_status_log('    '+subjid+' moving from '+ACTION+' '+process+' to DO '+next_process)
                             else:
                                 db[ACTION][next_process].append(subjid)
-                                cdb.Update_status_log('        moving '+subjid+' from '+ACTION+' '+process+' to '+ACTION+' '+next_process)
+                                cdb.Update_status_log('    '+subjid+' moving from '+ACTION+' '+process+' to '+ACTION+' '+next_process)
                         else:
-                            cdb.Update_status_log(subjid+' processing DONE')
+                            cdb.Update_status_log('    '+subjid+' processing DONE')
                     else:
-                        cdb.Update_status_log('moving '+subjid+' to error_'+process)
+                        cdb.Update_status_log('   '+subjid+' '+process+' moving to ERROR')
                         print('moving '+subjid+' to error_'+process)
                         db['PROCESSED']['error_'+process].append(subjid)
         else:
-            cdb.Update_status_log('    '+subjid+'    running, NOT in RUNNING_JOBS')
-            print('    ',subjid,'    running, NOT in RUNNING_JOBS')
+            cdb.Update_status_log('    '+subjid+' NOT in RUNNING_JOBS')
+            print('    ',subjid,' NOT in RUNNING_JOBS')
             if not crunfs.chkIsRunning(subjid):
                 db[ACTION][process].remove(subjid)
                 if base_name in subjid:
                     print(' reading ',process,subjid,' subjid is long or base ')
                     if not crunfs.checks_from_runfs('recon', subjid):
-                        cdb.Update_status_log('moving '+subjid+' to error_recon')
+                        cdb.Update_status_log('   '+subjid+' recon, moving to ERROR')
                         db['PROCESSED']['error_recon'].append(subjid)
                 else:
                     if crunfs.checks_from_runfs(process, subjid):
@@ -230,18 +224,18 @@ def running(process, all_running):
                             next_process = process_order[process_order.index(process)+1]
                             if not crunfs.checks_from_runfs(next_process, subjid):
                                 db['DO'][next_process].append(subjid)
-                                cdb.Update_status_log('        moving '+subjid+' from '+ACTION+' '+process+' to DO '+next_process)
+                                cdb.Update_status_log('    '+subjid+' moving from '+ACTION+' '+process+' to DO '+next_process)
                             else:
                                 db[ACTION][next_process].append(subjid)
-                                cdb.Update_status_log('        moving '+subjid+' from '+ACTION+' '+process+' to '+ACTION+' '+next_process)
+                                cdb.Update_status_log('    '+subjid+' moving from '+ACTION+' '+process+' to '+ACTION+' '+next_process)
                         else:
-                            cdb.Update_status_log(subjid+' processing DONE')
+                            cdb.Update_status_log('    '+subjid+' processing DONE')
                     else:
-                        cdb.Update_status_log('moving '+subjid+' to error_'+process)
+                        cdb.Update_status_log('   '+subjid+' '+process+' moving to ERROR')
                         db['PROCESSED']['error_'+process].append(subjid)
             else:
                 db[ACTION][process].remove(subjid)
-                cdb.Update_status_log('moving '+subjid+' to error_'+process)
+                cdb.Update_status_log('   '+subjid+' '+process+' moving to ERROR')
                 print('moving '+subjid+' to error_'+process)
                 db['PROCESSED']['error_'+process].append(subjid)
     cdb.Update_DB(db)
@@ -275,15 +269,15 @@ def long_check_groups(_id):
                                 if crunfs.checks_from_runfs('recon', long_f):
                                     All_long_ids_done.append(long_f)
                                 else:
-                                    cdb.Update_status_log('moving '+long_f+' to error_recon')
+                                    cdb.Update_status_log(long_f+' moving to error_recon')
                                     db['PROCESSED']['error_recon'].append(long_f)
                             else:
-                                cdb.Update_status_log('moving '+long_f+' to error_recon')
+                                cdb.Update_status_log(long_f+' moving to error_recon')
                                 db['PROCESSED']['error_recon'].append(long_f)
 
                         if len(All_long_ids_done) == len(LONG_TPS):
                             print('        ','moving to CP2LOCAL ',_id)
-                            cdb.Update_status_log('moving '+_id+' to cp2local')
+                            cdb.Update_status_log(_id+' moving to cp2local')
                             for subjid in ls:
                                 cdb.Update_status_log('moving '+subjid+' cp2local')
                                 db['PROCESSED']['cp2local'].append(subjid)            
@@ -291,7 +285,7 @@ def long_check_groups(_id):
                             db['LONG_TPS'].pop(_id, None)
                             print('        ',_id,'moved to cp2local')
                     else:
-                        cdb.Update_status_log('moving '+base_f+' to error_recon')
+                        cdb.Update_status_log(base_f+' moving to error_recon')
                         db['PROCESSED']['error_recon'].append(base_f)
             else:
                 job_id = crunfs.makesubmitpbs(Get_cmd.recbase(base_f, All_cross_ids_done), base_f, 'recbase', cwalltime.Get_walltime('recbase'))
@@ -304,7 +298,7 @@ def long_check_groups(_id):
                 if crunfs.checks_from_runfs(process_order[-1], subjid):
                     print('        ','last process done ',process_order[-1])
                     print('        ','moving to CP2LOCAL ',_id)
-                    cdb.Update_status_log('moving '+_id+' to cp2local')
+                    cdb.Update_status_log(_id+' moving to cp2local')
                     db['PROCESSED']['cp2local'].append(subjid)            
                     db['LONG_DIRS'].pop(_id, None)
                     db['LONG_TPS'].pop(_id, None)
@@ -397,7 +391,7 @@ def check_error():
 							print('    ERROR, ',subjid,' is absent from LONG_DIRS')
 						error_name = 'error_'+subjid
 						rename(SUBJECTS_DIR+subjid,SUBJECTS_DIR+error_name)
-						cdb.Update_status_log('moving '+error_name+' to cp2local')
+						cdb.Update_status_log(error_name+' moving to cp2local')
 						db['PROCESSED']['cp2local'].append(error_name)
 					else:
 						print('            all files were created for process: ', process)
@@ -418,18 +412,18 @@ def move_processed_subjects():
         processed_subjects.append(subject)
     for subject in processed_subjects:
         print('    moving from cp2local ', subject)
-        cdb.Update_status_log('    moving from cp2local '+subject)
+        cdb.Update_status_log('    '+subject+' moving from cp2local')
         size_src = sum(f.stat().st_size for f in Path(SUBJECTS_DIR+subject).glob('**/*') if f.is_file())
         shutil.move(SUBJECTS_DIR+subject, processed_SUBJECTS_DIR+subject)
         db['PROCESSED']['cp2local'].remove(subject)
         cdb.Update_DB(db)
         size_dst = sum(f.stat().st_size for f in Path(processed_SUBJECTS_DIR+subject).glob('**/*') if f.is_file())
         if size_src == size_dst:
-            print('    ',subject,' moved correctly, ',size_src, size_dst)
-            cdb.Update_status_log('    '+subject+' moved correctly, '+str(size_src)+' '+str(size_dst))
+            print('        moved correctly: ',size_src, size_dst)
+            cdb.Update_status_log('        moved correctly, '+str(size_src)+' '+str(size_dst))
         else:
-            print('    something was wrong, not moved correctly', size_src, size_dst)
-            cdb.Update_status_log('    something went wrong, not moved correctly '+str(size_src)+' '+str(size_dst))
+            print('        ERROR in moving, not moved correctly', size_src, size_dst)
+            cdb.Update_status_log('        ERROR in moving, not moved correctly '+str(size_src)+' '+str(size_dst))
 
     print('moving DONE')
 
@@ -516,8 +510,8 @@ if crunfs.FS_ready(SUBJECTS_DIR):
     print('updating status')
     cdb.Update_status_log('',True)
 
-    if max_walltime > '24:00:00':
-        max_walltime = '03:00:00'
+    if max_walltime > '12:00:00':
+        max_walltime = '11:00:00'
 
     t0 = time.time()
     time_elapsed = 0
@@ -536,21 +530,20 @@ if crunfs.FS_ready(SUBJECTS_DIR):
 
 
     while active_subjects >0 and time.strftime("%H",time.gmtime(time_elapsed)) < max_walltime[:-6]:
-        time_to_sleep = Count_TimeSleep()
         count_run += 1
         cdb.Update_status_log('restarting run, '+str(count_run))
         run()
+
+        time_to_sleep = Count_TimeSleep()
         print('waiting. Next run at: ',str(time.strftime("%H:%M",time.gmtime(time.time()+time_to_sleep))))
         cdb.Update_status_log('waiting. Next run at: '+str(time.strftime("%H:%M",time.gmtime(time.time()+time_to_sleep))))
-
         time.sleep(time_to_sleep)
         time_elapsed = time.time() - t0
-        cdb.Update_status_log('    elapsed time: '+time.strftime("%H",time.gmtime(time_elapsed))+' max walltime: '+max_walltime[:-6])
+        cdb.Update_status_log('    elapsed time: '+time.strftime("%H:%M",time.gmtime(time_elapsed))+' max walltime: '+max_walltime[:-6])
 
         if count_run % 5 == 0:
-            print('reading files SUBJECTS_DIR, subj2fs')
+            print('reading SUBJECTS_DIR and subj2fs for new subjects')
             db = cdb.Update_DB_new_subjects_and_SUBJECTS_DIR(db)
-
         active_subjects = check_active_tasks(db)
 
     if active_subjects == 0:
