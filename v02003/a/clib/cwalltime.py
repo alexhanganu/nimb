@@ -1,5 +1,5 @@
 #!/bin/python
-# 2020.06.04
+# 2020.06.12
 # Alexandru Hanganu
 
 from var import max_walltime
@@ -18,6 +18,7 @@ def Get_walltime(process):
         'brstem':'02:00:00',
         'hip':'02:00:00',
         'tha':'02:00:00',
+        'masks':'12:00:00',
         }
     if suggested_times[process] <= max_walltime:
         walltime = suggested_times[process]

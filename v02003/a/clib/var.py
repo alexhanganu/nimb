@@ -18,6 +18,7 @@ batch_output_cmd = '#SBATCH --output='
 submit_cmd = 'sbatch'
 freesurfer_version = 7
 archive_processed = True
+masks = []
 
 import os
 def get_vars():

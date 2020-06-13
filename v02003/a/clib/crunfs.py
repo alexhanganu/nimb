@@ -69,22 +69,6 @@ def submit_4_run(cmd, subjid, run, walltime): #to join with makesubmitpbs
         return session
 
 
-def run_make_masks(subjid):
-
-    subj_dir = SUBJECTS_DIR+subjid
-    if not path.isdir(subj_dir+'/masks'):
-        mkdir(subj_dir+'/masks')
-    mask_dir = subj_dir+'/masks/'
-
-    for structure in cdb.get_mask_codes():
-        aseg_mgz = subj_dir+'/mri/aseg.mgz'
-        orig001_mgz = subj_dir+'/mri/orig/001.mgz'
-        mask_mgz = mask_dir+structure+'.mgz'
-        mask_nii = mask_dir+structure+'.nii'
-        system('mri_binarize --match '+str(structure_codes[structure])+' --i '+aseg_mgz+' --o '+mask_mgz)
-        system('mri_convert -rl '+orig001_mgz+' -rt nearest '+mask_mgz+' '+mask_nii)
-
-
 
 def FS_ready(SUBJECTS_DIR):
     if 'fsaverage' in listdir(SUBJECTS_DIR):
@@ -145,11 +129,15 @@ def chksubjidinfs(subjid):
 
 def chkIsRunning(subjid):
 
-    if any('IsRunning.lh+rh' in i for i in listdir(SUBJECTS_DIR+subjid+'/scripts')):
-        print('    IsRunning file present: True')
+    try:
+        if any('IsRunning.lh+rh' in i for i in listdir(path.join(SUBJECTS_DIR,subjid,'scripts'))):
+            print('    IsRunning file present: True')
+            return True
+        else:
+            return False
+    except Exception as e:
+        print(e)
         return True
-    else:
-        return False
 
 
 
@@ -157,8 +145,8 @@ def chkreconf_if_without_error(subjid):
 
     file_2read = 'recon-all-status.log'
     try:
-        if file_2read in listdir(SUBJECTS_DIR+subjid+'/scripts/'):
-            f = open(SUBJECTS_DIR+subjid+'/scripts/'+file_2read,'r').readlines()
+        if file_2read in listdir(path.join(SUBJECTS_DIR,subjid,'scripts')):
+            f = open(path.join(SUBJECTS_DIR,subjid,'scripts',file_2read),'r').readlines()
 
             for line in reversed(f):
                 if 'exited with ERRORS' in line:
@@ -238,7 +226,7 @@ def chkbrstemf(subjid):
                     bs_f_stats = [i for i in lsmri if 'brainstemSsVolumes' in i][0]
                     if bs_f_stats:
                         if 'brainstemSsVolumes.v10' in bs_f_stats:
-                            shutil.copy(SUBJECTS_DIR+subjid+'/'+bs_f_stats, SUBJECTS_DIR+subjid+'/stats/brainstem.v10.stats')
+                            shutil.copy(path.join(SUBJECTS_DIR,subjid,bs_f_stats), path.join(SUBJECTS_DIR,subjid,'stats','brainstem.v10.stats'))
                         return True
                     else:
                         return False
@@ -246,6 +234,12 @@ def chkbrstemf(subjid):
         return False 
 
 
+files_hip_amy21_mri = {
+    'lh.hippoSfVolumes-T1.v21.txt':'lh.hipposubfields.T1.v21.stats',
+    'rh.hippoSfVolumes-T1.v21.txt':'rh.hipposubfields.T1.v21.stats',
+    'lh.amygNucVolumes-T1.v21.txt':'lh.amygdalar-nuclei.T1.v21.stats',
+    'rh.amygNucVolumes-T1.v21.txt':'rh.amygdalar-nuclei.T1.v21.stats',
+}
 def chkhipf(subjid):
 
     lsscripts=listdir(SUBJECTS_DIR+subjid+'/scripts/')
@@ -257,19 +251,19 @@ def chkhipf(subjid):
                 if any('Everything done' in i for i in line2read):
                     lsmri=listdir(SUBJECTS_DIR+subjid+'/mri/')
                     if any('lh.hippoSfVolumes-T1.v10.txt' in i for i in lsmri):
-                        shutil.copy(SUBJECTS_DIR+subjid+'/mri/lh.hippoSfVolumes-T1.v10.txt',SUBJECTS_DIR+subjid+'/stats/lh.hipposubfields.T1.v10.stats')
-                        if any('rh.hippoSfVolumes-T1.v10.txt' in i for i in lsmri):
-                            shutil.copy(SUBJECTS_DIR+subjid+'/mri/rh.hippoSfVolumes-T1.v10.txt',SUBJECTS_DIR+subjid+'/stats/rh.hipposubfields.T1.v10.stats')
+                        try:
+                            shutil.copy(path.join(SUBJECTS_DIR,subjid,'mri','lh.hippoSfVolumes-T1.v10.txt'),path.join(SUBJECTS_DIR,subjid,'stats','lh.hipposubfields.T1.v10.stats'))
+                            shutil.copy(path.join(SUBJECTS_DIR,subjid,'mri','rh.hippoSfVolumes-T1.v10.txt'),path.join(SUBJECTS_DIR,subjid,'stats','rh.hipposubfields.T1.v10.stats'))
                             return True
+                        except Exception as e:
+                            print(e)
                     elif any('lh.hippoSfVolumes-T1.v21.txt' in i for i in lsmri):
-                        shutil.copy(SUBJECTS_DIR+subjid+'/mri/lh.hippoSfVolumes-T1.v21.txt',SUBJECTS_DIR+subjid+'/stats/lh.hipposubfields.T1.v21.stats')
-                        if any('rh.hippoSfVolumes-T1.v21.txt' in i for i in lsmri):
-                            shutil.copy(SUBJECTS_DIR+subjid+'/mri/rh.hippoSfVolumes-T1.v21.txt',SUBJECTS_DIR+subjid+'/stats/rh.hipposubfields.T1.v21.stats')
-                        if any('lh.amygNucVolumes-T1.v21.txt ' in i for i in lsmri):
-                            shutil.copy(SUBJECTS_DIR+subjid+'/mri/lh.amygNucVolumes-T1.v21.txt',SUBJECTS_DIR+subjid+'/stats/lh.amygdalar-nuclei.T1.v21.stats')
-                        if any('rh.amygNucVolumes-T1.v21.txt' in i for i in lsmri):
-                            shutil.copy(SUBJECTS_DIR+subjid+'/mri/rh.amygNucVolumes-T1.v21.txt',SUBJECTS_DIR+subjid+'/stats/rh.amygdalar-nuclei.T1.v21.stats')
+                        try:
+                            for file in files_hip_amy21_mri:
+                                shutil.copy(path.join(SUBJECTS_DIR,subjid,'mri',file),path.join(SUBJECTS_DIR,subjid,'stats',files_hip_amy21_mri[file]))
                             return True
+                        except Exception as e:
+                            print(e)
                     else:
                         return False
     else:
@@ -286,7 +280,7 @@ def chkthaf(subjid):
                 if any('Everything done' in i for i in line2read):
                     lsmri=listdir(SUBJECTS_DIR+subjid+'/mri/')
                     if any('ThalamicNuclei.v12.T1.volumes.txt' in i for i in lsmri):
-                        shutil.copy(SUBJECTS_DIR+subjid+'/mri/ThalamicNuclei.v12.T1.volumes.txt',SUBJECTS_DIR+subjid+'/stats/thalamic-nuclei.v12.T1.stats')
+                        shutil.copy(path.join(SUBJECTS_DIR,subjid,'mri','ThalamicNuclei.v12.T1.volumes.txt'),path.join(SUBJECTS_DIR,subjid,'stats','thalamic-nuclei.v12.T1.stats'))
                         return True
                     else:
                         return False
@@ -296,11 +290,10 @@ def chkthaf(subjid):
 
 def chk_masks(subjid):
 
-    if path.isdir(SUBJECTS_DIR+subjid+'/masks/'):
-        for structure in cdb.get_mask_codes():
-            if structure+'.nii' not in listdir(SUBJECTS_DIR+subjid+'/masks/'):
+    if path.isdir(path.join(SUBJECTS_DIR,subjid,'masks')):
+        for structure in var.masks:
+            if structure+'.nii' not in listdir(path.join(SUBJECTS_DIR,subjid,'masks')):
                 return False
-                break
             else:
                 return True
     else:

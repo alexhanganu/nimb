@@ -1,8 +1,11 @@
 #!/bin/python
-# 2020.06.12
+# 2020.06.13
 
 from os import path, listdir, remove, rename, system, chdir, environ
-from pathlib import Path
+try:
+    from pathlib import Path
+except ImportError as e:
+    print(e)
 import time, shutil
 from var import cscratch_dir, max_nr_running_batches, process_order, base_name, DO_LONG, freesurfer_version, max_walltime, submit_cmd
 import crunfs, cdb, cwalltime, var
@@ -67,6 +70,8 @@ class Get_cmd:
 
     def tha(_id): return "segmentThalamicNuclei.sh %s" % _id
 
+    def masks(_id): return "cd "+nimb_dir+"\npython run_masks.py {}".format(_id)
+
 
 
 
@@ -80,6 +85,8 @@ def Get_status_for_subjid_in_queue(subjid, all_running):
 
 
 def do(process):
+    ACTION = 'DO'
+    cdb.Update_status_log(ACTION+' '+process)
 
     lsd = list()
     for val in db['DO'][process]:
@@ -89,53 +96,33 @@ def do(process):
         if get_len_Queue_Running()<= max_nr_running_batches:
             db['DO'][process].remove(subjid)
             if process == 'registration':
-                    if not crunfs.chksubjidinfs(subjid):
-                        t1_ls_f, flair_ls_f, t2_ls_f = cdb.get_registration_files(subjid, db['LONG_DIRS'])
-                        job_id = crunfs.makesubmitpbs(Get_cmd.registration(subjid, t1_ls_f, flair_ls_f, t2_ls_f), subjid, process, cwalltime.Get_walltime(process))
-                        db['RUNNING_JOBS'][subjid] = job_id
-                        db['QUEUE'][process].append(subjid)
-
+                if not crunfs.chksubjidinfs(subjid):
+                    t1_ls_f, flair_ls_f, t2_ls_f = cdb.get_registration_files(subjid, db['LONG_DIRS'])
+                    job_id = crunfs.makesubmitpbs(Get_cmd.registration(subjid, t1_ls_f, flair_ls_f, t2_ls_f), subjid, process, cwalltime.Get_walltime(process))
             if process == 'recon':
-                            job_id = crunfs.makesubmitpbs(Get_cmd.recon(subjid), subjid, 'recon', cwalltime.Get_walltime('recon'))
-                            db['RUNNING_JOBS'][subjid] = job_id
-                            db['QUEUE'][process].append(subjid)
+                job_id = crunfs.makesubmitpbs(Get_cmd.recon(subjid), subjid, 'recon', cwalltime.Get_walltime('recon'))
             if process == 'autorecon1':
-                            job_id = crunfs.makesubmitpbs(Get_cmd.autorecon(subjid, '1'), subjid, 'autorecon1', cwalltime.Get_walltime('autorecon1'))
-                            db['RUNNING_JOBS'][subjid] = job_id
-                            db['QUEUE'][process].append(subjid)
+                job_id = crunfs.makesubmitpbs(Get_cmd.autorecon(subjid, '1'), subjid, 'autorecon1', cwalltime.Get_walltime('autorecon1'))
             if process == 'autorecon2':
-                            job_id = crunfs.makesubmitpbs(Get_cmd.autorecon(subjid, '2'), subjid, 'autorecon2', cwalltime.Get_walltime('autorecon2'))
-                            db['RUNNING_JOBS'][subjid] = job_id
-                            db['QUEUE'][process].append(subjid)
+                job_id = crunfs.makesubmitpbs(Get_cmd.autorecon(subjid, '2'), subjid, 'autorecon2', cwalltime.Get_walltime('autorecon2'))
             if process == 'autorecon3':
-                            job_id = crunfs.makesubmitpbs(Get_cmd.autorecon(subjid, '3'), subjid, 'autorecon3', cwalltime.Get_walltime('autorecon3'))
-                            db['RUNNING_JOBS'][subjid] = job_id
-                            db['QUEUE'][process].append(subjid)
+                job_id = crunfs.makesubmitpbs(Get_cmd.autorecon(subjid, '3'), subjid, 'autorecon3', cwalltime.Get_walltime('autorecon3'))
             if process == 'qcache':
-                        job_id = crunfs.makesubmitpbs(Get_cmd.qcache(subjid), subjid, process, cwalltime.Get_walltime(process))
-                        db['RUNNING_JOBS'][subjid] = job_id
-                        db['QUEUE'][process].append(subjid)
+                job_id = crunfs.makesubmitpbs(Get_cmd.qcache(subjid), subjid, process, cwalltime.Get_walltime(process))
             elif process == 'brstem':
-                        job_id = crunfs.makesubmitpbs(Get_cmd.brstem(subjid), subjid, process, cwalltime.Get_walltime(process))
-                        db['RUNNING_JOBS'][subjid] = job_id
-                        db['QUEUE'][process].append(subjid)
+                job_id = crunfs.makesubmitpbs(Get_cmd.brstem(subjid), subjid, process, cwalltime.Get_walltime(process))
             elif process == 'hip':
-                        job_id = crunfs.makesubmitpbs(Get_cmd.hip(subjid), subjid, process, cwalltime.Get_walltime(process))
-                        db['RUNNING_JOBS'][subjid] = job_id
-                        db['QUEUE'][process].append(subjid)
+                job_id = crunfs.makesubmitpbs(Get_cmd.hip(subjid), subjid, process, cwalltime.Get_walltime(process))
             elif process == 'tha':
-                        job_id = crunfs.makesubmitpbs(Get_cmd.tha(subjid), subjid, process, cwalltime.Get_walltime(process))
-                        db['RUNNING_JOBS'][subjid] = job_id
-                        db['QUEUE'][process].append(subjid)
+                job_id = crunfs.makesubmitpbs(Get_cmd.tha(subjid), subjid, process, cwalltime.Get_walltime(process))
             elif process == 'masks':
-                        db['RUNNING'][process].append(subjid)
-                        cdb.Update_status_log('RUNNING masks for: '+subjid)
-                        cdb.Update_DB(db)
-                        crunfs.run_make_masks(subjid)
+                job_id = crunfs.makesubmitpbs(Get_cmd.masks(subjid), subjid, process, cwalltime.Get_walltime(process))
+            db['RUNNING_JOBS'][subjid] = job_id
+            db['QUEUE'][process].append(subjid)
             try:
-            	cdb.Update_status_log(subjid+', '+process+', submited id: '+str(job_id))
+                cdb.Update_status_log('   '+subjid+', '+process+', submited id: '+str(job_id))
             except Exception as e:
-            	print('    err in do: ',e)
+                print('    err in do: ',e)
     cdb.Update_DB(db)
 
 
@@ -359,6 +346,8 @@ def long_check_groups(_id):
 
 
 def check_error():
+	cdb.Update_status_log('ERROR checking')
+
 	for process in process_order:
 		if db['PROCESSED']['error_'+process]:
 			lserr = list()
@@ -418,10 +407,7 @@ def move_processed_subjects():
         db['PROCESSED']['cp2local'].remove(subject)
         cdb.Update_DB(db)
         size_dst = sum(f.stat().st_size for f in Path(processed_SUBJECTS_DIR+subject).glob('**/*') if f.is_file())
-        if size_src == size_dst:
-            print('        moved correctly: ',size_src, size_dst)
-            cdb.Update_status_log('        moved correctly, '+str(size_src)+' '+str(size_dst))
-        else:
+        if size_src != size_dst:
             print('        ERROR in moving, not moved correctly', size_src, size_dst)
             cdb.Update_status_log('        ERROR in moving, not moved correctly '+str(size_src)+' '+str(size_dst))
 
@@ -433,7 +419,7 @@ def run():
     cdb.Update_DB(db)
     all_running = cdb.get_batch_jobs_status()
 
-    for process in process_order:
+    for process in process_order[::-1]:
         if len(db['QUEUE'][process])>0:
             print('queue loop')
             queue(process, all_running)

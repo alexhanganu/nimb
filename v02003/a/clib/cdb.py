@@ -457,7 +457,7 @@ def get_diskusage_report():
     on compute canada clusters
     the command diskusage_report is used'''
 
-    def get_jobs(diskusage, queue):
+    def get_diskspace(diskusage, queue):
 
         for line in queue[1:]:
                 vals = list(filter(None,line.split(' ')))
@@ -471,13 +471,12 @@ def get_diskusage_report():
     diskusage = dict()
     for cuser in cusers_list:
         queue = list(filter(None,subprocess.run(['diskusage_report'], stdout=subprocess.PIPE).stdout.decode('utf-8').split('\n')))
-        diskusage = get_jobs(diskusage, queue)
+        diskusage = get_diskspace(diskusage, queue)
 
     return diskusage
 
 
-
-def get_mask_codes():
+def get_mask_codes(structure):
     structure_codes = {'left_hippocampus':17,'right_hippocampus':53,
                     'left_thalamus':10,'right_thalamus':49,'left_caudate':11,'right_caudate':50,
                     'left_putamen':12,'right_putamen':51,'left_pallidum':13,'right_pallidum':52,
@@ -488,4 +487,4 @@ def get_mask_codes():
                     'left_hippocampus_fissure':555,'right_hippocampus_fissure':505,
                     'left_amygdala_subiculum':557,'right_amygdala_subiculum':507,
                     'left_amygdala_presubiculum':554,'right_amygdala_presubiculum':504,}
-    return structure_codes
+    return structure_codes[structure]
