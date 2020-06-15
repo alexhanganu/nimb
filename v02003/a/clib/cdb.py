@@ -64,6 +64,7 @@ def Get_DB():
         db['PROCESSED'] = {'cp2local':[],}
         for process in process_order:
             db['PROCESSED']['error_'+process] = []
+        db['PROCESSED']['error_other'] = []
     return db
 
 

@@ -1,5 +1,5 @@
 #!/bin/python
-# 2020.06.13
+# 2020.06.14
 
 from os import path, listdir, remove, rename, system, chdir, environ
 try:
@@ -27,51 +27,22 @@ def get_len_Queue_Running():
 class Get_cmd:
 
     def registration(subjid, t1_f, flair_f, t2_f):
-            cmd = "recon-all "
-            for _t1 in t1_f:
-                cmd = cmd+" -i "+_t1
-            if flair_f != 'none':
-                for _flair in flair_f:
-                    cmd = cmd+' -FLAIR '+_flair
-            if t2_f != 'none':
-                for _t2 in t2_f:
-                    cmd = cmd+' -T2 '+_t2
-            cmd = cmd+' -s '+subjid
+        flair_cmd = '{}'.format(''.join([' -FLAIR '+i for i in flair_f])) if flair_f != 'none' else ''
+        t2_cmd = '{}'.format(''.join([' -T2 '+i for i in t2_f])) if t2_f != 'none' else ''
+        return "recon-all{}".format(''.join([' -i '+i for i in t1_f]))+flair_cmd+t2_cmd+' -s '+subjid
 
-            return cmd
+    def recbase(id_base, ls_tps): return "recon-all -base {0}{1} -all".format(id_base, ''.join([' -tp '+i for i in ls_tps]))
+    def reclong(_id, id_base): return "recon-all -long {0} {1} -all".format(_id, id_base)
 
-    def autorecon(_id, lvl): return "recon-all -autorecon%s -s %s" % (lvl, _id)
-
-    def recon(_id): return "recon-all -all -s %s" % _id
-
-    def recbase(id_base, ls_tps):
-            cmd = "recon-all -base %s" % id_base
-            for tp in ls_tps:
-                cmd = cmd+' -tp '+tp
-            cmd = cmd+' -all'
-
-            return cmd
-
-    def reclong(_id, id_base): return "recon-all -long %s %s -all" % (_id, id_base)
-
-    def qcache(_id): return "recon-all -qcache -s %s" % _id
-
-    def brstem(_id): 
-        if freesurfer_version>6:
-            return 'segmentBS.sh {}'.format(_id)
-        else:
-            return "recon-all -s %s -brainstem-structures" % _id
-
-    def hip(_id):
-        if freesurfer_version>6:
-            return 'segmentHA_T1.sh {}'.format(_id)
-        else:
-            return "recon-all -s %s -hippocampal-subfields-T1" % _id
-
-    def tha(_id): return "segmentThalamicNuclei.sh %s" % _id
-
+    def recon(_id): return "recon-all -all -s {}".format(_id)
+    def autorecon1(_id): return "recon-all -autorecon1 -s {}".format(_id)
+    def autorecon2(_id): return "recon-all -autorecon2 -s {}".format(_id)
+    def autorecon3(_id): return "recon-all -autorecon3 -s {}".format(_id)
+    def qcache(_id): return "recon-all -qcache -s {}".format(_id)
+    def brstem(_id): return 'segmentBS.sh {}'.format(_id) if freesurfer_version>6 else 'recon-all -s {} -brainstem-structures'.format(_id)
+    def hip(_id): return 'segmentHA_T1.sh {}'.format(_id) if freesurfer_version>6 else 'recon-all -s {} -hippocampal-subfields-T1'.format(_id)
+    def tha(_id): return "segmentThalamicNuclei.sh {}".format(_id)
     def masks(_id): return "cd "+nimb_dir+"\npython run_masks.py {}".format(_id)
-
 
 
 
@@ -99,15 +70,15 @@ def do(process):
                 if not crunfs.chksubjidinfs(subjid):
                     t1_ls_f, flair_ls_f, t2_ls_f = cdb.get_registration_files(subjid, db['LONG_DIRS'])
                     job_id = crunfs.makesubmitpbs(Get_cmd.registration(subjid, t1_ls_f, flair_ls_f, t2_ls_f), subjid, process, cwalltime.Get_walltime(process))
-            if process == 'recon':
-                job_id = crunfs.makesubmitpbs(Get_cmd.recon(subjid), subjid, 'recon', cwalltime.Get_walltime('recon'))
-            if process == 'autorecon1':
-                job_id = crunfs.makesubmitpbs(Get_cmd.autorecon(subjid, '1'), subjid, 'autorecon1', cwalltime.Get_walltime('autorecon1'))
-            if process == 'autorecon2':
-                job_id = crunfs.makesubmitpbs(Get_cmd.autorecon(subjid, '2'), subjid, 'autorecon2', cwalltime.Get_walltime('autorecon2'))
-            if process == 'autorecon3':
-                job_id = crunfs.makesubmitpbs(Get_cmd.autorecon(subjid, '3'), subjid, 'autorecon3', cwalltime.Get_walltime('autorecon3'))
-            if process == 'qcache':
+            elif process == 'recon':
+                job_id = crunfs.makesubmitpbs(Get_cmd.recon(subjid), subjid, process, cwalltime.Get_walltime(process))
+            elif process == 'autorecon1':
+                job_id = crunfs.makesubmitpbs(Get_cmd.autorecon1(subjid), subjid, process, cwalltime.Get_walltime(process))
+            elif process == 'autorecon2':
+                job_id = crunfs.makesubmitpbs(Get_cmd.autorecon2(subjid), subjid, process, cwalltime.Get_walltime(process))
+            elif process == 'autorecon3':
+                job_id = crunfs.makesubmitpbs(Get_cmd.autorecon3(subjid), subjid, process, cwalltime.Get_walltime(process))
+            elif process == 'qcache':
                 job_id = crunfs.makesubmitpbs(Get_cmd.qcache(subjid), subjid, process, cwalltime.Get_walltime(process))
             elif process == 'brstem':
                 job_id = crunfs.makesubmitpbs(Get_cmd.brstem(subjid), subjid, process, cwalltime.Get_walltime(process))
@@ -192,7 +163,7 @@ def running(process, all_running):
                         else:
                             cdb.Update_status_log('    '+subjid+' processing DONE')
                     else:
-                        cdb.Update_status_log('   '+subjid+' '+process+' moving to ERROR')
+                        cdb.Update_status_log('   '+subjid+' '+process+' moving to ERROR because status is: '+status+', and IsRunning is present')
                         print('moving '+subjid+' to error_'+process)
                         db['PROCESSED']['error_'+process].append(subjid)
         else:
@@ -358,13 +329,18 @@ def check_error():
 				if path.exists(SUBJECTS_DIR+subjid):
 					if crunfs.chkIsRunning(subjid):
 						print('            removing IsRunning file')
-						remove(SUBJECTS_DIR+subjid+'/scripts/IsRunning.lh+rh')
+						cdb.Update_status_log('            removing IsRunning file')
+						remove(path.join(SUBJECTS_DIR,subjid,'scripts','IsRunning.lh+rh'))
 					print('        checking the recon-all-status.log for error for: ',process)
+					cdb.Update_status_log('        checking the recon-all-status.log for error for: '+process)
 					if not crunfs.chkreconf_if_without_error(subjid):
-						print('            recon-all.log file exited with ERRORS. Please check the file')
+						print('            recon-all-status.log file exited with ERRORS. Please check the file')
+						cdb.Update_status_log('            recon-all-status.log file exited with ERRORS. Please check the file')
 					print('        checking if all files were created for: '+process)
+					cdb.Update_status_log('        checking if all files were created for: '+process)
 					if not crunfs.checks_from_runfs(process, subjid):
 						print('            some files were not created. Excluding subject from pipeline.')
+						cdb.Update_status_log('            some files were not created. Excluding subject from pipeline.')
 						db['PROCESSED']['error_'+process].remove(subjid)
 						_id, _ = cdb.get_id_long(subjid, db['LONG_DIRS'])
 						if _id != 'none':
@@ -375,17 +351,19 @@ def check_error():
 									db['LONG_DIRS'].pop(_id, None)
 									db['LONG_TPS'].pop(_id, None)
 							except ValueError as e:
-								print('    ERROR, ',subjid,' was found in LONG_DIRS; ',e)
+								print('        ERROR, id not found in LONG_DIRS; ',e)
+								cdb.Update_status_log('        ERROR, id not found in LONG_DIRS; ',e)
 						else:
-							print('    ERROR, ',subjid,' is absent from LONG_DIRS')
-						error_name = 'error_'+subjid
-						rename(SUBJECTS_DIR+subjid,SUBJECTS_DIR+error_name)
-						cdb.Update_status_log(error_name+' moving to cp2local')
-						db['PROCESSED']['cp2local'].append(error_name)
+							print('        ERROR, ',subjid,' is absent from LONG_DIRS')
+							cdb.Update_status_log('        ERROR, '+subjid+' is absent from LONG_DIRS')
+						cdb.Update_status_log('        '+subjid+' moving to cp2local')
+						db['PROCESSED']['cp2local'].append(subjid)
 					else:
 						print('            all files were created for process: ', process)
+						cdb.Update_status_log('            all files were created for process: '+process)
 				else:
 					print('    not in SUBJECTS_DIR')
+					cdb.Update_status_log('    not in SUBJECTS_DIR')
 	#ls of errors:
 	# ERROR: MultiRegistration::loadMovables: images have different voxel sizes.
 	# Currently not supported, maybe first make conform?
@@ -400,17 +378,20 @@ def move_processed_subjects():
     for subject in db['PROCESSED']['cp2local']:
         processed_subjects.append(subject)
     for subject in processed_subjects:
-        print('    moving from cp2local ', subject)
+        print('    '+subject+' moving from cp2local')
         cdb.Update_status_log('    '+subject+' moving from cp2local')
         size_src = sum(f.stat().st_size for f in Path(SUBJECTS_DIR+subject).glob('**/*') if f.is_file())
         shutil.move(SUBJECTS_DIR+subject, processed_SUBJECTS_DIR+subject)
         db['PROCESSED']['cp2local'].remove(subject)
         cdb.Update_DB(db)
         size_dst = sum(f.stat().st_size for f in Path(processed_SUBJECTS_DIR+subject).glob('**/*') if f.is_file())
+        error_name = 'error_'+subject
+        rename(processed_SUBJECTS_DIR+subject,processed_SUBJECTS_DIR+error_name)
         if size_src != size_dst:
             print('        ERROR in moving, not moved correctly', size_src, size_dst)
             cdb.Update_status_log('        ERROR in moving, not moved correctly '+str(size_src)+' '+str(size_dst))
-
+            shutil.rmtree(processed_SUBJECTS_DIR+error_name)
+            db['PROCESSED']['error_other'].append(subject)
     print('moving DONE')
 
 
@@ -460,7 +441,7 @@ def check_active_tasks(db):
         error = error + len(db['PROCESSED']['error_'+process])
     for _id in db['LONG_DIRS']:
         active_subjects = active_subjects + len(db['LONG_DIRS'][_id])
-    active_subjects = active_subjects+len(db['PROCESSED']['cp2local'])
+    active_subjects = active_subjects+len(db['PROCESSED']['cp2local'])-len(db['PROCESSED']['error_other'])
     #finished = error + len(db['PROCESSED']['cp2local'])
     #for ACTION in ('DO', 'QUEUE', 'RUNNING',):
     #    for process in db[ACTION]:
