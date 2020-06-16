@@ -1,5 +1,5 @@
 #!/bin/python
-# 2020.06.12
+# 2020.06.15
 
 '''
 add FS QA tools to rm scans with low SNR (Koh et al 2017)
@@ -44,7 +44,7 @@ def makesubmitpbs(cmd, subjid, run, walltime):
         f.write('export SUBJECTS_DIR='+SUBJECTS_DIR+'\n')
         f.write('\n')
         f.write(cmd+'\n')
-    print('submitting '+sh_file)
+    print('    submitting '+sh_file)
     if SUBMIT:
         try:
             resp = subprocess.run([submit_cmd,nimb_scratch_dir+'usedpbs/'+sh_file], stdout=subprocess.PIPE).stdout.decode('utf-8')
@@ -150,7 +150,7 @@ def chkreconf_if_without_error(subjid):
 
             for line in reversed(f):
                 if 'exited with ERRORS' in line:
-                    cdb.Update_status_log(subjid+' exited with ERRORS line is present')
+                    cdb.Update_status_log('        exited with ERRORS')
                     return False
                 elif 'finished without error' in line:
                     return True
@@ -158,13 +158,13 @@ def chkreconf_if_without_error(subjid):
                     return False
                     break
                 else:
-                    cdb.Update_status_log(subjid+' it\'s not clear whether subject finished with or without ERROR')
+                    cdb.Update_status_log('        not clear if finished with or without ERROR')
                     return False
         else:
             return False
     except FileNotFoundError as e:
         print(e)
-        cdb.Update_status_log(subjid+' '+str(e))
+        cdb.Update_status_log('    '+subjid+' '+str(e))
 
 
 def chk_if_autorecon_done(lvl, subjid):
@@ -298,16 +298,3 @@ def chk_masks(subjid):
                 return True
     else:
         return False
-
-
-
-# def FS_ready(SUBJECTS_DIR): #changed, old version
-#     ready = False
-#     if 'fsaverage' not in listdir(SUBJECTS_DIR):
-#         print(' fsaverage is missing in SUBJECTS_DIR')
-#     if path.isdir(SUBJECTS_DIR+'fsaverage'):
-#         if 'xhemi' not in listdir(SUBJECTS_DIR+'fsaverage'):
-#             print(' fsaverage/xhemi is missing')
-#     if 'fsaverage' in listdir(SUBJECTS_DIR) and 'xhemi' in listdir(SUBJECTS_DIR+'fsaverage'):
-#         ready = True
-#     return ready

@@ -1,14 +1,15 @@
 #!/bin/python
-# 2020.06.14
+# 2020.06.15
 
 from os import path, listdir, remove, rename, system, chdir, environ
 try:
     from pathlib import Path
 except ImportError as e:
-    print(e)
+    cdb.Update_status_log(e)
 import time, shutil
-from var import cscratch_dir, max_nr_running_batches, process_order, base_name, DO_LONG, freesurfer_version, max_walltime, submit_cmd
+from var import cscratch_dir, max_nr_running_batches, process_order, base_name, DO_LONG, freesurfer_version, batch_walltime, submit_cmd, nimb_version
 import crunfs, cdb, cwalltime, var
+
 environ['TZ'] = 'US/Eastern'
 time.tzset()
 
@@ -93,7 +94,7 @@ def do(process):
             try:
                 cdb.Update_status_log('   '+subjid+', '+process+', submited id: '+str(job_id))
             except Exception as e:
-                print('    err in do: ',e)
+                cdb.Update_status_log('    err in do: '+e)
     cdb.Update_DB(db)
 
 
@@ -111,7 +112,6 @@ def queue(process, all_running):
             status = Get_status_for_subjid_in_queue(subjid, all_running)
             if crunfs.checks_from_runfs('registration',subjid):
                 if status =='R' or status == 'none':
-                    print(subjid,' status: ',status,'; moving from '+ACTION+' to RUNNING '+process)
                     cdb.Update_status_log('   '+subjid+' moving from '+ACTION+' to RUNNING '+process)
                     db[ACTION][process].remove(subjid)
                     db['RUNNING'][process].append(subjid)
@@ -120,10 +120,8 @@ def queue(process, all_running):
                 cdb.Update_status_log('   '+subjid+' '+process+' moving to ERROR')
                 db['PROCESSED']['error_'+process].append(subjid)
             else:
-                print(subjid,' is NOT registered yet !!!!!!!')
                 cdb.Update_status_log('   '+subjid+'    is NOT registered yet')
         else:
-            print(subjid,'    queue, NOT in RUNNING_JOBS')
             cdb.Update_status_log('   '+subjid+'    queue, NOT in RUNNING_JOBS')
     cdb.Update_DB(db)
 
@@ -145,10 +143,9 @@ def running(process, all_running):
                 db[ACTION][process].remove(subjid)
                 db['RUNNING_JOBS'].pop(subjid, None)
                 if base_name in subjid:
-                    print(' reading ',process,subjid,' subjid is long or base ')
+                    cdb.Update_status_log(' reading '+process+subjid+' subjid is long or base ')
                     if crunfs.chkIsRunning(subjid) or not crunfs.checks_from_runfs('recon', subjid):
                         cdb.Update_status_log('   '+subjid+' '+process+' moving to ERROR')
-                        print('moving '+subjid+' to error_'+process)
                         db['PROCESSED']['error_recon'].append(subjid)
                 else:
                     if not crunfs.chkIsRunning(subjid) and crunfs.checks_from_runfs(process, subjid):
@@ -164,15 +161,13 @@ def running(process, all_running):
                             cdb.Update_status_log('    '+subjid+' processing DONE')
                     else:
                         cdb.Update_status_log('   '+subjid+' '+process+' moving to ERROR because status is: '+status+', and IsRunning is present')
-                        print('moving '+subjid+' to error_'+process)
                         db['PROCESSED']['error_'+process].append(subjid)
         else:
             cdb.Update_status_log('    '+subjid+' NOT in RUNNING_JOBS')
-            print('    ',subjid,' NOT in RUNNING_JOBS')
             if not crunfs.chkIsRunning(subjid):
                 db[ACTION][process].remove(subjid)
                 if base_name in subjid:
-                    print(' reading ',process,subjid,' subjid is long or base ')
+                    cdb.Update_status_log(' reading '+process+subjid+' subjid is long or base ')
                     if not crunfs.checks_from_runfs('recon', subjid):
                         cdb.Update_status_log('   '+subjid+' recon, moving to ERROR')
                         db['PROCESSED']['error_recon'].append(subjid)
@@ -193,8 +188,7 @@ def running(process, all_running):
                         db['PROCESSED']['error_'+process].append(subjid)
             else:
                 db[ACTION][process].remove(subjid)
-                cdb.Update_status_log('   '+subjid+' '+process+' moving to ERROR')
-                print('moving '+subjid+' to error_'+process)
+                cdb.Update_status_log('   '+subjid+' '+process+' moving to error_'+process)
                 db['PROCESSED']['error_'+process].append(subjid)
     cdb.Update_DB(db)
 
@@ -234,14 +228,13 @@ def long_check_groups(_id):
                                 db['PROCESSED']['error_recon'].append(long_f)
 
                         if len(All_long_ids_done) == len(LONG_TPS):
-                            print('        ','moving to CP2LOCAL ',_id)
                             cdb.Update_status_log(_id+' moving to cp2local')
                             for subjid in ls:
                                 cdb.Update_status_log('moving '+subjid+' cp2local')
                                 db['PROCESSED']['cp2local'].append(subjid)            
                             db['LONG_DIRS'].pop(_id, None)
                             db['LONG_TPS'].pop(_id, None)
-                            print('        ',_id,'moved to cp2local')
+                            cdb.Update_status_log('        '+_id+'moved to cp2local')
                     else:
                         cdb.Update_status_log(base_f+' moving to error_recon')
                         db['PROCESSED']['error_recon'].append(base_f)
@@ -254,15 +247,211 @@ def long_check_groups(_id):
         for subjid in ls:
             if crunfs.checks_from_runfs('registration', subjid):
                 if crunfs.checks_from_runfs(process_order[-1], subjid):
-                    print('        ','last process done ',process_order[-1])
-                    print('        ','moving to CP2LOCAL ',_id)
-                    cdb.Update_status_log(_id+' moving to cp2local')
+                    cdb.Update_status_log('        last process done '+process_order[-1])
+                    cdb.Update_status_log('        moving to CP2LOCAL ')
                     db['PROCESSED']['cp2local'].append(subjid)            
                     db['LONG_DIRS'].pop(_id, None)
                     db['LONG_TPS'].pop(_id, None)
             else:
-                print(process_order[-1], ' for ',subjid,' not finished ')
+                cdb.Update_status_log(process_order[-1]+' for '+subjid+' not finished ')
     cdb.Update_DB(db)
+
+
+
+def check_error():
+	cdb.Update_status_log('ERROR checking')
+
+	for process in process_order:
+		if db['PROCESSED']['error_'+process]:
+			lserr = list()
+			for val in db['PROCESSED']['error_'+process]:
+				lserr.append(val)	
+			for subjid in lserr:
+				cdb.Update_status_log('    '+subjid)
+				if path.exists(SUBJECTS_DIR+subjid):
+					if crunfs.chkIsRunning(subjid):
+						cdb.Update_status_log('            removing IsRunning file')
+						remove(path.join(SUBJECTS_DIR,subjid,'scripts','IsRunning.lh+rh'))
+					cdb.Update_status_log('        checking the recon-all-status.log for error for: '+process)
+					crunfs.chkreconf_if_without_error(subjid)
+					cdb.Update_status_log('        checking if all files were created for: '+process)
+					if not crunfs.checks_from_runfs(process, subjid):
+						cdb.Update_status_log('            some files were not created. Excluding subject from pipeline.')
+						db['PROCESSED']['error_'+process].remove(subjid)
+						_id, _ = cdb.get_id_long(subjid, db['LONG_DIRS'])
+						if _id != 'none':
+							try:
+								db['LONG_DIRS'][_id].remove(subjid)
+								db['LONG_TPS'][_id].remove(subjid.replace(_id+'_',''))
+								if len(db['LONG_DIRS'][_id])==0:
+									db['LONG_DIRS'].pop(_id, None)
+									db['LONG_TPS'].pop(_id, None)
+							except ValueError as e:
+								cdb.Update_status_log('        ERROR, id not found in LONG_DIRS; '+e)
+						else:
+							cdb.Update_status_log('        ERROR, '+subjid+' is absent from LONG_DIRS')
+						cdb.Update_status_log('        '+subjid+' moving to cp2local')
+						db['PROCESSED']['cp2local'].append(subjid)
+					else:
+						cdb.Update_status_log('            all files were created for process: '+process)
+						db['PROCESSED']['error_'+process].remove(subjid)
+						db['RUNNING'][process].append(subjid)
+						cdb.Update_status_log('    moving from error_'+process+' to RUNNING '+process)
+				else:
+					cdb.Update_status_log('    not in SUBJECTS_DIR')
+				cdb.Update_DB(db)
+
+	#ls of errors:
+	# ERROR: MultiRegistration::loadMovables: images have different voxel sizes.
+	# Currently not supported, maybe first make conform?
+	# Debug info: size(1) = 1.05469, 1.05469, 1.2   size(0) = 1, 1, 1.2
+	# MultiRegistration::loadMovables: voxel size is different /scratch/hanganua/fs-subjects/011_S_0021_ses-6/mri/orig/002.mgz
+
+
+
+def move_processed_subjects():
+    processed_subjects = list()
+    for subject in db['PROCESSED']['cp2local']:
+        processed_subjects.append(subject)
+    for subject in processed_subjects:
+        cdb.Update_status_log('    '+subject+' moving from cp2local')
+        size_src = sum(f.stat().st_size for f in Path(path.join(SUBJECTS_DIR,subject)).glob('**/*') if f.is_file())
+        shutil.move(path.join(SUBJECTS_DIR,subject), path.join(processed_SUBJECTS_DIR,subject))
+        db['PROCESSED']['cp2local'].remove(subject)
+        cdb.Update_DB(db)
+        size_dst = sum(f.stat().st_size for f in Path(processed_SUBJECTS_DIR+subject).glob('**/*') if f.is_file())
+        if size_src != size_dst:
+            cdb.Update_status_log('        ERROR in moving, not moved correctly '+str(size_src)+' '+str(size_dst))
+            rename(path.join(processed_SUBJECTS_DIR,subject),path.join(processed_SUBJECTS_DIR,'error_'+subject))
+            db['PROCESSED']['error_other'].append(subject)
+    cdb.Update_status_log('moving DONE')
+
+
+
+def run():
+    cdb.Update_DB(db)
+    all_running = cdb.get_batch_jobs_status()
+
+    for process in process_order[::-1]:
+        if len(db['QUEUE'][process])>0:
+            queue(process, all_running)
+        if len(db['RUNNING'][process])>0:
+            running(process,all_running)
+        if len(db['DO'][process])>0:
+            do(process)
+
+    # print('long check pipeline started') #
+    # long_check_pipeline(all_running)
+
+    ls_long_dirs = list()
+    for key in db['LONG_DIRS']:
+        ls_long_dirs.append(key)
+
+    for _id in ls_long_dirs:
+        if get_len_Queue_Running()<= max_nr_running_batches:
+            cdb.Update_status_log(_id+': checking subjects') #
+            long_check_groups(_id)
+
+    cdb.Update_status_log('finished checking database')
+
+    cdb.Update_status_log('\n\n checking the ERRORS')
+    check_error()
+    cdb.Update_status_log('finished checking the ERRORS')
+
+    cdb.Update_status_log('\n\n moving  the processed')
+    move_processed_subjects()
+    cdb.Update_status_log('finished checking the processed')
+
+
+def check_active_tasks(db):
+    active_subjects = 0
+    error = 0
+    for process in process_order:
+        error = error + len(db['PROCESSED']['error_'+process])
+    for _id in db['LONG_DIRS']:
+        active_subjects = active_subjects + len(db['LONG_DIRS'][_id])
+    active_subjects = active_subjects+len(db['PROCESSED']['cp2local'])-len(db['PROCESSED']['error_other'])
+    #finished = error + len(db['PROCESSED']['cp2local'])
+    #for ACTION in ('DO', 'QUEUE', 'RUNNING',):
+    #    for process in db[ACTION]:
+    #        active_subjects = active_subjects + len(db[ACTION][process])
+    #active_subjects = active_subjects-(finished)
+    #if active_subjects == 0:
+    #    for _id in db['LONG_DIRS']:
+    #        active_subjects = active_subjects + len(db['LONG_DIRS'][_id])
+
+    cdb.Update_status_log('\n                 '+str(active_subjects)+'\n                 '+str(error)+' error')
+    return active_subjects
+
+
+def Count_TimeSleep():
+    time2sleep = 300 # 5 minutes
+    if get_len_Queue_Running() >= max_nr_running_batches:
+        cdb.Update_status_log('queue and running: '+str(get_len_Queue_Running())+' max: '+str(max_nr_running_batches))
+        time2sleep = 1500 # 25 minutes
+        # for process in db['QUEUE']:
+        #     if len(db['QUEUE'][process])>0:
+        #         time2sleep = 1500 # 25 minutes
+        #         break
+        # if 'autorecon2' in db['RUNNING']:
+        #     if len(db['RUNNING']['autorecon2']) + len(db['RUNNING']['autorecon3']) >= max_nr_running_batches:
+        #         time2sleep = 1500
+        # elif 'recon' in db['RUNNING'] and len(db['RUNNING']['recon']) >= max_nr_running_batches:
+        #         time2sleep = 1500
+        # elif 'hip' in db['RUNNING'] and len(db['RUNNING']['hip'])>0 or 'brstem' in db['RUNNING'] and len(db['RUNNING']['brstem'])>0 or 'qcache' in db['RUNNING'] and len(db['RUNNING']['qcache'])>0:
+        #     time2sleep = 1500
+    return time2sleep
+
+
+if crunfs.FS_ready(SUBJECTS_DIR):
+    print('updating status')
+    cdb.Update_status_log('\n\n\n\n========nimb version: '+nimb_version,True)
+
+    t0 = time.time()
+    time_elapsed = 0
+    count_run = 0
+
+    cdb.Update_status_log('pipeline started')
+    cdb.Update_running(1)
+
+    cdb.Update_status_log('reading database')
+    db = cdb.Get_DB()
+
+    cdb.Update_status_log('reading SUBJECTS_DIR, subj2fs for new subjects')
+    db = cdb.Update_DB_new_subjects_and_SUBJECTS_DIR(db)
+    cdb.Update_DB(db)
+    active_subjects = check_active_tasks(db)
+
+    # extracting 15 minutes from the maximum time for the batch to run
+    # since it is expected that less then 15 minutes will be required for the pipeline to perform all the steps
+    # while the batch is running, and start new batch
+    batch_hour = str(int(batch_walltime.split(':')[0])-1).zfill(2)
+    max_batch_running = batch_hour+':'+str(int(batch_walltime.split(':')[1])+30)
+
+    while active_subjects >0 and time.strftime("%H:%M",time.gmtime(time_elapsed)) < max_batch_running:
+        count_run += 1
+        cdb.Update_status_log('restarting run, '+str(count_run))
+        if count_run % 5 == 0:
+            cdb.Update_status_log('reading SUBJECTS_DIR, subj2fs for new subjects')
+            db = cdb.Update_DB_new_subjects_and_SUBJECTS_DIR(db)
+            cdb.Update_DB(db)
+        run()
+
+        time_to_sleep = Count_TimeSleep()
+        cdb.Update_status_log('waiting. Next run at: '+str(time.strftime("%H:%M",time.localtime(time.time()+time_to_sleep))))
+        time.sleep(time_to_sleep)
+
+        time_elapsed = time.time() - t0
+        cdb.Update_status_log('    elapsed time: '+time.strftime("%H:%M",time.gmtime(time_elapsed))+' max walltime: '+batch_walltime[:-6])
+        active_subjects = check_active_tasks(db)
+
+    if active_subjects == 0:
+        cdb.Update_running(0)
+        cdb.Update_status_log('ALL TASKS FINISHED')
+    else:
+        cdb.Update_status_log('Sending new batch to scheduler')
+        chdir(nimb_dir)
+        system(submit_cmd+' run.sh')
 
 
 
@@ -314,210 +503,4 @@ def long_check_groups(_id):
 #                 if not crunfs.checks_from_runfs('recon', subjid):
 #                     db['PROCESSED']['error_recon'].append(subjid)
 #     cdb.Update_DB(db)
-
-
-def check_error():
-	cdb.Update_status_log('ERROR checking')
-
-	for process in process_order:
-		if db['PROCESSED']['error_'+process]:
-			lserr = list()
-			for val in db['PROCESSED']['error_'+process]:
-				lserr.append(val)	
-			for subjid in lserr:
-				print('    ',subjid)
-				if path.exists(SUBJECTS_DIR+subjid):
-					if crunfs.chkIsRunning(subjid):
-						print('            removing IsRunning file')
-						cdb.Update_status_log('            removing IsRunning file')
-						remove(path.join(SUBJECTS_DIR,subjid,'scripts','IsRunning.lh+rh'))
-					print('        checking the recon-all-status.log for error for: ',process)
-					cdb.Update_status_log('        checking the recon-all-status.log for error for: '+process)
-					if not crunfs.chkreconf_if_without_error(subjid):
-						print('            recon-all-status.log file exited with ERRORS. Please check the file')
-						cdb.Update_status_log('            recon-all-status.log file exited with ERRORS. Please check the file')
-					print('        checking if all files were created for: '+process)
-					cdb.Update_status_log('        checking if all files were created for: '+process)
-					if not crunfs.checks_from_runfs(process, subjid):
-						print('            some files were not created. Excluding subject from pipeline.')
-						cdb.Update_status_log('            some files were not created. Excluding subject from pipeline.')
-						db['PROCESSED']['error_'+process].remove(subjid)
-						_id, _ = cdb.get_id_long(subjid, db['LONG_DIRS'])
-						if _id != 'none':
-							try:
-								db['LONG_DIRS'][_id].remove(subjid)
-								db['LONG_TPS'][_id].remove(subjid.replace(_id+'_',''))
-								if len(db['LONG_DIRS'][_id])==0:
-									db['LONG_DIRS'].pop(_id, None)
-									db['LONG_TPS'].pop(_id, None)
-							except ValueError as e:
-								print('        ERROR, id not found in LONG_DIRS; ',e)
-								cdb.Update_status_log('        ERROR, id not found in LONG_DIRS; ',e)
-						else:
-							print('        ERROR, ',subjid,' is absent from LONG_DIRS')
-							cdb.Update_status_log('        ERROR, '+subjid+' is absent from LONG_DIRS')
-						cdb.Update_status_log('        '+subjid+' moving to cp2local')
-						db['PROCESSED']['cp2local'].append(subjid)
-					else:
-						print('            all files were created for process: ', process)
-						cdb.Update_status_log('            all files were created for process: '+process)
-				else:
-					print('    not in SUBJECTS_DIR')
-					cdb.Update_status_log('    not in SUBJECTS_DIR')
-	#ls of errors:
-	# ERROR: MultiRegistration::loadMovables: images have different voxel sizes.
-	# Currently not supported, maybe first make conform?
-	# Debug info: size(1) = 1.05469, 1.05469, 1.2   size(0) = 1, 1, 1.2
-	# MultiRegistration::loadMovables: voxel size is different /scratch/hanganua/fs-subjects/011_S_0021_ses-6/mri/orig/002.mgz
-
-
-
-
-def move_processed_subjects():
-    processed_subjects = list()
-    for subject in db['PROCESSED']['cp2local']:
-        processed_subjects.append(subject)
-    for subject in processed_subjects:
-        print('    '+subject+' moving from cp2local')
-        cdb.Update_status_log('    '+subject+' moving from cp2local')
-        size_src = sum(f.stat().st_size for f in Path(SUBJECTS_DIR+subject).glob('**/*') if f.is_file())
-        shutil.move(SUBJECTS_DIR+subject, processed_SUBJECTS_DIR+subject)
-        db['PROCESSED']['cp2local'].remove(subject)
-        cdb.Update_DB(db)
-        size_dst = sum(f.stat().st_size for f in Path(processed_SUBJECTS_DIR+subject).glob('**/*') if f.is_file())
-        error_name = 'error_'+subject
-        rename(processed_SUBJECTS_DIR+subject,processed_SUBJECTS_DIR+error_name)
-        if size_src != size_dst:
-            print('        ERROR in moving, not moved correctly', size_src, size_dst)
-            cdb.Update_status_log('        ERROR in moving, not moved correctly '+str(size_src)+' '+str(size_dst))
-            shutil.rmtree(processed_SUBJECTS_DIR+error_name)
-            db['PROCESSED']['error_other'].append(subject)
-    print('moving DONE')
-
-
-
-def run():
-    cdb.Update_DB(db)
-    all_running = cdb.get_batch_jobs_status()
-
-    for process in process_order[::-1]:
-        if len(db['QUEUE'][process])>0:
-            print('queue loop')
-            queue(process, all_running)
-        if len(db['RUNNING'][process])>0:
-            print('running loop')
-            running(process,all_running)
-        if len(db['DO'][process])>0:
-            print('do loop')
-            do(process)
-
-    # print('long check pipeline started') #
-    # long_check_pipeline(all_running)
-
-    ls_long_dirs = list()
-    for key in db['LONG_DIRS']:
-        ls_long_dirs.append(key)
-
-    for _id in ls_long_dirs:
-        if get_len_Queue_Running()<= max_nr_running_batches:
-            print(_id,': checking subjects') #
-            long_check_groups(_id)
-
-    print('finished checking database')
-
-    print('\n\n checking the ERRORS')
-    check_error()
-    print('finished checking the ERRORS')
-
-    print('\n\n moving  the processed')
-    move_processed_subjects()
-    print('finished checking the processed')
-
-
-def check_active_tasks(db):
-    active_subjects = 0
-    error = 0
-    for process in process_order:
-        error = error + len(db['PROCESSED']['error_'+process])
-    for _id in db['LONG_DIRS']:
-        active_subjects = active_subjects + len(db['LONG_DIRS'][_id])
-    active_subjects = active_subjects+len(db['PROCESSED']['cp2local'])-len(db['PROCESSED']['error_other'])
-    #finished = error + len(db['PROCESSED']['cp2local'])
-    #for ACTION in ('DO', 'QUEUE', 'RUNNING',):
-    #    for process in db[ACTION]:
-    #        active_subjects = active_subjects + len(db[ACTION][process])
-    #active_subjects = active_subjects-(finished)
-    #if active_subjects == 0:
-    #    for _id in db['LONG_DIRS']:
-    #        active_subjects = active_subjects + len(db['LONG_DIRS'][_id])
-
-    cdb.Update_status_log('\n                 '+str(active_subjects)+'\n                 '+str(error)+' error')
-    return active_subjects
-
-
-def Count_TimeSleep():
-    time2sleep = 100
-    if get_len_Queue_Running() >= max_nr_running_batches:
-        cdb.Update_status_log('queue and running: '+str(get_len_Queue_Running())+' max: '+str(max_nr_running_batches))
-        for process in db['QUEUE']:
-            if len(db['QUEUE'][process])>0:
-                time2sleep = 1800
-                break
-        if 'autorecon2' in db['RUNNING']:
-            if len(db['RUNNING']['autorecon2']) + len(db['RUNNING']['autorecon3']) >= max_nr_running_batches:
-                time2sleep = 7200
-        elif 'recon' in db['RUNNING'] and len(db['RUNNING']['recon']) >= max_nr_running_batches:
-                time2sleep = 7200
-        elif 'hip' in db['RUNNING'] and len(db['RUNNING']['hip'])>0 or 'brstem' in db['RUNNING'] and len(db['RUNNING']['brstem'])>0 or 'qcache' in db['RUNNING'] and len(db['RUNNING']['qcache'])>0:
-            time2sleep = 3600
-    return time2sleep
-
-
-if crunfs.FS_ready(SUBJECTS_DIR):
-    print('updating status')
-    cdb.Update_status_log('',True)
-
-    if max_walltime > '12:00:00':
-        max_walltime = '11:00:00'
-
-    t0 = time.time()
-    time_elapsed = 0
-    count_run = 0
-
-    print('pipeline started')
-    cdb.Update_running(1)
-
-    print('reading database')
-    db = cdb.Get_DB()
-
-    print('reading files SUBJECTS_DIR, subj2fs')
-    db = cdb.Update_DB_new_subjects_and_SUBJECTS_DIR(db)
-    cdb.Update_DB(db)
-    active_subjects = check_active_tasks(db)
-
-
-    while active_subjects >0 and time.strftime("%H",time.gmtime(time_elapsed)) < max_walltime[:-6]:
-        count_run += 1
-        cdb.Update_status_log('restarting run, '+str(count_run))
-        run()
-
-        time_to_sleep = Count_TimeSleep()
-        print('waiting. Next run at: ',str(time.strftime("%H:%M",time.gmtime(time.time()+time_to_sleep))))
-        cdb.Update_status_log('waiting. Next run at: '+str(time.strftime("%H:%M",time.gmtime(time.time()+time_to_sleep))))
-        time.sleep(time_to_sleep)
-        time_elapsed = time.time() - t0
-        cdb.Update_status_log('    elapsed time: '+time.strftime("%H:%M",time.gmtime(time_elapsed))+' max walltime: '+max_walltime[:-6])
-
-        if count_run % 5 == 0:
-            print('reading SUBJECTS_DIR and subj2fs for new subjects')
-            db = cdb.Update_DB_new_subjects_and_SUBJECTS_DIR(db)
-        active_subjects = check_active_tasks(db)
-
-    if active_subjects == 0:
-        cdb.Update_running(0)
-        cdb.Update_status_log('ALL TASKS FINISHED')
-    else:
-        cdb.Update_status_log('Sending new batch to scheduler')
-        chdir(nimb_dir)
-        system(submit_cmd+' run.sh')
 

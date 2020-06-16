@@ -1,5 +1,5 @@
 #!/bin/python
-# 2020.06.03
+# 2020.06.15
 
 from os import path, listdir, remove, getenv, rename, mkdir, environ, system
 from var import process_order, long_name, base_name, cusers_list
@@ -9,28 +9,6 @@ import var
 environ['TZ'] = 'US/Eastern'
 time.tzset()
 
-# def get_vars():
-#     from var import cname, cusers_list, chome_dir, cprojects_dir, cscratch_dir
-#     cuser = 'not_defined'
-#     for user in cusers_list:
-#         if user in getenv('HOME'):
-#             cuser = user
-#             break
-#     else:
-#         print('ERROR - user not defined')
-
-#     if cname=='beluga' or cname=='cedar':
-#         nimb_dir=chome_dir+'/'+cuser+'/'+cprojects_dir+'/a/'
-#         dir_new_subjects=chome_dir+'/'+cuser+'/'+cprojects_dir+'/subjects/'
-#         nimb_scratch_dir=cscratch_dir+'/'+cuser+'/a_tmp/'
-#         SUBJECTS_DIR = chome_dir+'/'+cuser+'/'+cprojects_dir+'/fs-subjects/'
-#         processed_SUBJECTS_DIR = cscratch_dir+'/'+cuser+'/subjects_processed/'
-#         export_FreeSurfer_cmd = 'export FREESURFER_HOME='+chome_dir+'/'+cuser+'/'+cprojects_dir+'/freesurfer'
-#         source_FreeSurfer_cmd = '$FREESURFER_HOME/SetUpFreeSurfer.sh'
-#     else:
-#         print(cname, 'variables not defined for this cluster')
-
-#     return cuser, nimb_dir, nimb_scratch_dir, SUBJECTS_DIR, processed_SUBJECTS_DIR, dir_new_subjects, export_FreeSurfer_cmd, source_FreeSurfer_cmd
 
 cuser, nimb_dir, nimb_scratch_dir, SUBJECTS_DIR, _, _, _, _ = var.get_vars()
 
@@ -90,6 +68,7 @@ def Update_DB(d):
 
 
 def Update_status_log(cmd, update=True):
+    print(cmd)
     file = nimb_scratch_dir+'status.log'
     if not update:
         print('cleaning status file', file)
@@ -384,7 +363,7 @@ def chk_subj_in_SUBJECTS_DIR(db):
                     db['DO'][process].append(subjid)
                     break
         else:
-            Update_status_log(subjid+' IsRunning file present, adding to '+process_order[1])
+            Update_status_log('            IsRunning file present, adding to '+process_order[1])
             print('        IsRunning file present, adding to ',process_order[1])
             db['RUNNING'][process_order[1]].append(subjid)
 
@@ -489,3 +468,55 @@ def get_mask_codes(structure):
                     'left_amygdala_subiculum':557,'right_amygdala_subiculum':507,
                     'left_amygdala_presubiculum':554,'right_amygdala_presubiculum':504,}
     return structure_codes[structure]
+
+
+
+
+
+# from os import system
+# system('squeue -u hanganua > batch_queue')
+
+
+# import pandas as pd
+
+# if cluster == 'beluga':
+#     df = pd.read_csv(file, sep=' ')
+
+#     df.drop(df.iloc[:, 0:8], inplace=True, axis=1)
+#     df.drop(df.iloc[:, 1:3], inplace=True, axis=1)
+#     df.drop(df.iloc[:, 1:14], inplace=True, axis=1)
+
+#     job_ids = df.iloc[:,0].tolist()
+#     batch_files = df.iloc[:,1].dropna().tolist()+df.iloc[:,2].dropna().tolist()
+    
+#     start_batch_cmd = 'sbatch '
+#     cacel_batch_cmd = 'scancel -i '
+
+# elif cluster == 'helios':
+#     df= pd.read_csv(file, sep='\t')
+    
+#     new = df.iloc[:,0].str.split("  ", n = 5, expand = True)
+#     ls = list()
+#     for val in new.iloc[:,0]:
+#         ls.append(val)
+#     job_ids = ls[3:]
+#     #data["First Name"]= new[0]  
+#     #data["Last Name"]= new[1] 
+#     #data.drop(columns =["Name"], inplace = True)
+
+#     start_batch_cmd = 'msub '
+#     cacel_batch_cmd = 'qdel '
+
+# print(job_ids)
+# print(batch_files)
+
+#for _id in job_ids:
+#            print('canceling job: ',_id)
+#            system(cacel_batch_cmd+_id)
+
+
+# from time import sleep
+#    sleep(10)
+#    for file in batch_files:
+#         print('starting job: ',file)
+#         system(start_batch_cmd+file)
