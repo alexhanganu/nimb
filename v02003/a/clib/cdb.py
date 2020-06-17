@@ -1,5 +1,5 @@
 #!/bin/python
-# 2020.06.15
+# 2020.06.16
 
 from os import path, listdir, remove, getenv, rename, mkdir, environ, system
 from var import process_order, long_name, base_name, cusers_list
@@ -42,7 +42,6 @@ def Get_DB():
         db['PROCESSED'] = {'cp2local':[],}
         for process in process_order:
             db['PROCESSED']['error_'+process] = []
-        db['PROCESSED']['error_other'] = []
     return db
 
 

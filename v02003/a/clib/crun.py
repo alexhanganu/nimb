@@ -322,8 +322,7 @@ def move_processed_subjects():
         size_dst = sum(f.stat().st_size for f in Path(processed_SUBJECTS_DIR+subject).glob('**/*') if f.is_file())
         if size_src != size_dst:
             cdb.Update_status_log('        ERROR in moving, not moved correctly '+str(size_src)+' '+str(size_dst))
-            rename(path.join(processed_SUBJECTS_DIR,subject),path.join(processed_SUBJECTS_DIR,'error_'+subject))
-            db['PROCESSED']['error_other'].append(subject)
+            rename(path.join(processed_SUBJECTS_DIR,subject),path.join(processed_SUBJECTS_DIR,'error_moving'+subject))
     cdb.Update_status_log('moving DONE')
 
 
@@ -343,20 +342,17 @@ def run():
     # print('long check pipeline started') #
     # long_check_pipeline(all_running)
 
+    cdb.Update_status_log('CHECKING subjects')
     ls_long_dirs = list()
     for key in db['LONG_DIRS']:
         ls_long_dirs.append(key)
 
     for _id in ls_long_dirs:
         if get_len_Queue_Running()<= max_nr_running_batches:
-            cdb.Update_status_log(_id+': checking subjects') #
+            cdb.Update_status_log('    '+_id)
             long_check_groups(_id)
 
-    cdb.Update_status_log('finished checking database')
-
-    cdb.Update_status_log('\n\n checking the ERRORS')
     check_error()
-    cdb.Update_status_log('finished checking the ERRORS')
 
     cdb.Update_status_log('\n\n moving  the processed')
     move_processed_subjects()
@@ -370,7 +366,7 @@ def check_active_tasks(db):
         error = error + len(db['PROCESSED']['error_'+process])
     for _id in db['LONG_DIRS']:
         active_subjects = active_subjects + len(db['LONG_DIRS'][_id])
-    active_subjects = active_subjects+len(db['PROCESSED']['cp2local'])-len(db['PROCESSED']['error_other'])
+    active_subjects = active_subjects+len(db['PROCESSED']['cp2local'])
     #finished = error + len(db['PROCESSED']['cp2local'])
     #for ACTION in ('DO', 'QUEUE', 'RUNNING',):
     #    for process in db[ACTION]:
@@ -454,6 +450,7 @@ if crunfs.FS_ready(SUBJECTS_DIR):
         system(submit_cmd+' run.sh')
 
 
+'''THIS script was used for the longitudinal analysis. It has changed and it should not be needed now, but a longitudinal analysis must be made to confirm'''
 
 # def long_check_pipeline(all_running):
 #     lsq_long = list()
