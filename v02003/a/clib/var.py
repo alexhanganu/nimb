@@ -1,5 +1,4 @@
 #!/bin/python
-nimb_version = '2020.06.16.1806.cruncdb'
 max_nr_running_batches = 100 #seems to be taking up to 45
 cname = 'cedar'
 cusers_list = ['hanganua','hvt','lucaspsy','hiver85']

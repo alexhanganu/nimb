@@ -7,8 +7,9 @@ try:
 except ImportError as e:
     cdb.Update_status_log(e)
 import time, shutil
-from var import cscratch_dir, max_nr_running_batches, process_order, base_name, DO_LONG, freesurfer_version, batch_walltime, submit_cmd, nimb_version
+from var import cscratch_dir, max_nr_running_batches, process_order, base_name, DO_LONG, freesurfer_version, batch_walltime, submit_cmd
 import crunfs, cdb, cwalltime, var
+from cbuild_stamp import nimb_version
 
 environ['TZ'] = 'US/Eastern'
 time.tzset()

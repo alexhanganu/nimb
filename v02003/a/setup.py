@@ -17,8 +17,12 @@ freesurfer71_centos6_download_address = 'https://surfer.nmr.mgh.harvard.edu/pub/
 freesurfer71_centos7_download_address = 'https://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/7.1.0/freesurfer-linux-centos7_x86_64-7.1.0.tar.gz'
 freesurfer71_centos8_download_address = 'https://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/7.1.0/freesurfer-linux-centos8_x86_64-7.1.0.tar.gz'
 freesurfer60_download_address = 'ftp://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/6.0.0/freesurfer-Linux-centos6_x86_64-stable-pub-v6.0.0.tar.gz'
-matlab_runtime_download_address = 'http://surfer.nmr.mgh.harvard.edu/fswiki/MatlabRuntime?action=AttachFile&do=get&target=runtime2012bLinux.tar.gz'
-anaconda_installation = 'http://anaconda3-5.1.0-linux-x86_64.sh/'
+# https://surfer.nmr.mgh.harvard.edu/fswiki/MatlabRuntime
+matlab_runtime_FS7_install_cmd = "fs_install_mcr R2014b"
+matlab_FS_install_cmd_long = "cd $FREESURFER_HOME/bin && curl https://raw.githubusercontent.com/freesurfer/freesurfer/dev/scripts/fs_install_mcr -o fs_install_mcr && chmod +x fs_install_mcr"
+matlab_runtime_FS6_install_cmd = "fs_install_mcr R2012b"
+matlab_runtime_download_address_FS6 = 'http://surfer.nmr.mgh.harvard.edu/fswiki/MatlabRuntime?action=AttachFile&do=get&target=runtime2012bLinux.tar.gz'
+miniconda_installation = 'curl https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh'
 
 #freesurfer_download_address = freesurfer71_download_address
 
