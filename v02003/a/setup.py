@@ -18,13 +18,19 @@ freesurfer71_centos7_download_address = 'https://surfer.nmr.mgh.harvard.edu/pub/
 freesurfer71_centos8_download_address = 'https://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/7.1.0/freesurfer-linux-centos8_x86_64-7.1.0.tar.gz'
 freesurfer60_download_address = 'ftp://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/6.0.0/freesurfer-Linux-centos6_x86_64-stable-pub-v6.0.0.tar.gz'
 # https://surfer.nmr.mgh.harvard.edu/fswiki/MatlabRuntime
-matlab_runtime_FS7_install_cmd = "fs_install_mcr R2014b"
-matlab_FS_install_cmd_long = "cd $FREESURFER_HOME/bin && curl https://raw.githubusercontent.com/freesurfer/freesurfer/dev/scripts/fs_install_mcr -o fs_install_mcr && chmod +x fs_install_mcr"
-matlab_runtime_FS6_install_cmd = "fs_install_mcr R2012b"
-matlab_runtime_download_address_FS6 = 'http://surfer.nmr.mgh.harvard.edu/fswiki/MatlabRuntime?action=AttachFile&do=get&target=runtime2012bLinux.tar.gz'
+
+if freesurfer_version>6:
+    matlab_runtime_download_address_FS7 = 'https://ssd.mathworks.com/supportfiles/downloads/R2014b/deployment_files/R2014b/installers/glnxa64/MCR_R2014b_glnxa64_installer.zip'
+else:
+    matlab_runtime_download_address_FS6 = 'https://ssd.mathworks.com/supportfiles/MCR_Runtime/R2012b/MCR_R2012b_glnxa64_installer.zip -o installer.zip'
+    matlab_runtime_download_address_FS6 = 'http://surfer.nmr.mgh.harvard.edu/fswiki/MatlabRuntime?action=AttachFile&do=get&target=runtime2012bLinux.tar.gz'
+
+
+
+
 miniconda_installation = 'curl https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh'
 
-#freesurfer_download_address = freesurfer71_download_address
+freesurfer_download_address = freesurfer71_centos7_download_address
 
 '''chmod +x Anaconda3-5
 ./Anaconda3-5
@@ -399,17 +405,17 @@ def SETUP_APP():
 
 def create_setup_cluster_file(cname, cuser, cmaindir, cscratch_dir, supervisor_ccri, pwd, file):
 
-    batch_file_header, batch_walltime_cmd, max_walltime, batch_output_cmd, pbs_file_FS_setup, avail_processes, max_nr_running_batches, submit_cmd = database.Commands_cluster_scheduler(cname,supervisor_ccri)
-    text4_scheduler = '","'.join(batch_file_header)
-    text_FS_scheduler = '","'.join(pbs_file_FS_setup)
-    ls_process_order = '","'.join(avail_processes)
+    #batch_file_header, batch_walltime_cmd, max_walltime, batch_output_cmd, pbs_file_FS_setup, avail_processes, max_nr_running_batches, submit_cmd = database.Commands_cluster_scheduler(cname,cuser, supervisor_ccri)
+    # text4_scheduler = '","'.join(batch_file_header)
+    # text_FS_scheduler = '","'.join(pbs_file_FS_setup)
+    # ls_process_order = '","'.join(avail_processes)
 
     py_file_header = ('#!/usr/bin/env python','# coding: utf-8')
     setup_file_content = ('import os','import shutil','\n''cmaindir=\"'+cmaindir+'\"',
                         '\n'
                         'pbs_files_and_content = {\'run.pbs\':(\'cd '+cmaindir+'\',\'python a/crun.py\')}',
-                        'pbs_file_header = (\"'+text4_scheduler+'\")',
-                        'pbs_file_FS_setup = (\"'+text_FS_scheduler+'\")',
+                        # 'pbs_file_header = (\"'+text4_scheduler+'\")',
+                        # 'pbs_file_FS_setup = (\"'+text_FS_scheduler+'\")',
                         '\n'
                         'if not os.path.exists(cmaindir+\'subjects/\'):','    os.makedirs(cmaindir+\'subjects/\')',
                         'if not os.path.exists(cmaindir+\'a/\'):','    os.makedirs(cmaindir+\'a/\')',
@@ -431,14 +437,14 @@ def create_setup_cluster_file(cname, cuser, cmaindir, cscratch_dir, supervisor_c
                         '        f.write(\'supervisor_ccri=\"'+supervisor_ccri+'\"\\n\')',
                         '        f.write(\'cmaindir=\"'+cmaindir+'\"\\n\')',
                         '        f.write(\'cscratch_dir=\"'+cscratch_dir+'\"\\n\')',
-                        '        f.write(\'text_4_scheduler=(\"'+text4_scheduler+'\")\\n\')',
-                        '        f.write(\'batch_walltime_cmd=(\"'+batch_walltime_cmd+'\")\\n\')',
-                        '        f.write(\'max_walltime=(\"'+max_walltime+'\")\\n\')',
-                        '        f.write(\'batch_output_cmd=(\"'+batch_output_cmd+'\")\\n\')',
-                        '        f.write(\'pbs_file_FS_setup=(\"'+text_FS_scheduler+'\")\\n\')',
-                        '        f.write(\'submit_cmd=(\"'+submit_cmd+'\")\\n\')',
-                        '        f.write(\'process_order='+ls_process_order+'\\n\')',
-                        '        f.write(\'max_nr_running_batches=(\"'+str(max_nr_running_batches)+'\")\\n\')',
+                        # '        f.write(\'text_4_scheduler=(\"'+text4_scheduler+'\")\\n\')',
+                        # '        f.write(\'batch_walltime_cmd=(\"'+batch_walltime_cmd+'\")\\n\')',
+                        # '        f.write(\'max_walltime=(\"'+max_walltime+'\")\\n\')',
+                        # '        f.write(\'batch_output_cmd=(\"'+batch_output_cmd+'\")\\n\')',
+                        # '        f.write(\'pbs_file_FS_setup=(\"'+text_FS_scheduler+'\")\\n\')',
+                        # '        f.write(\'submit_cmd=(\"'+submit_cmd+'\")\\n\')',
+                        # '        f.write(\'process_order='+ls_process_order+'\\n\')',
+                        # '        f.write(\'max_nr_running_batches=(\"'+str(max_nr_running_batches)+'\")\\n\')',
                         '\n'
                         'for file in pbs_files_and_content:',
                         '    with open(cmaindir+\'a/\'+file,\'w\') as f:',
@@ -461,7 +467,7 @@ def create_setup_cluster_file(cname, cuser, cmaindir, cscratch_dir, supervisor_c
                         'shutil.move(cmaindir+\'.license\', cmaindir+\'freesurfer/.license\')',
                         'if not os.path.exists(cmaindir+\'freesurfer/MCRv80\'):',
                         '    os.chdir(cmaindir+\'freesurfer\')',
-                        '    os.system(\'curl "'+matlab_runtime_download_address+'" -o "matlab_runtime.tar.gz" \')',
+                        '    os.system(\'curl "'+matlab_FS_install_cmd_long+'" -o "matlab_runtime.tar.gz" \')',
                         '    while not os.path.isfile(cmaindir+\'freesurfer/matlab_runtime.tar.gz\'):',
                         '        time.sleep(30)',
                         '    os.system(\'tar xvf matlab_runtime.tar.gz\')',

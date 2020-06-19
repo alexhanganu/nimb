@@ -392,7 +392,7 @@ def update_ls_subj2fs(SUBJECT_ID):
 
 # todo: transform into a dictionary
 
-def Commands_cluster_scheduler(cluster, supervisor_ccri):
+def Commands_cluster_scheduler(cluster, cuser, supervisor_ccri):
 
     # CEDAR-SimonFraser cedar.computecanada.ca
     if cluster == 'cedar':
