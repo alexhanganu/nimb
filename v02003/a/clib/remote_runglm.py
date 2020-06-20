@@ -3,6 +3,7 @@
 from os import system, listdir, makedirs, path, getcwd
 import shutil, linecache, sys
 
+
 class PerformGLM():
     def __init__(self, PATHglm, FREESURFER_HOME, SUBJECTS_DIR):
         self.SUBJECTS_DIR = SUBJECTS_DIR
@@ -164,7 +165,7 @@ def _GET_Groups(df, group_col, id_col):
         return groups, subjects_per_group
 
 
-    def make_py_f_subjects(GLM_dir, subjects_per_group):
+def make_py_f_subjects(GLM_dir, subjects_per_group):
         file = 'subjects_per_group.py'
         open(GLM_dir+file, 'w').close()
         with open(GLM_dir+file, 'a') as f:
@@ -350,8 +351,11 @@ class PrepareForGLM():
 
 
 
-if '__main__' == '__file__':
-    import pandas
+if __name__ == '__main__':
+    try:
+        import pandas, xlrd
+    except ImportError as e:
+        sys.exit(e)
 
     file_groups = 'datas_groupes_NPI_CNvsAD.xlsx'
     group_col = 'Group'
@@ -360,7 +364,9 @@ if '__main__' == '__file__':
     FREESURFER_HOME = '/home/lucaspsy/projects/def-hanganua/freesurfer'
     SUBJECTS_DIR = '/home/lucaspsy/projects/def-hanganua/fs-subjects'
 
-    df_file_groups = pandas.read.excel(file_groups)
+    print('doing GLM for the file:'+file_groups)
+
+    df_file_groups = pandas.read_excel(file_groups)
     groups, subjects_per_group = _GET_Groups(df_file_groups, group_col, id_col)
     print(group, subjects_per_group)
 
