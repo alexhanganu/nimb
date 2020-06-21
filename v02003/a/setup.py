@@ -37,8 +37,6 @@ freesurfer_download_address = freesurfer71_centos7_download_address
 echo "export PATH=~../anaconda_path/bin:$PATH >> $HOME/.bashrc"
 conda install -c conda-forge dcm2niix                                                                    
 pip install dcm2bids
-
-
 '''
 
 class setupcredentials():
@@ -357,7 +355,9 @@ def SETUP_APP():
         makedirs(MainFolder+'statistics/')
     if not os.path.exists(MainFolder+'statistics/stats/'):
         makedirs(MainFolder+'statistics/stats/')
-
+    if platform in ["linux", "linux2"]:
+        os.system(f"chmod -R 777 {MainFolder}")
+        # must use python3
     #!!!!!!!!!!! modules works only when soft imported. Otherwise - the answer is showing that module is missing.
     if platform == 'win32':
         if 'version_dotcom_Net_Framework < 4.6' not in modules:
@@ -560,8 +560,11 @@ def SETUP_CLUSTER(cname, cuser, caddress, cmaindir, cscratch_dir, cpw, superviso
 def SETUP_LOCAL(local_maindir):
     print('SETTING UP LOCAL')
     pwd = getcwd().replace(path.sep, '/')+'/'
-    system('sudo chmod 777 '+local_maindir)
-
+    system('sudo chmod 777 '+local_maindir) # why sudo here?
+    # check if sudo is needed, what happens if user is not in sudo group ==> script failed
+    # if sudo fail, run the normal command, for now, not check if command fails
+    system('chmod 777 ' + local_maindir)  # why sudo here?
+    # notes: default mode of makedir is 777
     if not path.exists(local_maindir+'a/'):
         makedirs(local_maindir+'a/')
     if not path.exists(local_maindir+'a/lib/'):
@@ -578,6 +581,12 @@ def SETUP_LOCAL(local_maindir):
         open(local_maindir+'a/__init__.py','w').close()
         with open(local_maindir+'a/__init__.py','a') as f:
             f.write('__all__ = [\"local_run, local_runfs\"]')
+    # force the mode=777 recursive for all sub-folders
+    # todo: check the needed of this chmod +R 777 later within the documents
+    # just make sure its mode is 777 for all files, in case of fire!
+    system('sudo chmod -R 777 ' + local_maindir)
+    # in case that the user is not in sudo group, run again
+    system('chmod -R 777 ' + local_maindir)
     shutil.copy('a/lib/local_run.py', local_maindir+'a/local_run.py')
     shutil.copy('a/lib/local_runfs.py', local_maindir+'a/local_runfs.py')
     shutil.copy('a/lib/local_db.py', local_maindir+'a/local_db.py')
