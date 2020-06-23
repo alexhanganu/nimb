@@ -1,5 +1,20 @@
 #!/usr/bin/env python
 # coding: utf-8
+# 2020.06.23
+
+"""
+files that must be copied to the cluster:
+crun.py, crunfs.py, cdb.py, cwalltime.py, run_masks.py, mri_info
+
+For the license: USER provides the license details in the GUI and they are 
+added in this script.
+"""
+
+fs_license = ("hanganu.alexandru@gmail.com",
+"11009",
+"*C1QZcOiGGrPE",
+"FSUt0BPqKfdQc",)
+
 from os import path, makedirs, chdir, system, remove
 import os, shutil, time
 
@@ -82,6 +97,9 @@ with open(path.join(cmaindir,'a','var.py'),'w') as f:
 
     f.write("    return cuser, nimb_dir, nimb_scratch_dir, SUBJECTS_DIR, processed_SUBJECTS_DIR, dir_new_subjects, export_FreeSurfer_cmd, source_FreeSurfer_c$\n")
 
+with open(path.join(cmaindir,'freesurfer','.license'),'w') as f:
+    for line in fs_license:
+        f.write(line+'\n')
 
 
 
