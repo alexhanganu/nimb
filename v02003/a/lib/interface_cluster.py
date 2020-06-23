@@ -4,7 +4,7 @@
 from os import system, path, remove
 from . import database
 from sys import platform
-import SSHHelper
+from utility import SSHHelper
 
 freesurfer = database._get_folder('Main')
 

@@ -7,8 +7,8 @@ try:
     from os import lchmod
 except ImportError:
     pass
-import shutil, time
-from SSHHelper import *
+import shutil
+from utility.SSHHelper import *
 import pathlib
 from a.lib import database
 

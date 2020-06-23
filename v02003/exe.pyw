@@ -1,13 +1,12 @@
 
 # 2020 Jan 10
 # modules to install: pandas, scipy, glob, shutil, openpyxl, xlrd(data_processing_local.chklog)
-import os
 from a.build import build
 from a.lib import interface_cluster
 from a.lib import database
-import SSHHelper
-from tkinter import Tk, Frame, ttk, Label, Menu, N, W, E, S, StringVar, HORIZONTAL, VERTICAL
-from sys import platform, exit, version_info
+from utility import SSHHelper
+from tkinter import Tk, ttk, Menu, N, W, E, S, StringVar, HORIZONTAL
+from sys import platform, version_info
 
 if not version_info[0] >= 3:
     from os import system
@@ -184,15 +183,13 @@ def run_processing_on_cluster_2():
     host_name = clusters[list(clusters)[0]]['remote_address']
 
     print("Start running the the command via SSH in cluster: python a/crun.py")
-    SSHHelper.running_command_ssh_2(host_name=host_name,user_name=user_name,
+    SSHHelper.running_command_ssh_2(host_name=host_name, user_name=user_name,
                                     user_password=user_password,
                                     cmd_run_crun_on_cluster=cmd_run_crun_on_cluster)
 
 def run(Project):
     print("Project name: " + Project)
     print(Project)
-    from a.lib.data_processing_local import cp2cluster
-    from a.lib.data_processing_local import cpFromCluster
     status.set('Copying data to cluster ...block for now')
     # cp2cluster()
     status.set('Cluster analysis started')
@@ -269,7 +266,6 @@ clusters = database._get_Table_Data('Clusters','all')
 cred = ['not set']
 ####
 #clusters = database._get_credentials('all')
-from a.lib.interface_cluster import check_cluster_status
 # cuser = clusters[0][1]
 # caddress = clusters[0][2]
 # cpw = clusters[0][5]
