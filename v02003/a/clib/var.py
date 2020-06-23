@@ -1,5 +1,5 @@
 #!/bin/python
-max_nr_running_batches = 100 #seems to be taking up to 45
+max_nr_running_batches = 100 #seems to be taking up to 100
 cname = 'cedar'
 cusers_list = ['hanganua','hvt','lucaspsy','hiver85']
 chome_dir = '/home'
@@ -21,24 +21,12 @@ archive_processed = False
 masks = []
 
 
-from os import path, getuid, getenv
+from os import path
+from cget_username import _get_username
 
 def get_vars():
 
-    cuser = ''
-    try:
-        import pwd
-        user = pwd.getpwuid( getuid() ) [0]
-    except ImportError:
-        print(e)
-    if not cuser:
-        for user in cusers_list:
-            if user in getenv('HOME'):
-                cuser = user
-                break
-    else:
-        print('ERROR - user not defined')
-
+    cuser = _get_username()
 
     nimb_dir=path.join(chome_dir,cuser,cprojects_dir,'a/')
     dir_new_subjects=path.join(chome_dir,cuser,cprojects_dir,'subjects/')

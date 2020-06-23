@@ -4,7 +4,7 @@
 
 """
 files that must be copied to the cluster:
-crun.py, crunfs.py, cdb.py, cwalltime.py, run_masks.py, mri_info
+crun.py, crunfs.py, cdb.py, cwalltime.py, run_masks.py, mri_info, cget_username.py
 
 For the license: USER provides the license details in the GUI and they are 
 added in this script.
@@ -67,7 +67,6 @@ with open(path.join(cmaindir,'a','var.py'),'w') as f:
     f.write('freesurfer_version = 7\n')
     f.write('archive_processed = False\n')
     f.write('masks = []\n')
-
     f.write('\n')
     f.write('from os import path, getuid, getenv\n')
     f.write('\n')
@@ -188,5 +187,8 @@ if not path.exists(path.join(cmaindir,'miniconda3')):
     system('./miniconda3/bin/conda config --set report_errors false')
     system('./miniconda3/bin/conda install -y dcm2niix')
     system('./miniconda3/bin/conda install -y dcm2bids')
+    system('./miniconda3/bin/conda install -y pandas')
+    system('./miniconda3/bin/conda install -y numpy')
+    system('./miniconda3/bin/conda install -y xlrd')
     system('./miniconda3/bin/conda install -y paramiko')
 print('SETUP FINISHED')
