@@ -446,6 +446,6 @@ if __name__ == "__main__":
     if True:
         test()
     if False:
-        json_path = '../new_subjects.json'
+        json_path = '../docs/new_subjects.json'
         upload_all_subjects(subjects_json_file = json_path, subjects_folder="/home/hvt/test",
                         a_folder ='/home/hvt/projects/def-hanganua/a')
