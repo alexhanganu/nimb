@@ -15,10 +15,11 @@ fs_license = ("hanganu.alexandru@gmail.com",
 "*C1QZcOiGGrPE",
 "FSUt0BPqKfdQc",)
 
-from os import path, makedirs, chdir, system, remove
-import os, shutil, time
 
 cmaindir = "/home/mellahs/projects/def-bellevil/"
+
+
+
 cscratch_dir = "/scratch"
 
 pbs_file_header = (
@@ -28,6 +29,14 @@ pbs_file_header = (
             '#SBATCH --time=03:00:00',
             '#SBATCH --output=/scratch/mellahs/a_tmp/running_output.out')
 python_cmd = 'module load python/3.8.2'
+
+
+
+
+
+from os import path, makedirs, chdir, system, remove
+import os, shutil, time
+
 export_FreeSurfer_cmd = 'export FREESURFER_HOME='+path.join(cmaindir,'freesurfer')
 source_FreeSurfer_cmd = '$FREESURFER_HOME/SetUpFreeSurfer.sh'
 
@@ -40,9 +49,11 @@ for subDIR in (path.join(cmaindir,'subjects'),
                 path.join(cmaindir,'subjects_processed')):
     if not path.exists(subDIR):
         makedirs(subDIR)
-for file in ('crun.py','crunfs.py','cdb.py','cwalltime.py','run_masks.py','mri_info'):
+for file in ('crun.py','crunfs.py','cdb.py','cwalltime.py','run_masks.py','mri_info', 'cget_username.py'):
     if path.exists(path.join(cmaindir,file)):
         shutil.move(path.join(cmaindir,file), path.join(cmaindir,'a',file))
+    else:
+        print(file,' is missing')
 
 if not path.exists(path.join(cmaindir,'a','__init__.py')):
     open(path.join(cmaindir,'a','__init__.py'),'w').close()
@@ -68,23 +79,12 @@ with open(path.join(cmaindir,'a','var.py'),'w') as f:
     f.write('archive_processed = False\n')
     f.write('masks = []\n')
     f.write('\n')
-    f.write('from os import path, getuid, getenv\n')
+    f.write('from os import path\n')
+    f.write('from cget_username import _get_username\n')
     f.write('\n')
     f.write('def get_vars():\n')
     f.write('\n')
-    f.write('    cuser = ''\n')
-    f.write('    try:\n')
-    f.write('        import pwd\n')
-    f.write('        user = pwd.getpwuid( getuid() ) [0]\n')
-    f.write('    except ImportError:\n')
-    f.write('        print(e)\n')
-    f.write('    if not cuser:\n')
-    f.write('        for user in cusers_list:\n')
-    f.write("            if user in getenv('HOME'):\n")
-    f.write('                cuser = user\n')
-    f.write('                break\n')
-    f.write('    else:\n')
-    f.write("        print('ERROR - user not defined')\n")
+    f.write('    cuser = _get_username()\n')
     f.write('\n')
     f.write("    nimb_dir=path.join(cmaindir,'a/')\n")
     f.write("    dir_new_subjects=path.join(cmaindir,'subjects/')\n")
@@ -95,11 +95,6 @@ with open(path.join(cmaindir,'a','var.py'),'w') as f:
     f.write("    source_FreeSurfer_cmd = '$FREESURFER_HOME/SetUpFreeSurfer.sh'\n")
 
     f.write("    return cuser, nimb_dir, nimb_scratch_dir, SUBJECTS_DIR, processed_SUBJECTS_DIR, dir_new_subjects, export_FreeSurfer_cmd, source_FreeSurfer_c$\n")
-
-with open(path.join(cmaindir,'freesurfer','.license'),'w') as f:
-    for line in fs_license:
-        f.write(line+'\n')
-
 
 
     for file in pbs_files_and_content:
@@ -117,6 +112,11 @@ if not path.exists(path.join(cmaindir,'freesurfer')):
         time.sleep(1000)
     system('tar xvf freesurfer_installation.tar.gz')
     remove('freesurfer_installation.tar.gz')
+
+    with open(path.join(cmaindir,'freesurfer','.license'),'w') as f:
+        for line in fs_license:
+            f.write(line+'\n')
+
     chdir(path.join(cmaindir,'freesurfer','bin'))
 
     remove('run_SegmentSubject.sh')

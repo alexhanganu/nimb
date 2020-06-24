@@ -9,9 +9,9 @@ class PerformGLM():
         self.SUBJECTS_DIR = SUBJECTS_DIR
         for file in listdir(PATHglm):
             if '.py' in file:
-                shutil.copy(PATHglm+file, getcwd()+'/'+file)
+                shutil.copy(path.join(PATHglm,file), path.join(getcwd(),file))
         self.PATH = PATHglm
-        self.glmPATH = PATHglm+'glm/'
+        self.glmPATH = path.join(PATHglm,'glm/')
         if not path.isdir(self.glmPATH):
             makedirs(self.glmPATH)
         try:
@@ -69,7 +69,7 @@ class PerformGLM():
                                         # self.make_images_results_fdr(hemi, glmdir, contrast.replace('.mtx',''), 'sig.mgh', 3.0)
 
     def check_maxvox(self, glmdir, contrast_name):
-        val = [i.strip() for i in open(glmdir+'/'+contrast_name+'/maxvox.dat').readlines()][0].split()[0]
+        val = [i.strip() for i in open(path.join(glmdir,contrast_name,'maxvox.dat')).readlines()][0].split()[0]
         if float(val) > 3.0 or float(val) < -3.0:
             return True
         else:
@@ -167,8 +167,8 @@ def _GET_Groups(df, group_col, id_col):
 
 def make_py_f_subjects(GLM_dir, subjects_per_group):
         file = 'subjects_per_group.py'
-        open(GLM_dir+file, 'w').close()
-        with open(GLM_dir+file, 'a') as f:
+        open(path.join(GLM_dir,file), 'w').close()
+        with open(path.join(GLM_dir,file), 'a') as f:
             f.write('#!/bin/python/\nsubjects_per_group = {')
             for group in subjects_per_group:
                 f.write('\''+group+'\':[')
@@ -184,12 +184,12 @@ class PrepareForGLM():
     #https://surfer.nmr.mgh.harvard.edu/fswiki/FsgdExamples
     def __init__(self, path_save_fsgd, file_clinical_data, id_col, group_col):
         self.PATH = path_save_fsgd
-        self.PATHfsgd = self.PATH+'fsgd/'
-        self.PATHmtx = self.PATH+'contrasts/'
-        Make_Dirs(self.PATHfsgd)
-        Make_Dirs(self.PATHmtx)
+        self.PATHfsgd = path.join(self.PATH,'fsgd')
+        self.PATHmtx = path.join(self.PATH,'contrasts')
+        if not path.isdir(self.PATHfsgd): makedirs(self.PATHfsgd)
+        if not path.isdir(self.PATHmtx): makedirs(self.PATHmtx)
         print(self.PATHfsgd)
-        shutil.copy(file_clinical_data, self.PATH+file_clinical_data[file_clinical_data.rfind('/')+1:])
+        shutil.copy(file_clinical_data, path.join(self.PATH,file_clinical_data[file_clinical_data.rfind('/')+1:]))
         self.group_col = group_col
         d_init = pd.read_excel(file_clinical_data, sheet_name = 'data').to_dict()
         self.d_subjid = {}
@@ -242,16 +242,16 @@ class PrepareForGLM():
 
     def make_fsgd_g1g2v0(self):
         file = 'g2v0'+'_'+self.ls_groups[0]+'_'+self.ls_groups[1]+'.fsgd'
-        open(self.PATHfsgd+file, 'w').close()
-        with open(self.PATHfsgd+file, 'a') as f:
+        open(path.join(self.PATHfsgd,file), 'w').close()
+        with open(path.join(self.PATHfsgd,file), 'a') as f:
             f.write('GroupDescriptorFile 1\nClass '+self.ls_groups[0]+' plus blue\nClass '+self.ls_groups[1]+' circle green\n')
             for subjid in self.d_subjid:
                 f.write('Input '+subjid+' '+self.d_subjid[subjid][self.group_col]+'\n')
         self.files_glm['g2v0']['fsgd'].append(file)
         # for group in self.ls_groups:
             # file = 'g1v0'+'_'+group+'.fsgd'
-            # open(self.PATHfsgd+file, 'w').close()
-            # with open(self.PATHfsgd+file, 'a') as f:
+            # open(path.join(self.PATHfsgd,file), 'w').close()
+            # with open(path.join(self.PATHfsgd,file), 'a') as f:
                 # f.write('GroupDescriptorFile 1\nClass Main\n')
                 # for subjid in self.d_subjid:
                     # if self.d_subjid[subjid][self.group_col] == group:
@@ -270,8 +270,8 @@ class PrepareForGLM():
             for variable in self.ls_vars_stats:
                 if not self.check_var_zero(variable, group):
                     file = 'g1v1'+'_'+group+'_'+variable+'.fsgd'
-                    open(self.PATHfsgd+file, 'w').close()
-                    with open(self.PATHfsgd+file, 'a') as f:
+                    open(path.join(self.PATHfsgd,file), 'w').close()
+                    with open(path.join(self.PATHfsgd,file), 'a') as f:
                         f.write('GroupDescriptorFile 1\nClass Main\nVariables '+variable+'\n')
                         for subjid in self.d_subjid:
                             if self.d_subjid[subjid][self.group_col] == group:
@@ -286,8 +286,8 @@ class PrepareForGLM():
                     for variable2 in self.ls_vars_stats[self.ls_vars_stats.index(variable)+1:]:
                         if not self.check_var_zero(variable2, group):
                             file = 'g1v2'+'_'+group+'_'+variable+'_'+variable2+'.fsgd'
-                            open(self.PATHfsgd+file, 'w').close()
-                            with open(self.PATHfsgd+file, 'a') as f:
+                            open(path.join(self.PATHfsgd,file), 'w').close()
+                            with open(path.join(self.PATHfsgd,file), 'a') as f:
                                 f.write('GroupDescriptorFile 1\nClass Main\nVariables '+variable+' '+variable2+'\n')
                                 for subjid in self.d_subjid:
                                     if self.d_subjid[subjid][self.group_col] == group:
@@ -298,8 +298,8 @@ class PrepareForGLM():
         for variable in self.ls_vars_stats:
             if not self.check_var_zero(variable, self.ls_groups[0]) and not self.check_var_zero(variable, self.ls_groups[1]):
                 file = 'g2v1'+'_'+self.ls_groups[0]+'_'+self.ls_groups[1]+'_'+variable+'.fsgd'
-                open(self.PATHfsgd+file, 'w').close()
-                with open(self.PATHfsgd+file, 'a') as f:
+                open(path.join(self.PATHfsgd,file), 'w').close()
+                with open(path.join(self.PATHfsgd,file), 'a') as f:
                     f.write('GroupDescriptorFile 1\nClass '+self.ls_groups[0]+' plus blue\nClass '+self.ls_groups[1]+' circle green\nVariables ')
                     f.write(variable+'\n')
                     for subjid in self.d_subjid:
@@ -308,8 +308,8 @@ class PrepareForGLM():
 
     def make_qdec_fsgd_g2(self):
         file = 'qdec_g2.fsgd'
-        open(self.PATH+file, 'w').close()
-        with open(self.PATH+file, 'a') as f:
+        open(path.join(self.PATH,file), 'w').close()
+        with open(path.join(self.PATH,file), 'a') as f:
             f.write('fsid group ')
             for variable in self.ls_vars_stats:
                 if not self.check_var_zero(variable, self.ls_groups[0]) and not self.check_var_zero(variable, self.ls_groups[1]):
@@ -325,8 +325,8 @@ class PrepareForGLM():
         for contrast_type in self.contrasts:
             for contrast_name in self.contrasts[contrast_type]:
                 file = contrast_type+'_'+contrast_name
-                open(self.PATHmtx+file, 'w').close()
-                with open(self.PATHmtx+file, 'a') as f:
+                open(path.join(self.PATHmtx,file), 'w').close()
+                with open(path.join(self.PATHmtx,file), 'a') as f:
                     f.write(self.contrasts[contrast_type][contrast_name][0])
                 self.files_glm[contrast_type]['mtx'].append(file)
                 self.files_glm[contrast_type]['mtx_explanation'].append(self.contrasts[contrast_type][contrast_name][1])
@@ -357,9 +357,9 @@ if __name__ == '__main__':
     except ImportError as e:
         sys.exit(e)
 
-    file_groups = 'datas_groupes_NPI_CNvsAD.xlsx'
+    file_groups = '/home/lucaspsy/projects/def-hanganua/adni/datas_groupes_NPI_CNvsAD.xlsx'
     group_col = 'Group'
-    id_col = 'RID'
+    id_col = 'MRI_subjects'
     GLM_dir = '/home/lucaspsy/projects/def-hanganua/adni/glm'
     FREESURFER_HOME = '/home/lucaspsy/projects/def-hanganua/freesurfer'
     SUBJECTS_DIR = '/home/lucaspsy/projects/def-hanganua/fs-subjects'
@@ -368,13 +368,13 @@ if __name__ == '__main__':
 
     df_file_groups = pandas.read_excel(file_groups)
     groups, subjects_per_group = _GET_Groups(df_file_groups, group_col, id_col)
-    print(group, subjects_per_group)
+    print(groups, subjects_per_group)
 
-    print('\nSTEP 1 of 7: making file with subjects')
+    print('\nSTEP 1 of 3: making file with subjects')
     make_py_f_subjects(GLM_dir, subjects_per_group)
 
-    print('\nSTEP 2 of 7: making files for GLM')
+    print('\nSTEP 2 of 3: making files for GLM')
     PrepareForGLM(GLM_dir, file_groups, id_col, group_col)
 
-    print('\nSTEP 2 of 7: running the glm')
+    print('\nSTEP 3 of 3: running the glm')
     PerformGLM(PATH_4glm, FREESURFER_HOME, SUBJECTS_DIR)
