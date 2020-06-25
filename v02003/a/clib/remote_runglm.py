@@ -1,4 +1,6 @@
 #!/bin/python
+# 2020.06.25
+
 
 from os import system, listdir, makedirs, path, getcwd
 import shutil, linecache, sys
@@ -137,7 +139,7 @@ class PerformGLM():
     #     system('tksurfer fsaverage '+hemi+' inflated -overlay '+glmdir+'/'+contrast_name+'/'+file+' -fthresh '+str(thresh)+' -tcl scr.tcl')
 
     def cluster_stats_to_file(self, analysis_name, sum_mc_f, contrast_name, direction, explanation):
-        file = self.PATH+'results/cluster_stats.log'
+        file = path.join(self.PATH,'results','cluster_stats.log')
         if not path.isfile(file):
             open(file,'w').close()
         ls = list()
@@ -285,10 +287,10 @@ class PrepareForGLM():
                 if not self.check_var_zero(variable, group):
                     for variable2 in self.ls_vars_stats[self.ls_vars_stats.index(variable)+1:]:
                         if not self.check_var_zero(variable2, group):
-                            file = 'g1v2'+'_'+group+'_'+variable+'_'+variable2+'.fsgd'
+                            file = 'g1v2'+'_'+group+'_'+str(variable)+'_'+str(variable2)+'.fsgd'
                             open(path.join(self.PATHfsgd,file), 'w').close()
                             with open(path.join(self.PATHfsgd,file), 'a') as f:
-                                f.write('GroupDescriptorFile 1\nClass Main\nVariables '+variable+' '+variable2+'\n')
+                                f.write('GroupDescriptorFile 1\nClass Main\nVariables '+str(variable)+' '+str(variable2)+'\n')
                                 for subjid in self.d_subjid:
                                     if self.d_subjid[subjid][self.group_col] == group:
                                         f.write('Input '+subjid+' Main '+str(self.d_subjid[subjid][variable])+' '+str(self.d_subjid[subjid][variable2])+'\n')
@@ -353,20 +355,21 @@ class PrepareForGLM():
 
 if __name__ == '__main__':
     try:
-        import pandas, xlrd
+        import pandas as pd
+        import xlrd
     except ImportError as e:
         sys.exit(e)
 
-    file_groups = '/home/lucaspsy/projects/def-hanganua/adni/datas_groupes_NPI_CNvsAD.xlsx'
+    file_groups = '/home/lucaspsy/projects/def-hanganua/adni/datas_CNvsAD.xlsx'
     group_col = 'Group'
     id_col = 'MRI_subjects'
     GLM_dir = '/home/lucaspsy/projects/def-hanganua/adni/glm'
     FREESURFER_HOME = '/home/lucaspsy/projects/def-hanganua/freesurfer'
     SUBJECTS_DIR = '/home/lucaspsy/projects/def-hanganua/fs-subjects'
 
-    print('doing GLM for the file:'+file_groups)
+    print('doing GLM for file:'+file_groups)
 
-    df_file_groups = pandas.read_excel(file_groups)
+    df_file_groups = pd.read_excel(file_groups)
     groups, subjects_per_group = _GET_Groups(df_file_groups, group_col, id_col)
     print(groups, subjects_per_group)
 
@@ -377,4 +380,4 @@ if __name__ == '__main__':
     PrepareForGLM(GLM_dir, file_groups, id_col, group_col)
 
     print('\nSTEP 3 of 3: running the glm')
-    PerformGLM(PATH_4glm, FREESURFER_HOME, SUBJECTS_DIR)
+    PerformGLM(GLM_dir, FREESURFER_HOME, SUBJECTS_DIR)
