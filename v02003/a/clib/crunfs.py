@@ -7,7 +7,7 @@ https://surfer.nmr.mgh.harvard.edu/fswiki/QATools
 
 '''
 
-SUBMIT = True
+SUBMIT = False
 print('SUBMITTING is: ', SUBMIT)
 
 from os import listdir, path, mkdir, system

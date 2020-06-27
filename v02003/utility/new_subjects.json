@@ -1,0 +1,44 @@
+{
+    "PPMI_10874": {
+        "ses-1": {
+            "anat": {
+                "t1": [
+                    "D:/PROGRAMMING/Alex/nimb/mri_unzipped/PPMI_10874/axial_spgr/2014-09-05_10_36_20.0/S235825/PPMI_10874_MR_axial_spgr_br_raw_20141105114755569_6_S235825_I450998.dcm"
+                ],
+                "flair": [
+                    "D:/PROGRAMMING/Alex/nimb/mri_unzipped/PPMI_10874/Ax_T2_FLAIR/2014-09-05_10_36_20.0/S235826/PPMI_10874_MR_Ax_T2_FLAIR__br_raw_20141105114756022_5_S235826_I450999.dcm"
+                ],
+                "t2": [
+                    "D:/PROGRAMMING/Alex/nimb/mri_unzipped/PPMI_10874/_AX_FSE_T2/2014-09-05_10_36_20.0/S235827/PPMI_10874_MR__AX_FSE_T2_br_raw_20141105114755241_5_S235827_I451001.dcm"
+                ]
+            }
+        }
+    },
+    "PPMI_12224": {
+        "ses-1": {
+            "anat": {
+                "t1": [
+                    "D:/PROGRAMMING/Alex/nimb/mri_unzipped/PPMI_12224/T1/2013-10-28_13_03_17.0/S532364/PPMI_12224_MR_T1_br_raw_20170201113013461_28_S532364_I814548.dcm"
+                ],
+                "t2": [
+                    "D:/PROGRAMMING/Alex/nimb/mri_unzipped/PPMI_12224/T2/2013-10-28_13_03_17.0/S532362/PPMI_12224_MR_T2_br_raw_20170201113015431_50_S532362_I814546.dcm"
+                ]
+            }
+        }
+    },
+    "PPMI_12593": {
+        "ses-1": {
+            "anat": {
+                "t1": [
+                    "D:/PROGRAMMING/Alex/nimb/mri_unzipped/PPMI_12593/axial_spgr/2014-02-24_15_01_48.0/S228525/PPMI_12593_MR_axial_spgr_br_raw_20140825110307994_38_S228525_I440672.dcm"
+                ],
+                "flair": [
+                    "D:/PROGRAMMING/Alex/nimb/mri_unzipped/PPMI_12593/Ax_T2_FLAIR/2014-02-24_15_01_48.0/S228521/PPMI_12593_MR_Ax_T2_FLAIR__br_raw_20140825110307026_47_S228521_I440666.dcm"
+                ],
+                "t2": [
+                    "D:/PROGRAMMING/Alex/nimb/mri_unzipped/PPMI_12593/_AX_FSE_T2/2014-02-24_15_01_48.0/S228522/PPMI_12593_MR__AX_FSE_T2_br_raw_20140825110306744_4_S228522_I440668.dcm"
+                ]
+            }
+        }
+    }
+}
