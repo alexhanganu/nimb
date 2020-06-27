@@ -1,18 +1,9 @@
 #!/bin/python
-<<<<<<< HEAD
 
 '''following variables are set by the user in the GUI or in this file
 current setup is constructed for Compute Canada clusters'''
 
-max_nr_running_batches = 100 #seems to be taking up to 100
-=======
 max_nr_running_batches = 5 #seems to be taking up to 100
-cname = 'cedar'
-cusers_list = ['hanganua','hvt','lucaspsy','hiver85']
-chome_dir = '/home'
-cprojects_dir = 'projects/def-hanganua'
-cscratch_dir = '/scratch'
->>>>>>> d6c62f17c5c9a0c72ea123f94348643b443268d8
 process_order = ['registration','autorecon1','autorecon2','autorecon3','qcache','brstem','hip','tha']
 supervisor_account = 'def-hanganua'
 
