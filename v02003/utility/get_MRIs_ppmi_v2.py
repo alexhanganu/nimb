@@ -12,6 +12,7 @@
 project = 'ppmi'
 
 from os import path, listdir, getenv, walk
+from collections import defaultdict
 from sys import platform
 if platform == 'linux' or platform == 'linux2':
 	path_home = getenv('HOME')+'/projects/def-hanganua/'+project
@@ -34,7 +35,8 @@ print('PATH_HOME is: ',path_home)
 
 #f_with_downloaded_ids = '/materials/1.ls_subjects_downloaded.txt' # file with id of the downloaded participants
 if platform == 'linux' or platform == 'linux2' :
-	f_new_subjects = '/home/hvt/projects/def-hanganua/hvt_ppmi_tmp' + '/new_subjects.json'
+	#f_new_subjects = '/home/hvt/projects/def-hanganua/hvt_ppmi_tmp' + '/new_subjects.json'
+	f_new_subjects = getenv('HOME') + '/projects/def-hanganua/a' + '/new_subjects.json'
 	logf = path_scratch+'/log_'+project+'_'+str(time.strftime('%Y%m%d_%H_%M',time.localtime()))+'.txt'
 	open(logf,'w')
 if platform == 'darwin':
@@ -92,17 +94,46 @@ def validate_if_date(date_text):
 
 
 
+# def get_ls_sessions(ls):
+# 	d_paths = {}
+# 	ls_sessions = list()
+#
+# 	for mr_path in ls:
+# 		for date in mr_path.split('/')[2:]:
+# 			if validate_if_date(date):
+# 				d_paths[date] = mr_path
+# 				if date not in ls_sessions:
+# 					ls_sessions.append(date)
+# 	return ls_sessions, d_paths
+
+# Kp_note:
+# Current: Extract 1 path by day
+# -> Output: Only get the first path found and skip other types in the same day
+# New: Add Extract more path by day + type
 def get_ls_sessions(ls):
-	d_paths = {}
+	# add types
+	mr_types = {'t1': ['t1', 'spgr', 'rage', ],
+				'flair': ['flair', ],
+				't2': ['t2', ],
+				'dwi': ('hardi', 'dti', 'diffus',),
+				'rsfmri': ['resting_state_fmri', 'rsfmri', ],
+				'fieldmap': ['field_map', 'field_mapping', 'fieldmap', ]}
+	d_paths = defaultdict(list)
 	ls_sessions = list()
+
 	for mr_path in ls:
+		# add date to sessions
 		for date in mr_path.split('/')[2:]:
 			if validate_if_date(date):
-				d_paths[date] = mr_path
 				if date not in ls_sessions:
-					ls_sessions.append(date)
+		 			ls_sessions.append(date)
+				break
+		# add paths by date and type
+		for mr_name_ls in mr_types.values():
+			for mr_name in mr_name_ls:
+				if mr_name.lower() in mr_path.lower():
+					d_paths[date].append(mr_path)
 	return ls_sessions, d_paths
-
 
 def classify_by_sessions(ls):
 	d = {}
@@ -124,14 +155,18 @@ def classify_by_sessions(ls):
 	return d
 
 
+
 def make_dict_sessions_with_paths(d_paths, d_sessions):
 	d_ses_paths = {}
+
 	for ses in d_sessions:
 		d_ses_paths[ses] = list()
 		for date in d_sessions[ses]:
-			if d_paths[date] not in d_ses_paths[ses]:
-				d_ses_paths[ses].append(d_paths[date])
+			for path in d_paths[date]:
+				if path not in d_ses_paths[ses]:
+					d_ses_paths[ses].append(path)
 	return d_ses_paths
+
 
 
 def get_MR_types(mr_path):

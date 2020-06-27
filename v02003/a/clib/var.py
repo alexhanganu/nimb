@@ -1,5 +1,5 @@
 #!/bin/python
-max_nr_running_batches = 100 #seems to be taking up to 100
+max_nr_running_batches = 5 #seems to be taking up to 100
 cname = 'cedar'
 cusers_list = ['hanganua','hvt','lucaspsy','hiver85']
 chome_dir = '/home'
