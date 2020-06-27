@@ -1,16 +1,13 @@
 #!/bin/python
-# 2020.06.16
+# 2020.06.26
 
 from os import path, listdir, remove, getenv, rename, mkdir, environ, system
-from var import process_order, long_name, base_name, cusers_list
+from var import process_order, long_name, base_name, cusers_list, cuser, nimb_dir, nimb_scratch_dir, SUBJECTS_DIR
 import time, shutil
-import var
 
 environ['TZ'] = 'US/Eastern'
 time.tzset()
 
-
-cuser, nimb_dir, nimb_scratch_dir, SUBJECTS_DIR, _, _, _, _ = var.get_vars()
 
 
 def Get_DB():
@@ -419,7 +416,6 @@ def get_batch_jobs_status():
         return jobs
 
 
-    from var import cname
     import subprocess
 
     jobs = dict()
@@ -444,7 +440,6 @@ def get_diskusage_report():
         return diskusage
 
 
-    from var import cname
     import subprocess
 
     diskusage = dict()

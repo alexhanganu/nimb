@@ -1,5 +1,5 @@
 #!/bin/python
-# 2020.06.15
+# 2020.06.26
 
 from os import path, listdir, remove, rename, system, chdir, environ
 try:
@@ -7,14 +7,13 @@ try:
 except ImportError as e:
     cdb.Update_status_log(e)
 import time, shutil
-from var import cscratch_dir, max_nr_running_batches, process_order, base_name, DO_LONG, freesurfer_version, batch_walltime, submit_cmd
-import crunfs, cdb, cwalltime, var
+from var import cscratch_dir, max_nr_running_batches, process_order, base_name, DO_LONG, freesurfer_version, batch_walltime, submit_cmd, nimb_dir, SUBJECTS_DIR, processed_SUBJECTS_DIR
+import crunfs, cdb, cwalltime
 from cbuild_stamp import nimb_version
 
 environ['TZ'] = 'US/Eastern'
 time.tzset()
 
-_, nimb_dir, _, SUBJECTS_DIR , processed_SUBJECTS_DIR, _, _ , _ = var.get_vars()
 
 
 def get_len_Queue_Running():

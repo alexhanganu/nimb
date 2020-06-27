@@ -678,3 +678,31 @@ def SETUP_LOCAL(local_maindir):
     #system('make -j 4')
     #system('curl https://github.com/stnava/ANTs/tarball/master -o ants.tar.zip')
     print('FINISHED SETTING UP LOCAL')
+
+
+
+
+'''In order to setup Tractoflow on the cluster, singularity is needed;
+on cedar singularity does not allow installation
+saying there is not sudo
+probably Tractflow can be installed and run only on a local with sudo'''
+
+# print('TRYING to setup TractoFlow for DWI analysis')
+# from os import system
+# def chk(module):
+#     system('module spider '+module+' >> tmp')
+#     res = open('tmp','r').readlines()
+#     remove('tmp')
+#     for val in res:
+#         if 'module spider '+module in val:
+#             line = val.strip('\n')
+#             return line.split(' ')[-1]
+
+# module_v = chk_if_module_present('singularity')
+# if module_v:
+#     chdir(cmaindir)
+    # system('module load '+module_v)
+    # system('wget http://scil.usherbrooke.ca/containers_list/tractoflow_2.1.0_feb64b9_2020-05-29.img')
+    # system('git clone https://github.com/scilus/containers-tractoflow.git')
+    # system('singularity build singularity_name.img containers-tractoflow/singularity_tractoflow.def')
+

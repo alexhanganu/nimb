@@ -10,32 +10,38 @@ For the license: USER provides the license details in the GUI and they are
 added in this script.
 """
 
+account_project = "def-bellevil"
+user = 'mellahs'
+
+
+projects_dir = path.join("projects",account_project)
+
 fs_license = ("hanganu.alexandru@gmail.com",
 "11009",
 "*C1QZcOiGGrPE",
 "FSUt0BPqKfdQc",)
 
 
-cmaindir = "/home/mellahs/projects/def-bellevil/"
+from os import path, makedirs, chdir, system, remove
+import os, shutil, time
 
+cmaindir = path.join(path.expanduser('~'),projects_dir)
 
 
 cscratch_dir = "/scratch"
 
 pbs_file_header = (
             '#!/bin/sh',
-            '#SBATCH --account=def-bellevil',
+            '#SBATCH --account='+account_project,
             '#SBATCH --mem=8G',
             '#SBATCH --time=03:00:00',
-            '#SBATCH --output=/scratch/mellahs/a_tmp/running_output.out')
+            '#SBATCH --output=/scratch/'+user+'/a_tmp/running_output.out')
 python_cmd = 'module load python/3.8.2'
 
 
 
 
 
-from os import path, makedirs, chdir, system, remove
-import os, shutil, time
 
 export_FreeSurfer_cmd = 'export FREESURFER_HOME='+path.join(cmaindir,'freesurfer')
 source_FreeSurfer_cmd = '$FREESURFER_HOME/SetUpFreeSurfer.sh'
@@ -60,7 +66,7 @@ if not path.exists(path.join(cmaindir,'a','__init__.py')):
 with open(path.join(cmaindir,'a','var.py'),'w') as f:
     f.write('#!/bin/python\n')
     f.write('cname="cedar"\n')
-    f.write('cusers_list=["mellahs",]\n')
+    f.write('cusers_list=['+user+',]\n')
     f.write('supervisor_ccri="yyc"\n')
     f.write('max_nr_running_batches = 100\n')
     f.write('cmaindir = "'+cmaindir+'"\n')
@@ -69,7 +75,7 @@ with open(path.join(cmaindir,'a','var.py'),'w') as f:
     f.write('long_name = "ses-1"\n')
     f.write('base_name = "base"\n')
     f.write('DO_LONG = False\n')
-    f.write("text4_scheduler = ('#!/bin/sh','#SBATCH --account=def-bellevil','#SBATCH --mem=8G',)\n")
+    f.write("text4_scheduler = ('#!/bin/sh','#SBATCH --account='"+account_project+"','#SBATCH --mem=8G',)\n")
     f.write('batch_walltime_cmd = "#SBATCH --time="\n')
     f.write('max_walltime = "99:00:00"\n')
     f.write('batch_walltime = "03:00:00"\n')
@@ -187,8 +193,23 @@ if not path.exists(path.join(cmaindir,'miniconda3')):
     system('./miniconda3/bin/conda config --set report_errors false')
     system('./miniconda3/bin/conda install -y dcm2niix')
     system('./miniconda3/bin/conda install -y dcm2bids')
+    system('./miniconda3/bin/conda install -y -c conda-forge dipy')
     system('./miniconda3/bin/conda install -y pandas')
     system('./miniconda3/bin/conda install -y numpy')
     system('./miniconda3/bin/conda install -y xlrd')
     system('./miniconda3/bin/conda install -y paramiko')
-print('SETUP FINISHED')
+print('FINISHED Setting Up FreeSurfer and miniconda3 with dcm2niix, dcm2bids, pandas, numpy, xlrd, paramiko and dipy')
+
+
+
+
+
+
+
+
+
+
+
+
+
+

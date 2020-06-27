@@ -1,5 +1,5 @@
 #!/bin/python
-# 2020.06.15
+# 2020.06.26
 
 '''
 add FS QA tools to rm scans with low SNR (Koh et al 2017)
@@ -13,11 +13,9 @@ print('SUBMITTING is: ', SUBMIT)
 from os import listdir, path, mkdir, system
 import shutil
 import datetime
-from var import text4_scheduler, batch_walltime_cmd, max_walltime, batch_output_cmd, submit_cmd, freesurfer_version
+from var import text4_scheduler, batch_walltime_cmd, max_walltime, batch_output_cmd, submit_cmd, freesurfer_version, nimb_dir, nimb_scratch_dir, SUBJECTS_DIR, export_FreeSurfer_cmd, source_FreeSurfer_cmd
 import cdb, var
 import subprocess
-
-_, nimb_dir, nimb_scratch_dir, SUBJECTS_DIR , _, _, export_FreeSurfer_cmd, source_FreeSurfer_cmd = var.get_vars()
 
 
 
@@ -211,7 +209,6 @@ log_files = {
     },
 }
 
-# 117711151
 
 def chkbrstemf(subjid):
 
