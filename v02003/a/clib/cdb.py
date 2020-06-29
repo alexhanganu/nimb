@@ -17,6 +17,7 @@ def Get_DB():
     # change to local dev folder instead of supervisor folder due to no-writing-file permission
     if path.isfile(nimb_scratch_dir+'db'):
         shutil.copy(nimb_scratch_dir+'db',nimb_dir+'db.py')
+        system('chmod 777 '+nimb_dir+'db.py')
         time.sleep(2)
         from db import DO, QUEUE, RUNNING, RUNNING_JOBS, LONG_DIRS, LONG_TPS, PROCESSED
         db['DO'] = DO
@@ -110,42 +111,6 @@ def get_RUNNING_JOBS(type):
     return sorted(lsall)
 
 
-def get_registration_files(subjid, d_LONG_DIRS):
-    f = nimb_dir+"new_subjects_registration.json"#!!!! json file must be archived when finished
-    if path.isfile(f):
-        import json
-
-        with open(f) as jfile:
-            data = json.load(jfile)
-
-        for _id in d_LONG_DIRS:
-            if subjid in d_LONG_DIRS[_id]:
-                _id = _id
-                ses = subjid.replace(_id+'_',"")
-                break
-            # else:
-            #     _id = 'none'
-            #     print(_id,' not in LONG_DIRS, please CHECK the database')
-        Update_status_log('    id is: '+_id+', ses is: '+ses)
-        print(_id, ses)
-
-        if _id != 'none':
-            t1_ls_f = data[_id][ses]['anat']['t1']
-            flair_ls_f = 'none'
-            t2_ls_f = 'none'
-            if 'flair' in data[_id][ses]['anat']:
-                if data[_id][ses]['anat']['flair']:
-                    flair_ls_f = data[_id][ses]['anat']['flair']
-            if 't2' in data[_id][ses]['anat']:
-                if data[_id][ses]['anat']['t2']:
-                    t2_ls_f = data[_id][ses]['anat']['t2']
-        Update_status_log(subjid+' registration files were read')
-
-    t1_ls_f, flair_ls_f, t2_ls_f = keep_files_similar_params(t1_ls_f, flair_ls_f, t2_ls_f)
-
-    return t1_ls_f, flair_ls_f, t2_ls_f
-
-
 
 def verify_vox_size_values(vox_size):
     vox = True
@@ -188,14 +153,14 @@ def get_MR_file_params(file):
 		field_strength = [x.strip('\n') for x in lines if 'FieldStrength' in x][0].split(',')[0].replace('       FieldStrength: ','')
 		matrix = [x.strip('\n') for x in lines if 'dimensions' in x][0].split(',')[0].replace('    dimensions: ','')
 		fov = [x.strip('\n') for x in lines if 'fov' in x][0].split(',')[0].replace('           fov: ','')
-		print('    voxel size is: ',vox_size)
-		print('    TR is: ',TR)
-		print('    TE is: ',TE)
-		print('    TI is: ',TI)
-		print('    flip angle is: ',flip_angle)
-		print('    field strength is: ',field_strength)
-		print('    matrix is: ',matrix)
-		print('    fov is: ',fov)
+		Update_status_log('    voxel size is: '+str(vox_size))
+		Update_status_log('    TR is: '+str(TR))
+		Update_status_log('    TE is: '+str(TE))
+		Update_status_log('    TI is: '+str(TI))
+		Update_status_log('    flip angle is: '+str(flip_angle))
+		Update_status_log('    field strength is: '+str(field_strength))
+		Update_status_log('    matrix is: '+str(matrix))
+		Update_status_log('    fov is: '+str(fov))
 		remove(tmp_f)
 		Update_status_log('    voxel size is: '+str(vox_size))
 	return vox_size
@@ -207,7 +172,7 @@ def keep_files_similar_params(t1_ls_f, flair_ls_f, t2_ls_f):
         vox_size = get_MR_file_params(file)
         if vox_size:
             if verify_vox_size_values(vox_size):
-                print(main_vox_size, vox_size)
+                Update_status_log(str(main_vox_size)+' '+str(vox_size))
                 if main_vox_size == 'none':
                     main_vox_size = vox_size
                 else:
@@ -219,7 +184,7 @@ def keep_files_similar_params(t1_ls_f, flair_ls_f, t2_ls_f):
     if flair_ls_f != 'none':
         for file in flair_ls_f:
             vox_size = get_MR_file_params(file)
-            print(main_vox_size, vox_size)
+            Update_status_log(str(main_vox_size)+' '+str(vox_size))
             if vox_size != main_vox_size:
                 flair_ls_f.remove(file)
     if len(flair_ls_f) <1:
@@ -227,7 +192,7 @@ def keep_files_similar_params(t1_ls_f, flair_ls_f, t2_ls_f):
     if t2_ls_f != 'none':
         for file in t2_ls_f:
             vox_size = get_MR_file_params(file)
-            print(main_vox_size, vox_size)
+            Update_status_log(str(main_vox_size)+' '+str(vox_size))
             if vox_size != main_vox_size:
                 t2_ls_f.remove(file)
     if len(t2_ls_f) <1:
@@ -239,8 +204,9 @@ def keep_files_similar_params(t1_ls_f, flair_ls_f, t2_ls_f):
 def Update_DB_new_subjects_and_SUBJECTS_DIR(db):
 
     d = chk_subj_in_SUBJECTS_DIR(db)
-    d = chk_new_subjects(db)
-    print('done checking SUBJECTS_DIR and new subjects')
+    d = chk_subjects_folder(db)
+    d = chk_new_subjects_json_file(db)
+    Update_status_log('done checking SUBJECTS_DIR, subjects folder and new_subjects.json')
     return db
 
 
@@ -261,18 +227,27 @@ def add_subjid_2_DB(_id, ses, db, ls_SUBJECTS_in_long_dirs_processed):
 
 
 
-def chk_new_subjects(db):
+def chk_subjects_folder(db):
+    Update_status_log('checking for new subjects in the subjects folder...')
+
     ls_SUBJECTS_in_long_dirs_processed = get_ls_subjids_in_long_dirs(db)
     from crunfs import checks_from_runfs
 
     f_subj2fs = nimb_dir+"subj2fs"
     if path.isfile(f_subj2fs):
         ls_subj2fs = ls_from_subj2fs(f_subj2fs)
-        print(ls_subj2fs)
         for subjid in ls_subj2fs:
+            Update_status_log('    adding '+subjid+' to database')
             _id, ses = get_id_long(subjid, db['LONG_DIRS'])
             if not checks_from_runfs('registration',_id):
                 db = add_subjid_2_DB(_id, ses, db, ls_SUBJECTS_in_long_dirs_processed)
+        Update_status_log('new subjects were added from the subjects folder')
+    return db
+
+
+
+def chk_new_subjects_json_file(db):
+    Update_status_log('checking for new subjects ...')
     f_new_subjects = nimb_dir+"new_subjects.json"
     if path.isfile(f_new_subjects):
         import json
@@ -287,10 +262,51 @@ def chk_new_subjects(db):
                                 db = add_subjid_2_DB(_id, ses, db, ls_SUBJECTS_in_long_dirs_processed)
                             else:
                                 db['PROCESSED']['error_registration'].append(subjid)
-                                Update_status_log('ERROR: subj2fs was read and wasn\'t added to database')
-        rename(f_new_subjects, nimb_dir+'new_subjects_registration.json')
-        Update_status_log('new subjects database was read')
+                                Update_status_log('ERROR: '+_id+' was read and but was not added to database')
+        rename(f_new_subjects, nimb_dir+'new_subjects_registration_paths.json')
+        Update_status_log('new subjects were added from the new_subjects.json file')
     return db
+
+
+
+
+def get_registration_files(subjid, d_LONG_DIRS):
+    f = nimb_dir+"new_subjects_registration_paths.json"#!!!! json file must be archived when finished
+    if path.isfile(f):
+        import json
+
+        with open(f) as jfile:
+            data = json.load(jfile)
+
+        for _id in d_LONG_DIRS:
+            if subjid in d_LONG_DIRS[_id]:
+                _id = _id
+                ses = subjid.replace(_id+'_',"")
+                break
+            # else:
+            #     _id = 'none'
+            #     print(_id,' not in LONG_DIRS, please CHECK the database')
+        Update_status_log('    id is: '+_id+', ses is: '+ses)
+        print(_id, ses)
+
+        if _id != 'none':
+            t1_ls_f = data[_id][ses]['anat']['t1']
+            flair_ls_f = 'none'
+            t2_ls_f = 'none'
+            if 'flair' in data[_id][ses]['anat']:
+                if data[_id][ses]['anat']['flair']:
+                    flair_ls_f = data[_id][ses]['anat']['flair']
+            if 't2' in data[_id][ses]['anat']:
+                if data[_id][ses]['anat']['t2']:
+                    t2_ls_f = data[_id][ses]['anat']['t2']
+        Update_status_log(subjid+' registration files were read')
+
+    t1_ls_f, flair_ls_f, t2_ls_f = keep_files_similar_params(t1_ls_f, flair_ls_f, t2_ls_f)
+
+    return t1_ls_f, flair_ls_f, t2_ls_f
+
+
+
 
 
 
@@ -328,7 +344,6 @@ def get_id_long(subjid, LONG_DIRS):
 
 def chk_subj_in_SUBJECTS_DIR(db):
     Update_status_log('checking SUBJECTS_DIR ...')
-    print('checking SUBJECTS_DIR ...')
 
     from crunfs import chkIsRunning, checks_from_runfs
 

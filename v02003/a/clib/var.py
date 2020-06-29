@@ -7,12 +7,12 @@ max_nr_running_batches = 5 #seems to be taking up to 100
 process_order = ['registration','autorecon1','autorecon2','autorecon3','qcache','brstem','hip','tha']
 supervisor_account = 'def-hanganua'
 
-long_name = 'ses-1'
+long_name = 'ses-'
 base_name = 'base'
 DO_LONG = False
 batch_walltime_cmd = '#SBATCH --time='
-max_walltime = '99:00:00'
-batch_walltime = '03:00:00'
+max_walltime = '99:00:00' # waltime maximal for the remote cluster
+batch_walltime = '03:00:00' # walltime maximal for the run.sh batch that runs the pipeline
 batch_output_cmd = '#SBATCH --output='
 submit_cmd = 'sbatch'
 freesurfer_version = 7
@@ -23,7 +23,7 @@ masks = []
 
 
 
-from os import path
+from os import path, makedirs
 from cget_username import _get_username
 
 cuser = _get_username()

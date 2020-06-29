@@ -7,7 +7,7 @@ try:
 except ImportError as e:
     cdb.Update_status_log(e)
 import time, shutil
-from var import cscratch_dir, max_nr_running_batches, process_order, base_name, DO_LONG, freesurfer_version, batch_walltime, submit_cmd, nimb_dir, SUBJECTS_DIR, processed_SUBJECTS_DIR
+from var import max_nr_running_batches, process_order, base_name, DO_LONG, freesurfer_version, batch_walltime, submit_cmd, nimb_dir, SUBJECTS_DIR, processed_SUBJECTS_DIR
 import crunfs, cdb, cwalltime
 from cbuild_stamp import nimb_version
 
