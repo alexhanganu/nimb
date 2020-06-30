@@ -1,7 +1,7 @@
 #!/bin/python
 # 2020.06.26
 
-from os import path, listdir, remove, getenv, rename, mkdir, environ, system
+from os import path, listdir, remove, getenv, rename, mkdir, environ, system, chdir
 from var import process_order, long_name, base_name, cusers_list, cuser, nimb_dir, nimb_scratch_dir, SUBJECTS_DIR
 import time, shutil
 
@@ -140,39 +140,55 @@ def vox_higher_main(vox_size, main_vox_size):
 def get_MR_file_params(file):
 	tmp_f = nimb_scratch_dir+'tmp'
 	vox_size = 'none'
-	system('./a/mri_info '+file+' >> '+tmp_f)
+	chdir(nimb_dir)
+	system('./mri_info '+file+' >> '+tmp_f)
 	if path.isfile(tmp_f):
 		lines = list(open(tmp_f,'r'))
-		vox_size = [x.strip('\n') for x in lines if 'voxel sizes' in x][0].split(' ')[-3:]
-		vox_size = [x.replace(',','') for x in vox_size]
-		TR_TE_TI = [x.strip('\n') for x in lines if 'TR' in x][0].split(',')
-		TR = TR_TE_TI[0].split(' ')[-2]
-		TE = TR_TE_TI[1].split(' ')[-2]
-		TI = TR_TE_TI[2].split(' ')[-2]
-		flip_angle = TR_TE_TI[3].split(' ')[-2]
-		field_strength = [x.strip('\n') for x in lines if 'FieldStrength' in x][0].split(',')[0].replace('       FieldStrength: ','')
-		matrix = [x.strip('\n') for x in lines if 'dimensions' in x][0].split(',')[0].replace('    dimensions: ','')
-		fov = [x.strip('\n') for x in lines if 'fov' in x][0].split(',')[0].replace('           fov: ','')
-		Update_status_log('    voxel size is: '+str(vox_size))
-		Update_status_log('    TR is: '+str(TR))
-		Update_status_log('    TE is: '+str(TE))
-		Update_status_log('    TI is: '+str(TI))
-		Update_status_log('    flip angle is: '+str(flip_angle))
-		Update_status_log('    field strength is: '+str(field_strength))
-		Update_status_log('    matrix is: '+str(matrix))
-		Update_status_log('    fov is: '+str(fov))
+		try:
+			vox_size = [x.strip('\n') for x in lines if 'voxel sizes' in x][0].split(' ')[-3:]
+			vox_size = [x.replace(',','') for x in vox_size]
+			Update_status_log('            voxel size is: '+str(vox_size))
+		except IndexError as e:
+			Update_status_log('            voxel size is: '+str(e))
+		try:
+			TR_TE_TI = [x.strip('\n') for x in lines if 'TR' in x][0].split(',')
+			TR = TR_TE_TI[0].split(' ')[-2]
+			TE = TR_TE_TI[1].split(' ')[-2]
+			TI = TR_TE_TI[2].split(' ')[-2]
+			flip_angle = TR_TE_TI[3].split(' ')[-2]
+			Update_status_log('            TR is: '+str(TR))
+			Update_status_log('            TE is: '+str(TE))
+			Update_status_log('            TI is: '+str(TI))
+			Update_status_log('            flip angle is: '+str(flip_angle))
+		except IndexError as e:
+			Update_status_log('            TR,TE,TI, flip angle : '+str(e))
+		try:
+			field_strength = [x.strip('\n') for x in lines if 'FieldStrength' in x][0].split(',')[0].replace('       FieldStrength: ','')
+			Update_status_log('            field strength is: '+str(field_strength))
+		except IndexError as e:
+			Update_status_log('            field_strength : '+str(e))
+		try:
+			matrix = [x.strip('\n') for x in lines if 'dimensions' in x][0].split(',')[0].replace('    dimensions: ','')
+			Update_status_log('            matrix is: '+str(matrix))
+		except IndexError as e:
+			Update_status_log('            matrix : '+str(e))
+		try:
+			fov = [x.strip('\n') for x in lines if 'fov' in x][0].split(',')[0].replace('           fov: ','')
+			Update_status_log('            fov is: '+str(fov))
+		except IndexError as e:
+			Update_status_log('            fov : '+str(e))			
 		remove(tmp_f)
-		Update_status_log('    voxel size is: '+str(vox_size))
 	return vox_size
 
 
 def keep_files_similar_params(t1_ls_f, flair_ls_f, t2_ls_f):
     main_vox_size = 'none'
     for file in t1_ls_f:
+        Update_status_log('        reading MR data for T1 file: '+file)
         vox_size = get_MR_file_params(file)
         if vox_size:
             if verify_vox_size_values(vox_size):
-                Update_status_log(str(main_vox_size)+' '+str(vox_size))
+                Update_status_log('        current voxel size is: '+str(vox_size))
                 if main_vox_size == 'none':
                     main_vox_size = vox_size
                 else:
@@ -181,20 +197,27 @@ def keep_files_similar_params(t1_ls_f, flair_ls_f, t2_ls_f):
                           t1_ls_f.remove(file)
                         else:
                             main_vox_size = vox_size                            
+        Update_status_log('        main voxel size is: '+str(main_vox_size))
     if flair_ls_f != 'none':
         for file in flair_ls_f:
+            Update_status_log('        reading MR data for FLAIR file: '+file)
             vox_size = get_MR_file_params(file)
-            Update_status_log(str(main_vox_size)+' '+str(vox_size))
+            Update_status_log('        main voxel size is: '+str(main_vox_size))
+            Update_status_log('        current voxel size is: '+str(vox_size))
             if vox_size != main_vox_size:
                 flair_ls_f.remove(file)
+                Update_status_log('        FLAIR file not added to analysis; voxel size is different')
     if len(flair_ls_f) <1:
         flair_ls_f = 'none'
     if t2_ls_f != 'none':
         for file in t2_ls_f:
+            Update_status_log('        reading MR data for T2 file: '+file)
             vox_size = get_MR_file_params(file)
-            Update_status_log(str(main_vox_size)+' '+str(vox_size))
+            Update_status_log('        main voxel size is: '+str(main_vox_size))
+            Update_status_log('        current voxel size is: '+str(vox_size))
             if vox_size != main_vox_size:
                 t2_ls_f.remove(file)
+                Update_status_log('        T2 file not added to analysis; voxel size is different')
     if len(t2_ls_f) <1:
         t2_ls_f = 'none'
     return t1_ls_f, flair_ls_f, t2_ls_f
@@ -248,6 +271,10 @@ def chk_subjects_folder(db):
 
 def chk_new_subjects_json_file(db):
     Update_status_log('checking for new subjects ...')
+
+    ls_SUBJECTS_in_long_dirs_processed = get_ls_subjids_in_long_dirs(db)
+    from crunfs import checks_from_runfs
+
     f_new_subjects = nimb_dir+"new_subjects.json"
     if path.isfile(f_new_subjects):
         import json
@@ -286,8 +313,7 @@ def get_registration_files(subjid, d_LONG_DIRS):
             # else:
             #     _id = 'none'
             #     print(_id,' not in LONG_DIRS, please CHECK the database')
-        Update_status_log('    id is: '+_id+', ses is: '+ses)
-        print(_id, ses)
+        Update_status_log('    '+subjid+'\n        id is: '+_id+', ses is: '+ses)
 
         if _id != 'none':
             t1_ls_f = data[_id][ses]['anat']['t1']
@@ -299,7 +325,7 @@ def get_registration_files(subjid, d_LONG_DIRS):
             if 't2' in data[_id][ses]['anat']:
                 if data[_id][ses]['anat']['t2']:
                     t2_ls_f = data[_id][ses]['anat']['t2']
-        Update_status_log(subjid+' registration files were read')
+        Update_status_log('        registration files were read')
 
     t1_ls_f, flair_ls_f, t2_ls_f = keep_files_similar_params(t1_ls_f, flair_ls_f, t2_ls_f)
 
@@ -370,12 +396,10 @@ def chk_subj_in_SUBJECTS_DIR(db):
             for process in process_order[1:]:
                 if not checks_from_runfs(process, subjid):
                     Update_status_log('        '+subjid+' sent for '+process)
-                    print('        ',subjid,' sent for ',process)
                     db['DO'][process].append(subjid)
                     break
         else:
             Update_status_log('            IsRunning file present, adding to '+process_order[1])
-            print('        IsRunning file present, adding to ',process_order[1])
             db['RUNNING'][process_order[1]].append(subjid)
 
     if not path.isdir(SUBJECTS_DIR):
@@ -387,31 +411,24 @@ def chk_subj_in_SUBJECTS_DIR(db):
     for subjid in ls_SUBJECTS:
         if subjid not in ls_SUBJECTS_in_long_dirs_processed:
             Update_status_log('    '+subjid+' not in PROCESSED')
-            print(subjid,'\n    not in PROCESSED')
             _id, longitud = get_id_long(subjid, db['LONG_DIRS'])
             Update_status_log('        adding to database: id: '+_id+', long name: '+longitud)
-            print('    ',_id, longitud)
             if _id == subjid:
                 subjid = _id+'_'+longitud
                 Update_status_log('   no '+long_name+' in '+_id+' Changing name to: '+subjid)
-                print('   no ',long_name,' in ',_id,' Changing name to: ',subjid)
                 rename(SUBJECTS_DIR+_id, SUBJECTS_DIR+subjid)
             if _id not in db['LONG_DIRS']:
-                # print('    adding ',_id, ' to LONG_DIRS')
                 db['LONG_DIRS'][_id] = list()
             if _id in db['LONG_DIRS']:
                 if subjid not in db['LONG_DIRS'][_id]:
                     # Update_status_log('        '+subjid+' to LONG_DIRS[\''+_id+'\']')
-                    # print('    adding ',subjid, ' to LONG_DIRS[\''+_id+'\']')
                     db['LONG_DIRS'][_id].append(subjid)
             if _id not in db['LONG_TPS']:
                 # Update_status_log('    adding '+_id+' to LONG_TPS')
-                # print('    adding ',_id, ' to LONG_TPS')
                 db['LONG_TPS'][_id] = list()
             if _id in db['LONG_TPS']:
                 if longitud not in db['LONG_TPS'][_id]:
                     # Update_status_log('    adding '+longitud+' to LONG_TPS[\''+_id+'\']')
-                    # print('    adding ',longitud, ' to LONG_TPS[\''+_id+'\']')
                     db['LONG_TPS'][_id].append(longitud)
             if base_name not in subjid:
                 if subjid not in ls_SUBJECTS_running:

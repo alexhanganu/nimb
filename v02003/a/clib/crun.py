@@ -92,7 +92,7 @@ def do(process):
             db['RUNNING_JOBS'][subjid] = job_id
             db['QUEUE'][process].append(subjid)
             try:
-                cdb.Update_status_log('   '+subjid+', '+process+', submited id: '+str(job_id))
+                cdb.Update_status_log('        '+subjid+', '+process+', submited id: '+str(job_id))
             except Exception as e:
                 cdb.Update_status_log('    err in do: '+e)
     cdb.Update_DB(db)
@@ -253,7 +253,7 @@ def long_check_groups(_id):
                     db['LONG_DIRS'].pop(_id, None)
                     db['LONG_TPS'].pop(_id, None)
             else:
-                cdb.Update_status_log(process_order[-1]+' for '+subjid+' not finished ')
+                cdb.Update_status_log('        '+process_order[-1]+' for '+subjid+' not finished ')
     cdb.Update_DB(db)
 
 

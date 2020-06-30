@@ -1,6 +1,7 @@
 #!/bin/python
 # created based on the get_MRIs_adni.py
-#Alexandru Hanganu 20200107
+# Kim Phuong Pham 20200628;  Alexandru Hanganu 20200107
+
 '''
 1) read the folder with subjects SUBJECTS_DIR_RAW
 3) extract paths for the anat MRIs
