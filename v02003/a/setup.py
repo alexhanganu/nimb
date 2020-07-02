@@ -683,10 +683,15 @@ def SETUP_LOCAL(local_maindir):
 
 
 
-'''In order to setup Tractoflow on the cluster, singularity is needed;
+'''
+
+In order to setup Tractoflow on the cluster, singularity is needed;
 on cedar singularity does not allow installation
 saying there is not sudo
-probably Tractflow can be installed and run only on a local with sudo'''
+probably Tractflow can be installed and run only on a local with sudo
+needs sudo on elm
+
+'''
 
 # print('TRYING to setup TractoFlow for DWI analysis')
 # from os import system
