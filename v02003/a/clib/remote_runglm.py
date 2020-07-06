@@ -10,6 +10,7 @@ class PerformGLM():
     def __init__(self, PATHglm, FREESURFER_HOME, SUBJECTS_DIR):
         self.SUBJECTS_DIR = SUBJECTS_DIR
         self.PATHglm = PATHglm
+        self.FREESURFER_HOME = FREESURFER_HOME
 
         for file in ('subjects_per_group.py','files_for_glm.py'):
             shutil.copy(path.join(self.PATHglm,file), path.join(path.dirname(__file__),file))
@@ -45,8 +46,8 @@ class PerformGLM():
             
 
     def fsgd_win_to_unix(self, files_for_glm):
-        if not path.isdir(self.PATHglm+'fsgd_unix'):
-            makedirs(self.PATHglm+'fsgd_unix')
+        if not path.isdir(path.join(self.PATHglm,'fsgd_unix')):
+            makedirs(path.join(self.PATHglm,'fsgd_unix'))
         for contrast_type in files_for_glm:
             for fsgd_file in files_for_glm[contrast_type]['fsgd']:
                 fsgd_f_unix = path.join(self.PATHglm,'fsgd_unix',fsgd_file.replace('.fsgd','')+'_unix.fsgd')
@@ -381,7 +382,7 @@ if __name__ == '__main__':
         '\n    SUBJECTS_DIR: '+SUBJECTS_DIR+
         '\n    GLM_dir: '+GLM_dir+
         '\n    GLM_file_group: '+GLM_file_group+
-        'id_col: '+id_col+
+        '\n    id_col: '+id_col+
         '\n    group_col: '+group_col)
 
     new_SUBJECTS_DIR = '/home/'+cuser+'/projects/def-hanganua/adni/Subjects_GLM'
