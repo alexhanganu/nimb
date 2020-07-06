@@ -397,10 +397,10 @@ if __name__ == '__main__':
 
     shutil.copy(GLM_file_group, path.join(GLM_dir,Path(GLM_file_group).name))
 
-    if '.csv' in file_groups:
-        df_groups_clin = pd.read_csv(file_groups)
-    elif '.xlsx' in file_groups or '.xls' in file_group:
-        df_groups_clin = pd.read_excel(file_groups)
+    if '.csv' in GLM_file_group:
+        df_groups_clin = pd.read_csv(GLM_file_group)
+    elif '.xlsx' in GLM_file_group or '.xls' in file_group:
+        df_groups_clin = pd.read_excel(GLM_file_group)
 
     groups, subjects_per_group = _GET_Groups(df_groups_clin, group_col, id_col)
     print(groups, subjects_per_group)
