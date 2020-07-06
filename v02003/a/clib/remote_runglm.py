@@ -6,7 +6,7 @@ from os import system, listdir, makedirs, path, getcwd, chdir, remove
 import shutil, linecache, sys
 
 
-def _GET_Groups(df, group_col, id_col):
+def _GET_Groups(df, id_col, group_col):
         groups = []
         subjects_per_group = {}
         for val in df[group_col]:
@@ -20,28 +20,14 @@ def _GET_Groups(df, group_col, id_col):
         return groups, subjects_per_group
 
 
-def make_py_f_subjects(GLM_dir, subjects_per_group):
-        file = 'subjects_per_group.py'
-        open(path.join(GLM_dir,file), 'w').close()
-        with open(path.join(GLM_dir,file), 'a') as f:
-            f.write('#!/bin/python/\nsubjects_per_group = {')
-            for group in subjects_per_group:
-                f.write('\''+group+'\':[')
-                for subject in subjects_per_group[group]:
-                    f.write('\''+subject+'\',')
-                f.write('],')
-            f.write('}')
-
-
-
 
 class PrepareForGLM():
 
     #https://surfer.nmr.mgh.harvard.edu/fswiki/FsgdExamples
-    def __init__(self, path_save_fsgd, df_groups_clin, id_col, group_col):
-        self.PATH = path_save_fsgd
-        self.PATHfsgd = path.join(self.PATH,'fsgd')
-        self.PATHmtx = path.join(self.PATH,'contrasts')
+    def __init__(self, GLM_dir, df_groups_clin, id_col, group_col):
+        self.PATH_GLM_dir = GLM_dir
+        self.PATHfsgd = path.join(self.PATH_GLM_dir,'fsgd')
+        self.PATHmtx = path.join(self.PATH_GLM_dir,'contrasts')
         if not path.isdir(self.PATHfsgd): makedirs(self.PATHfsgd)
         if not path.isdir(self.PATHmtx): makedirs(self.PATHmtx)
         print(self.PATHfsgd)
@@ -80,6 +66,8 @@ class PrepareForGLM():
             self.files_glm[contrast_type]['mtx_explanation'] = []
             self.files_glm[contrast_type]['gd2mtx'] = gd2[contrast_type]
 
+        print('creating list of subjects')
+        self.make_py_f_subjects(df_groups_clin, id_col)
         print('creating fsgd for g1g2v0')
         self.make_fsgd_g1g2v0()
         print('creating fsgd for g1v1')
@@ -94,6 +82,22 @@ class PrepareForGLM():
         self.make_py_f()
         print('creating qdec fsgd files')
         self.make_qdec_fsgd_g2()
+
+    def make_py_f_subjects(self, df_groups_clin, id_col):
+
+        _, subjects_per_group = _GET_Groups(df_groups_clin, id_col, self.group_col)
+
+        file = 'subjects_per_group.py'
+        open(path.join(self.PATH_GLM_dir,file), 'w').close()
+        with open(path.join(self.PATH_GLM_dir,file), 'a') as f:
+            f.write('#!/bin/python/\nsubjects_per_group = {')
+            for group in subjects_per_group:
+                f.write('\''+group+'\':[')
+                for subject in subjects_per_group[group]:
+                    f.write('\''+subject+'\',')
+                f.write('],')
+            f.write('}')
+
 
     def make_fsgd_g1g2v0(self):
         file = 'g2v0'+'_'+self.ls_groups[0]+'_'+self.ls_groups[1]+'.fsgd'
@@ -163,8 +167,8 @@ class PrepareForGLM():
 
     def make_qdec_fsgd_g2(self):
         file = 'qdec_g2.fsgd'
-        open(path.join(self.PATH,file), 'w').close()
-        with open(path.join(self.PATH,file), 'a') as f:
+        open(path.join(self.PATH_GLM_dir,file), 'w').close()
+        with open(path.join(self.PATH_GLM_dir,file), 'a') as f:
             f.write('fsid group ')
             for variable in self.ls_vars_stats:
                 if not self.check_var_zero(variable, self.ls_groups[0]) and not self.check_var_zero(variable, self.ls_groups[1]):
@@ -191,8 +195,8 @@ class PrepareForGLM():
 
     def make_py_f(self):
         file = 'files_for_glm.py'
-        open(path.join(self.PATH,file), 'w').close()
-        with open(path.join(self.PATH,file), 'a') as f:
+        open(path.join(self.PATH_GLM_dir,file), 'w').close()
+        with open(path.join(self.PATH_GLM_dir,file), 'a') as f:
             f.write('#!/bin/python/\nfiles_for_glm = {')
             for contrast_type in self.files_glm:
                 f.write('\''+contrast_type+'\':{')
@@ -242,7 +246,7 @@ class PerformGLM():
                 else:
                     RUN = True
         if RUN:
-#            self.fsgd_win_to_unix(files_for_glm)
+            self.fsgd_win_to_unix(files_for_glm)
             self.RUN_GLM(files_for_glm)
             print('\n\nGLM DONE')
         else:
@@ -265,7 +269,7 @@ class PerformGLM():
         measurements = ['thickness','area','volume',]#'curv']
         thresholds = [10,]#5,15,20,25]
         for contrast_type in files_for_glm:
-            for fsgd_file in files_for_glm[contrast_type]['fsgd'][:2]:                                                  # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!to rm the [:2]
+            for fsgd_file in files_for_glm[contrast_type]['fsgd']:
                 fsgd_f_unix = path.join(self.PATHglm,'fsgd_unix',fsgd_file.replace('.fsgd','')+'_unix.fsgd')
                 for hemi in hemispheres:
                     for meas in measurements:
@@ -377,11 +381,11 @@ if __name__ == '__main__':
     except ImportError as e:
         sys.exit(e)
 
-    print('Please check that all required variable for the GLM analysis are defined in the var.py file')
+    print('Please check that all required variables for the GLM analysis are defined in the var.py file')
     print('before running the script, remember to source $FREESURFER_HOME')
     print('check if fsaverage is present in SUBJECTS_DIR')
 
-    from var import cuser, FREESURFER_HOME, SUBJECTS_DIR, GLM_dir, GLM_file_group, id_col, group_col
+    from var import cuser, FREESURFER_HOME, SUBJECTS_DIR, GLM_dir, GLM_file_group, id_col, group_col, variables_for_glm
 
     print('current variables are: '+
         '\n    FREESURFER_HOME: '+FREESURFER_HOME+
@@ -400,23 +404,21 @@ if __name__ == '__main__':
     print('doing GLM for file:'+GLM_file_group)
     if not path.isdir(GLM_dir): makedirs(GLM_dir)
 
-    # shutil.copy(GLM_file_group, path.join(GLM_dir,Path(GLM_file_group).name))
+    shutil.copy(GLM_file_group, path.join(GLM_dir,Path(GLM_file_group).name))
 
-    # if '.csv' in GLM_file_group:
-    #     df_groups_clin = pd.read_csv(GLM_file_group)
-    # elif '.xlsx' in GLM_file_group or '.xls' in file_group:
-    #     df_groups_clin = pd.read_excel(GLM_file_group)
-    # if 'Unnamed: 0' in df_groups_clin.columns:
-    #     df_groups_clin.drop(columns=['Unnamed: 0',], inplace=True)
+    if '.csv' in GLM_file_group:
+        df_groups_clin = pd.read_csv(GLM_file_group)
+    elif '.xlsx' in GLM_file_group or '.xls' in file_group:
+        df_groups_clin = pd.read_excel(GLM_file_group)
+    cols2drop = list()
+    for col in df_groups_clin.columns.tolist():
+        if col not in variables_for_glm+[id_col,group_col]:
+            cols2drop.append(col)
+    if cols2drop:
+        df_groups_clin.drop(columns=cols2drop, inplace=True)
 
-    # groups, subjects_per_group = _GET_Groups(df_groups_clin, group_col, id_col)
-    # print(groups, subjects_per_group)
+    print('\nSTEP 1 of 2: creating files required for GLM')
+    PrepareForGLM(GLM_dir, df_groups_clin, id_col, group_col)
 
-    # print('\nSTEP 1 of 3: making file with subjects')
-    # make_py_f_subjects(GLM_dir, subjects_per_group)
-
-    # print('\nSTEP 2 of 3: making files for GLM')
-    # PrepareForGLM(GLM_dir, df_groups_clin, id_col, group_col)
-
-    print('\nSTEP 3 of 3: running the glm')
+    print('\nSTEP 2 of 2: performing GLM analysis')
     PerformGLM(GLM_dir, FREESURFER_HOME, SUBJECTS_DIR)

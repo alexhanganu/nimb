@@ -65,6 +65,19 @@ following variables are used for the GLM analysis
 GLM_file_group = path.join('/home',cuser,'datas_CNvsAD_clinical.csv') # this is the file that contains the: IDs, groups and variables for the FreeSurfer GLM analysis
 id_col = 'MRI_subjects' # this is the name of the columns from GLM_file_group where the IDs are defined. The IDs MUST be the same as in SUBJECTS_DIR
 group_col = 'Group' # this is the name of the column from GLM_file_group where the groups are defined
+variables_for_glm = ['AGE', 'MMSCORE', 'CDMEMORY', 'CDGLOBAL', 'GDMEMORY', 'GDTOTAL', 'FAQTOTAL',
+       'PTGENDER', 'PTEDUCAT', 'CLOCKSCOR', 'COPYSCOR', 'AVTOT1', 'AVERR1',
+       'AVTOT2', 'AVERR2', 'AVTOT3', 'AVERR3', 'AVTOT4', 'AVERR4', 'AVTOT5',
+       'AVERR5', 'AVTOT6', 'AVERR6', 'AVTOTB', 'AVERRB', 'DSPANFOR',
+       'DSPANFLTH', 'DSPANBAC', 'DSPANBLTH', 'CATANIMSC', 'CATANPERS',
+       'CATANINTR', 'CATVEGESC', 'CATVGPERS', 'CATVGINTR', 'TRAASCOR',
+       'TRAAERRCOM', 'TRAAERROM', 'TRABSCOR', 'TRABERRCOM', 'TRABERROM',
+       'DIGITSCOR', 'BNTSPONT', 'BNTSTIM', 'BNTCSTIM', 'BNTPHON', 'BNTCPHON',
+       'BNTTOTAL', 'AVDEL30MIN', 'AVDELERR1', 'AVDELTOT', 'AVDELERR2',
+       'ANARTERR', 'NPIA', 'NPIASEV', 'NPIB', 'NPIBSEV', 'NPIC', 'NPICSEV',
+       'NPID', 'NPIDSEV', 'NPIE', 'NPIESEV', 'NPIF', 'NPIFSEV', 'NPIG',
+       'NPIGSEV', 'NPIH', 'NPIHSEV', 'NPII', 'NPIISEV', 'NPIJ', 'NPIJSEV',
+       'NPIK', 'NPIKSEV', 'NPIL', 'NPILSEV', 'NPISCORE'] # this is the list of variable what will be used to perform the FreeSurfer GLM correlations
 GLM_dir = path.join('/scratch',cuser,'adni','glm') # this is the folder whether the glm analysis is made. It is necessary for the file remote_runglm.py
 
 for remote_path in (nimb_dir, dir_new_subjects, SUBJECTS_DIR, processed_SUBJECTS_DIR, nimb_scratch_dir):
