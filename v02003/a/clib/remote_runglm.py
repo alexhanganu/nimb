@@ -1,8 +1,8 @@
 #!/bin/python
-# 2020.06.25
+# 2020.07.06
 
 
-from os import system, listdir, makedirs, path, getcwd
+from os import system, listdir, makedirs, path, getcwd, chdir, remove
 import shutil, linecache, sys
 
 
@@ -11,15 +11,22 @@ class PerformGLM():
         self.SUBJECTS_DIR = SUBJECTS_DIR
         self.PATHglm = PATHglm
 
-        for file in listdir(self.PATHglm):
-            if '.py' in file:
-                shutil.copy(path.join(self.PATHglm,file), path.join(getcwd(),file))
+        for file in ('subjects_per_group.py','files_for_glm.py'):
+            shutil.copy(path.join(self.PATHglm,file), path.join(path.dirname(__file__),file))
         try:
             from subjects_per_group import subjects_per_group
-            from files_for_glm import files_for_glm
-            print('All GLM analysis DONE')
-        except ImportError:
-            print('no files_for_glm.py file')
+            remove(path.join(path.dirname(__file__),'subjects_per_group.py'))
+            print('subjects per group imported')
+            try:
+                from files_for_glm import files_for_glm
+                remove(path.join(path.dirname(__file__),'files_for_glm.py'))
+                print('files for glm imported')
+            except ImportError as e:
+                print(e)
+                sys.exit('files for glm is missing')
+        except ImportError as e:
+            print(e)
+            sys.exit('subjects per group is missing')
 
         for group in subjects_per_group:
             for subject in subjects_per_group[group]:
@@ -34,6 +41,7 @@ class PerformGLM():
             print('\n\nGLM DONE')
         else:
             sys.exit('some subjects are missing from the freesurfer folder')
+
             
 
     def fsgd_win_to_unix(self, files_for_glm):
@@ -184,6 +192,7 @@ def make_py_f_subjects(GLM_dir, subjects_per_group):
 
 
 
+
 class PrepareForGLM():
 
     #https://surfer.nmr.mgh.harvard.edu/fswiki/FsgdExamples
@@ -322,8 +331,9 @@ class PrepareForGLM():
             for id in self.d_subjid:
                 f.write(id+' '+self.d_subjid[id][self.group_col]+' ')
                 for variable in self.ls_vars_stats:
-                    f.write(self.d_subjid[id][variable]+' ')
+                    f.write(str(self.d_subjid[id][variable])+' ')
                 f.write('\n')
+
 
     def make_contrasts(self):
         for contrast_type in self.contrasts:
@@ -359,6 +369,7 @@ if __name__ == '__main__':
     try:
         import pandas as pd
         import xlrd
+        from pathlib import Path
     except ImportError as e:
         sys.exit(e)
 
@@ -383,7 +394,7 @@ if __name__ == '__main__':
     if not path.isdir(GLM_dir):
         makedirs(GLM_dir)
 
-    shutil.copy(GLM_file_group, path.join(GLM_dir,GLM_file_group))
+    shutil.copy(GLM_file_group, path.join(GLM_dir,Path(GLM_file_group).name))
 
     if '.csv' in file_groups:
         df_groups_clin = pd.read_csv(file_groups)
