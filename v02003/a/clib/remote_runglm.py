@@ -350,8 +350,8 @@ class PrepareForGLM():
 
     def make_py_f(self):
         file = 'files_for_glm.py'
-        open(self.PATH+file, 'w').close()
-        with open(self.PATH+file, 'a') as f:
+        open(path.join(self.PATH,file), 'w').close()
+        with open(path.join(self.PATH,file), 'a') as f:
             f.write('#!/bin/python/\nfiles_for_glm = {')
             for contrast_type in self.files_glm:
                 f.write('\''+contrast_type+'\':{')
@@ -401,6 +401,8 @@ if __name__ == '__main__':
         df_groups_clin = pd.read_csv(GLM_file_group)
     elif '.xlsx' in GLM_file_group or '.xls' in file_group:
         df_groups_clin = pd.read_excel(GLM_file_group)
+    if 'Unnamed: 0' in df_groups_clin.columns:
+        df_groups_clin.drop(columns=['Unnamed: 0'], inplace=True)
 
     groups, subjects_per_group = _GET_Groups(df_groups_clin, group_col, id_col)
     print(groups, subjects_per_group)
