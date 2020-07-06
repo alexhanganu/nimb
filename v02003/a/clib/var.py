@@ -17,7 +17,8 @@ batch_output_cmd = '#SBATCH --output='
 submit_cmd = 'sbatch'
 freesurfer_version = 7
 archive_processed = False
-masks = []
+masks = [] # varibale that includes the ROI names of subcortical regions in order to create the masks.
+SUBMIT = True # variable to define if the batches will be submitted to the scheduler. Is used to perform initial verification if files were created correctly
 
 
 
@@ -45,7 +46,8 @@ are saved on the scratch, as per the current Compute Canada setup'''
 
 remote_path_main_dir = path.join('/home',cuser,'projects',supervisor_account)
 remote_path_save_temporary_files = path.join('/scratch',cuser)
-export_FreeSurfer_cmd = 'export FREESURFER_HOME='+path.join(remote_path_main_dir,'freesurfer')
+FREESURFER_HOME = path.join(remote_path_main_dir,'freesurfer')
+export_FreeSurfer_cmd = 'export FREESURFER_HOME='+FREESURFER_HOME
 source_FreeSurfer_cmd = '$FREESURFER_HOME/SetUpFreeSurfer.sh'
 
 nimb_dir=path.join(remote_path_main_dir,'a/')
@@ -53,6 +55,17 @@ dir_new_subjects=path.join(remote_path_main_dir,'subjects/')
 SUBJECTS_DIR = path.join(remote_path_main_dir,'fs-subjects/')
 processed_SUBJECTS_DIR = path.join(remote_path_main_dir,'subjects_processed/')
 nimb_scratch_dir=path.join(remote_path_save_temporary_files,'a_tmp/')
+
+
+
+'''
+following variables are used for the GLM analysis
+'''
+
+GLM_file_group = path.join('/home',cuser,'datas_CNvsAD_clinical.csv') # this is the file that contains the: IDs, groups and variables for the FreeSurfer GLM analysis
+id_col = 'MRI_subjects' # this is the name of the columns from GLM_file_group where the IDs are defined. The IDs MUST be the same as in SUBJECTS_DIR
+group_col = 'Group' # this is the name of the column from GLM_file_group where the groups are defined
+GLM_dir = path.join('/scratch',cuser,'adni','glm') # this is the folder whether the glm analysis is made. It is necessary for the file remote_runglm.py
 
 for remote_path in (nimb_dir, dir_new_subjects, SUBJECTS_DIR, processed_SUBJECTS_DIR, nimb_scratch_dir):
 	if not path.isdir(remote_path):

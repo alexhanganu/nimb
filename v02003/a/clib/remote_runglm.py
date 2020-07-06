@@ -187,16 +187,15 @@ def make_py_f_subjects(GLM_dir, subjects_per_group):
 class PrepareForGLM():
 
     #https://surfer.nmr.mgh.harvard.edu/fswiki/FsgdExamples
-    def __init__(self, path_save_fsgd, file_clinical_data, id_col, group_col):
+    def __init__(self, path_save_fsgd, df_groups_clin, id_col, group_col):
         self.PATH = path_save_fsgd
         self.PATHfsgd = path.join(self.PATH,'fsgd')
         self.PATHmtx = path.join(self.PATH,'contrasts')
         if not path.isdir(self.PATHfsgd): makedirs(self.PATHfsgd)
         if not path.isdir(self.PATHmtx): makedirs(self.PATHmtx)
         print(self.PATHfsgd)
-        shutil.copy(file_clinical_data, path.join(self.PATH,file_clinical_data[file_clinical_data.rfind('/')+1:]))
         self.group_col = group_col
-        d_init = pd.read_excel(file_clinical_data, sheet_name = 'data').to_dict()
+        d_init = df_groups_clin.to_dict()
         self.d_subjid = {}
         ls_all_vars = [key for key in d_init if key != id_col]
         self.ls_groups = []
@@ -363,24 +362,42 @@ if __name__ == '__main__':
     except ImportError as e:
         sys.exit(e)
 
-    file_groups = '/home/lucaspsy/projects/def-hanganua/adni/datas_CNvsAD.xlsx'
-    group_col = 'Group'
-    id_col = 'MRI_subjects'
-    GLM_dir = '/home/lucaspsy/projects/def-hanganua/adni/glm'
-    FREESURFER_HOME = '/home/lucaspsy/projects/def-hanganua/freesurfer'
-    SUBJECTS_DIR = '/home/lucaspsy/projects/def-hanganua/fs-subjects'
+    print('Please check that all required variable for the GLM analysis are defined in the var.py file')
+    from var import cuser, FREESURFER_HOME, SUBJECTS_DIR, GLM_dir, GLM_file_group, id_col, group_col
 
-    print('doing GLM for file:'+file_groups)
+    print('current variables are: '+
+        '\n    FREESURFER_HOME: '+FREESURFER_HOME+
+        '\n    SUBJECTS_DIR: '+SUBJECTS_DIR+
+        '\n    GLM_dir: '+GLM_dir+
+        '\n    GLM_file_group: '+GLM_file_group+
+        'id_col: '+id_col+
+        '\n    group_col: '+group_col)
 
-    df_file_groups = pd.read_excel(file_groups)
-    groups, subjects_per_group = _GET_Groups(df_file_groups, group_col, id_col)
+    new_SUBJECTS_DIR = '/home/'+cuser+'/projects/def-hanganua/adni/Subjects_GLM'
+    if new_SUBJECTS_DIR != SUBJECTS_DIR:
+        print('new SUBJECTS_DIR is: '+new_SUBJECTS_DIR)
+        SUBJECTS_DIR = new_SUBJECTS_DIR
+
+
+    print('doing GLM for file:'+GLM_file_group)
+    if not path.isdir(GLM_dir):
+        makedirs(GLM_dir)
+
+    shutil.copy(GLM_file_group, path.join(GLM_dir,GLM_file_group))
+
+    if '.csv' in file_groups:
+        df_groups_clin = pd.read_csv(file_groups)
+    elif '.xlsx' in file_groups or '.xls' in file_group:
+        df_groups_clin = pd.read_excel(file_groups)
+
+    groups, subjects_per_group = _GET_Groups(df_groups_clin, group_col, id_col)
     print(groups, subjects_per_group)
 
     print('\nSTEP 1 of 3: making file with subjects')
     make_py_f_subjects(GLM_dir, subjects_per_group)
 
     print('\nSTEP 2 of 3: making files for GLM')
-    PrepareForGLM(GLM_dir, file_groups, id_col, group_col)
+    PrepareForGLM(GLM_dir, df_groups_clin, id_col, group_col)
 
     print('\nSTEP 3 of 3: running the glm')
     PerformGLM(GLM_dir, FREESURFER_HOME, SUBJECTS_DIR)
