@@ -242,7 +242,7 @@ class PerformGLM():
                 else:
                     RUN = True
         if RUN:
-            self.fsgd_win_to_unix(files_for_glm)
+#            self.fsgd_win_to_unix(files_for_glm)
             self.RUN_GLM(files_for_glm)
             print('\n\nGLM DONE')
         else:
@@ -265,7 +265,7 @@ class PerformGLM():
         measurements = ['thickness','area','volume',]#'curv']
         thresholds = [10,]#5,15,20,25]
         for contrast_type in files_for_glm:
-            for fsgd_file in files_for_glm[contrast_type]['fsgd'][:2]:                                                  # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!to rm
+            for fsgd_file in files_for_glm[contrast_type]['fsgd'][:2]:                                                  # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!to rm the [:2]
                 fsgd_f_unix = path.join(self.PATHglm,'fsgd_unix',fsgd_file.replace('.fsgd','')+'_unix.fsgd')
                 for hemi in hemispheres:
                     for meas in measurements:
@@ -398,26 +398,25 @@ if __name__ == '__main__':
 
 
     print('doing GLM for file:'+GLM_file_group)
-    if not path.isdir(GLM_dir):
-        makedirs(GLM_dir)
+    if not path.isdir(GLM_dir): makedirs(GLM_dir)
 
-    shutil.copy(GLM_file_group, path.join(GLM_dir,Path(GLM_file_group).name))
+    # shutil.copy(GLM_file_group, path.join(GLM_dir,Path(GLM_file_group).name))
 
-    if '.csv' in GLM_file_group:
-        df_groups_clin = pd.read_csv(GLM_file_group)
-    elif '.xlsx' in GLM_file_group or '.xls' in file_group:
-        df_groups_clin = pd.read_excel(GLM_file_group)
-    if 'Unnamed: 0' in df_groups_clin.columns:
-        df_groups_clin.drop(columns=['Unnamed: 0',], inplace=True)
+    # if '.csv' in GLM_file_group:
+    #     df_groups_clin = pd.read_csv(GLM_file_group)
+    # elif '.xlsx' in GLM_file_group or '.xls' in file_group:
+    #     df_groups_clin = pd.read_excel(GLM_file_group)
+    # if 'Unnamed: 0' in df_groups_clin.columns:
+    #     df_groups_clin.drop(columns=['Unnamed: 0',], inplace=True)
 
-    groups, subjects_per_group = _GET_Groups(df_groups_clin, group_col, id_col)
-    print(groups, subjects_per_group)
+    # groups, subjects_per_group = _GET_Groups(df_groups_clin, group_col, id_col)
+    # print(groups, subjects_per_group)
 
-    print('\nSTEP 1 of 3: making file with subjects')
-    make_py_f_subjects(GLM_dir, subjects_per_group)
+    # print('\nSTEP 1 of 3: making file with subjects')
+    # make_py_f_subjects(GLM_dir, subjects_per_group)
 
-    print('\nSTEP 2 of 3: making files for GLM')
-    PrepareForGLM(GLM_dir, df_groups_clin, id_col, group_col)
+    # print('\nSTEP 2 of 3: making files for GLM')
+    # PrepareForGLM(GLM_dir, df_groups_clin, id_col, group_col)
 
     print('\nSTEP 3 of 3: running the glm')
     PerformGLM(GLM_dir, FREESURFER_HOME, SUBJECTS_DIR)
