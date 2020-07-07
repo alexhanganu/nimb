@@ -1,8 +1,8 @@
 #!/bin/python
-# 2020.07.06
+# 2020.07.07
 
 
-from os import system, listdir, makedirs, path, getcwd, chdir, remove
+from os import system, listdir, makedirs, path, remove
 import shutil, linecache, sys
 
 
@@ -76,6 +76,8 @@ class PrepareForGLM():
         # self.make_fsgd_g1v2()
         # print('creating fsgd for g2v1')
         self.make_fsgd_g2v1()
+        print('creating unix version of fsgd files, to convert Windows tabulations to unix')
+        self.fsgd_win_to_unix()
         print('creating contrasts')
         self.make_contrasts()
         print('creating py file with all data')
@@ -165,6 +167,13 @@ class PrepareForGLM():
                         f.write('Input '+subjid+' '+self.d_subjid[subjid][self.group_col]+' '+str(self.d_subjid[subjid][variable])+'\n')
                 self.files_glm['g2v1']['fsgd'].append(file)
 
+    def fsgd_win_to_unix(self):
+        for contrast_type in self.files_glm:
+            for fsgd_file in self.files_glm[contrast_type]['fsgd']:
+                fsgd_f_unix = path.join(self.PATHglm,'fsgd',fsgd_file.replace('.fsgd','')+'_unix.fsgd')
+                if not path.isfile(fsgd_f_unix):
+                    system('cat '+path.join(self.PATHglm,'fsgd',fsgd_file)+' | sed \'s/\\r/\\n/g\' > '+fsgd_f_unix)
+
     def make_qdec_fsgd_g2(self):
         file = 'qdec_g2.fsgd'
         open(path.join(self.PATH_GLM_dir,file), 'w').close()
@@ -210,6 +219,7 @@ class PrepareForGLM():
 
 
 
+
 class PerformGLM():
     def __init__(self, PATHglm, FREESURFER_HOME, SUBJECTS_DIR, measurements, thresholds, cache):
         self.SUBJECTS_DIR = SUBJECTS_DIR
@@ -246,7 +256,7 @@ class PerformGLM():
                 else:
                     RUN = True
         if RUN:
-            self.fsgd_win_to_unix(files_for_glm)
+            # self.fsgd_win_to_unix(files_for_glm)
             self.RUN_GLM(files_for_glm, measurements, thresholds, cache)
             print('\n\nGLM DONE')
         else:
@@ -254,13 +264,13 @@ class PerformGLM():
 
             
 
-    def fsgd_win_to_unix(self, files_for_glm):
-        if not path.isdir(path.join(self.PATHglm,'fsgd_unix')): makedirs(path.join(self.PATHglm,'fsgd_unix'))
-        for contrast_type in files_for_glm:
-            for fsgd_file in files_for_glm[contrast_type]['fsgd']:
-                fsgd_f_unix = path.join(self.PATHglm,'fsgd_unix',fsgd_file.replace('.fsgd','')+'_unix.fsgd')
-                if not path.isfile(fsgd_f_unix):
-                    system('cat '+path.join(self.PATHglm,'fsgd',fsgd_file)+' | sed \'s/\\r/\\n/g\' > '+fsgd_f_unix)
+    # def fsgd_win_to_unix(self, files_for_glm):
+    #     if not path.isdir(path.join(self.PATHglm,'fsgd_unix')): makedirs(path.join(self.PATHglm,'fsgd_unix'))
+    #     for contrast_type in files_for_glm:
+    #         for fsgd_file in files_for_glm[contrast_type]['fsgd']:
+    #             fsgd_f_unix = path.join(self.PATHglm,'fsgd_unix',fsgd_file.replace('.fsgd','')+'_unix.fsgd')
+    #             if not path.isfile(fsgd_f_unix):
+    #                 system('cat '+path.join(self.PATHglm,'fsgd',fsgd_file)+' | sed \'s/\\r/\\n/g\' > '+fsgd_f_unix)
 
     def RUN_GLM(self, files_for_glm, measurements, thresholds, cache):
         print('performing GLM analysis using mri_glmfit')
@@ -268,7 +278,7 @@ class PerformGLM():
         hemispheres = ['lh','rh']
         for contrast_type in files_for_glm:
             for fsgd_file in files_for_glm[contrast_type]['fsgd']:
-                fsgd_f_unix = path.join(self.PATHglm,'fsgd_unix',fsgd_file.replace('.fsgd','')+'_unix.fsgd')
+                fsgd_f_unix = path.join(self.PATHglm,'fsgd',fsgd_file.replace('.fsgd','')+'_unix.fsgd')
                 for hemi in hemispheres:
                     for meas in measurements:
                         for thresh in thresholds:
@@ -327,86 +337,6 @@ class PerformGLM():
 
 
 
-
-class SaveGLMimages():
-
-    def __init__(self, GLM_dir, files_for_glm, measurements, thresholds, cache):
-        self.PATHglm = GLM_dir
-        self.PATHglm_glm = path.join(self.PATHglm,'glm/')
-
-        hemispheres = ['lh','rh']
-        sim_direction = ['pos', 'neg',]
-
-        for contrast_type in files_for_glm:
-            for fsgd_file in files_for_glm[contrast_type]['fsgd']:
-                fsgd_f_unix = path.join(self.PATHglm,'fsgd_unix',fsgd_file.replace('.fsgd','')+'_unix.fsgd')
-                for hemi in hemispheres:
-                    for meas in measurements:
-                        for thresh in thresholds:
-                            analysis_name = fsgd_file.replace('.fsgd','')+'.'+meas+'.'+hemi+'.fwhm'+str(thresh)
-                            glmdir = path.join(self.PATHglm_glm,analysis_name)
-                            contrastdir = glmdir+'/'+contrast_name+'/'
-
-                            for contrast in files_for_glm[contrast_type]['mtx']:
-                                if self.check_maxvox(glmdir, contrast.replace('.mtx','')):
-                                    self.make_images_results_fdr(hemi, glmdir, contrast.replace('.mtx',''), 'sig.mgh', 3.0)
-                                for direction in sim_direction:
-                                    sum_mc_f = contrastdir+'mc-z.'+direction+'.th'+str(cache)+'.sig.cluster.summary'
-                                    cwsig_mc_f = contrastdir+'mc-z.'+direction+'.th'+str(cache)+'.sig.cluster.mgh'
-                                    oannot_mc_f = contrastdir+'mc-z.'+direction+'.th'+str(cache)+'.sig.ocn.annot'
-                                    if self.check_mcz_summary(sum_mc_f):
-                                        self.make_images_results_mc(hemi, analysis_name, contrast.replace('.mtx','').replace(contrast_type+'_',''), direction, cwsig_mc_f, oannot_mc_f, str(cache), 1.3)
-
-
-
-    def check_maxvox(self, glmdir, contrast_name):
-        val = [i.strip() for i in open(path.join(glmdir,contrast_name,'maxvox.dat')).readlines()][0].split()[0]
-        if float(val) > 3.0 or float(val) < -3.0:
-            return True
-        else:
-            return False
-
-    def check_mcz_summary(self, file):
-        if len(linecache.getline(file, 42).strip('\n')) > 0:
-            return True
-        else:
-            return False
-
-    def make_images_results_mc(self, hemi, analysis_name, contrast, direction, cwsig_mc_f, oannot_mc_f, cache, thresh):
-        self.PATH_save_mc = self.PATHglm+'results/mc/'
-        if not path.isdir(self.PATH_save_mc):
-            makedirs(self.PATH_save_mc)
-        fv_cmds = ['-ss '+self.PATH_save_mc+analysis_name+'_'+contrast+'_lat_mc_'+direction+cache+'.tiff -noquit',
-                    '-cam Azimuth 180',
-                    '-ss '+self.PATH_save_mc+analysis_name+'_'+contrast+'_med_mc_'+direction+cache+'.tiff -quit',]
-        open('fv.cmd','w').close()
-        with open('fv.cmd','a') as f:
-            for line in fv_cmds:
-                f.write(line+'\n')
-
-        system('freeview -f $SUBJECTS_DIR/fsaverage/surf/'+hemi+'.inflated:overlay='+cwsig_mc_f+':overlay_threshold='+str(thresh)+',5:annot='+oannot_mc_f+' -viewport 3d -layout 1 -cmd fv.cmd')
-
-
-    def make_images_results_fdr(self, hemi, glmdir, contrast_name, file, thresh):
-        self.PATH_save_fdr = self.PATHglm+'results/fdr/'
-        if not path.isdir(self.PATH_save_fdr):
-            makedirs(self.PATH_save_fdr)
-
-        tksurfer_cmds = ['set colscalebarflag 1', 'set scalebarflag 1', 'save_tiff '+self.PATH_save_fdr+contrast_name+'_'+str(3.0)+'_lat.tiff',
-        'rotate_brain_y 180', 'redraw', 'save_tiff '+self.PATH_save_fdr+contrast_name+'_'+str(3.0)+'_med.tiff',
-        'sclv_set_current_threshold_using_fdr 0.05 0', 'redraw', 'save_tiff '+self.PATH_save_fdr+contrast_name+'_fdr_med.tiff',
-        'rotate_brain_y 180', 'redraw', 'save_tiff '+self.PATH_save_fdr+contrast_name+'_fdr_lat.tiff','exit']
-        open('scr.tcl','w').close()
-        with open('scr.tcl','a') as f:
-            for line in tksurfer_cmds:
-                f.write(line+'\n')
-        print('tksurfer fsaverage '+hemi+' inflated -overlay '+glmdir+'/'+contrast_name+'/'+file+' -fthresh '+str(thresh)+' -tcl scr.tcl')
-        system('tksurfer fsaverage '+hemi+' inflated -overlay '+glmdir+'/'+contrast_name+'/'+file+' -fthresh '+str(thresh)+' -tcl scr.tcl')
-
-
-
-
-
 if __name__ == '__main__':
     try:
         import pandas as pd
@@ -454,12 +384,90 @@ if __name__ == '__main__':
     PerformGLM(GLM_dir, FREESURFER_HOME, SUBJECTS_DIR, GLM_measurements, GLM_thresholds, GLM_MCz_cache)
 
 
-    # shutil.copy(path.join(GLM_dir,'files_for_glm.py'), path.join(path.dirname(__file__),'files_for_glm.py'))
-    # try:
-    #     from files_for_glm import files_for_glm
-    #     remove(path.join(path.dirname(__file__),'files_for_glm.py'))
-    #     print('files for glm imported')
-    #     SaveGLMimages(GLM_dir, files_for_glm, GLM_measurements, GLM_thresholds, GLM_MCz_cache)
-    # except ImportError as e:
-    #     print(e)
-    #     sys.exit('files_for_glm per group is missing')
+
+
+
+
+
+
+
+
+
+
+
+# FOLLOWING script moved to fs_glm_extract_images.py
+# class SaveGLMimages():
+
+#     def __init__(self, GLM_dir, files_for_glm, measurements, thresholds, cache):
+#         self.PATHglm = GLM_dir
+#         self.PATHglm_glm = path.join(self.PATHglm,'glm/')
+
+#         hemispheres = ['lh','rh']
+#         sim_direction = ['pos', 'neg',]
+
+#         for contrast_type in files_for_glm:
+#             for fsgd_file in files_for_glm[contrast_type]['fsgd']:
+#                 fsgd_f_unix = path.join(self.PATHglm,'fsgd_unix',fsgd_file.replace('.fsgd','')+'_unix.fsgd')
+#                 for hemi in hemispheres:
+#                     for meas in measurements:
+#                         for thresh in thresholds:
+#                             analysis_name = fsgd_file.replace('.fsgd','')+'.'+meas+'.'+hemi+'.fwhm'+str(thresh)
+#                             glmdir = path.join(self.PATHglm_glm,analysis_name)
+#                             contrastdir = glmdir+'/'+contrast_name+'/'
+
+#                             for contrast in files_for_glm[contrast_type]['mtx']:
+#                                 if self.check_maxvox(glmdir, contrast.replace('.mtx','')):
+#                                     self.make_images_results_fdr(hemi, glmdir, contrast.replace('.mtx',''), 'sig.mgh', 3.0)
+#                                 for direction in sim_direction:
+#                                     sum_mc_f = contrastdir+'mc-z.'+direction+'.th'+str(cache)+'.sig.cluster.summary'
+#                                     cwsig_mc_f = contrastdir+'mc-z.'+direction+'.th'+str(cache)+'.sig.cluster.mgh'
+#                                     oannot_mc_f = contrastdir+'mc-z.'+direction+'.th'+str(cache)+'.sig.ocn.annot'
+#                                     if self.check_mcz_summary(sum_mc_f):
+#                                         self.make_images_results_mc(hemi, analysis_name, contrast.replace('.mtx','').replace(contrast_type+'_',''), direction, cwsig_mc_f, oannot_mc_f, str(cache), 1.3)
+
+
+
+#     def check_maxvox(self, glmdir, contrast_name):
+#         val = [i.strip() for i in open(path.join(glmdir,contrast_name,'maxvox.dat')).readlines()][0].split()[0]
+#         if float(val) > 3.0 or float(val) < -3.0:
+#             return True
+#         else:
+#             return False
+
+#     def check_mcz_summary(self, file):
+#         if len(linecache.getline(file, 42).strip('\n')) > 0:
+#             return True
+#         else:
+#             return False
+
+#     def make_images_results_mc(self, hemi, analysis_name, contrast, direction, cwsig_mc_f, oannot_mc_f, cache, thresh):
+#         self.PATH_save_mc = self.PATHglm+'results/mc/'
+#         if not path.isdir(self.PATH_save_mc):
+#             makedirs(self.PATH_save_mc)
+#         fv_cmds = ['-ss '+self.PATH_save_mc+analysis_name+'_'+contrast+'_lat_mc_'+direction+cache+'.tiff -noquit',
+#                     '-cam Azimuth 180',
+#                     '-ss '+self.PATH_save_mc+analysis_name+'_'+contrast+'_med_mc_'+direction+cache+'.tiff -quit',]
+#         open('fv.cmd','w').close()
+#         with open('fv.cmd','a') as f:
+#             for line in fv_cmds:
+#                 f.write(line+'\n')
+
+#         system('freeview -f $SUBJECTS_DIR/fsaverage/surf/'+hemi+'.inflated:overlay='+cwsig_mc_f+':overlay_threshold='+str(thresh)+',5:annot='+oannot_mc_f+' -viewport 3d -layout 1 -cmd fv.cmd')
+
+
+#     def make_images_results_fdr(self, hemi, glmdir, contrast_name, file, thresh):
+#         self.PATH_save_fdr = self.PATHglm+'results/fdr/'
+#         if not path.isdir(self.PATH_save_fdr):
+#             makedirs(self.PATH_save_fdr)
+
+#         tksurfer_cmds = ['set colscalebarflag 1', 'set scalebarflag 1', 'save_tiff '+self.PATH_save_fdr+contrast_name+'_'+str(3.0)+'_lat.tiff',
+#         'rotate_brain_y 180', 'redraw', 'save_tiff '+self.PATH_save_fdr+contrast_name+'_'+str(3.0)+'_med.tiff',
+#         'sclv_set_current_threshold_using_fdr 0.05 0', 'redraw', 'save_tiff '+self.PATH_save_fdr+contrast_name+'_fdr_med.tiff',
+#         'rotate_brain_y 180', 'redraw', 'save_tiff '+self.PATH_save_fdr+contrast_name+'_fdr_lat.tiff','exit']
+#         open('scr.tcl','w').close()
+#         with open('scr.tcl','a') as f:
+#             for line in tksurfer_cmds:
+#                 f.write(line+'\n')
+#         print('tksurfer fsaverage '+hemi+' inflated -overlay '+glmdir+'/'+contrast_name+'/'+file+' -fthresh '+str(thresh)+' -tcl scr.tcl')
+#         system('tksurfer fsaverage '+hemi+' inflated -overlay '+glmdir+'/'+contrast_name+'/'+file+' -fthresh '+str(thresh)+' -tcl scr.tcl')
+
