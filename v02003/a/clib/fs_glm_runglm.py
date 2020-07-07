@@ -170,9 +170,9 @@ class PrepareForGLM():
     def fsgd_win_to_unix(self):
         for contrast_type in self.files_glm:
             for fsgd_file in self.files_glm[contrast_type]['fsgd']:
-                fsgd_f_unix = path.join(self.PATHglm,'fsgd',fsgd_file.replace('.fsgd','')+'_unix.fsgd')
+                fsgd_f_unix = path.join(self.PATH_GLM_dir,'fsgd',fsgd_file.replace('.fsgd','')+'_unix.fsgd')
                 if not path.isfile(fsgd_f_unix):
-                    system('cat '+path.join(self.PATHglm,'fsgd',fsgd_file)+' | sed \'s/\\r/\\n/g\' > '+fsgd_f_unix)
+                    system('cat '+path.join(self.PATH_GLM_dir,'fsgd',fsgd_file)+' | sed \'s/\\r/\\n/g\' > '+fsgd_f_unix)
 
     def make_qdec_fsgd_g2(self):
         file = 'qdec_g2.fsgd'
