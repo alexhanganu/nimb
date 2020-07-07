@@ -285,12 +285,13 @@ class PerformGLM():
                             analysis_name = fsgd_file.replace('.fsgd','')+'.'+meas+'.'+hemi+'.fwhm'+str(thresh)
                             glmdir = path.join(self.PATHglm_glm,analysis_name)
                             mgh_f = path.join(glmdir,meas+'.'+hemi+'.fwhm'+str(thresh)+'.y.mgh')
-                            system('mris_preproc --fsgd '+fsgd_f_unix+' --cache-in '+meas+'.fwhm'+str(thresh)+'.fsaverage --target fsaverage --hemi '+hemi+' --out '+mgh_f)
-                            for contrast in files_for_glm[contrast_type]['mtx']:
-                                explanation = files_for_glm[contrast_type]['mtx_explanation'][files_for_glm[contrast_type]['mtx'].index(contrast)]
-                                for gd2mtx in files_for_glm[contrast_type]['gd2mtx']:
-                                    system('mri_glmfit --y '+mgh_f+' --fsgd '+fsgd_f_unix+' '+gd2mtx+' --glmdir '+glmdir+' --surf fsaverage '+hemi+' --label '+path.join(self.SUBJECTS_DIR,'fsaverage','label',hemi+'.aparc.label')+' --C '+path.join(self.PATHglm,'contrasts',contrast))
-                                    self.RUN_sim(glmdir, contrast.replace('.mtx',''), hemi, contrast_type, analysis_name, meas, cache, explanation)
+                            if not path.isdir(glmdir):
+                                system('mris_preproc --fsgd '+fsgd_f_unix+' --cache-in '+meas+'.fwhm'+str(thresh)+'.fsaverage --target fsaverage --hemi '+hemi+' --out '+mgh_f)
+                                for contrast in files_for_glm[contrast_type]['mtx']:
+                                    explanation = files_for_glm[contrast_type]['mtx_explanation'][files_for_glm[contrast_type]['mtx'].index(contrast)]
+                                    for gd2mtx in files_for_glm[contrast_type]['gd2mtx']:
+                                        system('mri_glmfit --y '+mgh_f+' --fsgd '+fsgd_f_unix+' '+gd2mtx+' --glmdir '+glmdir+' --surf fsaverage '+hemi+' --label '+path.join(self.SUBJECTS_DIR,'fsaverage','label',hemi+'.aparc.label')+' --C '+path.join(self.PATHglm,'contrasts',contrast))
+                                        self.RUN_sim(glmdir, contrast.replace('.mtx',''), hemi, contrast_type, analysis_name, meas, cache, explanation)
 
 
     def RUN_sim(self, glmdir, contrast_name, hemi, contrast_type, analysis_name, meas, cache, explanation):
