@@ -52,6 +52,7 @@ source_FreeSurfer_cmd = '$FREESURFER_HOME/SetUpFreeSurfer.sh'
 
 nimb_dir=path.join(remote_path_main_dir,'a/')
 dir_new_subjects=path.join(remote_path_main_dir,'subjects/')
+# SUBJECTS_DIR = path.join(remote_path_main_dir,'adni/Subjects_GLM') #temporary path for GLM analysis
 SUBJECTS_DIR = path.join(remote_path_main_dir,'fs-subjects/')
 processed_SUBJECTS_DIR = path.join(remote_path_main_dir,'subjects_processed/')
 nimb_scratch_dir=path.join(remote_path_save_temporary_files,'a_tmp/')
@@ -79,6 +80,10 @@ variables_for_glm = ['AGE', 'MMSCORE', 'CDMEMORY', 'CDGLOBAL', 'GDMEMORY', 'GDTO
        'NPIGSEV', 'NPIH', 'NPIHSEV', 'NPII', 'NPIISEV', 'NPIJ', 'NPIJSEV',
        'NPIK', 'NPIKSEV', 'NPIL', 'NPILSEV', 'NPISCORE'] # this is the list of variable what will be used to perform the FreeSurfer GLM correlations
 GLM_dir = path.join('/scratch',cuser,'adni','glm') # this is the folder whether the glm analysis is made. It is necessary for the file remote_runglm.py
+GLM_measurements = ['thickness','area','volume',]#'curv'] # these are the cortical parameters that will be used for GLM analysis
+GLM_thresholds = [10,]#5,15,20,25] # these are the threshold levels for smoothing in mm, used for GLM analysis
+GLM_MCz_cache = 13 # level of mcz simulation threshold, 13 equals to p=0.05
+
 
 for remote_path in (nimb_dir, dir_new_subjects, SUBJECTS_DIR, processed_SUBJECTS_DIR, nimb_scratch_dir):
 	if not path.isdir(remote_path):
