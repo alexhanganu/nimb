@@ -296,6 +296,8 @@ class PerformGLM():
                                     for gd2mtx in files_for_glm[contrast_type]['gd2mtx']:
                                         self.run_mri_glmfit(mgh_f, fsgd_f_unix, gd2mtx, glmdir, hemi, contrast)
                                         # system('mri_glmfit --y '+mgh_f+' --fsgd '+fsgd_f_unix+' '+gd2mtx+' --glmdir '+glmdir+' --surf fsaverage '+hemi+' --label '+path.join(self.SUBJECTS_DIR,'fsaverage','label',hemi+'.aparc.label')+' --C '+path.join(self.PATHglm,'contrasts',contrast))
+                                        if self.check_maxvox(glmdir, contrast.replace('.mtx','')):
+                                            self.log_contrasts_with_significance(self, glmdir, contrast_name)
                                         self.run_mri_surfcluster(glmdir, contrast.replace('.mtx',''), hemi, contrast_type, analysis_name, meas, cache, explanation)
 
     def run_mris_preproc(self, fsgd_file, meas, thresh, hemi, mgh_f):
@@ -329,6 +331,12 @@ class PerformGLM():
             else:
                 system('mri_glmfit-sim --glmdir '+path.join(glmdir,contrast_name)+' --cache '+str(cache)+' '+direction+' --cwp 0.05 --2spaces')
 
+    def check_maxvox(self, glmdir, contrast_name):
+        val = [i.strip() for i in open(path.join(glmdir,contrast_name,'maxvox.dat')).readlines()][0].split()[0]
+        if float(val) > 3.0 or float(val) < -3.0:
+            return True
+        else:
+            return False
 
     def check_mcz_summary(self, file):
         if len(linecache.getline(file, 42).strip('\n')) > 0:
@@ -350,6 +358,14 @@ class PerformGLM():
             for value in ls:
                 f.write(value+'\n')
             f.write('\n')
+
+    def log_contrasts_with_significance(self, glmdir, contrast_name):
+        file = path.join(self.PATHglm_results,'sig_contrasts.log')
+        if not path.isfile(file):
+            open(file,'w').close()
+        with open(file, 'a') as f:
+            f.write(glmdir+'_'+contrast_name'\n')
+
 
 
 
@@ -380,21 +396,21 @@ if __name__ == '__main__':
     print('doing GLM for file:'+GLM_file_group)
     if not path.isdir(GLM_dir): makedirs(GLM_dir)
 
-    shutil.copy(GLM_file_group, path.join(GLM_dir,Path(GLM_file_group).name))
+    # shutil.copy(GLM_file_group, path.join(GLM_dir,Path(GLM_file_group).name))
 
-    if '.csv' in GLM_file_group:
-        df_groups_clin = pd.read_csv(GLM_file_group)
-    elif '.xlsx' in GLM_file_group or '.xls' in file_group:
-        df_groups_clin = pd.read_excel(GLM_file_group)
-    cols2drop = list()
-    for col in df_groups_clin.columns.tolist():
-        if col not in variables_for_glm+[id_col,group_col]:
-            cols2drop.append(col)
-    if cols2drop:
-        df_groups_clin.drop(columns=cols2drop, inplace=True)
+    # if '.csv' in GLM_file_group:
+    #     df_groups_clin = pd.read_csv(GLM_file_group)
+    # elif '.xlsx' in GLM_file_group or '.xls' in file_group:
+    #     df_groups_clin = pd.read_excel(GLM_file_group)
+    # cols2drop = list()
+    # for col in df_groups_clin.columns.tolist():
+    #     if col not in variables_for_glm+[id_col,group_col]:
+    #         cols2drop.append(col)
+    # if cols2drop:
+    #     df_groups_clin.drop(columns=cols2drop, inplace=True)
 
-    print('\nSTEP 1 of 2: creating files required for GLM')
-    PrepareForGLM(GLM_dir, df_groups_clin, id_col, group_col)
+    # print('\nSTEP 1 of 2: creating files required for GLM')
+    # PrepareForGLM(GLM_dir, df_groups_clin, id_col, group_col)
 
     print('\nSTEP 2 of 2: performing GLM analysis')
     PerformGLM(GLM_dir, FREESURFER_HOME, SUBJECTS_DIR, GLM_measurements, GLM_thresholds, GLM_MCz_cache)
