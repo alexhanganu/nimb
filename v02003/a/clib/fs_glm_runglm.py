@@ -297,7 +297,7 @@ class PerformGLM():
                                         self.run_mri_glmfit(mgh_f, fsgd_f_unix, gd2mtx, glmdir, hemi, contrast)
                                         # system('mri_glmfit --y '+mgh_f+' --fsgd '+fsgd_f_unix+' '+gd2mtx+' --glmdir '+glmdir+' --surf fsaverage '+hemi+' --label '+path.join(self.SUBJECTS_DIR,'fsaverage','label',hemi+'.aparc.label')+' --C '+path.join(self.PATHglm,'contrasts',contrast))
                                         if self.check_maxvox(glmdir, contrast.replace('.mtx','')):
-                                            self.log_contrasts_with_significance(self, glmdir, contrast.replace('.mtx',''))
+                                            self.log_contrasts_with_significance(glmdir, contrast.replace('.mtx',''))
                                         self.run_mri_surfcluster(glmdir, contrast.replace('.mtx',''), hemi, contrast_type, analysis_name, meas, cache, explanation)
 
     def run_mris_preproc(self, fsgd_file, meas, thresh, hemi, mgh_f):
