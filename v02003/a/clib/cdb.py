@@ -2,7 +2,7 @@
 # 2020.06.26
 
 from os import path, listdir, remove, getenv, rename, mkdir, environ, system, chdir
-from var import process_order, long_name, base_name, cusers_list, cuser, nimb_dir, nimb_scratch_dir, SUBJECTS_DIR
+from var import process_order, long_name, base_name, cusers_list, cuser, nimb_dir, nimb_scratch_dir, SUBJECTS_DIR, flair_t2_add
 import time, shutil
 
 environ['TZ'] = 'US/Eastern'
@@ -306,6 +306,7 @@ def get_registration_files(subjid, d_LONG_DIRS):
             data = json.load(jfile)
 
         for _id in d_LONG_DIRS:
+
             if subjid in d_LONG_DIRS[_id]:
                 _id = _id
                 ses = subjid.replace(_id+'_',"")
@@ -319,11 +320,11 @@ def get_registration_files(subjid, d_LONG_DIRS):
             t1_ls_f = data[_id][ses]['anat']['t1']
             flair_ls_f = 'none'
             t2_ls_f = 'none'
-            if 'flair' in data[_id][ses]['anat']:
+            if 'flair' in data[_id][ses]['anat'] and flair_t2_add:
                 if data[_id][ses]['anat']['flair']:
                     flair_ls_f = data[_id][ses]['anat']['flair']
-            if 't2' in data[_id][ses]['anat']:
-                if data[_id][ses]['anat']['t2']:
+            if 't2' in data[_id][ses]['anat'] and flair_t2_add:
+                if data[_id][ses]['anat']['t2'] and flair_ls_f == 'none':
                     t2_ls_f = data[_id][ses]['anat']['t2']
         Update_status_log('        registration files were read')
 
