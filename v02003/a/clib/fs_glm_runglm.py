@@ -286,26 +286,41 @@ class PerformGLM():
                             glmdir = path.join(self.PATHglm_glm,analysis_name)
                             mgh_f = path.join(glmdir,meas+'.'+hemi+'.fwhm'+str(thresh)+'.y.mgh')
                             if not path.isdir(glmdir):
-                                system('mris_preproc --fsgd '+fsgd_f_unix+' --cache-in '+meas+'.fwhm'+str(thresh)+'.fsaverage --target fsaverage --hemi '+hemi+' --out '+mgh_f)
+                                self.run_mris_preproc(fsgd_f_unix, meas, thresh, hemi, mgh_f)
+                                if not path.isfile(mgh_f):
+                                    print(mgh_f+' not created; ERROR in mris_preproc')
+                                    sys.exit('mris_preproc ERROR')
+                                # system('mris_preproc --fsgd '+fsgd_f_unix+' --cache-in '+meas+'.fwhm'+str(thresh)+'.fsaverage --target fsaverage --hemi '+hemi+' --out '+mgh_f)
                                 for contrast in files_for_glm[contrast_type]['mtx']:
                                     explanation = files_for_glm[contrast_type]['mtx_explanation'][files_for_glm[contrast_type]['mtx'].index(contrast)]
                                     for gd2mtx in files_for_glm[contrast_type]['gd2mtx']:
-                                        system('mri_glmfit --y '+mgh_f+' --fsgd '+fsgd_f_unix+' '+gd2mtx+' --glmdir '+glmdir+' --surf fsaverage '+hemi+' --label '+path.join(self.SUBJECTS_DIR,'fsaverage','label',hemi+'.aparc.label')+' --C '+path.join(self.PATHglm,'contrasts',contrast))
-                                        self.RUN_sim(glmdir, contrast.replace('.mtx',''), hemi, contrast_type, analysis_name, meas, cache, explanation)
+                                        self.run_mri_glmfit(mgh_f, fsgd_f_unix, gd2mtx, glmdir, hemi, contrast)
+                                        # system('mri_glmfit --y '+mgh_f+' --fsgd '+fsgd_f_unix+' '+gd2mtx+' --glmdir '+glmdir+' --surf fsaverage '+hemi+' --label '+path.join(self.SUBJECTS_DIR,'fsaverage','label',hemi+'.aparc.label')+' --C '+path.join(self.PATHglm,'contrasts',contrast))
+                                        self.run_mri_surfcluster(glmdir, contrast.replace('.mtx',''), hemi, contrast_type, analysis_name, meas, cache, explanation)
+
+    def run_mris_preproc(self, fsgd_file, meas, thresh, hemi, mgh_f):
+        system('mris_preproc --fsgd '+fsgd_file+' --cache-in '+meas+'.fwhm'+str(thresh)+'.fsaverage --target fsaverage --hemi '+hemi+' --out '+mgh_f)
+
+    def run_mri_glmfit(self, mgh_f, fsgd_file, gd2mtx, glmdir, hemi, contrast):
+        label_cmd = ' --label '+path.join(self.SUBJECTS_DIR,'fsaverage','label',hemi+'.aparc.label')
+        contrast_cmd = ' --C '+path.join(self.PATHglm,'contrasts',contrast)
+        cmd = 'mri_glmfit --y '+mgh_f+' --fsgd '+fsgd_file+' '+gd2mtx+' --glmdir '+glmdir+' --surf fsaverage '+hemi+label_cmd+contrast_cmd
+        system(cmd)
 
 
-    def RUN_sim(self, glmdir, contrast_name, hemi, contrast_type, analysis_name, meas, cache, explanation):
+    def run_mri_surfcluster(self, glmdir, contrast_name, hemi, contrast_type, analysis_name, meas, cache, explanation):
         sim_direction = ['pos', 'neg',]
-        contrastdir = glmdir+'/'+contrast_name+'/'
+        contrastdir = path.join(glmdir,contrast_name)
         fwhm = {'thickness': {'lh': '15','rh': '15'},'area': {'lh': '24','rh': '25'},'volume': {'lh': '16','rh': '16'},}
+        measure_abbreviation = {'thickness':'th','area':'ar','volume':'vol'} # needs to be checked, it is possible that only .th is used
         for direction in sim_direction:
-            sig_f = contrastdir+'sig.mgh'
-            cwsig_mc_f = contrastdir+'mc-z.'+direction+'.th'+str(cache)+'.sig.cluster.mgh'
-            vwsig_mc_f = contrastdir+'mc-z.'+direction+'.th'+str(cache)+'.sig.vertex.mgh'
-            sum_mc_f = contrastdir+'mc-z.'+direction+'.th'+str(cache)+'.sig.cluster.summary'
-            ocn_mc_f = contrastdir+'mc-z.'+direction+'.th'+str(cache)+'.sig.ocn.mgh'
-            oannot_mc_f = contrastdir+'mc-z.'+direction+'.th'+str(cache)+'.sig.ocn.annot'
-            csdpdf_mc_f = contrastdir+'mc-z.'+direction+'.th'+str(cache)+'.pdf.dat'
+            sig_f = path.join(contrastdir,'sig.mgh')
+            cwsig_mc_f = path.join(contrastdir,'mc-z.'+direction+'.'+measure_abbreviation[meas]+str(cache)+'.sig.cluster.mgh')
+            vwsig_mc_f = path.join(contrastdir,'mc-z.'+direction+'.'+measure_abbreviation[meas]+str(cache)+'.sig.vertex.mgh')
+            sum_mc_f = path.join(contrastdir,'mc-z.'+direction+'.'+measure_abbreviation[meas]+str(cache)+'.sig.cluster.summary')
+            ocn_mc_f = path.join(contrastdir,'mc-z.'+direction+'.'+measure_abbreviation[meas]+str(cache)+'.sig.ocn.mgh')
+            oannot_mc_f = path.join(contrastdir,'mc-z.'+direction+'.'+measure_abbreviation[meas]+str(cache)+'.sig.ocn.annot')
+            csdpdf_mc_f = path.join(contrastdir,'mc-z.'+direction+'.'+measure_abbreviation[meas]+str(cache)+'.pdf.dat')
             if meas != 'curv':
                 csd_mc_f = path.join(self.FREESURFER_HOME,'average','mult-comp-cor','fsaverage',hemi,'cortex','fwhm'+fwhm[meas][hemi],direction,'th'+str(cache),'mc-z.csd')
                 system('mri_surfcluster --in '+sig_f+' --csd '+csd_mc_f+' --mask '+path.join(glmdir,'mask.mgh')+' --cwsig '+cwsig_mc_f+' --vwsig '+vwsig_mc_f+' --sum '+sum_mc_f+' --ocn '+ocn_mc_f+' --oannot '+oannot_mc_f+' --csdpdf '+csdpdf_mc_f+' --annot aparc --cwpvalthresh 0.05 --surf white')                                        
