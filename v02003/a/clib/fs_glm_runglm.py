@@ -229,10 +229,10 @@ class PerformGLM():
         self.PATHglm_glm = path.join(self.PATHglm,'glm/')
         self.PATHglm_results = path.join(self.PATHglm,'results')
         for subdir in (self.PATHglm_glm, self.PATHglm_results):
-            if not path.isdir(subdir): makedirs(self.PATHglm_results)
+            if not path.isdir(subdir): makedirs(subdir)
 
         for file in ('subjects_per_group.py','files_for_glm.py'):
-            shutil.copy(path.join(self.PATHglm,file), path.join(path.dirname(__file__),file))
+            shutil.copy(path.join(self.PATHglm,file), path.join(path.dirname(path.abspath(__file__)),file))
         try:
             from subjects_per_group import subjects_per_group
             remove(path.join(path.dirname(__file__),'subjects_per_group.py'))
