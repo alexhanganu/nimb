@@ -1,5 +1,5 @@
 #!/bin/python
-# 2020.07.07
+# 2020.07.10
 
 
 from os import system, listdir, makedirs, path, remove
@@ -256,21 +256,11 @@ class PerformGLM():
                 else:
                     RUN = True
         if RUN:
-            # self.fsgd_win_to_unix(files_for_glm)
             self.RUN_GLM(files_for_glm, measurements, thresholds, cache)
             print('\n\nGLM DONE')
         else:
             sys.exit('some subjects are missing from the freesurfer folder')
 
-            
-
-    # def fsgd_win_to_unix(self, files_for_glm):
-    #     if not path.isdir(path.join(self.PATHglm,'fsgd_unix')): makedirs(path.join(self.PATHglm,'fsgd_unix'))
-    #     for contrast_type in files_for_glm:
-    #         for fsgd_file in files_for_glm[contrast_type]['fsgd']:
-    #             fsgd_f_unix = path.join(self.PATHglm,'fsgd_unix',fsgd_file.replace('.fsgd','')+'_unix.fsgd')
-    #             if not path.isfile(fsgd_f_unix):
-    #                 system('cat '+path.join(self.PATHglm,'fsgd',fsgd_file)+' | sed \'s/\\r/\\n/g\' > '+fsgd_f_unix)
 
     def RUN_GLM(self, files_for_glm, measurements, thresholds, cache):
         print('performing GLM analysis using mri_glmfit')
@@ -364,7 +354,7 @@ class PerformGLM():
         if not path.isfile(file):
             open(file,'w').close()
         with open(file, 'a') as f:
-            f.write(glmdir+'_'+contrast_name+'\n')
+            f.write(path.join(glmdir,contrast_name)+'\n')
 
 
 
@@ -396,21 +386,21 @@ if __name__ == '__main__':
     print('doing GLM for file:'+GLM_file_group)
     if not path.isdir(GLM_dir): makedirs(GLM_dir)
 
-    # shutil.copy(GLM_file_group, path.join(GLM_dir,Path(GLM_file_group).name))
+    shutil.copy(GLM_file_group, path.join(GLM_dir,Path(GLM_file_group).name))
 
-    # if '.csv' in GLM_file_group:
-    #     df_groups_clin = pd.read_csv(GLM_file_group)
-    # elif '.xlsx' in GLM_file_group or '.xls' in file_group:
-    #     df_groups_clin = pd.read_excel(GLM_file_group)
-    # cols2drop = list()
-    # for col in df_groups_clin.columns.tolist():
-    #     if col not in variables_for_glm+[id_col,group_col]:
-    #         cols2drop.append(col)
-    # if cols2drop:
-    #     df_groups_clin.drop(columns=cols2drop, inplace=True)
+    if '.csv' in GLM_file_group:
+        df_groups_clin = pd.read_csv(GLM_file_group)
+    elif '.xlsx' in GLM_file_group or '.xls' in file_group:
+        df_groups_clin = pd.read_excel(GLM_file_group)
+    cols2drop = list()
+    for col in df_groups_clin.columns.tolist():
+        if col not in variables_for_glm+[id_col,group_col]:
+            cols2drop.append(col)
+    if cols2drop:
+        df_groups_clin.drop(columns=cols2drop, inplace=True)
 
-    # print('\nSTEP 1 of 2: creating files required for GLM')
-    # PrepareForGLM(GLM_dir, df_groups_clin, id_col, group_col)
+    print('\nSTEP 1 of 2: creating files required for GLM')
+    PrepareForGLM(GLM_dir, df_groups_clin, id_col, group_col)
 
     print('\nSTEP 2 of 2: performing GLM analysis')
     PerformGLM(GLM_dir, FREESURFER_HOME, SUBJECTS_DIR, GLM_measurements, GLM_thresholds, GLM_MCz_cache)
