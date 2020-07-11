@@ -25,7 +25,11 @@ flair_t2_add = False
 
 
 from os import path, makedirs
-from cget_username import _get_username
+try:
+       from cget_username import _get_username
+except ImportError:
+       from a.clib.cget_username import _get_username
+
 
 cuser = _get_username()
 cusers_list = ['hanganua','hvt','lucaspsy','hiver85']
