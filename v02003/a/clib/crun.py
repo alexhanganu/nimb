@@ -7,7 +7,7 @@ try:
 except ImportError as e:
     cdb.Update_status_log(e)
 import time, shutil
-from var import max_nr_running_batches, process_order, base_name, DO_LONG, freesurfer_version, batch_walltime, submit_cmd, nimb_dir, SUBJECTS_DIR, processed_SUBJECTS_DIR
+from var import max_nr_running_batches, process_order, base_name, DO_LONG, freesurfer_version, batch_walltime, submit_cmd, nimb_dir, SUBJECTS_DIR, processed_SUBJECTS_DIR, processing_env,
 import crunfs, cdb, cwalltime
 from cbuild_stamp import nimb_version
 
@@ -70,25 +70,26 @@ def do(process):
             if process == 'registration':
                 if not crunfs.chksubjidinfs(subjid):
                     t1_ls_f, flair_ls_f, t2_ls_f = cdb.get_registration_files(subjid, db['LONG_DIRS'])
-                    job_id = crunfs.makesubmitpbs(Get_cmd.registration(subjid, t1_ls_f, flair_ls_f, t2_ls_f), subjid, process, cwalltime.Get_walltime(process))
+                    # job_id = crunfs.submit_4_processing(processing_env, cmd, subjid, run, walltime)
+                    job_id = crunfs.makesubmitpbs(submit_cmd, Get_cmd.registration(subjid, t1_ls_f, flair_ls_f, t2_ls_f), subjid, process, cwalltime.Get_walltime(process))
             elif process == 'recon':
-                job_id = crunfs.makesubmitpbs(Get_cmd.recon(subjid), subjid, process, cwalltime.Get_walltime(process))
+                job_id = crunfs.makesubmitpbs(submit_cmd, Get_cmd.recon(subjid), subjid, process, cwalltime.Get_walltime(process))
             elif process == 'autorecon1':
-                job_id = crunfs.makesubmitpbs(Get_cmd.autorecon1(subjid), subjid, process, cwalltime.Get_walltime(process))
+                job_id = crunfs.makesubmitpbs(submit_cmd, Get_cmd.autorecon1(subjid), subjid, process, cwalltime.Get_walltime(process))
             elif process == 'autorecon2':
-                job_id = crunfs.makesubmitpbs(Get_cmd.autorecon2(subjid), subjid, process, cwalltime.Get_walltime(process))
+                job_id = crunfs.makesubmitpbs(submit_cmd, Get_cmd.autorecon2(subjid), subjid, process, cwalltime.Get_walltime(process))
             elif process == 'autorecon3':
-                job_id = crunfs.makesubmitpbs(Get_cmd.autorecon3(subjid), subjid, process, cwalltime.Get_walltime(process))
+                job_id = crunfs.makesubmitpbs(submit_cmd, Get_cmd.autorecon3(subjid), subjid, process, cwalltime.Get_walltime(process))
             elif process == 'qcache':
-                job_id = crunfs.makesubmitpbs(Get_cmd.qcache(subjid), subjid, process, cwalltime.Get_walltime(process))
+                job_id = crunfs.makesubmitpbs(submit_cmd, Get_cmd.qcache(subjid), subjid, process, cwalltime.Get_walltime(process))
             elif process == 'brstem':
-                job_id = crunfs.makesubmitpbs(Get_cmd.brstem(subjid), subjid, process, cwalltime.Get_walltime(process))
+                job_id = crunfs.makesubmitpbs(submit_cmd, Get_cmd.brstem(subjid), subjid, process, cwalltime.Get_walltime(process))
             elif process == 'hip':
-                job_id = crunfs.makesubmitpbs(Get_cmd.hip(subjid), subjid, process, cwalltime.Get_walltime(process))
+                job_id = crunfs.makesubmitpbs(submit_cmd, Get_cmd.hip(subjid), subjid, process, cwalltime.Get_walltime(process))
             elif process == 'tha':
-                job_id = crunfs.makesubmitpbs(Get_cmd.tha(subjid), subjid, process, cwalltime.Get_walltime(process))
+                job_id = crunfs.makesubmitpbs(submit_cmd, Get_cmd.tha(subjid), subjid, process, cwalltime.Get_walltime(process))
             elif process == 'masks':
-                job_id = crunfs.makesubmitpbs(Get_cmd.masks(subjid), subjid, process, cwalltime.Get_walltime(process))
+                job_id = crunfs.makesubmitpbs(submit_cmd, Get_cmd.masks(subjid), subjid, process, cwalltime.Get_walltime(process))
             db['RUNNING_JOBS'][subjid] = job_id
             db['QUEUE'][process].append(subjid)
             try:

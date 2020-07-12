@@ -1,24 +1,24 @@
-NeuroImaging My Brain = NIMB (Pipeline for MRI analysis)
+NeuroImaging My Brain = NIMB (Pipeline for Structural MRI analysis wih FreeSurfer)
 
 * Module *GUI* :
     * takes the variables and files provided by the user
     * initiates the *DISTRIBUTION* module
 
 * Module *DISTRIBUTION* :
-    * takes T1 and Flair and/or T2 MR images and initiates the *CLASSIFIER* module
+    * takes T1 and Flair or T2 MR images and initiates the *CLASSIFIER* module
     * checks for available space on the local or remote computer
     * checks for the volume of data provided for analysis
     * checks if FreeSurfer is installed on the local or remote computer
-    * deploys corresponding MR images to the remote computer along with the new_subjects.json file
+    * deploys corresponding MR images to the remote computer and the new_subjects.json file
     * initiates the *PROCESSING* module
     * checks if data is processed
     * moves the processed data to the corresponding storage folder provided by the user
 
-* MOdule *CLASSIFIER* :
-    * classifies the raw MR images in the BIDS format, creating the files new_subjects.json
+* Module *CLASSIFIER* :
+    * classifies the raw MR images in the BIDS format, creating the file new_subjects.json
 
 * Module *PROCESSING* :
-    * reads the new_subjects.json file and registers the subjects in T1 and/or Flair or T2 to FreeSurfer
+    * reads the new_subjects.json file and registers the subjects in T1 and Flair or T2 to FreeSurfer
     * runs the FreeSurfer steps: recon-all (autorecon1, 2, 3), qcache, brainstem, hippocampus, thalamus
     * extracts the masks for subcortical structures (if requested by the user)
 
@@ -36,3 +36,4 @@ NeuroImaging My Brain = NIMB (Pipeline for MRI analysis)
         * performs logistic regression for all variables provided by the user and the FreeSurfer variables (sklearn.linear_model.LogisticRegression())
 
 * current remote compute is Cedar cluster on Compute Canada
+* processing is sent to the slurm scheduler (#SBATCH)

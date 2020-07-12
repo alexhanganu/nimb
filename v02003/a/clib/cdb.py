@@ -102,16 +102,6 @@ def get_ls_subjids_in_long_dirs(db):
     return lsall
 
 
-def get_RUNNING_JOBS(type):
-    lsall = []
-    if type == 'tmux':
-        for val in db['RUNNING_JOBS'].keys():
-            if 'tmux' in val:
-                lsall.append(val)
-    return sorted(lsall)
-
-
-
 def verify_vox_size_values(vox_size):
     vox = True
     if type(vox_size) == list:

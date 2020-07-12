@@ -11,14 +11,26 @@ https://surfer.nmr.mgh.harvard.edu/fswiki/QATools
 from os import listdir, path, mkdir, system
 import shutil
 import datetime
-from var import text4_scheduler, batch_walltime_cmd, max_walltime, batch_output_cmd, submit_cmd, freesurfer_version, nimb_dir, nimb_scratch_dir, SUBJECTS_DIR, export_FreeSurfer_cmd, source_FreeSurfer_cmd, SUBMIT
+from var import text4_scheduler, batch_walltime_cmd, max_walltime, batch_output_cmd, freesurfer_version, nimb_dir, nimb_scratch_dir, SUBJECTS_DIR, export_FreeSurfer_cmd, source_FreeSurfer_cmd, SUBMIT
 import cdb, var
 import subprocess
 print('SUBMITTING is: ', SUBMIT)
 
 
 
-def makesubmitpbs(cmd, subjid, run, walltime):
+def submit_4_processing(processing_env, cmd, subjid, run, walltime):
+    if processing_env == 'slurm':
+        submit_cmd = 'sbatch'
+        makesubmitpbs(submit_cmd, subjid, run, walltime)
+    elif processing_env == 'tmux':
+        submit_cmd = 'tmux'
+        submit_tmux(submit_cmd, cmd, subjid)
+    else:
+        print('ERROR: processing environment not provided or incorrect')
+
+
+
+def makesubmitpbs(submit_cmd, cmd, subjid, run, walltime):
 
     date=datetime.datetime.now()
     dt=str(date.year)+str(date.month)+str(date.day)
@@ -53,17 +65,13 @@ def makesubmitpbs(cmd, subjid, run, walltime):
         return ''
 
 
-def submit_4_run(cmd, subjid, run, walltime): #to join with makesubmitpbs
-    if remote_type == 'tmux': #https://gist.github.com/henrik/1967800
-        last_session = cdb.get_RUNNING_JOBS('tmux')
-        if len(last_session)>0:
-            session = 'tmux_'+str(int(last_session[-1][last_session[-1].find('-'):])+1) #get job id from cdb
-        else:
-            session = 'tmux_1'
+def submit_tmux(submit_cmd, cmd, subjid):
+    #https://gist.github.com/henrik/1967800
+    tmux_session = 'tmux_'+str(subjid)
 
-        make_tmux_screen = 'tmux new -d -s session'
-        system(submit_cmd+' send-keys -t '+str(session)+' '+cmd+' ENTER') #tmux send-keys -t session "echo 'Hello world'" ENTER
-        return session
+    make_tmux_screen = 'tmux new -d -s '+tmux_session
+    system(submit_cmd+' send-keys -t '+str(tmux_session)+' '+cmd+' ENTER') #tmux send-keys -t session "echo 'Hello world'" ENTER
+    return tmux_session
 
 
 
