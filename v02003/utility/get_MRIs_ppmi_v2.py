@@ -18,7 +18,7 @@ from sys import platform
 if platform == 'linux' or platform == 'linux2':
 	path_home = getenv('HOME')+'/projects/def-hanganua/'+project
 	path_scratch = getenv('SCRATCH')
-	SUBJECTS_DIR_RAW = path_home+'/source/mri_unzipped'
+	SUBJECTS_DIR_RAW = path.join(path_scratch,'database','loni_ppmi','source','mri_unzipped')
 if platform == 'win32':
 	p = input('please write the path of mri_unzipped: ')
 	if path.isdir(p):
@@ -32,12 +32,11 @@ import datetime as dt
 import time, json
 
 print('PATH_HOME is: ',path_home)
-# ?print('PATH_SCRATCH is: ',path_scratch)
+print('PATH_SCRATCH is: ',path_scratch)
 
-#f_with_downloaded_ids = '/materials/1.ls_subjects_downloaded.txt' # file with id of the downloaded participants
 if platform == 'linux' or platform == 'linux2' :
 	#f_new_subjects = '/home/hvt/projects/def-hanganua/hvt_ppmi_tmp' + '/new_subjects.json'
-	f_new_subjects = getenv('HOME') + '/projects/def-hanganua/a' + '/new_subjects.json'
+	f_new_subjects = path.join(getenv('HOME'),'new_subjects.json')
 	logf = path_scratch+'/log_'+project+'_'+str(time.strftime('%Y%m%d_%H_%M',time.localtime()))+'.txt'
 	open(logf,'w')
 if platform == 'darwin':
@@ -111,6 +110,7 @@ def validate_if_date(date_text):
 # Current: Extract 1 path by day
 # -> Output: Only get the first path found and skip other types in the same day
 # New: Add Extract more path by day + type
+
 def get_ls_sessions(ls):
 	# add types
 	mr_types = {'t1': ['t1', 'spgr', 'rage', ],

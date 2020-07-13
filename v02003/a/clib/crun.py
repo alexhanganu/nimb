@@ -295,8 +295,8 @@ def check_error():
 						else:
 							cdb.Update_status_log('        ERROR, '+subjid+' is absent from LONG_DIRS')
 						cdb.Update_status_log('        '+subjid+' moving from error')
-                        rename(path.join(SUBJECTS_DIR,subjid),path.join(SUBJECTS_DIR,'error_'+process+'_'+subjid))
-                        move_processed_subjects('error_'+process+'_'+subjid)
+						rename(path.join(SUBJECTS_DIR,subjid),path.join(SUBJECTS_DIR,'error_'+process+'_'+subjid))
+						move_processed_subjects('error_'+process+'_'+subjid)
 					else:
 						cdb.Update_status_log('            all files were created for process: '+process)
 						db['PROCESSED']['error_'+process].remove(subjid)
