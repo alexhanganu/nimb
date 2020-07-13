@@ -1,5 +1,5 @@
 #!/bin/python
-# 2020.07.12
+# 2020.07.13
 
 from os import path, listdir, remove, rename, system, chdir, environ
 try:
@@ -272,7 +272,7 @@ def check_error():
 				lserr.append(val)	
 			for subjid in lserr:
 				cdb.Update_status_log('    '+subjid)
-				if path.exists(SUBJECTS_DIR+subjid):
+				if path.exists(path.join(SUBJECTS_DIR,subjid)):
 					if crunfs.chkIsRunning(subjid):
 						cdb.Update_status_log('            removing IsRunning file')
 						remove(path.join(SUBJECTS_DIR,subjid,'scripts','IsRunning.lh+rh'))
@@ -294,8 +294,9 @@ def check_error():
 								cdb.Update_status_log('        ERROR, id not found in LONG_DIRS; '+e)
 						else:
 							cdb.Update_status_log('        ERROR, '+subjid+' is absent from LONG_DIRS')
-						cdb.Update_status_log('        '+subjid+' moving to cp2local')
-						db['PROCESSED']['cp2local'].append(subjid)
+						cdb.Update_status_log('        '+subjid+' moving from error')
+                        rename(path.join(SUBJECTS_DIR,subjid),path.join(SUBJECTS_DIR,'error_'+process+'_'+subjid))
+                        move_processed_subjects('error_'+process+'_'+subjid)
 					else:
 						cdb.Update_status_log('            all files were created for process: '+process)
 						db['PROCESSED']['error_'+process].remove(subjid)
@@ -313,20 +314,16 @@ def check_error():
 
 
 
-def move_processed_subjects():
-    processed_subjects = list()
-    for subject in db['PROCESSED']['cp2local']:
-        processed_subjects.append(subject)
-    for subject in processed_subjects:
-        cdb.Update_status_log('    '+subject+' moving from cp2local')
-        size_src = sum(f.stat().st_size for f in Path(path.join(SUBJECTS_DIR,subject)).glob('**/*') if f.is_file())
-        shutil.move(path.join(SUBJECTS_DIR,subject), path.join(processed_SUBJECTS_DIR,subject))
-        db['PROCESSED']['cp2local'].remove(subject)
-        cdb.Update_DB(db)
-        size_dst = sum(f.stat().st_size for f in Path(processed_SUBJECTS_DIR+subject).glob('**/*') if f.is_file())
-        if size_src != size_dst:
-            cdb.Update_status_log('        ERROR in moving, not moved correctly '+str(size_src)+' '+str(size_dst))
-            rename(path.join(processed_SUBJECTS_DIR,subject),path.join(processed_SUBJECTS_DIR,'error_moving'+subject))
+def move_processed_subjects(subject):
+    cdb.Update_status_log('    '+subject+' moving from cp2local')
+    size_src = sum(f.stat().st_size for f in Path(path.join(SUBJECTS_DIR,subject)).glob('**/*') if f.is_file())
+    shutil.move(path.join(SUBJECTS_DIR,subject), path.join(processed_SUBJECTS_DIR,subject))
+    db['PROCESSED']['cp2local'].remove(subject)
+    cdb.Update_DB(db)
+    size_dst = sum(f.stat().st_size for f in Path(processed_SUBJECTS_DIR+subject).glob('**/*') if f.is_file())
+    if size_src != size_dst:
+        cdb.Update_status_log('        ERROR in moving, not moved correctly '+str(size_src)+' '+str(size_dst))
+        rename(path.join(processed_SUBJECTS_DIR,subject),path.join(processed_SUBJECTS_DIR,'error_moving'+subject))
     cdb.Update_status_log('moving DONE')
 
 
@@ -359,7 +356,12 @@ def run():
     check_error()
 
     cdb.Update_status_log('\n\n moving  the processed')
-    move_processed_subjects()
+
+    # processed_subjects = list()
+    # for subject in db['PROCESSED']['cp2local']: # [::-1]
+    #     processed_subjects.append(subject)
+    for subject in db['PROCESSED']['cp2local'][::-1]:# processed_subjects:
+        move_processed_subjects(subject)
     cdb.Update_status_log('finished checking the processed')
 
 

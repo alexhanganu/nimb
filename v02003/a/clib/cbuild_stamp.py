@@ -1,1 +1,1 @@
-nimb_version = '2020.07.09.1343'
+nimb_version = '2020.07.13'
