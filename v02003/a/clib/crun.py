@@ -1,5 +1,5 @@
 #!/bin/python
-# 2020.06.26
+# 2020.07.12
 
 from os import path, listdir, remove, rename, system, chdir, environ
 try:
@@ -72,6 +72,8 @@ def do(process):
                     t1_ls_f, flair_ls_f, t2_ls_f = cdb.get_registration_files(subjid, db['LONG_DIRS'])
                     # job_id = crunfs.submit_4_processing(processing_env, cmd, subjid, run, walltime)
                     job_id = crunfs.makesubmitpbs(submit_cmd, Get_cmd.registration(subjid, t1_ls_f, flair_ls_f, t2_ls_f), subjid, process, cwalltime.Get_walltime(process))
+                else:
+                    job_id = 'none'
             elif process == 'recon':
                 job_id = crunfs.makesubmitpbs(submit_cmd, Get_cmd.recon(subjid), subjid, process, cwalltime.Get_walltime(process))
             elif process == 'autorecon1':
@@ -90,12 +92,13 @@ def do(process):
                 job_id = crunfs.makesubmitpbs(submit_cmd, Get_cmd.tha(subjid), subjid, process, cwalltime.Get_walltime(process))
             elif process == 'masks':
                 job_id = crunfs.makesubmitpbs(submit_cmd, Get_cmd.masks(subjid), subjid, process, cwalltime.Get_walltime(process))
-            db['RUNNING_JOBS'][subjid] = job_id
-            db['QUEUE'][process].append(subjid)
-            try:
-                cdb.Update_status_log('        '+subjid+', '+process+', submited id: '+str(job_id))
-            except Exception as e:
-                cdb.Update_status_log('    err in do: '+e)
+            if job_id != 'none':
+                db['RUNNING_JOBS'][subjid] = job_id
+                db['QUEUE'][process].append(subjid)
+                try:
+                    cdb.Update_status_log('        '+subjid+', '+process+', submited id: '+str(job_id))
+                except Exception as e:
+                    cdb.Update_status_log('    err in do: '+e)
     cdb.Update_DB(db)
 
 
