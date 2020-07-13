@@ -127,13 +127,14 @@ def vox_higher_main(vox_size, main_vox_size):
 	return res
 
 
-def get_MR_file_params(file):
+def get_MR_file_params(subjid, file):
 	tmp_f = nimb_scratch_dir+'tmp'
 	vox_size = 'none'
 	chdir(nimb_dir)
 	system('./mri_info '+file+' >> '+tmp_f)
 	if path.isfile(tmp_f):
 		lines = list(open(tmp_f,'r'))
+		# with open(path.join(nimb_scratch_dir,subjid+'_mrparams'),'w') as f: 
 		try:
 			vox_size = [x.strip('\n') for x in lines if 'voxel sizes' in x][0].split(' ')[-3:]
 			vox_size = [x.replace(',','') for x in vox_size]
@@ -171,11 +172,11 @@ def get_MR_file_params(file):
 	return vox_size
 
 
-def keep_files_similar_params(t1_ls_f, flair_ls_f, t2_ls_f):
+def keep_files_similar_params(subjid, t1_ls_f, flair_ls_f, t2_ls_f):
     main_vox_size = 'none'
     for file in t1_ls_f:
         Update_status_log('        reading MR data for T1 file: '+file)
-        vox_size = get_MR_file_params(file)
+        vox_size = get_MR_file_params(subjid, file)
         if vox_size:
             if verify_vox_size_values(vox_size):
                 Update_status_log('        current voxel size is: '+str(vox_size))
@@ -191,7 +192,7 @@ def keep_files_similar_params(t1_ls_f, flair_ls_f, t2_ls_f):
     if flair_ls_f != 'none':
         for file in flair_ls_f:
             Update_status_log('        reading MR data for FLAIR file: '+file)
-            vox_size = get_MR_file_params(file)
+            vox_size = get_MR_file_params(subjid, file)
             Update_status_log('        main voxel size is: '+str(main_vox_size))
             Update_status_log('        current voxel size is: '+str(vox_size))
             if vox_size != main_vox_size:
@@ -202,7 +203,7 @@ def keep_files_similar_params(t1_ls_f, flair_ls_f, t2_ls_f):
     if t2_ls_f != 'none':
         for file in t2_ls_f:
             Update_status_log('        reading MR data for T2 file: '+file)
-            vox_size = get_MR_file_params(file)
+            vox_size = get_MR_file_params(subjid, file)
             Update_status_log('        main voxel size is: '+str(main_vox_size))
             Update_status_log('        current voxel size is: '+str(vox_size))
             if vox_size != main_vox_size:
@@ -318,7 +319,7 @@ def get_registration_files(subjid, d_LONG_DIRS):
                     t2_ls_f = data[_id][ses]['anat']['t2']
         Update_status_log('        registration files were read')
 
-    t1_ls_f, flair_ls_f, t2_ls_f = keep_files_similar_params(t1_ls_f, flair_ls_f, t2_ls_f)
+    t1_ls_f, flair_ls_f, t2_ls_f = keep_files_similar_params(subjid, t1_ls_f, flair_ls_f, t2_ls_f)
 
     return t1_ls_f, flair_ls_f, t2_ls_f
 
