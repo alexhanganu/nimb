@@ -20,13 +20,19 @@ def Get_DB():
         system('chmod 777 '+nimb_dir+'db.py')
         time.sleep(2)
         from db import DO, QUEUE, RUNNING, RUNNING_JOBS, LONG_DIRS, LONG_TPS, PROCESSED
-        db['DO'] = DO
-        db['QUEUE'] = QUEUE
-        db['RUNNING'] = RUNNING
-        db['RUNNING_JOBS'] = RUNNING_JOBS
-        db['LONG_DIRS'] = LONG_DIRS
-        db['LONG_TPS'] = LONG_TPS
-        db['PROCESSED'] = PROCESSED
+        db['DO'] = DO # key: list
+        db['QUEUE'] = QUEUE # key: list
+        db['RUNNING'] = RUNNING # key: list
+        db['RUNNING_JOBS'] = RUNNING_JOBS # key: int
+        db['LONG_DIRS'] = LONG_DIRS # key: list
+        db['LONG_TPS'] = LONG_TPS # key: list
+        db['PROCESSED'] = PROCESSED # key: list
+        try:
+            from db import REGISTRATION
+            db['REGISTRATION'] = REGISTRATION # key: key: key: list
+        except ImportError as e:
+            print(e)
+
         time.sleep(2)
         remove(nimb_dir+'db.py')
     else:
@@ -48,19 +54,26 @@ def Update_DB(d):
     open(file,'w').close()
     with open(file,'a') as f:
         for key in d:
-            if key != 'RUNNING_JOBS':
-                f.write(key+'= {')
+            f.write(key+'= {')
+            if key == 'RUNNING_JOBS':
+                for subkey in d[key]:
+                    f.write('\''+subkey+'\':'+str(d[key][subkey])+',')
+            elif key == 'REGISTRATION':
+                for subkey_subjid in d[key]:
+                    f.write('\''+subkey_subjid+'\': {')
+                    for subkey_mrgroup in d[key][subkey_subjid]:
+                        f.write('\''+subkey_mrgroup+'\': {')
+                        for subkey_mrgroup_type in d[key][subkey_subjid][subkey_mrgroup]:
+                            f.write('\''+subkey_mrgroup_type+'\':'+str(d[key][subkey_subjid][subkey_mrgroup][subkey_mrgroup_type])+',')
+                        f.write('},')
+                    f.write('},')
+            else:
                 for subkey in d[key]:
                     f.write('\''+subkey+'\':[')
                     for value in sorted(d[key][subkey]):
                         f.write('\''+value+'\',')
                     f.write('],')
-                f.write('}\n')
-            else:
-                f.write(key+'= {')
-                for subkey in d[key]:
-                    f.write('\''+subkey+'\':'+str(d[key][subkey])+',')
-                f.write('}\n')
+            f.write('}\n')
 
 
 
@@ -221,18 +234,17 @@ def Update_DB_new_subjects_and_SUBJECTS_DIR(db):
 
 
 
-def add_subjid_2_DB(_id, ses, db, ls_SUBJECTS_in_long_dirs_processed):
-        subjid = _id+'_'+ses
-        if subjid not in ls_SUBJECTS_in_long_dirs_processed:
-            if _id not in db['LONG_DIRS']:
-                db['LONG_DIRS'][_id] = []
-                db['LONG_TPS'][_id] = []
-            db['LONG_TPS'][_id].append(ses)
-            db['LONG_DIRS'][_id].append(subjid)
-            db['DO']['registration'].append(subjid)
-        else:
-            Update_status_log('ERROR: '+subjid+' in database! new one cannot be registered')
-        return db
+def add_subjid_2_DB(subjid, _id, ses, db, ls_SUBJECTS_in_long_dirs_processed):
+    if subjid not in ls_SUBJECTS_in_long_dirs_processed:
+        if _id not in db['LONG_DIRS']:
+            db['LONG_DIRS'][_id] = []
+            db['LONG_TPS'][_id] = []
+        db['LONG_TPS'][_id].append(ses)
+        db['LONG_DIRS'][_id].append(subjid)
+        db['DO']['registration'].append(subjid)
+    else:
+        Update_status_log('ERROR: '+subjid+' in database! new one cannot be registered')
+    return db
 
 
 
@@ -250,12 +262,12 @@ def chk_subjects_folder(db):
             Update_status_log('    adding '+subjid+' to database')
             _id, ses = get_id_long(subjid, db['LONG_DIRS'])
             if not checks_from_runfs('registration',_id):
-                db = add_subjid_2_DB(_id, ses, db, ls_SUBJECTS_in_long_dirs_processed)
+                db = add_subjid_2_DB(subjid, _id, ses, db, ls_SUBJECTS_in_long_dirs_processed)
         Update_status_log('new subjects were added from the subjects folder')
     return db
 
 
-
+# NOTE: intending to remove the new_subjects_registration_path.json
 def chk_new_subjects_json_file(db):
     Update_status_log('checking for new subjects ...')
 
@@ -273,7 +285,10 @@ def chk_new_subjects_json_file(db):
                     if 'anat' in data[_id][ses]:
                         if 't1' in data[_id][ses]['anat']:
                             if data[_id][ses]['anat']['t1']:
-                                db = add_subjid_2_DB(_id, ses, db, ls_SUBJECTS_in_long_dirs_processed)
+                                subjid = _id+'_'+ses
+                                if 'REGISTRATION' in db:
+                                    db['REGISTRATION'][subjid] = data[_id][ses]
+                                db = add_subjid_2_DB(subjid, _id, ses, db, ls_SUBJECTS_in_long_dirs_processed)
                             else:
                                 db['PROCESSED']['error_registration'].append(subjid)
                                 Update_status_log('ERROR: '+_id+' was read and but was not added to database')
@@ -282,37 +297,50 @@ def chk_new_subjects_json_file(db):
     return db
 
 
-
+# NOTE: intending to remove the new_subjects_registration_path.json
+#       if registration will be done from the database, the "else" can be removed
 def get_registration_files(subjid, d_LONG_DIRS):
-    f = nimb_dir+"new_subjects_registration_paths.json"#!!!! json file must be archived when finished
-    if path.isfile(f):
-        import json
+    if 'REGISTRATION' in db:
+        t1_ls_f = db['REGISTRATION'][subjid]['anat']['t1']
+        flair_ls_f = 'none'
+        t2_ls_f = 'none'
+        if 'flair' in db['REGISTRATION'][subjid]['anat'] and flair_t2_add:
+            if db['REGISTRATION'][subjid]['anat']['flair']:
+                flair_ls_f = db['REGISTRATION'][subjid]['anat']['flair']
+        if 't2' in db['REGISTRATION'][subjid]['anat'] and flair_t2_add:
+            if db['REGISTRATION'][subjid]['anat']['t2'] and flair_ls_f == 'none':
+                t2_ls_f = db['REGISTRATION'][subjid]['anat']['t2']
+        Update_status_log('        registration files were read from db[\'REGISTRATION\']')
+    else:
+        f = nimb_dir+"new_subjects_registration_paths.json"#!!!! json file must be archived when finished
+        if path.isfile(f):
+            import json
 
-        with open(f) as jfile:
-            data = json.load(jfile)
+            with open(f) as jfile:
+                data = json.load(jfile)
 
-        for _id in d_LONG_DIRS:
+            for _id in d_LONG_DIRS:
 
-            if subjid in d_LONG_DIRS[_id]:
-                _id = _id
-                ses = subjid.replace(_id+'_',"")
-                break
-            # else:
-            #     _id = 'none'
-            #     print(_id,' not in LONG_DIRS, please CHECK the database')
-        Update_status_log('    '+subjid+'\n                        id is: '+_id+', ses is: '+ses)
+                if subjid in d_LONG_DIRS[_id]:
+                    _id = _id
+                    ses = subjid.replace(_id+'_',"")
+                    break
+                # else:
+                #     _id = 'none'
+                #     print(_id,' not in LONG_DIRS, please CHECK the database')
+            Update_status_log('    '+subjid+'\n                        id is: '+_id+', ses is: '+ses)
 
-        if _id != 'none':
-            t1_ls_f = data[_id][ses]['anat']['t1']
-            flair_ls_f = 'none'
-            t2_ls_f = 'none'
-            if 'flair' in data[_id][ses]['anat'] and flair_t2_add:
-                if data[_id][ses]['anat']['flair']:
-                    flair_ls_f = data[_id][ses]['anat']['flair']
-            if 't2' in data[_id][ses]['anat'] and flair_t2_add:
-                if data[_id][ses]['anat']['t2'] and flair_ls_f == 'none':
-                    t2_ls_f = data[_id][ses]['anat']['t2']
-        Update_status_log('        registration files were read')
+            if _id != 'none':
+                t1_ls_f = data[_id][ses]['anat']['t1']
+                flair_ls_f = 'none'
+                t2_ls_f = 'none'
+                if 'flair' in data[_id][ses]['anat'] and flair_t2_add:
+                    if data[_id][ses]['anat']['flair']:
+                        flair_ls_f = data[_id][ses]['anat']['flair']
+                if 't2' in data[_id][ses]['anat'] and flair_t2_add:
+                    if data[_id][ses]['anat']['t2'] and flair_ls_f == 'none':
+                        t2_ls_f = data[_id][ses]['anat']['t2']
+            Update_status_log('        registration files were read from new_subjects_registration_paths.json')
 
     t1_ls_f, flair_ls_f, t2_ls_f = keep_files_similar_params(subjid, t1_ls_f, flair_ls_f, t2_ls_f)
 
