@@ -230,7 +230,7 @@ def keep_files_similar_params(subjid, t1_ls_f, flair_ls_f, t2_ls_f):
         if len(t2_ls_f) <1:
             t2_ls_f = 'none'
     print(grouped_by_voxsize)
-    print(grouped_by_voxsize.keys())
+    print(min(grouped_by_voxsize.keys()))
     return t1_ls_f, flair_ls_f, t2_ls_f
 
 
