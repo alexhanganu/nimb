@@ -96,7 +96,7 @@ def do(process):
                 db['RUNNING_JOBS'][subjid] = job_id
                 db['QUEUE'][process].append(subjid)
                 try:
-                    cdb.Update_status_log('        '+subjid+', '+process+', submited id: '+str(job_id))
+                    cdb.Update_status_log('    '+subjid+', '+process+', submited id: '+str(job_id))
                 except Exception as e:
                     cdb.Update_status_log('    err in do: '+e)
     cdb.Update_DB(db)
@@ -116,17 +116,17 @@ def queue(process, all_running):
             status = Get_status_for_subjid_in_queue(subjid, all_running)
             if crunfs.checks_from_runfs('registration',subjid):
                 if status =='R' or status == 'none':
-                    cdb.Update_status_log('   '+subjid+' moving from '+ACTION+' to RUNNING '+process)
+                    cdb.Update_status_log('    '+subjid+' moving from '+ACTION+' to RUNNING '+process)
                     db[ACTION][process].remove(subjid)
                     db['RUNNING'][process].append(subjid)
             elif status == 'none':
                 db[ACTION][process].remove(subjid)
-                cdb.Update_status_log('   '+subjid+' '+process+' moving to ERROR')
+                cdb.Update_status_log('    '+subjid+' '+process+' moving to ERROR')
                 db['PROCESSED']['error_'+process].append(subjid)
             else:
-                cdb.Update_status_log('   '+subjid+'    is NOT registered yet')
+                cdb.Update_status_log('    '+subjid+'    is NOT registered yet')
         else:
-            cdb.Update_status_log('   '+subjid+'    queue, NOT in RUNNING_JOBS')
+            cdb.Update_status_log('    '+subjid+'    queue, NOT in RUNNING_JOBS')
     cdb.Update_DB(db)
 
 

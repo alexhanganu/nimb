@@ -1,5 +1,5 @@
 #!/bin/python
-# 2020.06.26
+# 2020.07.14
 
 from os import path, listdir, remove, getenv, rename, mkdir, environ, system, chdir
 from var import process_order, long_name, base_name, cusers_list, cuser, nimb_dir, nimb_scratch_dir, SUBJECTS_DIR, flair_t2_add
@@ -300,7 +300,7 @@ def get_registration_files(subjid, d_LONG_DIRS):
             # else:
             #     _id = 'none'
             #     print(_id,' not in LONG_DIRS, please CHECK the database')
-        Update_status_log('    '+subjid+'\n        id is: '+_id+', ses is: '+ses)
+        Update_status_log('    '+subjid+'\n                        id is: '+_id+', ses is: '+ses)
 
         if _id != 'none':
             t1_ls_f = data[_id][ses]['anat']['t1']
