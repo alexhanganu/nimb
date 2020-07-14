@@ -306,6 +306,7 @@ def check_error():
 						cdb.Update_status_log('        moving from error_'+process+' to RUNNING '+process)
 				else:
 					cdb.Update_status_log('    not in SUBJECTS_DIR')
+					db['PROCESSED']['error_'+process].remove(subjid)
 				cdb.Update_DB(db)
 
 
