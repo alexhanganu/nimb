@@ -173,21 +173,27 @@ def get_MR_file_params(subjid, file):
 
 
 def keep_files_similar_params(subjid, t1_ls_f, flair_ls_f, t2_ls_f):
+    grouped_by_voxsize = {}
     main_vox_size = 'none'
+    
     for file in t1_ls_f:
         Update_status_log('        reading MR data for T1 file: '+file)
         vox_size = get_MR_file_params(subjid, file)
         if vox_size:
             if verify_vox_size_values(vox_size):
                 Update_status_log('        current voxel size is: '+str(vox_size))
+                if str(vox_size) not in grouped_by_voxsize:
+                    grouped_by_voxsize[str(vox_size)] = {'t1':[file]}
+                else:
+                    grouped_by_voxsize[str(vox_size)]['t1'].append(file)
+
                 if main_vox_size == 'none':
                     main_vox_size = vox_size
-                else:
-                    if vox_size != main_vox_size:
-                        if vox_higher_main(vox_size, main_vox_size):
-                          t1_ls_f.remove(file)
-                        else:
-                            main_vox_size = vox_size                            
+                elif vox_size != main_vox_size:
+                    if vox_higher_main(vox_size, main_vox_size):
+                        t1_ls_f.remove(file)
+                    else:
+                        main_vox_size = vox_size                            
         Update_status_log('        main voxel size is: '+str(main_vox_size))
     if flair_ls_f != 'none':
         for file in flair_ls_f:
@@ -195,22 +201,36 @@ def keep_files_similar_params(subjid, t1_ls_f, flair_ls_f, t2_ls_f):
             vox_size = get_MR_file_params(subjid, file)
             Update_status_log('        main voxel size is: '+str(main_vox_size))
             Update_status_log('        current voxel size is: '+str(vox_size))
+            if str(vox_size) in grouped_by_voxsize:
+                if 'flair' not in grouped_by_size[str(vox_size)]:
+                    grouped_by_voxsize[str(vox_size)]['flair'] = [file]
+                else:
+                    grouped_by_voxsize[str(vox_size)]['flair'].append(file)
+
             if vox_size != main_vox_size:
                 flair_ls_f.remove(file)
                 Update_status_log('        FLAIR file not added to analysis; voxel size is different')
-    if len(flair_ls_f) <1:
-        flair_ls_f = 'none'
+        if len(flair_ls_f) <1:
+            flair_ls_f = 'none'
     if t2_ls_f != 'none':
         for file in t2_ls_f:
             Update_status_log('        reading MR data for T2 file: '+file)
             vox_size = get_MR_file_params(subjid, file)
             Update_status_log('        main voxel size is: '+str(main_vox_size))
             Update_status_log('        current voxel size is: '+str(vox_size))
+            if str(vox_size) in grouped_by_voxsize:
+                if 'flair' not in grouped_by_voxsize[str(vox_size)]:
+                    if 't2' not in grouped_by_voxsize[str(vox_size)]:
+                        grouped_by_voxsize[str(vox_size)]['t2'] = [file]
+                    else:
+                        grouped_by_voxsize[str(vox_size)]['t2'].append(file)
             if vox_size != main_vox_size:
                 t2_ls_f.remove(file)
                 Update_status_log('        T2 file not added to analysis; voxel size is different')
-    if len(t2_ls_f) <1:
-        t2_ls_f = 'none'
+        if len(t2_ls_f) <1:
+            t2_ls_f = 'none'
+    print(grouped_by_voxsize)
+    print(grouped_by_voxsize.keys())
     return t1_ls_f, flair_ls_f, t2_ls_f
 
 
