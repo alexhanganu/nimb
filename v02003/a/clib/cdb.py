@@ -117,16 +117,6 @@ def verify_vox_size_values(vox_size):
     return vox
 
 
-
-def vox_higher_main(vox_size, main_vox_size):
-	res = True
-	vox_1 = float(vox_size[0])*float(vox_size[1])*float(vox_size[2])
-	vox_2 = float(main_vox_size[0])*float(main_vox_size[1])*float(main_vox_size[2])
-	if vox_1<vox_2:
-		res = False
-	return res
-
-
 def get_MR_file_params(subjid, file):
 	tmp_f = path.join(nimb_scratch_dir,'tmp')
 	vox_size = 'none'
@@ -134,103 +124,89 @@ def get_MR_file_params(subjid, file):
 	system('./mri_info '+file+' >> '+tmp_f)
 	if path.isfile(tmp_f):
 		lines = list(open(tmp_f,'r'))
-		# with open(path.join(nimb_scratch_dir,subjid+'_mrparams'),'w') as f: 
-		try:
-			vox_size = [x.strip('\n') for x in lines if 'voxel sizes' in x][0].split(' ')[-3:]
-			vox_size = [x.replace(',','') for x in vox_size]
-			Update_status_log('            voxel size is: '+str(vox_size))
-		except IndexError as e:
-			Update_status_log('            voxel size is: '+str(e))
-		try:
-			TR_TE_TI = [x.strip('\n') for x in lines if 'TR' in x][0].split(',')
-			TR = TR_TE_TI[0].split(' ')[-2]
-			TE = TR_TE_TI[1].split(' ')[-2]
-			TI = TR_TE_TI[2].split(' ')[-2]
-			flip_angle = TR_TE_TI[3].split(' ')[-2]
-			Update_status_log('            TR is: '+str(TR))
-			Update_status_log('            TE is: '+str(TE))
-			Update_status_log('            TI is: '+str(TI))
-			Update_status_log('            flip angle is: '+str(flip_angle))
-		except IndexError as e:
-			Update_status_log('            TR,TE,TI, flip angle : '+str(e))
-		try:
-			field_strength = [x.strip('\n') for x in lines if 'FieldStrength' in x][0].split(',')[0].replace('       FieldStrength: ','')
-			Update_status_log('            field strength is: '+str(field_strength))
-		except IndexError as e:
-			Update_status_log('            field_strength : '+str(e))
-		try:
-			matrix = [x.strip('\n') for x in lines if 'dimensions' in x][0].split(',')[0].replace('    dimensions: ','')
-			Update_status_log('            matrix is: '+str(matrix))
-		except IndexError as e:
-			Update_status_log('            matrix : '+str(e))
-		try:
-			fov = [x.strip('\n') for x in lines if 'fov' in x][0].split(',')[0].replace('           fov: ','')
-			Update_status_log('            fov is: '+str(fov))
-		except IndexError as e:
-			Update_status_log('            fov : '+str(e))			
+		file_mrparams = path.join(nimb_scratch_dir,subjid+'_mrparams')
+		if not path.isfile(file_mrparams):
+			open(file_mrparams,'w').close()
+		with open(file_mrparams,'a') as f:
+			f.write(file+'\n')
+			try:
+				vox_size = [x.strip('\n') for x in lines if 'voxel sizes' in x][0].split(' ')[-3:]
+				vox_size = [x.replace(',','') for x in vox_size]
+				f.write('voxel \t'+str(vox_size)+'\n') #Update_status_log('            voxel size is: '+str(vox_size))
+			except IndexError as e:
+				print(e)#Update_status_log('            voxel size is: '+str(e))
+			try:
+				TR_TE_TI = [x.strip('\n') for x in lines if 'TR' in x][0].split(',')
+				TR = TR_TE_TI[0].split(' ')[-2]
+				TE = TR_TE_TI[1].split(' ')[-2]
+				TI = TR_TE_TI[2].split(' ')[-2]
+				flip_angle = TR_TE_TI[3].split(' ')[-2]
+				f.write('TR \t'+str(TR)+'\n') #Update_status_log('            TR is: '+str(TR))
+				f.write('TE \t'+str(TE)+'\n') #Update_status_log('            TE is: '+str(TE))
+				f.write('TI \t'+str(TI)+'\n') #Update_status_log('            TI is: '+str(TI))
+				f.write('flip angle \t'+str(flip_angle)+'\n') #Update_status_log('            flip angle is: '+str(flip_angle))
+			except IndexError as e:
+				print(e)#Update_status_log('            TR,TE,TI, flip angle : '+str(e))
+			try:
+				field_strength = [x.strip('\n') for x in lines if 'FieldStrength' in x][0].split(',')[0].replace('       FieldStrength: ','')
+				f.write('field strength \t'+str(field_strength)+'\n') #Update_status_log('            field strength is: '+str(field_strength))
+			except IndexError as e:
+				print(e)#Update_status_log('            field_strength : '+str(e))
+			try:
+				matrix = [x.strip('\n') for x in lines if 'dimensions' in x][0].split(',')[0].replace('    dimensions: ','')
+				f.write('matrix \t'+str(matrix)+'\n')#Update_status_log('            matrix is: '+str(matrix))
+			except IndexError as e:
+				print(e)#Update_status_log('            matrix : '+str(e))
+			try:
+				fov = [x.strip('\n') for x in lines if 'fov' in x][0].split(',')[0].replace('           fov: ','')
+				f.write('fov \t'+str(fov)+'\n')#Update_status_log('            fov is: '+str(fov))
+			except IndexError as e:
+				print(e)#Update_status_log('            fov : '+str(e))			
 		remove(tmp_f)
 	return vox_size
 
 
 def keep_files_similar_params(subjid, t1_ls_f, flair_ls_f, t2_ls_f):
     grouped_by_voxsize = {}
-    main_vox_size = 'none'
-    
     for file in t1_ls_f:
         Update_status_log('        reading MR data for T1 file: '+file)
         vox_size = get_MR_file_params(subjid, file)
         if vox_size:
             if verify_vox_size_values(vox_size):
-                Update_status_log('        current voxel size is: '+str(vox_size))
                 if str(vox_size) not in grouped_by_voxsize:
                     grouped_by_voxsize[str(vox_size)] = {'t1':[file]}
                 else:
                     grouped_by_voxsize[str(vox_size)]['t1'].append(file)
-
-                if main_vox_size == 'none':
-                    main_vox_size = vox_size
-                elif vox_size != main_vox_size:
-                    if vox_higher_main(vox_size, main_vox_size):
-                        t1_ls_f.remove(file)
+            vox_size_used = min(grouped_by_voxsize.keys())
+            Update_status_log('        voxel size used: '+str(vox_size_used))
+            t1_ls_f = grouped_by_voxsize[vox_size_used]['t1']
+        else:
+            t1_ls_f = t1_ls_f[:1]
+            vox_size_used = ''
+            Update_status_log('        voxel size not detected, the first T1 is used')
+    if vox_size_used:
+        if flair_ls_f != 'none':
+            for file in flair_ls_f:
+                Update_status_log('        reading MR data for FLAIR file: '+file)
+                vox_size = get_MR_file_params(subjid, file)
+                if str(vox_size) == str(vox_size_used):
+                    if 'flair' not in grouped_by_size[str(vox_size)]:
+                        grouped_by_voxsize[str(vox_size)]['flair'] = [file]
                     else:
-                        main_vox_size = vox_size                            
-        Update_status_log('        main voxel size is: '+str(main_vox_size))
-    if flair_ls_f != 'none':
-        for file in flair_ls_f:
-            Update_status_log('        reading MR data for FLAIR file: '+file)
-            vox_size = get_MR_file_params(subjid, file)
-            Update_status_log('        main voxel size is: '+str(main_vox_size))
-            Update_status_log('        current voxel size is: '+str(vox_size))
-            if str(vox_size) in grouped_by_voxsize:
-                if 'flair' not in grouped_by_size[str(vox_size)]:
-                    grouped_by_voxsize[str(vox_size)]['flair'] = [file]
-                else:
-                    grouped_by_voxsize[str(vox_size)]['flair'].append(file)
-
-            if vox_size != main_vox_size:
-                flair_ls_f.remove(file)
-                Update_status_log('        FLAIR file not added to analysis; voxel size is different')
-        if len(flair_ls_f) <1:
-            flair_ls_f = 'none'
-    if t2_ls_f != 'none':
-        for file in t2_ls_f:
-            Update_status_log('        reading MR data for T2 file: '+file)
-            vox_size = get_MR_file_params(subjid, file)
-            Update_status_log('        main voxel size is: '+str(main_vox_size))
-            Update_status_log('        current voxel size is: '+str(vox_size))
-            if str(vox_size) in grouped_by_voxsize:
-                if 'flair' not in grouped_by_voxsize[str(vox_size)]:
-                    if 't2' not in grouped_by_voxsize[str(vox_size)]:
-                        grouped_by_voxsize[str(vox_size)]['t2'] = [file]
-                    else:
-                        grouped_by_voxsize[str(vox_size)]['t2'].append(file)
-            if vox_size != main_vox_size:
-                t2_ls_f.remove(file)
-                Update_status_log('        T2 file not added to analysis; voxel size is different')
-        if len(t2_ls_f) <1:
-            t2_ls_f = 'none'
-    print(grouped_by_voxsize)
-    print(min(grouped_by_voxsize.keys()))
+                        grouped_by_voxsize[str(vox_size)]['flair'].append(file)
+                    flair_ls_f = grouped_by_voxsize[vox_size_used]['flair']
+        if t2_ls_f != 'none':
+            for file in t2_ls_f:
+                Update_status_log('        reading MR data for T2 file: '+file)
+                vox_size = get_MR_file_params(subjid, file)
+                if str(vox_size) == vox_size_used:
+                    if 'flair' not in grouped_by_voxsize[str(vox_size)]:
+                        if 't2' not in grouped_by_voxsize[str(vox_size)]:
+                            grouped_by_voxsize[str(vox_size)]['t2'] = [file]
+                        else:
+                            grouped_by_voxsize[str(vox_size)]['t2'].append(file)
+                        t2_ls_f = grouped_by_voxsize[vox_size_used]['t2']
+    Update_status_log('        files used: '+str(t1_ls_f)+' '+str(flair_ls_f)+'_'+str(t2_ls_f))
     return t1_ls_f, flair_ls_f, t2_ls_f
 
 
@@ -304,7 +280,6 @@ def chk_new_subjects_json_file(db):
         rename(f_new_subjects, nimb_dir+'new_subjects_registration_paths.json')
         Update_status_log('new subjects were added from the new_subjects.json file')
     return db
-
 
 
 
@@ -558,3 +533,13 @@ def get_mask_codes(structure):
 #    for file in batch_files:
 #         print('starting job: ',file)
 #         system(start_batch_cmd+file)
+
+
+# script used to measure voxel size and choose the smallest one. Not used now.
+# def vox_higher_main(vox_size, main_vox_size):
+# 	res = True
+# 	vox_1 = float(vox_size[0])*float(vox_size[1])*float(vox_size[2])
+# 	vox_2 = float(main_vox_size[0])*float(main_vox_size[1])*float(main_vox_size[2])
+# 	if vox_1<vox_2:
+# 		res = False
+# 	return res
