@@ -317,6 +317,9 @@ def fs_find_error(subjid):
                 if 'ERROR: Talairach failed!' in line:
                     cdb.Update_status_log('        ERROR: Manual Talairach alignment may be necessary, or include the -notal-check flag to skip this test, making sure the -notal-check flag follows -all or -autorecon1 in the command string.')
                     error = 'talfail'
+                if  'ERROR: MultiRegistration::loadMovables: images have different voxel sizes.':
+                    cdb.Update_status_log('        ERROR: Voxel size is different, Multiregistration is not supported; consider making conform')
+                    error = 'voxsizediff'
         else:
             cdb.Update_status_log('        ERROR: '+file_2read+' not in '+path.join(SUBJECTS_DIR,subjid,'scripts'))
     except FileNotFoundError as e:

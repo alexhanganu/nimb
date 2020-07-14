@@ -282,7 +282,6 @@ def check_error():
 					if not crunfs.checks_from_runfs(process, subjid):
 						cdb.Update_status_log('            some files were not created. Excluding subject from pipeline.')
 						fs_error = crunfs.fs_find_error(subjid)
-						db['PROCESSED']['error_'+process].remove(subjid)
 						_id, _ = cdb.get_id_long(subjid, db['LONG_DIRS'])
 						if _id != 'none':
 							try:
@@ -295,37 +294,33 @@ def check_error():
 								cdb.Update_status_log('        ERROR, id not found in LONG_DIRS; '+e)
 						else:
 							cdb.Update_status_log('        ERROR, '+subjid+' is absent from LONG_DIRS')
-						cdb.Update_status_log('        '+subjid+' moving from error')
 						if fs_error:
-							rename(path.join(SUBJECTS_DIR,subjid),path.join(SUBJECTS_DIR,'error_'+fs_error+'_'+subjid))
-							move_processed_subjects('error_'+fs_error+'_'+subjid)
+                            new_name = 'error_'+fs_error+'_'+subjid
 						else:
-							rename(path.join(SUBJECTS_DIR,subjid),path.join(SUBJECTS_DIR,'error_'+process+'_'+subjid))
-							move_processed_subjects('error_'+process+'_'+subjid)
+                            new_name = 'error_'+process+'_'+subjid
+                        move_processed_subjects(subjid, 'error_'+process, new_name)
 					else:
 						cdb.Update_status_log('            all files were created for process: '+process)
 						db['PROCESSED']['error_'+process].remove(subjid)
 						db['RUNNING'][process].append(subjid)
-						cdb.Update_status_log('    moving from error_'+process+' to RUNNING '+process)
+						cdb.Update_status_log('        moving from error_'+process+' to RUNNING '+process)
 				else:
 					cdb.Update_status_log('    not in SUBJECTS_DIR')
 				cdb.Update_DB(db)
 
-	#ls of errors:
-	# ERROR: MultiRegistration::loadMovables: images have different voxel sizes.
-	# Currently not supported, maybe first make conform?
-	# Debug info: size(1) = 1.05469, 1.05469, 1.2   size(0) = 1, 1, 1.2
-	# MultiRegistration::loadMovables: voxel size is different /scratch/hanganua/fs-subjects/011_S_0021_ses-6/mri/orig/002.mgz
 
 
-
-def move_processed_subjects(subject):
-    cdb.Update_status_log('    '+subject+' moving from cp2local')
+def move_processed_subjects(subject, db_source, new_name):
+    cdb.Update_status_log('            '+subject+' moving from '+db_source)
     size_src = sum(f.stat().st_size for f in Path(path.join(SUBJECTS_DIR,subject)).glob('**/*') if f.is_file())
     shutil.move(path.join(SUBJECTS_DIR,subject), path.join(processed_SUBJECTS_DIR,subject))
-    db['PROCESSED']['cp2local'].remove(subject)
+    db['PROCESSED'][db_source].remove(subject)
     cdb.Update_DB(db)
     size_dst = sum(f.stat().st_size for f in Path(processed_SUBJECTS_DIR+subject).glob('**/*') if f.is_file())
+    if new_name:
+        cdb.Update_status_log('        renaming'+subject+' to '+new_name)
+        rename(path.join(processed_SUBJECTS_DIR,subject),path.join(processed_SUBJECTS_DIR,new_name))
+        subject = new_name
     if size_src != size_dst:
         cdb.Update_status_log('        ERROR in moving, not moved correctly '+str(size_src)+' '+str(size_dst))
         rename(path.join(processed_SUBJECTS_DIR,subject),path.join(processed_SUBJECTS_DIR,'error_moving'+subject))
@@ -366,7 +361,7 @@ def run():
     # for subject in db['PROCESSED']['cp2local']: # [::-1]
     #     processed_subjects.append(subject)
     for subject in db['PROCESSED']['cp2local'][::-1]:# processed_subjects:
-        move_processed_subjects(subject)
+        move_processed_subjects(subject, 'cp2local', '')
     cdb.Update_status_log('finished checking the processed')
 
 
