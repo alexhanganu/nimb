@@ -96,9 +96,9 @@ def do(process):
                 db['RUNNING_JOBS'][subjid] = job_id
                 db['QUEUE'][process].append(subjid)
                 try:
-                    cdb.Update_status_log('    '+subjid+', '+process+', submited id: '+str(job_id))
+                    cdb.Update_status_log('        submited id: '+str(job_id))
                 except Exception as e:
-                    cdb.Update_status_log('    err in do: '+e)
+                    cdb.Update_status_log('        err in do: '+e)
     cdb.Update_DB(db)
 
 
