@@ -128,7 +128,7 @@ def vox_higher_main(vox_size, main_vox_size):
 
 
 def get_MR_file_params(subjid, file):
-	tmp_f = nimb_scratch_dir+'tmp'
+	tmp_f = path.join(nimb_scratch_dir,'tmp')
 	vox_size = 'none'
 	chdir(nimb_dir)
 	system('./mri_info '+file+' >> '+tmp_f)

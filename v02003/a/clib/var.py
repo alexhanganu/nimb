@@ -3,7 +3,7 @@
 '''following variables are set by the user in the GUI or in this file
 current setup is constructed for Compute Canada clusters'''
 
-max_nr_running_batches = 5 #seems to be taking up to 100
+max_nr_running_batches = 100 #seems to be taking up to 100
 process_order = ['registration','autorecon1','autorecon2','autorecon3','qcache','brstem','hip','tha']
 supervisor_account = 'def-hanganua'
 
@@ -56,7 +56,6 @@ source_FreeSurfer_cmd = '$FREESURFER_HOME/SetUpFreeSurfer.sh'
 
 nimb_dir=path.join(remote_path_main_dir,'a/')
 dir_new_subjects=path.join(remote_path_main_dir,'subjects/')
-# SUBJECTS_DIR = path.join(remote_path_main_dir,'adni/Subjects_GLM') #temporary path for GLM analysis
 SUBJECTS_DIR = path.join(remote_path_main_dir,'fs-subjects/')
 processed_SUBJECTS_DIR = path.join(remote_path_main_dir,'subjects_processed/')
 nimb_scratch_dir=path.join(remote_path_save_temporary_files,'a_tmp/')
