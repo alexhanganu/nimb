@@ -1,5 +1,5 @@
 #!/bin/python
-# 2020.07.13
+# 2020.07.14
 
 from os import path, listdir, remove, rename, system, chdir, environ
 try:
@@ -281,6 +281,7 @@ def check_error():
 					cdb.Update_status_log('        checking if all files were created for: '+process)
 					if not crunfs.checks_from_runfs(process, subjid):
 						cdb.Update_status_log('            some files were not created. Excluding subject from pipeline.')
+						fs_error = crunfs.fs_find_error(subjid)
 						db['PROCESSED']['error_'+process].remove(subjid)
 						_id, _ = cdb.get_id_long(subjid, db['LONG_DIRS'])
 						if _id != 'none':
@@ -295,8 +296,12 @@ def check_error():
 						else:
 							cdb.Update_status_log('        ERROR, '+subjid+' is absent from LONG_DIRS')
 						cdb.Update_status_log('        '+subjid+' moving from error')
-						rename(path.join(SUBJECTS_DIR,subjid),path.join(SUBJECTS_DIR,'error_'+process+'_'+subjid))
-						move_processed_subjects('error_'+process+'_'+subjid)
+						if fs_error:
+							rename(path.join(SUBJECTS_DIR,subjid),path.join(SUBJECTS_DIR,'error_'+fs_error+'_'+subjid))
+							move_processed_subjects('error_'+fs_error+'_'+subjid)
+						else:
+							rename(path.join(SUBJECTS_DIR,subjid),path.join(SUBJECTS_DIR,'error_'+process+'_'+subjid))
+							move_processed_subjects('error_'+process+'_'+subjid)
 					else:
 						cdb.Update_status_log('            all files were created for process: '+process)
 						db['PROCESSED']['error_'+process].remove(subjid)

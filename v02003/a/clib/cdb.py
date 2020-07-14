@@ -11,7 +11,8 @@ time.tzset()
 
 
 def Get_DB():
-
+    ''' DataBase has a py structure so that in the future it can be easily transfered to an sqlite database
+        alternatively, the DB could be recorded as json.dump '''
     db = dict()
     print("nimb_scratch_dir is:" + nimb_scratch_dir)
     # change to local dev folder instead of supervisor folder due to no-writing-file permission
@@ -74,6 +75,10 @@ def Update_DB(d):
                         f.write('\''+value+'\',')
                     f.write('],')
             f.write('}\n')
+    # testing how would the DB work in the json.dump format:
+    with open(nimb_scratch_dir+'db.json','w') as f:
+        json.dump(d, f, indent=4)
+
 
 
 

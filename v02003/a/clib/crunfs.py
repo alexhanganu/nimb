@@ -1,5 +1,5 @@
 #!/bin/python
-# 2020.07.05
+# 2020.07.14
 
 '''
 add FS QA tools to rm scans with low SNR (Koh et al 2017)
@@ -302,3 +302,25 @@ def chk_masks(subjid):
                 return True
     else:
         return False
+
+
+def fs_find_error(subjid):
+    error = ''
+    print('seraching for THE error')
+
+    file_2read = 'recon-all.log'
+    try:
+        if file_2read in listdir(path.join(SUBJECTS_DIR,subjid,'scripts')):
+            f = open(path.join(SUBJECTS_DIR,subjid,'scripts',file_2read),'r').readlines()
+
+            for line in reversed(f):
+                if 'ERROR: Talairach failed!' in line:
+                    cdb.Update_status_log('        ERROR: Manual Talairach alignment may be necessary, or include the -notal-check flag to skip this test, making sure the -notal-check flag follows -all or -autorecon1 in the command string.')
+                    error = 'talfail'
+        else:
+            cdb.Update_status_log('        ERROR: '+file_2read+' not in '+path.join(SUBJECTS_DIR,subjid,'scripts'))
+    except FileNotFoundError as e:
+        print(e)
+        cdb.Update_status_log('    '+subjid+' '+str(e))
+
+    return error
