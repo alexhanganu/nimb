@@ -295,10 +295,10 @@ def check_error():
 						else:
 							cdb.Update_status_log('        ERROR, '+subjid+' is absent from LONG_DIRS')
 						if fs_error:
-                            new_name = 'error_'+fs_error+'_'+subjid
+							new_name = 'error_'+fs_error+'_'+subjid
 						else:
-                            new_name = 'error_'+process+'_'+subjid
-                        move_processed_subjects(subjid, 'error_'+process, new_name)
+							new_name = 'error_'+process+'_'+subjid
+						move_processed_subjects(subjid, 'error_'+process, new_name)
 					else:
 						cdb.Update_status_log('            all files were created for process: '+process)
 						db['PROCESSED']['error_'+process].remove(subjid)
