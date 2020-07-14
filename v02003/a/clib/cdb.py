@@ -3,7 +3,7 @@
 
 from os import path, listdir, remove, getenv, rename, mkdir, environ, system, chdir
 from var import process_order, long_name, base_name, cusers_list, cuser, nimb_dir, nimb_scratch_dir, SUBJECTS_DIR, flair_t2_add
-import time, shutil
+import time, shutil, json
 
 environ['TZ'] = 'US/Eastern'
 time.tzset()
