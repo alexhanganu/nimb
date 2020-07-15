@@ -258,7 +258,7 @@ def long_check_groups(_id):
                     db['LONG_DIRS'].pop(_id, None)
                     db['LONG_TPS'].pop(_id, None)
             else:
-                cdb.Update_status_log('        '+process_order[-1]+' for '+subjid+' not finished ')
+                cdb.Update_status_log('        '+subjid+' was not registered')
     cdb.Update_DB(db)
 
 
@@ -313,7 +313,7 @@ def check_error():
 
 
 def move_processed_subjects(subject, db_source, new_name):
-    cdb.Update_status_log('            '+subject+' moving from '+db_source)
+    cdb.Update_status_log('    '+subject+' moving from '+db_source)
     size_src = sum(f.stat().st_size for f in Path(path.join(SUBJECTS_DIR,subject)).glob('**/*') if f.is_file())
     shutil.move(path.join(SUBJECTS_DIR,subject), path.join(processed_SUBJECTS_DIR,subject))
     db['PROCESSED'][db_source].remove(subject)
@@ -357,7 +357,7 @@ def run():
 
     check_error()
 
-    cdb.Update_status_log('\n\n moving the processed')
+    cdb.Update_status_log('\nMOVING the processed')
 
     # processed_subjects = list()
     # for subject in db['PROCESSED']['cp2local']: # [::-1]
