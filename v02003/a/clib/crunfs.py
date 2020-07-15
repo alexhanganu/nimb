@@ -322,6 +322,9 @@ def fs_find_error(subjid):
                     cdb.Update_status_log('        ERROR: Voxel size is different, Multiregistration is not supported; consider making conform')
                     error = 'voxsizediff'
                     break
+                if 'ERROR: no run data found' in line:
+                    error = 'noreg'
+                    break
         else:
             cdb.Update_status_log('        ERROR: '+file_2read+' not in '+path.join(SUBJECTS_DIR,subjid,'scripts'))
     except FileNotFoundError as e:
