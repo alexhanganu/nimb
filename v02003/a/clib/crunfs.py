@@ -53,7 +53,7 @@ def makesubmitpbs(submit_cmd, cmd, subjid, run, walltime):
         f.write('export SUBJECTS_DIR='+SUBJECTS_DIR+'\n')
         f.write('\n')
         f.write(cmd+'\n')
-    print('    '+sh_file+' submitting')
+    cdb.Update_status_log('    '+sh_file+' submitting')
     if SUBMIT:
         try:
             resp = subprocess.run([submit_cmd,nimb_scratch_dir+'usedpbs/'+sh_file], stdout=subprocess.PIPE).stdout.decode('utf-8')
