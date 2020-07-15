@@ -97,7 +97,7 @@ def do(process):
                 db['RUNNING_JOBS'][subjid] = job_id
                 db['QUEUE'][process].append(subjid)
                 try:
-                    cdb.Update_status_log('                            submited id: '+str(job_id))
+                    cdb.Update_status_log('                                   submited id: '+str(job_id))
                 except Exception as e:
                     cdb.Update_status_log('        err in do: '+e)
     cdb.Update_DB(db)
@@ -357,14 +357,13 @@ def run():
 
     check_error()
 
-    cdb.Update_status_log('\nMOVING the processed')
+    cdb.Update_status_log('MOVING the processed')
 
     # processed_subjects = list()
     # for subject in db['PROCESSED']['cp2local']: # [::-1]
     #     processed_subjects.append(subject)
     for subject in db['PROCESSED']['cp2local'][::-1]:# processed_subjects:
         move_processed_subjects(subject, 'cp2local', '')
-    cdb.Update_status_log('finished checking the processed')
 
 
 def check_active_tasks(db):
@@ -435,6 +434,7 @@ if crunfs.FS_ready(SUBJECTS_DIR):
     while active_subjects >0 and time.strftime("%H:%M",time.gmtime(time_elapsed)) < max_batch_running:
         count_run += 1
         cdb.Update_status_log('restarting run, '+str(count_run))
+        cdb.Update_status_log('elapsed time: '+time.strftime("%H:%M",time.gmtime(time_elapsed))+' max walltime: '+batch_walltime[:-6])
         if count_run % 5 == 0:
             cdb.Update_status_log('reading SUBJECTS_DIR, subj2fs for new subjects')
             db = cdb.Update_DB_new_subjects_and_SUBJECTS_DIR(db)
@@ -442,11 +442,10 @@ if crunfs.FS_ready(SUBJECTS_DIR):
         run()
 
         time_to_sleep = Count_TimeSleep()
-        cdb.Update_status_log('waiting. Next run at: '+str(time.strftime("%H:%M",time.localtime(time.time()+time_to_sleep))))
+        cdb.Update_status_log('\n\nWAITING. \nNext run at: '+str(time.strftime("%H:%M",time.localtime(time.time()+time_to_sleep))))
         time.sleep(time_to_sleep)
 
         time_elapsed = time.time() - t0
-        cdb.Update_status_log('    elapsed time: '+time.strftime("%H:%M",time.gmtime(time_elapsed))+' max walltime: '+batch_walltime[:-6])
         active_subjects = check_active_tasks(db)
 
     if active_subjects == 0:

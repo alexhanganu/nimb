@@ -413,7 +413,7 @@ def get_id_long(subjid, LONG_DIRS):
 
 
 def chk_subj_in_SUBJECTS_DIR(db):
-    Update_status_log('checking SUBJECTS_DIR ...')
+    Update_status_log('SUBJECTS_DIR checking ...')
 
     from crunfs import chkIsRunning, checks_from_runfs
 
