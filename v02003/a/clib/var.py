@@ -21,7 +21,7 @@ masks = [] # varibale that includes the ROI names of subcortical regions in orde
 SUBMIT = True # variable to define if the batches will be submitted to the scheduler. Is used to perform initial verification if files were created correctly
 flair_t2_add = False
 processing_env = 'slurm' #tmux
-
+python3_load_cmd = 'module load python/3.8.2\npython'
 
 
 from os import path, makedirs
