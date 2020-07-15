@@ -356,7 +356,7 @@ def run():
 
     check_error()
 
-    cdb.Update_status_log('\n\n moving  the processed')
+    cdb.Update_status_log('\n\n moving the processed')
 
     # processed_subjects = list()
     # for subject in db['PROCESSED']['cp2local']: # [::-1]

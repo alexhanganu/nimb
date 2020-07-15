@@ -16,10 +16,17 @@ def Get_DB():
     db = dict()
     print("nimb_scratch_dir is:" + nimb_scratch_dir)
     # change to local dev folder instead of supervisor folder due to no-writing-file permission
-    if path.isfile(nimb_scratch_dir+'db'):
-        shutil.copy(nimb_scratch_dir+'db',nimb_dir+'db.py')
-        system('chmod 777 '+nimb_dir+'db.py')
+    db_json_file = path.join(nimb_scratch_dir,'db.json')
+    if path.isfile(db_json_file):
+        with open(db_json_file) as db_json_open:
+            dbjson = json.load(db_json_open)
+
+    db_2py_file = path.join(nimb_scratch_dir, 'db')
+    if path.isfile(db_2py_file):
+        shutil.copy(db_2py_file,path.join(nimb_dir,'db.py'))
+        system('chmod 777 '+path.join(nimb_dir,'db.py'))
         time.sleep(2)
+
         from db import DO, QUEUE, RUNNING, RUNNING_JOBS, LONG_DIRS, LONG_TPS, PROCESSED
         db['DO'] = DO # key: list
         db['QUEUE'] = QUEUE # key: list
@@ -32,6 +39,7 @@ def Get_DB():
             from db import REGISTRATION
             db['REGISTRATION'] = REGISTRATION # key: key: key: list
         except ImportError as e:
+            db['REGISTRATION'] = {}
             print(e)
 
         time.sleep(2)
