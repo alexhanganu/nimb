@@ -325,8 +325,11 @@ def move_processed_subjects(subject, db_source, new_name):
         subject = new_name
     if size_src != size_dst:
         cdb.Update_status_log('        ERROR in moving, not moved correctly '+str(size_src)+' '+str(size_dst))
-        rename(path.join(processed_SUBJECTS_DIR,subject),path.join(processed_SUBJECTS_DIR,'error_moving'+subject))
+        subject = 'error_moving'+subject
+        rename(path.join(processed_SUBJECTS_DIR,subject),path.join(processed_SUBJECTS_DIR,subject))
     cdb.Update_status_log('        moving DONE')
+    # cdb.Update_status_log('        archiving ...')
+    # system('zip -r -q -m '+path.join(processed_SUBJECTS_DIR,subject+'.zip')+' '+path.join(processed_SUBJECTS_DIR,subject))
 
 
 
