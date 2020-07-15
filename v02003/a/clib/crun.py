@@ -150,7 +150,7 @@ def running(process, all_running):
                 if base_name in subjid:
                     cdb.Update_status_log(' reading '+process+subjid+' subjid is long or base ')
                     if crunfs.chkIsRunning(subjid) or not crunfs.checks_from_runfs('recon', subjid):
-                        cdb.Update_status_log('   '+subjid+' '+process+' moving to ERROR')
+                        cdb.Update_status_log('    '+subjid+' '+process+' moving to ERROR')
                         db['PROCESSED']['error_recon'].append(subjid)
                 else:
                     if not crunfs.chkIsRunning(subjid) and crunfs.checks_from_runfs(process, subjid):
@@ -291,8 +291,8 @@ def check_error():
 								if len(db['LONG_DIRS'][_id])==0:
 									db['LONG_DIRS'].pop(_id, None)
 									db['LONG_TPS'].pop(_id, None)
-							except ValueError as e:
-								cdb.Update_status_log('        ERROR, id not found in LONG_DIRS; '+e)
+							except Exception as e:
+								cdb.Update_status_log('        ERROR, id not found in LONG_DIRS; '+str(e))
 						else:
 							cdb.Update_status_log('        ERROR, '+subjid+' is absent from LONG_DIRS')
 						if fs_error:
@@ -455,7 +455,7 @@ if crunfs.FS_ready(SUBJECTS_DIR):
     else:
         cdb.Update_status_log('Sending new batch to scheduler')
         chdir(nimb_dir)
-        system(submit_cmd+' run.sh')
+        system('python nimb.py')
 
 
 '''THIS script was used for the longitudinal analysis. It has changed and it should not be needed now, but a longitudinal analysis must be made to confirm'''
