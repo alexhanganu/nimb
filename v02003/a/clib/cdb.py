@@ -13,14 +13,16 @@ time.tzset()
 def Get_DB():
     ''' DataBase has a py structure so that in the future it can be easily transfered to an sqlite database
         alternatively, the DB could be recorded as json.dump '''
-    db = dict()
     print("nimb_scratch_dir is:" + nimb_scratch_dir)
     # change to local dev folder instead of supervisor folder due to no-writing-file permission
     db_json_file = path.join(nimb_scratch_dir,'db.json')
     if path.isfile(db_json_file):
         with open(db_json_file) as db_json_open:
             dbjson = json.load(db_json_open)
+    else:
+        dbjson = dict()
 
+    db = dict()
     db_2py_file = path.join(nimb_scratch_dir, 'db')
     if path.isfile(db_2py_file):
         shutil.copy(db_2py_file,path.join(nimb_dir,'db.py'))
@@ -53,8 +55,15 @@ def Get_DB():
         db['LONG_DIRS'] = {}
         db['LONG_TPS'] = {}
         db['PROCESSED'] = {'cp2local':[],}
+        db['REGISTRATION'] = {}
         for process in process_order:
             db['PROCESSED']['error_'+process] = []
+
+    # testing if db.json is similar to the py version
+    if db == dbjson:
+        Update_status_log('DB json and DB py are similar')
+    else:
+        Update_status_log('DB json and DB py NOT similar')
     return db
 
 
@@ -84,7 +93,7 @@ def Update_DB(d):
                     f.write('],')
             f.write('}\n')
     # testing how would the DB work in the json.dump format:
-    with open(nimb_scratch_dir+'db.json','w') as f:
+    with open(path.join(nimb_scratch_dir,'db.json'),'w') as f:
         json.dump(d, f, indent=4)
 
 
