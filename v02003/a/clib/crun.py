@@ -7,7 +7,7 @@ try:
 except ImportError as e:
     cdb.Update_status_log(e)
 import time, shutil
-from var import max_nr_running_batches, process_order, base_name, DO_LONG, freesurfer_version, batch_walltime, submit_cmd, nimb_dir, SUBJECTS_DIR, processed_SUBJECTS_DIR, processing_env
+from var import max_nr_running_batches, process_order, base_name, DO_LONG, freesurfer_version, batch_walltime, submit_cmd, nimb_dir, SUBJECTS_DIR, processed_SUBJECTS_DIR, processing_env, archive_processed
 import crunfs, cdb, cwalltime
 from cbuild_stamp import nimb_version
 
@@ -328,8 +328,9 @@ def move_processed_subjects(subject, db_source, new_name):
         subject = 'error_moving'+subject
         rename(path.join(processed_SUBJECTS_DIR,subject),path.join(processed_SUBJECTS_DIR,subject))
     cdb.Update_status_log('        moving DONE')
-    # cdb.Update_status_log('        archiving ...')
-    # system('zip -r -q -m '+path.join(processed_SUBJECTS_DIR,subject+'.zip')+' '+path.join(processed_SUBJECTS_DIR,subject))
+    if archive_processed:
+        cdb.Update_status_log('        archiving ...')
+        system('zip -r -q -m '+path.join(processed_SUBJECTS_DIR,subject+'.zip')+' '+path.join(processed_SUBJECTS_DIR,subject))
 
 
 
