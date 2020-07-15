@@ -201,6 +201,13 @@ def get_MR_file_params(subjid, file):
 	return vox_size
 
 
+def move_mrparams(subjid):
+    file_mrparams = path.join(nimb_scratch_dir,subjid+'_mrparams')
+    if path.isfile(file_mrparams):
+        shutil.move(file_mrparams, path.join(SUBJECTS_DIR, subjid, 'stats'))
+
+
+
 def keep_files_similar_params(subjid, t1_ls_f, flair_ls_f, t2_ls_f):
     grouped_by_voxsize = {}
     for file in t1_ls_f:

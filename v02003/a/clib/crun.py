@@ -76,6 +76,7 @@ def do(process):
                     job_id = 'none'
             elif process == 'recon':
                 job_id = crunfs.makesubmitpbs(submit_cmd, Get_cmd.recon(subjid), subjid, process, cwalltime.Get_walltime(process))
+                cdb.move_mrparams(subjid)
             elif process == 'autorecon1':
                 job_id = crunfs.makesubmitpbs(submit_cmd, Get_cmd.autorecon1(subjid), subjid, process, cwalltime.Get_walltime(process))
             elif process == 'autorecon2':
@@ -96,7 +97,7 @@ def do(process):
                 db['RUNNING_JOBS'][subjid] = job_id
                 db['QUEUE'][process].append(subjid)
                 try:
-                    cdb.Update_status_log('        submited id: '+str(job_id))
+                    cdb.Update_status_log('                            submited id: '+str(job_id))
                 except Exception as e:
                     cdb.Update_status_log('        err in do: '+e)
     cdb.Update_DB(db)
