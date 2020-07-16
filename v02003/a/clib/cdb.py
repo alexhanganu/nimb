@@ -2,7 +2,7 @@
 # 2020.07.14
 
 from os import path, listdir, remove, getenv, rename, mkdir, environ, system, chdir
-from var import process_order, long_name, base_name, cusers_list, cuser, NIMB_HOME, nimb_dir, nimb_scratch_dir, SUBJECTS_DIR, flair_t2_add
+from var import process_order, long_name, base_name, cusers_list, cuser, nimb_dir, nimb_scratch_dir, SUBJECTS_DIR, flair_t2_add
 import time, shutil, json
 
 environ['TZ'] = 'US/Eastern'
@@ -15,20 +15,12 @@ def Get_DB():
         alternatively, the DB could be recorded as json.dump '''
     print("nimb_scratch_dir is:" + nimb_scratch_dir)
     # change to local dev folder instead of supervisor folder due to no-writing-file permission
-
     db_json_file = path.join(nimb_scratch_dir,'db.json')
     if path.isfile(db_json_file):
         with open(db_json_file) as db_json_open:
             dbjson = json.load(db_json_open)
     else:
         dbjson = dict()
-
-    db_json_file_last = path.join(NIMB_HOME, 'db.json')
-    if path.isfile(db_json_file_last):
-        with open(db_json_file_last) as db_last_open:
-            dbjson_last = json.load(db_last_open)
-            if dbjson_last != dbjson:
-                print('ATTENTION !!!! \nlast version of database in NIMB_HOME DIFFERS from the new version. Please CHECK')
 
     db = dict()
     db_2py_file = path.join(nimb_scratch_dir, 'db')
