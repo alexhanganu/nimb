@@ -7,7 +7,7 @@ try:
 except ImportError as e:
     cdb.Update_status_log(e)
 import time, shutil
-from var import max_nr_running_batches, process_order, base_name, DO_LONG, freesurfer_version, batch_walltime, submit_cmd, nimb_dir, SUBJECTS_DIR, processed_SUBJECTS_DIR, processing_env, archive_processed
+from var import max_nr_running_batches, process_order, base_name, DO_LONG, freesurfer_version, batch_walltime, submit_cmd, NIMB_HOME, nimb_dir, nimb_scratch_dir, SUBJECTS_DIR, processed_SUBJECTS_DIR, processing_env, archive_processed
 import crunfs, cdb, cwalltime
 from cbuild_stamp import nimb_version
 
@@ -461,6 +461,7 @@ if crunfs.FS_ready(SUBJECTS_DIR):
         cdb.Update_running(0)
         cdb.Update_status_log('ALL TASKS FINISHED')
     else:
+        shutil.copy(path.join(nimb_scratch_dir,'db.json'),path.join(NIMB_HOME,'db.json'))
         cdb.Update_status_log('Sending new batch to scheduler')
         chdir(nimb_dir)
         system('python nimb.py')

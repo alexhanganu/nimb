@@ -55,6 +55,7 @@ export_FreeSurfer_cmd = 'export FREESURFER_HOME='+FREESURFER_HOME
 source_FreeSurfer_cmd = '$FREESURFER_HOME/SetUpFreeSurfer.sh'
 
 nimb_dir=path.join(remote_path_main_dir,'a/')
+NIMB_HOME=path.join(remote_path_main_dir,'a')
 dir_new_subjects=path.join(remote_path_main_dir,'subjects/')
 SUBJECTS_DIR = path.join(remote_path_main_dir,'fs-subjects/')
 processed_SUBJECTS_DIR = path.join(remote_path_main_dir,'subjects_processed/')
