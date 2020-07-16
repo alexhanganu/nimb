@@ -1,5 +1,5 @@
 #!/bin/python
-# 2020.07.14
+# 2020.07.16
 
 '''
 add FS QA tools to rm scans with low SNR (Koh et al 2017)
@@ -11,7 +11,7 @@ https://surfer.nmr.mgh.harvard.edu/fswiki/QATools
 from os import listdir, path, mkdir, system
 import shutil
 import datetime
-from var import text4_scheduler, batch_walltime_cmd, max_walltime, batch_output_cmd, freesurfer_version, nimb_dir, nimb_scratch_dir, SUBJECTS_DIR, export_FreeSurfer_cmd, source_FreeSurfer_cmd, SUBMIT
+from var import text4_scheduler, batch_walltime_cmd, max_walltime, batch_output_cmd, freesurfer_version, NIMB_HOME, nimb_dir, nimb_scratch_dir, SUBJECTS_DIR, export_FreeSurfer_cmd, source_FreeSurfer_cmd, SUBMIT
 import cdb, var
 import subprocess
 print('SUBMITTING is: ', SUBMIT)

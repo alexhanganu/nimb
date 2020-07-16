@@ -1,8 +1,8 @@
 #!/bin/python
-# 2020.07.14
+# 2020.07.17
 
 from os import path, listdir, remove, getenv, rename, mkdir, environ, system, chdir
-from var import process_order, long_name, base_name, cusers_list, cuser, nimb_dir, nimb_scratch_dir, SUBJECTS_DIR, flair_t2_add
+from var import process_order, long_name, base_name, cusers_list, cuser, NIMB_HOME, nimb_dir, nimb_scratch_dir, SUBJECTS_DIR, flair_t2_add
 import time, shutil, json
 
 environ['TZ'] = 'US/Eastern'
@@ -13,16 +13,24 @@ time.tzset()
 def Get_DB():
     ''' DataBase has a py structure so that in the future it can be easily transfered to an sqlite database
         alternatively, the DB could be recorded as json.dump '''
+    print("NIMB_HOME is:" + NIMB_HOME)
     print("nimb_scratch_dir is:" + nimb_scratch_dir)
     # change to local dev folder instead of supervisor folder due to no-writing-file permission
+
+    db = dict()
+    dbjson = dict()
+
+    db_json_last_file = path.join(NIMB_HOME,'db.json')
+    if path.isfile(db_json_last_file):
+        with open(db_json_last_file) as db_json_last_open:
+            dbjson_last = json.load(db_json_last_open)
+
+
     db_json_file = path.join(nimb_scratch_dir,'db.json')
     if path.isfile(db_json_file):
         with open(db_json_file) as db_json_open:
             dbjson = json.load(db_json_open)
-    else:
-        dbjson = dict()
 
-    db = dict()
     db_2py_file = path.join(nimb_scratch_dir, 'db')
     if path.isfile(db_2py_file):
         shutil.copy(db_2py_file,path.join(nimb_dir,'db.py'))
@@ -60,11 +68,15 @@ def Get_DB():
             db['PROCESSED']['error_'+process] = []
 
     # testing if db.json is similar to the py version
+    if dbjson_last != dbjson:
+        Update_status_log('ERROR !! last DB json from NIMB_HOME is different from the DB on NIMB_scratch')
+#       db = dbjson_last
     if db == dbjson:
         Update_status_log('DB json and DB py are similar')
     else:
         Update_status_log('DB json and DB py NOT similar')
     return db
+
 
 
 def Update_DB(d):

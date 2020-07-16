@@ -7,7 +7,7 @@ try:
 except ImportError as e:
     cdb.Update_status_log(e)
 import time, shutil
-from var import max_nr_running_batches, process_order, base_name, DO_LONG, freesurfer_version, batch_walltime, submit_cmd, nimb_dir, SUBJECTS_DIR, processed_SUBJECTS_DIR, processing_env, archive_processed
+from var import max_nr_running_batches, process_order, base_name, DO_LONG, freesurfer_version, batch_walltime, submit_cmd, NIMB_HOME, nimb_dir, SUBJECTS_DIR, processed_SUBJECTS_DIR, processing_env, archive_processed
 import crunfs, cdb, cwalltime
 from cbuild_stamp import nimb_version
 
@@ -129,8 +129,8 @@ def queue(process, all_running):
         else:
             cdb.Update_status_log('    '+subjid+'    queue, NOT in RUNNING_JOBS')
             db[ACTION][process].remove(subjid)
-                cdb.Update_status_log('    '+subjid+' '+process+' moving to ERROR')
-                db['PROCESSED']['error_'+process].append(subjid)
+            cdb.Update_status_log('    '+subjid+' '+process+' moving to ERROR')
+            db['PROCESSED']['error_'+process].append(subjid)
     cdb.Update_DB(db)
 
 
@@ -452,6 +452,8 @@ if crunfs.FS_ready(SUBJECTS_DIR):
 
         time_to_sleep = Count_TimeSleep()
         cdb.Update_status_log('\n\nWAITING. \nNext run at: '+str(time.strftime("%H:%M",time.localtime(time.time()+time_to_sleep))))
+#        shutil.copy(path.join(nimb_scratch_dir,'db.json'),path.join(NIMB_HOME,'db.json'))
+#        system('chmod 777 '+path.join(NIMB_HOME,'db.json'))
         time.sleep(time_to_sleep)
 
         time_elapsed = time.time() - t0
