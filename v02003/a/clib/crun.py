@@ -1,5 +1,5 @@
 #!/bin/python
-# 2020.07.14
+# 2020.07.16
 
 from os import path, listdir, remove, rename, system, chdir, environ
 try:
@@ -7,7 +7,7 @@ try:
 except ImportError as e:
     cdb.Update_status_log(e)
 import time, shutil
-from var import max_nr_running_batches, process_order, base_name, DO_LONG, freesurfer_version, batch_walltime, submit_cmd, NIMB_HOME, nimb_dir, SUBJECTS_DIR, processed_SUBJECTS_DIR, processing_env, archive_processed
+from var import max_nr_running_batches, process_order, base_name, DO_LONG, freesurfer_version, batch_walltime, submit_cmd, NIMB_HOME, nimb_dir, nimb_scratch_dir, SUBJECTS_DIR, processed_SUBJECTS_DIR, processing_env, archive_processed
 import crunfs, cdb, cwalltime
 from cbuild_stamp import nimb_version
 
@@ -61,12 +61,12 @@ def do(process):
     cdb.Update_status_log(ACTION+' '+process)
 
     lsd = list()
-    for val in db['DO'][process]:
+    for val in db[ACTION][process]:
         lsd.append(val)
 
     for subjid in lsd:
         if get_len_Queue_Running()<= max_nr_running_batches:
-            db['DO'][process].remove(subjid)
+            db[ACTION][process].remove(subjid)
             if process == 'registration':
                 if not crunfs.chksubjidinfs(subjid):
                     t1_ls_f, flair_ls_f, t2_ls_f = cdb.get_registration_files(subjid, db['LONG_DIRS'])
@@ -100,6 +100,7 @@ def do(process):
                     cdb.Update_status_log('                                   submited id: '+str(job_id))
                 except Exception as e:
                     cdb.Update_status_log('        err in do: '+e)
+    db[ACTION][process].sort()
     cdb.Update_DB(db)
 
 
@@ -131,6 +132,7 @@ def queue(process, all_running):
             db[ACTION][process].remove(subjid)
             cdb.Update_status_log('    '+subjid+' '+process+' moving to ERROR')
             db['PROCESSED']['error_'+process].append(subjid)
+    db[ACTION][process].sort()
     cdb.Update_DB(db)
 
 
@@ -198,6 +200,7 @@ def running(process, all_running):
                 db[ACTION][process].remove(subjid)
                 cdb.Update_status_log('   '+subjid+' '+process+' moving to error_'+process)
                 db['PROCESSED']['error_'+process].append(subjid)
+    db[ACTION][process].sort()
     cdb.Update_DB(db)
 
 
@@ -313,6 +316,7 @@ def check_error():
 				else:
 					cdb.Update_status_log('    not in SUBJECTS_DIR')
 					db['PROCESSED']['error_'+process].remove(subjid)
+					db['PROCESSED'][process].sort()
 				cdb.Update_DB(db)
 
 
@@ -351,8 +355,8 @@ def run():
         if len(db['DO'][process])>0:
             do(process)
 
-    # print('long check pipeline started') #
-    # long_check_pipeline(all_running)
+    check_error()
+
 
     cdb.Update_status_log('CHECKING subjects')
     ls_long_dirs = list()
@@ -364,14 +368,10 @@ def run():
             cdb.Update_status_log('    '+_id)
             long_check_groups(_id)
 
-    check_error()
 
     cdb.Update_status_log('MOVING the processed')
 
-    # processed_subjects = list()
-    # for subject in db['PROCESSED']['cp2local']: # [::-1]
-    #     processed_subjects.append(subject)
-    for subject in db['PROCESSED']['cp2local'][::-1]:# processed_subjects:
+    for subject in db['PROCESSED']['cp2local'][::-1]:
         move_processed_subjects(subject, 'cp2local', '')
 
 
@@ -429,7 +429,7 @@ if crunfs.FS_ready(SUBJECTS_DIR):
     cdb.Update_status_log('reading database')
     db = cdb.Get_DB()
 
-    cdb.Update_status_log('reading SUBJECTS_DIR, subj2fs for new subjects')
+    cdb.Update_status_log('NEW SUBJECTS searching:')
     db = cdb.Update_DB_new_subjects_and_SUBJECTS_DIR(db)
     cdb.Update_DB(db)
     active_subjects = check_active_tasks(db)
@@ -452,8 +452,8 @@ if crunfs.FS_ready(SUBJECTS_DIR):
 
         time_to_sleep = Count_TimeSleep()
         cdb.Update_status_log('\n\nWAITING. \nNext run at: '+str(time.strftime("%H:%M",time.localtime(time.time()+time_to_sleep))))
-#        shutil.copy(path.join(nimb_scratch_dir,'db.json'),path.join(NIMB_HOME,'db.json'))
-#        system('chmod 777 '+path.join(NIMB_HOME,'db.json'))
+        shutil.copy(path.join(nimb_scratch_dir,'db.json'),path.join(NIMB_HOME,'db.json'))
+        system('chmod 777 '+path.join(NIMB_HOME,'db.json'))
         time.sleep(time_to_sleep)
 
         time_elapsed = time.time() - t0

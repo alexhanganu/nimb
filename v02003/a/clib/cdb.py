@@ -19,11 +19,7 @@ def Get_DB():
 
     db = dict()
     dbjson = dict()
-
     db_json_last_file = path.join(NIMB_HOME,'db.json')
-    if path.isfile(db_json_last_file):
-        with open(db_json_last_file) as db_json_last_open:
-            dbjson_last = json.load(db_json_last_open)
 
 
     db_json_file = path.join(nimb_scratch_dir,'db.json')
@@ -68,13 +64,16 @@ def Get_DB():
             db['PROCESSED']['error_'+process] = []
 
     # testing if db.json is similar to the py version
-    if dbjson_last != dbjson:
-        Update_status_log('ERROR !! last DB json from NIMB_HOME is different from the DB on NIMB_scratch')
-#       db = dbjson_last
-    if db == dbjson:
-        Update_status_log('DB json and DB py are similar')
+    if path.isfile(db_json_last_file):
+        with open(db_json_last_file) as db_json_last_open:
+            dbjson_last = json.load(db_json_last_open)
+            if dbjson_last != dbjson:
+                Update_status_log('ERROR !! last DB json from NIMB_HOME is different from the DB json on NIMB_scratch')
+        #       db = dbjson_last
+    if db != dbjson:
+        Update_status_log('DB json and DB py NOT similar, but maybe json file is not sorted')
     else:
-        Update_status_log('DB json and DB py NOT similar')
+        Update_status_log('DB json nimb_scratch, DB py nimb_scratch and DB json NIMB_HOME are ALL similar')
     return db
 
 
@@ -94,7 +93,7 @@ def Update_DB(d):
                     for subkey_mrgroup in d[key][subkey_subjid]:
                         f.write('\''+subkey_mrgroup+'\': {')
                         for subkey_mrgroup_type in d[key][subkey_subjid][subkey_mrgroup]:
-                            f.write('\''+subkey_mrgroup_type+'\':'+str(d[key][subkey_subjid][subkey_mrgroup][subkey_mrgroup_type])+',')
+                            f.write('\''+subkey_mrgroup_type+'\':'+str(sorted(d[key][subkey_subjid][subkey_mrgroup][subkey_mrgroup_type]))+',')
                         f.write('},')
                     f.write('},')
             else:
@@ -270,7 +269,6 @@ def Update_DB_new_subjects_and_SUBJECTS_DIR(db):
     d = chk_subj_in_SUBJECTS_DIR(db)
     d = chk_subjects_folder(db)
     d = chk_new_subjects_json_file(db)
-    Update_status_log('done checking SUBJECTS_DIR, subjects folder and new_subjects.json')
     return db
 
 
@@ -291,7 +289,7 @@ def add_subjid_2_DB(subjid, _id, ses, db, ls_SUBJECTS_in_long_dirs_processed):
 
 
 def chk_subjects_folder(db):
-    Update_status_log('checking for new subjects in the subjects folder...')
+    Update_status_log('    NEW_SUBJECTS_DIR checking ...')
 
     ls_SUBJECTS_in_long_dirs_processed = get_ls_subjids_in_long_dirs(db)
     from crunfs import checks_from_runfs
@@ -310,7 +308,7 @@ def chk_subjects_folder(db):
 
 # NOTE: intending to remove the new_subjects_registration_path.json
 def chk_new_subjects_json_file(db):
-    Update_status_log('checking for new subjects ...')
+    Update_status_log('    new_subjects.json checking ...')
 
     ls_SUBJECTS_in_long_dirs_processed = get_ls_subjids_in_long_dirs(db)
     from crunfs import checks_from_runfs
@@ -425,7 +423,7 @@ def get_id_long(subjid, LONG_DIRS):
 
 
 def chk_subj_in_SUBJECTS_DIR(db):
-    Update_status_log('SUBJECTS_DIR checking ...')
+    Update_status_log('    SUBJECTS_DIR checking ...')
 
     from crunfs import chkIsRunning, checks_from_runfs
 
