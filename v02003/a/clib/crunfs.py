@@ -325,6 +325,9 @@ def fs_find_error(subjid):
                 if 'ERROR: no run data found' in line:
                     error = 'noreg'
                     break
+                if 'ERROR: inputs have mismatched dimensions!' in line:
+                    error = 'regdim'
+                    break
         else:
             cdb.Update_status_log('        ERROR: '+file_2read+' not in '+path.join(SUBJECTS_DIR,subjid,'scripts'))
     except FileNotFoundError as e:

@@ -16,7 +16,7 @@ batch_walltime = '03:00:00' # walltime maximal for the run.sh batch that runs th
 batch_output_cmd = '#SBATCH --output='
 submit_cmd = 'sbatch'
 freesurfer_version = 7
-archive_processed = False
+archive_processed = True
 masks = [] # varibale that includes the ROI names of subcortical regions in order to create the masks.
 SUBMIT = True # variable to define if the batches will be submitted to the scheduler. Is used to perform initial verification if files were created correctly
 flair_t2_add = False

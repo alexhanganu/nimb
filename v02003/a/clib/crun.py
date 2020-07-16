@@ -128,6 +128,9 @@ def queue(process, all_running):
                 cdb.Update_status_log('    '+subjid+'    is NOT registered yet')
         else:
             cdb.Update_status_log('    '+subjid+'    queue, NOT in RUNNING_JOBS')
+            db[ACTION][process].remove(subjid)
+                cdb.Update_status_log('    '+subjid+' '+process+' moving to ERROR')
+                db['PROCESSED']['error_'+process].append(subjid)
     cdb.Update_DB(db)
 
 
@@ -259,6 +262,8 @@ def long_check_groups(_id):
                     db['LONG_TPS'].pop(_id, None)
             else:
                 cdb.Update_status_log('        '+subjid+' was not registered')
+                db['LONG_DIRS'].pop(_id, None)
+                db['LONG_TPS'].pop(_id, None)
     cdb.Update_DB(db)
 
 
