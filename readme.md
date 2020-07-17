@@ -107,12 +107,18 @@ source_FreeSurfer_cmd = '$FREESURFER_HOME/SetUpFreeSurfer.sh' #this command migh
 
 
 === REMOTE COMPUTER specific variables:
+raddress = 'cedar.computecanada.ca' # address to access the remote computer, can be an IP
+ruser = 'username' # username to access the remote computer
+NIMB_RHOME = 'path' on the remote computer where nimb will be installed
+FREESURFER_RHOME = 'path' to the remote computer where Freesurfer will be installed. if left blank, FreeSurfer will be installed in NIMB_RHOME
 python3_load_cmd = 'module load python/3.8.2' # this commands is used if the processing is performed on a remote computer where python3 can be used only from module load
 processing_env = 'slurm' or 'tmux' #defines which environment is used for the processing of data
 cusers_list = [] # if the number of users on the remote computer are more than 1.
 
+
 === COMPUTE CANADA specific variables:
 supervisor_account = 'def-supervisor' # variable used on compute canada clusters to create the batches
+
 
 === STATISTICAL ANALYSIS variables:
 GLM_file_group = "PATH to the file.csv or file.xlsx" that has the subjects, groups and variables for statistical analyis
