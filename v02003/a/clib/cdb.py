@@ -338,7 +338,7 @@ def chk_new_subjects_json_file(db):
 
 # NOTE: intending to remove the new_subjects_registration_path.json
 #       if registration will be done from the database, the "else" can be removed
-def get_registration_files(subjid, d_LONG_DIRS):
+def get_registration_files(subjid, db):
     if 'REGISTRATION' in db:
         t1_ls_f = db['REGISTRATION'][subjid]['anat']['t1']
         flair_ls_f = 'none'
@@ -358,9 +358,9 @@ def get_registration_files(subjid, d_LONG_DIRS):
             with open(f) as jfile:
                 data = json.load(jfile)
 
-            for _id in d_LONG_DIRS:
+            for _id in db['LONG_DIRS']:
 
-                if subjid in d_LONG_DIRS[_id]:
+                if subjid in db['LONG_DIRS'][_id]:
                     _id = _id
                     ses = subjid.replace(_id+'_',"")
                     break
