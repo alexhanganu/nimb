@@ -65,9 +65,9 @@ NeuroImaging My Brain = NIMB (Pipeline for Structural MRI analysis wih FreeSurfe
         * runs the FreeSurfer steps: autorecon1, autorecon2, autorecon3, qcache, brainstem, hippocampus, thalamus
         * if user requested extraction of masks:
             ** extracts the masks for the corresponding subcortical structures and puts them in the processed_folder/masks
-        * once the processing is done, moves the processed subjects to the $PROCESSED_NIMB/processed_fs_dir folder
+        * once the processing is done, moves the processed subjects to the $PROCESSED_NIMB/processed_fs folder
     * if user wants the data archived:
-        ** archives with zip the each subject in the $PROCESSED_NIMB/processed_fs_dir folder
+        ** archives with zip the each subject in the $PROCESSED_NIMB/processed_fs folder
 
 
 * Module *STATS* : (works on the local computer as GUI or terminal or on the remote computer in the terminal) (folder "$NIMB_HOME/stats") (cmd: nimb stats)
@@ -100,31 +100,12 @@ ruser          = 'username' # username to access the remote computer. Password w
 NIMB_RHOME     = 'path' on the remote computer where nimb will be downloaded
 processing_env = 'slurm' or 'tmux' or 'moab' # is the environment used for processing data
 
-FREESURFER_RHOME = '' # path to the remote computer where Freesurfer is installed. Default if $NIMB_RHOME/freesurfer
 python3_load_cmd = '' # command if python is used as module, can be: 'module load python/3.8.2'
 cusers_list      = [] # if the number of users on the remote computer are more than 1, can be: ['user1','user2',]
 
 
 * COMPUTE CANADA specific variables:
 supervisor_account = 'def-supervisor' # variable used on compute canada clusters to create the batches
-
-
-=== DEFAULT variables that can be changed:
-* PATHs:
-SOURCE_BIDS_DIR = '' # path to a folder that, if NOT blank, pipeline will convert SOURCE_SUBJECTS_DIR to BIDS format
-PROCESSED_NIMB = $NIMB_HOME/processed_nimb # path to folder where the processed subjects will be stored temporarily
-
-* LONGITUDINAL analysis:
-base_name = 'base' # the name of the base subject that will be created during the longitudinal analysis with FreeSurfer
-python3_run_cmd = 'python3' # is the command used on the local or remote computer that is used to initiate python 3
-
-* FREESURFER specific variables
-FREESURFER_HOME = '$NIMB_HOME/freesurfer' # path to the freesurfer folder. If OS is Linux/Mac by default freesurfer is installed in $NIMB_HOME. If OS is Windows, pipeline will ask the credentials for a remote Linux/Mac.
-FS_SUBJECTS_DIR = '$NIMB_HOME/freesurfer/subjects' # path to the folder where the subjects are being processed by FreeSurfer.
-long_name = 'ses-' # abbreviation used to define the longitudinal time points for subjects
-export_FreeSurfer_cmd = 'export FREESURFER_HOME='+FREESURFER_HOME # in some cases this command has to be adjusted
-source_FreeSurfer_cmd = '$FREESURFER_HOME/SetUpFreeSurfer.sh' # command might be different if FreeSurfer is used as module
-freesurfer_version = '7' # default is 7 (for 7.1.0) but pipeline should also work with versions 6 and 5
 
 
 === USER-defined STATISTICAL ANALYSIS variables:
@@ -136,3 +117,35 @@ GLM_dir = 'pat' # to the folder were the glm analysis will be made.
 GLM_measurements = ['thickness','area','volume',]#'curv'] # cortical parameters that will be used for FreeSurfer GLM analysis
 GLM_thresholds = [10,]#5,15,20,25] # threshold levels for smoothing in mm, used for FreeSurfer GLM analysis
 GLM_MCz_cache = 13 # level of FreeSurfer GLM MCZ simulation threshold 13 equals to p=0.05
+
+
+
+=== DEFAULT variables that can be changed:
+* PATHs:
+SOURCE_BIDS_DIR = '' # path to a folder that, if NOT blank, pipeline will convert SOURCE_SUBJECTS_DIR to BIDS format
+PROCESSED_NIMB = $NIMB_HOME/processed_nimb # path to folder where the processed subjects will be stored temporarily
+
+* Processing variables:
+SUBMIT = True                   # or False, defines if the scheduler batches are submitted to the scheduler. Is used to verify the batches
+max_nr_running_batches = 100    # number of batches that can be sent to the scheduler at the same time.
+max_walltime = '99:00:00'       # waltime maximal for the scheduler
+batch_walltime_cmd = '#SBATCH --time=' #this command differs between schedulers
+batch_output_cmd = '#SBATCH --output=' # command used in the batch to define the path of the output file
+submit_cmd = 'sbatch'           # command used to submit the batched to the scheduler
+batch_walltime = '03:00:00'     # walltime maximal for the pipeline to reinitate itself; 3 hours is the duration that is used by the scheduler to quickly deploy the script
+
+* LONGITUDINAL analysis:
+DO_LONG = False # True or False, if longitudinal analysis needs to be made
+base_name = 'base' # the name of the base subject that will be created during the longitudinal analysis with FreeSurfer
+python3_run_cmd = 'python3' # is the command used on the local or remote computer that is used to initiate python 3
+
+* FREESURFER specific variables
+FREESURFER_HOME = '$NIMB_RHOME/freesurfer' # path to the freesurfer folder. If OS is Linux/Mac by default freesurfer is installed in $NIMB_HOME. If OS is Windows, pipeline will ask the credentials for a remote Linux/Mac.
+FS_SUBJECTS_DIR = '$NIMB_HOME/freesurfer/subjects' # path to the folder where the subjects are being processed by FreeSurfer.
+long_name = 'ses-' # abbreviation used to define the longitudinal time points for subjects
+export_FreeSurfer_cmd = 'export FREESURFER_HOME='+FREESURFER_HOME # in some cases this command has to be adjusted
+source_FreeSurfer_cmd = '$FREESURFER_HOME/SetUpFreeSurfer.sh' # command might be different if FreeSurfer is used as module
+freesurfer_version = '7' # default is 7 (for 7.1.0) but pipeline should also work with versions 6 and 5
+process_order = ['registration','autorecon1','autorecon2','autorecon3','qcache','brstem','hip','tha'] #list of processing steps in FreeSurfer. For FreeSurfer version lower thatn 7, "tha" must be remove; Instead of autorecon1, autorecon2 and autorecon3, the commmand "recon" can be used (which will use the command 'recon-all' for freesurfer processing), but it will take more time for processing and this can be limited by the scheduler
+
+
