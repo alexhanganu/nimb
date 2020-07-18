@@ -216,7 +216,10 @@ def move_mrparams_clean_registration(subjid):
     file_mrparams = path.join(nimb_scratch_dir,subjid+'_mrparams')
     if path.isfile(file_mrparams):
         shutil.move(file_mrparams, path.join(SUBJECTS_DIR, subjid, 'stats'))
-    db['REGISTRATION'].pop(subjid, None)
+    if subjid in db['REGISTRATION']:
+        db['REGISTRATION'].pop(subjid, None)
+    else:
+        Update_status_log('        missing from db[REGISTRATION]')
     return db
 
 

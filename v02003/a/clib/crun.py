@@ -79,6 +79,7 @@ def do(process):
                 db = cdb.move_mrparams_clean_registration(subjid, db)
             elif process == 'autorecon1':
                 job_id = crunfs.makesubmitpbs(submit_cmd, Get_cmd.autorecon1(subjid), subjid, process, cwalltime.Get_walltime(process))
+                db = cdb.move_mrparams_clean_registration(subjid, db)
             elif process == 'autorecon2':
                 job_id = crunfs.makesubmitpbs(submit_cmd, Get_cmd.autorecon2(subjid), subjid, process, cwalltime.Get_walltime(process))
             elif process == 'autorecon3':
