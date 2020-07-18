@@ -76,7 +76,7 @@ def do(process):
                     job_id = 'none'
             elif process == 'recon':
                 job_id = crunfs.makesubmitpbs(submit_cmd, Get_cmd.recon(subjid), subjid, process, cwalltime.Get_walltime(process))
-                cdb.move_mrparams(subjid)
+                db = cdb.move_mrparams_clean_registration(subjid, db)
             elif process == 'autorecon1':
                 job_id = crunfs.makesubmitpbs(submit_cmd, Get_cmd.autorecon1(subjid), subjid, process, cwalltime.Get_walltime(process))
             elif process == 'autorecon2':

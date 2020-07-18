@@ -71,7 +71,7 @@ def Get_DB():
                 Update_status_log('ERROR !! last DB json from NIMB_HOME is different from the DB json on NIMB_scratch')
         #       db = dbjson_last
     if db != dbjson:
-        Update_status_log('DB json and DB py NOT similar, but maybe json file is not sorted')
+        Update_status_log('DB json and DB py NOT similar, but json file is not sorted')
     else:
         Update_status_log('DB json nimb_scratch, DB py nimb_scratch and DB json NIMB_HOME are ALL similar')
     return db
@@ -212,10 +212,12 @@ def get_MR_file_params(subjid, file):
 	return vox_size
 
 
-def move_mrparams(subjid):
+def move_mrparams_clean_registration(subjid):
     file_mrparams = path.join(nimb_scratch_dir,subjid+'_mrparams')
     if path.isfile(file_mrparams):
         shutil.move(file_mrparams, path.join(SUBJECTS_DIR, subjid, 'stats'))
+    db['REGISTRATION'].pop(subjid, None)
+    return db
 
 
 
