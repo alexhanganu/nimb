@@ -331,7 +331,7 @@ def fs_find_error(subjid):
                 elif 'error: MRISreadCurvature:' in line:
                     error = 'errCurvature'
                     break
-                elif 'ERROR: cannot find' inl ine:
+                elif 'ERROR: cannot find' in line:
                     error = 'cannotfind'
                     break
         else:
