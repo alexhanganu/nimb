@@ -1,5 +1,5 @@
 #!/bin/python
-# 2020.07.17
+# 2020.07.20
 
 from os import path, listdir, remove, getenv, rename, mkdir, environ, system, chdir
 from var import process_order, long_name, base_name, cusers_list, cuser, NIMB_HOME, nimb_dir, nimb_scratch_dir, SUBJECTS_DIR, flair_t2_add
@@ -223,6 +223,14 @@ def move_mrparams_clean_registration(subjid):
     return db
 
 
+def check_that_all_files_are_accessible(ls):
+	for file in ls:
+		if not path.exists(file):
+			ls.remove(file)
+	return ls
+
+
+
 
 def keep_files_similar_params(subjid, t1_ls_f, flair_ls_f, t2_ls_f):
     grouped_by_voxsize = {}
@@ -375,17 +383,18 @@ def get_registration_files(subjid, db):
             Update_status_log('    '+subjid+'\n                        id is: '+_id+', ses is: '+ses)
 
             if _id != 'none':
-                t1_ls_f = data[_id][ses]['anat']['t1']
-                flair_ls_f = 'none'
-                t2_ls_f = 'none'
-                if 'flair' in data[_id][ses]['anat'] and flair_t2_add:
-                    if data[_id][ses]['anat']['flair']:
-                        flair_ls_f = data[_id][ses]['anat']['flair']
-                if 't2' in data[_id][ses]['anat'] and flair_t2_add:
-                    if data[_id][ses]['anat']['t2'] and flair_ls_f == 'none':
-                        t2_ls_f = data[_id][ses]['anat']['t2']
+                t1_ls_f = check_that_all_files_are_accessible(data[_id][ses]['anat']['t1'])
+                if t1_ls_f:
+	                flair_ls_f = 'none'
+	                t2_ls_f = 'none'
+	                if 'flair' in data[_id][ses]['anat'] and flair_t2_add:
+	                    if data[_id][ses]['anat']['flair']:
+	                        flair_ls_f = check_that_all_files_are_accessible(data[_id][ses]['anat']['flair'])
+	                if 't2' in data[_id][ses]['anat'] and flair_t2_add:
+	                    if data[_id][ses]['anat']['t2'] and flair_ls_f == 'none':
+	                        t2_ls_f = check_that_all_files_are_accessible(data[_id][ses]['anat']['t2'])
             Update_status_log('        registration files were read from new_subjects_registration_paths.json')
-
+    
     t1_ls_f, flair_ls_f, t2_ls_f = keep_files_similar_params(subjid, t1_ls_f, flair_ls_f, t2_ls_f)
 
     return t1_ls_f, flair_ls_f, t2_ls_f
