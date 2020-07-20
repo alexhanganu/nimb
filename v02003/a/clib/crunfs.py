@@ -318,15 +318,21 @@ def fs_find_error(subjid):
                     cdb.Update_status_log('        ERROR: Manual Talairach alignment may be necessary, or include the -notal-check flag to skip this test, making sure the -notal-check flag follows -all or -autorecon1 in the command string.')
                     error = 'talfail'
                     break
-                if  'ERROR: MultiRegistration::loadMovables: images have different voxel sizes.':
+                elif  'ERROR: MultiRegistration::loadMovables: images have different voxel sizes.':
                     cdb.Update_status_log('        ERROR: Voxel size is different, Multiregistration is not supported; consider making conform')
                     error = 'voxsizediff'
                     break
-                if 'ERROR: no run data found' in line:
+                elif 'ERROR: no run data found' in line:
                     error = 'noreg'
                     break
-                if 'ERROR: inputs have mismatched dimensions!' in line:
+                elif 'ERROR: inputs have mismatched dimensions!' in line:
                     error = 'regdim'
+                    break
+                elif 'error: MRISreadCurvature:' in line:
+                    error = 'errCurvature'
+                    break
+                elif 'ERROR: cannot find' inl ine:
+                    error = 'cannotfind'
                     break
         else:
             cdb.Update_status_log('        ERROR: '+file_2read+' not in '+path.join(SUBJECTS_DIR,subjid,'scripts'))
