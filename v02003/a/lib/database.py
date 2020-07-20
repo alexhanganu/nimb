@@ -339,7 +339,7 @@ def create_lsmiss(lsmiss):
                 f.write(subject+'\n')
 
 
-def _get_lsmiss():
+def _get_lsmiss(): # define what is missing
     MainFolder = _get_folder('Main')
     lsmiss = {}
     for file in listdir(MainFolder+'logs/'):

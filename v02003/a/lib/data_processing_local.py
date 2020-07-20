@@ -445,7 +445,7 @@ def cp2cluster():
 #
 def cpFromCluster():
     """
-    it copy the files from the cluster to the local folder
+    it copy the files from the cluster to the local folder, get files from Processed_SUBJECTS_DIR
     the remote location : source dir: is in the configuration, how?
     the local location : dest dir: is in the configuration also
 
@@ -462,8 +462,8 @@ def cpFromCluster():
     #     # system('scp '+cuser+'@'+caddress+':'+cmaindir+'status_cluster '+freesurfer+'logs/')
 
     def platform_win(cuser, caddress, cmaindir,cpw):
-        print(MainFolder)
-        file = MainFolder+'logs/psftpcpdb_from_cluster.scr'
+        print(MainFolder) # not use now use to be local folder store the results
+        file = MainFolder+'logs/psftpcpdb_from_cluster.scr' # do not use, can remove
         open(file, 'w').close()
         with open(file,'a') as f:
             f.write('get '+cmaindir+'a/db.py a/db.py\n') # this is the batch command: get a/db.py a/db.py

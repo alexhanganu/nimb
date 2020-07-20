@@ -176,7 +176,7 @@ def run_processing_on_cluster_2():
     user_name = clusters[list(clusters)[0]]['Username']
     user_password = clusters[list(clusters)[0]]['Password']
     project_folder = clusters[list(clusters)[0]]['HOME']
-    cmd_run = " python a/crun.py -submit false" #submit=true
+    cmd_run = " python a/crun.py " #submit=true
     load_python_3 = 'module load python/3.7.4;'
     cmd_run_crun_on_cluster = load_python_3 +"cd " + "/home/hvt/" + "; " + cmd_run
     print("command: "+ cmd_run_crun_on_cluster)
@@ -188,16 +188,34 @@ def run_processing_on_cluster_2():
                                     cmd_run_crun_on_cluster=cmd_run_crun_on_cluster)
 
 def run(Project):
+    """
+    **Local pc does not have FS**
+    1. do model classification
+        - to generate the subjects json files in format
+    2. upload files to remote
+        - upload the jsons to remote (subject folder?)
+        - upload the files to remote (in BIDS format) ==> no need
+    3. run the commands on remote (FS commands) via SSH
+    4. run the model distribution module:
+        - check the available space at remote pc # this is a TODO
+            + todo
+        - check the running status (i.e., check the results from FS)
+            + working, using sbatch (slurm) for now
+        - copy the results from remote to local
+        - finish the above first
+
+    """
     print("Project name: " + Project)
     print(Project)
-    status.set('Copying data to cluster ...block for now')
-    # cp2cluster()
+    status.set('Copying data to cluster ...')
+
+    # run_copy_subject_to_cluster
     status.set('Cluster analysis started')
     status.set("Cluster analysing running....")
     run_processing_on_cluster_2()
     print("Do processing here, temporary block that function")
     # set_MainFolder(Project)
-    # cpFromCluster() # todo: dead here
+    cpFromCluster() # todo: dead here
     #
     # status.set('Copying processed data from cluster')
     #

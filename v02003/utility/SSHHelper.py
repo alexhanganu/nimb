@@ -29,7 +29,7 @@ clusters = database._get_Table_Data('Clusters','all')
 if 'elm' in clusters:
     cname = 'elm'
 else:
-    #cname = 'defaultClusters'
+    # cname = 'defaultClusters'
     cname = 'cedar'
 
 
@@ -39,7 +39,7 @@ project_folder = clusters[cname]['HOME'] #'/home/hvt/projects/def-hanganua'
 cmd_run = " python a/crun.py -submit true" #submit=true
 load_python_3 = 'module load python/3.7.4;'
 cmd_run_crun_on_cluster = load_python_3 +"cd " + project_folder + "; " + cmd_run
-host_name = [cname]['remote_address'] #"beluga.calculquebec.ca"
+host_name = clusters[cname]['remote_address'] #"beluga.calculquebec.ca"
 # note: if the parclustersamiko has errors when connecting to beluga, change it to beluga1 or 2,3,4
 a_folder = clusters[cname]['App_DIR']#'/home/hvt/projects/def-hanganua/a'
 
@@ -178,6 +178,11 @@ def make_destination_folders(ssh_session, dest_folder,subject_id_folder_name):
     sftp = paramiko.SFTPClient.from_transport(ssh_session.get_transport())
     new_folder = dest_folder +"/" + subject_id_folder_name
     make_folder_at_cluster(sftp, new_folder)
+
+    #todo: make it able to mkdir -p
+    # using https://stackoverflow.com/questions/14819681/upload-files-using-sftp-in-python-but-create-directories-if-path-doesnt-exist
+    # ssh.exec_command('mkdir -p ' + remote_path)
+    # ssh.close(), then it would be okay
     return True
 
 """
@@ -448,5 +453,7 @@ if __name__ == "__main__":
         test()
     if False:
         json_path = '../docs/new_subjects.json'
-        upload_all_subjects(subjects_json_file = json_path, subjects_folder="/home/hvt/test",
-                        a_folder ='/home/hvt/projects/def-hanganua/a')
+        import os
+        print(os.path.isfile('../docs/new_subjects.json'))
+        # upload_all_subjects(subjects_json_file = json_path, subjects_folder="/home/hvt/test",
+        #                 a_folder ='/home/hvt/projects/def-hanganua/a')

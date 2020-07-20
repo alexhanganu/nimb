@@ -25,7 +25,7 @@ flair_t2_add = False
 
 
 from os import path, makedirs
-from cget_username import _get_username
+from a.clib.cget_username import _get_username
 
 cuser = _get_username()
 cusers_list = ['hanganua','hvt','lucaspsy','hiver85']
@@ -87,7 +87,8 @@ GLM_MCz_cache = 13 # level of mcz simulation threshold, 13 equals to p=0.05
 
 for remote_path in (nimb_dir, dir_new_subjects, SUBJECTS_DIR, processed_SUBJECTS_DIR, nimb_scratch_dir):
 	if not path.isdir(remote_path):
-		makedirs(remote_path)
+		# makedirs(remote_path)
+       pass # stop for now
 
 
 
