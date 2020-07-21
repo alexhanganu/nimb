@@ -1,33 +1,82 @@
-from os import path
-from variables import text4_scheduler, batch_walltime_cmd, batch_walltime, batch_output_cmd, submit_cmd, python3_load_cmd, python3_run_cmd, nimb_dir, nimb_scratch_dir
-import datetime, subprocess
-import cdb
+# -*- coding: utf-8 -*-
+# 2020 07 21
+
+"""nimb module"""
+
+import argparse
+import sys
+from distribution.pipeline_management import Management
+from setup.get_vars import get_vars
+
+
+__version__ = 'v1'
+
+class NIMB(object):
+    """ Object to initiate pipeline
+    Args:
+        process: initiates pipeline
+    """
+
+    def __init__(
+        self,
+        process,
+        **_
+    ):
+
+        self.process = process
+        self.vars = get_vars()
+
+
+    def run(self):
+        """Run nimb"""
+        task = Management(self.process)
+
+        if self.process == 'classify':
+            task.classify(self.vars)
+
+        if self.process == 'freesurfer':
+            task.freesurfer()
+
+        if self.process == 'stats':
+            task.stats()
+
+        if self.process == 'fsglm':
+            task.fsglm()
 
 
 
-date=datetime.datetime.now()
-dt=str(date.year)+str(date.month)+str(date.day)
 
-if not path.exists(path.join(nimb_scratch_dir,'usedpbs')):
-    mkdir(path.join(nimb_scratch_dir,'usedpbs'))
+def get_parameters():
+    """get parameters for nimb"""
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description="""text {}""".format(
+            __version__
+        ),
+        epilog="""
+            Documentation at https://github.com/alexhanganu/nimb
+            """,
+    )
+
+    parser.add_argument(
+        "-process", required=False, 
+        default='freesurfer', 
+        choices = ['freesurfer','classify','stats','fsglm'],
+        help="freesurfer (start FreeSurfer pipeline), classify (classify MRIs) stats (perform statistical analysis), fsglm (perform freesurfer mri_glmfit GLM analsysis)",
+    )
 
 
-sh_file = 'nimb_run_'+str(dt)+'.sh'
-out_file = 'nimb_run_'+str(dt)+'.out'
+    params = parser.parse_args()
+    return params
 
-with open(nimb_scratch_dir+'usedpbs/'+sh_file,'a') as f:
-    for line in text4_scheduler:
-        f.write(line+'\n')
-    f.write(batch_walltime_cmd+batch_walltime+'\n')
-    f.write(batch_output_cmd+path.join(nimb_scratch_dir,'usedpbs',out_file)+'\n')
-    f.write('\n')
-    f.write('cd '+nimb_dir+'a/clib\n')
-    f.write(python3_load_cmd+'\n')
-    f.write(python3_run_cmd+' crun.py\n')
 
-cdb.Update_status_log('    '+sh_file+' submitting')
-try:
-        resp = subprocess.run([submit_cmd,nimb_scratch_dir+'usedpbs/'+sh_file], stdout=subprocess.PIPE).stdout.decode('utf-8')
-        print(list(filter(None, resp.split(' ')))[-1].strip('\n'))
-except Exception as e:
-        print(e)
+def main():
+
+    params = get_parameters()
+
+    app = NIMB(**vars(params))
+    return app.run()
+
+
+if __name__ == "__main__":
+    sys.exit(main())
