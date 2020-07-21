@@ -3,7 +3,7 @@
 '''following variables are set by the user in the GUI or in this file
 current setup is constructed for Compute Canada clusters'''
 
-max_nr_running_batches = 100 #seems to be taking up to 100
+max_nr_running_batches = 5 #seems to be taking up to 100
 process_order = ['registration','autorecon1','autorecon2','autorecon3','qcache','brstem','hip','tha']
 supervisor_account = 'def-hanganua'
 
@@ -16,20 +16,16 @@ batch_walltime = '03:00:00' # walltime maximal for the run.sh batch that runs th
 batch_output_cmd = '#SBATCH --output='
 submit_cmd = 'sbatch'
 freesurfer_version = 7
-archive_processed = True
+archive_processed = False
 masks = [] # varibale that includes the ROI names of subcortical regions in order to create the masks.
 SUBMIT = True # variable to define if the batches will be submitted to the scheduler. Is used to perform initial verification if files were created correctly
-flair_t2_add = False
-processing_env = 'slurm' #tmux
-python3_load_cmd = 'module load python/3.8.2\npython'
+
+
+
 
 
 from os import path, makedirs
-try:
-       from cget_username import _get_username
-except ImportError:
-       from a.clib.cget_username import _get_username
-
+from cget_username import _get_username
 
 cuser = _get_username()
 cusers_list = ['hanganua','hvt','lucaspsy','hiver85']
@@ -55,9 +51,9 @@ export_FreeSurfer_cmd = 'export FREESURFER_HOME='+FREESURFER_HOME
 source_FreeSurfer_cmd = '$FREESURFER_HOME/SetUpFreeSurfer.sh'
 
 nimb_dir=path.join(remote_path_main_dir,'a/')
-NIMB_HOME=path.join(remote_path_main_dir,'a')
 dir_new_subjects=path.join(remote_path_main_dir,'subjects/')
-SUBJECTS_DIR = path.join(remote_path_main_dir,'fs-subjects/')
+SUBJECTS_DIR = path.join(remote_path_main_dir,'adni/Subjects_GLM') #temporary path for GLM analysis
+# SUBJECTS_DIR = path.join(remote_path_main_dir,'fs-subjects/')
 processed_SUBJECTS_DIR = path.join(remote_path_main_dir,'subjects_processed/')
 nimb_scratch_dir=path.join(remote_path_save_temporary_files,'a_tmp/')
 
@@ -89,9 +85,9 @@ GLM_thresholds = [10,]#5,15,20,25] # these are the threshold levels for smoothin
 GLM_MCz_cache = 13 # level of mcz simulation threshold, 13 equals to p=0.05
 
 
-for remote_path in (nimb_dir, dir_new_subjects, SUBJECTS_DIR, processed_SUBJECTS_DIR, nimb_scratch_dir):
-	if not path.isdir(remote_path):
-		makedirs(remote_path)
+#for remote_path in (nimb_dir, dir_new_subjects, SUBJECTS_DIR, processed_SUBJECTS_DIR, nimb_scratch_dir):#
+#	if not path.isdir(remote_path):#
+#		makedirs(remote_path)
 
 
 

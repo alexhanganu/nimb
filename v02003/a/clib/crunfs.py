@@ -1,5 +1,5 @@
 #!/bin/python
-# 2020.07.16
+# 2020.07.05
 
 '''
 add FS QA tools to rm scans with low SNR (Koh et al 2017)
@@ -11,26 +11,14 @@ https://surfer.nmr.mgh.harvard.edu/fswiki/QATools
 from os import listdir, path, mkdir, system
 import shutil
 import datetime
-from var import text4_scheduler, batch_walltime_cmd, max_walltime, batch_output_cmd, freesurfer_version, NIMB_HOME, nimb_dir, nimb_scratch_dir, SUBJECTS_DIR, export_FreeSurfer_cmd, source_FreeSurfer_cmd, SUBMIT
+from var import text4_scheduler, batch_walltime_cmd, max_walltime, batch_output_cmd, submit_cmd, freesurfer_version, nimb_dir, nimb_scratch_dir, SUBJECTS_DIR, export_FreeSurfer_cmd, source_FreeSurfer_cmd, SUBMIT
 import cdb, var
 import subprocess
 print('SUBMITTING is: ', SUBMIT)
 
 
 
-def submit_4_processing(processing_env, cmd, subjid, run, walltime):
-    if processing_env == 'slurm':
-        submit_cmd = 'sbatch'
-        makesubmitpbs(submit_cmd, subjid, run, walltime)
-    elif processing_env == 'tmux':
-        submit_cmd = 'tmux'
-        submit_tmux(submit_cmd, cmd, subjid)
-    else:
-        print('ERROR: processing environment not provided or incorrect')
-
-
-
-def makesubmitpbs(submit_cmd, cmd, subjid, run, walltime):
+def makesubmitpbs(cmd, subjid, run, walltime):
 
     date=datetime.datetime.now()
     dt=str(date.year)+str(date.month)+str(date.day)
@@ -53,7 +41,7 @@ def makesubmitpbs(submit_cmd, cmd, subjid, run, walltime):
         f.write('export SUBJECTS_DIR='+SUBJECTS_DIR+'\n')
         f.write('\n')
         f.write(cmd+'\n')
-    cdb.Update_status_log('    '+sh_file+' submitting')
+    print('    submitting '+sh_file)
     if SUBMIT:
         try:
             resp = subprocess.run([submit_cmd,nimb_scratch_dir+'usedpbs/'+sh_file], stdout=subprocess.PIPE).stdout.decode('utf-8')
@@ -65,13 +53,17 @@ def makesubmitpbs(submit_cmd, cmd, subjid, run, walltime):
         return ''
 
 
-def submit_tmux(submit_cmd, cmd, subjid):
-    #https://gist.github.com/henrik/1967800
-    tmux_session = 'tmux_'+str(subjid)
+def submit_4_run(cmd, subjid, run, walltime): #to join with makesubmitpbs
+    if remote_type == 'tmux': #https://gist.github.com/henrik/1967800
+        last_session = cdb.get_RUNNING_JOBS('tmux')
+        if len(last_session)>0:
+            session = 'tmux_'+str(int(last_session[-1][last_session[-1].find('-'):])+1) #get job id from cdb
+        else:
+            session = 'tmux_1'
 
-    make_tmux_screen = 'tmux new -d -s '+tmux_session
-    system(submit_cmd+' send-keys -t '+str(tmux_session)+' '+cmd+' ENTER') #tmux send-keys -t session "echo 'Hello world'" ENTER
-    return tmux_session
+        make_tmux_screen = 'tmux new -d -s session'
+        system(submit_cmd+' send-keys -t '+str(session)+' '+cmd+' ENTER') #tmux send-keys -t session "echo 'Hello world'" ENTER
+        return session
 
 
 
@@ -302,42 +294,3 @@ def chk_masks(subjid):
                 return True
     else:
         return False
-
-
-def fs_find_error(subjid):
-    error = ''
-    print('seraching for THE error')
-
-    file_2read = 'recon-all.log'
-    try:
-        if file_2read in listdir(path.join(SUBJECTS_DIR,subjid,'scripts')):
-            f = open(path.join(SUBJECTS_DIR,subjid,'scripts',file_2read),'r').readlines()
-
-            for line in reversed(f):
-                if 'ERROR: Talairach failed!' in line:
-                    cdb.Update_status_log('        ERROR: Manual Talairach alignment may be necessary, or include the -notal-check flag to skip this test, making sure the -notal-check flag follows -all or -autorecon1 in the command string.')
-                    error = 'talfail'
-                    break
-                elif  'ERROR: MultiRegistration::loadMovables: images have different voxel sizes.':
-                    cdb.Update_status_log('        ERROR: Voxel size is different, Multiregistration is not supported; consider making conform')
-                    error = 'voxsizediff'
-                    break
-                elif 'ERROR: no run data found' in line:
-                    error = 'noreg'
-                    break
-                elif 'ERROR: inputs have mismatched dimensions!' in line:
-                    error = 'regdim'
-                    break
-                elif 'error: MRISreadCurvature:' in line:
-                    error = 'errCurvature'
-                    break
-                elif 'ERROR: cannot find' in line:
-                    error = 'cannotfind'
-                    break
-        else:
-            cdb.Update_status_log('        ERROR: '+file_2read+' not in '+path.join(SUBJECTS_DIR,subjid,'scripts'))
-    except FileNotFoundError as e:
-        print(e)
-        cdb.Update_status_log('    '+subjid+' '+str(e))
-
-    return error
