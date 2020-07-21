@@ -11,10 +11,6 @@ class Management():
 
         print('start distribution')
 
-    def classify(self, vars):
-
-        print('start classification')
-        print(vars)
 
     def freesurfer(self):
 

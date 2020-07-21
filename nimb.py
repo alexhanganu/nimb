@@ -7,7 +7,7 @@ import argparse
 import sys
 from distribution.pipeline_management import Management
 from setup.get_vars import get_vars
-
+from classification import classify_bids
 
 __version__ = 'v1'
 
@@ -32,7 +32,10 @@ class NIMB(object):
         task = Management(self.process)
 
         if self.process == 'classify':
-            task.classify(self.vars)
+            print(self.vars)
+             SUBJECTS_DIR_RAW = ""
+             NIMB_tmp = ""
+             classify_bids.get_dict_MR_files2process(SUBJECTS_DIR_RAW, NIMB_tmp)
 
         if self.process == 'freesurfer':
             task.freesurfer()

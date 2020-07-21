@@ -1,0 +1,54 @@
+{
+    "NACC000034": {
+        "ses-1": {
+            "anat": {
+                "t1": "C:/Users/Jessica/Documents/s2019-NPS-db/freesurfer_nacc/raw/NACC000034_tp1_t1/IM-0014-0001.dcm",
+                "flair": "C:/Users/Jessica/Documents/s2019-NPS-db/freesurfer_nacc/raw/NACC000034_tp1_flair/IM-0015-0001.dcm",
+                "t2": ""
+                    }
+        }
+    },
+    "NACC000225": {
+        "ses-1": {
+            "anat": {
+                "t1": "C:/Users/Jessica/Documents/s2019-NPS-db/freesurfer_nacc/raw/NACC000225_tp1_t1/1.2.840.113619.2.134.1762534283.2871.1252519741.782.dcm",
+                "flair": "",
+                "t2": ""
+                    }
+                },
+        "ses-2": {
+            "anat": {
+                "t1": "C:/Users/Jessica/Documents/s2019-NPS-db/freesurfer_nacc/raw/NACC000225_tp2_t1/1.2.840.113619.2.134.1762534283.3274.1326220813.729.dcm",
+                "flair": "",
+                "t2": ""
+                    }
+        }
+    },
+    "NACC000546": {
+        "ses-1": {
+            "anat": {
+                "t1": "",
+                "flair": "C:/Users/Jessica/Documents/s2019-NPS-db/freesurfer_nacc/raw/NACC000546_tp1_flair/ser005img00001.dcm",
+                "t2": "C:/Users/Jessica/Documents/s2019-NPS-db/freesurfer_nacc/raw/NACC000546_tp1_t2/ser004img00001.dcm"
+                    }
+        }
+    },
+    "NACC000992": {
+        "ses-1": {
+            "anat": {
+                "t1": "C:/Users/Jessica/Documents/s2019-NPS-db/freesurfer_nacc/raw/NACC000992_tp1_t1/1.2.124.113540.0.200612018600.3.243450-9-1-sks45b.dcm",
+                "flair": "",
+                "t2": ""
+                    }
+        }
+    },
+    "NACC001412": {
+        "ses-1": {
+            "anat": {
+                "t1": "C:/Users/Jessica/Documents/s2019-NPS-db/freesurfer_nacc/raw/NACC001412_tp1_t1/IM-0001-0001.dcm",
+                "flair": "C:/Users/Jessica/Documents/s2019-NPS-db/freesurfer_nacc/raw/NACC001412_tp1_flair/IM-0002-0001.dcm",
+                "t2": ""
+                    }
+        }
+    }
+}
