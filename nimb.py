@@ -33,9 +33,9 @@ class NIMB(object):
 
         if self.process == 'classify':
             print(self.vars)
-             SUBJECTS_DIR_RAW = ""
-             NIMB_tmp = ""
-             classify_bids.get_dict_MR_files2process(SUBJECTS_DIR_RAW, NIMB_tmp)
+            SUBJECTS_DIR_RAW = "/home/hanganua/projects/def-hanganua/new_subjects"
+            NIMB_tmp = "/home/hanganua/projects/def-hanganua/nimb/tmp"
+            classify_bids.get_dict_MR_files2process(SUBJECTS_DIR_RAW, NIMB_tmp)
 
         if self.process == 'freesurfer':
             task.freesurfer()
