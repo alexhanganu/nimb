@@ -1,5 +1,5 @@
 #!/bin/python
-# 2020.07.21
+# 2020.07.22
 
 
 from os import listdir, path, mkdir, system
@@ -14,16 +14,13 @@ print('SUBMITTING is: ', SUBMIT)
 
 
 
-# def submit_4_processing(processing_env, cmd, subjid, run, walltime):
-#     if processing_env == 'slurm':
-#         submit_cmd = 'sbatch'
-#         makesubmitpbs(submit_cmd, subjid, run, walltime)
-#     elif processing_env == 'tmux':
-#         submit_cmd = 'tmux'
-#         submit_tmux(submit_cmd, cmd, subjid)
-#     else:
-#         print('ERROR: processing environment not provided or incorrect')
-
+def submit_4_processing(processing_env, cmd, subjid, run, walltime):
+    if processing_env == 'slurm':
+        makesubmitpbs(cmd, subjid, run, walltime)
+    elif processing_env == 'tmux':
+        submit_tmux(cmd, subjid)
+    else:
+        print('ERROR: processing environment not provided or incorrect')
 
 
 def makesubmitpbs(cmd, subjid, run, walltime):
@@ -52,7 +49,7 @@ def makesubmitpbs(cmd, subjid, run, walltime):
     print('    submitting '+sh_file)
     if SUBMIT:
         try:
-            resp = subprocess.run([submit_cmd,nimb_scratch_dir+'usedpbs/'+sh_file], stdout=subprocess.PIPE).stdout.decode('utf-8')
+            resp = subprocess.run(['sbatch',nimb_scratch_dir+'usedpbs/'+sh_file], stdout=subprocess.PIPE).stdout.decode('utf-8')
             return list(filter(None, resp.split(' ')))[-1].strip('\n')
         except Exception as e:
             print(e)
@@ -60,13 +57,13 @@ def makesubmitpbs(cmd, subjid, run, walltime):
     else:
         return ''
 
-# def submit_tmux(submit_cmd, cmd, subjid):
-#     #https://gist.github.com/henrik/1967800
-#     tmux_session = 'tmux_'+str(subjid)
+def submit_tmux(cmd, subjid):
+    #https://gist.github.com/henrik/1967800
+    tmux_session = 'tmux_'+str(subjid)
 
-#     make_tmux_screen = 'tmux new -d -s '+tmux_session
-#     system(submit_cmd+' send-keys -t '+str(tmux_session)+' '+cmd+' ENTER') #tmux send-keys -t session "echo 'Hello world'" ENTER
-#     return tmux_session
+    make_tmux_screen = 'tmux new -d -s '+tmux_session
+    system('tmux send-keys -t '+str(tmux_session)+' '+cmd+' ENTER') #tmux send-keys -t session "echo 'Hello world'" ENTER
+    return tmux_session
 
 
 
