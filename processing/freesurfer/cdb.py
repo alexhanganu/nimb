@@ -1,9 +1,12 @@
 #!/bin/python
-# 2020.06.26
+# 2020.07.21
 
 from os import path, listdir, remove, getenv, rename, mkdir, environ, system, chdir
-from var import process_order, long_name, base_name, cusers_list, cuser, nimb_dir, nimb_scratch_dir, SUBJECTS_DIR
+from var import (process_order, long_name, base_name, cusers_list, 
+	cuser, nimb_dir, nimb_scratch_dir, SUBJECTS_DIR, flair_t2_add)
 import time, shutil
+
+NIMB_tmp = "/home/hanganua/projects/def-hanganua/nimb/tmp/"
 
 environ['TZ'] = 'US/Eastern'
 time.tzset()
@@ -12,14 +15,19 @@ time.tzset()
 
 def Get_DB():
 
+    ''' DataBase has a py structure so that in the future it can be easily transfered to an sqlite database
+        alternatively, the DB could be recorded as json.dump '''
+
     db = dict()
+    dbjson = dict()
+    db_json_last_file = path.join(nimb_dir,'db.json')
+
     print("nimb_scratch_dir is:" + nimb_scratch_dir)
-    # change to local dev folder instead of supervisor folder due to no-writing-file permission
     if path.isfile(nimb_scratch_dir+'db'):
         shutil.copy(nimb_scratch_dir+'db',nimb_dir+'db.py')
-        system('chmod 777 '+nimb_dir+'db.py')
+        system('chmod 777 '+path.join(nimb_dir,'db.py'))
         time.sleep(2)
-        from db import DO, QUEUE, RUNNING, RUNNING_JOBS, LONG_DIRS, LONG_TPS, PROCESSED
+        from db import DO, QUEUE, RUNNING, RUNNING_JOBS, LONG_DIRS, LONG_TPS, PROCESSED, REGISTRATION
         db['DO'] = DO
         db['QUEUE'] = QUEUE
         db['RUNNING'] = RUNNING
@@ -27,6 +35,7 @@ def Get_DB():
         db['LONG_DIRS'] = LONG_DIRS
         db['LONG_TPS'] = LONG_TPS
         db['PROCESSED'] = PROCESSED
+        db['REGISTRATION'] = REGISTRATION
         time.sleep(2)
         remove(nimb_dir+'db.py')
     else:
@@ -38,8 +47,26 @@ def Get_DB():
         db['LONG_DIRS'] = {}
         db['LONG_TPS'] = {}
         db['PROCESSED'] = {'cp2local':[],}
+        db['REGISTRATION'] = {}
         for process in process_order:
             db['PROCESSED']['error_'+process] = []
+
+    # db_json_file = path.join(nimb_scratch_dir,'db.json')
+    # if path.isfile(db_json_file):
+    #     with open(db_json_file) as db_json_open:
+    #         dbjson = json.load(db_json_open)
+    # testing if db.json is similar to the py version
+    # if path.isfile(db_json_last_file):
+    #     with open(db_json_last_file) as db_json_last_open:
+    #         dbjson_last = json.load(db_json_last_open)
+    #         if dbjson_last != dbjson:
+    #             Update_status_log('ERROR !! last DB json from NIMB_HOME is different from the DB json on NIMB_scratch')
+    #             db = dbjson_last
+    # if db != dbjson:
+    #     Update_status_log('DB json and DB py NOT similar, but json file is not sorted')
+    # else:
+    #     Update_status_log('DB json nimb_scratch, DB py nimb_scratch and DB json NIMB_HOME are ALL similar')
+
     return db
 
 
@@ -48,25 +75,36 @@ def Update_DB(d):
     open(file,'w').close()
     with open(file,'a') as f:
         for key in d:
-            if key != 'RUNNING_JOBS':
-                f.write(key+'= {')
+            f.write(key+'= {')
+            if key == 'RUNNING_JOBS':
+                for subkey in d[key]:
+                    f.write('\''+subkey+'\':'+str(d[key][subkey])+',')
+            elif key == 'REGISTRATION':
+                for subkey_subjid in d[key]:
+                    f.write('\''+subkey_subjid+'\': {')
+                    for subkey_mrgroup in d[key][subkey_subjid]:
+                        f.write('\''+subkey_mrgroup+'\': {')
+                        for subkey_mrgroup_type in d[key][subkey_subjid][subkey_mrgroup]:
+                            f.write('\''+subkey_mrgroup_type+'\':'+str(sorted(d[key][subkey_subjid][subkey_mrgroup][subkey_mrgroup_type]))+',')
+                        f.write('},')
+                    f.write('},')
+            else:
                 for subkey in d[key]:
                     f.write('\''+subkey+'\':[')
                     for value in sorted(d[key][subkey]):
                         f.write('\''+value+'\',')
                     f.write('],')
-                f.write('}\n')
-            else:
-                f.write(key+'= {')
-                for subkey in d[key]:
-                    f.write('\''+subkey+'\':'+str(d[key][subkey])+',')
-                f.write('}\n')
+            f.write('}\n')
+    # testing how would the DB work in the json.dump format:
+    # with open(path.join(nimb_scratch_dir,'db.json'),'w') as f:
+    #     json.dump(d, f, indent=4)
+
 
 
 
 def Update_status_log(cmd, update=True):
     print(cmd)
-    file = nimb_scratch_dir+'status.log'
+    file = path.join(nimb_scratch_dir,'status.log')
     if not update:
         print('cleaning status file', file)
         open(file,'w').close()
@@ -77,7 +115,7 @@ def Update_status_log(cmd, update=True):
 
 
 def Update_running(cmd):
-    file = nimb_scratch_dir+'running_'
+    file = path.join(nimb_scratch_dir,'running_')
 	
     if cmd == 1:
         if path.isfile(file+'0'):
@@ -102,16 +140,6 @@ def get_ls_subjids_in_long_dirs(db):
     return lsall
 
 
-def get_RUNNING_JOBS(type):
-    lsall = []
-    if type == 'tmux':
-        for val in db['RUNNING_JOBS'].keys():
-            if 'tmux' in val:
-                lsall.append(val)
-    return sorted(lsall)
-
-
-
 def verify_vox_size_values(vox_size):
     vox = True
     if type(vox_size) == list:
@@ -127,131 +155,133 @@ def verify_vox_size_values(vox_size):
     return vox
 
 
-
-def vox_higher_main(vox_size, main_vox_size):
-	res = True
-	vox_1 = float(vox_size[0])*float(vox_size[1])*float(vox_size[2])
-	vox_2 = float(main_vox_size[0])*float(main_vox_size[1])*float(main_vox_size[2])
-	if vox_1<vox_2:
-		res = False
-	return res
-
-
-def get_MR_file_params(file):
-	tmp_f = nimb_scratch_dir+'tmp'
+def get_MR_file_params(subjid, file):
+	tmp_f = path.join(nimb_scratch_dir,'tmp')
 	vox_size = 'none'
 	chdir(nimb_dir)
 	system('./mri_info '+file+' >> '+tmp_f)
 	if path.isfile(tmp_f):
 		lines = list(open(tmp_f,'r'))
-		try:
-			vox_size = [x.strip('\n') for x in lines if 'voxel sizes' in x][0].split(' ')[-3:]
-			vox_size = [x.replace(',','') for x in vox_size]
-			Update_status_log('            voxel size is: '+str(vox_size))
-		except IndexError as e:
-			Update_status_log('            voxel size is: '+str(e))
-		try:
-			TR_TE_TI = [x.strip('\n') for x in lines if 'TR' in x][0].split(',')
-			TR = TR_TE_TI[0].split(' ')[-2]
-			TE = TR_TE_TI[1].split(' ')[-2]
-			TI = TR_TE_TI[2].split(' ')[-2]
-			flip_angle = TR_TE_TI[3].split(' ')[-2]
-			Update_status_log('            TR is: '+str(TR))
-			Update_status_log('            TE is: '+str(TE))
-			Update_status_log('            TI is: '+str(TI))
-			Update_status_log('            flip angle is: '+str(flip_angle))
-		except IndexError as e:
-			Update_status_log('            TR,TE,TI, flip angle : '+str(e))
-		try:
-			field_strength = [x.strip('\n') for x in lines if 'FieldStrength' in x][0].split(',')[0].replace('       FieldStrength: ','')
-			Update_status_log('            field strength is: '+str(field_strength))
-		except IndexError as e:
-			Update_status_log('            field_strength : '+str(e))
-		try:
-			matrix = [x.strip('\n') for x in lines if 'dimensions' in x][0].split(',')[0].replace('    dimensions: ','')
-			Update_status_log('            matrix is: '+str(matrix))
-		except IndexError as e:
-			Update_status_log('            matrix : '+str(e))
-		try:
-			fov = [x.strip('\n') for x in lines if 'fov' in x][0].split(',')[0].replace('           fov: ','')
-			Update_status_log('            fov is: '+str(fov))
-		except IndexError as e:
-			Update_status_log('            fov : '+str(e))			
+		file_mrparams = path.join(nimb_scratch_dir,subjid+'_mrparams')
+		if not path.isfile(file_mrparams):
+			open(file_mrparams,'w').close()
+		with open(file_mrparams,'a') as f:
+			f.write(file+'\n')
+			try:
+				vox_size = [x.strip('\n') for x in lines if 'voxel sizes' in x][0].split(' ')[-3:]
+				vox_size = [x.replace(',','') for x in vox_size]
+				f.write('voxel \t'+str(vox_size)+'\n') #Update_status_log('            voxel size is: '+str(vox_size))
+			except IndexError as e:
+				print(e)#Update_status_log('            voxel size is: '+str(e))
+			try:
+				TR_TE_TI = [x.strip('\n') for x in lines if 'TR' in x][0].split(',')
+				TR = TR_TE_TI[0].split(' ')[-2]
+				TE = TR_TE_TI[1].split(' ')[-2]
+				TI = TR_TE_TI[2].split(' ')[-2]
+				flip_angle = TR_TE_TI[3].split(' ')[-2]
+				f.write('TR \t'+str(TR)+'\n') #Update_status_log('            TR is: '+str(TR))
+				f.write('TE \t'+str(TE)+'\n') #Update_status_log('            TE is: '+str(TE))
+				f.write('TI \t'+str(TI)+'\n') #Update_status_log('            TI is: '+str(TI))
+				f.write('flip angle \t'+str(flip_angle)+'\n') #Update_status_log('            flip angle is: '+str(flip_angle))
+			except IndexError as e:
+				print(e)#Update_status_log('            TR,TE,TI, flip angle : '+str(e))
+			try:
+				field_strength = [x.strip('\n') for x in lines if 'FieldStrength' in x][0].split(',')[0].replace('       FieldStrength: ','')
+				f.write('field strength \t'+str(field_strength)+'\n') #Update_status_log('            field strength is: '+str(field_strength))
+			except IndexError as e:
+				print(e)#Update_status_log('            field_strength : '+str(e))
+			try:
+				matrix = [x.strip('\n') for x in lines if 'dimensions' in x][0].split(',')[0].replace('    dimensions: ','')
+				f.write('matrix \t'+str(matrix)+'\n')#Update_status_log('            matrix is: '+str(matrix))
+			except IndexError as e:
+				print(e)#Update_status_log('            matrix : '+str(e))
+			try:
+				fov = [x.strip('\n') for x in lines if 'fov' in x][0].split(',')[0].replace('           fov: ','')
+				f.write('fov \t'+str(fov)+'\n')#Update_status_log('            fov is: '+str(fov))
+			except IndexError as e:
+				print(e)#Update_status_log('            fov : '+str(e))			
 		remove(tmp_f)
 	return vox_size
 
 
-def keep_files_similar_params(t1_ls_f, flair_ls_f, t2_ls_f):
-    main_vox_size = 'none'
+def check_that_all_files_are_accessible(ls):
+	for file in ls:
+		if not path.exists(file):
+			ls.remove(file)
+	return ls
+
+
+def keep_files_similar_params(subjid, t1_ls_f, flair_ls_f, t2_ls_f):
+    grouped_by_voxsize = {}
     for file in t1_ls_f:
         Update_status_log('        reading MR data for T1 file: '+file)
-        vox_size = get_MR_file_params(file)
+        vox_size = get_MR_file_params(subjid, file)
         if vox_size:
             if verify_vox_size_values(vox_size):
-                Update_status_log('        current voxel size is: '+str(vox_size))
-                if main_vox_size == 'none':
-                    main_vox_size = vox_size
+                if str(vox_size) not in grouped_by_voxsize:
+                    grouped_by_voxsize[str(vox_size)] = {'t1':[file]}
                 else:
-                    if vox_size != main_vox_size:
-                        if vox_higher_main(vox_size, main_vox_size):
-                          t1_ls_f.remove(file)
+                    grouped_by_voxsize[str(vox_size)]['t1'].append(file)
+            vox_size_used = min(grouped_by_voxsize.keys())
+            Update_status_log('        voxel size used: '+str(vox_size_used))
+            t1_ls_f = grouped_by_voxsize[vox_size_used]['t1']
+        else:
+            t1_ls_f = t1_ls_f[:1]
+            vox_size_used = ''
+            Update_status_log('        voxel size not detected, the first T1 is used')
+    if vox_size_used:
+        if flair_ls_f != 'none':
+            for file in flair_ls_f:
+                Update_status_log('        reading MR data for FLAIR file: '+file)
+                vox_size = get_MR_file_params(subjid, file)
+                if str(vox_size) == str(vox_size_used):
+                    if 'flair' not in grouped_by_size[str(vox_size)]:
+                        grouped_by_voxsize[str(vox_size)]['flair'] = [file]
+                    else:
+                        grouped_by_voxsize[str(vox_size)]['flair'].append(file)
+                    flair_ls_f = grouped_by_voxsize[vox_size_used]['flair']
+        if t2_ls_f != 'none':
+            for file in t2_ls_f:
+                Update_status_log('        reading MR data for T2 file: '+file)
+                vox_size = get_MR_file_params(subjid, file)
+                if str(vox_size) == vox_size_used:
+                    if 'flair' not in grouped_by_voxsize[str(vox_size)]:
+                        if 't2' not in grouped_by_voxsize[str(vox_size)]:
+                            grouped_by_voxsize[str(vox_size)]['t2'] = [file]
                         else:
-                            main_vox_size = vox_size                            
-        Update_status_log('        main voxel size is: '+str(main_vox_size))
-    if flair_ls_f != 'none':
-        for file in flair_ls_f:
-            Update_status_log('        reading MR data for FLAIR file: '+file)
-            vox_size = get_MR_file_params(file)
-            Update_status_log('        main voxel size is: '+str(main_vox_size))
-            Update_status_log('        current voxel size is: '+str(vox_size))
-            if vox_size != main_vox_size:
-                flair_ls_f.remove(file)
-                Update_status_log('        FLAIR file not added to analysis; voxel size is different')
-    if len(flair_ls_f) <1:
-        flair_ls_f = 'none'
-    if t2_ls_f != 'none':
-        for file in t2_ls_f:
-            Update_status_log('        reading MR data for T2 file: '+file)
-            vox_size = get_MR_file_params(file)
-            Update_status_log('        main voxel size is: '+str(main_vox_size))
-            Update_status_log('        current voxel size is: '+str(vox_size))
-            if vox_size != main_vox_size:
-                t2_ls_f.remove(file)
-                Update_status_log('        T2 file not added to analysis; voxel size is different')
-    if len(t2_ls_f) <1:
-        t2_ls_f = 'none'
+                            grouped_by_voxsize[str(vox_size)]['t2'].append(file)
+                        t2_ls_f = grouped_by_voxsize[vox_size_used]['t2']
+    Update_status_log('        files used: '+str(t1_ls_f)+' '+str(flair_ls_f)+'_'+str(t2_ls_f))
     return t1_ls_f, flair_ls_f, t2_ls_f
 
 
 
 def Update_DB_new_subjects_and_SUBJECTS_DIR(db):
 
-    d = chk_subj_in_SUBJECTS_DIR(db)
-    d = chk_subjects_folder(db)
-    d = chk_new_subjects_json_file(db)
-    Update_status_log('done checking SUBJECTS_DIR, subjects folder and new_subjects.json')
+    db = chk_subj_in_SUBJECTS_DIR(db)
+    db = chk_subjects_folder(db)
+    db = chk_new_subjects_json_file(db)
     return db
 
 
 
-def add_subjid_2_DB(_id, ses, db, ls_SUBJECTS_in_long_dirs_processed):
-        subjid = _id+'_'+ses
-        if subjid not in ls_SUBJECTS_in_long_dirs_processed:
-            if _id not in db['LONG_DIRS']:
-                db['LONG_DIRS'][_id] = []
-                db['LONG_TPS'][_id] = []
-            db['LONG_TPS'][_id].append(ses)
-            db['LONG_DIRS'][_id].append(subjid)
-            db['DO']['registration'].append(subjid)
-        else:
-            Update_status_log('ERROR: '+subjid+' in database! new one cannot be registered')
-        return db
 
+def add_subjid_2_DB(subjid, _id, ses, db, ls_SUBJECTS_in_long_dirs_processed):
+    if subjid not in ls_SUBJECTS_in_long_dirs_processed:
+        if _id not in db['LONG_DIRS']:
+            db['LONG_DIRS'][_id] = []
+            db['LONG_TPS'][_id] = []
+        db['LONG_TPS'][_id].append(ses)
+        db['LONG_DIRS'][_id].append(subjid)
+        db['DO']['registration'].append(subjid)
+    else:
+        Update_status_log('ERROR: '+subjid+' in database! new one cannot be registered')
+    return db
 
 
 
 def chk_subjects_folder(db):
-    Update_status_log('checking for new subjects in the subjects folder...')
+    Update_status_log('    NEW_SUBJECTS_DIR checking ...')
 
     ls_SUBJECTS_in_long_dirs_processed = get_ls_subjids_in_long_dirs(db)
     from crunfs import checks_from_runfs
@@ -263,19 +293,23 @@ def chk_subjects_folder(db):
             Update_status_log('    adding '+subjid+' to database')
             _id, ses = get_id_long(subjid, db['LONG_DIRS'])
             if not checks_from_runfs('registration',_id):
-                db = add_subjid_2_DB(_id, ses, db, ls_SUBJECTS_in_long_dirs_processed)
+                db = add_subjid_2_DB(subjid, _id, ses, db, ls_SUBJECTS_in_long_dirs_processed)
         Update_status_log('new subjects were added from the subjects folder')
     return db
 
 
 
+
+
+# NOTE: intending to remove the new_subjects_registration_path.json
+# !!!!!!!!!!!!!!!!!!!!!! PATH MUST BE CHANGED
 def chk_new_subjects_json_file(db):
-    Update_status_log('checking for new subjects ...')
+    Update_status_log('    new_subjects.json checking ...')
 
     ls_SUBJECTS_in_long_dirs_processed = get_ls_subjids_in_long_dirs(db)
     from crunfs import checks_from_runfs
 
-    f_new_subjects = nimb_dir+"new_subjects.json"
+    f_new_subjects = path.join(NIMB_tmp,"new_subjects.json")
     if path.isfile(f_new_subjects):
         import json
         with open(f_new_subjects) as jfile:
@@ -286,53 +320,67 @@ def chk_new_subjects_json_file(db):
                     if 'anat' in data[_id][ses]:
                         if 't1' in data[_id][ses]['anat']:
                             if data[_id][ses]['anat']['t1']:
-                                db = add_subjid_2_DB(_id, ses, db, ls_SUBJECTS_in_long_dirs_processed)
+                                subjid = _id+'_'+ses
+                                if 'REGISTRATION' in db:
+                                    db['REGISTRATION'][subjid] = data[_id][ses]
+                                db = add_subjid_2_DB(subjid, _id, ses, db, ls_SUBJECTS_in_long_dirs_processed)
                             else:
                                 db['PROCESSED']['error_registration'].append(subjid)
                                 Update_status_log('ERROR: '+_id+' was read and but was not added to database')
-        rename(f_new_subjects, nimb_dir+'new_subjects_registration_paths.json')
-        Update_status_log('new subjects were added from the new_subjects.json file')
+        rename(f_new_subjects, path.join(NIMB_tmp,'znew_subjects.json'))
+        # rename(f_new_subjects, nimb_dir+'znew_subjects.json')
+        Update_status_log('        new subjects were added from the new_subjects.json file')
     return db
 
 
-
-
-def get_registration_files(subjid, d_LONG_DIRS):
-    f = nimb_dir+"new_subjects_registration_paths.json"#!!!! json file must be archived when finished
-    if path.isfile(f):
-        import json
-
-        with open(f) as jfile:
-            data = json.load(jfile)
-
-        for _id in d_LONG_DIRS:
-            if subjid in d_LONG_DIRS[_id]:
-                _id = _id
-                ses = subjid.replace(_id+'_',"")
-                break
-            # else:
-            #     _id = 'none'
-            #     print(_id,' not in LONG_DIRS, please CHECK the database')
-        Update_status_log('    '+subjid+'\n        id is: '+_id+', ses is: '+ses)
-
-        if _id != 'none':
-            t1_ls_f = data[_id][ses]['anat']['t1']
-            flair_ls_f = 'none'
-            t2_ls_f = 'none'
-            if 'flair' in data[_id][ses]['anat']:
-                if data[_id][ses]['anat']['flair']:
-                    flair_ls_f = data[_id][ses]['anat']['flair']
-            if 't2' in data[_id][ses]['anat']:
-                if data[_id][ses]['anat']['t2']:
-                    t2_ls_f = data[_id][ses]['anat']['t2']
-        Update_status_log('        registration files were read')
-
-    t1_ls_f, flair_ls_f, t2_ls_f = keep_files_similar_params(t1_ls_f, flair_ls_f, t2_ls_f)
-
+# NOTE: intending to remove the new_subjects_registration_path.json
+#       if registration will be done from the database, the "else" can be removed
+def get_registration_files(subjid, db):
+    Update_status_log('    '+subjid+' reading registration files')
+    if 'REGISTRATION' in db:
+        t1_ls_f = db['REGISTRATION'][subjid]['anat']['t1']
+        flair_ls_f = 'none'
+        t2_ls_f = 'none'
+        if 'flair' in db['REGISTRATION'][subjid]['anat'] and flair_t2_add:
+            if db['REGISTRATION'][subjid]['anat']['flair']:
+                flair_ls_f = db['REGISTRATION'][subjid]['anat']['flair']
+        if 't2' in db['REGISTRATION'][subjid]['anat'] and flair_t2_add:
+            if db['REGISTRATION'][subjid]['anat']['t2'] and flair_ls_f == 'none':
+                t2_ls_f = db['REGISTRATION'][subjid]['anat']['t2']
+        Update_status_log('        from db[\'REGISTRATION\']')
+        t1_ls_f, flair_ls_f, t2_ls_f = keep_files_similar_params(subjid, t1_ls_f, flair_ls_f, t2_ls_f)
+    else:
+        Update_status_log('        registration files CANNOT be read from db[REGISTRATION]')
+        # f = nimb_dir+"znew_subjects.json"#!!!! json file must be archived when finished
+        # if path.isfile(f):
+        #     import json
+        #     with open(f) as jfile:
+        #         data = json.load(jfile)
+        #     for _id in db['LONG_DIRS']:
+        #         if subjid in db['LONG_DIRS'][_id]:
+        #             _id = _id
+        #             ses = subjid.replace(_id+'_',"")
+        #             break
+        #         # else:
+        #         #     _id = 'none'
+        #         #     print(_id,' not in LONG_DIRS, please CHECK the database')
+        #     Update_status_log('    '+subjid+'\n                        id is: '+_id+', ses is: '+ses)
+        #     if _id != 'none':
+        #         t1_ls_f = check_that_all_files_are_accessible(data[_id][ses]['anat']['t1'])
+        #         if t1_ls_f:
+           #          flair_ls_f = 'none'
+           #          t2_ls_f = 'none'
+           #          if 'flair' in data[_id][ses]['anat'] and flair_t2_add:
+           #              if data[_id][ses]['anat']['flair']:
+           #                  flair_ls_f = check_that_all_files_are_accessible(data[_id][ses]['anat']['flair'])
+           #          if 't2' in data[_id][ses]['anat'] and flair_t2_add:
+           #              if data[_id][ses]['anat']['t2'] and flair_ls_f == 'none':
+           #                  t2_ls_f = check_that_all_files_are_accessible(data[_id][ses]['anat']['t2'])
+            # Update_status_log('        registration files were read from znew_subjects.json')
+        t1_ls_f    = []
+        flair_ls_f = []
+        t2_ls_f    = []
     return t1_ls_f, flair_ls_f, t2_ls_f
-
-
-
 
 
 
@@ -369,7 +417,7 @@ def get_id_long(subjid, LONG_DIRS):
 
 
 def chk_subj_in_SUBJECTS_DIR(db):
-    Update_status_log('checking SUBJECTS_DIR ...')
+    Update_status_log('    SUBJECTS_DIR checking ...')
 
     from crunfs import chkIsRunning, checks_from_runfs
 
@@ -499,6 +547,8 @@ def get_mask_codes(structure):
 
 
 
+
+
 # from os import system
 # system('squeue -u hanganua > batch_queue')
 
@@ -546,3 +596,244 @@ def get_mask_codes(structure):
 #    for file in batch_files:
 #         print('starting job: ',file)
 #         system(start_batch_cmd+file)
+
+
+
+
+
+# WAS WORKING, BUT NEEDS TO BE CHANGED WITH THE UPPER ONE ON JSON STYLE
+# def Update_DB(d):
+#     file = nimb_scratch_dir+'db'
+#     open(file,'w').close()
+#     with open(file,'a') as f:
+#         for key in d:
+#             if key != 'RUNNING_JOBS':
+#                 f.write(key+'= {')
+#                 for subkey in d[key]:
+#                     f.write('\''+subkey+'\':[')
+#                     for value in sorted(d[key][subkey]):
+#                         f.write('\''+value+'\',')
+#                     f.write('],')
+#                 f.write('}\n')
+#             else:
+#                 f.write(key+'= {')
+#                 for subkey in d[key]:
+#                     f.write('\''+subkey+'\':'+str(d[key][subkey])+',')
+#                 f.write('}\n')
+
+
+
+
+# def get_RUNNING_JOBS(type):
+#     lsall = []
+#     if type == 'tmux':
+#         for val in db['RUNNING_JOBS'].keys():
+#             if 'tmux' in val:
+#                 lsall.append(val)
+#     return sorted(lsall)
+
+
+# def vox_higher_main(vox_size, main_vox_size):
+# 	res = True
+# 	vox_1 = float(vox_size[0])*float(vox_size[1])*float(vox_size[2])
+# 	vox_2 = float(main_vox_size[0])*float(main_vox_size[1])*float(main_vox_size[2])
+# 	if vox_1<vox_2:
+# 		res = False
+# 	return res
+
+
+
+
+# OLD VERSION, WILL BE REMOVED IF THE NEW ONE WORKS
+# def get_MR_file_params(file):
+# 	tmp_f = nimb_scratch_dir+'tmp'
+# 	vox_size = 'none'
+# 	chdir(nimb_dir)
+# 	system('./mri_info '+file+' >> '+tmp_f)
+# 	if path.isfile(tmp_f):
+# 		lines = list(open(tmp_f,'r'))
+# 		try:
+# 			vox_size = [x.strip('\n') for x in lines if 'voxel sizes' in x][0].split(' ')[-3:]
+# 			vox_size = [x.replace(',','') for x in vox_size]
+# 			Update_status_log('            voxel size is: '+str(vox_size))
+# 		except IndexError as e:
+# 			Update_status_log('            voxel size is: '+str(e))
+# 		try:
+# 			TR_TE_TI = [x.strip('\n') for x in lines if 'TR' in x][0].split(',')
+# 			TR = TR_TE_TI[0].split(' ')[-2]
+# 			TE = TR_TE_TI[1].split(' ')[-2]
+# 			TI = TR_TE_TI[2].split(' ')[-2]
+# 			flip_angle = TR_TE_TI[3].split(' ')[-2]
+# 			Update_status_log('            TR is: '+str(TR))
+# 			Update_status_log('            TE is: '+str(TE))
+# 			Update_status_log('            TI is: '+str(TI))
+# 			Update_status_log('            flip angle is: '+str(flip_angle))
+# 		except IndexError as e:
+# 			Update_status_log('            TR,TE,TI, flip angle : '+str(e))
+# 		try:
+# 			field_strength = [x.strip('\n') for x in lines if 'FieldStrength' in x][0].split(',')[0].replace('       FieldStrength: ','')
+# 			Update_status_log('            field strength is: '+str(field_strength))
+# 		except IndexError as e:
+# 			Update_status_log('            field_strength : '+str(e))
+# 		try:
+# 			matrix = [x.strip('\n') for x in lines if 'dimensions' in x][0].split(',')[0].replace('    dimensions: ','')
+# 			Update_status_log('            matrix is: '+str(matrix))
+# 		except IndexError as e:
+# 			Update_status_log('            matrix : '+str(e))
+# 		try:
+# 			fov = [x.strip('\n') for x in lines if 'fov' in x][0].split(',')[0].replace('           fov: ','')
+# 			Update_status_log('            fov is: '+str(fov))
+# 		except IndexError as e:
+# 			Update_status_log('            fov : '+str(e))			
+# 		remove(tmp_f)
+# 	return vox_size
+
+
+
+# OLD VERSION
+# def keep_files_similar_params(t1_ls_f, flair_ls_f, t2_ls_f):
+#     main_vox_size = 'none'
+#     for file in t1_ls_f:
+#         Update_status_log('        reading MR data for T1 file: '+file)
+#         vox_size = get_MR_file_params(file)
+#         if vox_size:
+#             if verify_vox_size_values(vox_size):
+#                 Update_status_log('        current voxel size is: '+str(vox_size))
+#                 if main_vox_size == 'none':
+#                     main_vox_size = vox_size
+#                 else:
+#                     if vox_size != main_vox_size:
+#                         if vox_higher_main(vox_size, main_vox_size):
+#                           t1_ls_f.remove(file)
+#                         else:
+#                             main_vox_size = vox_size                            
+#         Update_status_log('        main voxel size is: '+str(main_vox_size))
+#     if flair_ls_f != 'none':
+#         for file in flair_ls_f:
+#             Update_status_log('        reading MR data for FLAIR file: '+file)
+#             vox_size = get_MR_file_params(file)
+#             Update_status_log('        main voxel size is: '+str(main_vox_size))
+#             Update_status_log('        current voxel size is: '+str(vox_size))
+#             if vox_size != main_vox_size:
+#                 flair_ls_f.remove(file)
+#                 Update_status_log('        FLAIR file not added to analysis; voxel size is different')
+#     if len(flair_ls_f) <1:
+#         flair_ls_f = 'none'
+#     if t2_ls_f != 'none':
+#         for file in t2_ls_f:
+#             Update_status_log('        reading MR data for T2 file: '+file)
+#             vox_size = get_MR_file_params(file)
+#             Update_status_log('        main voxel size is: '+str(main_vox_size))
+#             Update_status_log('        current voxel size is: '+str(vox_size))
+#             if vox_size != main_vox_size:
+#                 t2_ls_f.remove(file)
+#                 Update_status_log('        T2 file not added to analysis; voxel size is different')
+#     if len(t2_ls_f) <1:
+#         t2_ls_f = 'none'
+#     return t1_ls_f, flair_ls_f, t2_ls_f
+
+
+
+# WHY THE VARIABLE D IS BEING USED ?
+# def Update_DB_new_subjects_and_SUBJECTS_DIR(db):
+
+#     d = chk_subj_in_SUBJECTS_DIR(db)
+#     d = chk_subjects_folder(db)
+#     d = chk_new_subjects_json_file(db)
+#     return db
+
+
+# OLD VERSION
+# def add_subjid_2_DB(_id, ses, db, ls_SUBJECTS_in_long_dirs_processed):
+#         subjid = _id+'_'+ses
+#         if subjid not in ls_SUBJECTS_in_long_dirs_processed:
+#             if _id not in db['LONG_DIRS']:
+#                 db['LONG_DIRS'][_id] = []
+#                 db['LONG_TPS'][_id] = []
+#             db['LONG_TPS'][_id].append(ses)
+#             db['LONG_DIRS'][_id].append(subjid)
+#             db['DO']['registration'].append(subjid)
+#         else:
+#             Update_status_log('ERROR: '+subjid+' in database! new one cannot be registered')
+#         return db
+
+
+
+# OLD VERSION
+# def chk_subjects_folder(db):
+#     Update_status_log('checking for new subjects in the subjects folder...')
+
+#     ls_SUBJECTS_in_long_dirs_processed = get_ls_subjids_in_long_dirs(db)
+#     from crunfs import checks_from_runfs
+
+#     f_subj2fs = nimb_dir+"subj2fs"
+#     if path.isfile(f_subj2fs):
+#         ls_subj2fs = ls_from_subj2fs(f_subj2fs)
+#         for subjid in ls_subj2fs:
+#             Update_status_log('    adding '+subjid+' to database')
+#             _id, ses = get_id_long(subjid, db['LONG_DIRS'])
+#             if not checks_from_runfs('registration',_id):
+#                 db = add_subjid_2_DB(_id, ses, db, ls_SUBJECTS_in_long_dirs_processed)
+#         Update_status_log('new subjects were added from the subjects folder')
+#     return db
+
+
+# def chk_new_subjects_json_file(db):
+#     Update_status_log('checking for new subjects ...')
+
+#     ls_SUBJECTS_in_long_dirs_processed = get_ls_subjids_in_long_dirs(db)
+#     from crunfs import checks_from_runfs
+
+#     f_new_subjects = nimb_dir+"new_subjects.json"
+#     if path.isfile(f_new_subjects):
+#         import json
+#         with open(f_new_subjects) as jfile:
+#             data = json.load(jfile)
+#         for _id in data:
+#             if not checks_from_runfs('registration',_id):
+#                 for ses in data[_id]:
+#                     if 'anat' in data[_id][ses]:
+#                         if 't1' in data[_id][ses]['anat']:
+#                             if data[_id][ses]['anat']['t1']:
+#                                 db = add_subjid_2_DB(_id, ses, db, ls_SUBJECTS_in_long_dirs_processed)
+#                             else:
+#                                 db['PROCESSED']['error_registration'].append(subjid)
+#                                 Update_status_log('ERROR: '+_id+' was read and but was not added to database')
+#         rename(f_new_subjects, nimb_dir+'new_subjects_registration_paths.json')
+#         Update_status_log('new subjects were added from the new_subjects.json file')
+#     return db
+
+
+# def get_registration_files(subjid, d_LONG_DIRS):
+#     f = nimb_dir+"new_subjects_registration_paths.json"#!!!! json file must be archived when finished
+#     if path.isfile(f):
+#         import json
+
+#         with open(f) as jfile:
+#             data = json.load(jfile)
+
+#         for _id in d_LONG_DIRS:
+#             if subjid in d_LONG_DIRS[_id]:
+#                 _id = _id
+#                 ses = subjid.replace(_id+'_',"")
+#                 break
+#             # else:
+#             #     _id = 'none'
+#             #     print(_id,' not in LONG_DIRS, please CHECK the database')
+#         Update_status_log('    '+subjid+'\n        id is: '+_id+', ses is: '+ses)
+
+#         if _id != 'none':
+#             t1_ls_f = data[_id][ses]['anat']['t1']
+#             flair_ls_f = 'none'
+#             t2_ls_f = 'none'
+#             if 'flair' in data[_id][ses]['anat']:
+#                 if data[_id][ses]['anat']['flair']:
+#                     flair_ls_f = data[_id][ses]['anat']['flair']
+#             if 't2' in data[_id][ses]['anat']:
+#                 if data[_id][ses]['anat']['t2']:
+#                     t2_ls_f = data[_id][ses]['anat']['t2']
+#         Update_status_log('        registration files were read')
+
+#     t1_ls_f, flair_ls_f, t2_ls_f = keep_files_similar_params(t1_ls_f, flair_ls_f, t2_ls_f)
+
+#     return t1_ls_f, flair_ls_f, t2_ls_f

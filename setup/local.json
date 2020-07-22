@@ -24,7 +24,7 @@
        "max_walltime"           : "99:00:00",
        "batch_walltime"         : "03:00:00",
        "python3_load_cmd"       : "module load python/3.8.2",
-       "python3_run_cmd" : "python3",
+       "python3_run_cmd" : "python",
        "FreeSurfer_install" : "True",
        "freesurfer_version" : 7,
        "FREESURFER_HOME" : "/home/lucaspsy/projects/def-hanganua/freesurfer",

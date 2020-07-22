@@ -15,7 +15,7 @@ if not path.exists(path.join(nimb_scratch_dir,'usedpbs')):
 sh_file = 'nimb_run_'+str(dt)+'.sh'
 out_file = 'nimb_run_'+str(dt)+'.out'
 
-with open(nimb_scratch_dir+'usedpbs/'+sh_file,'a') as f:
+with open(nimb_scratch_dir+'usedpbs/'+sh_file,'w') as f:
     for line in text4_scheduler:
         f.write(line+'\n')
     f.write(batch_walltime_cmd+batch_walltime+'\n')
