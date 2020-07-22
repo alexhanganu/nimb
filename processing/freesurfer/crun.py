@@ -1,5 +1,5 @@
 #!/bin/python
-# 2020.07.21
+# 2020.07.22
 
 '''
 add FS QA tools to rm scans with low SNR (Koh et al 2017)
@@ -21,16 +21,6 @@ from cbuild_stamp import nimb_version
 
 environ['TZ'] = 'US/Eastern'
 time.tzset()
-
-
-
-def get_len_Queue_Running():
-	len_QueueRunning = 0
-	for process in db['RUNNING']:
-		len_QueueRunning = len_QueueRunning+len(db['RUNNING'][process])
-	for process in db['QUEUE']:
-		len_QueueRunning = len_QueueRunning+len(db['QUEUE'][process])
-	return len_QueueRunning
 
 
 class Get_cmd:
@@ -179,7 +169,7 @@ def do(process):
                     # job_id = crunfs.submit_4_processing(processing_env, cmd, subjid, run, walltime)
                     job_id = crunfs.makesubmitpbs(Get_cmd.registration(subjid, t1_ls_f, flair_ls_f, t2_ls_f), subjid, process, cwalltime.Get_walltime(process))
                 else:
-                    job_id = 'none'
+                    job_id = 0
             elif process == 'recon':
                 job_id = crunfs.makesubmitpbs(Get_cmd.recon(subjid), subjid, process, cwalltime.Get_walltime(process))
             elif process == 'autorecon1':
@@ -198,66 +188,14 @@ def do(process):
                 job_id = crunfs.makesubmitpbs(Get_cmd.tha(subjid), subjid, process, cwalltime.Get_walltime(process))
             elif process == 'masks':
                 job_id = crunfs.makesubmitpbs(Get_cmd.masks(subjid), subjid, process, cwalltime.Get_walltime(process))
-            if job_id != 'none':
-                db['RUNNING_JOBS'][subjid] = job_id
-                db['QUEUE'][process].append(subjid)
-                try:
-                    cdb.Update_status_log('                                   submited id: '+str(job_id))
-                except Exception as e:
-                    cdb.Update_status_log('        err in do: '+e)
+            db['RUNNING_JOBS'][subjid] = job_id
+            db['QUEUE'][process].append(subjid)
+            try:
+                cdb.Update_status_log('                                   submited id: '+str(job_id))
+            except Exception as e:
+                cdb.Update_status_log('        err in do: '+e)
 #    db[ACTION][process].sort()
     cdb.Update_DB(db)
-
-
-# NEW VERSION, BUT THERE WERE A DB ERROR THAT COULD NOT BE SOLVED.
-# def check_error():
-#     cdb.Update_status_log('ERROR checking')
-
-#     for process in process_order:
-#         if db['PROCESSED']['error_'+process]:
-#             lserr = list()
-#             for val in db['PROCESSED']['error_'+process]:
-#                 lserr.append(val)   
-#             for subjid in lserr:
-#                 cdb.Update_status_log('    '+subjid)
-#                 if path.exists(path.join(SUBJECTS_DIR,subjid)):
-#                     if crunfs.chkIsRunning(subjid):
-#                         cdb.Update_status_log('            removing IsRunning file')
-#                         remove(path.join(SUBJECTS_DIR,subjid,'scripts','IsRunning.lh+rh'))
-#                     cdb.Update_status_log('        checking the recon-all-status.log for error for: '+process)
-#                     crunfs.chkreconf_if_without_error(subjid)
-#                     cdb.Update_status_log('        checking if all files were created for: '+process)
-#                     if not crunfs.checks_from_runfs(process, subjid):
-#                         cdb.Update_status_log('            some files were not created. Excluding subject from pipeline.')
-#                         fs_error = crunfs.fs_find_error(subjid)
-#                         _id, _ = cdb.get_id_long(subjid, db['LONG_DIRS'])
-#                         if _id != 'none':
-#                             try:
-#                                 db['LONG_DIRS'][_id].remove(subjid)
-#                                 db['LONG_TPS'][_id].remove(subjid.replace(_id+'_',''))
-#                                 if len(db['LONG_DIRS'][_id])==0:
-#                                     db['LONG_DIRS'].pop(_id, None)
-#                                     db['LONG_TPS'].pop(_id, None)
-#                             except Exception as e:
-#                                 cdb.Update_status_log('        ERROR, id not found in LONG_DIRS; '+str(e))
-#                         else:
-#                             cdb.Update_status_log('        ERROR, '+subjid+' is absent from LONG_DIRS')
-#                         if fs_error:
-#                             new_name = 'error_'+fs_error+'_'+subjid
-#                         else:
-#                             new_name = 'error_'+process+'_'+subjid
-#                         move_processed_subjects(subjid, 'error_'+process, new_name)
-#                     else:
-#                         cdb.Update_status_log('            all files were created for process: '+process)
-#                         db['PROCESSED']['error_'+process].remove(subjid)
-#                         db['RUNNING'][process].append(subjid)
-#                         cdb.Update_status_log('        moving from error_'+process+' to RUNNING '+process)
-#                 else:
-#                     cdb.Update_status_log('    not in SUBJECTS_DIR')
-#                     db['PROCESSED']['error_'+process].remove(subjid)
-#                     db['PROCESSED'][process].sort()
-#                 cdb.Update_DB(db)
-
 
 
 def check_error():
@@ -270,7 +208,7 @@ def check_error():
                 lserr.append(val)   
             for subjid in lserr:
                 cdb.Update_status_log('    '+subjid)
-                if path.exists(SUBJECTS_DIR+subjid):
+                if path.exists(path.join(SUBJECTS_DIR,subjid)):
                     if crunfs.chkIsRunning(subjid):
                         cdb.Update_status_log('            removing IsRunning file')
                         remove(path.join(SUBJECTS_DIR,subjid,'scripts','IsRunning.lh+rh'))
@@ -288,19 +226,33 @@ def check_error():
                                 if len(db['LONG_DIRS'][_id])==0:
                                     db['LONG_DIRS'].pop(_id, None)
                                     db['LONG_TPS'].pop(_id, None)
-                            except ValueError as e:
-                                cdb.Update_status_log('        ERROR, id not found in LONG_DIRS; '+e)
+                                if subjid in db['REGISTRATION']:
+                                    db['REGISTRATION'].pop(subjid, None)
+                                else:
+                                    Update_status_log('        missing from db[REGISTRATION]')
+                            except Exception as e:
+                                cdb.Update_status_log('        ERROR, id not found in LONG_DIRS; '+str(e))
                         else:
                             cdb.Update_status_log('        ERROR, '+subjid+' is absent from LONG_DIRS')
-                        cdb.Update_status_log('        '+subjid+' moving to cp2local')
-                        db['PROCESSED']['cp2local'].append(subjid)
+
+# ================ START NEW CODE that needs to be verified, starting 20200722, ah
+                        fs_error = crunfs.fs_find_error(subjid)
+                        if fs_error:
+                            new_name = 'error_'+fs_error+'_'+subjid
+                        else:
+                            new_name = 'error_'+process+'_'+subjid
+# ================ END NEW CODE that needs to be verified
+
+                        move_processed_subjects(subjid, 'error_'+process, new_name)
                     else:
                         cdb.Update_status_log('            all files were created for process: '+process)
                         db['PROCESSED']['error_'+process].remove(subjid)
                         db['RUNNING'][process].append(subjid)
-                        cdb.Update_status_log('    moving from error_'+process+' to RUNNING '+process)
+                        cdb.Update_status_log('        moving from error_'+process+' to RUNNING '+process)
                 else:
                     cdb.Update_status_log('    not in SUBJECTS_DIR')
+                    db['PROCESSED']['error_'+process].remove(subjid)
+                db['PROCESSED']['error_'+process].sort()
                 cdb.Update_DB(db)
 
 
@@ -445,35 +397,25 @@ def check_active_tasks(db):
     for _id in db['LONG_DIRS']:
         active_subjects = active_subjects + len(db['LONG_DIRS'][_id])
     active_subjects = active_subjects+len(db['PROCESSED']['cp2local'])
-    #finished = error + len(db['PROCESSED']['cp2local'])
-    #for ACTION in ('DO', 'QUEUE', 'RUNNING',):
-    #    for process in db[ACTION]:
-    #        active_subjects = active_subjects + len(db[ACTION][process])
-    #active_subjects = active_subjects-(finished)
-    #if active_subjects == 0:
-    #    for _id in db['LONG_DIRS']:
-    #        active_subjects = active_subjects + len(db['LONG_DIRS'][_id])
-
     cdb.Update_status_log('\n                 '+str(active_subjects)+'\n                 '+str(error)+' error')
     return active_subjects
+
+
+
+def get_len_Queue_Running():
+    len_QueueRunning = 0
+    for process in db['RUNNING']:
+        len_QueueRunning = len_QueueRunning+len(db['RUNNING'][process])
+    for process in db['QUEUE']:
+        len_QueueRunning = len_QueueRunning+len(db['QUEUE'][process])
+    return len_QueueRunning
 
 
 def Count_TimeSleep():
     time2sleep = 300 # 5 minutes
     if get_len_Queue_Running() >= max_nr_running_batches:
         cdb.Update_status_log('queue and running: '+str(get_len_Queue_Running())+' max: '+str(max_nr_running_batches))
-        time2sleep = 1500 # 25 minutes
-        # for process in db['QUEUE']:
-        #     if len(db['QUEUE'][process])>0:
-        #         time2sleep = 1500 # 25 minutes
-        #         break
-        # if 'autorecon2' in db['RUNNING']:
-        #     if len(db['RUNNING']['autorecon2']) + len(db['RUNNING']['autorecon3']) >= max_nr_running_batches:
-        #         time2sleep = 1500
-        # elif 'recon' in db['RUNNING'] and len(db['RUNNING']['recon']) >= max_nr_running_batches:
-        #         time2sleep = 1500
-        # elif 'hip' in db['RUNNING'] and len(db['RUNNING']['hip'])>0 or 'brstem' in db['RUNNING'] and len(db['RUNNING']['brstem'])>0 or 'qcache' in db['RUNNING'] and len(db['RUNNING']['qcache'])>0:
-        #     time2sleep = 1500
+        time2sleep = 1200 # 20 minutes
     return time2sleep
 
 
@@ -585,3 +527,48 @@ if crunfs.FS_ready(SUBJECTS_DIR):
 #                     db['PROCESSED']['error_recon'].append(subjid)
 #     cdb.Update_DB(db)
 
+
+
+# OLD VERSION before the DB bug
+# def check_error():
+#     cdb.Update_status_log('ERROR checking')
+
+#     for process in process_order:
+#         if db['PROCESSED']['error_'+process]:
+#             lserr = list()
+#             for val in db['PROCESSED']['error_'+process]:
+#                 lserr.append(val)   
+#             for subjid in lserr:
+#                 cdb.Update_status_log('    '+subjid)
+#                 if path.exists(SUBJECTS_DIR+subjid):
+#                     if crunfs.chkIsRunning(subjid):
+#                         cdb.Update_status_log('            removing IsRunning file')
+#                         remove(path.join(SUBJECTS_DIR,subjid,'scripts','IsRunning.lh+rh'))
+#                     cdb.Update_status_log('        checking the recon-all-status.log for error for: '+process)
+#                     crunfs.chkreconf_if_without_error(subjid)
+#                     cdb.Update_status_log('        checking if all files were created for: '+process)
+#                     if not crunfs.checks_from_runfs(process, subjid):
+#                         cdb.Update_status_log('            some files were not created. Excluding subject from pipeline.')
+#                         db['PROCESSED']['error_'+process].remove(subjid)
+#                         _id, _ = cdb.get_id_long(subjid, db['LONG_DIRS'])
+#                         if _id != 'none':
+#                             try:
+#                                 db['LONG_DIRS'][_id].remove(subjid)
+#                                 db['LONG_TPS'][_id].remove(subjid.replace(_id+'_',''))
+#                                 if len(db['LONG_DIRS'][_id])==0:
+#                                     db['LONG_DIRS'].pop(_id, None)
+#                                     db['LONG_TPS'].pop(_id, None)
+#                             except ValueError as e:
+#                                 cdb.Update_status_log('        ERROR, id not found in LONG_DIRS; '+e)
+#                         else:
+#                             cdb.Update_status_log('        ERROR, '+subjid+' is absent from LONG_DIRS')
+#                         cdb.Update_status_log('        '+subjid+' moving to cp2local')
+#                         db['PROCESSED']['cp2local'].append(subjid)
+#                     else:
+#                         cdb.Update_status_log('            all files were created for process: '+process)
+#                         db['PROCESSED']['error_'+process].remove(subjid)
+#                         db['RUNNING'][process].append(subjid)
+#                         cdb.Update_status_log('    moving from error_'+process+' to RUNNING '+process)
+#                 else:
+#                     cdb.Update_status_log('    not in SUBJECTS_DIR')
+#                 cdb.Update_DB(db)

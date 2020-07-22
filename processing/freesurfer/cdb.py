@@ -1,5 +1,5 @@
 #!/bin/python
-# 2020.07.21
+# 2020.07.22
 
 from os import path, listdir, remove, getenv, rename, mkdir, environ, system, chdir
 from var import (process_order, long_name, base_name, cusers_list, 
@@ -170,36 +170,36 @@ def get_MR_file_params(subjid, file):
 			try:
 				vox_size = [x.strip('\n') for x in lines if 'voxel sizes' in x][0].split(' ')[-3:]
 				vox_size = [x.replace(',','') for x in vox_size]
-				f.write('voxel \t'+str(vox_size)+'\n') #Update_status_log('            voxel size is: '+str(vox_size))
+				f.write('voxel \t'+str(vox_size)+'\n')
 			except IndexError as e:
-				print(e)#Update_status_log('            voxel size is: '+str(e))
+				print(e)
 			try:
 				TR_TE_TI = [x.strip('\n') for x in lines if 'TR' in x][0].split(',')
 				TR = TR_TE_TI[0].split(' ')[-2]
 				TE = TR_TE_TI[1].split(' ')[-2]
 				TI = TR_TE_TI[2].split(' ')[-2]
 				flip_angle = TR_TE_TI[3].split(' ')[-2]
-				f.write('TR \t'+str(TR)+'\n') #Update_status_log('            TR is: '+str(TR))
-				f.write('TE \t'+str(TE)+'\n') #Update_status_log('            TE is: '+str(TE))
-				f.write('TI \t'+str(TI)+'\n') #Update_status_log('            TI is: '+str(TI))
-				f.write('flip angle \t'+str(flip_angle)+'\n') #Update_status_log('            flip angle is: '+str(flip_angle))
+				f.write('TR \t'+str(TR)+'\n')
+				f.write('TE \t'+str(TE)+'\n')
+				f.write('TI \t'+str(TI)+'\n')
+				f.write('flip angle \t'+str(flip_angle)+'\n')
 			except IndexError as e:
-				print(e)#Update_status_log('            TR,TE,TI, flip angle : '+str(e))
+				print(e)
 			try:
 				field_strength = [x.strip('\n') for x in lines if 'FieldStrength' in x][0].split(',')[0].replace('       FieldStrength: ','')
-				f.write('field strength \t'+str(field_strength)+'\n') #Update_status_log('            field strength is: '+str(field_strength))
+				f.write('field strength \t'+str(field_strength)+'\n')
 			except IndexError as e:
-				print(e)#Update_status_log('            field_strength : '+str(e))
+				print(e)
 			try:
 				matrix = [x.strip('\n') for x in lines if 'dimensions' in x][0].split(',')[0].replace('    dimensions: ','')
-				f.write('matrix \t'+str(matrix)+'\n')#Update_status_log('            matrix is: '+str(matrix))
+				f.write('matrix \t'+str(matrix)+'\n')
 			except IndexError as e:
-				print(e)#Update_status_log('            matrix : '+str(e))
+				print(e)
 			try:
 				fov = [x.strip('\n') for x in lines if 'fov' in x][0].split(',')[0].replace('           fov: ','')
-				f.write('fov \t'+str(fov)+'\n')#Update_status_log('            fov is: '+str(fov))
+				f.write('fov \t'+str(fov)+'\n')
 			except IndexError as e:
-				print(e)#Update_status_log('            fov : '+str(e))			
+				print(e)
 		remove(tmp_f)
 	return vox_size
 
@@ -301,8 +301,6 @@ def chk_subjects_folder(db):
 
 
 
-# NOTE: intending to remove the new_subjects_registration_path.json
-# !!!!!!!!!!!!!!!!!!!!!! PATH MUST BE CHANGED
 def chk_new_subjects_json_file(db):
     Update_status_log('    new_subjects.json checking ...')
 
@@ -327,14 +325,13 @@ def chk_new_subjects_json_file(db):
                             else:
                                 db['PROCESSED']['error_registration'].append(subjid)
                                 Update_status_log('ERROR: '+_id+' was read and but was not added to database')
-        rename(f_new_subjects, path.join(NIMB_tmp,'znew_subjects.json'))
-        # rename(f_new_subjects, nimb_dir+'znew_subjects.json')
+# ================ START consider removing new_subjects.json, starting 20200722, ah
+        rename(f_new_subjects, path.join(NIMB_tmp,'znew_subjects_'+time.strftime("%Y%m%d_%H%M",time.localtime(time.time()))+'.json'))
+# ================ END
         Update_status_log('        new subjects were added from the new_subjects.json file')
     return db
 
 
-# NOTE: intending to remove the new_subjects_registration_path.json
-#       if registration will be done from the database, the "else" can be removed
 def get_registration_files(subjid, db):
     Update_status_log('    '+subjid+' reading registration files')
     if 'REGISTRATION' in db:
@@ -351,6 +348,7 @@ def get_registration_files(subjid, db):
         t1_ls_f, flair_ls_f, t2_ls_f = keep_files_similar_params(subjid, t1_ls_f, flair_ls_f, t2_ls_f)
     else:
         Update_status_log('        registration files CANNOT be read from db[REGISTRATION]')
+# ================ START if registration is done from the db[REGISTRATION], the "else" can be removed, starting 20200722, ah
         # f = nimb_dir+"znew_subjects.json"#!!!! json file must be archived when finished
         # if path.isfile(f):
         #     import json
@@ -377,6 +375,7 @@ def get_registration_files(subjid, db):
            #              if data[_id][ses]['anat']['t2'] and flair_ls_f == 'none':
            #                  t2_ls_f = check_that_all_files_are_accessible(data[_id][ses]['anat']['t2'])
             # Update_status_log('        registration files were read from znew_subjects.json')
+# ================ END
         t1_ls_f    = []
         flair_ls_f = []
         t2_ls_f    = []
