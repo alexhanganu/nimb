@@ -161,6 +161,7 @@ def do(process):
         lsd.append(val)
 
     for subjid in lsd:
+        cdb.Update_status_log('   '+subjid)
         if get_len_Queue_Running()<= max_nr_running_batches:
             db[ACTION][process].remove(subjid)
             if process == 'registration':
