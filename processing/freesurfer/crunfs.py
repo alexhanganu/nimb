@@ -5,12 +5,9 @@
 from os import listdir, path, mkdir, system
 import shutil
 import datetime
-from var import (nimb_dir, nimb_scratch_dir, SUBJECTS_DIR,
-                text4_scheduler, batch_walltime_cmd, max_walltime, batch_output_cmd, submit_cmd, SUBMIT,
-                freesurfer_version, export_FreeSurfer_cmd, source_FreeSurfer_cmd)
+from var import SUBJECTS_DIR
 import cdb, var
 import subprocess
-print('SUBMITTING is: ', SUBMIT)
 
 
 
@@ -24,33 +21,33 @@ def submit_4_processing(processing_env, cmd, subjid, run, walltime):
     return job_id
 
 
-def makesubmitpbs(cmd, subjid, run, walltime):
-
+def makesubmitpbs(cmd, subjid, run, walltime, params):
+    
     date=datetime.datetime.now()
     dt=str(date.year)+str(date.month)+str(date.day)
 
-    if not path.exists(nimb_scratch_dir+'usedpbs'):
-        mkdir(nimb_scratch_dir+'usedpbs')
+    if not path.exists(params["NIMB_tmp"]+'usedpbs'):
+        mkdir(params["NIMB_tmp"]+'usedpbs')
     sh_file = subjid+'_'+run+'_'+str(dt)+'.sh'
     out_file = subjid+'_'+run+'_'+str(dt)+'.out'
 
-    with open(nimb_scratch_dir+'usedpbs/'+sh_file,'a') as f:
-        for line in text4_scheduler:
+    with open(params["NIMB_tmp"]+'usedpbs/'+sh_file,'a') as f:
+        for line in params["text4_scheduler"]:
             f.write(line+'\n')
-        f.write(batch_walltime_cmd+walltime+'\n')
-        f.write(batch_output_cmd+nimb_scratch_dir+'usedpbs/'+out_file+'\n')
+        f.write(params["batch_walltime_cmd"]+walltime+'\n')
+        f.write(params["batch_output_cmd"]+params["NIMB_tmp"]+'usedpbs/'+out_file+'\n')
         f.write('\n')
-        f.write('cd '+nimb_dir+'\n')
+        f.write('cd '+params["NIMB_HOME"]+'\n')
         f.write('\n')
-        f.write(export_FreeSurfer_cmd+'\n')
-        f.write('source '+source_FreeSurfer_cmd+'\n')
+        f.write(params["export_FreeSurfer_cmd"]+'\n')
+        f.write('source '+params["source_FreeSurfer_cmd"]+'\n')
         f.write('export SUBJECTS_DIR='+SUBJECTS_DIR+'\n')
         f.write('\n')
         f.write(cmd+'\n')
     print('    submitting '+sh_file)
-    if SUBMIT:
+    if params["SUBMIT"]:
         try:
-            resp = subprocess.run(['sbatch',nimb_scratch_dir+'usedpbs/'+sh_file], stdout=subprocess.PIPE).stdout.decode('utf-8')
+            resp = subprocess.run(['sbatch',params["NIMB_tmp"]+'usedpbs/'+sh_file], stdout=subprocess.PIPE).stdout.decode('utf-8')
             return list(filter(None, resp.split(' ')))[-1].strip('\n')
         except Exception as e:
             print(e)
@@ -81,7 +78,7 @@ def FS_ready(SUBJECTS_DIR):
 
 
 
-def checks_from_runfs(process, subjid):
+def checks_from_runfs(process, subjid, freesurfer_version):
 
     if process == 'registration':
         result = chksubjidinfs(subjid)
@@ -102,7 +99,7 @@ def checks_from_runfs(process, subjid):
         result = chk_if_qcache_done(subjid)
 
     if process == 'brstem':
-        result = chkbrstemf(subjid)
+        result = chkbrstemf(subjid, freesurfer_version)
 
     if process == 'hip':
         result = chkhipf(subjid)
@@ -223,7 +220,7 @@ log_files = {
 }
 
 
-def chkbrstemf(subjid):
+def chkbrstemf(subjid, freesurfer_version):
 
     lsscripts=listdir(SUBJECTS_DIR+subjid+'/scripts/')
     log_file = log_files['bs'][freesurfer_version]
