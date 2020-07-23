@@ -4,7 +4,7 @@
 from os import path, listdir, remove, getenv, rename, mkdir, environ, system, chdir
 from var import (process_order, long_name, base_name, cusers_list, 
 	cuser, nimb_dir, nimb_scratch_dir, SUBJECTS_DIR, flair_t2_add)
-import time, shutil
+import time, shutil, json
 
 NIMB_tmp = "/home/hanganua/projects/def-hanganua/nimb/tmp/"
 
@@ -15,8 +15,9 @@ time.tzset()
 
 def Get_DB():
 
-    ''' DataBase has a py structure so that in the future it can be easily transfered to an sqlite database
-        alternatively, the DB could be recorded as json.dump '''
+    ''' 
+    DataBase has a py structure so that in the future it can be easily transfered to an sqlite database
+    '''
 
     db = dict()
     dbjson = dict()
@@ -51,7 +52,8 @@ def Get_DB():
         for process in process_order:
             db['PROCESSED']['error_'+process] = []
 
-    # db_json_file = path.join(nimb_scratch_dir,'db.json')
+# ================ START implementing DB in a json format, started testing 20200722, ah
+    db_json_file = path.join(nimb_scratch_dir,'db.json')
     # if path.isfile(db_json_file):
     #     with open(db_json_file) as db_json_open:
     #         dbjson = json.load(db_json_open)
@@ -66,14 +68,18 @@ def Get_DB():
     #     Update_status_log('DB json and DB py NOT similar, but json file is not sorted')
     # else:
     #     Update_status_log('DB json nimb_scratch, DB py nimb_scratch and DB json NIMB_HOME are ALL similar')
+# ================ END
 
     return db
 
 
 def Update_DB(d):
     file = nimb_scratch_dir+'db'
-    open(file,'w').close()
-    with open(file,'a') as f:
+# ================ START probably 'w').close() is not needed. This opens the file twice. started testing 20200722, ah
+#    open(file,'w').close()
+    with open(file,'w') as f:
+#    with open(file,'a') as f:
+# ================ END
         for key in d:
             f.write(key+'= {')
             if key == 'RUNNING_JOBS':
@@ -95,9 +101,11 @@ def Update_DB(d):
                         f.write('\''+value+'\',')
                     f.write('],')
             f.write('}\n')
-    # testing how would the DB work in the json.dump format:
-    # with open(path.join(nimb_scratch_dir,'db.json'),'w') as f:
-    #     json.dump(d, f, indent=4)
+# ================ START implementing DB in a json format, started testing 20200722, ah
+    with open(path.join(nimb_scratch_dir,'db.json'),'w') as f:
+        json.dump(d, f, indent=4)
+# ================ END
+
 
 
 
@@ -325,7 +333,7 @@ def chk_new_subjects_json_file(db):
                             else:
                                 db['PROCESSED']['error_registration'].append(subjid)
                                 Update_status_log('ERROR: '+_id+' was read and but was not added to database')
-# ================ START consider removing new_subjects.json, starting 20200722, ah
+# ================ START consider removing new_subjects.json, started testing 20200722, ah
         rename(f_new_subjects, path.join(NIMB_tmp,'znew_subjects_'+time.strftime("%Y%m%d_%H%M",time.localtime(time.time()))+'.json'))
 # ================ END
         Update_status_log('        new subjects were added from the new_subjects.json file')
@@ -348,7 +356,7 @@ def get_registration_files(subjid, db):
         t1_ls_f, flair_ls_f, t2_ls_f = keep_files_similar_params(subjid, t1_ls_f, flair_ls_f, t2_ls_f)
     else:
         Update_status_log('        registration files CANNOT be read from db[REGISTRATION]')
-# ================ START if registration is done from the db[REGISTRATION], the "else" can be removed, starting 20200722, ah
+# ================ START if registration is done from the db[REGISTRATION], the "else" can be removed, started testing 20200722, ah
         # f = nimb_dir+"znew_subjects.json"#!!!! json file must be archived when finished
         # if path.isfile(f):
         #     import json

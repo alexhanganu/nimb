@@ -196,22 +196,27 @@ def get_dict_MR_files2process(SUBJECTS_DIR_RAW, NIMB_tmp):
 	:return:
 	"""
 	f_new_subjects = path.join(NIMB_tmp,'new_subjects.json')
-
-	d_subjects = dict()
-	for subject in listdir(SUBJECTS_DIR_RAW):
-			d_subjects[subject] = {}
-			ls_MR_paths = exclude_MR_types(get_paths2dcm_files(SUBJECTS_DIR_RAW+'/'+subject))
-			print("ls_MR_paths: ", ls_MR_paths)
-			ls_sessions, d_paths = get_ls_sessions(ls_MR_paths)
-			#print(ls_sessions)
-			d_sessions = classify_by_sessions(ls_sessions)
-			#print(d_sessions)
-			dict_sessions_paths = make_dict_sessions_with_paths(d_paths, d_sessions)
-			d_ses_MR_types = classify_by_MR_types(dict_sessions_paths)
-			d_BIDS_structure = make_BIDS_structure(d_ses_MR_types)
-			#print(d_BIDS_structure)
-			d_subjects[subject] = d_BIDS_structure
-			print("d_subjects:", d_subjects)
-	with open(f_new_subjects,'w') as f:
-		json.dump(d_subjects, f, indent=4)
-
+	if not path.exists(f_new_subjects):
+		d_subjects = dict()
+		for subject in listdir(SUBJECTS_DIR_RAW):
+				d_subjects[subject] = {}
+				ls_MR_paths = exclude_MR_types(get_paths2dcm_files(SUBJECTS_DIR_RAW+'/'+subject))
+				print("ls_MR_paths: ", ls_MR_paths)
+				ls_sessions, d_paths = get_ls_sessions(ls_MR_paths)
+				#print(ls_sessions)
+				d_sessions = classify_by_sessions(ls_sessions)
+				#print(d_sessions)
+				dict_sessions_paths = make_dict_sessions_with_paths(d_paths, d_sessions)
+				d_ses_MR_types = classify_by_MR_types(dict_sessions_paths)
+				d_BIDS_structure = make_BIDS_structure(d_ses_MR_types)
+				#print(d_BIDS_structure)
+				d_subjects[subject] = d_BIDS_structure
+				print("d_subjects:", d_subjects)
+		with open(f_new_subjects,'w') as f:
+			json.dump(d_subjects, f, indent=4)
+		if path.exists(f_new_subjects):
+			return True
+		else:
+			return False
+	else:
+		return True

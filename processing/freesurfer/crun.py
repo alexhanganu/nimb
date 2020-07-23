@@ -67,21 +67,21 @@ def queue(process, all_running):
             status = Get_status_for_subjid_in_queue(subjid, all_running)
             if crunfs.checks_from_runfs('registration',subjid):
                 if status =='R' or status == 'none':
-                    cdb.Update_status_log('   '+subjid+' moving from '+ACTION+' to RUNNING '+process)
+                    cdb.Update_status_log('    '+subjid+' moving from '+ACTION+' to RUNNING '+process)
                     db[ACTION][process].remove(subjid)
                     db['RUNNING'][process].append(subjid)
             elif status == 'none':
                 db[ACTION][process].remove(subjid)
-                cdb.Update_status_log('   '+subjid+' '+process+' moving to ERROR')
+                cdb.Update_status_log('    '+subjid+' '+process+' moving to ERROR')
                 db['PROCESSED']['error_'+process].append(subjid)
             else:
-                cdb.Update_status_log('   '+subjid+'    is NOT registered yet')
+                cdb.Update_status_log('    '+subjid+'    is NOT registered yet')
         else:
-            cdb.Update_status_log('   '+subjid+'    queue, NOT in RUNNING_JOBS')
+            cdb.Update_status_log('    '+subjid+'    queue, NOT in RUNNING_JOBS')
             db[ACTION][process].remove(subjid)
             cdb.Update_status_log('    '+subjid+' '+process+' moving to ERROR')
             db['PROCESSED']['error_'+process].append(subjid)
-#    db[ACTION][process].sort()
+    db[ACTION][process].sort()
     cdb.Update_DB(db)
 
 
@@ -102,7 +102,7 @@ def running(process, all_running):
                 if base_name in subjid:
                     cdb.Update_status_log(' reading '+process+subjid+' subjid is long or base ')
                     if crunfs.chkIsRunning(subjid) or not crunfs.checks_from_runfs('recon', subjid):
-                        cdb.Update_status_log('   '+subjid+' '+process+' moving to ERROR')
+                        cdb.Update_status_log('    '+subjid+' '+process+' moving to ERROR')
                         db['PROCESSED']['error_recon'].append(subjid)
                 else:
                     if not crunfs.chkIsRunning(subjid) and crunfs.checks_from_runfs(process, subjid):
@@ -117,16 +117,16 @@ def running(process, all_running):
                         else:
                             cdb.Update_status_log('    '+subjid+' processing DONE')
                     else:
-                        cdb.Update_status_log('   '+subjid+' '+process+' moving to ERROR because status is: '+status+', and IsRunning is present')
+                        cdb.Update_status_log('    '+subjid+' '+process+' moving to ERROR because status is: '+status+', and IsRunning is present')
                         db['PROCESSED']['error_'+process].append(subjid)
         else:
             cdb.Update_status_log('    '+subjid+' NOT in RUNNING_JOBS')
             if not crunfs.chkIsRunning(subjid):
                 db[ACTION][process].remove(subjid)
                 if base_name in subjid:
-                    cdb.Update_status_log(' reading '+process+subjid+' subjid is long or base ')
+                    cdb.Update_status_log('    '+subjid+process+' subjid is long or base ')
                     if not crunfs.checks_from_runfs('recon', subjid):
-                        cdb.Update_status_log('   '+subjid+' recon, moving to ERROR')
+                        cdb.Update_status_log('    '+subjid+' recon, moving to ERROR')
                         db['PROCESSED']['error_recon'].append(subjid)
                 else:
                     if crunfs.checks_from_runfs(process, subjid):
@@ -141,13 +141,13 @@ def running(process, all_running):
                         else:
                             cdb.Update_status_log('    '+subjid+' processing DONE')
                     else:
-                        cdb.Update_status_log('   '+subjid+' '+process+' moving to ERROR')
+                        cdb.Update_status_log('    '+subjid+' '+process+' moving to ERROR')
                         db['PROCESSED']['error_'+process].append(subjid)
             else:
                 db[ACTION][process].remove(subjid)
-                cdb.Update_status_log('   '+subjid+' '+process+' moving to error_'+process)
+                cdb.Update_status_log('    '+subjid+' '+process+' moving to error_'+process)
                 db['PROCESSED']['error_'+process].append(subjid)
-#    db[ACTION][process].sort()
+    db[ACTION][process].sort()
     cdb.Update_DB(db)
 
 
@@ -167,7 +167,9 @@ def do(process):
             if process == 'registration':
                 if not crunfs.chksubjidinfs(subjid):
                     t1_ls_f, flair_ls_f, t2_ls_f = cdb.get_registration_files(subjid, db)
+# ================ START changing to submit_4_processing, in order to add tmux, started testing 20200722, ah
                     # job_id = crunfs.submit_4_processing(processing_env, cmd, subjid, run, walltime)
+# ================ END
                     job_id = crunfs.makesubmitpbs(Get_cmd.registration(subjid, t1_ls_f, flair_ls_f, t2_ls_f), subjid, process, cwalltime.Get_walltime(process))
                 else:
                     job_id = 0
@@ -195,7 +197,7 @@ def do(process):
                 cdb.Update_status_log('                                   submited id: '+str(job_id))
             except Exception as e:
                 cdb.Update_status_log('        err in do: '+e)
-#    db[ACTION][process].sort()
+    db[ACTION][process].sort()
     cdb.Update_DB(db)
 
 
@@ -218,33 +220,49 @@ def check_error():
                     cdb.Update_status_log('        checking if all files were created for: '+process)
                     if not crunfs.checks_from_runfs(process, subjid):
                         cdb.Update_status_log('            some files were not created. Excluding subject from pipeline.')
-                        db['PROCESSED']['error_'+process].remove(subjid)
-                        _id, _ = cdb.get_id_long(subjid, db['LONG_DIRS'])
-                        if _id != 'none':
-                            try:
-                                db['LONG_DIRS'][_id].remove(subjid)
-                                db['LONG_TPS'][_id].remove(subjid.replace(_id+'_',''))
-                                if len(db['LONG_DIRS'][_id])==0:
-                                    db['LONG_DIRS'].pop(_id, None)
-                                    db['LONG_TPS'].pop(_id, None)
-                                if subjid in db['REGISTRATION']:
-                                    db['REGISTRATION'].pop(subjid, None)
-                                else:
-                                    Update_status_log('        missing from db[REGISTRATION]')
-                            except Exception as e:
-                                cdb.Update_status_log('        ERROR, id not found in LONG_DIRS; '+str(e))
-                        else:
-                            cdb.Update_status_log('        ERROR, '+subjid+' is absent from LONG_DIRS')
-
-# ================ START NEW CODE that needs to be verified, starting 20200722, ah
+# ================ START NEW CODE that needs to be verified, started testing 20200722, ah
                         fs_error = crunfs.fs_find_error(subjid)
+                        solved = False
                         if fs_error:
-                            new_name = 'error_'+fs_error+'_'+subjid
+                            solve = crunfs.solve_error(subjid, error)
+                            if solve == 'continue':
+                                solved = True
+                                db['PROCESSED']['error_'+process].remove(subjid)
+                                db['RUNNING'][process].append(subjid)
+                                cdb.Update_status_log('        moving from error_'+process+' to RUNNING '+process)
+                            elif solve == 'voxreg':
+                                solved = True
+                                db['REGISTRATION'][subjid]['anat']['t1'] = db['REGISTRATION'][subjid]['anat']['t1'][:1]
+                                if 'flair' in db['REGISTRATION'][subjid]['anat']:
+                                        db['REGISTRATION'][subjid]['anat'].pop('flair', None)
+                                if 't2' in db['REGISTRATION'][subjid]['anat']:
+                                        db['REGISTRATION'][subjid]['anat'].pop('t2', None)
+                                db['PROCESSED']['error_'+process].remove(subjid)
+                                db['DO']["registration"].append(subjid)
+                                cdb.Update_status_log('        moving from error_'+process+' to RUNNING registratoin')
+                            else:
+                                new_name = 'error_'+fs_error+'_'+subjid
                         else:
                             new_name = 'error_'+process+'_'+subjid
 # ================ END NEW CODE that needs to be verified
-
-                        move_processed_subjects(subjid, 'error_'+process, new_name)
+                        if not solved:
+                            _id, _ = cdb.get_id_long(subjid, db['LONG_DIRS'])
+                            if _id != 'none':
+                                try:
+                                    db['LONG_DIRS'][_id].remove(subjid)
+                                    db['LONG_TPS'][_id].remove(subjid.replace(_id+'_',''))
+                                    if len(db['LONG_DIRS'][_id])==0:
+                                        db['LONG_DIRS'].pop(_id, None)
+                                        db['LONG_TPS'].pop(_id, None)
+                                    if subjid in db['REGISTRATION']:
+                                        db['REGISTRATION'].pop(subjid, None)
+                                    else:
+                                        Update_status_log('        missing from db[REGISTRATION]')
+                                except Exception as e:
+                                    cdb.Update_status_log('        ERROR, id not found in LONG_DIRS; '+str(e))
+                            else:
+                                cdb.Update_status_log('        ERROR, '+subjid+' is absent from LONG_DIRS')
+                            move_processed_subjects(subjid, 'error_'+process, new_name)
                     else:
                         cdb.Update_status_log('            all files were created for process: '+process)
                         db['PROCESSED']['error_'+process].remove(subjid)
@@ -342,13 +360,14 @@ def move_processed_subjects(subject, db_source, new_name):
         shutil.move(file_mrparams, path.join(SUBJECTS_DIR, subject, 'stats'))
     size_src = sum(f.stat().st_size for f in Path(path.join(SUBJECTS_DIR,subject)).glob('**/*') if f.is_file())
     shutil.move(path.join(SUBJECTS_DIR,subject), path.join(processed_SUBJECTS_DIR,subject))
-    db['PROCESSED']['cp2local'].remove(subject)
+    db['PROCESSED'][db_source].remove(subject)
     cdb.Update_DB(db)
     size_dst = sum(f.stat().st_size for f in Path(processed_SUBJECTS_DIR+subject).glob('**/*') if f.is_file())
 
     if size_src == size_dst and archive_processed and new_name == '':
         cdb.Update_status_log('        archiving ...')
-        system('zip -r -q -m '+path.join(processed_SUBJECTS_DIR,subject+'.zip')+' '+path.join(processed_SUBJECTS_DIR,subject))
+        chdir(processed_SUBJECTS_DIR)
+        system('zip -r -q -m '+subject+'.zip '+subject)
     if new_name:
         cdb.Update_status_log('        renaming'+subject+' to '+new_name)
         rename(path.join(processed_SUBJECTS_DIR,subject),path.join(processed_SUBJECTS_DIR,new_name))
@@ -439,11 +458,10 @@ if crunfs.FS_ready(SUBJECTS_DIR):
     cdb.Update_DB(db)
     active_subjects = check_active_tasks(db)
 
-    # extracting 15 minutes from the maximum time for the batch to run
+    # extracting 20 minutes from the maximum time for the batch to run
     # since it is expected that less then 15 minutes will be required for the pipeline to perform all the steps
     # while the batch is running, and start new batch
-    batch_hour = str(int(batch_walltime.split(':')[0])-1).zfill(2)
-    max_batch_running = batch_hour+':'+str(int(batch_walltime.split(':')[1])+30)
+    max_batch_running = time.strftime('%H:%M:%S',time.localtime(time.mktime(time.strptime(batch_walltime,"%H:%M:%S"))-1200))
 
     while active_subjects >0 and time.strftime("%H:%M",time.gmtime(time_elapsed)) < max_batch_running:
         count_run += 1
@@ -457,12 +475,18 @@ if crunfs.FS_ready(SUBJECTS_DIR):
 
         time_to_sleep = Count_TimeSleep()
         cdb.Update_status_log('\n\nWAITING. \nNext run at: '+str(time.strftime("%H:%M",time.localtime(time.time()+time_to_sleep))))
+# ================ START NEW CODE, to save a db version that would be accessible to all users, started testing 20200722, ah
         # try:
         #     shutil.copy(path.join(nimb_scratch_dir,'db.json'),path.join(NIMB_HOME,'db.json'))
         #     system('chmod 777 '+path.join(NIMB_HOME,'db.json'))
         # except Exception as e:
         #     cdb.Update_status_log(str(e))
-        time.sleep(time_to_sleep)
+# ================ END NEW CODE that needs to be verified; There seem to be writing permission limitations
+# ================ START NEW CODE, batch gets closed by the scheduler, trying to calculate time left until batch is finished, started testing 20200722, ah
+        time_elapsed = time.time() - t0
+        if time.strftime("%H:%M",time.gmtime(time_elapsed+time_to_sleep)) < max_batch_running:
+            time.sleep(time_to_sleep)
+# ================ END NEW CODE that needs to be verified
 
         time_elapsed = time.time() - t0
         active_subjects = check_active_tasks(db)

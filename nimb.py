@@ -6,7 +6,9 @@
 import argparse
 import sys
 from distribution.pipeline_management import Management
-from setup.get_vars import get_vars
+from setup.get_vars import Get_Vars
+from processing.freesurfer import start_fs_pipeline
+
 from classification import classify_bids
 
 __version__ = 'v1'
@@ -24,27 +26,34 @@ class NIMB(object):
     ):
 
         self.process = process
-        self.vars = get_vars()
+        getvars = Get_Vars()
+        self.vars = getvars.d_all_vars
+        print('local user is: '+self.vars['local']['user'])
 
 
     def run(self):
         """Run nimb"""
-        task = Management(self.process)
+        task = Management(self.process, self.vars)
+        self.SOURCE_SUBJECTS_DIR = self.vars['local']['PATHS']['SOURCE_SUBJECTS_DIR']
+        self.NIMB_tmp              = self.vars['local']['PATHS']['NIMB_tmp']
 
         if self.process == 'classify':
-            print(self.vars)
-            SUBJECTS_DIR_RAW = "/home/hanganua/projects/def-hanganua/new_subjects"
-            NIMB_tmp = "/home/hanganua/projects/def-hanganua/nimb/tmp"
-            classify_bids.get_dict_MR_files2process(SUBJECTS_DIR_RAW, NIMB_tmp)
+            self.classify(task.freesurfer())
 
         if self.process == 'freesurfer':
-            task.freesurfer()
+            if self.classify(task.freesurfer()):
+                start_fs_pipeline()
 
         if self.process == 'stats':
             task.stats()
 
         if self.process == 'fsglm':
             task.fsglm()
+
+    def classify(self, ready):
+        if ready:
+            return classify_bids.get_dict_MR_files2process(self.SOURCE_SUBJECTS_DIR, self.NIMB_tmp)
+
 
 
 
@@ -83,3 +92,12 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
+
+
+
+# cusers_list = users_list
+# cuser = user
+# nimb_dir = NIMB_HOME
+# SUBJECTS_DIR = FS_SUBJECTS_DIR
+# processed_SUBJECTS_DIR = path.join('/home',user,'projects',supervisor_account,'processed_subjects') #must be changed to NIMB_HOME/processed_nimb/processed_fs
+# dir_new_subjects=path.join('/home',user,'projects',supervisor_account,'new_subjects')  #must be changed to NIMB_RHOME/new_subjects

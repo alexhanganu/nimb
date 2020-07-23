@@ -16,11 +16,12 @@ print('SUBMITTING is: ', SUBMIT)
 
 def submit_4_processing(processing_env, cmd, subjid, run, walltime):
     if processing_env == 'slurm':
-        makesubmitpbs(cmd, subjid, run, walltime)
+        job_id = makesubmitpbs(cmd, subjid, run, walltime)
     elif processing_env == 'tmux':
-        submit_tmux(cmd, subjid)
+        job_id = submit_tmux(cmd, subjid)
     else:
         print('ERROR: processing environment not provided or incorrect')
+    return job_id
 
 
 def makesubmitpbs(cmd, subjid, run, walltime):
@@ -53,9 +54,9 @@ def makesubmitpbs(cmd, subjid, run, walltime):
             return list(filter(None, resp.split(' ')))[-1].strip('\n')
         except Exception as e:
             print(e)
-            return ''
+            return 0
     else:
-        return ''
+        return 0
 
 def submit_tmux(cmd, subjid):
     #https://gist.github.com/henrik/1967800
@@ -313,18 +314,16 @@ def chk_masks(subjid):
 def fs_find_error(subjid):
     error = ''
     print('identifying THE error')
-
-    file_2read = 'recon-all.log'
+    file_2read = path.join(SUBJECTS_DIR,subjid,'scripts','recon-all.log')
     try:
-        if file_2read in listdir(path.join(SUBJECTS_DIR,subjid,'scripts')):
-            f = open(path.join(SUBJECTS_DIR,subjid,'scripts',file_2read),'r').readlines()
-
+        if path.exists(file_2read):
+            f = open(file_2read,'r').readlines()
             for line in reversed(f):
                 if 'ERROR: Talairach failed!' in line:
                     cdb.Update_status_log('        ERROR: Manual Talairach alignment may be necessary, or include the -notal-check flag to skip this test, making sure the -notal-check flag follows -all or -autorecon1 in the command string.')
                     error = 'talfail'
                     break
-                elif  'ERROR: MultiRegistration::loadMovables: images have different voxel sizes.':
+                elif  'ERROR: MultiRegistration::loadMovables: images have different voxel sizes.' in line:
                     cdb.Update_status_log('        ERROR: Voxel size is different, Multiregistration is not supported; consider making conform')
                     error = 'voxsizediff'
                     break
@@ -345,5 +344,21 @@ def fs_find_error(subjid):
     except FileNotFoundError as e:
         print(e)
         cdb.Update_status_log('    '+subjid+' '+str(e))
-
     return error
+
+
+def solve_error(subjid, error):
+    file_2read = path.join(SUBJECTS_DIR,subjid,'scripts','recon-all.log')
+    f = open(file_2read,'r').readlines()
+    if error == "errCurvature":
+        for line in reversed(f):
+            if 'error: MRISreadCurvature:' in line:
+                line_nr = f.index(line)
+                break
+        if line_nr:
+            if [i for i in f[line_nr:line_nr+20] if 'Skipping this (and any remaining) curvature files' in i]:
+                return 'continue'
+        else:
+            return 'unsolved'
+    if error == 'voxsizediff':
+        return 'voxreg'

@@ -3,37 +3,33 @@
 from os import path
 import json
 
-def get_vars():
+class Get_Vars():
 
-	with open(path.join(path.dirname(path.abspath(__file__)), 'local.json')) as jf:
-		vars = json.load(jf)
+	def __init__(self):
 
-	print(vars)#.remote_environment)
+		f_vars_local = path.join(path.dirname(path.abspath(__file__)), 'local.json')
+		self.d_all_vars = dict()
+		self.d_all_vars['local'] = self.get_vars(f_vars_local)
+		self.change_username()
+		for remote_name in self.d_all_vars['local']["remote_environment"]:
+			self.d_all_vars[remote_name] = self.get_vars(path.join(path.dirname(path.abspath(__file__)), remote_name+'.json'))
 
-# # ==================================
-# # script to use the correct username if multiple users are using the same pipeline
-# if len(users_list)>1:
-#        try:
-#               from cget_username import _get_username
-#        except ImportError:
-#               from a.clib.cget_username import _get_username
-#        user = _get_username()
-# from os import path
-# ==================================
+	def get_vars(self, file):
+		with open(file) as jf:
+			return json.load(jf)
 
+	def verify_local_user(self):
+		from get_username import _get_username
+		user = self.d_all_vars['local']['user']
+		user_local = _get_username()
+		if user_local != user:
+			return True, user, user_local
 
-
-'''
-variables that must be changed in all scripts and must be removed
-'''
-# from os import makedirs
-# for remote_path in (NIMB_RHOME, dir_new_subjects, FS_SUBJECTS_DIR, processed_SUBJECTS_DIR, nimb_scratch_dir):
-# 	if not path.isdir(remote_path):
-# 		makedirs(remote_path)
-
-# cusers_list = users_list
-# cuser = user
-# nimb_dir = NIMB_HOME
-# SUBJECTS_DIR = FS_SUBJECTS_DIR
-# processed_SUBJECTS_DIR = path.join('/home',user,'projects',supervisor_account,'processed_subjects') #must be changed to NIMB_HOME/processed_nimb/processed_fs
-# dir_new_subjects=path.join('/home',user,'projects',supervisor_account,'new_subjects')  #must be changed to NIMB_RHOME/new_subjects
+	def change_username(self):
+		if len(self.d_all_vars['local']["users_list"])>1:
+			change, user, user_local = self.verify_local_user()
+			if change:
+				print('changing username')
+				self.d_all_vars['local']['user'] = user_local
+				for variable in self.d_all_vars['local']['PATHS']:
+					self.d_all_vars['local']['PATHS'][variable] = self.d_all_vars['local']['PATHS'][variable].replace(user, user_local)
