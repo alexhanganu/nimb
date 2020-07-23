@@ -1,13 +1,12 @@
 #!/bin/python
-# 2020.07.22
+# 2020.07.23
 
 
 from os import listdir, path, mkdir, system
+import subprocess
 import shutil
 import datetime
-from var import SUBJECTS_DIR
-import cdb, var
-import subprocess
+import cdb
 
 
 
@@ -22,7 +21,7 @@ def submit_4_processing(processing_env, cmd, subjid, run, walltime):
 
 
 def makesubmitpbs(cmd, subjid, run, walltime, params):
-    
+
     date=datetime.datetime.now()
     dt=str(date.year)+str(date.month)+str(date.day)
 
@@ -41,7 +40,7 @@ def makesubmitpbs(cmd, subjid, run, walltime, params):
         f.write('\n')
         f.write(params["export_FreeSurfer_cmd"]+'\n')
         f.write('source '+params["source_FreeSurfer_cmd"]+'\n')
-        f.write('export SUBJECTS_DIR='+SUBJECTS_DIR+'\n')
+        f.write('export SUBJECTS_DIR='+params["SUBJECTS_DIR"]+'\n')
         f.write('\n')
         f.write(cmd+'\n')
     print('    submitting '+sh_file)
@@ -78,41 +77,41 @@ def FS_ready(SUBJECTS_DIR):
 
 
 
-def checks_from_runfs(process, subjid, freesurfer_version):
+def checks_from_runfs(SUBJECTS_DIR, process, subjid, freesurfer_version, masks):
 
     if process == 'registration':
-        result = chksubjidinfs(subjid)
+        result = chksubjidinfs(SUBJECTS_DIR, subjid)
 
     if process == 'autorecon1':
-        result = chk_if_autorecon_done(1, subjid)
+        result = chk_if_autorecon_done(SUBJECTS_DIR, 1, subjid)
 
     if process == 'autorecon2':
-        result = chk_if_autorecon_done(2, subjid)
+        result = chk_if_autorecon_done(SUBJECTS_DIR, 2, subjid)
 
     if process == 'autorecon3':
-        result = chk_if_autorecon_done(3, subjid)
+        result = chk_if_autorecon_done(SUBJECTS_DIR, 3, subjid)
 
     if process == 'recon':
-        result = chk_if_recon_done(subjid)
+        result = chk_if_recon_done(SUBJECTS_DIR, subjid)
 
     if process == 'qcache':
-        result = chk_if_qcache_done(subjid)
+        result = chk_if_qcache_done(SUBJECTS_DIR, subjid)
 
     if process == 'brstem':
-        result = chkbrstemf(subjid, freesurfer_version)
+        result = chkbrstemf(SUBJECTS_DIR, subjid, freesurfer_version)
 
     if process == 'hip':
-        result = chkhipf(subjid)
+        result = chkhipf(SUBJECTS_DIR, subjid)
 
     if process == 'tha':
-        result = chkthaf(subjid)
+        result = chkthaf(SUBJECTS_DIR, subjid)
 
     if process == 'masks':
-        result = chk_masks(subjid)
+        result = chk_masks(SUBJECTS_DIR, subjid, masks)
 
     return result
 
-def chksubjidinfs(subjid):
+def chksubjidinfs(SUBJECTS_DIR, subjid):
 
     lsallsubjid=listdir(SUBJECTS_DIR)
 
@@ -123,7 +122,7 @@ def chksubjidinfs(subjid):
         return False
 
 
-def chkIsRunning(subjid):
+def chkIsRunning(SUBJECTS_DIR, subjid):
 
     #script does not check for presence of IsRunning files for the brainstem, hippocampus and thalamus
     IsRunning_files = ['IsRunning.lh+rh','IsRunningThalamicNuclei_mainFreeSurferT1',]
@@ -149,7 +148,7 @@ def chkIsRunning(subjid):
 
 
 
-def chkreconf_if_without_error(subjid):
+def chkreconf_if_without_error(subjid, SUBJECTS_DIR):
 
     file_2read = 'recon-all-status.log'
     try:
@@ -175,7 +174,7 @@ def chkreconf_if_without_error(subjid):
         cdb.Update_status_log('    '+subjid+' '+str(e))
 
 
-def chk_if_autorecon_done(lvl, subjid):
+def chk_if_autorecon_done(SUBJECTS_DIR, lvl, subjid):
     f_autorecon = {1:['mri/nu.mgz','mri/orig.mgz','mri/brainmask.mgz',],
                 2:['stats/lh.curv.stats','stats/rh.curv.stats',],
                 3:['stats/aseg.stats','stats/wmparc.stats',]}
@@ -188,7 +187,7 @@ def chk_if_autorecon_done(lvl, subjid):
 
 
 
-def chk_if_recon_done(subjid):
+def chk_if_recon_done(SUBJECTS_DIR, subjid):
 
     '''must check for all files: https://surfer.nmr.mgh.harvard.edu/fswiki/ReconAllDevTable
 	'''
@@ -199,7 +198,7 @@ def chk_if_recon_done(subjid):
 
 
 
-def chk_if_qcache_done(subjid):
+def chk_if_qcache_done(SUBJECTS_DIR, subjid):
 
     if 'rh.w-g.pct.mgh.fsaverage.mgh' and 'lh.thickness.fwhm10.fsaverage.mgh' in listdir(SUBJECTS_DIR+subjid+'/surf/'):
         return True
@@ -220,7 +219,7 @@ log_files = {
 }
 
 
-def chkbrstemf(subjid, freesurfer_version):
+def chkbrstemf(SUBJECTS_DIR, subjid, freesurfer_version):
 
     lsscripts=listdir(SUBJECTS_DIR+subjid+'/scripts/')
     log_file = log_files['bs'][freesurfer_version]
@@ -247,7 +246,7 @@ files_hip_amy21_mri = {
     'lh.amygNucVolumes-T1.v21.txt':'lh.amygdalar-nuclei.T1.v21.stats',
     'rh.amygNucVolumes-T1.v21.txt':'rh.amygdalar-nuclei.T1.v21.stats',
 }
-def chkhipf(subjid):
+def chkhipf(SUBJECTS_DIR, subjid):
 
     lsscripts=listdir(SUBJECTS_DIR+subjid+'/scripts/')
     if any('hippocampal-subfields-T1' in i for i in lsscripts):
@@ -277,7 +276,7 @@ def chkhipf(subjid):
         return False
 
 
-def chkthaf(subjid):
+def chkthaf(SUBJECTS_DIR, subjid):
 
     lsscripts=listdir(SUBJECTS_DIR+subjid+'/scripts/')
     if any('thalamic-nuclei-mainFreeSurferT1.log' in i for i in lsscripts):
@@ -295,10 +294,10 @@ def chkthaf(subjid):
         return False
 
 
-def chk_masks(subjid):
+def chk_masks(SUBJECTS_DIR, subjid, masks):
 
     if path.isdir(path.join(SUBJECTS_DIR,subjid,'masks')):
-        for structure in var.masks:
+        for structure in masks:
             if structure+'.nii' not in listdir(path.join(SUBJECTS_DIR,subjid,'masks')):
                 return False
             else:
@@ -308,7 +307,7 @@ def chk_masks(subjid):
 
 
 
-def fs_find_error(subjid):
+def fs_find_error(subjid, SUBJECTS_DIR):
     error = ''
     print('identifying THE error')
     file_2read = path.join(SUBJECTS_DIR,subjid,'scripts','recon-all.log')
@@ -344,7 +343,7 @@ def fs_find_error(subjid):
     return error
 
 
-def solve_error(subjid, error):
+def solve_error(subjid, error, SUBJECTS_DIR):
     file_2read = path.join(SUBJECTS_DIR,subjid,'scripts','recon-all.log')
     f = open(file_2read,'r').readlines()
     if error == "errCurvature":

@@ -260,11 +260,11 @@ def keep_files_similar_params(subjid, nimb_dir, NIMB_tmp, t1_ls_f, flair_ls_f, t
 
 
 
-def Update_DB_new_subjects_and_SUBJECTS_DIR(nimb_dir, NIMB_tmp, nimb_scratch_dir, SUBJECTS_DIR, db, process_order, base_name, long_name, freesurfer_version):
+def Update_DB_new_subjects_and_SUBJECTS_DIR(nimb_dir, NIMB_tmp, nimb_scratch_dir, SUBJECTS_DIR, db, process_order, base_name, long_name, freesurfer_version, masks):
 
-    db = chk_subj_in_SUBJECTS_DIR(SUBJECTS_DIR, nimb_scratch_dir, db, process_order, base_name, long_name, freesurfer_version)
-    db = chk_subjects_folder(nimb_dir, nimb_scratch_dir, db, base_name, long_name, freesurfer_version)
-    db = chk_new_subjects_json_file(NIMB_tmp, nimb_scratch_dir, db, freesurfer_version)
+    db = chk_subj_in_SUBJECTS_DIR(SUBJECTS_DIR, nimb_scratch_dir, db, process_order, base_name, long_name, freesurfer_version, masks)
+    db = chk_subjects_folder(SUBJECTS_DIR, nimb_dir, nimb_scratch_dir, db, base_name, long_name, freesurfer_version, masks)
+    db = chk_new_subjects_json_file(SUBJECTS_DIR, NIMB_tmp, nimb_scratch_dir, db, freesurfer_version, masks)
     return db
 
 
@@ -284,7 +284,7 @@ def add_subjid_2_DB(NIMB_tmp, subjid, _id, ses, db, ls_SUBJECTS_in_long_dirs_pro
 
 
 
-def chk_subjects_folder(nimb_dir, nimb_scratch_dir, db, base_name, long_name, freesurfer_version):
+def chk_subjects_folder(SUBJECTS_DIR, nimb_dir, nimb_scratch_dir, db, base_name, long_name, freesurfer_version, masks):
     Update_status_log(nimb_scratch_dir, '    NEW_SUBJECTS_DIR checking ...')
 
     ls_SUBJECTS_in_long_dirs_processed = get_ls_subjids_in_long_dirs(db)
@@ -296,7 +296,7 @@ def chk_subjects_folder(nimb_dir, nimb_scratch_dir, db, base_name, long_name, fr
         for subjid in ls_subj2fs:
             Update_status_log(nimb_scratch_dir, '    adding '+subjid+' to database')
             _id, ses = get_id_long(subjid, db['LONG_DIRS'], base_name, long_name)
-            if not checks_from_runfs('registration',_id, freesurfer_version):
+            if not checks_from_runfs(SUBJECTS_DIR, 'registration',_id, freesurfer_version, masks):
                 db = add_subjid_2_DB(nimb_scratch_dir, subjid, _id, ses, db, ls_SUBJECTS_in_long_dirs_processed)
         Update_status_log(nimb_scratch_dir, 'new subjects were added from the subjects folder')
     return db
@@ -305,7 +305,7 @@ def chk_subjects_folder(nimb_dir, nimb_scratch_dir, db, base_name, long_name, fr
 
 
 
-def chk_new_subjects_json_file(NIMB_tmp, nimb_scratch_dir, db, freesurfer_version):
+def chk_new_subjects_json_file(SUBJECTS_DIR, NIMB_tmp, nimb_scratch_dir, db, freesurfer_version, masks):
     Update_status_log(nimb_scratch_dir, '    new_subjects.json checking ...')
 
     ls_SUBJECTS_in_long_dirs_processed = get_ls_subjids_in_long_dirs(db)
@@ -317,7 +317,7 @@ def chk_new_subjects_json_file(NIMB_tmp, nimb_scratch_dir, db, freesurfer_versio
         with open(f_new_subjects) as jfile:
             data = json.load(jfile)
         for _id in data:
-            if not checks_from_runfs('registration',_id, freesurfer_version):
+            if not checks_from_runfs(SUBJECTS_DIR, 'registration',_id, freesurfer_version, masks):
                 for ses in data[_id]:
                     if 'anat' in data[_id][ses]:
                         if 't1' in data[_id][ses]['anat']:
@@ -419,7 +419,7 @@ def get_id_long(subjid, LONG_DIRS, base_name, long_name):
 
 
 
-def chk_subj_in_SUBJECTS_DIR(SUBJECTS_DIR, nimb_scratch_dir, db, process_order, base_name, long_name, freesurfer_version):
+def chk_subj_in_SUBJECTS_DIR(SUBJECTS_DIR, nimb_scratch_dir, db, process_order, base_name, long_name, freesurfer_version, masks):
     Update_status_log(nimb_scratch_dir, '    SUBJECTS_DIR checking ...')
 
     from crunfs import chkIsRunning, checks_from_runfs
@@ -442,10 +442,10 @@ def chk_subj_in_SUBJECTS_DIR(SUBJECTS_DIR, nimb_scratch_dir, db, process_order, 
                         ls_subj_running.append(subjid)
         return ls_subj_running
 
-    def add_new_subjid_to_db(subjid, process_order, nimb_scratch_dir):
-        if not chkIsRunning(subjid):
+    def add_new_subjid_to_db(subjid, process_order, nimb_scratch_dir, freesurfer_version, masks):
+        if not chkIsRunning(SUBJECTS_DIR, subjid):
             for process in process_order[1:]:
-                if not checks_from_runfs(process, subjid, freesurfer_version):
+                if not checks_from_runfs(SUBJECTS_DIR, process, subjid, freesurfer_version, masks):
                     Update_status_log(nimb_scratch_dir, '        '+subjid+' sent for '+process)
                     db['DO'][process].append(subjid)
                     break
@@ -483,7 +483,7 @@ def chk_subj_in_SUBJECTS_DIR(SUBJECTS_DIR, nimb_scratch_dir, db, process_order, 
                     db['LONG_TPS'][_id].append(longitud)
             if base_name not in subjid:
                 if subjid not in ls_SUBJECTS_running:
-                    add_new_subjid_to_db(subjid, process_order, nimb_scratch_dir)
+                    add_new_subjid_to_db(subjid, process_order, nimb_scratch_dir, freesurfer_version, masks)
     return db
 
 
@@ -775,7 +775,7 @@ def get_mask_codes(structure):
 #         for subjid in ls_subj2fs:
 #             Update_status_log(nimb_scratch_dir, '    adding '+subjid+' to database')
 #             _id, ses = get_id_long(subjid, db['LONG_DIRS'], base_name)
-#             if not checks_from_runfs('registration',_id):
+#             if not checks_from_runfs(SUBJECTS_DIR, 'registration',_id):
 #                 db = add_subjid_2_DB(_id, ses, db, ls_SUBJECTS_in_long_dirs_processed)
 #         Update_status_log(nimb_scratch_dir, 'new subjects were added from the subjects folder')
 #     return db
@@ -793,7 +793,7 @@ def get_mask_codes(structure):
 #         with open(f_new_subjects) as jfile:
 #             data = json.load(jfile)
 #         for _id in data:
-#             if not checks_from_runfs('registration',_id):
+#             if not checks_from_runfs(SUBJECTS_DIR, 'registration',_id):
 #                 for ses in data[_id]:
 #                     if 'anat' in data[_id][ses]:
 #                         if 't1' in data[_id][ses]['anat']:

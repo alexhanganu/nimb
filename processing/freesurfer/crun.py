@@ -1,5 +1,5 @@
 #!/bin/python
-# 2020.07.22
+# 2020.07.23
 
 '''
 add FS QA tools to rm scans with low SNR (Koh et al 2017)
@@ -14,21 +14,22 @@ except ImportError as e:
     cdb.Update_status_log(nimb_scratch_dir, e)
 import time, shutil
 from var import (nimb_dir, nimb_scratch_dir, SUBJECTS_DIR, processed_SUBJECTS_DIR, cuser ,cusers_list,
-                processing_env, SUBMIT, max_nr_running_batches, batch_walltime, submit_cmd, archive_processed,
-                freesurfer_version, process_order, flair_t2_add, DO_LONG, base_name, long_name)
+                processing_env, SUBMIT, text4_scheduler, max_nr_running_batches, batch_walltime_cmd, batch_walltime, batch_output_cmd, submit_cmd, archive_processed,
+                freesurfer_version, export_FreeSurfer_cmd, source_FreeSurfer_cmd, process_order, flair_t2_add, masks, DO_LONG, base_name, long_name)
 import crunfs, cdb, cwalltime
 from cbuild_stamp import nimb_version
 NIMB_tmp = "/home/hanganua/projects/def-hanganua/nimb/tmp/"
 print('SUBMITTING is: ', SUBMIT)
 
-scheduler_params = {'NIMB_HOME': nimb_dir,
-              'NIMB_tmp': nimb_scratch_dir,
-              'text4_scheduler': text4_scheduler,
-              'batch_walltime_cmd':  batch_walltime_cmd,
-              'batch_output_cmd' :batch_output_cmd,
-              'export_FreeSurfer_cmd': export_FreeSurfer_cmd,
-              'source_FreeSurfer_cmd': source_FreeSurfer_cmd,
-              'SUBMIT': SUBMIT}
+scheduler_params = {'NIMB_HOME'            : nimb_dir,
+                    'NIMB_tmp'             : nimb_scratch_dir,
+                    'SUBJECTS_DIR'         :SUBJECTS_DIR,
+                    'text4_scheduler'      : text4_scheduler,
+                    'batch_walltime_cmd'   :  batch_walltime_cmd,
+                    'batch_output_cmd'     :batch_output_cmd,
+                    'export_FreeSurfer_cmd': export_FreeSurfer_cmd,
+                    'source_FreeSurfer_cmd': source_FreeSurfer_cmd,
+                    'SUBMIT'               : SUBMIT}
 
 
 environ['TZ'] = 'US/Eastern'
@@ -77,7 +78,7 @@ def queue(process, all_running):
     for subjid in lsq:
         if subjid in db['RUNNING_JOBS']:
             status = Get_status_for_subjid_in_queue(subjid, all_running)
-            if crunfs.checks_from_runfs('registration',subjid, freesurfer_version):
+            if crunfs.checks_from_runfs(SUBJECTS_DIR, 'registration',subjid, freesurfer_version, masks):
                 if status =='R' or status == 'none':
                     cdb.Update_status_log(nimb_scratch_dir, '    '+subjid+' moving from '+ACTION+' to RUNNING '+process)
                     db[ACTION][process].remove(subjid)
@@ -113,14 +114,14 @@ def running(process, all_running):
                 db['RUNNING_JOBS'].pop(subjid, None)
                 if base_name in subjid:
                     cdb.Update_status_log(nimb_scratch_dir, ' reading '+process+subjid+' subjid is long or base ')
-                    if crunfs.chkIsRunning(subjid) or not crunfs.checks_from_runfs('recon', subjid, freesurfer_version):
+                    if crunfs.chkIsRunning(SUBJECTS_DIR, subjid) or not crunfs.checks_from_runfs(SUBJECTS_DIR, 'recon', subjid, freesurfer_version, masks):
                         cdb.Update_status_log(nimb_scratch_dir, '    '+subjid+' '+process+' moving to ERROR')
                         db['PROCESSED']['error_recon'].append(subjid)
                 else:
-                    if not crunfs.chkIsRunning(subjid) and crunfs.checks_from_runfs(process, subjid, freesurfer_version):
+                    if not crunfs.chkIsRunning(SUBJECTS_DIR, subjid) and crunfs.checks_from_runfs(SUBJECTS_DIR, process, subjid, freesurfer_version, masks):
                         if process != process_order[-1]:
                             next_process = process_order[process_order.index(process)+1]
-                            if not crunfs.checks_from_runfs(next_process, subjid, freesurfer_version):
+                            if not crunfs.checks_from_runfs(SUBJECTS_DIR, next_process, subjid, freesurfer_version, masks):
                                 db['DO'][next_process].append(subjid)
                                 cdb.Update_status_log(nimb_scratch_dir, '    '+subjid+' moving from '+ACTION+' '+process+' to DO '+next_process)
                             else:
@@ -133,18 +134,18 @@ def running(process, all_running):
                         db['PROCESSED']['error_'+process].append(subjid)
         else:
             cdb.Update_status_log(nimb_scratch_dir, '    '+subjid+' NOT in RUNNING_JOBS')
-            if not crunfs.chkIsRunning(subjid):
+            if not crunfs.chkIsRunning(SUBJECTS_DIR, subjid):
                 db[ACTION][process].remove(subjid)
                 if base_name in subjid:
                     cdb.Update_status_log(nimb_scratch_dir, '    '+subjid+process+' subjid is long or base ')
-                    if not crunfs.checks_from_runfs('recon', subjid, freesurfer_version):
+                    if not crunfs.checks_from_runfs(SUBJECTS_DIR, 'recon', subjid, freesurfer_version, masks):
                         cdb.Update_status_log(nimb_scratch_dir, '    '+subjid+' recon, moving to ERROR')
                         db['PROCESSED']['error_recon'].append(subjid)
                 else:
-                    if crunfs.checks_from_runfs(process, subjid, freesurfer_version):
+                    if crunfs.checks_from_runfs(SUBJECTS_DIR, process, subjid, freesurfer_version, masks):
                         if process != process_order[-1]:
                             next_process = process_order[process_order.index(process)+1]
-                            if not crunfs.checks_from_runfs(next_process, subjid, freesurfer_version):
+                            if not crunfs.checks_from_runfs(SUBJECTS_DIR, next_process, subjid, freesurfer_version, masks):
                                 db['DO'][next_process].append(subjid)
                                 cdb.Update_status_log(nimb_scratch_dir, '    '+subjid+' moving from '+ACTION+' '+process+' to DO '+next_process)
                             else:
@@ -224,19 +225,19 @@ def check_error():
             for subjid in lserr:
                 cdb.Update_status_log(nimb_scratch_dir, '    '+subjid)
                 if path.exists(path.join(SUBJECTS_DIR,subjid)):
-                    if crunfs.chkIsRunning(subjid):
+                    if crunfs.chkIsRunning(SUBJECTS_DIR, subjid):
                         cdb.Update_status_log(nimb_scratch_dir, '            removing IsRunning file')
                         remove(path.join(SUBJECTS_DIR,subjid,'scripts','IsRunning.lh+rh'))
                     cdb.Update_status_log(nimb_scratch_dir, '        checking the recon-all-status.log for error for: '+process)
-                    crunfs.chkreconf_if_without_error(subjid)
+                    crunfs.chkreconf_if_without_error(subjid, SUBJECTS_DIR)
                     cdb.Update_status_log(nimb_scratch_dir, '        checking if all files were created for: '+process)
-                    if not crunfs.checks_from_runfs(process, subjid, freesurfer_version):
+                    if not crunfs.checks_from_runfs(SUBJECTS_DIR, process, subjid, freesurfer_version, masks):
                         cdb.Update_status_log(nimb_scratch_dir, '            some files were not created. Excluding subject from pipeline.')
 # ================ START NEW CODE that needs to be verified, started testing 20200722, ah
-                        fs_error = crunfs.fs_find_error(subjid)
+                        fs_error = crunfs.fs_find_error(subjid, SUBJECTS_DIR)
                         solved = False
                         if fs_error:
-                            solve = crunfs.solve_error(subjid, fs_error)
+                            solve = crunfs.solve_error(subjid, fs_error, SUBJECTS_DIR)
                             if solve == 'continue':
                                 solved = True
                                 db['PROCESSED']['error_'+process].remove(subjid)
@@ -294,14 +295,14 @@ def long_check_groups(_id):
     if DO_LONG and len(LONG_TPS)>1:
         All_cross_ids_done = list()
         for ses in LONG_TPS:
-            if _id+ses in ls and crunfs.checks_from_runfs(process_order[-1], _id+ses, freesurfer_version):
+            if _id+ses in ls and crunfs.checks_from_runfs(SUBJECTS_DIR, process_order[-1], _id+ses, freesurfer_version, masks):
                 All_cross_ids_done.append(_id+ses)
 
         if len(All_cross_ids_done) == len(LONG_TPS):
             base_f = _id+base_name
             if base_f in ls:
-                if base_f not in db['QUEUE']['recon'] and base_f not in db['PROCESSED']['error_recon'] and not crunfs.chkIsRunning(base_f):
-                    if crunfs.checks_from_runfs('recon', base_f, freesurfer_version):
+                if base_f not in db['QUEUE']['recon'] and base_f not in db['PROCESSED']['error_recon'] and not crunfs.chkIsRunning(SUBJECTS_DIR, base_f):
+                    if crunfs.checks_from_runfs(SUBJECTS_DIR, 'recon', base_f, freesurfer_version, masks):
                         All_long_ids_done = list()
                         for ses in LONG_TPS:
                             long_f = _id+ses+'.long.'+_id+base_name
@@ -310,8 +311,8 @@ def long_check_groups(_id):
                                 db['RUNNING_JOBS'][long_f] = job_id
                                 db['QUEUE']['recon'].append(long_f)
                                 db['LONG_DIRS'][_id].append(long_f)
-                            elif crunfs.checks_from_runfs('registration',long_f, freesurfer_version):
-                                if crunfs.checks_from_runfs('recon', long_f, freesurfer_version):
+                            elif crunfs.checks_from_runfs(SUBJECTS_DIR, 'registration',long_f, freesurfer_version, masks):
+                                if crunfs.checks_from_runfs(SUBJECTS_DIR, 'recon', long_f, freesurfer_version, masks):
                                     All_long_ids_done.append(long_f)
                                 else:
                                     cdb.Update_status_log(nimb_scratch_dir, long_f+' moving to error_recon')
@@ -343,8 +344,8 @@ def long_check_groups(_id):
     else:
         for subjid in ls:
             cdb.Update_status_log(nimb_scratch_dir, '        '+subjid)
-            if crunfs.checks_from_runfs('registration', subjid, freesurfer_version):
-                if crunfs.checks_from_runfs(process_order[-1], subjid, freesurfer_version):
+            if crunfs.checks_from_runfs(SUBJECTS_DIR, 'registration', subjid, freesurfer_version, masks):
+                if crunfs.checks_from_runfs(SUBJECTS_DIR, process_order[-1], subjid, freesurfer_version, masks):
                     cdb.Update_status_log(nimb_scratch_dir, '            last process done '+process_order[-1]+' moving to CP2LOCAL')
                     db['PROCESSED']['cp2local'].append(subjid)
                     db['LONG_DIRS'].pop(_id, None)
@@ -466,7 +467,7 @@ if crunfs.FS_ready(SUBJECTS_DIR):
     db = cdb.Get_DB(nimb_dir, nimb_scratch_dir, process_order)
 
     cdb.Update_status_log(nimb_scratch_dir, 'NEW SUBJECTS searching:')
-    db = cdb.Update_DB_new_subjects_and_SUBJECTS_DIR(nimb_dir, NIMB_tmp, nimb_scratch_dir, SUBJECTS_DIR,db, process_order, base_name, long_name, freesurfer_version)
+    db = cdb.Update_DB_new_subjects_and_SUBJECTS_DIR(nimb_dir, NIMB_tmp, nimb_scratch_dir, SUBJECTS_DIR,db, process_order, base_name, long_name, freesurfer_version, masks)
     cdb.Update_DB(db, nimb_scratch_dir)
     active_subjects = check_active_tasks(db)
 
@@ -481,7 +482,7 @@ if crunfs.FS_ready(SUBJECTS_DIR):
         cdb.Update_status_log(nimb_scratch_dir, 'elapsed time: '+time.strftime("%H:%M",time.gmtime(time_elapsed))+' max walltime: '+batch_walltime[:-6])
         if count_run % 5 == 0:
             cdb.Update_status_log(nimb_scratch_dir, 'NEW SUBJECTS searching:')
-            db = cdb.Update_DB_new_subjects_and_SUBJECTS_DIR(nimb_dir, NIMB_tmp, nimb_scratch_dir, SUBJECTS_DIR, db, process_order, base_name, long_name, freesurfer_version)
+            db = cdb.Update_DB_new_subjects_and_SUBJECTS_DIR(nimb_dir, NIMB_tmp, nimb_scratch_dir, SUBJECTS_DIR, db, process_order, base_name, long_name, freesurfer_version, masks)
             cdb.Update_DB(db, nimb_scratch_dir)
         run()
 
@@ -524,22 +525,22 @@ if crunfs.FS_ready(SUBJECTS_DIR):
 #     for subjid in lsq_long:
 #         if subjid in db['RUNNING_JOBS']:
 #             status = Get_status_for_subjid_in_queue(subjid, all_running)
-#             if status =='R' or status == 'none' and crunfs.checks_from_runfs('registration',subjid):
+#             if status =='R' or status == 'none' and crunfs.checks_from_runfs(SUBJECTS_DIR, 'registration',subjid):
 #                 print('       ',subjid,' status: ',status,'; moving from queue to running')
 #                 cdb.Update_status_log(nimb_scratch_dir, 'moving '+subjid+' from queue to running')
 #                 db['RUNNING_LONG']['queue'].remove(subjid)
 #                 db['RUNNING']['recon'].append(subjid)
-#             elif status == 'none' and not crunfs.checks_from_runfs('registration',subjid):
+#             elif status == 'none' and not crunfs.checks_from_runfs(SUBJECTS_DIR, 'registration',subjid):
 #                 db['RUNNING_LONG']['queue'].remove(subjid)
 #                 db['PROCESSED']['error_recon'].append(subjid)
 #         else:
 #             print(subjid,'    queue, NOT in RUNNING_JOBS')
-#             if crunfs.checks_from_runfs('registration',subjid):
-#                 if crunfs.chkIsRunning(subjid):
+#             if crunfs.checks_from_runfs(SUBJECTS_DIR, 'registration',subjid):
+#                 if crunfs.chkIsRunning(SUBJECTS_DIR, subjid):
 #                     cdb.Update_status_log(nimb_scratch_dir, 'moving '+subjid+' from long_QUEUE to long_RUNNING')
 #                     db['RUNNING_LONG']['queue'].remove(subjid)
 #                     db['RUNNING']['recon'].append(subjid)
-#                 elif crunfs.checks_from_runfs('recon', subjid):
+#                 elif crunfs.checks_from_runfs(SUBJECTS_DIR, 'recon', subjid):
 #                     cdb.Update_status_log(nimb_scratch_dir, subjid+' long recon DONE')
 #                     db['RUNNING_LONG']['queue'].remove(subjid)
 
@@ -554,13 +555,13 @@ if crunfs.FS_ready(SUBJECTS_DIR):
 #             if status == 'none':
 #                 db['RUNNING_LONG']['running'].remove(subjid)
 #                 db['RUNNING_JOBS'].pop(subjid, None)
-#                 if crunfs.chkIsRunning(subjid) or not crunfs.checks_from_runfs('recon', subjid):
+#                 if crunfs.chkIsRunning(SUBJECTS_DIR, subjid) or not crunfs.checks_from_runfs(SUBJECTS_DIR, 'recon', subjid):
 #                     db['PROCESSED']['error_recon'].append(subjid)
 #         else:
 #             print('    ',subjid,'    queue, NOT in RUNNING_JOBS')
-#             if not crunfs.chkIsRunning(subjid):
+#             if not crunfs.chkIsRunning(SUBJECTS_DIR, subjid):
 #                 db['RUNNING_LONG']['running'].remove(subjid)
-#                 if not crunfs.checks_from_runfs('recon', subjid):
+#                 if not crunfs.checks_from_runfs(SUBJECTS_DIR, 'recon', subjid):
 #                     db['PROCESSED']['error_recon'].append(subjid)
 #     cdb.Update_DB(db, nimb_scratch_dir)
 
@@ -578,13 +579,13 @@ if crunfs.FS_ready(SUBJECTS_DIR):
 #             for subjid in lserr:
 #                 cdb.Update_status_log(nimb_scratch_dir, '    '+subjid)
 #                 if path.exists(SUBJECTS_DIR+subjid):
-#                     if crunfs.chkIsRunning(subjid):
+#                     if crunfs.chkIsRunning(SUBJECTS_DIR, subjid):
 #                         cdb.Update_status_log(nimb_scratch_dir, '            removing IsRunning file')
 #                         remove(path.join(SUBJECTS_DIR,subjid,'scripts','IsRunning.lh+rh'))
 #                     cdb.Update_status_log(nimb_scratch_dir, '        checking the recon-all-status.log for error for: '+process)
 #                     crunfs.chkreconf_if_without_error(subjid)
 #                     cdb.Update_status_log(nimb_scratch_dir, '        checking if all files were created for: '+process)
-#                     if not crunfs.checks_from_runfs(process, subjid):
+#                     if not crunfs.checks_from_runfs(SUBJECTS_DIR, process, subjid):
 #                         cdb.Update_status_log(nimb_scratch_dir, '            some files were not created. Excluding subject from pipeline.')
 #                         db['PROCESSED']['error_'+process].remove(subjid)
 #                         _id, _ = cdb.get_id_long(subjid, db['LONG_DIRS'])
