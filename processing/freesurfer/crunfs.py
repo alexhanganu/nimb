@@ -91,7 +91,7 @@ def checks_from_runfs(SUBJECTS_DIR, process, subjid, freesurfer_version, masks):
     if process == 'autorecon3':
         result = chk_if_autorecon_done(SUBJECTS_DIR, 3, subjid)
 
-    if process == 'recon':
+    if process == 'recon-all':
         result = chk_if_recon_done(SUBJECTS_DIR, subjid)
 
     if process == 'qcache':
@@ -124,8 +124,8 @@ def chksubjidinfs(SUBJECTS_DIR, subjid):
 
 def chkIsRunning(SUBJECTS_DIR, subjid):
 
-    #script does not check for presence of IsRunning files for the brainstem, hippocampus and thalamus
-    IsRunning_files = ['IsRunning.lh+rh','IsRunningThalamicNuclei_mainFreeSurferT1',]
+    #script does not check for presence of IsRunning files for the brainstem
+    IsRunning_files = ['IsRunning.lh+rh','IsRunningHPsubT1.lh+rh','IsRunningThalamicNuclei_mainFreeSurferT1']
     try:
         for file in IsRunning_files:
             if path.exists(path.join(SUBJECTS_DIR,subjid,'scripts',file)):
@@ -135,16 +135,6 @@ def chkIsRunning(SUBJECTS_DIR, subjid):
     except Exception as e:
         print(e)
         return True
-
-    # try:
-    #     if any('IsRunning.lh+rh' in i for i in listdir(path.join(SUBJECTS_DIR,subjid,'scripts'))):
-    #         print('    IsRunning file present: True')
-    #         return True
-    #     else:
-    #         return False
-    # except Exception as e:
-    #     print(e)
-    #     return True
 
 
 
@@ -156,19 +146,23 @@ def chkreconf_if_without_error(subjid, SUBJECTS_DIR):
             f = open(path.join(SUBJECTS_DIR,subjid,'scripts',file_2read),'r').readlines()
 
             for line in reversed(f):
-                if 'exited with ERRORS' in line:
+                if 'finished without error' in line:
+                    return True
+                    break
+                elif 'exited with ERRORS' in line:
                     cdb.Update_status_log('        exited with ERRORS')
                     return False
-                elif 'finished without error' in line:
-                    return True
+                    break
                 elif 'recon-all -s' in line:
                     return False
                     break
                 else:
                     cdb.Update_status_log('        not clear if finished with or without ERROR')
                     return False
+                    break
         else:
             return False
+            break
     except FileNotFoundError as e:
         print(e)
         cdb.Update_status_log('    '+subjid+' '+str(e))
@@ -334,6 +328,9 @@ def fs_find_error(subjid, SUBJECTS_DIR):
                     break
                 elif 'ERROR: cannot find' in line:
                     error = 'cannotfind'
+                    break
+                elif 'error: MRIresample():' in line:
+                    error = 'errMRIresample'
                     break
         else:
             cdb.Update_status_log('        ERROR: '+file_2read+' not in '+path.join(SUBJECTS_DIR,subjid,'scripts'))

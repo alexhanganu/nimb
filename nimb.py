@@ -5,6 +5,7 @@
 
 import argparse
 import sys
+import json
 from distribution.pipeline_management import Management
 from setup.get_vars import Get_Vars
 from processing.freesurfer import start_fs_pipeline
@@ -41,8 +42,9 @@ class NIMB(object):
             self.classify(task.freesurfer())
 
         if self.process == 'freesurfer':
-            if self.classify(task.freesurfer()):
-                start_fs_pipeline()
+            with open(path.join(self.vars['local']['PATHS']['NIMB_HOME'],'processing','freesurfer','vars.json')) as jf:
+                json.dump(self.vars['local'], jf, indent=4)
+            start_fs_pipeline()
 
         if self.process == 'stats':
             task.stats()

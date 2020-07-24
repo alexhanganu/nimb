@@ -24,7 +24,7 @@ def Get_DB(NIMB_HOME, NIMB_tmp, process_order):
         shutil.copy(NIMB_tmp+'db',NIMB_HOME+'db.py')
         system('chmod 777 '+path.join(NIMB_HOME,'db.py'))
         time.sleep(2)
-        from db import DO, QUEUE, RUNNING, RUNNING_JOBS, LONG_DIRS, LONG_TPS, PROCESSED, REGISTRATION
+        from db import DO, QUEUE, RUNNING, RUNNING_JOBS, LONG_DIRS, LONG_TPS, PROCESSED, REGISTRATION, ERROR_QUEUE
         db['DO'] = DO
         db['QUEUE'] = QUEUE
         db['RUNNING'] = RUNNING
@@ -33,6 +33,7 @@ def Get_DB(NIMB_HOME, NIMB_tmp, process_order):
         db['LONG_TPS'] = LONG_TPS
         db['PROCESSED'] = PROCESSED
         db['REGISTRATION'] = REGISTRATION
+        db['ERROR_QUEUE'] = ERROR_QUEUE
         time.sleep(2)
         remove(NIMB_HOME+'db.py')
     else:
@@ -45,6 +46,7 @@ def Get_DB(NIMB_HOME, NIMB_tmp, process_order):
         db['LONG_TPS'] = {}
         db['PROCESSED'] = {'cp2local':[],}
         db['REGISTRATION'] = {}
+        db['ERROR_QUEUE'] = {}        
         for process in process_order:
             db['PROCESSED']['error_'+process] = []
 
@@ -78,7 +80,7 @@ def Update_DB(db, NIMB_tmp):
 # ================ END
         for key in db:
             f.write(key+'= {')
-            if key == 'RUNNING_JOBS':
+            if key == 'RUNNING_JOBS' or key == 'ERROR_QUEUE':
                 for subkey in db[key]:
                     f.write('\''+subkey+'\':'+str(db[key][subkey])+',')
             elif key == 'REGISTRATION':
@@ -260,11 +262,11 @@ def keep_files_similar_params(subjid, nimb_dir, NIMB_tmp, t1_ls_f, flair_ls_f, t
 
 
 
-def Update_DB_new_subjects_and_SUBJECTS_DIR(nimb_dir, NIMB_tmp, nimb_scratch_dir, SUBJECTS_DIR, db, process_order, base_name, long_name, freesurfer_version, masks):
+def Update_DB_new_subjects_and_SUBJECTS_DIR(nimb_dir, nimb_scratch_dir, SUBJECTS_DIR, db, process_order, base_name, long_name, freesurfer_version, masks):
 
     db = chk_subj_in_SUBJECTS_DIR(SUBJECTS_DIR, nimb_scratch_dir, db, process_order, base_name, long_name, freesurfer_version, masks)
     db = chk_subjects_folder(SUBJECTS_DIR, nimb_dir, nimb_scratch_dir, db, base_name, long_name, freesurfer_version, masks)
-    db = chk_new_subjects_json_file(SUBJECTS_DIR, NIMB_tmp, nimb_scratch_dir, db, freesurfer_version, masks)
+    db = chk_new_subjects_json_file(SUBJECTS_DIR, nimb_scratch_dir, db, freesurfer_version, masks)
     return db
 
 
@@ -305,8 +307,8 @@ def chk_subjects_folder(SUBJECTS_DIR, nimb_dir, nimb_scratch_dir, db, base_name,
 
 
 
-def chk_new_subjects_json_file(SUBJECTS_DIR, NIMB_tmp, nimb_scratch_dir, db, freesurfer_version, masks):
-    Update_status_log(nimb_scratch_dir, '    new_subjects.json checking ...')
+def chk_new_subjects_json_file(SUBJECTS_DIR, NIMB_tmp, db, freesurfer_version, masks):
+    Update_status_log(NIMB_tmp, '    new_subjects.json checking ...')
 
     ls_SUBJECTS_in_long_dirs_processed = get_ls_subjids_in_long_dirs(db)
     from crunfs import checks_from_runfs
@@ -328,11 +330,11 @@ def chk_new_subjects_json_file(SUBJECTS_DIR, NIMB_tmp, nimb_scratch_dir, db, fre
                                 db = add_subjid_2_DB(subjid, _id, ses, db, ls_SUBJECTS_in_long_dirs_processed)
                             else:
                                 db['PROCESSED']['error_registration'].append(subjid)
-                                Update_status_log(nimb_scratch_dir, 'ERROR: '+_id+' was read and but was not added to database')
+                                Update_status_log(NIMB_tmp, 'ERROR: '+_id+' was read and but was not added to database')
 # ================ START consider removing new_subjects.json, started testing 20200722, ah
         rename(f_new_subjects, path.join(NIMB_tmp,'znew_subjects_'+time.strftime("%Y%m%d_%H%M",time.localtime(time.time()))+'.json'))
 # ================ END
-        Update_status_log(nimb_scratch_dir, '        new subjects were added from the new_subjects.json file')
+        Update_status_log(NIMB_tmp, '        new subjects were added from the new_subjects.json file')
     return db
 
 
