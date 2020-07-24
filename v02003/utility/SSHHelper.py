@@ -29,8 +29,8 @@ clusters = database._get_Table_Data('Clusters','all')
 if 'elm' in clusters:
     cname = 'elm'
 else:
-    cname = 'defaultClusters'
-
+    # cname = 'defaultClusters'
+    cname="cedar"
 
 user_name = clusters[cname]['Username']
 user_password = clusters[cname]['Password']

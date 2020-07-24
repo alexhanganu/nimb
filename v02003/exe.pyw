@@ -191,11 +191,15 @@ def run(Project):
     print("Project name: " + Project)
     print(Project)
     status.set('Copying data to cluster ...block for now')
-    # cp2cluster()
+    run_copy_subject_to_cluster()
     status.set('Cluster analysis started')
+
     status.set("Cluster analysing running....")
     run_processing_on_cluster_2()
     print("Do processing here, temporary block that function")
+    # do the processing here
+    # check the status of running application
+    #
     # set_MainFolder(Project)
     # cpFromCluster() # todo: dead here
     #

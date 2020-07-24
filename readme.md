@@ -7,7 +7,6 @@ NeuroImaging My Brain = NIMB (Pipeline for Structural MRI analysis wih FreeSurfe
     * if a file is provided that has the groups and the names of the subjects:
         ** initiates the *STATS* module
 
-
 * Module *DISTRIBUTION* : (works on the local computer as GUI or terminal or on the remote computer in the terminal) (folder "$NIMB_HOME/distribution")
     * checks that all folders and variables are defined
     * checks if with the processing app is installed on the local or remote computer
@@ -45,7 +44,7 @@ NeuroImaging My Brain = NIMB (Pipeline for Structural MRI analysis wih FreeSurfe
         ** searches for DWI images and if present adds them for the analysis
         ** searches for rsfMRI images and if present adds them for the analysis
     * if the user defined a SOURCE_BIDS_DIR folder:
-        ** uses the dcm2bids app to convert the subjects from the SOURCE_SUBJECTS_DIR folder into .nii.gz format
+        ** uses the dcm2bids app to convert the subjects from the SOURCE_SUBexJECTS_DIR folder into .nii.gz format
         ** classifies the MR files into BIDS format
     * saves the dictionary as $NIMB_HOME/tmp/new_subjects.json or $NIMB_RHOME/tmp/new_subjects.json file
 
