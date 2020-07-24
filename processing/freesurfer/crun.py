@@ -5,20 +5,20 @@
 add FS QA tools to rm scans with low SNR (Koh et al 2017)
 https://surfer.nmr.mgh.harvard.edu/fswiki/QATools
 '''
-
 from os import path, listdir, remove, rename, system, chdir, environ
 import time, shutil
 from datetime import datetime, timedelta
-try:
-    from pathlib import Path
-except ImportError as e:
-    cdb.Update_status_log(e)
+
 
 if path.isfile('vars.json'):
     with open('vars.json') as vars_json:
         vars = json.load(vars_json)
 else:
     print('ERROR: vars.json file MISSING')
+try:
+    from pathlib import Path
+except ImportError as e:
+    cdb.Update_status_log(e)
 
 # cuser                  = vars["USER"]["user"]
 # cusers_list            = vars["USER"]["users_list"]
@@ -291,7 +291,7 @@ def check_error():
                 cdb.Update_status_log(nimb_scratch_dir, '    '+subjid)
                 if path.exists(path.join(SUBJECTS_DIR,subjid)):
                     cdb.Update_status_log(nimb_scratch_dir, '        checking the recon-all-status.log for error and if all files were created for: '+process)
-                    if not crunfs.chkreconf_if_without_error(subjid, SUBJECTS_DIR):
+                    if not crunfs.chkreconf_if_without_error(NIMB_tmp, subjid, SUBJECTS_DIR):
                         if not crunfs.checks_from_runfs(SUBJECTS_DIR, process, subjid, freesurfer_version, masks):
 # ================ START NEW CODE that needs to be verified, started testing 20200722, ah
                             cdb.Update_status_log(nimb_scratch_dir, '            some files were not created and recon-all-status has errors. Excluding subject from pipeline.')

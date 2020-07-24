@@ -138,7 +138,7 @@ def chkIsRunning(SUBJECTS_DIR, subjid):
 
 
 
-def chkreconf_if_without_error(subjid, SUBJECTS_DIR):
+def chkreconf_if_without_error(NIMB_tmp, subjid, SUBJECTS_DIR):
 
     file_2read = 'recon-all-status.log'
     try:
@@ -165,7 +165,7 @@ def chkreconf_if_without_error(subjid, SUBJECTS_DIR):
             break
     except FileNotFoundError as e:
         print(e)
-        cdb.Update_status_log('    '+subjid+' '+str(e))
+        cdb.Update_status_log(NIMB_tmp,'    '+subjid+' '+str(e))
 
 
 def chk_if_autorecon_done(SUBJECTS_DIR, lvl, subjid):
