@@ -29,22 +29,22 @@ class NIMB(object):
         self.process = process
         getvars = Get_Vars()
         self.vars = getvars.d_all_vars
-        print('local user is: '+self.vars['local']['user'])
+        print('local user is: '+self.vars['local']['USER']['user'])
 
 
     def run(self):
         """Run nimb"""
         task = Management(self.process, self.vars)
-        self.SOURCE_SUBJECTS_DIR = self.vars['local']['PATHS']['SOURCE_SUBJECTS_DIR']
-        self.NIMB_tmp              = self.vars['local']['PATHS']['NIMB_tmp']
+        self.SOURCE_SUBJECTS_DIR = self.vars['local']['MRDATA_PATHS']['SOURCE_SUBJECTS_DIR']
+        self.NIMB_tmp              = self.vars['local']['NIMB_PATHS']['NIMB_tmp']
 
         if self.process == 'classify':
             self.classify(task.freesurfer())
 
         if self.process == 'freesurfer':
-            with open(path.join(self.vars['local']['PATHS']['NIMB_HOME'],'processing','freesurfer','vars.json')) as jf:
+            with open(path.join(self.vars['local']['NIMB_PATHS']['NIMB_HOME'],'processing','freesurfer','vars.json')) as jf:
                 json.dump(self.vars['local'], jf, indent=4)
-            start_fs_pipeline()
+#            start_fs_pipeline()
 
         if self.process == 'stats':
             task.stats()

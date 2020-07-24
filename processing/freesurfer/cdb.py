@@ -545,7 +545,8 @@ def get_mask_codes(structure):
                     'left_hippocampus_CA4':556,'right_hippocampus_CA4':506,
                     'left_hippocampus_fissure':555,'right_hippocampus_fissure':505,
                     'left_amygdala_subiculum':557,'right_amygdala_subiculum':507,
-                    'left_amygdala_presubiculum':554,'right_amygdala_presubiculum':504,}
+                    'left_amygdala_presubiculum':554,'right_amygdala_presubiculum':504,
+                    'cerebellum':7 8 46 47}
     return structure_codes[structure]
 
 

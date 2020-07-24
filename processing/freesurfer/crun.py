@@ -20,10 +20,10 @@ try:
 except ImportError as e:
     cdb.Update_status_log(e)
 
-# cuser                  = vars["user"]
-# cusers_list            = vars["users_list"]
-# nimb_dir               = vars["PATHS"]["NIMB_HOME"]
-# nimb_scratch_dir       = vars["PATHS"]["NIMB_tmp"]
+# cuser                  = vars["USER"]["user"]
+# cusers_list            = vars["USER"]["users_list"]
+# nimb_dir               = vars["NIMB_PATHS"]["NIMB_HOME"]
+# nimb_scratch_dir       = vars["NIMB_PATHS"]["NIMB_tmp"]
 
 # SUBMIT                 = vars["PROCESSING"]["SUBMIT"]
 # processing_env         = vars["PROCESSING"]["processing_env"]
