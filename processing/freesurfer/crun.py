@@ -243,7 +243,7 @@ def do(process):
         if get_len_Queue_Running()<= max_nr_running_batches:
             db[ACTION][process].remove(subjid)
             if process == 'registration':
-                if not crunfs.chksubjidinfs(subjid):
+                if not crunfs.checks_from_runfs(SUBJECTS_DIR, 'registration',subjid, freesurfer_version, masks):
                     t1_ls_f, flair_ls_f, t2_ls_f = cdb.get_registration_files(subjid, db, nimb_dir, nimb_scratch_dir, flair_t2_add)
 # ================ START changing to submit_4_processing, in order to add tmux, started testing 20200722, ah
                     # job_id = crunfs.submit_4_processing(processing_env, cmd, subjid, run, walltime)

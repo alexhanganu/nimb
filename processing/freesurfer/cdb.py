@@ -262,11 +262,11 @@ def keep_files_similar_params(subjid, nimb_dir, NIMB_tmp, t1_ls_f, flair_ls_f, t
 
 
 
-def Update_DB_new_subjects_and_SUBJECTS_DIR(nimb_dir, nimb_scratch_dir, SUBJECTS_DIR, db, process_order, base_name, long_name, freesurfer_version, masks):
+def Update_DB_new_subjects_and_SUBJECTS_DIR(nimb_dir, NIMB_tmp, SUBJECTS_DIR, db, process_order, base_name, long_name, freesurfer_version, masks):
 
-    db = chk_subj_in_SUBJECTS_DIR(SUBJECTS_DIR, nimb_scratch_dir, db, process_order, base_name, long_name, freesurfer_version, masks)
-    db = chk_subjects_folder(SUBJECTS_DIR, nimb_dir, nimb_scratch_dir, db, base_name, long_name, freesurfer_version, masks)
-    db = chk_new_subjects_json_file(SUBJECTS_DIR, nimb_scratch_dir, db, freesurfer_version, masks)
+    db = chk_subj_in_SUBJECTS_DIR(SUBJECTS_DIR, NIMB_tmp, db, process_order, base_name, long_name, freesurfer_version, masks)
+    db = chk_subjects_folder(SUBJECTS_DIR, nimb_dir, NIMB_tmp, db, base_name, long_name, freesurfer_version, masks)
+    db = chk_new_subjects_json_file(SUBJECTS_DIR, NIMB_tmp, db, freesurfer_version, masks)
     return db
 
 
@@ -286,21 +286,21 @@ def add_subjid_2_DB(NIMB_tmp, subjid, _id, ses, db, ls_SUBJECTS_in_long_dirs_pro
 
 
 
-def chk_subjects_folder(SUBJECTS_DIR, nimb_dir, nimb_scratch_dir, db, base_name, long_name, freesurfer_version, masks):
-    Update_status_log(nimb_scratch_dir, '    NEW_SUBJECTS_DIR checking ...')
+def chk_subjects_folder(SUBJECTS_DIR, nimb_dir, NIMB_tmp, db, base_name, long_name, freesurfer_version, masks):
+    Update_status_log(NIMB_tmp, '    NEW_SUBJECTS_DIR checking ...')
 
     ls_SUBJECTS_in_long_dirs_processed = get_ls_subjids_in_long_dirs(db)
     from crunfs import checks_from_runfs
 
     f_subj2fs = nimb_dir+"subj2fs"
     if path.isfile(f_subj2fs):
-        ls_subj2fs = ls_from_subj2fs(nimb_dir, nimb_scratch_dir, f_subj2fs)
+        ls_subj2fs = ls_from_subj2fs(nimb_dir, NIMB_tmp, f_subj2fs)
         for subjid in ls_subj2fs:
-            Update_status_log(nimb_scratch_dir, '    adding '+subjid+' to database')
+            Update_status_log(NIMB_tmp, '    adding '+subjid+' to database')
             _id, ses = get_id_long(subjid, db['LONG_DIRS'], base_name, long_name)
             if not checks_from_runfs(SUBJECTS_DIR, 'registration',_id, freesurfer_version, masks):
-                db = add_subjid_2_DB(nimb_scratch_dir, subjid, _id, ses, db, ls_SUBJECTS_in_long_dirs_processed)
-        Update_status_log(nimb_scratch_dir, 'new subjects were added from the subjects folder')
+                db = add_subjid_2_DB(NIMB_tmp, subjid, _id, ses, db, ls_SUBJECTS_in_long_dirs_processed)
+        Update_status_log(NIMB_tmp, 'new subjects were added from the subjects folder')
     return db
 
 
@@ -327,7 +327,7 @@ def chk_new_subjects_json_file(SUBJECTS_DIR, NIMB_tmp, db, freesurfer_version, m
                                 subjid = _id+'_'+ses
                                 if 'REGISTRATION' in db:
                                     db['REGISTRATION'][subjid] = data[_id][ses]
-                                db = add_subjid_2_DB(subjid, _id, ses, db, ls_SUBJECTS_in_long_dirs_processed)
+                                db = add_subjid_2_DB(NIMB_tmp, subjid, _id, ses, db, ls_SUBJECTS_in_long_dirs_processed)
                             else:
                                 db['PROCESSED']['error_registration'].append(subjid)
                                 Update_status_log(NIMB_tmp, 'ERROR: '+_id+' was read and but was not added to database')
@@ -389,14 +389,14 @@ def get_registration_files(subjid, db, nimb_dir, NIMB_tmp, flair_t2_add):
 
 
 
-def ls_from_subj2fs(nimb_dir, nimb_scratch_dir, f_subj2fs):
+def ls_from_subj2fs(nimb_dir, NIMB_tmp, f_subj2fs):
     ls_subjids = list()
     lines = list(open(f_subj2fs,'r'))
     for val in lines:
         if len(val)>3:
             ls_subjids.append(val.strip('\r\n'))
     rename(nimb_dir+'subj2fs', nimb_dir+'zdone_subj2fs')
-    Update_status_log(nimb_scratch_dir, 'subj2fs was read')
+    Update_status_log(NIMB_tmp, 'subj2fs was read')
     return ls_subjids
 
 
@@ -421,8 +421,8 @@ def get_id_long(subjid, LONG_DIRS, base_name, long_name):
 
 
 
-def chk_subj_in_SUBJECTS_DIR(SUBJECTS_DIR, nimb_scratch_dir, db, process_order, base_name, long_name, freesurfer_version, masks):
-    Update_status_log(nimb_scratch_dir, '    SUBJECTS_DIR checking ...')
+def chk_subj_in_SUBJECTS_DIR(SUBJECTS_DIR, NIMB_tmp, db, process_order, base_name, long_name, freesurfer_version, masks):
+    Update_status_log(NIMB_tmp, '    SUBJECTS_DIR checking ...')
 
     from crunfs import chkIsRunning, checks_from_runfs
 
@@ -444,15 +444,15 @@ def chk_subj_in_SUBJECTS_DIR(SUBJECTS_DIR, nimb_scratch_dir, db, process_order, 
                         ls_subj_running.append(subjid)
         return ls_subj_running
 
-    def add_new_subjid_to_db(subjid, process_order, nimb_scratch_dir, freesurfer_version, masks):
+    def add_new_subjid_to_db(subjid, process_order, NIMB_tmp, freesurfer_version, masks):
         if not chkIsRunning(SUBJECTS_DIR, subjid):
             for process in process_order[1:]:
                 if not checks_from_runfs(SUBJECTS_DIR, process, subjid, freesurfer_version, masks):
-                    Update_status_log(nimb_scratch_dir, '        '+subjid+' sent for '+process)
+                    Update_status_log(NIMB_tmp, '        '+subjid+' sent for '+process)
                     db['DO'][process].append(subjid)
                     break
         else:
-            Update_status_log(nimb_scratch_dir, '            IsRunning file present, adding to '+process_order[1])
+            Update_status_log(NIMB_tmp, '            IsRunning file present, adding to '+process_order[1])
             db['RUNNING'][process_order[1]].append(subjid)
 
     if not path.isdir(SUBJECTS_DIR):
@@ -463,29 +463,29 @@ def chk_subj_in_SUBJECTS_DIR(SUBJECTS_DIR, nimb_scratch_dir, db, process_order, 
 
     for subjid in ls_SUBJECTS:
         if subjid not in ls_SUBJECTS_in_long_dirs_processed:
-            Update_status_log(nimb_scratch_dir, '    '+subjid+' not in PROCESSED')
+            Update_status_log(NIMB_tmp, '    '+subjid+' not in PROCESSED')
             _id, longitud = get_id_long(subjid, db['LONG_DIRS'], base_name, long_name)
-            Update_status_log(nimb_scratch_dir, '        adding to database: id: '+_id+', long name: '+longitud)
+            Update_status_log(NIMB_tmp, '        adding to database: id: '+_id+', long name: '+longitud)
             if _id == subjid:
                 subjid = _id+'_'+longitud
-                Update_status_log(nimb_scratch_dir, '   no '+long_name+' in '+_id+' Changing name to: '+subjid)
+                Update_status_log(NIMB_tmp, '   no '+long_name+' in '+_id+' Changing name to: '+subjid)
                 rename(SUBJECTS_DIR+_id, SUBJECTS_DIR+subjid)
             if _id not in db['LONG_DIRS']:
                 db['LONG_DIRS'][_id] = list()
             if _id in db['LONG_DIRS']:
                 if subjid not in db['LONG_DIRS'][_id]:
-                    # Update_status_log(nimb_scratch_dir, '        '+subjid+' to LONG_DIRS[\''+_id+'\']')
+                    # Update_status_log(NIMB_tmp, '        '+subjid+' to LONG_DIRS[\''+_id+'\']')
                     db['LONG_DIRS'][_id].append(subjid)
             if _id not in db['LONG_TPS']:
-                # Update_status_log(nimb_scratch_dir, '    adding '+_id+' to LONG_TPS')
+                # Update_status_log(NIMB_tmp, '    adding '+_id+' to LONG_TPS')
                 db['LONG_TPS'][_id] = list()
             if _id in db['LONG_TPS']:
                 if longitud not in db['LONG_TPS'][_id]:
-                    # Update_status_log(nimb_scratch_dir, '    adding '+longitud+' to LONG_TPS[\''+_id+'\']')
+                    # Update_status_log(NIMB_tmp, '    adding '+longitud+' to LONG_TPS[\''+_id+'\']')
                     db['LONG_TPS'][_id].append(longitud)
             if base_name not in subjid:
                 if subjid not in ls_SUBJECTS_running:
-                    add_new_subjid_to_db(subjid, process_order, nimb_scratch_dir, freesurfer_version, masks)
+                    add_new_subjid_to_db(subjid, process_order, NIMB_tmp, freesurfer_version, masks)
     return db
 
 
