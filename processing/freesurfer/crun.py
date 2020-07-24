@@ -5,12 +5,6 @@
 add FS QA tools to rm scans with low SNR (Koh et al 2017)
 https://surfer.nmr.mgh.harvard.edu/fswiki/QATools
 '''
-if path.isfile('vars.json'):
-    with open('vars.json') as vars_json:
-        vars = json.load(vars_json)
-else:
-    print('ERROR: vars.json file MISSING')
-
 
 from os import path, listdir, remove, rename, system, chdir, environ
 import time, shutil
@@ -19,6 +13,12 @@ try:
     from pathlib import Path
 except ImportError as e:
     cdb.Update_status_log(e)
+
+if path.isfile('vars.json'):
+    with open('vars.json') as vars_json:
+        vars = json.load(vars_json)
+else:
+    print('ERROR: vars.json file MISSING')
 
 # cuser                  = vars["USER"]["user"]
 # cusers_list            = vars["USER"]["users_list"]

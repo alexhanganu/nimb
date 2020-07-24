@@ -18,7 +18,8 @@ from sys import platform
 if platform == 'linux' or platform == 'linux2':
 	path_home = getenv('HOME')+'/projects/def-hanganua/'+project
 	path_scratch = getenv('SCRATCH')
-	SUBJECTS_DIR_RAW = path.join(path_scratch,'database','loni_ppmi','source','mri_unzipped')
+	#SUBJECTS_DIR_RAW = path.join(path_scratch,'database','loni_ppmi','source','mri_unzipped')
+	SUBJECTS_DIR_RAW = path.join(path_scratch, '')
 if platform == 'win32':
 	p = input('please write the path of mri_unzipped: ')
 	if path.isdir(p):
@@ -35,8 +36,8 @@ print('PATH_HOME is: ',path_home)
 print('PATH_SCRATCH is: ',path_scratch)
 
 if platform == 'linux' or platform == 'linux2' :
-	#f_new_subjects = '/home/hvt/projects/def-hanganua/hvt_ppmi_tmp' + '/new_subjects.json'
-	f_new_subjects = path.join(getenv('HOME'),'new_subjects.json')
+	#f_new_subjects = path.join(getenv('HOME'),'new_subjects.json')
+	f_new_subjects = getenv('HOME') + '/projects/def-hanganua/a' + '/new_subjects.json'
 	logf = path_scratch+'/log_'+project+'_'+str(time.strftime('%Y%m%d_%H_%M',time.localtime()))+'.txt'
 	open(logf,'w')
 if platform == 'darwin':
@@ -238,16 +239,19 @@ def get_dict_MR_files2process():
 				continue
 			d_subjects[subject] = {}
 			ls_MR_paths = exclude_MR_types(get_paths2dcm_files(SUBJECTS_DIR_RAW+'/'+subject))
-			print(ls_MR_paths)
+			print("ls_MR_paths: ", ls_MR_paths)
 			ls_sessions, d_paths = get_ls_sessions(ls_MR_paths)
-			print(ls_sessions)
+			print ("ls_sessions:", ls_sessions)
+			print("d_paths:", d_paths)
+			#print(ls_sessions)
 			d_sessions = classify_by_sessions(ls_sessions)
-			print(d_sessions)
+			#print(d_sessions)
 			dict_sessions_paths = make_dict_sessions_with_paths(d_paths, d_sessions)
 			d_ses_MR_types = classify_by_MR_types(dict_sessions_paths)
 			d_BIDS_structure = make_BIDS_structure(d_ses_MR_types)
-			print(d_BIDS_structure)
+			#print(d_BIDS_structure)
 			d_subjects[subject] = d_BIDS_structure
+			print("d_subjects:", d_subjects)
 	return d_subjects
 
 
