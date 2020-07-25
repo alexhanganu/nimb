@@ -19,7 +19,7 @@ class DistributionHelper():
         return False
 
     @staticmethod
-    def get_list_subject_to_be_processed(SOURCE_SUBJECTS_DIR, PROCESSED_FS_DIR):
+    def get_list_subject_to_be_processed_local(SOURCE_SUBJECTS_DIR, PROCESSED_FS_DIR):
         """
         1. get the list of un-processed subject
         2. get the current available space on hard-disk of user
@@ -59,8 +59,7 @@ class DistributionHelper():
         all_subjects_at_local = ListSubjectHelper.get_all_subjects(SOURCE_SUBJECTS_DIR) # full path
         all_subjects_at_local_short_name = [short_name.split("/")[-1] for short_name in all_subjects_at_local ]
         # get free space remotely
-        (out, err) = runCommandOverSSH(ssh_session, f"ls  {PROCESSED_FS_DIR}/*.gz")
-        free_space = DiskspaceUtility.get_free_space_remote(out)
+        free_space = DiskspaceUtility.get_free_space_remote(ssh_session)
         to_be_process_subject = set(all_subjects_at_local_short_name) - set(all_processed_file_remote) # not consider space yet
         # consider the space available the remote server
         to_be_process_subject = DiskspaceUtility.get_subject_upto_size(free_space, to_be_process_subject)

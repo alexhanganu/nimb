@@ -22,16 +22,18 @@ class DiskspaceUtility:
         return int(subprocess.check_output(['du', '-shcm', path]).split()[0].decode('utf-8')) - 1
 
     @staticmethod
-    def get_free_space_remote(output):
+    def get_free_space_remote(ssh_session):
         """
         return the space in MB
+
         :param self:
-        :output the output of diskusage_report running at remote server
+        :output the output of diskusage_report running at remote server,
+        output is got from this line (out, err) = runCommandOverSSH(ssh_session, f"ls  {PROCESSED_FS_DIR}/*.gz")
         :param sshconnection: the ssh connection to the remote server
         :return: int, size in MG, this number is round(realsize) + 1
         """
+        (output, err) = runCommandOverSSH(ssh_session, "diskusage_report")
         print("It would talke long time to get diskusage_report ")
-        # output = subprocess.check_output(["diskusage_report"])
         first_line = output.decode("utf8").split("\n")[1].strip()
         results = re.sub("\s{4,}", "@@", first_line) #'/home (user hvt) 1173M/50G 20k/500k'
         results = results.split("@@")[1].lstrip().strip() # 1173M/50G

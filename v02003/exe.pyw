@@ -6,7 +6,7 @@ from a.lib import database
 from utility import SSHHelper
 from tkinter import Tk, ttk, Menu, N, W, E, S, StringVar, HORIZONTAL
 from sys import platform, version_info
-
+from .utility.distribution_helper import DistributionHelper
 if not version_info[0] >= 3:
     from os import system
 
@@ -190,13 +190,18 @@ def run(Project):
     # check if all the variabled are defined
     check_defined_variable(Project)
     # it can do better by reading the eml.json or beluga.json and check for the missing var
-    # 1. install required library and software on the local computer
+    # 1. install required library and software on the local computer, including freesurfer
     setting_up_local_computer()
     # 2. check and install required library on remote computer
     print("Setting up the remote server")
     setting_up_remote_linux_with_freesurfer()
-    status.set('Copying data to cluster ...block for now')
-    # 1 copy subjects to cluster
+
+    print("get list of un-process subject. to be send to the server")
+    # must set SOURCE_SUBJECTS_DIR, PROCESSED_FS_DIR before calling
+    # DistributionHelper.get_list_subject_to_be_processed_remote(SOURCE_SUBJECTS_DIR, PROCESSED_FS_DIR)
+    # how this part work?
+    status.set('Copying data to cluster ')
+    #  copy subjects to cluster
     run_copy_subject_to_cluster(Project)
 
     status.set('Cluster analysis started')
