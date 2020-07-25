@@ -159,12 +159,6 @@ def runplots():
     makestats.mkstatisticsfplots()
 
 
-
-def run_processing_on_cluster():
-    # todo: add username, password, and command line to run here
-    print("Start running the the command via SSH in cluster: python a/crun.py")
-    SSHHelper.running_command_ssh()
-
 def run_processing_on_cluster_2():
     '''
     this is an enhanced version of run_processing_on_cluster
