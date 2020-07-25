@@ -19,7 +19,7 @@ class Get_Vars():
 			return json.load(jf)
 
 	def verify_local_user(self):
-		from get_username import _get_username
+		from .get_username import _get_username
 		user = self.d_all_vars['local']['USER']['user']
 		user_local = _get_username()
 		if user_local != user:
@@ -33,5 +33,7 @@ class Get_Vars():
 				self.d_all_vars['local']['USER']['user'] = user_local
 				for variable in self.d_all_vars['local']['NIMB_PATHS']:
 					self.d_all_vars['local']['NIMB_PATHS'][variable] = self.d_all_vars['local']['NIMB_PATHS'][variable].replace(user, user_local)
-				for variable in self.d_all_vars['local']['FREESURFER']:
-					self.d_all_vars['local']['FREESURFER'][variable] = self.d_all_vars['local']['FREESURFER'][variable].replace(user, user_local)
+				self.d_all_vars['local']['FREESURFER']["FREESURFER_HOME"] = self.d_all_vars['local']['FREESURFER']["FREESURFER_HOME"].replace(user, user_local)
+				self.d_all_vars['local']['FREESURFER']["FS_SUBJECTS_DIR"] = self.d_all_vars['local']['FREESURFER']["FS_SUBJECTS_DIR"].replace(user, user_local)
+				self.d_all_vars['local']['FREESURFER']["export_FreeSurfer_cmd"] = self.d_all_vars['local']['FREESURFER']["export_FreeSurfer_cmd"].replace(user, user_local)
+

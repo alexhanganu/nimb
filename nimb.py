@@ -8,8 +8,7 @@ import sys
 import json
 from distribution.pipeline_management import Management
 from setup.get_vars import Get_Vars
-from processing.freesurfer import start_fs_pipeline
-
+from os import path
 from classification import classify_bids
 
 __version__ = 'v1'
@@ -42,9 +41,11 @@ class NIMB(object):
             self.classify(task.freesurfer())
 
         if self.process == 'freesurfer':
-            with open(path.join(self.vars['local']['NIMB_PATHS']['NIMB_HOME'],'processing','freesurfer','vars.json')) as jf:
+            vars_f = path.join(self.vars['local']['NIMB_PATHS']['NIMB_HOME'],'processing','freesurfer','vars.json')
+            with open(vars_f,'w') as jf:
                 json.dump(self.vars['local'], jf, indent=4)
-#            start_fs_pipeline()
+            from processing.freesurfer import start_fs_pipeline
+            start_fs_pipeline.start_fs_pipeline()
 
         if self.process == 'stats':
             task.stats()

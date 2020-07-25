@@ -21,14 +21,15 @@
        "SUBMIT": 1,
        "processing_env"         : "slurm",
        "max_nr_running_batches" : 100,
-       "text4_scheduler"        : ["#!/bin/sh","#SBATCH --account:def-hanganua","#SBATCH --mem:8G"],
-       "batch_walltime_cmd"     : "#SBATCH --time:",
-       "batch_output_cmd"       : "#SBATCH --output:",
+       "text4_scheduler"        : ["#!/bin/sh","#SBATCH --account=def-hanganua","#SBATCH --mem=8G"],
+       "batch_walltime_cmd"     : "#SBATCH --time=",
+       "batch_output_cmd"       : "#SBATCH --output=",
        "submit_cmd"             : "sbatch",
-       "max_walltime"           : "99:00:00",
+       "max_walltime"           : "23:59:59",
        "batch_walltime"         : "03:00:00",
        "python3_load_cmd"       : "module load python/3.8.2",
-       "python3_run_cmd"        : "python"
+       "python3_run_cmd"        : "python",
+       "archive_processed" : 1
               },
 "FREESURFER": {
        "FreeSurfer_install" : 1,
@@ -38,7 +39,6 @@
        "export_FreeSurfer_cmd" : "export FREESURFER_HOME:/home/lucaspsy/projects/def-hanganua/freesurfer",
        "source_FreeSurfer_cmd" : "$FREESURFER_HOME/SetUpFreeSurfer.sh",
        "process_order" : ["registration","autorecon1","autorecon2","autorecon3","qcache","brstem","hip","tha"],
-       "archive_processed" : 1,
        "masks" : [],
        "flair_t2_add" : 0,
        "DO_LONG" : 0,
