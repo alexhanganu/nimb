@@ -80,7 +80,10 @@ def Update_DB(db, NIMB_tmp):
 # ================ END
         for key in db:
             f.write(key+'= {')
-            if key == 'RUNNING_JOBS' or key == 'ERROR_QUEUE':
+            if key == 'ERROR_QUEUE':
+                for subkey in db[key]:
+                    f.write('\''+subkey+'\':\''+str(db[key][subkey])+'\',')
+            if key == 'RUNNING_JOBS':
                 for subkey in db[key]:
                     f.write('\''+subkey+'\':'+str(db[key][subkey])+',')
             elif key == 'REGISTRATION':
