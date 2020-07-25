@@ -25,18 +25,16 @@ def makesubmitpbs(cmd, subjid, run, walltime, params):
     date=datetime.datetime.now()
     dt=str(date.year)+str(date.month)+str(date.day)
 
-    if not path.exists(params["NIMB_tmp"]+'usedpbs'):
-        mkdir(params["NIMB_tmp"]+'usedpbs')
     sh_file = subjid+'_'+run+'_'+str(dt)+'.sh'
     out_file = subjid+'_'+run+'_'+str(dt)+'.out'
 
-    with open(params["NIMB_tmp"]+'usedpbs/'+sh_file,'a') as f:
+    with open(path.join(params["NIMB_tmp"], 'usedpbs', sh_file),'a') as f:
         for line in params["text4_scheduler"]:
             f.write(line+'\n')
         f.write(params["batch_walltime_cmd"]+walltime+'\n')
-        f.write(params["batch_output_cmd"]+params["NIMB_tmp"]+'usedpbs/'+out_file+'\n')
+        f.write(params["batch_output_cmd"]+path.join(params["NIMB_tmp"],'usedpbs',out_file)+'\n')
         f.write('\n')
-        f.write('cd '+params["NIMB_HOME"]+'\n')
+#        f.write('cd '+params["NIMB_HOME"]+'\n')
         f.write('\n')
         f.write(params["export_FreeSurfer_cmd"]+'\n')
         f.write('source '+params["source_FreeSurfer_cmd"]+'\n')
@@ -46,7 +44,7 @@ def makesubmitpbs(cmd, subjid, run, walltime, params):
     print('    submitting '+sh_file)
     if params["SUBMIT"]:
         try:
-            resp = subprocess.run(['sbatch',params["NIMB_tmp"]+'usedpbs/'+sh_file], stdout=subprocess.PIPE).stdout.decode('utf-8')
+            resp = subprocess.run(['sbatch',path.join(params["NIMB_tmp"],'usedpbs',sh_file)], stdout=subprocess.PIPE).stdout.decode('utf-8')
             return list(filter(None, resp.split(' ')))[-1].strip('\n')
         except Exception as e:
             print(e)
@@ -150,19 +148,18 @@ def chkreconf_if_without_error(NIMB_tmp, subjid, SUBJECTS_DIR):
                     return True
                     break
                 elif 'exited with ERRORS' in line:
-                    cdb.Update_status_log('        exited with ERRORS')
+                    cdb.Update_status_log(NIMB_tmp,'        exited with ERRORS')
                     return False
                     break
                 elif 'recon-all -s' in line:
                     return False
                     break
                 else:
-                    cdb.Update_status_log('        not clear if finished with or without ERROR')
+                    cdb.Update_status_log(NIMB_tmp,'        not clear if finished with or without ERROR')
                     return False
                     break
         else:
             return False
-            break
     except FileNotFoundError as e:
         print(e)
         cdb.Update_status_log(NIMB_tmp,'    '+subjid+' '+str(e))
@@ -173,7 +170,7 @@ def chk_if_autorecon_done(SUBJECTS_DIR, lvl, subjid):
                 2:['stats/lh.curv.stats','stats/rh.curv.stats',],
                 3:['stats/aseg.stats','stats/wmparc.stats',]}
     for path_f in f_autorecon[lvl]:
-            if not path.exists(SUBJECTS_DIR+subjid+'/'+path_f):# file not in listdir(SUBJECTS_DIR+subjid+'/'+file):
+            if not path.exists(path.join(SUBJECTS_DIR,subjid,path_f)):
                 return False
                 break
             else:
@@ -185,7 +182,7 @@ def chk_if_recon_done(SUBJECTS_DIR, subjid):
 
     '''must check for all files: https://surfer.nmr.mgh.harvard.edu/fswiki/ReconAllDevTable
 	'''
-    if 'wmparc.mgz' in listdir(SUBJECTS_DIR+subjid+'/mri/'):
+    if 'wmparc.mgz' in listdir(path.join(SUBJECTS_DIR,subjid,'mri')):
         return True
     else:
         return False
@@ -194,7 +191,7 @@ def chk_if_recon_done(SUBJECTS_DIR, subjid):
 
 def chk_if_qcache_done(SUBJECTS_DIR, subjid):
 
-    if 'rh.w-g.pct.mgh.fsaverage.mgh' and 'lh.thickness.fwhm10.fsaverage.mgh' in listdir(SUBJECTS_DIR+subjid+'/surf/'):
+    if 'rh.w-g.pct.mgh.fsaverage.mgh' and 'lh.thickness.fwhm10.fsaverage.mgh' in listdir(path.join(SUBJECTS_DIR,subjid,'surf')):
         return True
     else:
         return False
@@ -215,14 +212,14 @@ log_files = {
 
 def chkbrstemf(SUBJECTS_DIR, subjid, freesurfer_version):
 
-    lsscripts=listdir(SUBJECTS_DIR+subjid+'/scripts/')
+    lsscripts=listdir(path.join(SUBJECTS_DIR,subjid,'scripts'))
     log_file = log_files['bs'][freesurfer_version]
     if any(log_file in i for i in lsscripts):
-        with open(SUBJECTS_DIR+subjid+'/scripts/'+log_file,'rt') as readlog:
+        with open(path.join(SUBJECTS_DIR,subjid,'scripts',log_file),'rt') as readlog:
             for line in readlog:
                 line2read=[line]
                 if any('Everything done' in i for i in line2read):
-                    lsmri=listdir(SUBJECTS_DIR+subjid+'/mri/')
+                    lsmri=listdir(path.join(SUBJECTS_DIR,subjid,'mri'))
                     bs_f_stats = [i for i in lsmri if 'brainstemSsVolumes' in i][0]
                     if bs_f_stats:
                         if 'brainstemSsVolumes.v10' in bs_f_stats:
@@ -242,14 +239,14 @@ files_hip_amy21_mri = {
 }
 def chkhipf(SUBJECTS_DIR, subjid):
 
-    lsscripts=listdir(SUBJECTS_DIR+subjid+'/scripts/')
+    lsscripts=listdir(path.join(SUBJECTS_DIR,subjid,'scripts'))
     if any('hippocampal-subfields-T1' in i for i in lsscripts):
         # if 'IsRunningHPsubT1.lh+rh' not in lsscripts
-        with open(SUBJECTS_DIR+subjid+'/scripts/hippocampal-subfields-T1.log','rt') as readlog:
+        with open(path.join(SUBJECTS_DIR,subjid,'scripts','hippocampal-subfields-T1.log'),'rt') as readlog:
             for line in readlog:
                 line2read=[line]
                 if any('Everything done' in i for i in line2read):
-                    lsmri=listdir(SUBJECTS_DIR+subjid+'/mri/')
+                    lsmri=listdir(path.join(SUBJECTS_DIR,subjid,'mri'))
                     if any('lh.hippoSfVolumes-T1.v10.txt' in i for i in lsmri):
                         try:
                             shutil.copy(path.join(SUBJECTS_DIR,subjid,'mri','lh.hippoSfVolumes-T1.v10.txt'),path.join(SUBJECTS_DIR,subjid,'stats','lh.hipposubfields.T1.v10.stats'))
@@ -272,13 +269,13 @@ def chkhipf(SUBJECTS_DIR, subjid):
 
 def chkthaf(SUBJECTS_DIR, subjid):
 
-    lsscripts=listdir(SUBJECTS_DIR+subjid+'/scripts/')
+    lsscripts=listdir(path.join(SUBJECTS_DIR,subjid,'scripts'))
     if any('thalamic-nuclei-mainFreeSurferT1.log' in i for i in lsscripts):
-        with open(SUBJECTS_DIR+subjid+'/scripts/thalamic-nuclei-mainFreeSurferT1.log','rt') as readlog:
+        with open(path.join(SUBJECTS_DIR,subjid,'scripts','thalamic-nuclei-mainFreeSurferT1.log'),'rt') as readlog:
             for line in readlog:
                 line2read=[line]
                 if any('Everything done' in i for i in line2read):
-                    lsmri=listdir(SUBJECTS_DIR+subjid+'/mri/')
+                    lsmri=listdir(path.join(SUBJECTS_DIR,subjid,'mri'))
                     if any('ThalamicNuclei.v12.T1.volumes.txt' in i for i in lsmri):
                         shutil.copy(path.join(SUBJECTS_DIR,subjid,'mri','ThalamicNuclei.v12.T1.volumes.txt'),path.join(SUBJECTS_DIR,subjid,'stats','thalamic-nuclei.v12.T1.stats'))
                         return True
@@ -301,7 +298,7 @@ def chk_masks(SUBJECTS_DIR, subjid, masks):
 
 
 
-def fs_find_error(subjid, SUBJECTS_DIR):
+def fs_find_error(subjid, SUBJECTS_DIR, NIMB_tmp):
     error = ''
     print('identifying THE error')
     file_2read = path.join(SUBJECTS_DIR,subjid,'scripts','recon-all.log')
@@ -310,11 +307,11 @@ def fs_find_error(subjid, SUBJECTS_DIR):
             f = open(file_2read,'r').readlines()
             for line in reversed(f):
                 if 'ERROR: Talairach failed!' in line:
-                    cdb.Update_status_log('        ERROR: Manual Talairach alignment may be necessary, or include the -notal-check flag to skip this test, making sure the -notal-check flag follows -all or -autorecon1 in the command string.')
+                    cdb.Update_status_log(NIMB_tmp,'        ERROR: Manual Talairach alignment may be necessary, or include the -notal-check flag to skip this test, making sure the -notal-check flag follows -all or -autorecon1 in the command string.')
                     error = 'talfail'
                     break
                 elif  'ERROR: MultiRegistration::loadMovables: images have different voxel sizes.' in line:
-                    cdb.Update_status_log('        ERROR: Voxel size is different, Multiregistration is not supported; consider making conform')
+                    cdb.Update_status_log(NIMB_tmp,'        ERROR: Voxel size is different, Multiregistration is not supported; consider making conform')
                     error = 'voxsizediff'
                     break
                 elif 'ERROR: no run data found' in line:
@@ -333,10 +330,10 @@ def fs_find_error(subjid, SUBJECTS_DIR):
                     error = 'errMRIresample'
                     break
         else:
-            cdb.Update_status_log('        ERROR: '+file_2read+' not in '+path.join(SUBJECTS_DIR,subjid,'scripts'))
+            cdb.Update_status_log(NIMB_tmp,'        ERROR: '+file_2read+' not in '+path.join(SUBJECTS_DIR,subjid,'scripts'))
     except FileNotFoundError as e:
         print(e)
-        cdb.Update_status_log('    '+subjid+' '+str(e))
+        cdb.Update_status_log(NIMB_tmp,'    '+subjid+' '+str(e))
     return error
 
 

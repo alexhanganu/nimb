@@ -17,12 +17,12 @@ def Get_DB(NIMB_HOME, NIMB_tmp, process_order):
 
     db = dict()
     dbjson = dict()
-    db_json_last_file = path.join(NIMB_HOME,'db.json')
+    db_json_last_file = path.join(NIMB_HOME,'processing','freesurfer','db.json')
 
     print("NIMB_tmp is:" + NIMB_tmp)
-    if path.isfile(NIMB_tmp+'db'):
-        shutil.copy(NIMB_tmp+'db',NIMB_HOME+'db.py')
-        system('chmod 777 '+path.join(NIMB_HOME,'db.py'))
+    if path.isfile(path.join(NIMB_tmp,'db')):
+        shutil.copy(path.join(NIMB_tmp,'db'), path.join(NIMB_HOME,'processing','freesurfer','db.py'))
+        system('chmod 777 '+path.join(NIMB_HOME,'processing','freesurfer','db.py'))
         time.sleep(2)
         from db import DO, QUEUE, RUNNING, RUNNING_JOBS, LONG_DIRS, LONG_TPS, PROCESSED, REGISTRATION, ERROR_QUEUE
         db['DO'] = DO
@@ -35,7 +35,7 @@ def Get_DB(NIMB_HOME, NIMB_tmp, process_order):
         db['REGISTRATION'] = REGISTRATION
         db['ERROR_QUEUE'] = ERROR_QUEUE
         time.sleep(2)
-        remove(NIMB_HOME+'db.py')
+        remove(path.join(NIMB_HOME,'processing','freesurfer','db.py'))
     else:
         for action in ['DO','QUEUE','RUNNING',]:
             db[action] = {}
@@ -46,7 +46,7 @@ def Get_DB(NIMB_HOME, NIMB_tmp, process_order):
         db['LONG_TPS'] = {}
         db['PROCESSED'] = {'cp2local':[],}
         db['REGISTRATION'] = {}
-        db['ERROR_QUEUE'] = {}        
+        db['ERROR_QUEUE'] = {}
         for process in process_order:
             db['PROCESSED']['error_'+process] = []
 
@@ -60,12 +60,12 @@ def Get_DB(NIMB_HOME, NIMB_tmp, process_order):
     #     with open(db_json_last_file) as db_json_last_open:
     #         dbjson_last = json.load(db_json_last_open)
     #         if dbjson_last != dbjson:
-    #             Update_status_log(NIMB_tmp, 'ERROR !! last DB json from NIMB_HOME is different from the DB json on NIMB_scratch')
+    #             Update_status_log(NIMB_tmp, 'ERROR !! last DB json from NIMB_HOME/processing/freesurfer is different from the DB json on NIMB_scratch')
     #             db = dbjson_last
     # if db != dbjson:
     #     Update_status_log(NIMB_tmp, 'DB json and DB py NOT similar, but json file is not sorted')
     # else:
-    #     Update_status_log(NIMB_tmp, 'DB json nimb_scratch, DB py nimb_scratch and DB json NIMB_HOME are ALL similar')
+    #     Update_status_log(NIMB_tmp, 'DB json nimb_scratch, DB py nimb_scratch and DB json NIMB_HOME/processing/freesurfer are ALL similar')
 # ================ END
 
     return db
@@ -122,7 +122,6 @@ def Update_status_log(NIMB_tmp, cmd, update=True):
 
 def Update_running(NIMB_tmp, cmd):
     file = path.join(NIMB_tmp,'running_')
-	
     if cmd == 1:
         if path.isfile(file+'0'):
             rename(file+'0',file+'1')
@@ -164,7 +163,7 @@ def verify_vox_size_values(vox_size):
 def get_MR_file_params(subjid, nimb_dir, NIMB_tmp, file):
 	tmp_f = path.join(NIMB_tmp,'tmp')
 	vox_size = 'none'
-	chdir(nimb_dir)
+	chdir(path.join(nimb_dir,'classification'))
 	system('./mri_info '+file+' >> '+tmp_f)
 	if path.isfile(tmp_f):
 		lines = list(open(tmp_f,'r'))
@@ -262,10 +261,10 @@ def keep_files_similar_params(subjid, nimb_dir, NIMB_tmp, t1_ls_f, flair_ls_f, t
 
 
 
-def Update_DB_new_subjects_and_SUBJECTS_DIR(nimb_dir, NIMB_tmp, SUBJECTS_DIR, db, process_order, base_name, long_name, freesurfer_version, masks):
+def Update_DB_new_subjects_and_SUBJECTS_DIR(NIMB_tmp, SUBJECTS_DIR, db, process_order, base_name, long_name, freesurfer_version, masks):
 
     db = chk_subj_in_SUBJECTS_DIR(SUBJECTS_DIR, NIMB_tmp, db, process_order, base_name, long_name, freesurfer_version, masks)
-    db = chk_subjects_folder(SUBJECTS_DIR, nimb_dir, NIMB_tmp, db, base_name, long_name, freesurfer_version, masks)
+    db = chk_subjects_folder(SUBJECTS_DIR, NIMB_tmp, db, base_name, long_name, freesurfer_version, masks)
     db = chk_new_subjects_json_file(SUBJECTS_DIR, NIMB_tmp, db, freesurfer_version, masks)
     return db
 
@@ -286,15 +285,15 @@ def add_subjid_2_DB(NIMB_tmp, subjid, _id, ses, db, ls_SUBJECTS_in_long_dirs_pro
 
 
 
-def chk_subjects_folder(SUBJECTS_DIR, nimb_dir, NIMB_tmp, db, base_name, long_name, freesurfer_version, masks):
+def chk_subjects_folder(SUBJECTS_DIR, NIMB_tmp, db, base_name, long_name, freesurfer_version, masks):
     Update_status_log(NIMB_tmp, '    NEW_SUBJECTS_DIR checking ...')
 
     ls_SUBJECTS_in_long_dirs_processed = get_ls_subjids_in_long_dirs(db)
     from crunfs import checks_from_runfs
 
-    f_subj2fs = nimb_dir+"subj2fs"
+    f_subj2fs = path.join(NIMB_tmp, 'subj2fs')
     if path.isfile(f_subj2fs):
-        ls_subj2fs = ls_from_subj2fs(nimb_dir, NIMB_tmp, f_subj2fs)
+        ls_subj2fs = ls_from_subj2fs(NIMB_tmp, f_subj2fs)
         for subjid in ls_subj2fs:
             Update_status_log(NIMB_tmp, '    adding '+subjid+' to database')
             _id, ses = get_id_long(subjid, db['LONG_DIRS'], base_name, long_name)
@@ -389,13 +388,13 @@ def get_registration_files(subjid, db, nimb_dir, NIMB_tmp, flair_t2_add):
 
 
 
-def ls_from_subj2fs(nimb_dir, NIMB_tmp, f_subj2fs):
+def ls_from_subj2fs(NIMB_tmp, f_subj2fs):
     ls_subjids = list()
     lines = list(open(f_subj2fs,'r'))
     for val in lines:
         if len(val)>3:
             ls_subjids.append(val.strip('\r\n'))
-    rename(nimb_dir+'subj2fs', nimb_dir+'zdone_subj2fs')
+    rename(f_subj2fs, path.join(NIMB_tmp,'zdone_subj2fs'))
     Update_status_log(NIMB_tmp, 'subj2fs was read')
     return ls_subjids
 
@@ -448,11 +447,11 @@ def chk_subj_in_SUBJECTS_DIR(SUBJECTS_DIR, NIMB_tmp, db, process_order, base_nam
         if not chkIsRunning(SUBJECTS_DIR, subjid):
             for process in process_order[1:]:
                 if not checks_from_runfs(SUBJECTS_DIR, process, subjid, freesurfer_version, masks):
-                    Update_status_log(NIMB_tmp, '        '+subjid+' sent for '+process)
+                    Update_status_log(NIMB_tmp, '        '+subjid+' sent for DO '+process)
                     db['DO'][process].append(subjid)
                     break
         else:
-            Update_status_log(NIMB_tmp, '            IsRunning file present, adding to '+process_order[1])
+            Update_status_log(NIMB_tmp, '            IsRunning file present, adding to RUNNING '+process_order[1])
             db['RUNNING'][process_order[1]].append(subjid)
 
     if not path.isdir(SUBJECTS_DIR):
@@ -469,7 +468,7 @@ def chk_subj_in_SUBJECTS_DIR(SUBJECTS_DIR, NIMB_tmp, db, process_order, base_nam
             if _id == subjid:
                 subjid = _id+'_'+longitud
                 Update_status_log(NIMB_tmp, '   no '+long_name+' in '+_id+' Changing name to: '+subjid)
-                rename(SUBJECTS_DIR+_id, SUBJECTS_DIR+subjid)
+                rename(path.join(SUBJECTS_DIR,_id), path.join(SUBJECTS_DIR,subjid))
             if _id not in db['LONG_DIRS']:
                 db['LONG_DIRS'][_id] = list()
             if _id in db['LONG_DIRS']:
@@ -506,7 +505,7 @@ def get_batch_jobs_status(cuser, cusers_list):
     jobs = dict()
     for cuser in cusers_list:
         queue = list(filter(None,subprocess.run(['squeue','-u',cuser], stdout=subprocess.PIPE).stdout.decode('utf-8').split('\n')))
-        jobs = get_jobs(jobs, queue)
+        jobs.update(get_jobs(jobs, queue))
 
     return jobs
 

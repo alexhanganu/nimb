@@ -35,3 +35,4 @@ class Get_Vars():
 					self.d_all_vars['local']['NIMB_PATHS'][variable] = self.d_all_vars['local']['NIMB_PATHS'][variable].replace(user, user_local)
 				self.d_all_vars['local']['FREESURFER']["FREESURFER_HOME"] = self.d_all_vars['local']['FREESURFER']["FREESURFER_HOME"].replace(user, user_local)
 				self.d_all_vars['local']['FREESURFER']["FS_SUBJECTS_DIR"] = self.d_all_vars['local']['FREESURFER']["FS_SUBJECTS_DIR"].replace(user, user_local)
+				self.d_all_vars['local']['FREESURFER']["export_FreeSurfer_cmd"] = self.d_all_vars['local']['FREESURFER']["export_FreeSurfer_cmd"].replace(user, user_local)

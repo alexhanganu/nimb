@@ -45,7 +45,7 @@ class NIMB(object):
             with open(vars_f,'w') as jf:
                 json.dump(self.vars['local'], jf, indent=4)
             from processing.freesurfer import start_fs_pipeline
-#            start_fs_pipeline()
+            start_fs_pipeline.start_fs_pipeline()
 
         if self.process == 'stats':
             task.stats()
