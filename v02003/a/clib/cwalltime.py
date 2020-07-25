@@ -4,7 +4,7 @@
 
 from var import max_walltime
 
-def Get_walltime(process):
+def Get_walltime(process, max_walltime):
     
     suggested_times = {
         'registration':'01:00:00',
