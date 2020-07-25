@@ -306,7 +306,7 @@ def fs_find_error(subjid, SUBJECTS_DIR, NIMB_tmp):
         if path.exists(file_2read):
             f = open(file_2read,'r').readlines()
             for line in reversed(f):
-                if 'ERROR: Talairach failed!' in line:
+                if 'ERROR: Talairach failed!' in line or 'error: transforms/talairach.m3z' in line:
                     cdb.Update_status_log(NIMB_tmp,'        ERROR: Manual Talairach alignment may be necessary, or include the -notal-check flag to skip this test, making sure the -notal-check flag follows -all or -autorecon1 in the command string.')
                     error = 'talfail'
                     break
