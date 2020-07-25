@@ -1,6 +1,6 @@
 #!/bin/python
 # 2020.06.12
-# Alexandru Hanganu
+# alex hanganu
 
 
 def Get_walltime(process, max_walltime):
