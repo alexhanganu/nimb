@@ -1,6 +1,6 @@
 {
     "USER": {
-        "user": "hiver85",
+        "user": "hanganua",
         "users_list": [
             "hanganua",
             "hvt",
@@ -16,11 +16,11 @@
         "PROCESSED_FS_DIR_error": ""
     },
     "NIMB_PATHS": {
-        "NIMB_HOME": "/home/hiver85/projects/def-hanganua/nimb",
-        "NIMB_tmp": "/scratch/hiver85/a_tmp",
-        "NIMB_NEW_SUBJECTS": "/home/hiver85/projects/def-hanganua/new_subjects",
-        "NIMB_PROCESSED_FS": "/home/hiver85/projects/def-hanganua/subjects_processed",
-        "NIMB_PROCESSED_FS_error": "/home/hiver85/projects/def-hanganua/processed_fs_error"
+        "NIMB_HOME": "/home/hanganua/projects/def-hanganua/nimb",
+        "NIMB_tmp": "/scratch/hanganua/a_tmp",
+        "NIMB_NEW_SUBJECTS": "/home/hanganua/projects/def-hanganua/new_subjects",
+        "NIMB_PROCESSED_FS": "/home/hanganua/projects/def-hanganua/subjects_processed",
+        "NIMB_PROCESSED_FS_error": "/home/hanganua/projects/def-hanganua/processed_fs_error"
     },
     "PROCESSING": {
         "SUBMIT": 1,
@@ -43,9 +43,9 @@
     "FREESURFER": {
         "FreeSurfer_install": 1,
         "freesurfer_version": 7,
-        "FREESURFER_HOME": "/home/hiver85/projects/def-hanganua/freesurfer",
-        "FS_SUBJECTS_DIR": "/home/hiver85/projects/def-hanganua/fs-subjects",
-        "export_FreeSurfer_cmd": "export FREESURFER_HOME:/home/hiver85/projects/def-hanganua/freesurfer",
+        "FREESURFER_HOME": "/home/hanganua/projects/def-hanganua/freesurfer",
+        "FS_SUBJECTS_DIR": "/home/hanganua/projects/def-hanganua/fs-subjects",
+        "export_FreeSurfer_cmd": "export FREESURFER_HOME:/home/hanganua/projects/def-hanganua/freesurfer",
         "source_FreeSurfer_cmd": "$FREESURFER_HOME/SetUpFreeSurfer.sh",
         "process_order": [
             "registration",
