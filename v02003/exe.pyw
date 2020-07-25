@@ -1,4 +1,3 @@
-
 # 2020 Jan 10
 # modules to install: pandas, scipy, glob, shutil, openpyxl, xlrd(data_processing_local.chklog)
 from a.build import build
@@ -10,6 +9,7 @@ from sys import platform, version_info
 
 if not version_info[0] >= 3:
     from os import system
+
     print('INSTALLING PYTHON 3 for CENTOS 7')
     system('sudo yum install -y https://centos7.iuscommunity.org/ius-release.rpm')
     system('sudo yum update')
@@ -187,14 +187,29 @@ def run_processing_on_cluster_2():
                                     user_password=user_password,
                                     cmd_run_crun_on_cluster=cmd_run_crun_on_cluster)
 
-def run(Project):
-    print("Project name: " + Project)
-    print(Project)
-    status.set('Copying data to cluster ...block for now')
-    run_copy_subject_to_cluster()
-    status.set('Cluster analysis started')
 
+
+
+
+def run(Project):
+    # 0 check the variables
+    # check if all the variabled are defined
+    check_defined_variable(Project)
+    # it can do better by reading the eml.json or beluga.json and check for the missing var
+    # 1. install required library and software on the local computer
+    setting_up_local_computer()
+    # 2. check and install required library on remote computer
+    print("Setting up the remote server")
+    setting_up_remote_linux_with_freesurfer()
+    status.set('Copying data to cluster ...block for now')
+    # 1 copy subjects to cluster
+    run_copy_subject_to_cluster(Project)
+
+    status.set('Cluster analysis started')
     status.set("Cluster analysing running....")
+
+
+
     run_processing_on_cluster_2()
     print("Do processing here, temporary block that function")
     # do the processing here
@@ -211,8 +226,94 @@ def run(Project):
     #     # define LocalProcessing folder
     #     print("here is the error: " + database._get_folder('LocalProcessing'))
     #     system('python '+database._get_folder('LocalProcessing')+'a/local_run.py')
-        # path = 'a/lib/local_run.py '
-        # system('python a/lib/local_run.py')
+    # path = 'a/lib/local_run.py '
+    # system('python a/lib/local_run.py')
+
+def setting_up_local_computer():
+    if platform.startswith('linux'):
+        print("Currently only support setting up on Ubuntu-based system")
+        # do the job here
+        setting_up_local_linux_with_freesurfer()
+    elif platform in ["win32"]:
+        print("The system is not fully supported in Windows OS. The application quits now .")
+        exit()
+    else: # like freebsd,
+        print("This platform is not supported")
+        exit()
+def setting_up_local_linux_with_freesurfer():
+    """
+    install the require libarary
+    :return:
+    """
+    try:
+        from v02003.a.setup import SETUP_LOCAL_v2
+    except:
+        from a.setup import SETUP_LOCAL_v2
+
+    SETUP_LOCAL_v2()
+
+def setting_up_remote_linux_with_freesurfer():
+    # go the remote server by ssh, enter the $HOME (~) folder
+    # execute following commands
+    # 0. prepare the python load the python 3.7.4
+    # 1. git clone the repository
+    # 2. run the python file remote_setupv2.py
+
+    clusters = database._get_Table_Data('Clusters', 'all')
+    user_name = clusters[list(clusters)[0]]['Username']
+    user_password = clusters[list(clusters)[0]]['Password']
+    #todo:
+    git_repo = "https://github.com/alexhanganu/nimb/"
+    load_python_3 = 'module load python/3.7.4;'
+    cmd_git = f" cd ~; git clone {git_repo};  "
+    cmd_run_setup = " cd nimb/setup; python remote_setupv2.py"
+
+    cmd_run_crun_on_cluster = load_python_3 + cmd_git + cmd_run_setup
+    print("command: " + cmd_run_crun_on_cluster)
+    host_name = clusters[list(clusters)[0]]['remote_address']
+    # todo: how to know if the setting up is failed?
+    print("Setting up the remote cluster")
+    SSHHelper.running_command_ssh_2(host_name=host_name, user_name=user_name,
+                                    user_password=user_password,
+                                    cmd_run_crun_on_cluster=cmd_run_crun_on_cluster)
+
+def error_message(variable):
+    print(f"{variable} is empty or not defined, please check it again ")
+    print("The application is now exit")
+    exit()
+
+
+def check_defined_variable(Project):
+    """
+    The application with immediately quit if any of these variable is not define
+    :param Project:
+    :return: None
+    """
+    # todo: refactor to remove duplicate code
+    # todo:
+    clusters = database._get_Table_Data('Clusters', 'all')
+    cname = [*clusters.keys()][0]
+    password = clusters[cname]['Password']
+    supervisor_ccri = clusters[cname]['Supervisor_CCRI']
+    if not password:
+        error_message("password to login to remote cluster")
+    if not supervisor_ccri:
+        error_message("supervisor_ccri")
+    if not cname:
+        error_message("cluster name ")
+    project_folder = clusters[cname]['HOME']
+    if not project_folder:
+        error_message("your home folder")
+    a_folder = clusters[cname]['App_DIR']
+    if not a_folder:
+        error_message("a_folder")
+    subjects_folder = clusters[cname]['Subjects_raw_DIR']
+    if not subjects_folder:
+        error_message("Subjects_raw_DIR")
+    # mri_path = database._get_Table_Data('Projects', Project)[Project]['mri_dir']
+    # mri path is not in the sqlite location. must be updated
+
+
 def run_copy_subject_to_cluster(Project):
     '''
     copy the subjects from subject json file to cluster
@@ -220,19 +321,20 @@ def run_copy_subject_to_cluster(Project):
     :return: None
     '''
     # todo: how to get the active cluster for this project
-    clusters = database._get_Table_Data('Clusters','all')
+    clusters = database._get_Table_Data('Clusters', 'all')
     cname = [*clusters.keys()][0]
     project_folder = clusters[cname]['HOME']
     a_folder = clusters[cname]['App_DIR']
     subjects_folder = clusters[cname]['Subjects_raw_DIR']
     # the json path is getting from mri path,
-    mri_path = database._get_Table_Data('Projects',Project)[Project]['mri_dir']
+    mri_path = database._get_Table_Data('Projects', Project)[Project]['mri_dir']
     print(mri_path)
     print("subject json: " + mri_path)
-    interface_cluster.copy_subjects_to_cluster(mri_path,subjects_folder, a_folder)
+    interface_cluster.copy_subjects_to_cluster(mri_path, subjects_folder, a_folder)
+
 
 row = 0
-Project_Data = database._get_Table_Data('Projects','all')
+Project_Data = database._get_Table_Data('Projects', 'all')
 if len(Project_Data) > 0:
     for Project in Project_Data:
         col = 0
@@ -250,13 +352,12 @@ if len(Project_Data) > 0:
 
         button(mainframe, text="copy subjects to cluster",
                command=lambda: run_copy_subject_to_cluster(Project)).grid(row=row, column=col)
-        mri_path = database._get_Table_Data('Projects',Project)[Project]['mri_dir']
+        mri_path = database._get_Table_Data('Projects', Project)[Project]['mri_dir']
         col += 1
 
-       # button(mainframe, text="do stats", command=lambda: runstats(
-       #     Project_Data, Project)).grid(row=row, column=col, sticky=W)
+        # button(mainframe, text="do stats", command=lambda: runstats(
+        #     Project_Data, Project)).grid(row=row, column=col, sticky=W)
         row += 1
-
 
 ttk.Separator(mainframe, orient=HORIZONTAL).grid(
     row=row, column=0, columnspan=7, sticky='ew')
@@ -266,10 +367,10 @@ row += 1
 # button(mainframe, text="Extract data all subjects", command=xtrctdata).grid(row=row+1, column=5, columnspan=2, sticky=W)
 # row += 1
 
-clusters = database._get_Table_Data('Clusters','all')
+clusters = database._get_Table_Data('Clusters', 'all')
 cred = ['not set']
 ####
-#clusters = database._get_credentials('all')
+# clusters = database._get_credentials('all')
 # cuser = clusters[0][1]
 # caddress = clusters[0][2]
 # cpw = clusters[0][5]
@@ -280,16 +381,12 @@ cred = ['not set']
 for cred in clusters:
     button(mainframe, text=cred, command=setupcredentials).grid(
         row=row, column=0, sticky=W)
-    row +=1
+    row += 1
 
 for child in mainframe.winfo_children():
     child.grid_configure(padx=5, pady=5)
 
-
 root.mainloop()
-
-
-
 
 '''
 this script was written for a specific lab, it is probably not needed anymore.

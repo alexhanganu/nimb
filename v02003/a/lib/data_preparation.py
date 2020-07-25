@@ -7,6 +7,8 @@ try:
 except ImportError:
     pass
 import shutil, time
+from os import makedirs, path, listdir
+from datetime import datetime
 
 from . import database
 
@@ -20,11 +22,8 @@ def data_preparation(Project):
     group_col = 'group'
 
     Project_Data = database._get_Project_Data_d(Project)
-    file_groups = Project_Data_d[project]['file_groups']
-
-
-    from os import makedirs, path, listdir
-    from datetime import datetime
+    print("Project_Data_d[project]['file_groups'] is not defined")
+    file_groups = Project_Data_d[project]['file_groups'] # not available yet
 
     if len(file_groups)>0:
         print('file groups present, starting making fsgd files')

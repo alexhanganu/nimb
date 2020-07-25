@@ -681,34 +681,64 @@ def SETUP_LOCAL(local_maindir):
     print('FINISHED SETTING UP LOCAL')
 
 
+def SETUP_LOCAL_v2(local_maindir):
+    # -y for silent install
+    install_manager = 'apt-get -y'
+    import platform
+    if 'centos' in platform.platform():
+        install_manager = "yum -y"
 
+    print('SETTING UP LOCAL v2')
+    pwd = getcwd().replace(path.sep, '/')+'/'
+    system('sudo chmod 777 '+local_maindir) # why sudo here?
 
-'''
-
-In order to setup Tractoflow on the cluster, singularity is needed;
-on cedar singularity does not allow installation
-saying there is not sudo
-probably Tractflow can be installed and run only on a local with sudo
-needs sudo on elm
-
-'''
-
-# print('TRYING to setup TractoFlow for DWI analysis')
-# from os import system
-# def chk(module):
-#     system('module spider '+module+' >> tmp')
-#     res = open('tmp','r').readlines()
-#     remove('tmp')
-#     for val in res:
-#         if 'module spider '+module in val:
-#             line = val.strip('\n')
-#             return line.split(' ')[-1]
-
-# module_v = chk_if_module_present('singularity')
-# if module_v:
-#     chdir(cmaindir)
-    # system('module load '+module_v)
-    # system('wget http://scil.usherbrooke.ca/containers_list/tractoflow_2.1.0_feb64b9_2020-05-29.img')
-    # system('git clone https://github.com/scilus/containers-tractoflow.git')
-    # system('singularity build singularity_name.img containers-tractoflow/singularity_tractoflow.def')
-
+    system('chmod 777 ' + local_maindir)  # if sudo fail
+    # notes: default mode of makedir is 777
+    if not path.exists(local_maindir+'a/'):
+        makedirs(local_maindir+'a/')
+    if not path.exists(local_maindir+'a/lib/'):
+        makedirs(local_maindir+'a/lib/')
+    system('sudo chmod -R 777 ' + local_maindir)
+    # in case that the user is not in sudo group, run again
+    system('chmod -R 777 ' + local_maindir)
+    shutil.copy('a/lib/local_run.py', local_maindir+'a/local_run.py')
+    shutil.copy('a/lib/local_runfs.py', local_maindir+'a/local_runfs.py')
+    shutil.copy('a/lib/local_db.py', local_maindir+'a/local_db.py')
+    r = system('curl -V')
+    if r == 32512:
+        system(f'sudo {install_manager} install curl ')
+        print('y')
+    if not path.exists(local_maindir+'freesurfer/'):
+        chdir(local_maindir)
+        system('curl '+freesurfer_download_address+' -o freesurfer_installation.tar.gz')
+        while not path.isfile(local_maindir+'freesurfer_installation.tar.gz'):
+            time.sleep(1000)
+        system('tar xvf freesurfer_installation.tar.gz')
+        remove('freesurfer_installation.tar.gz')
+        shutil.move(pwd+'a/clib/.license', local_maindir+'freesurfer/.license')
+    if not path.exists(local_maindir+'freesurfer/MCRv80'):
+            chdir(local_maindir+'freesurfer')
+            system('curl '+matlab_runtime_download_address+' -o matlab_runtime.tar.gz')
+            while not path.isfile(local_maindir+'freesurfer/matlab_runtime.tar.gz'):
+                time.sleep(30)
+            system('tar xvf matlab_runtime.tar.gz')
+            remove('matlab_runtime.tar.gz')
+    system(f'sudo {install_manager}  install sshpass')
+    # system('sudo yum install sshpass -y')
+    chdir(local_maindir)
+    system(f'sudo {install_manager}  install tcsh')
+    system('echo \'export FREESURFER_HOME='+local_maindir+'freesurfer\' >> ~/.bashrc')
+    system('echo \'source $FREESURFER_HOME/SetUpFreeSurfer.sh\' >> ~/.bashrc')
+    if not path.exists(local_maindir+'fsl'):
+        system('curl https://fsl.fmrib.ox.ac.uk/fsldownloads/fslinstaller.py -o fslinstaller.py')
+        while not path.isfile(local_maindir+'fslinstaller.py'):
+                time.sleep(30)
+        system('python fslinstaller.py')
+        print('')
+        remove('fslinstaller.py')
+    system(f'sudo {install_manager}  install python-nipype ')
+    print('y')
+    system('pip3 install --user nipy')
+    system("pip3 install scp paramiko")
+    system("pip3 install xlsxwriter xlrd ")
+    print('FINISHED SETTING UP LOCAL')

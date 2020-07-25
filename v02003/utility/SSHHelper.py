@@ -442,9 +442,21 @@ def test():
     print(out, err)
     print("finish")
 
+def test2():
+    """tes the function"""
+    from  v02003.a.lib import database
+    clusters = database._get_credentials('all')
+    host_name = "beluga.calculquebec.ca"
+    ssh_session = getSSHSession(host_name, user_name, user_password)
+    (zip_out, err) = runCommandOverSSH(ssh_session, "ls  ~/projects/def-hanganua/adni/source/mri/*.zip" )
+    (gz_out, err) = runCommandOverSSH(ssh_session, "ls  ~/projects/def-hanganua/adni/source/mri/*.gz")
+
+    print("finish")
+
 if __name__ == "__main__":
     if True:
-        test()
+        # test()
+        test2()
     if False:
         json_path = '../docs/new_subjects.json'
         upload_all_subjects(subjects_json_file = json_path, subjects_folder="/home/hvt/test",
