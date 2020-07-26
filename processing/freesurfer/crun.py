@@ -282,9 +282,7 @@ def check_error():
 
     for process in process_order:
         if db['PROCESSED']['error_'+process]:
-            lserr = list()
-            for val in db['PROCESSED']['error_'+process]:
-                lserr.append(val)
+            lserr = db['PROCESSED']['error_'+process].copy()
             for subjid in lserr:
                 cdb.Update_status_log(nimb_scratch_dir, '    '+subjid)
                 if path.exists(path.join(SUBJECTS_DIR,subjid)):
