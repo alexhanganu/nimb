@@ -133,6 +133,7 @@ def queue(process, all_running):
     lsq = list()
     for val in db[ACTION][process]:
         lsq.append(val)
+#    lsq = db[ACTION][process].copy()
 
     for subjid in lsq:
         status = 'none'
@@ -163,6 +164,7 @@ def running(process, all_running):
     lsr = list()
     for val in db[ACTION][process]:
         lsr.append(val)	
+#    lsr = db[ACTION][process].copy()
 
     for subjid in lsr:
         if subjid in db['RUNNING_JOBS']:
@@ -235,6 +237,7 @@ def do(process):
     lsd = list()
     for val in db[ACTION][process]:
         lsd.append(val)
+#    lsd = db[ACTION][process].copy()
 
     for subjid in lsd:
         cdb.Update_status_log(nimb_scratch_dir, '   '+subjid)

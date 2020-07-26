@@ -34,11 +34,12 @@ with open(path.join(vars["NIMB_PATHS"]["NIMB_tmp"], 'status.log'),'a') as log:
     log.write('    '+sh_file+' submitting\n')
 
 def start_fs_pipeline():
-    try:
-        resp = subprocess.run([vars['PROCESSING']["submit_cmd"],path.join(vars["NIMB_PATHS"]["NIMB_tmp"], 'usedpbs', sh_file)], stdout=subprocess.PIPE).stdout.decode('utf-8')
-        print(list(filter(None, resp.split(' ')))[-1].strip('\n'))
-    except Exception as e:
-        print(e)
+    print('pause')
+#    try:
+#        resp = subprocess.run([vars['PROCESSING']["submit_cmd"],path.join(vars["NIMB_PATHS"]["NIMB_tmp"], 'usedpbs', sh_file)], stdout=subprocess.PIPE).stdout.decode('utf-8')
+#        print(list(filter(None, resp.split(' ')))[-1].strip('\n'))
+#    except Exception as e:
+#        print(e)
 
 if __name__ == "__main__":
     start_fs_pipeline()
