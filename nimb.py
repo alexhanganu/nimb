@@ -34,8 +34,6 @@ class NIMB(object):
     def run(self):
         """Run nimb"""
         task = Management(self.process, self.vars)
-        self.SOURCE_SUBJECTS_DIR = self.vars['local']['MRDATA_PATHS']['SOURCE_SUBJECTS_DIR']
-        self.NIMB_tmp              = self.vars['local']['NIMB_PATHS']['NIMB_tmp']
 
         if self.process == 'classify':
             self.classify(task.freesurfer())
@@ -55,7 +53,7 @@ class NIMB(object):
 
     def classify(self, ready):
         if ready:
-            return classify_bids.get_dict_MR_files2process(self.SOURCE_SUBJECTS_DIR, self.NIMB_tmp)
+            return classify_bids.get_dict_MR_files2process(self.vars['local']['NIMB_PATHS']['NIMB_NEW_SUBJECTS'],self.vars['local']['NIMB_PATHS']['NIMB_tmp'])
 
 
 
