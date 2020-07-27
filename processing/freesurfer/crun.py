@@ -24,6 +24,7 @@ except ImportError as e:
 cuser                  = vars["USER"]["user"]
 cusers_list            = vars["USER"]["users_list"]
 nimb_dir               = vars["NIMB_PATHS"]["NIMB_HOME"]
+NIMB_HOME              = vars["NIMB_PATHS"]["NIMB_HOME"]
 nimb_scratch_dir       = vars["NIMB_PATHS"]["NIMB_tmp"]
 NIMB_tmp               = vars["NIMB_PATHS"]["NIMB_tmp"]
 processed_SUBJECTS_DIR = vars["NIMB_PATHS"]["NIMB_PROCESSED_FS"]
@@ -176,7 +177,7 @@ def running(process, all_running):
                     cdb.Update_status_log(nimb_scratch_dir, ' reading '+process+subjid+' subjid is long or base ')
                     if crunfs.chkIsRunning(SUBJECTS_DIR, subjid) or not crunfs.checks_from_runfs(SUBJECTS_DIR, 'recon', subjid, freesurfer_version, masks):
                         cdb.Update_status_log(nimb_scratch_dir, '    '+subjid+' '+process+' moving to ERROR, step 1')
-                        db['ERROR_QUEUE'][subjid] = str(format(datetime.now()+timedelta(hours=datetime.strptime(cwalltime.Get_walltime(process, max_walltime), '%H:%M:%S').hour), "%Y%m%d_%H%M"))
+#                        db['ERROR_QUEUE'][subjid] = str(format(datetime.now()+timedelta(hours=datetime.strptime(cwalltime.Get_walltime(process, max_walltime), '%H:%M:%S').hour), "%Y%m%d_%H%M"))
                         db['PROCESSED']['error_recon'].append(subjid)
                 else:
                     if not crunfs.chkIsRunning(SUBJECTS_DIR, subjid) and crunfs.checks_from_runfs(SUBJECTS_DIR, process, subjid, freesurfer_version, masks):
@@ -192,7 +193,7 @@ def running(process, all_running):
                             cdb.Update_status_log(nimb_scratch_dir, '    '+subjid+' processing DONE')
                     else:
                         cdb.Update_status_log(nimb_scratch_dir, '    '+subjid+' '+process+' moving to ERROR because status is: '+status+', and IsRunning is present, step 2')
-                        db['ERROR_QUEUE'][subjid] = str(format(datetime.now()+timedelta(hours=datetime.strptime(cwalltime.Get_walltime(process, max_walltime), '%H:%M:%S').hour), "%Y%m%d_%H%M"))
+#                        db['ERROR_QUEUE'][subjid] = str(format(datetime.now()+timedelta(hours=datetime.strptime(cwalltime.Get_walltime(process, max_walltime), '%H:%M:%S').hour), "%Y%m%d_%H%M"))
                         db['PROCESSED']['error_'+process].append(subjid)
         else:
             cdb.Update_status_log(nimb_scratch_dir, '    '+subjid+' NOT in RUNNING_JOBS')
@@ -202,7 +203,7 @@ def running(process, all_running):
                     cdb.Update_status_log(nimb_scratch_dir, '    '+subjid+process+' subjid is long or base ')
                     if not crunfs.checks_from_runfs(SUBJECTS_DIR, 'recon', subjid, freesurfer_version, masks):
                         cdb.Update_status_log(nimb_scratch_dir, '    '+subjid+' recon, moving to ERROR, step 3')
-                        db['ERROR_QUEUE'][subjid] = str(format(datetime.now()+timedelta(hours=datetime.strptime(cwalltime.Get_walltime(process, max_walltime), '%H:%M:%S').hour), "%Y%m%d_%H%M"))
+#                        db['ERROR_QUEUE'][subjid] = str(format(datetime.now()+timedelta(hours=datetime.strptime(cwalltime.Get_walltime(process, max_walltime), '%H:%M:%S').hour), "%Y%m%d_%H%M"))
                         db['PROCESSED']['error_recon'].append(subjid)
                 else:
                     if crunfs.checks_from_runfs(SUBJECTS_DIR, process, subjid, freesurfer_version, masks):
@@ -218,12 +219,12 @@ def running(process, all_running):
                             cdb.Update_status_log(nimb_scratch_dir, '    '+subjid+' processing DONE')
                     else:
                         cdb.Update_status_log(nimb_scratch_dir, '    '+subjid+' '+process+' moving to ERROR, step 4')
-                        db['ERROR_QUEUE'][subjid] = str(format(datetime.now()+timedelta(hours=datetime.strptime(cwalltime.Get_walltime(process, max_walltime), '%H:%M:%S').hour), "%Y%m%d_%H%M"))
+#                        db['ERROR_QUEUE'][subjid] = str(format(datetime.now()+timedelta(hours=datetime.strptime(cwalltime.Get_walltime(process, max_walltime), '%H:%M:%S').hour), "%Y%m%d_%H%M"))
                         db['PROCESSED']['error_'+process].append(subjid)
             else:
                 db[ACTION][process].remove(subjid)
                 cdb.Update_status_log(nimb_scratch_dir, '    '+subjid+' '+process+' moving to error_'+process+' step5')
-                db['ERROR_QUEUE'][subjid] = str(format(datetime.now()+timedelta(hours=datetime.strptime(cwalltime.Get_walltime(process, max_walltime), '%H:%M:%S').hour), "%Y%m%d_%H%M"))
+#                db['ERROR_QUEUE'][subjid] = str(format(datetime.now()+timedelta(hours=datetime.strptime(cwalltime.Get_walltime(process, max_walltime), '%H:%M:%S').hour), "%Y%m%d_%H%M"))
                 db['PROCESSED']['error_'+process].append(subjid)
     db[ACTION][process].sort()
     cdb.Update_DB(db, nimb_scratch_dir)
@@ -303,18 +304,20 @@ def check_error():
                                     db['PROCESSED']['error_'+process].remove(subjid)
                                     db['RUNNING'][process].append(subjid)
                                     cdb.Update_status_log(nimb_scratch_dir, '        moving from error_'+process+' to RUNNING '+process)
-                                elif solve == 'voxreg' or solve == 'errorigmgz':
-                                    solved = True
-                                    db['REGISTRATION'][subjid]['anat']['t1'] = db['REGISTRATION'][subjid]['anat']['t1'][:1]
-                                    if 'flair' in db['REGISTRATION'][subjid]['anat']:
-                                            db['REGISTRATION'][subjid]['anat'].pop('flair', None)
-                                    if 't2' in db['REGISTRATION'][subjid]['anat']:
-                                            db['REGISTRATION'][subjid]['anat'].pop('t2', None)
-                                    db['PROCESSED']['error_'+process].remove(subjid)
-                                    db['DO']["registration"].append(subjid)
-                                    cdb.Update_status_log(nimb_scratch_dir, '        moving from error_'+process+' to RUNNING registratoin')
+                                elif subjid in db['REGISTRATION']:
+                                    if solve == 'voxreg' or solve == 'errorigmgz':
+                                        solved = True
+                                        db['REGISTRATION'][subjid]['anat']['t1'] = db['REGISTRATION'][subjid]['anat']['t1'][:1]
+                                        if 'flair' in db['REGISTRATION'][subjid]['anat']:
+                                                db['REGISTRATION'][subjid]['anat'].pop('flair', None)
+                                        if 't2' in db['REGISTRATION'][subjid]['anat']:
+                                                db['REGISTRATION'][subjid]['anat'].pop('t2', None)
+                                        db['PROCESSED']['error_'+process].remove(subjid)
+                                        db['DO']["registration"].append(subjid)
+                                        cdb.Update_status_log(nimb_scratch_dir, '        moving from error_'+process+' to RUNNING registratoin')
                                 else:
                                     new_name = 'error_'+fs_error+'_'+subjid
+                                    cdb.Update_status_log(nimb_scratch_dir, '            '+solve+', maybe subjid is missing from db[REGISTRATION]. Excluding subject from pipeline.')
                             else:
                                 new_name = 'error_'+process+'_'+subjid
 # ================ END NEW CODE that needs to be verified
@@ -333,7 +336,7 @@ def check_error():
                                         if subjid in db['REGISTRATION']:
                                             db['REGISTRATION'].pop(subjid, None)
                                         else:
-                                            Update_status_log('        missing from db[REGISTRATION]')
+                                            cdb.Update_status_log(nimb_scratch_dir, '        missing from db[REGISTRATION]')
                                     except Exception as e:
                                         cdb.Update_status_log(nimb_scratch_dir, '        ERROR, id not found in LONG_DIRS; '+str(e))
                                 else:
@@ -384,11 +387,11 @@ def long_check_groups(_id):
                                     All_long_ids_done.append(long_f)
                                 else:
                                     cdb.Update_status_log(nimb_scratch_dir, long_f+' moving to error_recon, STEP 6')
-                                    db['ERROR_QUEUE'][subjid] = str(format(datetime.now()+timedelta(hours=datetime.strptime(cwalltime.Get_walltime(process, max_walltime), '%H:%M:%S').hour), "%Y%m%d_%H%M"))
+#                                    db['ERROR_QUEUE'][subjid] = str(format(datetime.now()+timedelta(hours=datetime.strptime(cwalltime.Get_walltime(process, max_walltime), '%H:%M:%S').hour), "%Y%m%d_%H%M"))
                                     db['PROCESSED']['error_recon'].append(long_f)
                             else:
                                 cdb.Update_status_log(nimb_scratch_dir, long_f+' moving to error_recon, step 7')
-                                db['ERROR_QUEUE'][subjid] = str(format(datetime.now()+timedelta(hours=datetime.strptime(cwalltime.Get_walltime(process, max_walltime), '%H:%M:%S').hour), "%Y%m%d_%H%M"))
+#                                db['ERROR_QUEUE'][subjid] = str(format(datetime.now()+timedelta(hours=datetime.strptime(cwalltime.Get_walltime(process, max_walltime), '%H:%M:%S').hour), "%Y%m%d_%H%M"))
                                 db['PROCESSED']['error_recon'].append(long_f)
 
                         if len(All_long_ids_done) == len(LONG_TPS):
@@ -401,11 +404,11 @@ def long_check_groups(_id):
                             if subjid in db['REGISTRATION']:
                                 db['REGISTRATION'].pop(subjid, None)
                             else:
-                                Update_status_log('        missing from db[REGISTRATION]')
+                                cdb.Update_status_log(nimb_scratch_dir, '        missing from db[REGISTRATION]')
                             cdb.Update_status_log(nimb_scratch_dir, '        '+_id+'moved to cp2local')
                     else:
                         cdb.Update_status_log(nimb_scratch_dir, base_f+' moving to error_recon, step 8')
-                        db['ERROR_QUEUE'][subjid] = str(format(datetime.now()+timedelta(hours=datetime.strptime(cwalltime.Get_walltime(process, max_walltime), '%H:%M:%S').hour), "%Y%m%d_%H%M"))
+#                        db['ERROR_QUEUE'][subjid] = str(format(datetime.now()+timedelta(hours=datetime.strptime(cwalltime.Get_walltime(process, max_walltime), '%H:%M:%S').hour), "%Y%m%d_%H%M"))
                         db['PROCESSED']['error_recon'].append(base_f)
             else:
                 job_id = crunfs.makesubmitpbs(Get_cmd.recbase(base_f, All_cross_ids_done), base_f, 'recbase', cwalltime.Get_walltime('recbase'), scheduler_params)
@@ -424,7 +427,7 @@ def long_check_groups(_id):
                     if subjid in db['REGISTRATION']:
                         db['REGISTRATION'].pop(subjid, None)
                     else:
-                        Update_status_log('        missing from db[REGISTRATION]')
+                        cdb.Update_status_log(nimb_sratch_dir,'        missing from db[REGISTRATION]')
             else:
                 cdb.Update_status_log(nimb_scratch_dir, '        '+subjid+' was not registered')
                 db['LONG_DIRS'].pop(_id, None)
@@ -432,14 +435,14 @@ def long_check_groups(_id):
                 if subjid in db['REGISTRATION']:
                     db['REGISTRATION'].pop(subjid, None)
                 else:
-                    Update_status_log('        missing from db[REGISTRATION]')
+                    cdb.Update_status_log(nimb_scratch_dir, '        missing from db[REGISTRATION]')
     cdb.Update_DB(db, nimb_scratch_dir)
 
 
 
 def move_processed_subjects(subject, db_source, new_name):
     cdb.Update_status_log(nimb_scratch_dir, '    '+subject+' moving from '+db_source)
-    file_mrparams = path.join(nimb_scratch_dir,subject+'_mrparams')
+    file_mrparams = path.join(nimb_scratch_dir,'mriparams',subject+'_mrparams')
     if path.isfile(file_mrparams):
         shutil.move(file_mrparams, path.join(SUBJECTS_DIR, subject, 'stats'))
     size_src = sum(f.stat().st_size for f in Path(path.join(SUBJECTS_DIR,subject)).glob('**/*') if f.is_file())

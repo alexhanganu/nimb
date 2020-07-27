@@ -13,7 +13,7 @@
 "NIMB_PATHS": {
     "NIMB_HOME": "/home/lucaspsy/projects/def-hanganua/nimb",
     "NIMB_tmp": "/scratch/lucaspsy/a_tmp",
-    "NIMB_NEW_SUBJECTS": "/home/hanganua/projects/def-hanganua/nimb_new_subjects",
+    "NIMB_NEW_SUBJECTS": "/scratch/hanganua/nimb_new_subjects",
     "NIMB_PROCESSED_FS": "/home/lucaspsy/projects/def-hanganua/nimb_processed_fs",
     "NIMB_PROCESSED_FS_error": "/home/lucaspsy/projects/def-hanganua/nimb_processed_fs_error"
               },

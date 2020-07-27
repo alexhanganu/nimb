@@ -17,25 +17,33 @@ def Get_DB(NIMB_HOME, NIMB_tmp, process_order):
 
     db = dict()
     dbjson = dict()
+    db_json_file = path.join(NIMB_tmp,'db.json')
     db_json_last_file = path.join(NIMB_HOME,'processing','freesurfer','db.json')
 
     print("NIMB_tmp is:" + NIMB_tmp)
-    if path.isfile(path.join(NIMB_tmp,'db')):
-        shutil.copy(path.join(NIMB_tmp,'db'), path.join(NIMB_HOME,'processing','freesurfer','db.py'))
-        system('chmod 777 '+path.join(NIMB_HOME,'processing','freesurfer','db.py'))
-        time.sleep(2)
-        from db import DO, QUEUE, RUNNING, RUNNING_JOBS, LONG_DIRS, LONG_TPS, PROCESSED, REGISTRATION, ERROR_QUEUE
-        db['DO'] = DO
-        db['QUEUE'] = QUEUE
-        db['RUNNING'] = RUNNING
-        db['RUNNING_JOBS'] = RUNNING_JOBS
-        db['LONG_DIRS'] = LONG_DIRS
-        db['LONG_TPS'] = LONG_TPS
-        db['PROCESSED'] = PROCESSED
-        db['REGISTRATION'] = REGISTRATION
-        db['ERROR_QUEUE'] = ERROR_QUEUE
-        time.sleep(2)
-        remove(path.join(NIMB_HOME,'processing','freesurfer','db.py'))
+# ================ START implementing DB in a json format, started testing 20200722, ah
+    if path.isfile(db_json_file):
+        with open(db_json_file) as db_json_open:
+            db = json.load(db_json_open)
+# ================ END
+# ================ START = Update_DB records 'ERROR_QUEUE' in the else loop as list, and the error canot be found.
+#                  temporarily will use only the json DB version.
+#    if path.isfile(path.join(NIMB_tmp,'db')):
+#        shutil.copy(path.join(NIMB_tmp,'db'), path.join(NIMB_HOME,'processing','freesurfer','db.py'))
+#        system('chmod 777 '+path.join(NIMB_HOME,'processing','freesurfer','db.py'))
+#        time.sleep(2)
+#        from db import DO, QUEUE, RUNNING, RUNNING_JOBS, LONG_DIRS, LONG_TPS, PROCESSED, REGISTRATION, ERROR_QUEUE
+#        db['DO'] = DO
+#        db['QUEUE'] = QUEUE
+#        db['RUNNING'] = RUNNING
+#        db['RUNNING_JOBS'] = RUNNING_JOBS
+#        db['LONG_DIRS'] = LONG_DIRS
+#        db['LONG_TPS'] = LONG_TPS
+#        db['PROCESSED'] = PROCESSED
+#        db['REGISTRATION'] = REGISTRATION
+#        db['ERROR_QUEUE'] = ERROR_QUEUE
+#        time.sleep(2)
+#        remove(path.join(NIMB_HOME,'processing','freesurfer','db.py'))
     else:
         for action in ['DO','QUEUE','RUNNING',]:
             db[action] = {}
@@ -51,10 +59,6 @@ def Get_DB(NIMB_HOME, NIMB_tmp, process_order):
             db['PROCESSED']['error_'+process] = []
 
 # ================ START implementing DB in a json format, started testing 20200722, ah
-    db_json_file = path.join(NIMB_tmp,'db.json')
-    # if path.isfile(db_json_file):
-    #     with open(db_json_file) as db_json_open:
-    #         dbjson = json.load(db_json_open)
     # testing if db.json is similar to the py version
     # if path.isfile(db_json_last_file):
     #     with open(db_json_last_file) as db_json_last_open:
@@ -72,42 +76,36 @@ def Get_DB(NIMB_HOME, NIMB_tmp, process_order):
 
 
 def Update_DB(db, NIMB_tmp):
-    file = path.join(NIMB_tmp,'db')
-# ================ START probably 'w').close() is not needed. This opens the file twice. started testing 20200722, ah
-#    open(file,'w').close()
-    with open(file,'w') as f:
-#    with open(file,'a') as f:
-# ================ END
-        for key in db:
-            f.write(key+'= {')
-            if key == 'ERROR_QUEUE':
-                for subkey in db[key]:
-                    f.write('\''+subkey+'\':\''+str(db[key][subkey])+'\',')
-            if key == 'RUNNING_JOBS':
-                for subkey in db[key]:
-                    f.write('\''+subkey+'\':'+str(db[key][subkey])+',')
-            elif key == 'REGISTRATION':
-                for subkey_subjid in db[key]:
-                    f.write('\''+subkey_subjid+'\': {')
-                    for subkey_mrgroup in db[key][subkey_subjid]:
-                        f.write('\''+subkey_mrgroup+'\': {')
-                        for subkey_mrgroup_type in db[key][subkey_subjid][subkey_mrgroup]:
-                            f.write('\''+subkey_mrgroup_type+'\':'+str(sorted(db[key][subkey_subjid][subkey_mrgroup][subkey_mrgroup_type]))+',')
-                        f.write('},')
-                    f.write('},')
-            else:
-                for subkey in db[key]:
-                    f.write('\''+subkey+'\':[')
-                    for value in sorted(db[key][subkey]):
-                        f.write('\''+value+'\',')
-                    f.write('],')
-            f.write('}\n')
-# ================ START implementing DB in a json format, started testing 20200722, ah
-    with open(path.join(NIMB_tmp,'db.json'),'w') as f:
-        json.dump(db, f, indent=4)
-# ================ END
-
-
+    with open(path.join(NIMB_tmp,'db.json'),'w') as jf:
+        json.dump(db, jf, indent=4)
+#    with open(path.join(NIMB_tmp,'db'),'w') as f:
+#        for key in db:
+#            f.write(key+'= {')
+#            if key == 'ERROR_QUEUE':
+#                for subkey in db[key]:
+#                    f.write('\''+subkey+'\':\"'+str(db[key][subkey])+'\",')
+#            if key == 'RUNNING_JOBS':
+#                for subkey in db[key]:
+#                    f.write('\''+subkey+'\':'+str(db[key][subkey])+',')
+#            elif key == 'REGISTRATION':
+#                for subkey_subjid in db[key]:
+#                    f.write('\''+subkey_subjid+'\': {')
+#                    for subkey_mrgroup in db[key][subkey_subjid]:
+#                        f.write('\''+subkey_mrgroup+'\': {')
+#                        for subkey_mrgroup_type in db[key][subkey_subjid][subkey_mrgroup]:
+#                            f.write('\''+subkey_mrgroup_type+'\':'+str(sorted(db[key][subkey_subjid][subkey_mrgroup][subkey_mrgroup_type]))+',')
+#                        f.write('},')
+#                    f.write('},')
+#            else:
+# =============== This loop reads second time the 'ERROR_QUEUE', at the "else" level, though it must not.
+#                 cannot find the error. will use json version.
+#                print(key)
+#                for subkey in db[key]:
+#                    f.write('\''+subkey+'\':[')
+#                    for value in sorted(db[key][subkey]):
+#                        f.write('\''+value+'\',')
+#                    f.write('],')
+#            f.write('}\n')
 
 
 
@@ -170,7 +168,7 @@ def get_MR_file_params(subjid, nimb_dir, NIMB_tmp, file):
 	system('./mri_info '+file+' >> '+tmp_f)
 	if path.isfile(tmp_f):
 		lines = list(open(tmp_f,'r'))
-		file_mrparams = path.join(NIMB_tmp,subjid+'_mrparams')
+		file_mrparams = path.join(NIMB_tmp,'mriparams',subjid+'_mrparams')
 		if not path.isfile(file_mrparams):
 			open(file_mrparams,'w').close()
 		with open(file_mrparams,'a') as f:
@@ -327,22 +325,20 @@ def chk_new_subjects_json_file(SUBJECTS_DIR, NIMB_tmp, db, freesurfer_version, m
                         if 't1' in data[_id][ses]['anat']:
                             if data[_id][ses]['anat']['t1']:
                                 subjid = _id+'_'+ses
-                                if 'REGISTRATION' in db:
-                                    db['REGISTRATION'][subjid] = data[_id][ses]
+                                db['REGISTRATION'][subjid] = data[_id][ses]
                                 db = add_subjid_2_DB(NIMB_tmp, subjid, _id, ses, db, ls_SUBJECTS_in_long_dirs_processed)
                             else:
                                 db['PROCESSED']['error_registration'].append(subjid)
                                 Update_status_log(NIMB_tmp, 'ERROR: '+_id+' was read and but was not added to database')
 # ================ START consider removing new_subjects.json, started testing 20200722, ah
-        rename(f_new_subjects, path.join(NIMB_tmp,'znew_subjects_'+time.strftime("%Y%m%d_%H%M",time.localtime(time.time()))+'.json'))
+        rename(f_new_subjects, path.join(NIMB_tmp,'znew_subjects_registered_to_db_'+time.strftime("%Y%m%d_%H%M",time.localtime(time.time()))+'.json'))
 # ================ END
         Update_status_log(NIMB_tmp, '        new subjects were added from the new_subjects.json file')
     return db
 
 
 def get_registration_files(subjid, db, nimb_dir, NIMB_tmp, flair_t2_add):
-    Update_status_log(NIMB_tmp, '    '+subjid+' reading registration files')
-    if 'REGISTRATION' in db:
+        Update_status_log(NIMB_tmp, '    '+subjid+' reading registration files')
         t1_ls_f = db['REGISTRATION'][subjid]['anat']['t1']
         flair_ls_f = 'none'
         t2_ls_f = 'none'
@@ -354,36 +350,6 @@ def get_registration_files(subjid, db, nimb_dir, NIMB_tmp, flair_t2_add):
                 t2_ls_f = db['REGISTRATION'][subjid]['anat']['t2']
         Update_status_log(NIMB_tmp, '        from db[\'REGISTRATION\']')
         t1_ls_f, flair_ls_f, t2_ls_f = keep_files_similar_params(subjid, nimb_dir, NIMB_tmp, t1_ls_f, flair_ls_f, t2_ls_f)
-    else:
-        Update_status_log(NIMB_tmp, '        registration files CANNOT be read from db[REGISTRATION]')
-# ================ START if registration is done from the db[REGISTRATION], the "else" can be removed, started testing 20200722, ah
-        # f = nimb_dir+"znew_subjects.json"#!!!! json file must be archived when finished
-        # if path.isfile(f):
-        #     import json
-        #     with open(f) as jfile:
-        #         data = json.load(jfile)
-        #     for _id in db['LONG_DIRS']:
-        #         if subjid in db['LONG_DIRS'][_id]:
-        #             _id = _id
-        #             ses = subjid.replace(_id+'_',"")
-        #             break
-        #         # else:
-        #         #     _id = 'none'
-        #         #     print(_id,' not in LONG_DIRS, please CHECK the database')
-        #     Update_status_log(NIMB_tmp, '    '+subjid+'\n                        id is: '+_id+', ses is: '+ses)
-        #     if _id != 'none':
-        #         t1_ls_f = check_that_all_files_are_accessible(data[_id][ses]['anat']['t1'])
-        #         if t1_ls_f:
-           #          flair_ls_f = 'none'
-           #          t2_ls_f = 'none'
-           #          if 'flair' in data[_id][ses]['anat'] and flair_t2_add:
-           #              if data[_id][ses]['anat']['flair']:
-           #                  flair_ls_f = check_that_all_files_are_accessible(data[_id][ses]['anat']['flair'])
-           #          if 't2' in data[_id][ses]['anat'] and flair_t2_add:
-           #              if data[_id][ses]['anat']['t2'] and flair_ls_f == 'none':
-           #                  t2_ls_f = check_that_all_files_are_accessible(data[_id][ses]['anat']['t2'])
-            # Update_status_log(NIMB_tmp, '        registration files were read from znew_subjects.json')
-# ================ END
         t1_ls_f    = []
         flair_ls_f = []
         t2_ls_f    = []
