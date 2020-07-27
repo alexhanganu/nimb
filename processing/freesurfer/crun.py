@@ -477,13 +477,14 @@ def run():
 
     check_error()
 
-    cdb.Update_status_log(nimb_scratch_dir, 'CHECKING subjects')
-    ls_long_dirs = list()
-    for key in db['LONG_DIRS']:
-        ls_long_dirs.append(key)
+    if get_len_Queue_Running()<= max_nr_running_batches:
+        cdb.Update_status_log(nimb_scratch_dir, 'CHECKING subjects')
+        ls_long_dirs = list()
+        for key in db['LONG_DIRS']:
+            ls_long_dirs.append(key)
 
-    for _id in ls_long_dirs:
-        if get_len_Queue_Running()<= max_nr_running_batches:
+        for _id in ls_long_dirs:
+#        if get_len_Queue_Running()<= max_nr_running_batches: #this line is not understood, it should be primary order (now changed); with it, subjects are not moved to cp2local if processing is still undergoing
             cdb.Update_status_log(nimb_scratch_dir, '    '+_id)
             long_check_groups(_id)
 
