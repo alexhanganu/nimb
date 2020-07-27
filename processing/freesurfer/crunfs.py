@@ -314,6 +314,10 @@ def fs_find_error(subjid, SUBJECTS_DIR, NIMB_tmp):
                     cdb.Update_status_log(NIMB_tmp,'        ERROR: Voxel size is different, Multiregistration is not supported; consider making conform')
                     error = 'voxsizediff'
                     break
+                elif  'error: mghRead' in line:
+                    cdb.Update_status_log(NIMB_tmp,'        ERROR: orig bad registration, probably due to multiple -i entries, rerun with less entries')
+                    error = 'errorigmgz'
+                    break
                 elif 'ERROR: no run data found' in line:
                     error = 'noreg'
                     break
@@ -350,5 +354,5 @@ def solve_error(subjid, error, SUBJECTS_DIR):
                 return 'continue'
         else:
             return 'unsolved'
-    if error == 'voxsizediff':
+    if error == 'voxsizediff' or error == 'errorigmgz'':
         return 'voxreg'
