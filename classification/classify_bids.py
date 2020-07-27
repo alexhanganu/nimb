@@ -190,7 +190,7 @@ def make_BIDS_structure(d_ses_MR_types):
 
 
 
-def get_dict_MR_files2process(SUBJECTS_DIR_RAW, NIMB_tmp):
+def get_dict_MR_files2process(NIMB_NEW_SUBJECTS, NIMB_tmp):
 	"""
 	# only search for 2 number
 	:return:
@@ -198,9 +198,9 @@ def get_dict_MR_files2process(SUBJECTS_DIR_RAW, NIMB_tmp):
 	f_new_subjects = path.join(NIMB_tmp,'new_subjects.json')
 	if not path.exists(f_new_subjects):
 		d_subjects = dict()
-		for subject in listdir(SUBJECTS_DIR_RAW):
+		for subject in listdir(NIMB_NEW_SUBJECTS):
 				d_subjects[subject] = {}
-				ls_MR_paths = exclude_MR_types(get_paths2dcm_files(SUBJECTS_DIR_RAW+'/'+subject))
+				ls_MR_paths = exclude_MR_types(get_paths2dcm_files(path.join(NIMB_NEW_SUBJECTS,subject)))
 				print("ls_MR_paths: ", ls_MR_paths)
 				ls_sessions, d_paths = get_ls_sessions(ls_MR_paths)
 				#print(ls_sessions)
