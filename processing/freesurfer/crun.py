@@ -303,7 +303,7 @@ def check_error():
                                     db['PROCESSED']['error_'+process].remove(subjid)
                                     db['RUNNING'][process].append(subjid)
                                     cdb.Update_status_log(nimb_scratch_dir, '        moving from error_'+process+' to RUNNING '+process)
-                                elif solve == 'voxreg':
+                                elif solve == 'voxreg' or solve == 'errorigmgz':
                                     solved = True
                                     db['REGISTRATION'][subjid]['anat']['t1'] = db['REGISTRATION'][subjid]['anat']['t1'][:1]
                                     if 'flair' in db['REGISTRATION'][subjid]['anat']:

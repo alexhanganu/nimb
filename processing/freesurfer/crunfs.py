@@ -358,5 +358,5 @@ def solve_error(subjid, error, SUBJECTS_DIR):
                 return 'continue'
         else:
             return 'unsolved'
-    if error == 'voxsizediff' or error == 'errorigmgz'':
+    if error == 'voxsizediff' or error == 'errorigmgz':
         return 'voxreg'
