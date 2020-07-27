@@ -477,14 +477,18 @@ def run():
 
     check_error()
 
-    if get_len_Queue_Running()<= max_nr_running_batches:
-        cdb.Update_status_log(nimb_scratch_dir, 'CHECKING subjects')
-        ls_long_dirs = list()
-        for key in db['LONG_DIRS']:
+# ================ START it is unclear why the len_Queue limitation was added and why it is not primary
+#                        with it, subjects are not moved to cp2local if processing is still undergoing
+#                        started testing 20200722, ah
+#    if get_len_Queue_Running()<= max_nr_running_batches:
+    cdb.Update_status_log(nimb_scratch_dir, 'CHECKING subjects')
+    ls_long_dirs = list()
+    for key in db['LONG_DIRS']:
             ls_long_dirs.append(key)
 
-        for _id in ls_long_dirs:
-#        if get_len_Queue_Running()<= max_nr_running_batches: #this line is not understood, it should be primary order (now changed); with it, subjects are not moved to cp2local if processing is still undergoing
+    for _id in ls_long_dirs:
+#        if get_len_Queue_Running()<= max_nr_running_batches:
+# ================ END
             cdb.Update_status_log(nimb_scratch_dir, '    '+_id)
             long_check_groups(_id)
 

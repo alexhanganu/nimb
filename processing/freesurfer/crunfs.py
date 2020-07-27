@@ -7,7 +7,7 @@ import subprocess
 import shutil
 import datetime
 import cdb
-
+import time
 
 
 def submit_4_processing(processing_env, cmd, subjid, run, walltime):
@@ -43,6 +43,10 @@ def makesubmitpbs(cmd, subjid, run, walltime, params):
         f.write(cmd+'\n')
     print('    submitting '+sh_file)
     if params["SUBMIT"]:
+
+# ======== START trying to avoid the sbatch error of not receiving a submitting id, added 20200726 ah
+        time.sleep(2)
+# ======== END
         try:
             resp = subprocess.run(['sbatch',path.join(params["NIMB_tmp"],'usedpbs',sh_file)], stdout=subprocess.PIPE).stdout.decode('utf-8')
             return list(filter(None, resp.split(' ')))[-1].strip('\n')
