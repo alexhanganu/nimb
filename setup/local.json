@@ -36,7 +36,7 @@
        "freesurfer_version" : 7,
        "FREESURFER_HOME" : "/home/lucaspsy/projects/def-hanganua/freesurfer",
        "FS_SUBJECTS_DIR" : "/home/lucaspsy/projects/def-hanganua/fs-subjects",
-       "export_FreeSurfer_cmd" : "export FREESURFER_HOME:/home/lucaspsy/projects/def-hanganua/freesurfer",
+       "export_FreeSurfer_cmd" : "export FREESURFER_HOME=/home/lucaspsy/projects/def-hanganua/freesurfer",
        "source_FreeSurfer_cmd" : "$FREESURFER_HOME/SetUpFreeSurfer.sh",
        "process_order" : ["registration","autorecon1","autorecon2","autorecon3","qcache","brstem","hip","tha"],
        "masks" : [],

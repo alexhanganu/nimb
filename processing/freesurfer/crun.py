@@ -131,9 +131,6 @@ def queue(process, all_running):
     ACTION = 'QUEUE'
     cdb.Update_status_log(nimb_scratch_dir, ACTION+' '+process)
 
-#    lsq = list()
-#    for val in db[ACTION][process]:
-#        lsq.append(val)
     lsq = db[ACTION][process].copy()
 
     for subjid in lsq:
@@ -162,9 +159,6 @@ def running(process, all_running):
     ACTION = 'RUNNING'
     cdb.Update_status_log(nimb_scratch_dir, ACTION+' '+process)
 
-#    lsr = list()
-#    for val in db[ACTION][process]:
-#        lsr.append(val)	
     lsr = db[ACTION][process].copy()
 
     for subjid in lsr:
@@ -235,9 +229,6 @@ def do(process):
     ACTION = 'DO'
     cdb.Update_status_log(nimb_scratch_dir, ACTION+' '+process)
 
-#    lsd = list()
-#    for val in db[ACTION][process]:
-#        lsd.append(val)
     lsd = db[ACTION][process].copy()
 
     for subjid in lsd:
@@ -289,9 +280,7 @@ def check_error():
             lserr = db['PROCESSED']['error_'+process].copy()
             for subjid in lserr:
                 cdb.Update_status_log(nimb_scratch_dir, '    '+subjid)
-# ================ START NEW CODE that needs to be verified, started testing 20200728, ah
                 if subjid not in db["ERROR_QUEUE"] and path.exists(path.join(SUBJECTS_DIR, subjid)):
-# ================ END NEW CODE that needs to be verified
                     cdb.Update_status_log(nimb_scratch_dir, '        checking the recon-all-status.log for error and if all files were created for: '+process)
                     if not crunfs.chkreconf_if_without_error(NIMB_tmp, subjid, SUBJECTS_DIR):
                         if not crunfs.checks_from_runfs(SUBJECTS_DIR, process, subjid, freesurfer_version, masks):
@@ -357,7 +346,7 @@ def check_error():
                     if subjid in db["ERROR_QUEUE"]:
                         cdb.Update_status_log(nimb_scratch_dir, '    '+db['ERROR_QUEUE'][subjid]+' '+str(format(datetime.now(), "%Y%m%d_%H%M")))
                         if db['ERROR_QUEUE'][subjid] < str(format(datetime.now(), "%Y%m%d_%H%M")):
-                            cdb.Update_status_log(nimb_scratch_dir, '    renoving from ERROR_QUEUE')
+                            cdb.Update_status_log(nimb_scratch_dir, '    removing from ERROR_QUEUE')
                             db['ERROR_QUEUE'].pop(subjid, None)
 # ================ END NEW CODE that needs to be verified
                     cdb.Update_status_log(nimb_scratch_dir, '    not in SUBJECTS_DIR')

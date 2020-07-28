@@ -45,7 +45,7 @@
         "freesurfer_version": 7,
         "FREESURFER_HOME": "/home/hanganua/projects/def-hanganua/freesurfer",
         "FS_SUBJECTS_DIR": "/home/hanganua/projects/def-hanganua/fs-subjects",
-        "export_FreeSurfer_cmd": "export FREESURFER_HOME:/home/hanganua/projects/def-hanganua/freesurfer",
+        "export_FreeSurfer_cmd": "export FREESURFER_HOME=/home/hanganua/projects/def-hanganua/freesurfer",
         "source_FreeSurfer_cmd": "$FREESURFER_HOME/SetUpFreeSurfer.sh",
         "process_order": [
             "registration",
