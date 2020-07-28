@@ -1,5 +1,5 @@
 #!/bin/python
-# 2020.07.23
+# 2020.07.28
 
 '''
 add FS QA tools to rm scans with low SNR (Koh et al 2017)
@@ -177,7 +177,7 @@ def running(process, all_running):
                     cdb.Update_status_log(nimb_scratch_dir, ' reading '+process+subjid+' subjid is long or base ')
                     if crunfs.chkIsRunning(SUBJECTS_DIR, subjid) or not crunfs.checks_from_runfs(SUBJECTS_DIR, 'recon', subjid, freesurfer_version, masks):
                         cdb.Update_status_log(nimb_scratch_dir, '    '+subjid+' '+process+' moving to ERROR, step 1')
-#                        db['ERROR_QUEUE'][subjid] = str(format(datetime.now()+timedelta(hours=datetime.strptime(cwalltime.Get_walltime(process, max_walltime), '%H:%M:%S').hour), "%Y%m%d_%H%M"))
+                        db['ERROR_QUEUE'][subjid] = str(format(datetime.now()+timedelta(hours=datetime.strptime(cwalltime.Get_walltime(process, max_walltime), '%H:%M:%S').hour), "%Y%m%d_%H%M"))
                         db['PROCESSED']['error_recon'].append(subjid)
                 else:
                     if not crunfs.chkIsRunning(SUBJECTS_DIR, subjid) and crunfs.checks_from_runfs(SUBJECTS_DIR, process, subjid, freesurfer_version, masks):
@@ -193,7 +193,7 @@ def running(process, all_running):
                             cdb.Update_status_log(nimb_scratch_dir, '    '+subjid+' processing DONE')
                     else:
                         cdb.Update_status_log(nimb_scratch_dir, '    '+subjid+' '+process+' moving to ERROR because status is: '+status+', and IsRunning is present, step 2')
-#                        db['ERROR_QUEUE'][subjid] = str(format(datetime.now()+timedelta(hours=datetime.strptime(cwalltime.Get_walltime(process, max_walltime), '%H:%M:%S').hour), "%Y%m%d_%H%M"))
+                        db['ERROR_QUEUE'][subjid] = str(format(datetime.now()+timedelta(hours=datetime.strptime(cwalltime.Get_walltime(process, max_walltime), '%H:%M:%S').hour), "%Y%m%d_%H%M"))
                         db['PROCESSED']['error_'+process].append(subjid)
         else:
             cdb.Update_status_log(nimb_scratch_dir, '    '+subjid+' NOT in RUNNING_JOBS')
@@ -203,7 +203,7 @@ def running(process, all_running):
                     cdb.Update_status_log(nimb_scratch_dir, '    '+subjid+process+' subjid is long or base ')
                     if not crunfs.checks_from_runfs(SUBJECTS_DIR, 'recon', subjid, freesurfer_version, masks):
                         cdb.Update_status_log(nimb_scratch_dir, '    '+subjid+' recon, moving to ERROR, step 3')
-#                        db['ERROR_QUEUE'][subjid] = str(format(datetime.now()+timedelta(hours=datetime.strptime(cwalltime.Get_walltime(process, max_walltime), '%H:%M:%S').hour), "%Y%m%d_%H%M"))
+                        db['ERROR_QUEUE'][subjid] = str(format(datetime.now()+timedelta(hours=datetime.strptime(cwalltime.Get_walltime(process, max_walltime), '%H:%M:%S').hour), "%Y%m%d_%H%M"))
                         db['PROCESSED']['error_recon'].append(subjid)
                 else:
                     if crunfs.checks_from_runfs(SUBJECTS_DIR, process, subjid, freesurfer_version, masks):
@@ -219,12 +219,12 @@ def running(process, all_running):
                             cdb.Update_status_log(nimb_scratch_dir, '    '+subjid+' processing DONE')
                     else:
                         cdb.Update_status_log(nimb_scratch_dir, '    '+subjid+' '+process+' moving to ERROR, step 4')
-#                        db['ERROR_QUEUE'][subjid] = str(format(datetime.now()+timedelta(hours=datetime.strptime(cwalltime.Get_walltime(process, max_walltime), '%H:%M:%S').hour), "%Y%m%d_%H%M"))
+                        db['ERROR_QUEUE'][subjid] = str(format(datetime.now()+timedelta(hours=datetime.strptime(cwalltime.Get_walltime(process, max_walltime), '%H:%M:%S').hour), "%Y%m%d_%H%M"))
                         db['PROCESSED']['error_'+process].append(subjid)
             else:
                 db[ACTION][process].remove(subjid)
                 cdb.Update_status_log(nimb_scratch_dir, '    '+subjid+' '+process+' moving to error_'+process+' step5')
-#                db['ERROR_QUEUE'][subjid] = str(format(datetime.now()+timedelta(hours=datetime.strptime(cwalltime.Get_walltime(process, max_walltime), '%H:%M:%S').hour), "%Y%m%d_%H%M"))
+                db['ERROR_QUEUE'][subjid] = str(format(datetime.now()+timedelta(hours=datetime.strptime(cwalltime.Get_walltime(process, max_walltime), '%H:%M:%S').hour), "%Y%m%d_%H%M"))
                 db['PROCESSED']['error_'+process].append(subjid)
     db[ACTION][process].sort()
     cdb.Update_DB(db, nimb_scratch_dir)
@@ -289,11 +289,12 @@ def check_error():
             lserr = db['PROCESSED']['error_'+process].copy()
             for subjid in lserr:
                 cdb.Update_status_log(nimb_scratch_dir, '    '+subjid)
-                if path.exists(path.join(SUBJECTS_DIR,subjid)):
+# ================ START NEW CODE that needs to be verified, started testing 20200728, ah
+                if subjid not in db["ERROR_QUEUE"] and path.exists(path.join(SUBJECTS_DIR, subjid)):
+# ================ END NEW CODE that needs to be verified
                     cdb.Update_status_log(nimb_scratch_dir, '        checking the recon-all-status.log for error and if all files were created for: '+process)
                     if not crunfs.chkreconf_if_without_error(NIMB_tmp, subjid, SUBJECTS_DIR):
                         if not crunfs.checks_from_runfs(SUBJECTS_DIR, process, subjid, freesurfer_version, masks):
-# ================ START NEW CODE that needs to be verified, started testing 20200722, ah
                             cdb.Update_status_log(nimb_scratch_dir, '            some files were not created and recon-all-status has errors. Excluding subject from pipeline.')
                             fs_error = crunfs.fs_find_error(subjid, SUBJECTS_DIR, NIMB_tmp)
                             solved = False
@@ -320,7 +321,6 @@ def check_error():
                                     cdb.Update_status_log(nimb_scratch_dir, '            '+solve+', maybe subjid is missing from db[REGISTRATION]. Excluding subject from pipeline.')
                             else:
                                 new_name = 'error_'+process+'_'+subjid
-# ================ END NEW CODE that needs to be verified
                             if not solved:
                                 if crunfs.chkIsRunning(SUBJECTS_DIR, subjid):
                                     cdb.Update_status_log(nimb_scratch_dir, '            removing IsRunning file')
@@ -353,6 +353,13 @@ def check_error():
                             db['RUNNING'][process].append(subjid)
                             cdb.Update_status_log(nimb_scratch_dir, '        moving from error_'+process+' to RUNNING '+process)
                 else:
+# ================ START NEW CODE that needs to be verified, started testing 20200728, ah
+                    if subjid in db["ERROR_QUEUE"]:
+                        cdb.Update_status_log(nimb_scratch_dir, '    '+db['ERROR_QUEUE'][subjid]+' '+str(format(datetime.now(), "%Y%m%d_%H%M")))
+                        if db['ERROR_QUEUE'][subjid] < str(format(datetime.now(), "%Y%m%d_%H%M")):
+                            cdb.Update_status_log(nimb_scratch_dir, '    renoving from ERROR_QUEUE')
+                            db['ERROR_QUEUE'].pop(subjid, None)
+# ================ END NEW CODE that needs to be verified
                     cdb.Update_status_log(nimb_scratch_dir, '    not in SUBJECTS_DIR')
                     db['PROCESSED']['error_'+process].remove(subjid)
                 db['PROCESSED']['error_'+process].sort()
@@ -387,11 +394,11 @@ def long_check_groups(_id):
                                     All_long_ids_done.append(long_f)
                                 else:
                                     cdb.Update_status_log(nimb_scratch_dir, long_f+' moving to error_recon, STEP 6')
-#                                    db['ERROR_QUEUE'][subjid] = str(format(datetime.now()+timedelta(hours=datetime.strptime(cwalltime.Get_walltime(process, max_walltime), '%H:%M:%S').hour), "%Y%m%d_%H%M"))
+                                    db['ERROR_QUEUE'][subjid] = str(format(datetime.now()+timedelta(hours=datetime.strptime(cwalltime.Get_walltime(process, max_walltime), '%H:%M:%S').hour), "%Y%m%d_%H%M"))
                                     db['PROCESSED']['error_recon'].append(long_f)
                             else:
                                 cdb.Update_status_log(nimb_scratch_dir, long_f+' moving to error_recon, step 7')
-#                                db['ERROR_QUEUE'][subjid] = str(format(datetime.now()+timedelta(hours=datetime.strptime(cwalltime.Get_walltime(process, max_walltime), '%H:%M:%S').hour), "%Y%m%d_%H%M"))
+                                db['ERROR_QUEUE'][subjid] = str(format(datetime.now()+timedelta(hours=datetime.strptime(cwalltime.Get_walltime(process, max_walltime), '%H:%M:%S').hour), "%Y%m%d_%H%M"))
                                 db['PROCESSED']['error_recon'].append(long_f)
 
                         if len(All_long_ids_done) == len(LONG_TPS):
@@ -408,7 +415,7 @@ def long_check_groups(_id):
                             cdb.Update_status_log(nimb_scratch_dir, '        '+_id+'moved to cp2local')
                     else:
                         cdb.Update_status_log(nimb_scratch_dir, base_f+' moving to error_recon, step 8')
-#                        db['ERROR_QUEUE'][subjid] = str(format(datetime.now()+timedelta(hours=datetime.strptime(cwalltime.Get_walltime(process, max_walltime), '%H:%M:%S').hour), "%Y%m%d_%H%M"))
+                        db['ERROR_QUEUE'][subjid] = str(format(datetime.now()+timedelta(hours=datetime.strptime(cwalltime.Get_walltime(process, max_walltime), '%H:%M:%S').hour), "%Y%m%d_%H%M"))
                         db['PROCESSED']['error_recon'].append(base_f)
             else:
                 job_id = crunfs.makesubmitpbs(Get_cmd.recbase(base_f, All_cross_ids_done), base_f, 'recbase', cwalltime.Get_walltime('recbase'), scheduler_params)

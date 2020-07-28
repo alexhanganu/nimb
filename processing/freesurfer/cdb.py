@@ -353,7 +353,7 @@ def get_registration_files(subjid, db, nimb_dir, NIMB_tmp, flair_t2_add):
         t1_ls_f    = []
         flair_ls_f = []
         t2_ls_f    = []
-    return t1_ls_f, flair_ls_f, t2_ls_f
+        return t1_ls_f, flair_ls_f, t2_ls_f
 
 
 

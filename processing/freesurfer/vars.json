@@ -23,9 +23,9 @@
         "NIMB_PROCESSED_FS_error": "/home/hanganua/projects/def-hanganua/nimb_processed_fs_error"
     },
     "PROCESSING": {
-        "SUBMIT": 0,
+        "SUBMIT": 1,
         "processing_env": "slurm",
-        "max_nr_running_batches": 1,
+        "max_nr_running_batches": 100,
         "text4_scheduler": [
             "#!/bin/sh",
             "#SBATCH --account=def-hanganua",
