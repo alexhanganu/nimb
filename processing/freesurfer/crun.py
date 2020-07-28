@@ -21,34 +21,35 @@ try:
 except ImportError as e:
     cdb.Update_status_log(e)
 
-cuser                  = vars["USER"]["user"]
-cusers_list            = vars["USER"]["users_list"]
-nimb_dir               = vars["NIMB_PATHS"]["NIMB_HOME"]
-NIMB_HOME              = vars["NIMB_PATHS"]["NIMB_HOME"]
-nimb_scratch_dir       = vars["NIMB_PATHS"]["NIMB_tmp"]
-NIMB_tmp               = vars["NIMB_PATHS"]["NIMB_tmp"]
-processed_SUBJECTS_DIR = vars["NIMB_PATHS"]["NIMB_PROCESSED_FS"]
+cuser                   = vars["USER"]["user"]
+cusers_list             = vars["USER"]["users_list"]
+nimb_dir                = vars["NIMB_PATHS"]["NIMB_HOME"]
+NIMB_HOME               = vars["NIMB_PATHS"]["NIMB_HOME"]
+nimb_scratch_dir        = vars["NIMB_PATHS"]["NIMB_tmp"]
+NIMB_tmp                = vars["NIMB_PATHS"]["NIMB_tmp"]
+processed_SUBJECTS_DIR  = vars["NIMB_PATHS"]["NIMB_PROCESSED_FS"]
+NIMB_PROCESSED_FS_error = vars["NIMB_PATHS"]["NIMB_PROCESSED_FS_error"]
 
-SUBMIT                 = vars["PROCESSING"]["SUBMIT"]
-processing_env         = vars["PROCESSING"]["processing_env"]
-max_nr_running_batches = vars["PROCESSING"]["max_nr_running_batches"]
-text4_scheduler        = vars["PROCESSING"]["text4_scheduler"]
-batch_walltime_cmd     = vars["PROCESSING"]["batch_walltime_cmd"]
-batch_walltime         = vars["PROCESSING"]["batch_walltime"]
-batch_output_cmd       = vars["PROCESSING"]["batch_output_cmd"]
-max_walltime           = vars["PROCESSING"]["max_walltime"]
-archive_processed      = vars["PROCESSING"]["archive_processed"]
+SUBMIT                  = vars["PROCESSING"]["SUBMIT"]
+processing_env          = vars["PROCESSING"]["processing_env"]
+max_nr_running_batches  = vars["PROCESSING"]["max_nr_running_batches"]
+text4_scheduler         = vars["PROCESSING"]["text4_scheduler"]
+batch_walltime_cmd      = vars["PROCESSING"]["batch_walltime_cmd"]
+batch_walltime          = vars["PROCESSING"]["batch_walltime"]
+batch_output_cmd        = vars["PROCESSING"]["batch_output_cmd"]
+max_walltime            = vars["PROCESSING"]["max_walltime"]
+archive_processed       = vars["PROCESSING"]["archive_processed"]
 
-freesurfer_version     = vars["FREESURFER"]["freesurfer_version"]
-SUBJECTS_DIR           = vars["FREESURFER"]["FS_SUBJECTS_DIR"]
-export_FreeSurfer_cmd  = vars["FREESURFER"]["export_FreeSurfer_cmd"]
-source_FreeSurfer_cmd  = vars["FREESURFER"]["source_FreeSurfer_cmd"]
-process_order          = vars["FREESURFER"]["process_order"]
-flair_t2_add           = vars["FREESURFER"]["flair_t2_add"]
-masks                  = vars["FREESURFER"]["masks"]
-DO_LONG                = vars["FREESURFER"]["DO_LONG"]
-base_name              = vars["FREESURFER"]["base_name"]
-long_name              = vars["FREESURFER"]["long_name"]
+freesurfer_version      = vars["FREESURFER"]["freesurfer_version"]
+SUBJECTS_DIR            = vars["FREESURFER"]["FS_SUBJECTS_DIR"]
+export_FreeSurfer_cmd   = vars["FREESURFER"]["export_FreeSurfer_cmd"]
+source_FreeSurfer_cmd   = vars["FREESURFER"]["source_FreeSurfer_cmd"]
+process_order           = vars["FREESURFER"]["process_order"]
+flair_t2_add            = vars["FREESURFER"]["flair_t2_add"]
+masks                   = vars["FREESURFER"]["masks"]
+DO_LONG                 = vars["FREESURFER"]["DO_LONG"]
+base_name               = vars["FREESURFER"]["base_name"]
+long_name               = vars["FREESURFER"]["long_name"]
 
 if DO_LONG == 1:
     DO_LONG = True
@@ -441,23 +442,23 @@ def move_processed_subjects(subject, db_source, new_name):
     file_mrparams = path.join(nimb_scratch_dir,'mriparams',subject+'_mrparams')
     if path.isfile(file_mrparams):
         shutil.move(file_mrparams, path.join(SUBJECTS_DIR, subject, 'stats'))
-    size_src = sum(f.stat().st_size for f in Path(path.join(SUBJECTS_DIR,subject)).glob('**/*') if f.is_file())
-    shutil.move(path.join(SUBJECTS_DIR,subject), path.join(processed_SUBJECTS_DIR,subject))
-    db['PROCESSED'][db_source].remove(subject)
-    cdb.Update_DB(db, nimb_scratch_dir)
-    size_dst = sum(f.stat().st_size for f in Path(path.join(processed_SUBJECTS_DIR,subject)).glob('**/*') if f.is_file())
-
-    if size_src == size_dst and archive_processed and new_name == '':
-        cdb.Update_status_log(nimb_scratch_dir, '        archiving ...')
-        chdir(processed_SUBJECTS_DIR)
-        system('zip -r -q -m '+subject+'.zip '+subject)
-    if new_name:
-        cdb.Update_status_log(nimb_scratch_dir, '        renaming'+subject+' to '+new_name)
-        rename(path.join(processed_SUBJECTS_DIR,subject),path.join(processed_SUBJECTS_DIR,new_name))
-        subject = new_name
-    if size_src != size_dst:
-        cdb.Update_status_log(nimb_scratch_dir, '        ERROR in moving, not moved correctly '+str(size_src)+' '+str(size_dst))
-        rename(path.join(processed_SUBJECTS_DIR,subject),path.join(processed_SUBJECTS_DIR,'error_moving_'+subject))
+    size_src = sum(f.stat().st_size for f in Path(path.join(SUBJECTS_DIR, subject)).glob('**/*') if f.is_file())
+    if not new_name:
+        shutil.move(path.join(SUBJECTS_DIR, subject), path.join(processed_SUBJECTS_DIR, subject))
+        db['PROCESSED'][db_source].remove(subject)
+        cdb.Update_DB(db, nimb_scratch_dir)
+        size_dst = sum(f.stat().st_size for f in Path(path.join(processed_SUBJECTS_DIR, subject)).glob('**/*') if f.is_file())
+        if size_src == size_dst:
+            if archive_processed:
+                cdb.Update_status_log(nimb_scratch_dir, '        archiving ...')
+                chdir(processed_SUBJECTS_DIR)
+                system('zip -r -q -m '+subject+'.zip '+subject)
+        else:
+            cdb.Update_status_log(nimb_scratch_dir, '        ERROR in moving, not moved correctly '+str(size_src)+' '+str(size_dst))
+            shutil.move(path.join(processed_SUBJECTS_DIR, subject), path.join(NIMB_PROCESSED_FS_error, 'error_moving_'+subject))
+    else:
+        cdb.Update_status_log(nimb_scratch_dir, '        renaming'+subject+' to '+new_name+', moving to processed error')
+        shutil.move(path.join(SUBJECTS_DIR, subject), path.join(NIMB_PROCESSED_FS_error, new_name))
     cdb.Update_status_log(nimb_scratch_dir, '        moving DONE')
 
 
