@@ -416,10 +416,13 @@ def long_check_groups(_id):
                 db['QUEUE']['recon'].append(base_f)
     else:
         for subjid in ls:
-            cdb.Update_status_log(nimb_scratch_dir, '        '+subjid)
             if crunfs.checks_from_runfs(SUBJECTS_DIR, 'registration', subjid, freesurfer_version, masks):
                 if crunfs.checks_from_runfs(SUBJECTS_DIR, process_order[-1], subjid, freesurfer_version, masks):
                     cdb.Update_status_log(nimb_scratch_dir, '            last process done '+process_order[-1]+' moving to CP2LOCAL')
+                    if subjid in db['RUNNING'][process_order[-1]]:
+                        db['RUNNING'][process_order[-1]].remove(subjid)
+                    if subjid in db['QUEUE'][process_order[-1]]:
+                        db['QUEUE'][process_order[-1]].remove(subjid)
                     db['PROCESSED']['cp2local'].append(subjid)
                     db['LONG_DIRS'].pop(_id, None)
                     db['LONG_TPS'].pop(_id, None)
@@ -491,7 +494,7 @@ def run():
     for _id in ls_long_dirs:
 #        if get_len_Queue_Running()<= max_nr_running_batches:
 # ================ END
-            cdb.Update_status_log(nimb_scratch_dir, '    '+_id)
+            cdb.Update_status_log(nimb_scratch_dir, '    '+_id+': '+str(db['LONG_DIRS'][_id]))
             long_check_groups(_id)
 
 
@@ -566,13 +569,17 @@ if crunfs.FS_ready(SUBJECTS_DIR):
 
         time_to_sleep = Count_TimeSleep()
         cdb.Update_status_log(nimb_scratch_dir, '\n\nWAITING. \nNext run at: '+str(time.strftime("%H:%M",time.localtime(time.time()+time_to_sleep))))
+
+
 # ================ START NEW CODE, to save a db version that would be accessible to all users, started testing 20200722, ah
-        # try:
-        #     shutil.copy(path.join(nimb_scratch_dir,'db.json'),path.join(NIMB_HOME,'db.json'))
-        #     system('chmod 777 '+path.join(NIMB_HOME,'db.json'))
-        # except Exception as e:
-        #     cdb.Update_status_log(nimb_scratch_dir, str(e))
+        try:
+            shutil.copy(path.join(nimb_scratch_dir,'db.json'),path.join(NIMB_HOME,'processing','freesurfer','db.json'))
+            system('chmod 777 '+path.join(NIMB_HOME,'processing','freesurfer','db.json'))
+        except Exception as e:
+            cdb.Update_status_log(nimb_scratch_dir, str(e))
 # ================ END NEW CODE that needs to be verified; There seem to be writing permission limitations
+
+
 # ================ START NEW CODE, batch gets closed by the scheduler, trying to calculate time left until batch is finished, started testing 20200722, ah
 #                  line if was creating an infinitie loop, without the time.sleep, might have been related to missing :%S in strpftime
 #                  commented now, needs to be checked

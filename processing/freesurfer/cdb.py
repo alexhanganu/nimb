@@ -15,7 +15,6 @@ def Get_DB(NIMB_HOME, NIMB_tmp, process_order):
     DataBase has a py structure so that in the future it can be easily transfered to an sqlite database
     '''
 
-    db = dict()
     dbjson = dict()
     db_json_file = path.join(NIMB_tmp,'db.json')
     db_json_last_file = path.join(NIMB_HOME,'processing','freesurfer','db.json')
@@ -25,6 +24,7 @@ def Get_DB(NIMB_HOME, NIMB_tmp, process_order):
     if path.isfile(db_json_file):
         with open(db_json_file) as db_json_open:
             db = json.load(db_json_open)
+        shutil.copy(path.join(NIMB_tmp,'db.json'), path.join(NIMB_HOME,'processing','freesurfer','db.json'))
 # ================ END
 # ================ START = Update_DB records 'ERROR_QUEUE' in the else loop as list, and the error canot be found.
 #                  temporarily will use only the json DB version.
@@ -33,6 +33,7 @@ def Get_DB(NIMB_HOME, NIMB_tmp, process_order):
 #        system('chmod 777 '+path.join(NIMB_HOME,'processing','freesurfer','db.py'))
 #        time.sleep(2)
 #        from db import DO, QUEUE, RUNNING, RUNNING_JOBS, LONG_DIRS, LONG_TPS, PROCESSED, REGISTRATION, ERROR_QUEUE
+#        db = dict()
 #        db['DO'] = DO
 #        db['QUEUE'] = QUEUE
 #        db['RUNNING'] = RUNNING
