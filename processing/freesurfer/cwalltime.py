@@ -14,9 +14,9 @@ def Get_walltime(process, max_walltime):
         'recbase':'30:00:00',
         'reclong':'23:00:00',
         'qcache':'03:00:00',
-        'brstem':'02:00:00',
-        'hip':'02:00:00',
-        'tha':'02:00:00',
+        'brstem':'03:00:00',
+        'hip':'03:00:00',
+        'tha':'03:00:00',
         'masks':'12:00:00',
         }
     if suggested_times[process] <= max_walltime:

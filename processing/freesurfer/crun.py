@@ -1,6 +1,8 @@
 #!/bin/python
 # 2020.07.28
 
+max_runs = 8
+
 '''
 add FS QA tools to rm scans with low SNR (Koh et al 2017)
 https://surfer.nmr.mgh.harvard.edu/fswiki/QATools
@@ -424,7 +426,7 @@ def long_check_groups(_id):
                     if subjid in db['REGISTRATION']:
                         db['REGISTRATION'].pop(subjid, None)
                     else:
-                        cdb.Update_status_log(nimb_sratch_dir,'        missing from db[REGISTRATION]')
+                        cdb.Update_status_log(nimb_scratch_dir,'        missing from db[REGISTRATION]')
             else:
                 cdb.Update_status_log(nimb_scratch_dir, '        '+subjid+' was not registered')
                 db['LONG_DIRS'].pop(_id, None)
@@ -552,7 +554,7 @@ if crunfs.FS_ready(SUBJECTS_DIR):
     # while the batch is running, and start new batch
     max_batch_running = time.strftime('%H:%M:%S',time.localtime(time.mktime(time.strptime(batch_walltime,"%H:%M:%S"))-1200))
 
-    while active_subjects >0 and time.strftime("%H:%M",time.gmtime(time_elapsed)) < max_batch_running:
+    while count_run < max_runs and active_subjects >0 and time.strftime("%H:%M:%S",time.gmtime(time_elapsed)) < max_batch_running:
         count_run += 1
         cdb.Update_status_log(nimb_scratch_dir, 'restarting run, '+str(count_run))
         cdb.Update_status_log(nimb_scratch_dir, 'elapsed time: '+time.strftime("%H:%M",time.gmtime(time_elapsed))+' max walltime: '+batch_walltime[:-6])
@@ -572,9 +574,11 @@ if crunfs.FS_ready(SUBJECTS_DIR):
         #     cdb.Update_status_log(nimb_scratch_dir, str(e))
 # ================ END NEW CODE that needs to be verified; There seem to be writing permission limitations
 # ================ START NEW CODE, batch gets closed by the scheduler, trying to calculate time left until batch is finished, started testing 20200722, ah
+#                  line if was creating an infinitie loop, without the time.sleep, might have been related to missing :%S in strpftime
+#                  commented now, needs to be checked
         time_elapsed = time.time() - t0
-        if time.strftime("%H:%M",time.gmtime(time_elapsed+time_to_sleep)) < max_batch_running:
-            time.sleep(time_to_sleep)
+#        if time.strftime("%H:%M:%S",time.gmtime(time_elapsed+time_to_sleep)) < max_batch_running:
+        time.sleep(time_to_sleep)
 # ================ END NEW CODE that needs to be verified
 
         time_elapsed = time.time() - t0
@@ -585,9 +589,10 @@ if crunfs.FS_ready(SUBJECTS_DIR):
         cdb.Update_status_log(nimb_scratch_dir, 'ALL TASKS FINISHED')
     else:
         cdb.Update_status_log(nimb_scratch_dir, 'Sending new batch to scheduler')
-        chdir(nimb_dir)
-        system('python processing/freesurfer/start_fs_pipeline.py')
-        # system('sbatch run.sh')
+        cdb.Update_status_log(nimb_scratch_dir, ' break '+str(max_runs))
+#        chdir(nimb_dir)
+#        system('python processing/freesurfer/start_fs_pipeline.py')
+#        system('sbatch run.sh')
 
 
 '''THIS script was used for the longitudinal analysis. It has changed and it should not be needed now, but a longitudinal analysis must be made to confirm'''
