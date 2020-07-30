@@ -164,7 +164,7 @@ def verify_vox_size_values(vox_size):
 
 
 def get_MR_file_params(subjid, nimb_dir, NIMB_tmp, file):
-	tmp_f = path.join(NIMB_tmp,'mriparams')
+	tmp_f = path.join(NIMB_tmp,tmp_mriinfo)
 	vox_size = 'none'
 	chdir(path.join(nimb_dir,'classification'))
 	system('./mri_info '+file+' >> '+tmp_f)
