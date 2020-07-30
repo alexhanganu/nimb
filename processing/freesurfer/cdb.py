@@ -123,8 +123,8 @@ def Update_status_log(NIMB_tmp, cmd, update=True):
         f.write(dthm+' '+cmd+'\n')
 
 
-def Update_running(NIMB_tmp, cmd):
-    file = path.join(NIMB_tmp,'running_')
+def Update_running(NIMB_HOME, cuser, cmd):
+    file = path.join(NIMB_HOME,'tmp','running_'+str(cuser)+'_')
     if cmd == 1:
         if path.isfile(file+'0'):
             rename(file+'0',file+'1')
@@ -164,7 +164,7 @@ def verify_vox_size_values(vox_size):
 
 
 def get_MR_file_params(subjid, nimb_dir, NIMB_tmp, file):
-	tmp_f = path.join(NIMB_tmp,tmp_mriinfo)
+	tmp_f = path.join(NIMB_tmp,'tmp_mriinfo')
 	vox_size = 'none'
 	chdir(path.join(nimb_dir,'classification'))
 	system('./mri_info '+file+' >> '+tmp_f)
@@ -328,6 +328,7 @@ def chk_new_subjects_json_file(SUBJECTS_DIR, NIMB_tmp, db, freesurfer_version, m
                             if data[_id][ses]['anat']['t1']:
                                 subjid = _id+'_'+ses
                                 db['REGISTRATION'][subjid] = data[_id][ses]
+                                Update_status_log(NIMB_tmp, '        '+subjid+' added to database from new_subjects.json')
                                 db = add_subjid_2_DB(NIMB_tmp, subjid, _id, ses, db, ls_SUBJECTS_in_long_dirs_processed)
                             else:
                                 db['PROCESSED']['error_registration'].append(subjid)
@@ -352,9 +353,6 @@ def get_registration_files(subjid, db, nimb_dir, NIMB_tmp, flair_t2_add):
                 t2_ls_f = db['REGISTRATION'][subjid]['anat']['t2']
         Update_status_log(NIMB_tmp, '        from db[\'REGISTRATION\']')
         t1_ls_f, flair_ls_f, t2_ls_f = keep_files_similar_params(subjid, nimb_dir, NIMB_tmp, t1_ls_f, flair_ls_f, t2_ls_f)
-        t1_ls_f    = []
-        flair_ls_f = []
-        t2_ls_f    = []
         return t1_ls_f, flair_ls_f, t2_ls_f
 
 

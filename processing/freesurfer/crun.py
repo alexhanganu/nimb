@@ -1,7 +1,6 @@
 #!/bin/python
-# 2020.07.28
+# 2020.07.29
 
-max_runs = 8
 
 '''
 add FS QA tools to rm scans with low SNR (Koh et al 2017)
@@ -485,20 +484,14 @@ def run():
 
     check_error()
 
-# ================ START it is unclear why the len_Queue limitation was added and why it is not primary
-#                        with it, subjects are not moved to cp2local if processing is still undergoing
-#                        started testing 20200722, ah
-#    if get_len_Queue_Running()<= max_nr_running_batches:
     cdb.Update_status_log(nimb_scratch_dir, 'CHECKING subjects')
     ls_long_dirs = list()
     for key in db['LONG_DIRS']:
             ls_long_dirs.append(key)
 
     for _id in ls_long_dirs:
-#        if get_len_Queue_Running()<= max_nr_running_batches:
-# ================ END
-            cdb.Update_status_log(nimb_scratch_dir, '    '+_id+': '+str(db['LONG_DIRS'][_id]))
-            long_check_groups(_id)
+        cdb.Update_status_log(nimb_scratch_dir, '    '+_id+': '+str(db['LONG_DIRS'][_id]))
+        long_check_groups(_id)
 
 
     cdb.Update_status_log(nimb_scratch_dir, 'MOVING the processed')
@@ -545,7 +538,7 @@ if crunfs.FS_ready(SUBJECTS_DIR):
     count_run = 0
 
     cdb.Update_status_log(nimb_scratch_dir, 'pipeline started')
-    cdb.Update_running(nimb_scratch_dir, 1)
+    cdb.Update_running(nimb_dir, cuser, 1)
 
     cdb.Update_status_log(nimb_scratch_dir, 'reading database')
     db = cdb.Get_DB(nimb_dir, nimb_scratch_dir, process_order)
@@ -560,7 +553,7 @@ if crunfs.FS_ready(SUBJECTS_DIR):
     # while the batch is running, and start new batch
     max_batch_running = time.strftime('%H:%M:%S',time.localtime(time.mktime(time.strptime(batch_walltime,"%H:%M:%S"))-1200))
 
-    while count_run < max_runs and active_subjects >0 and time.strftime("%H:%M:%S",time.gmtime(time_elapsed)) < max_batch_running:
+    while active_subjects >0 and time.strftime("%H:%M:%S",time.gmtime(time_elapsed)) < max_batch_running:
         count_run += 1
         cdb.Update_status_log(nimb_scratch_dir, 'restarting run, '+str(count_run))
         cdb.Update_status_log(nimb_scratch_dir, 'elapsed time: '+time.strftime("%H:%M",time.gmtime(time_elapsed))+' max walltime: '+batch_walltime[:-6])
@@ -573,14 +566,11 @@ if crunfs.FS_ready(SUBJECTS_DIR):
         time_to_sleep = Count_TimeSleep()
         cdb.Update_status_log(nimb_scratch_dir, '\n\nWAITING. \nNext run at: '+str(time.strftime("%H:%M",time.localtime(time.time()+time_to_sleep))))
 
-
-# ================ START NEW CODE, to save a db version that would be accessible to all users, started testing 20200722, ah
         try:
             shutil.copy(path.join(nimb_scratch_dir,'db.json'),path.join(NIMB_HOME,'processing','freesurfer','db.json'))
             system('chmod 777 '+path.join(NIMB_HOME,'processing','freesurfer','db.json'))
         except Exception as e:
             cdb.Update_status_log(nimb_scratch_dir, str(e))
-# ================ END NEW CODE that needs to be verified; There seem to be writing permission limitations
 
 
 # ================ START NEW CODE, batch gets closed by the scheduler, trying to calculate time left until batch is finished, started testing 20200722, ah
@@ -599,10 +589,8 @@ if crunfs.FS_ready(SUBJECTS_DIR):
         cdb.Update_status_log(nimb_scratch_dir, 'ALL TASKS FINISHED')
     else:
         cdb.Update_status_log(nimb_scratch_dir, 'Sending new batch to scheduler')
-        cdb.Update_status_log(nimb_scratch_dir, ' break '+str(max_runs))
-#        chdir(nimb_dir)
-#        system('python processing/freesurfer/start_fs_pipeline.py')
-#        system('sbatch run.sh')
+        chdir(nimb_dir)
+        system('python processing/freesurfer/start_fs_pipeline.py')
 
 
 '''THIS script was used for the longitudinal analysis. It has changed and it should not be needed now, but a longitudinal analysis must be made to confirm'''
