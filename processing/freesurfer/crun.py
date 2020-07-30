@@ -165,6 +165,9 @@ def running(process, all_running):
     lsr = db[ACTION][process].copy()
 
     for subjid in lsr:
+#        status = 'none'
+#        if status =='R' or status == 'none':
+
         if subjid in db['RUNNING_JOBS']:
             status = Get_status_for_subjid_in_queue(subjid, all_running)
             if status == 'none':

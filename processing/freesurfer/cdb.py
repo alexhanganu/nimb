@@ -46,6 +46,7 @@ def Get_DB(NIMB_HOME, NIMB_tmp, process_order):
 #        time.sleep(2)
 #        remove(path.join(NIMB_HOME,'processing','freesurfer','db.py'))
     else:
+        db = dict()
         for action in ['DO','QUEUE','RUNNING',]:
             db[action] = {}
             for process in process_order:
@@ -266,7 +267,7 @@ def keep_files_similar_params(subjid, nimb_dir, NIMB_tmp, t1_ls_f, flair_ls_f, t
 def Update_DB_new_subjects_and_SUBJECTS_DIR(NIMB_tmp, SUBJECTS_DIR, db, process_order, base_name, long_name, freesurfer_version, masks):
 
     db = chk_subj_in_SUBJECTS_DIR(SUBJECTS_DIR, NIMB_tmp, db, process_order, base_name, long_name, freesurfer_version, masks)
-    db = chk_subjects_folder(SUBJECTS_DIR, NIMB_tmp, db, base_name, long_name, freesurfer_version, masks)
+#    db = chk_subjects_folder(SUBJECTS_DIR, NIMB_tmp, db, base_name, long_name, freesurfer_version, masks)
     db = chk_new_subjects_json_file(SUBJECTS_DIR, NIMB_tmp, db, freesurfer_version, masks)
     return db
 
@@ -424,8 +425,6 @@ def chk_subj_in_SUBJECTS_DIR(SUBJECTS_DIR, NIMB_tmp, db, process_order, base_nam
             Update_status_log(NIMB_tmp, '            IsRunning file present, adding to RUNNING '+process_order[1])
             db['RUNNING'][process_order[1]].append(subjid)
 
-    if not path.isdir(SUBJECTS_DIR):
-        mkdir(SUBJECTS_DIR)
     ls_SUBJECTS = sorted([i for i in listdir(SUBJECTS_DIR) if not chk_if_exclude(i)])
     ls_SUBJECTS_in_long_dirs_processed = get_ls_subjids_in_long_dirs(db)
     ls_SUBJECTS_running = get_subjs_running(db, process_order)
