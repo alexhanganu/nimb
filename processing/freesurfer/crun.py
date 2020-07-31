@@ -434,12 +434,13 @@ def long_check_groups(_id):
                         cdb.Update_status_log(nimb_scratch_dir,'        missing from db[REGISTRATION]')
             else:
                 cdb.Update_status_log(nimb_scratch_dir, '        '+subjid+' was not registered')
-                db['LONG_DIRS'].pop(_id, None)
-                db['LONG_TPS'].pop(_id, None)
-                if subjid in db['REGISTRATION']:
-                    db['REGISTRATION'].pop(subjid, None)
-                else:
-                    cdb.Update_status_log(nimb_scratch_dir, '        missing from db[REGISTRATION]')
+                if subjid not in db['DO']['registration'] and subjid not in db['RUNNING']['registration']:
+                    db['LONG_DIRS'].pop(_id, None)
+                    db['LONG_TPS'].pop(_id, None)
+                    if subjid in db['REGISTRATION']:
+                        db['REGISTRATION'].pop(subjid, None)
+                    else:
+                        cdb.Update_status_log(nimb_scratch_dir, '        missing from db[REGISTRATION]')
     cdb.Update_DB(db, nimb_scratch_dir)
 
 
@@ -548,10 +549,10 @@ if crunfs.FS_ready(SUBJECTS_DIR):
     cdb.Update_DB(db, nimb_scratch_dir)
     active_subjects = check_active_tasks(db)
 
-    # extracting 20 minutes from the maximum time for the batch to run
-    # since it is expected that less then 15 minutes will be required for the pipeline to perform all the steps
+    # extracting 40 minutes from the maximum time for the batch to run
+    # since it is expected that less then 35 minutes will be required for the pipeline to perform all the steps
     # while the batch is running, and start new batch
-    max_batch_running = time.strftime('%H:%M:%S',time.localtime(time.mktime(time.strptime(batch_walltime,"%H:%M:%S"))-1200))
+    max_batch_running = time.strftime('%H:%M:%S',time.localtime(time.mktime(time.strptime(batch_walltime,"%H:%M:%S"))-2400))
 
     while active_subjects >0 and time.strftime("%H:%M:%S",time.gmtime(time_elapsed)) < max_batch_running:
         count_run += 1

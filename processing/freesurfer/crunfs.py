@@ -28,7 +28,7 @@ def makesubmitpbs(cmd, subjid, run, walltime, params):
     sh_file = subjid+'_'+run+'_'+str(dt)+'.sh'
     out_file = subjid+'_'+run+'_'+str(dt)+'.out'
 
-    with open(path.join(params["NIMB_tmp"], 'usedpbs', sh_file),'a') as f:
+    with open(path.join(params["NIMB_tmp"], 'usedpbs', sh_file),'w') as f:
         for line in params["text4_scheduler"]:
             f.write(line+'\n')
         f.write(params["batch_walltime_cmd"]+walltime+'\n')
