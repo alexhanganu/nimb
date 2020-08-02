@@ -2,7 +2,7 @@
 # 2020.06.26
 
 from os import path, listdir, remove, getenv, rename, mkdir, environ, system, chdir
-from var import process_order, long_name, base_name, cusers_list, cuser, nimb_dir, nimb_scratch_dir, SUBJECTS_DIR
+from distribution.clib.var import process_order, long_name, base_name, cusers_list, cuser, nimb_dir, nimb_scratch_dir, SUBJECTS_DIR
 import time, shutil
 
 environ['TZ'] = 'US/Eastern'
@@ -254,7 +254,7 @@ def chk_subjects_folder(db):
     Update_status_log('checking for new subjects in the subjects folder...')
 
     ls_SUBJECTS_in_long_dirs_processed = get_ls_subjids_in_long_dirs(db)
-    from crunfs import checks_from_runfs
+    from distribution.clib.crunfs import checks_from_runfs
 
     f_subj2fs = nimb_dir+"subj2fs"
     if path.isfile(f_subj2fs):
@@ -273,7 +273,7 @@ def chk_new_subjects_json_file(db):
     Update_status_log('checking for new subjects ...')
 
     ls_SUBJECTS_in_long_dirs_processed = get_ls_subjids_in_long_dirs(db)
-    from crunfs import checks_from_runfs
+    from distribution.clib.crunfs import checks_from_runfs
 
     f_new_subjects = nimb_dir+"new_subjects.json"
     if path.isfile(f_new_subjects):
@@ -371,7 +371,7 @@ def get_id_long(subjid, LONG_DIRS):
 def chk_subj_in_SUBJECTS_DIR(db):
     Update_status_log('checking SUBJECTS_DIR ...')
 
-    from crunfs import chkIsRunning, checks_from_runfs
+    from distribution.clib.crunfs import chkIsRunning, checks_from_runfs
 
     def chk_if_exclude(subjid):
         exclude = False

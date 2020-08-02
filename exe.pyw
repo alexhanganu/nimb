@@ -1,9 +1,8 @@
 # 2020 Jan 10
 # modules to install: pandas, scipy, glob, shutil, openpyxl, xlrd(data_processing_local.chklog)
 from v02003.a.build import build
-from v02003.a.lib import interface_cluster
-from v02003.a.lib import database
-from v02003.utility import SSHHelper
+from distribution.lib import database, interface_cluster
+from distribution import SSHHelper
 from tkinter import Tk, ttk, Menu, N, W, E, S, StringVar, HORIZONTAL
 from sys import platform, version_info
 
@@ -47,7 +46,7 @@ freesurfer = database._get_folder('Main')
 def setupcredentials():
     from v02003.a.setup import setupcredentials
     if setupcredentials():
-        clusters = database._get_Table_Data('Clusters','all')
+        clusters = database._get_Table_Data('Clusters', 'all')
         # ccredentials_txt.set(clusters[0][1]+'@'+clusters[0][2])
 
 
@@ -76,8 +75,8 @@ def set_Folder(group, Project):
 
 def cstatus():
     try:
-        clusters = database._get_Table_Data('Clusters','all')
-        from v02003.a.lib.interface_cluster import check_cluster_status
+        clusters = database._get_Table_Data('Clusters', 'all')
+        from distribution.lib.interface_cluster import check_cluster_status
         cuser = clusters[0][1]
         caddress = clusters[0][2]
         cpw = clusters[0][5]
@@ -92,13 +91,13 @@ def cstatus():
                    + ' are queued')
     except FileNotFoundError:
         setupcredentials()
-        clusters = database._get_Table_Data('Clusters','all')
+        clusters = database._get_Table_Data('Clusters', 'all')
         cstatus()
 
 
 def StopAllActiveTasks():
-    from v02003.a.lib.interface_cluster import delete_all_running_tasks_on_cluster
-    clusters = database._get_Table_Data('Clusters','all')
+    from distribution.lib.interface_cluster import delete_all_running_tasks_on_cluster
+    clusters = database._get_Table_Data('Clusters', 'all')
     delete_all_running_tasks_on_cluster(
         clusters[0][1], clusters[0][2], clusters[0][5], clusters[0][3])
 
@@ -155,7 +154,7 @@ def runstats(Project_Data, Project):
 
 
 def runplots():
-    from v02003.a.lib import makestats
+    from distribution.lib import makestats
     makestats.mkstatisticsfplots()
 
 
@@ -166,7 +165,7 @@ def run_processing_on_cluster_2():
     :return:
     '''
     # version 2: add username, password, and command line to run here
-    clusters = database._get_Table_Data('Clusters','all')
+    clusters = database._get_Table_Data('Clusters', 'all')
     user_name = clusters[list(clusters)[0]]['Username']
     user_password = clusters[list(clusters)[0]]['Password']
     project_folder = clusters[list(clusters)[0]]['HOME']

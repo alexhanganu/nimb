@@ -1,6 +1,5 @@
 #!/bin/python
 #Alexandru Hanganu, 2018 June 26
-import sys
 # sys.path.append('../..')
 # sys.path.insert(0,'..')
 from os import rename, path, listdir, system, makedirs, remove
@@ -8,7 +7,6 @@ import datetime, time, shutil
 from lib.var import local_maindir
 # from .. import local_runfs, local_db
 from ..lib import local_runfs, local_db
-from sys import platform
 
 date=datetime.datetime.now()
 dt=str(date.year)+str(date.month)+str(date.day)
@@ -204,13 +202,13 @@ def do(process):
                             db['RUNNING']['recon'].append(subjid)
                             local_runfs.runrecon_all(subjid)
                         else:
-                            local_db.Update_status_log('ERROR: fsaverage is MISSING: '+subjid)
+                            local_db.Update_status_log('ERROR: fsaverage is MISSING: ' + subjid)
                             db['ERROR']['recon'].append(subjid)
                     else:
-                        local_db.Update_status_log('ERROR: fsaverage is MISSING: '+subjid)
+                        local_db.Update_status_log('ERROR: fsaverage is MISSING: ' + subjid)
                         db['ERROR']['recon'].append(subjid)
                 else:
-                    local_db.Update_status_log('ERROR: IsRunning file present: '+subjid)
+                    local_db.Update_status_log('ERROR: IsRunning file present: ' + subjid)
                     db['ERROR']['IsRunning'].append(subjid)	
                 db['DO']['recon'].remove(subjid)
         db['DO']['recon'] = sorted(db['DO']['recon'])
@@ -252,16 +250,16 @@ def do(process):
                     local_db.Update_DB(db)
                 else:
                     db['ERROR']['IsRunning'].append(subjid)
-                    local_db.Update_status_log('ERROR: IsRunning file present: '+subjid)
+                    local_db.Update_status_log('ERROR: IsRunning file present: ' + subjid)
                     local_db.Update_DB(db)
 
 
 def running(process):
-    local_db.Update_status_log('RUNNING '+process)
+    local_db.Update_status_log('RUNNING ' + process)
     for subjid in db['RUNNING'][process]:
         if path.isdir(fsDIR+subjid):
             if not local_runfs.chkIsRunning(subjid):
-                local_db.Update_status_log('moving '+subjid+' from RUNNING '+process+' to CHECK '+process)
+                local_db.Update_status_log('moving ' + subjid + ' from RUNNING ' + process + ' to CHECK ' + process)
                 db['CHECK'][process].append(subjid)
                 db['RUNNING'][process].remove(subjid)
                 db['CHECK'][process] = sorted(db['CHECK'][process])
@@ -272,18 +270,18 @@ def running(process):
 def check(process):
     count = 1
     while len(db['CHECK'][process])>0:
-        local_db.Update_status_log('CHECKING '+process+' active '+str(count))
+        local_db.Update_status_log('CHECKING ' + process + ' active ' + str(count))
         for subjid in db['CHECK'][process]:
             if not local_runfs.chkIsRunning(subjid):
                 if local_runfs.chkreconf(subjid):
                     if process == 'registration':
                         db['DO']['recon'].append(subjid)
-                        local_db.Update_status_log('moving '+subjid+' from CHECK '+process+' to DO recon')
+                        local_db.Update_status_log('moving ' + subjid + ' from CHECK ' + process + ' to DO recon')
                     elif process == 'recon':
                         if local_runfs.chk_if_recon_done(subjid):
                             if not local_runfs.chk_masks(subjid):
                                 db['DO']['masks'].append(subjid)
-                                local_db.Update_status_log('moving '+subjid+' from CHECK '+process+' to DO masks')
+                                local_db.Update_status_log('moving ' + subjid + ' from CHECK ' + process + ' to DO masks')
                             else:
                                 db['CHECK']['qcache'].append(subjid)
                         else:
@@ -292,7 +290,7 @@ def check(process):
                         if local_runfs.chk_masks(subjid):
                             if not local_runfs.chk_if_qcache_done(subjid):
                                 db['DO']['qcache'].append(subjid)
-                                local_db.Update_status_log('moving '+subjid+' from CHECK '+process+' to DO qcache')
+                                local_db.Update_status_log('moving ' + subjid + ' from CHECK ' + process + ' to DO qcache')
                             else:
                                 db['CHECK']['hip'].append(subjid)
                         else:
@@ -300,14 +298,14 @@ def check(process):
                     elif process == 'qcache':
                         if not local_runfs.chkhipf(subjid):
                             db['DO']['hip'].append(subjid)
-                            local_db.Update_status_log('moving '+subjid+' from CHECK '+process+' to DO hip')
+                            local_db.Update_status_log('moving ' + subjid + ' from CHECK ' + process + ' to DO hip')
                         else:
                             db['CHECK']['brstem'].append(subjid)
                     elif process == 'hip':
                         if local_runfs.chkhipf(subjid):
                             if not local_runfs.chkbrstemf(subjid):
                                 db['DO']['brstem'].append(subjid)
-                                local_db.Update_status_log('moving '+subjid+' from CHECK '+process+' to DO brstem')
+                                local_db.Update_status_log('moving ' + subjid + ' from CHECK ' + process + ' to DO brstem')
                             else:
                                 db['CHECK']['stats'].append(subjid)
                         else:
@@ -317,7 +315,7 @@ def check(process):
                             if not local_runfs.check_stats(subjid):
                                 if subjid not in db['DO']['stats']:
                                     db['DO']['stats'].append(subjid)
-                                    local_db.Update_status_log('moving '+subjid+' from CHECK '+process+' to DO stats')
+                                    local_db.Update_status_log('moving ' + subjid + ' from CHECK ' + process + ' to DO stats')
                                     #db['DO']['lgi'].append(subjid) 
                             else:
                                 db['DO']['cp2local'].append(subjid)
@@ -329,7 +327,7 @@ def check(process):
                     elif process == 'qcache_lgi':
                             pass
                 else:
-                    local_db.Update_status_log('ERROR: '+subjid+' : recon-all finished with error for :'+process)
+                    local_db.Update_status_log('ERROR: ' + subjid + ' : recon-all finished with error for :' + process)
                     db['ERROR'][process].append(subjid)
             else:
                 db['ERROR']['IsRunning'].append(subjid)
@@ -381,7 +379,7 @@ def check_active_tasks(db):
         for PROCESS in db[ACTION]:
             active_subjects = active_subjects + len(db[ACTION][PROCESS])
     active_subjects = active_subjects-(finished+error)
-    local_db.Update_status_log(str(active_subjects)+' subjects are being processed'+' '+str(finished)+' subjects were finished'+' '+str(error)+' subjects with errors')
+    local_db.Update_status_log(str(active_subjects) + ' subjects are being processed' + ' ' + str(finished) + ' subjects were finished' + ' ' + str(error) + ' subjects with errors')
     print(str(active_subjects)+' subjects are being processed'+' '+str(finished)+' subjects were finished'+' '+str(error)+' subjects with errors')
     return active_subjects
 
@@ -394,7 +392,7 @@ active_subjects = check_active_tasks(db)
 count_run = 0
 while active_subjects >0 :
     count_run += 1
-    local_db.Update_status_log('restarting run, '+str(count_run))
+    local_db.Update_status_log('restarting run, ' + str(count_run))
     run()
     if len(db['RUNNING']['hip'])>0 or len(db['RUNNING']['brstem'])>0 or len(db['RUNNING']['qcache'])>0:
         time2sleep = 600

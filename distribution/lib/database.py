@@ -402,6 +402,7 @@ def Commands_cluster_scheduler(cluster, cuser, supervisor_ccri):
         remote_type = 'slurm'
 
         FreeSurfer_Install = True
+        from setup.setup import freesurfer71_centos7_download_address
         FreeSurfer_Source = freesurfer71_centos7_download_address
         freesurfer_version = 7
 

@@ -3,10 +3,9 @@ goals are to check the disk space
 the function of this file is intended to run at the server
 """
 
-import os, glob
+import glob
 import subprocess, re
-from pathlib import Path
-from v02003.utility.SSHHelper import *
+from distribution.SSHHelper import *
 
 class DiskspaceUtility:
     
