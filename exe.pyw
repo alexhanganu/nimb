@@ -1,12 +1,12 @@
 # 2020 Jan 10
 # modules to install: pandas, scipy, glob, shutil, openpyxl, xlrd(data_processing_local.chklog)
-from a.build import build
-from a.lib import interface_cluster
-from a.lib import database
-from utility import SSHHelper
+from v02003.a.build import build
+from v02003.a.lib import interface_cluster
+from v02003.a.lib import database
+from v02003.utility import SSHHelper
 from tkinter import Tk, ttk, Menu, N, W, E, S, StringVar, HORIZONTAL
 from sys import platform, version_info
-from .utility.distribution_helper import DistributionHelper
+from v02003.utility.distribution_helper import DistributionHelper
 if not version_info[0] >= 3:
     from os import system
 
@@ -45,39 +45,39 @@ freesurfer = database._get_folder('Main')
 
 
 def setupcredentials():
-    from a.setup import setupcredentials
+    from v02003.a.setup import setupcredentials
     if setupcredentials():
         clusters = database._get_Table_Data('Clusters','all')
         # ccredentials_txt.set(clusters[0][1]+'@'+clusters[0][2])
 
 
 def set_Project_Data(Project):
-    from a.setup import SetProjectData
+    from v02003.a.setup import SetProjectData
     SetProjectData(Project)
 
 
 def set_MainFolder(Project):
-    from a.setup import set_MainFolder
+    from v02003.a.setup import set_MainFolder
     freesurfer = set_MainFolder(Project)
     freesurfer_address_var.set(freesurfer)
     print(freesurfer)
 
 
 def set_LocalProcessingFolder():
-    from a.setup import set_LocalProcessingFolder
+    from v02003.a.setup import set_LocalProcessingFolder
     local = set_LocalProcessingFolder()
-    local_fs_address.set(local)
+    local_fs_address.set(local) # where local_fs_address?
 
 
 def set_Folder(group, Project):
-    from a.setup import set_Folder
-    Projects_all[Project][group].set(set_Folder(group, Project))
+    from v02003.a.setup import set_Folder
+    Projects_all[Project][group].set(set_Folder(group, Project)) # where it is?
 
 
 def cstatus():
     try:
         clusters = database._get_Table_Data('Clusters','all')
-        from a.lib.interface_cluster import check_cluster_status
+        from v02003.a.lib.interface_cluster import check_cluster_status
         cuser = clusters[0][1]
         caddress = clusters[0][2]
         cpw = clusters[0][5]
@@ -97,7 +97,7 @@ def cstatus():
 
 
 def StopAllActiveTasks():
-    from a.lib.interface_cluster import delete_all_running_tasks_on_cluster
+    from v02003.a.lib.interface_cluster import delete_all_running_tasks_on_cluster
     clusters = database._get_Table_Data('Clusters','all')
     delete_all_running_tasks_on_cluster(
         clusters[0][1], clusters[0][2], clusters[0][5], clusters[0][3])
@@ -155,7 +155,7 @@ def runstats(Project_Data, Project):
 
 
 def runplots():
-    from a.lib import makestats
+    from v02003.a.lib import makestats
     makestats.mkstatisticsfplots()
 
 
@@ -247,7 +247,7 @@ def setting_up_local_linux_with_freesurfer():
     try:
         from v02003.a.setup import SETUP_LOCAL_v2
     except:
-        from a.setup import SETUP_LOCAL_v2
+        from v02003.a.setup import SETUP_LOCAL_v2
 
     SETUP_LOCAL_v2()
 
