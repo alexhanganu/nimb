@@ -1,15 +1,13 @@
 #!/bin/python
 
 
-from os import listdir, path, makedirs, rename, remove, symlink, readlink, system, lstat
 try:
     from os import lchmod
 except ImportError:
     pass
-import shutil, time
 from os import makedirs, path, listdir
 from datetime import datetime
-
+from sys import platform
 from . import database
 
 MainFolder = database._get_folder('Main')
