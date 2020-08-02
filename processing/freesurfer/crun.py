@@ -6,6 +6,9 @@
 add FS QA tools to rm scans with low SNR (Koh et al 2017)
 https://surfer.nmr.mgh.harvard.edu/fswiki/QATools
 '''
+print_all_subjects = False
+
+
 from os import path, listdir, remove, rename, system, chdir, environ
 import time, shutil
 import json
@@ -122,29 +125,6 @@ def Get_status_for_subjid_in_queue(subjid, all_running):
            return 'none'
     else:
         return 'none'
-
-
-
-def queue(process, all_running):
-    '''
-    logic: subject is Not in running - gets status none, is moved to running
-            subject is PD in running - stays.
-    '''
-    ACTION = 'QUEUE'
-    cdb.Update_status_log(nimb_scratch_dir, ACTION+' '+process)
-
-    lsq = db[ACTION][process].copy()
-
-    for subjid in lsq:
-        status = 'none'
-        status = Get_status_for_subjid_in_queue(subjid, all_running)
-        if status =='R' or status == 'none':
-                    cdb.Update_status_log(nimb_scratch_dir, '    '+subjid+' moving from '+ACTION+' to RUNNING '+process)
-                    db[ACTION][process].remove(subjid)
-                    db['RUNNING'][process].append(subjid)
-    db[ACTION][process].sort()
-    cdb.Update_DB(db, nimb_scratch_dir)
-
 
 
 
@@ -421,17 +401,18 @@ def long_check_groups(_id):
 
 
 def move_processed_subjects(subject, db_source, new_name):
-    cdb.Update_status_log(nimb_scratch_dir, '    '+subject+' moving from '+db_source)
     file_mrparams = path.join(nimb_scratch_dir,'mriparams',subject+'_mrparams')
     if path.isfile(file_mrparams):
         shutil.move(file_mrparams, path.join(SUBJECTS_DIR, subject, 'stats'))
+    cdb.Update_status_log(nimb_scratch_dir, '    '+subject+' copying from '+db_source)
     size_src = sum(f.stat().st_size for f in Path(path.join(SUBJECTS_DIR, subject)).glob('**/*') if f.is_file())
     if not new_name:
         shutil.copytree(path.join(SUBJECTS_DIR, subject), path.join(processed_SUBJECTS_DIR, subject))
-        cdb.Update_DB(db, nimb_scratch_dir)
         size_dst = sum(f.stat().st_size for f in Path(path.join(processed_SUBJECTS_DIR, subject)).glob('**/*') if f.is_file())
         if size_src == size_dst:
             db['PROCESSED'][db_source].remove(subject)
+            cdb.Update_DB(db, nimb_scratch_dir)
+            cdb.Update_status_log(nimb_scratch_dir, '    copied correctly, removing from SUBJECTS_DIR')
             shutil.rmtree(path.join(SUBJECTS_DIR, subject))
             if archive_processed:
                 cdb.Update_status_log(nimb_scratch_dir, '        archiving ...')
@@ -469,7 +450,8 @@ def run():
             ls_long_dirs.append(key)
 
     for _id in ls_long_dirs:
-        cdb.Update_status_log(nimb_scratch_dir, '    '+_id+': '+str(db['LONG_DIRS'][_id]))
+        if print_all_subjects:
+            cdb.Update_status_log(nimb_scratch_dir, '    '+_id+': '+str(db['LONG_DIRS'][_id]))
         long_check_groups(_id)
 
 
@@ -499,10 +481,10 @@ def  len_Running():
 
 
 def Count_TimeSleep():
-    time2sleep = 300 # 5 minutes
+    time2sleep = 600 # 10 minutes
     if len_Running() >= max_nr_running_batches:
         cdb.Update_status_log(nimb_scratch_dir, 'queue and running: '+str(len_Running())+' max: '+str(max_nr_running_batches))
-        time2sleep = 1200 # 20 minutes
+        time2sleep = 1800 # 30 minutes
     return time2sleep
 
 
@@ -665,3 +647,16 @@ if crunfs.FS_ready(SUBJECTS_DIR):
 #                 else:
 #                     cdb.Update_status_log(nimb_scratch_dir, '    not in SUBJECTS_DIR')
 #                 cdb.Update_DB(db, nimb_scratch_dir)
+
+#
+#def queue(process, all_running):
+#    ACTION = 'QUEUE'
+#    cdb.Update_status_log(nimb_scratch_dir, ACTION+' '+process)
+#    for subjid in db[ACTION][process].copy():
+#        status = 'none'
+#        status = Get_status_for_subjid_in_queue(subjid, all_running)
+#        if status =='R' or status == 'none':
+#            cdb.Update_status_log(nimb_scratch_dir, '    '+subjid+' moving from '+ACTION+' to RUNNING '+process)
+#            db[ACTION][process].remove(subjid)
+#            db['RUNNING'][process].append(subjid)
+#    cdb.Update_DB(db, nimb_scratch_dir)

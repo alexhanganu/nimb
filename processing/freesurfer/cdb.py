@@ -119,6 +119,7 @@ def Update_running(NIMB_HOME, cuser, cmd):
 def get_ls_subjids_in_long_dirs(db):
     lsall = []
     for _id in db['LONG_DIRS']:
+#        lsall = lsall + db['LONG_DIRS'][_id]
         for subjid in db['LONG_DIRS'][_id]:
                 if subjid not in lsall:
                     lsall.append(subjid)

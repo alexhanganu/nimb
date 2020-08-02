@@ -79,8 +79,7 @@ def submit_tmux(cmd, subjid):
 
 def chkIsRunning(SUBJECTS_DIR, subjid):
 
-    #script does not check for presence of IsRunning files for the brainstem
-    IsRunning_files = ['IsRunning.lh+rh','IsRunningHPsubT1.lh+rh','IsRunningThalamicNuclei_mainFreeSurferT1']
+    IsRunning_files = ['IsRunning.lh+rh', 'IsRunningBSsubst', 'IsRunningHPsubT1.lh+rh', 'IsRunningThalamicNuclei_mainFreeSurferT1']
     try:
         for file in IsRunning_files:
             if path.exists(path.join(SUBJECTS_DIR,subjid,'scripts',file)):
@@ -93,7 +92,7 @@ def chkIsRunning(SUBJECTS_DIR, subjid):
 
 
 def IsRunning_rm(SUBJECTS_DIR, subjid):
-    IsRunning_files = ['IsRunning.lh+rh','IsRunningHPsubT1.lh+rh','IsRunningThalamicNuclei_mainFreeSurferT1']
+    IsRunning_files = ['IsRunning.lh+rh', 'IsRunningBSsubst', 'IsRunningHPsubT1.lh+rh', 'IsRunningThalamicNuclei_mainFreeSurferT1']
     try:
         remove(path.join(SUBJECTS_DIR, subjid, 'scripts', [i for i in IsRunning_files if path.exists(path.join(SUBJECTS_DIR, subjid, 'scripts', i))][0]))
     except Exception as e:
@@ -297,17 +296,21 @@ def fs_find_error(subjid, SUBJECTS_DIR, NIMB_tmp):
         if path.exists(file_2read):
             f = open(file_2read,'r').readlines()
             for line in reversed(f):
-                if 'ERROR: Talairach failed!' in line or 'error: transforms/talairach.m3z' in line:
-                    cdb.Update_status_log(NIMB_tmp,'        ERROR: Manual Talairach alignment may be necessary, or include the -notal-check flag to skip this test, making sure the -notal-check flag follows -all or -autorecon1 in the command string.')
-                    error = 'talfail'
-                    break
-                elif  'ERROR: MultiRegistration::loadMovables: images have different voxel sizes.' in line:
-                    cdb.Update_status_log(NIMB_tmp,'        ERROR: Voxel size is different, Multiregistration is not supported; consider making conform')
+                if  'ERROR: MultiRegistration::loadMovables: images have different voxel sizes.' in line:
+                    cdb.Update_status_log(NIMB_tmp,'        ERROR: Voxel size is different, Multiregistration is not supported; consider registration with less entries')
                     error = 'voxsizediff'
                     break
                 elif  'error: mghRead' in line:
                     cdb.Update_status_log(NIMB_tmp,'        ERROR: orig bad registration, probably due to multiple -i entries, rerun with less entries')
                     error = 'errorigmgz'
+                    break
+                elif 'error: MRISreadCurvature:' in line:
+                    cdb.Update_status_log(NIMB_tmp,'                    ERROR: MRISreadCurvature')
+                    error = 'errCurvature'
+                    break
+                if 'ERROR: Talairach failed!' in line or 'error: transforms/talairach.m3z' in line:
+                    cdb.Update_status_log(NIMB_tmp,'        ERROR: Manual Talairach alignment may be necessary, or include the -notal-check flag to skip this test, making sure the -notal-check flag follows -all or -autorecon1 in the command string.')
+                    error = 'talfail'
                     break
                 elif 'ERROR: no run data found' in line:
                     cdb.Update_status_log(NIMB_tmp,'        ERROR: file has no registration')
@@ -316,10 +319,6 @@ def fs_find_error(subjid, SUBJECTS_DIR, NIMB_tmp):
                 elif 'ERROR: inputs have mismatched dimensions!' in line:
                     cdb.Update_status_log(NIMB_tmp,'        ERROR: files have mismatched dimension, repeat registration will be performed')
                     error = 'regdim'
-                    break
-                elif 'error: MRISreadCurvature:' in line:
-                    cdb.Update_status_log(NIMB_tmp,'                    ERROR: MRISreadCurvature')
-                    error = 'errCurvature'
                     break
                 elif 'ERROR: cannot find' in line:
                     cdb.Update_status_log(NIMB_tmp,'        ERROR: cannot find files')
