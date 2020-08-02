@@ -7,8 +7,9 @@ from os import listdir, system, path, makedirs, getcwd, remove, chdir
 
 from tkinter import Tk, Frame, ttk, Entry, Label, StringVar, filedialog, simpledialog
 
-from a.clib.var import freesurfer_version
-from a.lib import database
+from distribution.clib.var import freesurfer_version
+from distribution.lib import database
+
 
 win_netframework_download_address = 'https://www.microsoft.com/en-us/download/details.aspx?id=48137'
 win_visualstudio_download_address = 'http://landinghub.visualstudio.com/visual-cpp-build-tools'
