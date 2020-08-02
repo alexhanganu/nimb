@@ -18,7 +18,7 @@ except ImportError:
 import json
 from pathlib import Path
 
-from a.lib import database
+from v02003.a.lib import database
 logger = logging.getLogger(__name__)
 logging.basicConfig(format='%(asctime)s %(module)s %(levelname)s: %(message)s')
 # logger.setLevel(logging.INFO)
@@ -434,7 +434,7 @@ def download_files_from_server(local_folder, remote_folder):
 # kp for testing
 def test():
     """tes the function"""
-    from a.lib import database
+    from v02003.a.lib import database
     clusters = database._get_credentials('all')
     ssh_session = getSSHSession(host_name, user_name, user_password)
     print("ls; cd " + project_folder + "; ls")
@@ -449,9 +449,10 @@ def test2():
     host_name = "beluga.calculquebec.ca"
     ssh_session = getSSHSession(host_name, user_name, user_password)
     (zip_out, err) = runCommandOverSSH(ssh_session, "ls  ~/projects/def-hanganua/adni/source/mri/*.zip" )
-    (gz_out, err) = runCommandOverSSH(ssh_session, "ls  ~/projects/def-hanganua/adni/source/mri/*.gz")
+    #(gz_out, err) = runCommandOverSSH(ssh_session, "ls  ~/projects/def-hanganua/adni/source/mri/*.gz")
 
     print("finish")
+    ssh_session.close()
 
 if __name__ == "__main__":
     if True:

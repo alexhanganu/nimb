@@ -6,20 +6,30 @@ the function of this file is intended to run at the server
 import os, glob
 import subprocess, re
 from pathlib import Path
-from .SSHHelper import *
+from v02003.utility.SSHHelper import *
 
 class DiskspaceUtility:
     
     @staticmethod
     def get_free_space( path):
         """
-        return the space in MB
+        return the space in MB of home folder, by running this command <df -hm ~> on local computer
         :param self:
         :param path: path to calculate the size
         :return: int, size in MG, this number is round(realsize) + 1
         """
         # todo: not clear how to do it, b/c the meaning of free space
-        return int(subprocess.check_output(['du', '-shcm', path]).split()[0].decode('utf-8')) - 1
+        # todo: is this the free space of home folder or not?
+        # note: use this
+        # return int(subprocess.check_output(['du', '-shcm', path]).split()[0].decode('utf-8')) - 1
+        home_folder = "~"
+        command = f"df -hm {home_folder}" # h: human readable, m = megabyte
+        out = subprocess.check_output(command, shell=True)
+
+        if 'Available' not in out:
+            return 0 # command failed
+        out = int(out.decode('utf8')[1].split()[-3])
+        return out
 
     @staticmethod
     def get_free_space_remote(ssh_session):
@@ -103,6 +113,7 @@ class DiskspaceUtility:
     @staticmethod
     def get_subject_to_be_process_with_free_space(unprocessed_subject_list ):
         """
+
         get_files_upto_freespace_in_home_folder
         :param unprocessed_subject_list:
         :return:
@@ -119,7 +130,7 @@ class ListSubjectHelper:
         get all subject in SOURCE_SUBJECTS_DIR
         :param subject_path: must be absolute path
         :param extension:
-        :return: all files with defined extensions
+        :return: all files with defined extensions, full path
         """
         os.chdir(subject_path)
         files = []
@@ -136,20 +147,19 @@ class ListSubjectHelper:
         get all subject in SOURCE_SUBJECTS_DIR
         :param subject_path: must be absolute path
         :param extension:
-        :return: all files with defined extensions
+        :return: all files with defined extensions, such as ID.zip or ID.gz,
+                and are not in full path
         """
         ssh_session = getSSHSession(remote_host, remote_username, remote_password)
-        command =
-        (out, err) = runCommandOverSSH(ssh_session,command)
-
-        # get all the files in
-        subject_path = []
-        os.chdir(subject_path)
-        files = []
+        all_subjects = []
         for ext in extension:
-            files_1 = [os.path.join(subject_path, file) for file in glob.glob(ext)]
-            files.extend(files_1)
-        return files
+            command = f" cd {PROCESSED_FS_DIR}; ls {ext}"
+            (out, err) = runCommandOverSSH(ssh_session,command)
+            if "No such file or directory" in err:
+                continue
+            all_subjects.append(out.split("\n")[1:-1])
+        return all_subjects
+
     @staticmethod
     def get_to_be_processed_subject_local(SOURCE_SUBJECTS_DIR, PROCESSED_FS_DIR):
         """
@@ -164,8 +174,8 @@ class ListSubjectHelper:
         return list(unprocessed_subject)
 
 if __name__ == "__main__":
-    size = DiskspaceUtility.get_free_space(".")
+    size = DiskspaceUtility.get_free_space("../v02003/utility")
     print(f"current size is {size} ")
-    py = DiskspaceUtility.get_files_upto_size(1, ".","*.*")
+    py = DiskspaceUtility.get_files_upto_size(1, "../v02003/utility", "*.*")
     print(f"list of python {py}")
 

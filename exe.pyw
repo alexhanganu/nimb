@@ -6,7 +6,7 @@ from v02003.a.lib import database
 from v02003.utility import SSHHelper
 from tkinter import Tk, ttk, Menu, N, W, E, S, StringVar, HORIZONTAL
 from sys import platform, version_info
-from v02003.utility.distribution_helper import DistributionHelper
+
 if not version_info[0] >= 3:
     from os import system
 
