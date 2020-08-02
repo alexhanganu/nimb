@@ -2,15 +2,15 @@
 #Alexandru Hanganu, 2018 April 05
 
 
-from os import listdir, path, makedirs, rename, remove, symlink, readlink, system, lstat
+from os import listdir, path, makedirs, rename, remove, symlink, readlink, system, lstat, stat
 try:
     from os import lchmod
 except ImportError:
     pass
 import shutil
-from utility.SSHHelper import *
+from ..SSHHelper import *
 import pathlib
-from a.lib import database
+import distribution.lib.database
 
 MainFolder = database._get_folder('Main')
 DIRs_INCOMING = database._get_folder('MRI')
@@ -353,7 +353,7 @@ def cp2cluster():
     in the "subjects" folder. Removes the logmiss.xlsx, subj2fs, f2cp files
     '''
     from sys import platform
-    from a.lib.interface_cluster import start_cluster
+    from distribution.lib.interface_cluster import start_cluster
 
 
     def platform_linux_darwin(cuser, caddress, subj2cp, dirs2cp, cmaindir):
