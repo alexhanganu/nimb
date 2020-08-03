@@ -346,10 +346,10 @@
             "PPMI_3574_ses-1",
             "PPMI_3574_ses-2",
             "PPMI_3574_ses-4",
-            "PPMI_3753_ses-1",
             "PPMI_3575_ses-2",
             "PPMI_3575_ses-4",
-            "PPMI_3577_ses-1"
+            "PPMI_3577_ses-1",
+            "PPMI_3753_ses-1"
         ],
         "autorecon3": [],
         "qcache": [],
