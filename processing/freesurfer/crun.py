@@ -425,7 +425,6 @@ def move_processed_subjects(subject, db_source, new_name):
         cdb.Update_status_log(nimb_scratch_dir, '        renaming '+subject+' to '+new_name+', moving to processed error')
         shutil.move(path.join(SUBJECTS_DIR, subject), path.join(NIMB_PROCESSED_FS_error, new_name))
         db['PROCESSED'][db_source].remove(subject)
-
     cdb.Update_status_log(nimb_scratch_dir, '        moving DONE')
 
 
@@ -435,8 +434,6 @@ def run():
     all_running = cdb.get_batch_jobs_status(cuser, cusers_list)
 
     for process in process_order[::-1]:
-        if len(db['QUEUE'][process])>0:
-            queue(process, all_running)
         if len(db['RUNNING'][process])>0:
             running(process,all_running)
         if len(db['DO'][process])>0:
@@ -602,61 +599,3 @@ if crunfs.FS_ready(SUBJECTS_DIR):
 #                     db['PROCESSED']['error_recon'].append(subjid)
 #     cdb.Update_DB(db, nimb_scratch_dir)
 
-
-
-# OLD VERSION before the DB bug
-# def check_error():
-#     cdb.Update_status_log(nimb_scratch_dir, 'ERROR checking')
-
-#     for process in process_order:
-#         if db['PROCESSED']['error_'+process]:
-#             lserr = list()
-#             for val in db['PROCESSED']['error_'+process]:
-#                 lserr.append(val)   
-#             for subjid in lserr:
-#                 cdb.Update_status_log(nimb_scratch_dir, '    '+subjid)
-#                 if path.exists(SUBJECTS_DIR+subjid):
-#                     if crunfs.chkIsRunning(SUBJECTS_DIR, subjid):
-#                         cdb.Update_status_log(nimb_scratch_dir, '            removing IsRunning file')
-#                         remove(path.join(SUBJECTS_DIR,subjid,'scripts','IsRunning.lh+rh'))
-#                     cdb.Update_status_log(nimb_scratch_dir, '        checking the recon-all-status.log for error for: '+process)
-#                     crunfs.chkreconf_if_without_error(subjid)
-#                     cdb.Update_status_log(nimb_scratch_dir, '        checking if all files were created for: '+process)
-#                     if not crunfs.checks_from_runfs(SUBJECTS_DIR, process, subjid):
-#                         cdb.Update_status_log(nimb_scratch_dir, '            some files were not created. Excluding subject from pipeline.')
-#                         db['PROCESSED']['error_'+process].remove(subjid)
-#                         _id, _ = cdb.get_id_long(subjid, db['LONG_DIRS'])
-#                         if _id != 'none':
-#                             try:
-#                                 db['LONG_DIRS'][_id].remove(subjid)
-#                                 db['LONG_TPS'][_id].remove(subjid.replace(_id+'_',''))
-#                                 if len(db['LONG_DIRS'][_id])==0:
-#                                     db['LONG_DIRS'].pop(_id, None)
-#                                     db['LONG_TPS'].pop(_id, None)
-#                             except ValueError as e:
-#                                 cdb.Update_status_log(nimb_scratch_dir, '        ERROR, id not found in LONG_DIRS; '+e)
-#                         else:
-#                             cdb.Update_status_log(nimb_scratch_dir, '        ERROR, '+subjid+' is absent from LONG_DIRS')
-#                         cdb.Update_status_log(nimb_scratch_dir, '        '+subjid+' moving to cp2local')
-#                         db['PROCESSED']['cp2local'].append(subjid)
-#                     else:
-#                         cdb.Update_status_log(nimb_scratch_dir, '            all files were created for process: '+process)
-#                         db['PROCESSED']['error_'+process].remove(subjid)
-#                         db['RUNNING'][process].append(subjid)
-#                         cdb.Update_status_log(nimb_scratch_dir, '    moving from error_'+process+' to RUNNING '+process)
-#                 else:
-#                     cdb.Update_status_log(nimb_scratch_dir, '    not in SUBJECTS_DIR')
-#                 cdb.Update_DB(db, nimb_scratch_dir)
-
-#
-#def queue(process, all_running):
-#    ACTION = 'QUEUE'
-#    cdb.Update_status_log(nimb_scratch_dir, ACTION+' '+process)
-#    for subjid in db[ACTION][process].copy():
-#        status = 'none'
-#        status = Get_status_for_subjid_in_queue(subjid, all_running)
-#        if status =='R' or status == 'none':
-#            cdb.Update_status_log(nimb_scratch_dir, '    '+subjid+' moving from '+ACTION+' to RUNNING '+process)
-#            db[ACTION][process].remove(subjid)
-#            db['RUNNING'][process].append(subjid)
-#    cdb.Update_DB(db, nimb_scratch_dir)

@@ -16,43 +16,25 @@ def Get_DB(NIMB_HOME, NIMB_tmp, process_order):
     '''
 
     dbjson = dict()
-    db_json_file = path.join(NIMB_tmp,'db.json')
-    db_json_last_file = path.join(NIMB_HOME,'processing','freesurfer','db.json')
+    db_json_file = path.join(NIMB_tmp, 'db.json')
 
     print("NIMB_tmp is:" + NIMB_tmp)
     if path.isfile(db_json_file):
         with open(db_json_file) as db_json_open:
             db = json.load(db_json_open)
-        shutil.copy(path.join(NIMB_tmp,'db.json'), path.join(NIMB_HOME,'processing','freesurfer','db.json'))
-#    if path.isfile(path.join(NIMB_tmp,'db')):
-#        shutil.copy(path.join(NIMB_tmp,'db'), path.join(NIMB_HOME,'processing','freesurfer','db.py'))
-#        system('chmod 777 '+path.join(NIMB_HOME,'processing','freesurfer','db.py'))
-#        time.sleep(2)
-#        from db import DO, QUEUE, RUNNING, RUNNING_JOBS, LONG_DIRS, LONG_TPS, PROCESSED, REGISTRATION, ERROR_QUEUE
-#        db = dict()
-#        db['DO'] = DO
-#        db['QUEUE'] = QUEUE
-#        db['RUNNING'] = RUNNING
-#        db['RUNNING_JOBS'] = RUNNING_JOBS
-#        db['LONG_DIRS'] = LONG_DIRS
-#        db['LONG_TPS'] = LONG_TPS
-#        db['PROCESSED'] = PROCESSED
-#        db['REGISTRATION'] = REGISTRATION
-#        db['ERROR_QUEUE'] = ERROR_QUEUE
-#        time.sleep(2)
-#        remove(path.join(NIMB_HOME,'processing','freesurfer','db.py'))
+        shutil.copy(path.join(NIMB_tmp, 'db.json'), path.join(NIMB_HOME, 'tmp', 'db.json'))
     else:
         db = dict()
-        for action in ['DO','QUEUE','RUNNING',]:
+        for action in ['DO','RUNNING',]:
             db[action] = {}
             for process in process_order:
                 db[action][process] = []
         db['RUNNING_JOBS'] = {}
         db['LONG_DIRS'] = {}
         db['LONG_TPS'] = {}
-        db['PROCESSED'] = {'cp2local':[],}
         db['REGISTRATION'] = {}
         db['ERROR_QUEUE'] = {}
+        db['PROCESSED'] = {'cp2local':[],}
         for process in process_order:
             db['PROCESSED']['error_'+process] = []
 
@@ -60,66 +42,39 @@ def Get_DB(NIMB_HOME, NIMB_tmp, process_order):
 
 
 def Update_DB(db, NIMB_tmp):
-    with open(path.join(NIMB_tmp,'db.json'),'w') as jf:
+    with open(path.join(NIMB_tmp, 'db.json'), 'w') as jf:
         json.dump(db, jf, indent=4)
-#    with open(path.join(NIMB_tmp,'db'),'w') as f:
-#        for key in db:
-#            f.write(key+'= {')
-#            if key == 'ERROR_QUEUE':
-#                for subkey in db[key]:
-#                    f.write('\''+subkey+'\':\"'+str(db[key][subkey])+'\",')
-#            if key == 'RUNNING_JOBS':
-#                for subkey in db[key]:
-#                    f.write('\''+subkey+'\':'+str(db[key][subkey])+',')
-#            elif key == 'REGISTRATION':
-#                for subkey_subjid in db[key]:
-#                    f.write('\''+subkey_subjid+'\': {')
-#                    for subkey_mrgroup in db[key][subkey_subjid]:
-#                        f.write('\''+subkey_mrgroup+'\': {')
-#                        for subkey_mrgroup_type in db[key][subkey_subjid][subkey_mrgroup]:
-#                            f.write('\''+subkey_mrgroup_type+'\':'+str(sorted(db[key][subkey_subjid][subkey_mrgroup][subkey_mrgroup_type]))+',')
-#                        f.write('},')
-#                    f.write('},')
-#            else:
-# This loop reads second time the 'ERROR_QUEUE', at the "else" level, though it must not.  cannot find the error. will use json version.
-#                print(key)
-#                for subkey in db[key]:
-#                    f.write('\''+subkey+'\':[')
-#                    for value in sorted(db[key][subkey]):
-#                        f.write('\''+value+'\',')
-#                    f.write('],')
-#            f.write('}\n')
 
 
 
 def Update_status_log(NIMB_tmp, cmd, update=True):
     print(cmd)
-    file = path.join(NIMB_tmp,'status.log')
+    file = path.join(NIMB_tmp, 'status.log')
     if not update:
         print('cleaning status file', file)
         open(file,'w').close()
 
     dthm = time.strftime('%Y/%m/%d %H:%M')
-    with open(file,'a') as f:
+    with open(file, 'a') as f:
         f.write(dthm+' '+cmd+'\n')
 
 
 def Update_running(NIMB_HOME, cuser, cmd):
-    file = path.join(NIMB_HOME,'tmp','running_'+str(cuser)+'_')
+    file = path.join(NIMB_HOME, 'tmp', 'running_'+str(cuser)+'_')
     if cmd == 1:
         if path.isfile(file+'0'):
-            rename(file+'0',file+'1')
+            rename(file+'0', file+'1')
         else:
-            open(file+'1','w').close()
+            open(file+'1', 'w').close()
     else:
         if path.isfile(file+'1'):
-            rename(file+'1',file+'0')
+            rename(file+'1', file+'0')
 
 
 def get_ls_subjids_in_long_dirs(db):
     lsall = []
     for _id in db['LONG_DIRS']:
-#        lsall = lsall + db['LONG_DIRS'][_id]
+        lsall = lsall + db['LONG_DIRS'][_id]
         for subjid in db['LONG_DIRS'][_id]:
                 if subjid not in lsall:
                     lsall.append(subjid)
@@ -146,16 +101,16 @@ def verify_vox_size_values(vox_size):
 
 
 def get_MR_file_params(subjid, nimb_dir, NIMB_tmp, file):
-	tmp_f = path.join(NIMB_tmp,'tmp_mriinfo')
+	tmp_f = path.join(NIMB_tmp, 'tmp_mriinfo')
 	vox_size = 'none'
-	chdir(path.join(nimb_dir,'classification'))
+	chdir(path.join(nimb_dir, 'classification'))
 	system('./mri_info '+file+' >> '+tmp_f)
 	if path.isfile(tmp_f):
-		lines = list(open(tmp_f,'r'))
-		file_mrparams = path.join(NIMB_tmp,'mriparams',subjid+'_mrparams')
+		lines = list(open(tmp_f, 'r'))
+		file_mrparams = path.join(NIMB_tmp, 'mriparams', subjid+'_mrparams')
 		if not path.isfile(file_mrparams):
 			open(file_mrparams,'w').close()
-		with open(file_mrparams,'a') as f:
+		with open(file_mrparams, 'a') as f:
 			f.write(file+'\n')
 			try:
 				vox_size = [x.strip('\n') for x in lines if 'voxel sizes' in x][0].split(' ')[-3:]
@@ -249,7 +204,7 @@ def keep_files_similar_params(subjid, nimb_dir, NIMB_tmp, t1_ls_f, flair_ls_f, t
 def Update_DB_new_subjects_and_SUBJECTS_DIR(NIMB_tmp, SUBJECTS_DIR, db, process_order, base_name, long_name, freesurfer_version, masks):
 
     db = chk_subj_in_SUBJECTS_DIR(SUBJECTS_DIR, NIMB_tmp, db, process_order, base_name, long_name, freesurfer_version, masks)
-#    db = chk_subjects_folder(SUBJECTS_DIR, NIMB_tmp, db, base_name, long_name, freesurfer_version, masks)
+    db = chk_subjects2fs_file(SUBJECTS_DIR, NIMB_tmp, db, base_name, long_name, freesurfer_version, masks)
     db = chk_new_subjects_json_file(SUBJECTS_DIR, NIMB_tmp, db, freesurfer_version, masks)
     return db
 
@@ -270,13 +225,13 @@ def add_subjid_2_DB(NIMB_tmp, subjid, _id, ses, db, ls_SUBJECTS_in_long_dirs_pro
 
 
 
-def chk_subjects_folder(SUBJECTS_DIR, NIMB_tmp, db, base_name, long_name, freesurfer_version, masks):
+def chk_subjects2fs_file(SUBJECTS_DIR, NIMB_tmp, db, base_name, long_name, freesurfer_version, masks):
     Update_status_log(NIMB_tmp, '    NEW_SUBJECTS_DIR checking ...')
 
     ls_SUBJECTS_in_long_dirs_processed = get_ls_subjids_in_long_dirs(db)
     from crunfs import checks_from_runfs
 
-    f_subj2fs = path.join(NIMB_tmp, 'subj2fs')
+    f_subj2fs = path.join(NIMB_tmp, 'subjects2fs')
     if path.isfile(f_subj2fs):
         ls_subj2fs = ls_from_subj2fs(NIMB_tmp, f_subj2fs)
         for subjid in ls_subj2fs:
@@ -289,9 +244,19 @@ def chk_subjects_folder(SUBJECTS_DIR, NIMB_tmp, db, base_name, long_name, freesu
 
 
 
-
-
 def chk_new_subjects_json_file(SUBJECTS_DIR, NIMB_tmp, db, freesurfer_version, masks):
+
+    def ls_from_subj2fs(NIMB_tmp, f_subj2fs):
+        ls_subjids = list()
+        lines = list(open(f_subj2fs,'r'))
+        for val in lines:
+            if len(val)>3:
+                ls_subjids.append(val.strip('\r\n'))
+        rename(f_subj2fs, path.join(NIMB_tmp,'zdone_subjects2fs'))
+        Update_status_log(NIMB_tmp, 'subjects2fs was read')
+        return ls_subjids
+
+
     Update_status_log(NIMB_tmp, '    new_subjects.json checking ...')
 
     ls_SUBJECTS_in_long_dirs_processed = get_ls_subjids_in_long_dirs(db)
@@ -320,6 +285,7 @@ def chk_new_subjects_json_file(SUBJECTS_DIR, NIMB_tmp, db, freesurfer_version, m
     return db
 
 
+
 def get_registration_files(subjid, db, nimb_dir, NIMB_tmp, flair_t2_add):
         Update_status_log(NIMB_tmp, '    '+subjid+' reading registration files')
         t1_ls_f = db['REGISTRATION'][subjid]['anat']['t1']
@@ -334,18 +300,6 @@ def get_registration_files(subjid, db, nimb_dir, NIMB_tmp, flair_t2_add):
         Update_status_log(NIMB_tmp, '        from db[\'REGISTRATION\']')
         t1_ls_f, flair_ls_f, t2_ls_f = keep_files_similar_params(subjid, nimb_dir, NIMB_tmp, t1_ls_f, flair_ls_f, t2_ls_f)
         return t1_ls_f, flair_ls_f, t2_ls_f
-
-
-
-def ls_from_subj2fs(NIMB_tmp, f_subj2fs):
-    ls_subjids = list()
-    lines = list(open(f_subj2fs,'r'))
-    for val in lines:
-        if len(val)>3:
-            ls_subjids.append(val.strip('\r\n'))
-    rename(f_subj2fs, path.join(NIMB_tmp,'zdone_subj2fs'))
-    Update_status_log(NIMB_tmp, 'subj2fs was read')
-    return ls_subjids
 
 
 
@@ -498,172 +452,22 @@ def get_mask_codes(structure):
 
 
 
+def get_batch_job_status_table():
+    import pandas as pd
 
+    system('squeue -u hanganua > batch_queue')
+    try:
+         df = pd.read_csv(file, sep=' ')
 
+         df.drop(df.iloc[:, 0:8], inplace=True, axis=1)
+         df.drop(df.iloc[:, 1:3], inplace=True, axis=1)
+         df.drop(df.iloc[:, 1:14], inplace=True, axis=1)
 
-# from os import system
-# system('squeue -u hanganua > batch_queue')
-
-
-# import pandas as pd
-
-# if cluster == 'beluga':
-#     df = pd.read_csv(file, sep=' ')
-
-#     df.drop(df.iloc[:, 0:8], inplace=True, axis=1)
-#     df.drop(df.iloc[:, 1:3], inplace=True, axis=1)
-#     df.drop(df.iloc[:, 1:14], inplace=True, axis=1)
-
-#     job_ids = df.iloc[:,0].tolist()
-#     batch_files = df.iloc[:,1].dropna().tolist()+df.iloc[:,2].dropna().tolist()
+         job_ids = df.iloc[:,0].tolist()
+         batch_files = df.iloc[:,1].dropna().tolist()+df.iloc[:,2].dropna().tolist()
     
-#     start_batch_cmd = 'sbatch '
-#     cacel_batch_cmd = 'scancel -i '
+         start_batch_cmd = 'sbatch '
+         cacel_batch_cmd = 'scancel -i '
+    except Exception as e:
+        print(e)
 
-# elif cluster == 'helios':
-#     df= pd.read_csv(file, sep='\t')
-    
-#     new = df.iloc[:,0].str.split("  ", n = 5, expand = True)
-#     ls = list()
-#     for val in new.iloc[:,0]:
-#         ls.append(val)
-#     job_ids = ls[3:]
-#     #data["First Name"]= new[0]  
-#     #data["Last Name"]= new[1] 
-#     #data.drop(columns =["Name"], inplace = True)
-
-#     start_batch_cmd = 'msub '
-#     cacel_batch_cmd = 'qdel '
-
-# print(job_ids)
-# print(batch_files)
-
-#for _id in job_ids:
-#            print('canceling job: ',_id)
-#            system(cacel_batch_cmd+_id)
-
-
-# from time import sleep
-#    sleep(10)
-#    for file in batch_files:
-#         print('starting job: ',file)
-#         system(start_batch_cmd+file)
-
-
-
-
-
-# WAS WORKING, BUT NEEDS TO BE CHANGED WITH THE UPPER ONE ON JSON STYLE
-# def Update_DB(d):
-#     file = nimb_scratch_dir+'db'
-#     open(file,'w').close()
-#     with open(file,'a') as f:
-#         for key in d:
-#             if key != 'RUNNING_JOBS':
-#                 f.write(key+'= {')
-#                 for subkey in d[key]:
-#                     f.write('\''+subkey+'\':[')
-#                     for value in sorted(d[key][subkey]):
-#                         f.write('\''+value+'\',')
-#                     f.write('],')
-#                 f.write('}\n')
-#             else:
-#                 f.write(key+'= {')
-#                 for subkey in d[key]:
-#                     f.write('\''+subkey+'\':'+str(d[key][subkey])+',')
-#                 f.write('}\n')
-
-
-
-
-# def get_RUNNING_JOBS(type):
-#     lsall = []
-#     if type == 'tmux':
-#         for val in db['RUNNING_JOBS'].keys():
-#             if 'tmux' in val:
-#                 lsall.append(val)
-#     return sorted(lsall)
-
-
-# def vox_higher_main(vox_size, main_vox_size):
-# 	res = True
-# 	vox_1 = float(vox_size[0])*float(vox_size[1])*float(vox_size[2])
-# 	vox_2 = float(main_vox_size[0])*float(main_vox_size[1])*float(main_vox_size[2])
-# 	if vox_1<vox_2:
-# 		res = False
-# 	return res
-
-
-
-
-
-
-
-# OLD VERSION
-# def keep_files_similar_params(t1_ls_f, flair_ls_f, t2_ls_f):
-#     main_vox_size = 'none'
-#     for file in t1_ls_f:
-#         Update_status_log(nimb_scratch_dir, '        reading MR data for T1 file: '+file)
-#         vox_size = get_MR_file_params(file)
-#         if vox_size:
-#             if verify_vox_size_values(vox_size):
-#                 Update_status_log(nimb_scratch_dir, '        current voxel size is: '+str(vox_size))
-#                 if main_vox_size == 'none':
-#                     main_vox_size = vox_size
-#                 else:
-#                     if vox_size != main_vox_size:
-#                         if vox_higher_main(vox_size, main_vox_size):
-#                           t1_ls_f.remove(file)
-#                         else:
-#                             main_vox_size = vox_size                            
-#         Update_status_log(nimb_scratch_dir, '        main voxel size is: '+str(main_vox_size))
-#     if flair_ls_f != 'none':
-#         for file in flair_ls_f:
-#             Update_status_log(nimb_scratch_dir, '        reading MR data for FLAIR file: '+file)
-#             vox_size = get_MR_file_params(file)
-#             Update_status_log(nimb_scratch_dir, '        main voxel size is: '+str(main_vox_size))
-#             Update_status_log(nimb_scratch_dir, '        current voxel size is: '+str(vox_size))
-#             if vox_size != main_vox_size:
-#                 flair_ls_f.remove(file)
-#                 Update_status_log(nimb_scratch_dir, '        FLAIR file not added to analysis; voxel size is different')
-#     if len(flair_ls_f) <1:
-#         flair_ls_f = 'none'
-#     if t2_ls_f != 'none':
-#         for file in t2_ls_f:
-#             Update_status_log(nimb_scratch_dir, '        reading MR data for T2 file: '+file)
-#             vox_size = get_MR_file_params(file)
-#             Update_status_log(nimb_scratch_dir, '        main voxel size is: '+str(main_vox_size))
-#             Update_status_log(nimb_scratch_dir, '        current voxel size is: '+str(vox_size))
-#             if vox_size != main_vox_size:
-#                 t2_ls_f.remove(file)
-#                 Update_status_log(nimb_scratch_dir, '        T2 file not added to analysis; voxel size is different')
-#     if len(t2_ls_f) <1:
-#         t2_ls_f = 'none'
-#     return t1_ls_f, flair_ls_f, t2_ls_f
-
-
-
-# def chk_new_subjects_json_file(db):
-#     Update_status_log(nimb_scratch_dir, 'checking for new subjects ...')
-
-#     ls_SUBJECTS_in_long_dirs_processed = get_ls_subjids_in_long_dirs(db)
-#     from crunfs import checks_from_runfs
-
-#     f_new_subjects = nimb_dir+"new_subjects.json"
-#     if path.isfile(f_new_subjects):
-#         import json
-#         with open(f_new_subjects) as jfile:
-#             data = json.load(jfile)
-#         for _id in data:
-#             if not checks_from_runfs(SUBJECTS_DIR, 'registration',_id):
-#                 for ses in data[_id]:
-#                     if 'anat' in data[_id][ses]:
-#                         if 't1' in data[_id][ses]['anat']:
-#                             if data[_id][ses]['anat']['t1']:
-#                                 db = add_subjid_2_DB(_id, ses, db, ls_SUBJECTS_in_long_dirs_processed)
-#                             else:
-#                                 db['PROCESSED']['error_registration'].append(subjid)
-#                                 Update_status_log(nimb_scratch_dir, 'ERROR: '+_id+' was read and but was not added to database')
-#         rename(f_new_subjects, nimb_dir+'new_subjects_registration_paths.json')
-#         Update_status_log(nimb_scratch_dir, 'new subjects were added from the new_subjects.json file')
-#     return db
