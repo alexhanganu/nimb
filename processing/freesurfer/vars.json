@@ -18,14 +18,14 @@
     "NIMB_PATHS": {
         "NIMB_HOME": "/home/hanganua/projects/def-hanganua/nimb",
         "NIMB_tmp": "/scratch/hanganua/a_tmp",
-        "NIMB_NEW_SUBJECTS": "/scratch/hanganua/nimb_new_subjects",
+        "NIMB_NEW_SUBJECTS": "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped",
         "NIMB_PROCESSED_FS": "/home/hanganua/projects/def-hanganua/nimb_processed_fs",
         "NIMB_PROCESSED_FS_error": "/home/hanganua/projects/def-hanganua/nimb_processed_fs_error"
     },
     "PROCESSING": {
         "SUBMIT": 1,
         "processing_env": "slurm",
-        "max_nr_running_batches": 100,
+        "max_nr_running_batches": 150,
         "text4_scheduler": [
             "#!/bin/sh",
             "#SBATCH --account=def-hanganua",

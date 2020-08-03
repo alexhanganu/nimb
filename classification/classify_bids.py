@@ -196,9 +196,8 @@ def get_dict_MR_files2process(NIMB_NEW_SUBJECTS, NIMB_tmp):
 	:return:
 	"""
 	f_new_subjects = path.join(NIMB_tmp,'new_subjects.json')
-	if not path.exists(f_new_subjects):
-		d_subjects = dict()
-		for subject in listdir(NIMB_NEW_SUBJECTS):
+	d_subjects = dict()
+	for subject in listdir(NIMB_NEW_SUBJECTS):
 				d_subjects[subject] = {}
 				ls_MR_paths = exclude_MR_types(get_paths2dcm_files(path.join(NIMB_NEW_SUBJECTS,subject)))
 				print("ls_MR_paths: ", ls_MR_paths)
@@ -212,11 +211,9 @@ def get_dict_MR_files2process(NIMB_NEW_SUBJECTS, NIMB_tmp):
 				#print(d_BIDS_structure)
 				d_subjects[subject] = d_BIDS_structure
 				print("d_subjects:", d_subjects)
-		with open(f_new_subjects,'w') as f:
+	with open(f_new_subjects,'w') as f:
 			json.dump(d_subjects, f, indent=4)
-		if path.exists(f_new_subjects):
+	if path.exists(f_new_subjects):
 			return True
-		else:
-			return False
 	else:
-		return True
+			return False

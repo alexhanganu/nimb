@@ -543,7 +543,7 @@ if crunfs.FS_ready(SUBJECTS_DIR):
         active_subjects = check_active_tasks(db)
 
     if active_subjects == 0:
-        cdb.Update_running(nimb_scratch_dir, 0)
+        cdb.Update_running(nimb_scratch_dir, cuser, 0)
         cdb.Update_status_log(nimb_scratch_dir, 'ALL TASKS FINISHED')
     else:
         cdb.Update_status_log(nimb_scratch_dir, 'Sending new batch to scheduler')
