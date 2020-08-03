@@ -1,5 +1,4 @@
-from .SSHHelper import *
-from .check_disk_space import *
+from distribution.check_disk_space import *
 
 class DistributionHelper():
     """

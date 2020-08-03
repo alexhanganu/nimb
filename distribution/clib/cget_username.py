@@ -12,7 +12,7 @@ def _get_username():
         import pwd
         username = pwd.getpwuid( getuid() ) [0]
         print('username from pwd')
-    except ImportError:
+    except ImportError as e:
         print(e)
     if not username:
         try:

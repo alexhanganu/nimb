@@ -2,8 +2,10 @@
 #Alexandru Hanganu, 2018 June 5
 
 from os import listdir, path, mkdir, system, remove
-import shutil, datetime, threading, local_db
+import shutil, datetime, threading
 from lib.var import local_maindir
+import distribution.lib.local_db
+
 from multiprocessing import cpu_count
 
 from sys import version_info

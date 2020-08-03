@@ -11,8 +11,8 @@ https://surfer.nmr.mgh.harvard.edu/fswiki/QATools
 from os import listdir, path, mkdir, system
 import shutil
 import datetime
-from var import text4_scheduler, batch_walltime_cmd, max_walltime, batch_output_cmd, submit_cmd, freesurfer_version, nimb_dir, nimb_scratch_dir, SUBJECTS_DIR, export_FreeSurfer_cmd, source_FreeSurfer_cmd, SUBMIT
-import cdb, var
+from distribution.clib.var import text4_scheduler, batch_walltime_cmd, max_walltime, batch_output_cmd, submit_cmd, freesurfer_version, nimb_dir, nimb_scratch_dir, SUBJECTS_DIR, export_FreeSurfer_cmd, source_FreeSurfer_cmd, SUBMIT
+from distribution.clib import cdb, var
 import subprocess
 print('SUBMITTING is: ', SUBMIT)
 
@@ -54,7 +54,8 @@ def makesubmitpbs(cmd, subjid, run, walltime):
 
 
 def submit_4_run(cmd, subjid, run, walltime): #to join with makesubmitpbs
-    if remote_type == 'tmux': #https://gist.github.com/henrik/1967800
+    from distribution.lib import database
+    if database.remote_type == 'tmux': #https://gist.github.com/henrik/1967800
         last_session = cdb.get_RUNNING_JOBS('tmux')
         if len(last_session)>0:
             session = 'tmux_'+str(int(last_session[-1][last_session[-1].find('-'):])+1) #get job id from cdb

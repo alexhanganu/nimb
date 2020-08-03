@@ -3,7 +3,6 @@ This module is to execute the remote commands in cluster
 notes: code is modified from hw5
 # todo: make this script becomes a class in Singleton design pattern for the SSH session
 """
-import json
 import logging
 import tempfile
 import time
@@ -18,14 +17,15 @@ except ImportError:
 import json
 from pathlib import Path
 
-from a.lib import database
+from distribution.lib import database
+
 logger = logging.getLogger(__name__)
 logging.basicConfig(format='%(asctime)s %(module)s %(levelname)s: %(message)s')
 # logger.setLevel(logging.INFO)
 logger.setLevel(logging.DEBUG)
 #configuration
 cname='all'
-clusters = database._get_Table_Data('Clusters','all')
+clusters = database._get_Table_Data('Clusters', 'all')
 if 'elm' in clusters:
     cname = 'elm'
 else:
@@ -434,7 +434,7 @@ def download_files_from_server(local_folder, remote_folder):
 # kp for testing
 def test():
     """tes the function"""
-    from a.lib import database
+    from distribution.lib import database
     clusters = database._get_credentials('all')
     ssh_session = getSSHSession(host_name, user_name, user_password)
     print("ls; cd " + project_folder + "; ls")
@@ -444,20 +444,21 @@ def test():
 
 def test2():
     """tes the function"""
-    from  v02003.a.lib import database
+    from distribution.lib import database
     clusters = database._get_credentials('all')
     host_name = "beluga.calculquebec.ca"
     ssh_session = getSSHSession(host_name, user_name, user_password)
     (zip_out, err) = runCommandOverSSH(ssh_session, "ls  ~/projects/def-hanganua/adni/source/mri/*.zip" )
-    (gz_out, err) = runCommandOverSSH(ssh_session, "ls  ~/projects/def-hanganua/adni/source/mri/*.gz")
+    #(gz_out, err) = runCommandOverSSH(ssh_session, "ls  ~/projects/def-hanganua/adni/source/mri/*.gz")
 
     print("finish")
+    ssh_session.close()
 
 if __name__ == "__main__":
     if True:
         # test()
         test2()
     if False:
-        json_path = '../docs/new_subjects.json'
+        json_path = '../v02003/docs/new_subjects.json'
         upload_all_subjects(subjects_json_file = json_path, subjects_folder="/home/hvt/test",
                         a_folder ='/home/hvt/projects/def-hanganua/a')
