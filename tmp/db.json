@@ -4,10 +4,285 @@
         "autorecon1": [],
         "autorecon2": [],
         "autorecon3": [
-            "PPMI_3835_ses-3"
+            "PPMI_3819_ses-1",
+            "PPMI_3819_ses-2",
+            "PPMI_3819_ses-4",
+            "PPMI_3822_ses-2",
+            "PPMI_3822_ses-4",
+            "PPMI_3823_ses-1",
+            "PPMI_3823_ses-3",
+            "PPMI_3824_ses-1",
+            "PPMI_3824_ses-2",
+            "PPMI_3824_ses-3",
+            "PPMI_3824_ses-4",
+            "PPMI_3825_ses-1",
+            "PPMI_3825_ses-2",
+            "PPMI_3825_ses-4",
+            "PPMI_3826_ses-1",
+            "PPMI_3826_ses-2",
+            "PPMI_3826_ses-3",
+            "PPMI_3827_ses-1",
+            "PPMI_3828_ses-3",
+            "PPMI_3829_ses-2",
+            "PPMI_3829_ses-3",
+            "PPMI_3829_ses-4",
+            "PPMI_3830_ses-1",
+            "PPMI_3830_ses-2",
+            "PPMI_3830_ses-4",
+            "PPMI_3831_ses-2",
+            "PPMI_3831_ses-3",
+            "PPMI_3831_ses-4",
+            "PPMI_3832_ses-1",
+            "PPMI_3832_ses-3",
+            "PPMI_3832_ses-4",
+            "PPMI_3834_ses-2",
+            "PPMI_3834_ses-3",
+            "PPMI_3834_ses-4",
+            "PPMI_3838_ses-3",
+            "PPMI_3838_ses-4",
+            "PPMI_3851_ses-2",
+            "PPMI_3852_ses-3",
+            "PPMI_3853_ses-1",
+            "PPMI_3853_ses-2",
+            "PPMI_3855_ses-2",
+            "PPMI_3859_ses-1",
+            "PPMI_3866_ses-1",
+            "PPMI_3866_ses-2",
+            "PPMI_3868_ses-1",
+            "PPMI_4001_ses-2",
+            "PPMI_4001_ses-3",
+            "PPMI_4001_ses-4",
+            "PPMI_4004_ses-1",
+            "PPMI_4005_ses-1",
+            "PPMI_4005_ses-2",
+            "PPMI_4005_ses-3",
+            "PPMI_4010_ses-2",
+            "PPMI_4011_ses-2",
+            "PPMI_4011_ses-3",
+            "PPMI_4012_ses-2",
+            "PPMI_4012_ses-3",
+            "PPMI_4013_ses-2",
+            "PPMI_4018_ses-2",
+            "PPMI_4019_ses-1",
+            "PPMI_4019_ses-2",
+            "PPMI_4020_ses-1",
+            "PPMI_4020_ses-3",
+            "PPMI_4021_ses-3",
+            "PPMI_4021_ses-4",
+            "PPMI_4022_ses-2",
+            "PPMI_4022_ses-4",
+            "PPMI_4024_ses-1",
+            "PPMI_4024_ses-2",
+            "PPMI_4024_ses-3",
+            "PPMI_4025_ses-3",
+            "PPMI_4026_ses-1",
+            "PPMI_4026_ses-2",
+            "PPMI_4027_ses-2",
+            "PPMI_4027_ses-3",
+            "PPMI_4027_ses-4",
+            "PPMI_4029_ses-3",
+            "PPMI_4029_ses-4",
+            "PPMI_4030_ses-3",
+            "PPMI_4030_ses-4",
+            "PPMI_4032_ses-1",
+            "PPMI_4033_ses-1",
+            "PPMI_4034_ses-1",
+            "PPMI_4034_ses-2",
+            "PPMI_4034_ses-3",
+            "PPMI_4034_ses-4",
+            "PPMI_4035_ses-1",
+            "PPMI_4035_ses-2",
+            "PPMI_4035_ses-3",
+            "PPMI_4035_ses-4",
+            "PPMI_4037_ses-3",
+            "PPMI_4082_ses-1",
+            "PPMI_4135_ses-1",
+            "PPMI_4065_ses-1",
+            "PPMI_4067_ses-1",
+            "PPMI_4082_ses-2",
+            "PPMI_4082_ses-3",
+            "PPMI_4136_ses-2"
         ],
-        "qcache": [],
+        "qcache": [
+            "PPMI_3130_ses-3",
+            "PPMI_3154_ses-4",
+            "PPMI_3166_ses-2",
+            "PPMI_3172_ses-1",
+            "PPMI_3174_ses-4",
+            "PPMI_3175_ses-3",
+            "PPMI_3178_ses-4",
+            "PPMI_3181_ses-2",
+            "PPMI_3182_ses-1",
+            "PPMI_3182_ses-2",
+            "PPMI_3182_ses-4",
+            "PPMI_3184_ses-2",
+            "PPMI_3185_ses-1",
+            "PPMI_3185_ses-2",
+            "PPMI_3190_ses-3",
+            "PPMI_3190_ses-4",
+            "PPMI_3191_ses-1",
+            "PPMI_3309_ses-1",
+            "PPMI_3309_ses-2",
+            "PPMI_3314_ses-1",
+            "PPMI_3321_ses-1",
+            "PPMI_3321_ses-2",
+            "PPMI_3325_ses-2",
+            "PPMI_3325_ses-3",
+            "PPMI_3327_ses-1",
+            "PPMI_3327_ses-2",
+            "PPMI_3327_ses-3",
+            "PPMI_3328_ses-2",
+            "PPMI_3351_ses-1",
+            "PPMI_3364_ses-3",
+            "PPMI_3365_ses-4",
+            "PPMI_3366_ses-1",
+            "PPMI_3367_ses-1",
+            "PPMI_3367_ses-2",
+            "PPMI_3374_ses-3",
+            "PPMI_3375_ses-1",
+            "PPMI_3376_ses-1",
+            "PPMI_3380_ses-2",
+            "PPMI_3380_ses-3",
+            "PPMI_3380_ses-4",
+            "PPMI_3301_ses-1",
+            "PPMI_3307_ses-4",
+            "PPMI_3308_ses-4",
+            "PPMI_3328_ses-1",
+            "PPMI_3328_ses-3",
+            "PPMI_3366_ses-2",
+            "PPMI_3370_ses-1",
+            "PPMI_3371_ses-3",
+            "PPMI_3373_ses-3",
+            "PPMI_3383_ses-1",
+            "PPMI_3386_ses-1",
+            "PPMI_3386_ses-2",
+            "PPMI_3387_ses-1",
+            "PPMI_3392_ses-3"
+        ],
         "brstem": [
+            "PPMI_3118_ses-1",
+            "PPMI_3118_ses-2",
+            "PPMI_3118_ses-4",
+            "PPMI_3120_ses-1",
+            "PPMI_3120_ses-2",
+            "PPMI_3120_ses-4",
+            "PPMI_3122_ses-2",
+            "PPMI_3126_ses-3",
+            "PPMI_3107_ses-4",
+            "PPMI_3116_ses-4",
+            "PPMI_3120_ses-3",
+            "PPMI_3123_ses-4",
+            "PPMI_3126_ses-1",
+            "PPMI_3128_ses-3",
+            "PPMI_3128_ses-4",
+            "PPMI_3150_ses-1",
+            "PPMI_3150_ses-2",
+            "PPMI_3157_ses-1",
+            "PPMI_3168_ses-3"
+        ],
+        "hip": [
+            "PPMI_3107_ses-5",
+            "PPMI_3114_ses-2",
+            "PPMI_3116_ses-1"
+        ],
+        "tha": []
+    },
+    "QUEUE": {
+        "registration": [],
+        "autorecon1": [],
+        "autorecon2": [],
+        "autorecon3": [],
+        "qcache": [],
+        "brstem": [],
+        "hip": [],
+        "tha": []
+    },
+    "RUNNING": {
+        "registration": [],
+        "autorecon1": [],
+        "autorecon2": [
+            "PPMI_3803_ses-1",
+            "PPMI_4026_ses-4",
+            "PPMI_4038_ses-3",
+            "PPMI_4038_ses-4",
+            "PPMI_4081_ses-2",
+            "PPMI_4085_ses-2",
+            "PPMI_4085_ses-3"
+        ],
+        "autorecon3": [
+            "PPMI_3182_ses-3",
+            "PPMI_3307_ses-1",
+            "PPMI_3307_ses-2",
+            "PPMI_3307_ses-3",
+            "PPMI_3323_ses-3",
+            "PPMI_3371_ses-1",
+            "PPMI_3371_ses-2",
+            "PPMI_3372_ses-4",
+            "PPMI_3373_ses-4",
+            "PPMI_3375_ses-3",
+            "PPMI_3378_ses-2",
+            "PPMI_3378_ses-4",
+            "PPMI_3383_ses-3",
+            "PPMI_3386_ses-3",
+            "PPMI_3387_ses-2",
+            "PPMI_3389_ses-2",
+            "PPMI_3392_ses-1",
+            "PPMI_3551_ses-1",
+            "PPMI_3551_ses-2",
+            "PPMI_3551_ses-3",
+            "PPMI_3552_ses-1",
+            "PPMI_3552_ses-3",
+            "PPMI_3552_ses-4",
+            "PPMI_3554_ses-1",
+            "PPMI_3555_ses-1",
+            "PPMI_3556_ses-1",
+            "PPMI_3556_ses-2",
+            "PPMI_3557_ses-1",
+            "PPMI_3557_ses-2",
+            "PPMI_3557_ses-4",
+            "PPMI_3558_ses-2",
+            "PPMI_3559_ses-2",
+            "PPMI_3559_ses-4",
+            "PPMI_3563_ses-3",
+            "PPMI_3564_ses-1",
+            "PPMI_3564_ses-2",
+            "PPMI_3565_ses-1",
+            "PPMI_3569_ses-3",
+            "PPMI_3570_ses-2",
+            "PPMI_3571_ses-3",
+            "PPMI_3572_ses-2",
+            "PPMI_3574_ses-1",
+            "PPMI_3574_ses-2",
+            "PPMI_3574_ses-4",
+            "PPMI_3575_ses-2",
+            "PPMI_3575_ses-4",
+            "PPMI_3577_ses-1",
+            "PPMI_3577_ses-3",
+            "PPMI_3584_ses-1",
+            "PPMI_3585_ses-2",
+            "PPMI_3585_ses-3",
+            "PPMI_3585_ses-4",
+            "PPMI_3586_ses-1",
+            "PPMI_3586_ses-3",
+            "PPMI_3586_ses-4",
+            "PPMI_3588_ses-2",
+            "PPMI_3588_ses-3",
+            "PPMI_3588_ses-4",
+            "PPMI_3591_ses-3",
+            "PPMI_3591_ses-4",
+            "PPMI_3593_ses-1",
+            "PPMI_3593_ses-3",
+            "PPMI_3593_ses-4",
+            "PPMI_3752_ses-1",
+            "PPMI_3752_ses-2",
+            "PPMI_3753_ses-1",
+            "PPMI_3757_ses-4",
+            "PPMI_3758_ses-1",
+            "PPMI_3758_ses-3",
+            "PPMI_3759_ses-2",
+            "PPMI_3760_ses-3",
+            "PPMI_3760_ses-4",
+            "PPMI_3762_ses-2",
             "PPMI_3763_ses-3",
             "PPMI_3765_ses-2",
             "PPMI_3767_ses-1",
@@ -35,6 +310,7 @@
             "PPMI_3788_ses-1",
             "PPMI_3800_ses-1",
             "PPMI_3802_ses-1",
+            "PPMI_3567_ses-2",
             "PPMI_3802_ses-2",
             "PPMI_3803_ses-2",
             "PPMI_3805_ses-2",
@@ -48,412 +324,193 @@
             "PPMI_3816_ses-1",
             "PPMI_3817_ses-2",
             "PPMI_3818_ses-1",
-            "PPMI_3818_ses-2",
-            "PPMI_3819_ses-1",
-            "PPMI_3819_ses-2",
-            "PPMI_3819_ses-4",
-            "PPMI_3822_ses-2",
-            "PPMI_3822_ses-4",
-            "PPMI_3823_ses-1",
-            "PPMI_3823_ses-3",
-            "PPMI_3824_ses-1",
-            "PPMI_3824_ses-2",
-            "PPMI_3824_ses-3"
+            "PPMI_3818_ses-2"
         ],
-        "hip": [
-            "PPMI_3584_ses-1",
-            "PPMI_3585_ses-3",
-            "PPMI_3585_ses-4",
-            "PPMI_3586_ses-3",
-            "PPMI_3586_ses-4",
-            "PPMI_3588_ses-2",
-            "PPMI_3588_ses-3",
-            "PPMI_3588_ses-4",
-            "PPMI_3591_ses-3",
-            "PPMI_3591_ses-4",
-            "PPMI_3585_ses-2",
-            "PPMI_3586_ses-1",
-            "PPMI_3593_ses-1",
-            "PPMI_3593_ses-3",
-            "PPMI_3593_ses-4",
-            "PPMI_3752_ses-1",
-            "PPMI_3752_ses-2",
-            "PPMI_3753_ses-1",
-            "PPMI_3757_ses-4",
-            "PPMI_3758_ses-1",
-            "PPMI_3758_ses-3",
-            "PPMI_3759_ses-2",
-            "PPMI_3760_ses-3",
-            "PPMI_3760_ses-4",
-            "PPMI_3762_ses-2"
-        ],
-        "tha": [
-            "PPMI_3328_ses-3",
-            "PPMI_3351_ses-1",
-            "PPMI_3364_ses-3",
-            "PPMI_3365_ses-4",
-            "PPMI_3366_ses-1",
-            "PPMI_3366_ses-2",
-            "PPMI_3367_ses-1",
-            "PPMI_3367_ses-2",
-            "PPMI_3370_ses-1",
-            "PPMI_3371_ses-1",
-            "PPMI_3371_ses-2",
-            "PPMI_3371_ses-3",
-            "PPMI_3372_ses-4",
-            "PPMI_3373_ses-3",
-            "PPMI_3373_ses-4",
-            "PPMI_3374_ses-3",
-            "PPMI_3375_ses-1",
-            "PPMI_3375_ses-3",
-            "PPMI_3376_ses-1",
-            "PPMI_3378_ses-2",
-            "PPMI_3380_ses-2",
-            "PPMI_3380_ses-3",
-            "PPMI_3386_ses-2"
-        ]
-    },
-    "QUEUE": {
-        "registration": [],
-        "autorecon1": [],
-        "autorecon2": [],
-        "autorecon3": [],
-        "qcache": [],
-        "brstem": [],
-        "hip": [],
-        "tha": []
-    },
-    "RUNNING": {
-        "registration": [],
-        "autorecon1": [],
-        "autorecon2": [],
-        "autorecon3": [],
         "qcache": [
-            "PPMI_3824_ses-4",
-            "PPMI_3825_ses-1",
-            "PPMI_3825_ses-2",
-            "PPMI_3825_ses-4",
-            "PPMI_3826_ses-1",
-            "PPMI_3826_ses-2",
-            "PPMI_3826_ses-3",
-            "PPMI_3827_ses-1",
-            "PPMI_3828_ses-3",
-            "PPMI_3829_ses-2",
-            "PPMI_3829_ses-3",
-            "PPMI_3829_ses-4",
-            "PPMI_3830_ses-1",
-            "PPMI_3830_ses-2",
-            "PPMI_3830_ses-4",
-            "PPMI_3831_ses-2",
-            "PPMI_3831_ses-3",
-            "PPMI_3831_ses-4",
-            "PPMI_3832_ses-3",
-            "PPMI_3832_ses-4",
-            "PPMI_3834_ses-2",
-            "PPMI_3834_ses-3",
-            "PPMI_3834_ses-4",
-            "PPMI_3838_ses-3",
-            "PPMI_3838_ses-4",
-            "PPMI_3851_ses-2",
-            "PPMI_3852_ses-3",
-            "PPMI_3853_ses-1",
-            "PPMI_3853_ses-2",
-            "PPMI_3855_ses-2",
-            "PPMI_3859_ses-1",
-            "PPMI_3866_ses-1",
-            "PPMI_3866_ses-2",
-            "PPMI_3868_ses-1",
-            "PPMI_4001_ses-2",
-            "PPMI_4001_ses-3",
-            "PPMI_4001_ses-4",
-            "PPMI_4004_ses-1",
-            "PPMI_4005_ses-1",
-            "PPMI_4005_ses-2",
-            "PPMI_4005_ses-3",
-            "PPMI_4010_ses-2",
-            "PPMI_4011_ses-2",
-            "PPMI_4012_ses-2",
-            "PPMI_4012_ses-3",
-            "PPMI_4013_ses-2",
-            "PPMI_4018_ses-2",
-            "PPMI_4019_ses-1",
-            "PPMI_4019_ses-2",
-            "PPMI_4020_ses-1",
-            "PPMI_4020_ses-3",
-            "PPMI_4021_ses-3",
-            "PPMI_4021_ses-4",
-            "PPMI_4022_ses-2",
-            "PPMI_4022_ses-4",
-            "PPMI_4024_ses-1",
-            "PPMI_4024_ses-2",
-            "PPMI_4024_ses-3",
-            "PPMI_4025_ses-3",
-            "PPMI_4026_ses-1",
-            "PPMI_4026_ses-2",
-            "PPMI_4027_ses-2",
-            "PPMI_4027_ses-3",
-            "PPMI_4027_ses-4",
-            "PPMI_4030_ses-3",
-            "PPMI_4030_ses-4",
-            "PPMI_4032_ses-1",
-            "PPMI_4033_ses-1",
-            "PPMI_4034_ses-1",
-            "PPMI_4034_ses-2",
-            "PPMI_4034_ses-3",
-            "PPMI_4034_ses-4",
-            "PPMI_4035_ses-1",
-            "PPMI_4035_ses-2",
-            "PPMI_4035_ses-3",
-            "PPMI_4035_ses-4",
-            "PPMI_4037_ses-3",
-            "PPMI_4067_ses-1",
-            "PPMI_4081_ses-2",
-            "PPMI_4082_ses-1",
-            "PPMI_4082_ses-2",
-            "PPMI_4082_ses-3",
-            "PPMI_4085_ses-2",
-            "PPMI_4085_ses-3",
-            "PPMI_4135_ses-1",
-            "PPMI_4136_ses-2",
-            "PPMI_4011_ses-3",
-            "PPMI_4026_ses-4",
-            "PPMI_4029_ses-3",
-            "PPMI_4029_ses-4",
-            "PPMI_4065_ses-1"
+            "PPMI_3115_ses-2",
+            "PPMI_3125_ses-2",
+            "PPMI_3125_ses-4",
+            "PPMI_3127_ses-2",
+            "PPMI_3131_ses-1",
+            "PPMI_3132_ses-3",
+            "PPMI_3134_ses-3",
+            "PPMI_3151_ses-1",
+            "PPMI_3154_ses-2",
+            "PPMI_3160_ses-2",
+            "PPMI_3171_ses-2"
         ],
-        "brstem": [],
+        "brstem": [
+            "PPMI_3106_ses-3",
+            "PPMI_3111_ses-1",
+            "PPMI_3115_ses-1",
+            "PPMI_3108_ses-2",
+            "PPMI_3113_ses-1",
+            "PPMI_3116_ses-3"
+        ],
         "hip": [
-            "PPMI_3378_ses-4",
-            "PPMI_3380_ses-4",
-            "PPMI_3383_ses-1",
-            "PPMI_3383_ses-3",
-            "PPMI_3386_ses-1",
-            "PPMI_3386_ses-3",
-            "PPMI_3387_ses-1",
-            "PPMI_3387_ses-2",
-            "PPMI_3389_ses-2",
-            "PPMI_3392_ses-1",
-            "PPMI_3392_ses-3",
-            "PPMI_3551_ses-1",
-            "PPMI_3551_ses-2",
-            "PPMI_3551_ses-3",
-            "PPMI_3552_ses-1",
-            "PPMI_3552_ses-3",
-            "PPMI_3552_ses-4",
-            "PPMI_3554_ses-1",
-            "PPMI_3555_ses-1",
-            "PPMI_3556_ses-1",
-            "PPMI_3556_ses-2",
-            "PPMI_3557_ses-1",
-            "PPMI_3557_ses-2",
-            "PPMI_3557_ses-4",
-            "PPMI_3559_ses-2",
-            "PPMI_3559_ses-4",
-            "PPMI_3563_ses-3",
-            "PPMI_3564_ses-1",
-            "PPMI_3564_ses-2",
-            "PPMI_3565_ses-1",
-            "PPMI_3567_ses-2",
-            "PPMI_3572_ses-2",
-            "PPMI_3569_ses-3",
-            "PPMI_3570_ses-2",
-            "PPMI_3571_ses-3",
-            "PPMI_3574_ses-1",
-            "PPMI_3574_ses-2",
-            "PPMI_3574_ses-4",
-            "PPMI_3575_ses-2",
-            "PPMI_3575_ses-4",
-            "PPMI_3577_ses-1",
-            "PPMI_3577_ses-3"
+            "PPMI_3105_ses-2",
+            "PPMI_3105_ses-4",
+            "PPMI_3106_ses-1",
+            "PPMI_3108_ses-1",
+            "PPMI_3108_ses-4",
+            "PPMI_3114_ses-1"
         ],
         "tha": [
-            "PPMI_3182_ses-1",
-            "PPMI_3182_ses-2",
-            "PPMI_3182_ses-3",
-            "PPMI_3308_ses-4",
-            "PPMI_3309_ses-1",
-            "PPMI_3309_ses-2",
-            "PPMI_3314_ses-1",
-            "PPMI_3321_ses-1",
-            "PPMI_3321_ses-2",
-            "PPMI_3323_ses-3",
-            "PPMI_3325_ses-2",
-            "PPMI_3325_ses-3",
-            "PPMI_3327_ses-1",
-            "PPMI_3327_ses-2",
-            "PPMI_3327_ses-3",
-            "PPMI_3328_ses-1",
-            "PPMI_3328_ses-2"
+            "PPMI_3104_ses-1"
         ]
     },
     "RUNNING_JOBS": {
-        "PPMI_3105_ses-2": "47953759",
-        "PPMI_3105_ses-4": "47953763",
-        "PPMI_3107_ses-4": "47958450",
-        "PPMI_3120_ses-1": "47958459",
-        "PPMI_3120_ses-2": "47958462",
-        "PPMI_3120_ses-3": "47958466",
-        "PPMI_3120_ses-4": "47958468",
-        "PPMI_3123_ses-4": "47958589",
-        "PPMI_3130_ses-3": "47958590",
-        "PPMI_3174_ses-4": "47959692",
-        "PPMI_3182_ses-4": "47959699",
-        "PPMI_3184_ses-2": "47959701",
-        "PPMI_3185_ses-1": "47959702",
-        "PPMI_3185_ses-2": "47959704",
-        "PPMI_3190_ses-3": "47959705",
-        "PPMI_3378_ses-4": "47959711",
-        "PPMI_3380_ses-4": "47959715",
-        "PPMI_3383_ses-1": "47959717",
-        "PPMI_3383_ses-3": "47959719",
-        "PPMI_3386_ses-1": "47959720",
-        "PPMI_3386_ses-3": "47959722",
-        "PPMI_3387_ses-1": "47959723",
-        "PPMI_3387_ses-2": "47962749",
-        "PPMI_3389_ses-2": "47962751",
-        "PPMI_3392_ses-1": "47962757",
-        "PPMI_3392_ses-3": "47962764",
-        "PPMI_3551_ses-1": "47962771",
-        "PPMI_3551_ses-2": "47962774",
-        "PPMI_3551_ses-3": "47962777",
-        "PPMI_3552_ses-1": "47962779",
-        "PPMI_3552_ses-3": "47962783",
-        "PPMI_3552_ses-4": "47962789",
-        "PPMI_3554_ses-1": "47962793",
-        "PPMI_3555_ses-1": "47963097",
-        "PPMI_3556_ses-1": "47963101",
-        "PPMI_3556_ses-2": "47963106",
-        "PPMI_3557_ses-1": "47963109",
-        "PPMI_3557_ses-2": "47963125",
-        "PPMI_3557_ses-4": "47963127",
-        "PPMI_3559_ses-2": "47963432",
-        "PPMI_3559_ses-4": "47963441",
-        "PPMI_3563_ses-3": "47963445",
-        "PPMI_3564_ses-1": "47963451",
-        "PPMI_3564_ses-2": "47963454",
-        "PPMI_3565_ses-1": "47963458",
-        "PPMI_3567_ses-2": "47963460",
-        "PPMI_3572_ses-2": "47963463",
-        "PPMI_3182_ses-1": "47972686",
-        "PPMI_3182_ses-2": "47972692",
-        "PPMI_3182_ses-3": "47972698",
-        "PPMI_3308_ses-4": "47972705",
-        "PPMI_3309_ses-1": "47972710",
-        "PPMI_3309_ses-2": "47972715",
-        "PPMI_3314_ses-1": "47972728",
-        "PPMI_3321_ses-1": "47972734",
-        "PPMI_3321_ses-2": "47972742",
-        "PPMI_3323_ses-3": "47972749",
-        "PPMI_3325_ses-2": "47972758",
-        "PPMI_3325_ses-3": "47972765",
-        "PPMI_3327_ses-1": "47972775",
-        "PPMI_3327_ses-2": "47972784",
-        "PPMI_3327_ses-3": "47972787",
-        "PPMI_3328_ses-1": "47972798",
-        "PPMI_3328_ses-2": "47972821",
-        "PPMI_3569_ses-3": "47972872",
-        "PPMI_3570_ses-2": "47972892",
-        "PPMI_3571_ses-3": "47972897",
-        "PPMI_3574_ses-1": "47972901",
-        "PPMI_3574_ses-2": "47972908",
-        "PPMI_3574_ses-4": "47972910",
-        "PPMI_3575_ses-2": "47972914",
-        "PPMI_3575_ses-4": "47972921",
-        "PPMI_3577_ses-1": "47972926",
-        "PPMI_3577_ses-3": "47972928",
-        "PPMI_3824_ses-4": "47972935",
-        "PPMI_3825_ses-1": "47972937",
-        "PPMI_3825_ses-2": "47972940",
-        "PPMI_3825_ses-4": "47972941",
-        "PPMI_3826_ses-1": "47972943",
-        "PPMI_3826_ses-2": "47972947",
-        "PPMI_3826_ses-3": "47972951",
-        "PPMI_3827_ses-1": "47973223",
-        "PPMI_3828_ses-3": "47973235",
-        "PPMI_3829_ses-2": "47973244",
-        "PPMI_3829_ses-3": "47973245",
-        "PPMI_3829_ses-4": "47973251",
-        "PPMI_3830_ses-1": "47973535",
-        "PPMI_3830_ses-2": "47973543",
-        "PPMI_3830_ses-4": "47973545",
-        "PPMI_3831_ses-2": "47973549",
-        "PPMI_3831_ses-3": "47973554",
-        "PPMI_3831_ses-4": "47973561",
-        "PPMI_3832_ses-3": "47973567",
-        "PPMI_3832_ses-4": "47973575",
-        "PPMI_3834_ses-2": "47973579",
-        "PPMI_3834_ses-3": "47973791",
-        "PPMI_3834_ses-4": "47973796",
-        "PPMI_3838_ses-3": "47973804",
-        "PPMI_3838_ses-4": "47973811",
-        "PPMI_3851_ses-2": "47973820",
-        "PPMI_3852_ses-3": "47973826",
-        "PPMI_3853_ses-1": "47973833",
-        "PPMI_3853_ses-2": "47973840",
-        "PPMI_3855_ses-2": "47973845",
-        "PPMI_3859_ses-1": "47973851",
-        "PPMI_3866_ses-1": "47973860",
-        "PPMI_3866_ses-2": "47973870",
-        "PPMI_3868_ses-1": "47973878",
-        "PPMI_4001_ses-2": "47973885",
-        "PPMI_4001_ses-3": "47973892",
-        "PPMI_4001_ses-4": "47973897",
-        "PPMI_4004_ses-1": "47973903",
-        "PPMI_4005_ses-1": "47973913",
-        "PPMI_4005_ses-2": "47973919",
-        "PPMI_4005_ses-3": "47973926",
-        "PPMI_4010_ses-2": "47973933",
-        "PPMI_4011_ses-2": "47973939",
-        "PPMI_4012_ses-2": "47973945",
-        "PPMI_4012_ses-3": "47973952",
-        "PPMI_4013_ses-2": "47973958",
-        "PPMI_4018_ses-2": "47973965",
-        "PPMI_4019_ses-1": "47973970",
-        "PPMI_4019_ses-2": "47973978",
-        "PPMI_4020_ses-1": "47973986",
-        "PPMI_4020_ses-3": "47973992",
-        "PPMI_4021_ses-3": "47973996",
-        "PPMI_4021_ses-4": "47973998",
-        "PPMI_4022_ses-2": "47973999",
-        "PPMI_4022_ses-4": "47974001",
-        "PPMI_4024_ses-1": "47974002",
-        "PPMI_4024_ses-2": "47974008",
-        "PPMI_4024_ses-3": "47974010",
-        "PPMI_4025_ses-3": "47974016",
-        "PPMI_4026_ses-1": "47974023",
-        "PPMI_4026_ses-2": "47974029",
-        "PPMI_4027_ses-2": "47974037",
-        "PPMI_4027_ses-3": "47974045",
-        "PPMI_4027_ses-4": "47974053",
-        "PPMI_4030_ses-3": "47974057",
-        "PPMI_4030_ses-4": "47974072",
-        "PPMI_4032_ses-1": "47974075",
-        "PPMI_4033_ses-1": "47974077",
-        "PPMI_4034_ses-1": "47974084",
-        "PPMI_4034_ses-2": "47974088",
-        "PPMI_4034_ses-3": "47974091",
-        "PPMI_4034_ses-4": "47974095",
-        "PPMI_4035_ses-1": "47974097",
-        "PPMI_4035_ses-2": "47974099",
-        "PPMI_4035_ses-3": "47974101",
-        "PPMI_4035_ses-4": "47974107",
-        "PPMI_4037_ses-3": "47974109",
-        "PPMI_4067_ses-1": "47974112",
-        "PPMI_4081_ses-2": "47974114",
-        "PPMI_4082_ses-1": "47974119",
-        "PPMI_4082_ses-2": "47974122",
-        "PPMI_4082_ses-3": "47974127",
-        "PPMI_4085_ses-2": "47974132",
-        "PPMI_4085_ses-3": "47974139",
-        "PPMI_4135_ses-1": "47974144",
-        "PPMI_4136_ses-2": "47974148",
-        "PPMI_4011_ses-3": "47974152",
-        "PPMI_4026_ses-4": "47974160",
-        "PPMI_4029_ses-3": "47974172",
-        "PPMI_4029_ses-4": "47974177",
-        "PPMI_4065_ses-1": "47974182"
+        "PPMI_3803_ses-1": "47896731",
+        "PPMI_4026_ses-4": "47900599",
+        "PPMI_4038_ses-3": "47912094",
+        "PPMI_4038_ses-4": "47912099",
+        "PPMI_4081_ses-2": "47912117",
+        "PPMI_4085_ses-2": "47914947",
+        "PPMI_4085_ses-3": "47914951",
+        "PPMI_3307_ses-1": "47936771",
+        "PPMI_3307_ses-2": "47936782",
+        "PPMI_3307_ses-3": "47936792",
+        "PPMI_3323_ses-3": "47936881",
+        "PPMI_3371_ses-1": "47937528",
+        "PPMI_3371_ses-2": "47937535",
+        "PPMI_3372_ses-4": "47937995",
+        "PPMI_3373_ses-4": "47938007",
+        "PPMI_3375_ses-3": "47938019",
+        "PPMI_3378_ses-2": "47938038",
+        "PPMI_3378_ses-4": "47938079",
+        "PPMI_3383_ses-3": "47938649",
+        "PPMI_3386_ses-3": "47939318",
+        "PPMI_3387_ses-2": "47939340",
+        "PPMI_3389_ses-2": "47939346",
+        "PPMI_3392_ses-1": "47939357",
+        "PPMI_3551_ses-1": "47939367",
+        "PPMI_3551_ses-2": "47939375",
+        "PPMI_3551_ses-3": "47939812",
+        "PPMI_3552_ses-1": "47939818",
+        "PPMI_3552_ses-3": "47939824",
+        "PPMI_3552_ses-4": "47939829",
+        "PPMI_3554_ses-1": "47939836",
+        "PPMI_3555_ses-1": "47939838",
+        "PPMI_3556_ses-1": "47939841",
+        "PPMI_3556_ses-2": "47939846",
+        "PPMI_3557_ses-1": "47939850",
+        "PPMI_3105_ses-2": "47941297",
+        "PPMI_3557_ses-2": "47941340",
+        "PPMI_3557_ses-4": "47941342",
+        "PPMI_3558_ses-2": "47941349",
+        "PPMI_3559_ses-2": "47941393",
+        "PPMI_3559_ses-4": "47941415",
+        "PPMI_3563_ses-3": "47941421",
+        "PPMI_3564_ses-1": "47941427",
+        "PPMI_3564_ses-2": "47941441",
+        "PPMI_3565_ses-1": "47941447",
+        "PPMI_3569_ses-3": "47941451",
+        "PPMI_3570_ses-2": "47941454",
+        "PPMI_3571_ses-3": "47941457",
+        "PPMI_3572_ses-2": "47941461",
+        "PPMI_3574_ses-1": "47941464",
+        "PPMI_3574_ses-2": "47941549",
+        "PPMI_3574_ses-4": "47941595",
+        "PPMI_3575_ses-2": "47941893",
+        "PPMI_3105_ses-4": "47945705",
+        "PPMI_3108_ses-1": "47945712",
+        "PPMI_3575_ses-4": "47945823",
+        "PPMI_3577_ses-1": "47945830",
+        "PPMI_3577_ses-3": "47945836",
+        "PPMI_3584_ses-1": "47945854",
+        "PPMI_3585_ses-2": "47945876",
+        "PPMI_3585_ses-3": "47945886",
+        "PPMI_3585_ses-4": "47945904",
+        "PPMI_3586_ses-1": "47945918",
+        "PPMI_3586_ses-3": "47945930",
+        "PPMI_3586_ses-4": "47945937",
+        "PPMI_3588_ses-2": "47945941",
+        "PPMI_3588_ses-3": "47945947",
+        "PPMI_3588_ses-4": "47945952",
+        "PPMI_3182_ses-3": "47946693",
+        "PPMI_3591_ses-3": "47946709",
+        "PPMI_3591_ses-4": "47946756",
+        "PPMI_3593_ses-1": "47946760",
+        "PPMI_3593_ses-3": "47946766",
+        "PPMI_3593_ses-4": "47946774",
+        "PPMI_3752_ses-1": "47946780",
+        "PPMI_3752_ses-2": "47946791",
+        "PPMI_3753_ses-1": "47946802",
+        "PPMI_3757_ses-4": "47946821",
+        "PPMI_3758_ses-1": "47946828",
+        "PPMI_3758_ses-3": "47946835",
+        "PPMI_3759_ses-2": "47946841",
+        "PPMI_3760_ses-3": "47946842",
+        "PPMI_3760_ses-4": "47946849",
+        "PPMI_3762_ses-2": "47946853",
+        "PPMI_3763_ses-3": "47946861",
+        "PPMI_3765_ses-2": "47946866",
+        "PPMI_3767_ses-1": "47946870",
+        "PPMI_3767_ses-2": "47946875",
+        "PPMI_3769_ses-1": "47946881",
+        "PPMI_3104_ses-1": "47947643",
+        "PPMI_3106_ses-1": "47947648",
+        "PPMI_3106_ses-3": "47947652",
+        "PPMI_3111_ses-1": "47947660",
+        "PPMI_3115_ses-1": "47947663",
+        "PPMI_3769_ses-2": "47947730",
+        "PPMI_3770_ses-1": "47947734",
+        "PPMI_3771_ses-1": "47947739",
+        "PPMI_3771_ses-3": "47947745",
+        "PPMI_3775_ses-1": "47947756",
+        "PPMI_3775_ses-2": "47947760",
+        "PPMI_3775_ses-3": "47947767",
+        "PPMI_3776_ses-1": "47947772",
+        "PPMI_3776_ses-3": "47947784",
+        "PPMI_3776_ses-4": "47947792",
+        "PPMI_3777_ses-2": "47947794",
+        "PPMI_3777_ses-4": "47947800",
+        "PPMI_3778_ses-2": "47947806",
+        "PPMI_3778_ses-3": "47947811",
+        "PPMI_3780_ses-1": "47947818",
+        "PPMI_3780_ses-2": "47947917",
+        "PPMI_3780_ses-4": "47948107",
+        "PPMI_3781_ses-2": "47948111",
+        "PPMI_3787_ses-2": "47948114",
+        "PPMI_3788_ses-1": "47948118",
+        "PPMI_3800_ses-1": "47948122",
+        "PPMI_3802_ses-1": "47948125",
+        "PPMI_3108_ses-4": "47948366",
+        "PPMI_3114_ses-1": "47948371",
+        "PPMI_3108_ses-2": "47948379",
+        "PPMI_3113_ses-1": "47948390",
+        "PPMI_3116_ses-3": "47948399",
+        "PPMI_3115_ses-2": "47948406",
+        "PPMI_3125_ses-2": "47948411",
+        "PPMI_3125_ses-4": "47948422",
+        "PPMI_3127_ses-2": "47948426",
+        "PPMI_3131_ses-1": "47948433",
+        "PPMI_3132_ses-3": "47948436",
+        "PPMI_3134_ses-3": "47948443",
+        "PPMI_3151_ses-1": "47948449",
+        "PPMI_3154_ses-2": "47948456",
+        "PPMI_3160_ses-2": "47948463",
+        "PPMI_3171_ses-2": "47948473",
+        "PPMI_3567_ses-2": "47948478",
+        "PPMI_3802_ses-2": "47948484",
+        "PPMI_3803_ses-2": "47948492",
+        "PPMI_3805_ses-2": "47948497",
+        "PPMI_3807_ses-2": "47948507",
+        "PPMI_3808_ses-2": "47948508",
+        "PPMI_3808_ses-4": "47948513",
+        "PPMI_3813_ses-1": "47948521",
+        "PPMI_3814_ses-1": "47948533",
+        "PPMI_3814_ses-4": "47948542",
+        "PPMI_3815_ses-1": "47948545",
+        "PPMI_3816_ses-1": "47948551",
+        "PPMI_3817_ses-2": "47948558",
+        "PPMI_3818_ses-1": "47948569",
+        "PPMI_3818_ses-2": "47948577"
     },
     "LONG_DIRS": {
+        "PPMI_3130": [
+            "PPMI_3130_ses-3"
+        ],
         "PPMI_3753": [
             "PPMI_3753_ses-1"
         ],
@@ -469,6 +526,9 @@
             "PPMI_4027_ses-2",
             "PPMI_4027_ses-3",
             "PPMI_4027_ses-4"
+        ],
+        "PPMI_3168": [
+            "PPMI_3168_ses-3"
         ],
         "PPMI_4085": [
             "PPMI_4085_ses-2",
@@ -499,8 +559,15 @@
             "PPMI_3853_ses-1",
             "PPMI_3853_ses-2"
         ],
+        "PPMI_3174": [
+            "PPMI_3174_ses-4"
+        ],
         "PPMI_4136": [
             "PPMI_4136_ses-2"
+        ],
+        "PPMI_3126": [
+            "PPMI_3126_ses-1",
+            "PPMI_3126_ses-3"
         ],
         "PPMI_3825": [
             "PPMI_3825_ses-1",
@@ -521,6 +588,9 @@
         "PPMI_4037": [
             "PPMI_4037_ses-3"
         ],
+        "PPMI_3122": [
+            "PPMI_3122_ses-2"
+        ],
         "PPMI_3834": [
             "PPMI_3834_ses-2",
             "PPMI_3834_ses-3",
@@ -529,6 +599,10 @@
         "PPMI_3771": [
             "PPMI_3771_ses-1",
             "PPMI_3771_ses-3"
+        ],
+        "PPMI_3185": [
+            "PPMI_3185_ses-1",
+            "PPMI_3185_ses-2"
         ],
         "PPMI_3376": [
             "PPMI_3376_ses-1"
@@ -542,14 +616,28 @@
         "PPMI_4081": [
             "PPMI_4081_ses-2"
         ],
+        "PPMI_3150": [
+            "PPMI_3150_ses-1",
+            "PPMI_3150_ses-2"
+        ],
         "PPMI_3351": [
             "PPMI_3351_ses-1"
+        ],
+        "PPMI_3113": [
+            "PPMI_3113_ses-1"
+        ],
+        "PPMI_3181": [
+            "PPMI_3181_ses-2"
         ],
         "PPMI_3584": [
             "PPMI_3584_ses-1"
         ],
         "PPMI_3124": [
             "PPMI_3124_ses-4"
+        ],
+        "PPMI_3114": [
+            "PPMI_3114_ses-1",
+            "PPMI_3114_ses-2"
         ],
         "PPMI_3574": [
             "PPMI_3574_ses-1",
@@ -559,8 +647,18 @@
         "PPMI_4004": [
             "PPMI_4004_ses-1"
         ],
+        "PPMI_3111": [
+            "PPMI_3111_ses-1"
+        ],
         "PPMI_4013": [
             "PPMI_4013_ses-2"
+        ],
+        "PPMI_3190": [
+            "PPMI_3190_ses-3",
+            "PPMI_3190_ses-4"
+        ],
+        "PPMI_3166": [
+            "PPMI_3166_ses-2"
         ],
         "PPMI_3781": [
             "PPMI_3781_ses-2"
@@ -585,6 +683,10 @@
         ],
         "PPMI_3759": [
             "PPMI_3759_ses-2"
+        ],
+        "PPMI_3154": [
+            "PPMI_3154_ses-2",
+            "PPMI_3154_ses-4"
         ],
         "PPMI_3378": [
             "PPMI_3378_ses-2",
@@ -613,6 +715,11 @@
         "PPMI_4030": [
             "PPMI_4030_ses-3",
             "PPMI_4030_ses-4"
+        ],
+        "PPMI_3118": [
+            "PPMI_3118_ses-1",
+            "PPMI_3118_ses-2",
+            "PPMI_3118_ses-4"
         ],
         "PPMI_3818": [
             "PPMI_3818_ses-1",
@@ -662,6 +769,12 @@
         "PPMI_4067": [
             "PPMI_4067_ses-1"
         ],
+        "PPMI_3307": [
+            "PPMI_3307_ses-1",
+            "PPMI_3307_ses-2",
+            "PPMI_3307_ses-3",
+            "PPMI_3307_ses-4"
+        ],
         "PPMI_3832": [
             "PPMI_3832_ses-1",
             "PPMI_3832_ses-3",
@@ -685,8 +798,23 @@
         "PPMI_3852": [
             "PPMI_3852_ses-3"
         ],
+        "PPMI_3191": [
+            "PPMI_3191_ses-1"
+        ],
+        "PPMI_3134": [
+            "PPMI_3134_ses-3"
+        ],
+        "PPMI_3157": [
+            "PPMI_3157_ses-1"
+        ],
         "PPMI_3828": [
             "PPMI_3828_ses-3"
+        ],
+        "PPMI_3182": [
+            "PPMI_3182_ses-1",
+            "PPMI_3182_ses-2",
+            "PPMI_3182_ses-3",
+            "PPMI_3182_ses-4"
         ],
         "PPMI_4029": [
             "PPMI_4029_ses-3",
@@ -697,14 +825,35 @@
             "PPMI_4024_ses-2",
             "PPMI_4024_ses-3"
         ],
+        "PPMI_3115": [
+            "PPMI_3115_ses-1",
+            "PPMI_3115_ses-2"
+        ],
+        "PPMI_3123": [
+            "PPMI_3123_ses-4"
+        ],
+        "PPMI_3131": [
+            "PPMI_3131_ses-1"
+        ],
+        "PPMI_3108": [
+            "PPMI_3108_ses-1",
+            "PPMI_3108_ses-2",
+            "PPMI_3108_ses-4"
+        ],
         "PPMI_3763": [
             "PPMI_3763_ses-3"
+        ],
+        "PPMI_3104": [
+            "PPMI_3104_ses-1"
         ],
         "PPMI_4035": [
             "PPMI_4035_ses-1",
             "PPMI_4035_ses-2",
             "PPMI_4035_ses-3",
             "PPMI_4035_ses-4"
+        ],
+        "PPMI_3171": [
+            "PPMI_3171_ses-2"
         ],
         "PPMI_4010": [
             "PPMI_4010_ses-2"
@@ -724,6 +873,9 @@
             "PPMI_3830_ses-1",
             "PPMI_3830_ses-2",
             "PPMI_3830_ses-4"
+        ],
+        "PPMI_3178": [
+            "PPMI_3178_ses-4"
         ],
         "PPMI_3760": [
             "PPMI_3760_ses-3",
@@ -781,6 +933,9 @@
         "PPMI_3389": [
             "PPMI_3389_ses-2"
         ],
+        "PPMI_3175": [
+            "PPMI_3175_ses-3"
+        ],
         "PPMI_3321": [
             "PPMI_3321_ses-1",
             "PPMI_3321_ses-2"
@@ -796,6 +951,15 @@
             "PPMI_3383_ses-1",
             "PPMI_3383_ses-3"
         ],
+        "PPMI_3301": [
+            "PPMI_3301_ses-1"
+        ],
+        "PPMI_3120": [
+            "PPMI_3120_ses-1",
+            "PPMI_3120_ses-2",
+            "PPMI_3120_ses-3",
+            "PPMI_3120_ses-4"
+        ],
         "PPMI_3776": [
             "PPMI_3776_ses-1",
             "PPMI_3776_ses-2",
@@ -806,6 +970,10 @@
             "PPMI_3380_ses-2",
             "PPMI_3380_ses-3",
             "PPMI_3380_ses-4"
+        ],
+        "PPMI_3107": [
+            "PPMI_3107_ses-4",
+            "PPMI_3107_ses-5"
         ],
         "PPMI_4021": [
             "PPMI_4021_ses-3",
@@ -830,6 +998,11 @@
         "PPMI_3374": [
             "PPMI_3374_ses-3"
         ],
+        "PPMI_3105": [
+            "PPMI_3105_ses-1",
+            "PPMI_3105_ses-2",
+            "PPMI_3105_ses-4"
+        ],
         "PPMI_3586": [
             "PPMI_3586_ses-1",
             "PPMI_3586_ses-3",
@@ -844,6 +1017,18 @@
         ],
         "PPMI_3765": [
             "PPMI_3765_ses-2"
+        ],
+        "PPMI_3184": [
+            "PPMI_3184_ses-2"
+        ],
+        "PPMI_3125": [
+            "PPMI_3125_ses-2",
+            "PPMI_3125_ses-4"
+        ],
+        "PPMI_3116": [
+            "PPMI_3116_ses-1",
+            "PPMI_3116_ses-3",
+            "PPMI_3116_ses-4"
         ],
         "PPMI_3767": [
             "PPMI_3767_ses-1",
@@ -879,6 +1064,10 @@
             "PPMI_4001_ses-2",
             "PPMI_4001_ses-3",
             "PPMI_4001_ses-4"
+        ],
+        "PPMI_3106": [
+            "PPMI_3106_ses-1",
+            "PPMI_3106_ses-3"
         ],
         "PPMI_3328": [
             "PPMI_3328_ses-1",
@@ -921,6 +1110,9 @@
             "PPMI_3373_ses-3",
             "PPMI_3373_ses-4"
         ],
+        "PPMI_3132": [
+            "PPMI_3132_ses-3"
+        ],
         "PPMI_4005": [
             "PPMI_4005_ses-1",
             "PPMI_4005_ses-2",
@@ -940,6 +1132,12 @@
         ],
         "PPMI_3563": [
             "PPMI_3563_ses-3"
+        ],
+        "PPMI_3151": [
+            "PPMI_3151_ses-1"
+        ],
+        "PPMI_3160": [
+            "PPMI_3160_ses-2"
         ],
         "PPMI_3375": [
             "PPMI_3375_ses-1",
@@ -979,10 +1177,16 @@
         "PPMI_4065": [
             "PPMI_4065_ses-1"
         ],
+        "PPMI_3172": [
+            "PPMI_3172_ses-1"
+        ],
         "PPMI_3327": [
             "PPMI_3327_ses-1",
             "PPMI_3327_ses-2",
             "PPMI_3327_ses-3"
+        ],
+        "PPMI_3127": [
+            "PPMI_3127_ses-2"
         ],
         "PPMI_3868": [
             "PPMI_3868_ses-1"
@@ -990,12 +1194,19 @@
         "PPMI_3762": [
             "PPMI_3762_ses-2"
         ],
+        "PPMI_3128": [
+            "PPMI_3128_ses-3",
+            "PPMI_3128_ses-4"
+        ],
         "PPMI_3564": [
             "PPMI_3564_ses-1",
             "PPMI_3564_ses-2"
         ]
     },
     "LONG_TPS": {
+        "PPMI_3130": [
+            "ses-3"
+        ],
         "PPMI_3753": [
             "ses-1"
         ],
@@ -1011,6 +1222,9 @@
             "ses-2",
             "ses-3",
             "ses-4"
+        ],
+        "PPMI_3168": [
+            "ses-3"
         ],
         "PPMI_4085": [
             "ses-2",
@@ -1041,8 +1255,15 @@
             "ses-1",
             "ses-2"
         ],
+        "PPMI_3174": [
+            "ses-4"
+        ],
         "PPMI_4136": [
             "ses-2"
+        ],
+        "PPMI_3126": [
+            "ses-1",
+            "ses-3"
         ],
         "PPMI_3825": [
             "ses-1",
@@ -1063,6 +1284,9 @@
         "PPMI_4037": [
             "ses-3"
         ],
+        "PPMI_3122": [
+            "ses-2"
+        ],
         "PPMI_3834": [
             "ses-2",
             "ses-3",
@@ -1071,6 +1295,10 @@
         "PPMI_3771": [
             "ses-1",
             "ses-3"
+        ],
+        "PPMI_3185": [
+            "ses-1",
+            "ses-2"
         ],
         "PPMI_3376": [
             "ses-1"
@@ -1084,14 +1312,28 @@
         "PPMI_4081": [
             "ses-2"
         ],
+        "PPMI_3150": [
+            "ses-1",
+            "ses-2"
+        ],
         "PPMI_3351": [
             "ses-1"
+        ],
+        "PPMI_3113": [
+            "ses-1"
+        ],
+        "PPMI_3181": [
+            "ses-2"
         ],
         "PPMI_3584": [
             "ses-1"
         ],
         "PPMI_3124": [
             "ses-4"
+        ],
+        "PPMI_3114": [
+            "ses-1",
+            "ses-2"
         ],
         "PPMI_3574": [
             "ses-1",
@@ -1101,7 +1343,17 @@
         "PPMI_4004": [
             "ses-1"
         ],
+        "PPMI_3111": [
+            "ses-1"
+        ],
         "PPMI_4013": [
+            "ses-2"
+        ],
+        "PPMI_3190": [
+            "ses-3",
+            "ses-4"
+        ],
+        "PPMI_3166": [
             "ses-2"
         ],
         "PPMI_3781": [
@@ -1127,6 +1379,10 @@
         ],
         "PPMI_3759": [
             "ses-2"
+        ],
+        "PPMI_3154": [
+            "ses-2",
+            "ses-4"
         ],
         "PPMI_3378": [
             "ses-2",
@@ -1154,6 +1410,11 @@
         ],
         "PPMI_4030": [
             "ses-3",
+            "ses-4"
+        ],
+        "PPMI_3118": [
+            "ses-1",
+            "ses-2",
             "ses-4"
         ],
         "PPMI_3818": [
@@ -1204,6 +1465,12 @@
         "PPMI_4067": [
             "ses-1"
         ],
+        "PPMI_3307": [
+            "ses-1",
+            "ses-2",
+            "ses-3",
+            "ses-4"
+        ],
         "PPMI_3832": [
             "ses-1",
             "ses-3",
@@ -1227,8 +1494,23 @@
         "PPMI_3852": [
             "ses-3"
         ],
+        "PPMI_3191": [
+            "ses-1"
+        ],
+        "PPMI_3134": [
+            "ses-3"
+        ],
+        "PPMI_3157": [
+            "ses-1"
+        ],
         "PPMI_3828": [
             "ses-3"
+        ],
+        "PPMI_3182": [
+            "ses-1",
+            "ses-2",
+            "ses-3",
+            "ses-4"
         ],
         "PPMI_4029": [
             "ses-3",
@@ -1239,14 +1521,35 @@
             "ses-2",
             "ses-3"
         ],
+        "PPMI_3115": [
+            "ses-1",
+            "ses-2"
+        ],
+        "PPMI_3123": [
+            "ses-4"
+        ],
+        "PPMI_3131": [
+            "ses-1"
+        ],
+        "PPMI_3108": [
+            "ses-1",
+            "ses-2",
+            "ses-4"
+        ],
         "PPMI_3763": [
             "ses-3"
+        ],
+        "PPMI_3104": [
+            "ses-1"
         ],
         "PPMI_4035": [
             "ses-1",
             "ses-2",
             "ses-3",
             "ses-4"
+        ],
+        "PPMI_3171": [
+            "ses-2"
         ],
         "PPMI_4010": [
             "ses-2"
@@ -1265,6 +1568,9 @@
         "PPMI_3830": [
             "ses-1",
             "ses-2",
+            "ses-4"
+        ],
+        "PPMI_3178": [
             "ses-4"
         ],
         "PPMI_3760": [
@@ -1323,6 +1629,9 @@
         "PPMI_3389": [
             "ses-2"
         ],
+        "PPMI_3175": [
+            "ses-3"
+        ],
         "PPMI_3321": [
             "ses-1",
             "ses-2"
@@ -1338,6 +1647,15 @@
             "ses-1",
             "ses-3"
         ],
+        "PPMI_3301": [
+            "ses-1"
+        ],
+        "PPMI_3120": [
+            "ses-1",
+            "ses-2",
+            "ses-3",
+            "ses-4"
+        ],
         "PPMI_3776": [
             "ses-1",
             "ses-2",
@@ -1348,6 +1666,10 @@
             "ses-2",
             "ses-3",
             "ses-4"
+        ],
+        "PPMI_3107": [
+            "ses-4",
+            "ses-5"
         ],
         "PPMI_4021": [
             "ses-3",
@@ -1372,6 +1694,11 @@
         "PPMI_3374": [
             "ses-3"
         ],
+        "PPMI_3105": [
+            "ses-1",
+            "ses-2",
+            "ses-4"
+        ],
         "PPMI_3586": [
             "ses-1",
             "ses-3",
@@ -1386,6 +1713,18 @@
         ],
         "PPMI_3765": [
             "ses-2"
+        ],
+        "PPMI_3184": [
+            "ses-2"
+        ],
+        "PPMI_3125": [
+            "ses-2",
+            "ses-4"
+        ],
+        "PPMI_3116": [
+            "ses-1",
+            "ses-3",
+            "ses-4"
         ],
         "PPMI_3767": [
             "ses-1",
@@ -1421,6 +1760,10 @@
             "ses-2",
             "ses-3",
             "ses-4"
+        ],
+        "PPMI_3106": [
+            "ses-1",
+            "ses-3"
         ],
         "PPMI_3328": [
             "ses-1",
@@ -1463,6 +1806,9 @@
             "ses-3",
             "ses-4"
         ],
+        "PPMI_3132": [
+            "ses-3"
+        ],
         "PPMI_4005": [
             "ses-1",
             "ses-2",
@@ -1482,6 +1828,12 @@
         ],
         "PPMI_3563": [
             "ses-3"
+        ],
+        "PPMI_3151": [
+            "ses-1"
+        ],
+        "PPMI_3160": [
+            "ses-2"
         ],
         "PPMI_3375": [
             "ses-1",
@@ -1521,10 +1873,16 @@
         "PPMI_4065": [
             "ses-1"
         ],
+        "PPMI_3172": [
+            "ses-1"
+        ],
         "PPMI_3327": [
             "ses-1",
             "ses-2",
             "ses-3"
+        ],
+        "PPMI_3127": [
+            "ses-2"
         ],
         "PPMI_3868": [
             "ses-1"
@@ -1532,12 +1890,29 @@
         "PPMI_3762": [
             "ses-2"
         ],
+        "PPMI_3128": [
+            "ses-3",
+            "ses-4"
+        ],
         "PPMI_3564": [
             "ses-1",
             "ses-2"
         ]
     },
     "REGISTRATION": {
+        "PPMI_3130_ses-3": {
+            "anat": {
+                "t1": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3130/MPRAGE_GRAPPA2/2016-12-15_11_46_20.0/S547135/PPMI_3130_MR_MPRAGE_GRAPPA2_br_raw_20170320173440296_19_S547135_I831129.dcm",
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3130/Sag_MPRAGE_GRAPPA/2016-12-15_11_46_20.0/S547136/PPMI_3130_MR_Sag_MPRAGE_GRAPPA__br_raw_20170320173439279_156_S547136_I831130.dcm"
+                ]
+            },
+            "dwi": {
+                "dwi": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3130/DTI_gated/2016-12-15_12_30_38.0/S547139/PPMI_3130_MR_DTI_gated__br_raw_20170320173439350_63_S547139_I831133.dcm"
+                ]
+            }
+        },
         "PPMI_3753_ses-1": {
             "anat": {
                 "t1": [
@@ -1622,6 +1997,18 @@
                 "dwi": [
                     "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_4027/DTI_gated/2016-09-13_12_58_49.0/S510974/PPMI_4027_MR_DTI_gated__br_raw_20161102130826802_6_S510974_I790487.dcm",
                     "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_4027/DTI_gated/2016-09-13_13_27_12.0/S510978/PPMI_4027_MR_DTI_gated__br_raw_20161102130827783_32_S510978_I790492.dcm"
+                ]
+            }
+        },
+        "PPMI_3168_ses-3": {
+            "anat": {
+                "t1": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3168/SAG_MPRAGE_GRAPPA/2013-08-26_14_27_56.0/S203262/PPMI_3168_MR_SAG_MPRAGE_GRAPPA__br_raw_20131008134610072_110_S203262_I393608.dcm"
+                ]
+            },
+            "dwi": {
+                "dwi": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3168/DTI_gated/2013-08-26_14_33_27.0/S203261/PPMI_3168_MR_DTI_gated__br_raw_20131008134533952_8_S203261_I393607.dcm"
                 ]
             }
         },
@@ -1775,6 +2162,19 @@
                 ]
             }
         },
+        "PPMI_3174_ses-4": {
+            "anat": {
+                "t1": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3174/SAG_MPRAGE_GRAPPA/2016-04-12_11_21_18.0/S426387/PPMI_3174_MR_SAG_MPRAGE_GRAPPA__br_raw_20160422142957396_126_S426387_I689582.dcm"
+                ]
+            },
+            "dwi": {
+                "dwi": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3174/DTI_gated/2016-04-12_11_24_59.0/S426388/PPMI_3174_MR_DTI_gated__br_raw_20160422142957609_24_S426388_I689583.dcm",
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3174/DTI_gated/2016-04-12_11_48_32.0/S426385/PPMI_3174_MR_DTI_gated__br_raw_20160422142956489_59_S426385_I689580.dcm"
+                ]
+            }
+        },
         "PPMI_4136_ses-2": {
             "anat": {
                 "t1": [
@@ -1784,6 +2184,27 @@
             "dwi": {
                 "dwi": [
                     "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_4136/DTI_Sequence/2014-05-06_13_55_31.0/S225644/PPMI_4136_MR_DTI_Sequence_br_raw_20140820193104114_35_S225644_I436433.dcm"
+                ]
+            }
+        },
+        "PPMI_3126_ses-1": {
+            "anat": {
+                "t1": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3126/MPRAGE_GRAPPA/2013-09-18_10_59_00.0/S205747/PPMI_3126_MR_MPRAGE_GRAPPA__br_raw_20131108092423148_8_S205747_I397751.dcm"
+                ]
+            }
+        },
+        "PPMI_3126_ses-3": {
+            "anat": {
+                "t1": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3126/MPRAGE_GRAPPA2/2016-08-24_11_49_25.0/S510956/PPMI_3126_MR_MPRAGE_GRAPPA2_br_raw_20161102123356546_163_S510956_I790468.dcm",
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3126/Sag_MPRAGE_GRAPPA/2016-08-24_11_49_25.0/S510960/PPMI_3126_MR_Sag_MPRAGE_GRAPPA__br_raw_20161102123354534_129_S510960_I790472.dcm"
+                ]
+            },
+            "dwi": {
+                "dwi": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3126/DTI_gated/2016-08-24_12_04_30.0/S510958/PPMI_3126_MR_DTI_gated__br_raw_20161102123423377_27_S510958_I790470.dcm",
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3126/DTI_gated/2016-08-24_12_47_27.0/S510955/PPMI_3126_MR_DTI_gated__br_raw_20161102123358555_46_S510955_I790466.dcm"
                 ]
             }
         },
@@ -1895,6 +2316,18 @@
                 ]
             }
         },
+        "PPMI_3122_ses-2": {
+            "anat": {
+                "t1": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3122/MPRAGE_GRAPPA/2013-05-22_10_58_45.0/S196289/PPMI_3122_MR_MPRAGE_GRAPPA__br_raw_20130724153021362_166_S196289_I382285.dcm"
+                ]
+            },
+            "dwi": {
+                "dwi": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3122/DTI_gated/2013-05-22_11_15_15.0/S196291/PPMI_3122_MR_DTI_gated__br_raw_20130724153035511_3_S196291_I382287.dcm"
+                ]
+            }
+        },
         "PPMI_3834_ses-2": {
             "anat": {
                 "t1": [
@@ -1952,6 +2385,30 @@
                 ]
             }
         },
+        "PPMI_3185_ses-1": {
+            "anat": {
+                "t1": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3185/SAG_MPRAGE_GRAPPA/2014-03-07_10_19_44.0/S217896/PPMI_3185_MR_SAG_MPRAGE_GRAPPA__br_raw_20140506151651498_29_S217896_I423722.dcm"
+                ]
+            },
+            "dwi": {
+                "dwi": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3185/DTI_gated/2014-03-07_11_06_05.0/S217897/PPMI_3185_MR_DTI_gated__br_raw_20140506151653088_3_S217897_I423723.dcm"
+                ]
+            }
+        },
+        "PPMI_3185_ses-2": {
+            "anat": {
+                "t1": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3185/SAG_MPRAGE_GRAPPA/2015-05-12_11_08_28.0/S264308/PPMI_3185_MR_SAG_MPRAGE_GRAPPA__br_raw_20150629094901410_172_S264308_I498894.dcm"
+                ]
+            },
+            "dwi": {
+                "dwi": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3185/DTI_gated/2015-05-12_11_14_10.0/S264309/PPMI_3185_MR_DTI_gated__br_raw_20150629094901836_27_S264309_I498895.dcm"
+                ]
+            }
+        },
         "PPMI_3376_ses-1": {
             "anat": {
                 "t1": [
@@ -1990,6 +2447,25 @@
                 ]
             }
         },
+        "PPMI_3150_ses-1": {
+            "anat": {
+                "t1": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3150/MPRAGE_GRAPPA/2011-12-06_10_28_48.0/S146606/PPMI_3150_MR_MPRAGE_GRAPPA__br_raw_20120409100535396_66_S146606_I296442.dcm"
+                ]
+            }
+        },
+        "PPMI_3150_ses-2": {
+            "anat": {
+                "t1": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3150/MPRAGE_GRAPPA/2012-11-02_10_03_19.0/S179289/PPMI_3150_MR_MPRAGE_GRAPPA__br_raw_20130108083119172_101_S179289_I353812.dcm"
+                ]
+            },
+            "dwi": {
+                "dwi": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3150/DTI_gated/2012-11-02_10_22_07.0/S179290/PPMI_3150_MR_DTI_gated__br_raw_20130108083123041_1_S179290_I353813.dcm"
+                ]
+            }
+        },
         "PPMI_3351_ses-1": {
             "anat": {
                 "t1": [
@@ -2000,6 +2476,30 @@
                 "dwi": [
                     "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3351/DTI_gated/2015-06-01_08_22_56.0/S271108/PPMI_3351_MR_DTI_gated__br_raw_20150901103617936_59_S271108_I508244.dcm",
                     "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3351/DTI_gated/2015-06-01_08_56_03.0/S271110/PPMI_3351_MR_DTI_gated__br_raw_20150901103618747_16_S271110_I508246.dcm"
+                ]
+            }
+        },
+        "PPMI_3113_ses-1": {
+            "anat": {
+                "t1": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3113/MPRAGE_GRAPPA/2012-07-18_13_26_33.0/S169224/PPMI_3113_MR_MPRAGE_GRAPPA__br_raw_20121001154052499_99_S169224_I337507.dcm"
+                ]
+            },
+            "dwi": {
+                "dwi": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3113/DTI_gated/2012-07-18_13_38_54.0/S169226/PPMI_3113_MR_DTI_gated__br_raw_20121001154051251_9_S169226_I337509.dcm"
+                ]
+            }
+        },
+        "PPMI_3181_ses-2": {
+            "anat": {
+                "t1": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3181/SAG_MPRAGE_GRAPPA/2014-08-12_11_23_01.0/S228153/PPMI_3181_MR_SAG_MPRAGE_GRAPPA__br_raw_20140820143904457_35_S228153_I440164.dcm"
+                ]
+            },
+            "dwi": {
+                "dwi": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3181/DTI_gated/2014-08-12_11_28_51.0/S228152/PPMI_3181_MR_DTI_gated__br_raw_20140820143904848_38_S228152_I440162.dcm"
                 ]
             }
         },
@@ -2021,6 +2521,20 @@
                 "dwi": [
                     "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3124/DTI_gated/2016-06-15_12_23_11.0/S484598/PPMI_3124_MR_DTI_gated__br_raw_20160714164817860_14_S484598_I757796.dcm",
                     "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3124/DTI_gated/2016-06-15_12_55_52.0/S484596/PPMI_3124_MR_DTI_gated__br_raw_20160714164818015_52_S484596_I757794.dcm"
+                ]
+            }
+        },
+        "PPMI_3114_ses-1": {
+            "anat": {
+                "t1": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3114/MPRAGE_GRAPPA/2011-08-10_10_04_06.0/S120901/PPMI_3114_MR_MPRAGE_GRAPPA__br_raw_20111005133806843_10_S120901_I253901.dcm"
+                ]
+            }
+        },
+        "PPMI_3114_ses-2": {
+            "anat": {
+                "t1": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3114/MPRAGE_GRAPPA/2012-08-15_10_23_45.0/S179006/PPMI_3114_MR_MPRAGE_GRAPPA__br_raw_20130107135113339_4_S179006_I353464.dcm"
                 ]
             }
         },
@@ -2069,6 +2583,18 @@
                 ]
             }
         },
+        "PPMI_3111_ses-1": {
+            "anat": {
+                "t1": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3111/MPRAGE_GRAPPA/2011-05-26_13_20_29.0/S113788/PPMI_3111_MR_MPRAGE_GRAPPA__br_raw_20110707113242864_96_S113788_I243549.dcm"
+                ]
+            },
+            "dwi": {
+                "dwi": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3111/DTI_gated/2011-05-26_14_01_16.0/S113787/PPMI_3111_MR_DTI_gated__br_raw_20110707113319256_65_S113787_I243547.dcm"
+                ]
+            }
+        },
         "PPMI_4013_ses-2": {
             "anat": {
                 "t1": [
@@ -2082,6 +2608,18 @@
                 ]
             }
         },
+        "PPMI_3190_ses-3": {
+            "anat": {
+                "t1": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3190/SAG_MPRAGE_GRAPPA/2015-04-14_10_34_39.0/S259000/PPMI_3190_MR_SAG_MPRAGE_GRAPPA__br_raw_20150511123008950_188_S259000_I491591.dcm"
+                ]
+            },
+            "dwi": {
+                "dwi": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3190/DTI_gated/2015-04-14_11_04_19.0/S259003/PPMI_3190_MR_DTI_gated__br_raw_20150511123008807_55_S259003_I491594.dcm"
+                ]
+            }
+        },
         "PPMI_3190_ses-4": {
             "anat": {
                 "t1": [
@@ -2092,6 +2630,13 @@
                 "dwi": [
                     "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3190/DTI_gated/2017-05-04_10_45_18.0/S606247/PPMI_3190_MR_DTI_gated__br_raw_20170907113540085_63_S606247_I901151.dcm",
                     "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3190/DTI_gated/2017-05-04_11_16_50.0/S606246/PPMI_3190_MR_DTI_gated__br_raw_20170907113540496_20_S606246_I901150.dcm"
+                ]
+            }
+        },
+        "PPMI_3166_ses-2": {
+            "anat": {
+                "t1": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3166/SAG_MPRAGE_GRAPPA/2013-09-19_10_56_57.0/S205635/PPMI_3166_MR_SAG_MPRAGE_GRAPPA__br_raw_20131107152530180_156_S205635_I397585.dcm"
                 ]
             }
         },
@@ -2250,6 +2795,26 @@
             "dwi": {
                 "dwi": [
                     "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3759/DTI_gated/2012-11-21_10_46_36.0/S181433/PPMI_3759_MR_DTI_gated__br_raw_20130204171847867_1_S181433_I357723.dcm"
+                ]
+            }
+        },
+        "PPMI_3154_ses-2": {
+            "anat": {
+                "t1": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3154/MPRAGE_GRAPPA/2011-11-30_15_10_25.0/S146626/PPMI_3154_MR_MPRAGE_GRAPPA__br_raw_20120409113932699_176_S146626_I296467.dcm"
+                ]
+            }
+        },
+        "PPMI_3154_ses-4": {
+            "anat": {
+                "t1": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3154/SAG_MPRAGE_GRAPPA/2015-04-22_11_39_14.0/S258999/PPMI_3154_MR_SAG_MPRAGE_GRAPPA__br_raw_20150831110817963_146_S258999_I491590.dcm"
+                ]
+            },
+            "dwi": {
+                "dwi": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3154/DTI_UNgated/2015-04-22_12_11_22.0/S258997/PPMI_3154_MR_DTI_UNgated__br_raw_20150831110814434_20_S258997_I491587.dcm",
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3154/DTI_UNgated#2/2015-04-22_12_21_13.0/S258998/PPMI_3154_MR_DTI_UNgated#2__br_raw_20150831110815037_6_S258998_I491589.dcm"
                 ]
             }
         },
@@ -2421,6 +2986,33 @@
                 "dwi": [
                     "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_4030/DTI_gated/2017-01-25_11_19_20.0/S606283/PPMI_4030_MR_DTI_gated__br_raw_20170907123923624_16_S606283_I901194.dcm",
                     "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_4030/DTI_gated/2017-01-25_11_50_03.0/S606282/PPMI_4030_MR_DTI_gated__br_raw_20170907123922526_41_S606282_I901193.dcm"
+                ]
+            }
+        },
+        "PPMI_3118_ses-1": {
+            "anat": {
+                "t1": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3118/MPRAGE_GRAPPA/2012-01-25_10_18_59.0/S142538/PPMI_3118_MR_MPRAGE_GRAPPA__br_raw_20120305090714600_31_S142538_I287845.dcm"
+                ]
+            }
+        },
+        "PPMI_3118_ses-2": {
+            "anat": {
+                "t1": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3118/MPRAGE_GRAPPA/2013-01-23_10_03_16.0/S184075/PPMI_3118_MR_MPRAGE_GRAPPA__br_raw_20130311152802506_76_S184075_I362557.dcm"
+                ]
+            }
+        },
+        "PPMI_3118_ses-4": {
+            "anat": {
+                "t1": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3118/Sag_MPRAGE_GRAPPA/2016-02-24_10_34_03.0/S405062/PPMI_3118_MR_Sag_MPRAGE_GRAPPA__br_raw_20160427125626637_149_S405062_I665283.dcm"
+                ]
+            },
+            "dwi": {
+                "dwi": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3118/DTI_gated/2016-02-24_10_45_07.0/S405058/PPMI_3118_MR_DTI_gated__br_raw_20160427125627915_62_S405058_I665279.dcm",
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3118/DTI_gated/2016-02-24_11_26_05.0/S405063/PPMI_3118_MR_DTI_gated__br_raw_20160427125626518_59_S405063_I665285.dcm"
                 ]
             }
         },
@@ -2703,6 +3295,50 @@
                 ]
             }
         },
+        "PPMI_3307_ses-1": {
+            "anat": {
+                "t1": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3307/MPRAGE_GRAPPA/2011-11-10_14_20_09.0/S131505/PPMI_3307_MR_MPRAGE_GRAPPA__br_raw_20111201141503361_159_S131505_I269470.dcm"
+                ]
+            },
+            "dwi": {
+                "dwi": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3307/DTI_pulse_gated_AC_PC_line/2011-11-10_14_24_59.0/S131503/PPMI_3307_MR_DTI_pulse_gated_AC_PC_line_br_raw_20111201141453845_64_S131503_I269467.dcm"
+                ]
+            }
+        },
+        "PPMI_3307_ses-2": {
+            "anat": {
+                "t1": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3307/SAG_MPRAGE_GRAPPA/2012-11-06_10_41_17.0/S185692/PPMI_3307_MR_SAG_MPRAGE_GRAPPA__br_raw_20130402145406675_109_S185692_I365157.dcm"
+                ]
+            }
+        },
+        "PPMI_3307_ses-3": {
+            "anat": {
+                "t1": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3307/SAG_MPRAGE_GRAPPA/2013-11-12_13_02_44.0/S212764/PPMI_3307_MR_SAG_MPRAGE_GRAPPA__br_raw_20140218150521678_93_S212764_I414612.dcm"
+                ]
+            },
+            "dwi": {
+                "dwi": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3307/DTI_pulse_gated_AC_PC_line/2013-11-12_13_14_56.0/S212767/PPMI_3307_MR_DTI_pulse_gated_AC_PC_line_br_raw_20140218150521238_60_S212767_I414615.dcm"
+                ]
+            }
+        },
+        "PPMI_3307_ses-4": {
+            "anat": {
+                "t1": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3307/MPRAGE_GRAPPA/2015-11-05_12_55_10.0/S331760/PPMI_3307_MR_MPRAGE_GRAPPA__br_raw_20151215145122635_47_S331760_I581040.dcm"
+                ]
+            },
+            "dwi": {
+                "dwi": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3307/DTI_gated_AC-PC_LINE/2015-11-05_13_04_56.0/S331758/PPMI_3307_MR_DTI_gated_AC-PC_LINE_br_raw_20151215145122197_44_S331758_I581038.dcm",
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3307/DTI_gated/2015-11-05_13_33_24.0/S331757/PPMI_3307_MR_DTI_gated__br_raw_20151215145121978_45_S331757_I581037.dcm"
+                ]
+            }
+        },
         "PPMI_3832_ses-1": {
             "anat": {
                 "t1": [
@@ -2829,6 +3465,44 @@
                 ]
             }
         },
+        "PPMI_3191_ses-1": {
+            "anat": {
+                "t1": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3191/SAG_MPRAGE_GRAPPA/2014-05-29_11_14_58.0/S225599/PPMI_3191_MR_SAG_MPRAGE_GRAPPA__br_raw_20140723124132224_76_S225599_I436379.dcm"
+                ]
+            },
+            "dwi": {
+                "dwi": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3191/DTI_gated/2014-05-29_11_20_33.0/S225598/PPMI_3191_MR_DTI_gated__br_raw_20140723124134787_34_S225598_I436378.dcm",
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3191/DTI_gated/2014-05-29_11_45_14.0/S225597/PPMI_3191_MR_DTI_gated__br_raw_20140723124132927_60_S225597_I436376.dcm"
+                ]
+            }
+        },
+        "PPMI_3134_ses-3": {
+            "anat": {
+                "t1": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3134/MPRAGE_GRAPPA2/2017-04-14_12_14_23.0/S606238/PPMI_3134_MR_MPRAGE_GRAPPA2_br_raw_20170907112208180_32_S606238_I901141.dcm",
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3134/Sag_MPRAGE_GRAPPA/2017-04-14_12_14_23.0/S606239/PPMI_3134_MR_Sag_MPRAGE_GRAPPA__br_raw_20170907112207830_133_S606239_I901142.dcm"
+                ]
+            },
+            "dwi": {
+                "dwi": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3134/DTI_gated/2017-04-14_12_17_57.0/S606242/PPMI_3134_MR_DTI_gated__br_raw_20170907112208077_51_S606242_I901145.dcm"
+                ]
+            }
+        },
+        "PPMI_3157_ses-1": {
+            "anat": {
+                "t1": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3157/MPRAGE_GRAPPA/2011-02-07_10_44_54.0/S113900/PPMI_3157_MR_MPRAGE_GRAPPA__br_raw_20110707140925824_100_S113900_I243701.dcm"
+                ]
+            },
+            "dwi": {
+                "dwi": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3157/DTI_gated/2011-02-07_11_19_51.0/S113895/PPMI_3157_MR_DTI_gated__br_raw_20110707140926433_60_S113895_I243695.dcm"
+                ]
+            }
+        },
         "PPMI_3828_ses-3": {
             "anat": {
                 "t1": [
@@ -2870,6 +3544,19 @@
                 "dwi": [
                     "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3182/DTI_gated/2014-09-11_11_28_34.0/S234702/PPMI_3182_MR_DTI_gated__br_raw_20141027102442447_11_S234702_I449553.dcm",
                     "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3182/DTI_gated/2014-09-11_11_54_04.0/S234703/PPMI_3182_MR_DTI_gated__br_raw_20141027102441259_35_S234703_I449554.dcm"
+                ]
+            }
+        },
+        "PPMI_3182_ses-4": {
+            "anat": {
+                "t1": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3182/MPRAGE_GRAPPA2/2016-08-19_10_46_59.0/S501587/PPMI_3182_MR_MPRAGE_GRAPPA2_br_raw_20160926120138444_130_S501587_I778970.dcm",
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3182/SAG_MPRAGE_GRAPPA/2016-08-19_10_46_59.0/S501585/PPMI_3182_MR_SAG_MPRAGE_GRAPPA__br_raw_20160926120139015_161_S501585_I778967.dcm"
+                ]
+            },
+            "dwi": {
+                "dwi": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3182/DTI_gated#1/2016-08-19_11_13_40.0/S501583/PPMI_3182_MR_DTI_gated#1__br_raw_20160926120139451_35_S501583_I778965.dcm"
                 ]
             }
         },
@@ -2937,6 +3624,92 @@
                 ]
             }
         },
+        "PPMI_3115_ses-1": {
+            "anat": {
+                "t1": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3115/MPRAGE_GRAPPA/2011-08-01_13_30_13.0/S120955/PPMI_3115_MR_MPRAGE_GRAPPA__br_raw_20111005140124019_63_S120955_I253995.dcm"
+                ]
+            },
+            "dwi": {
+                "dwi": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3115/DTI_gated/2011-08-01_14_02_21.0/S120953/PPMI_3115_MR_DTI_gated__br_raw_20111005140132284_40_S120953_I253992.dcm"
+                ]
+            }
+        },
+        "PPMI_3115_ses-2": {
+            "anat": {
+                "t1": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3115/MPRAGE_GRAPPA/2012-07-18_14_24_27.0/S169231/PPMI_3115_MR_MPRAGE_GRAPPA__br_raw_20121001160702785_9_S169231_I337535.dcm"
+                ]
+            },
+            "dwi": {
+                "dwi": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3115/DTI_gated/2012-07-18_15_01_19.0/S169230/PPMI_3115_MR_DTI_gated__br_raw_20121001160652349_19_S169230_I337533.dcm"
+                ]
+            }
+        },
+        "PPMI_3123_ses-4": {
+            "anat": {
+                "t1": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3123/MPRAGE_GRAPPA2/2016-06-09_10_36_05.0/S484591/PPMI_3123_MR_MPRAGE_GRAPPA2_br_raw_20160714163425984_166_S484591_I757789.dcm"
+                ]
+            },
+            "dwi": {
+                "dwi": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3123/DTI_gated/2016-06-09_10_40_44.0/S484589/PPMI_3123_MR_DTI_gated__br_raw_20160714163425423_30_S484589_I757786.dcm",
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3123/DTI_gated/2016-06-09_11_13_32.0/S484592/PPMI_3123_MR_DTI_gated__br_raw_20160714163428176_12_S484592_I757790.dcm"
+                ]
+            }
+        },
+        "PPMI_3131_ses-1": {
+            "anat": {
+                "t1": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3131/MPRAGE_GRAPPA/2013-03-14_10_43_37.0/S187020/PPMI_3131_MR_MPRAGE_GRAPPA__br_raw_20130416101441632_20_S187020_I367286.dcm"
+                ]
+            },
+            "dwi": {
+                "dwi": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3131/DTI_gated/2013-03-14_11_27_00.0/S187021/PPMI_3131_MR_DTI_gated__br_raw_20130416101445798_39_S187021_I367287.dcm"
+                ]
+            }
+        },
+        "PPMI_3108_ses-1": {
+            "anat": {
+                "t1": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3108/MPRAGE_GRAPPA/2011-04-20_10_07_57.0/S107265/PPMI_3108_MR_MPRAGE_GRAPPA__br_raw_20110502103125225_170_S107265_I232161.dcm"
+                ]
+            },
+            "dwi": {
+                "dwi": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3108/DTI_gated/2011-04-20_10_33_28.0/S107264/PPMI_3108_MR_DTI_gated__br_raw_20110502103111271_33_S107264_I232160.dcm"
+                ]
+            }
+        },
+        "PPMI_3108_ses-2": {
+            "anat": {
+                "t1": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3108/MPRAGE_GRAPPA/2012-05-25_10_46_49.0/S157042/PPMI_3108_MR_MPRAGE_GRAPPA__br_raw_20120710083810451_126_S157042_I315585.dcm"
+                ]
+            },
+            "dwi": {
+                "dwi": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3108/DTI_gated/2012-05-25_11_03_02.0/S157043/PPMI_3108_MR_DTI_gated__br_raw_20120710083811826_65_S157043_I315586.dcm",
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3108/DTI_gated/2012-05-25_11_29_23.0/S157045/PPMI_3108_MR_DTI_gated__br_raw_20120710083906279_65_S157045_I315589.dcm"
+                ]
+            }
+        },
+        "PPMI_3108_ses-4": {
+            "anat": {
+                "t1": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3108/Sag_MPRAGE_GRAPPA/2015-05-06_09_33_18.0/S264300/PPMI_3108_MR_Sag_MPRAGE_GRAPPA__br_raw_20150629092758517_32_S264300_I498885.dcm"
+                ]
+            },
+            "dwi": {
+                "dwi": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3108/DTI_gated/2015-05-06_10_17_56.0/S264301/PPMI_3108_MR_DTI_gated__br_raw_20150629092758932_31_S264301_I498886.dcm"
+                ]
+            }
+        },
         "PPMI_3763_ses-3": {
             "anat": {
                 "t1": [
@@ -2948,6 +3721,13 @@
                 "dwi": [
                     "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3763/DTI_gated/2015-10-14_08_29_49.0/S304227/PPMI_3763_MR_DTI_gated__br_raw_20151116112952494_50_S304227_I549038.dcm",
                     "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3763/DTI_gated/2015-10-14_08_57_47.0/S304225/PPMI_3763_MR_DTI_gated__br_raw_20151116112951749_14_S304225_I549036.dcm"
+                ]
+            }
+        },
+        "PPMI_3104_ses-1": {
+            "anat": {
+                "t1": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3104/MPRAGE_GRAPPA/2011-02-14_12_32_37.0/S103322/PPMI_3104_MR_MPRAGE_GRAPPA__br_raw_20110406110622337_81_S103322_I226398.dcm"
                 ]
             }
         },
@@ -2995,6 +3775,18 @@
                 "dwi": [
                     "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_4035/DTI_gated/2017-03-21_13_06_32.0/S606312/PPMI_4035_MR_DTI_gated__br_raw_20170907130534635_13_S606312_I901228.dcm",
                     "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_4035/DTI_gated/2017-03-21_13_39_20.0/S606311/PPMI_4035_MR_DTI_gated__br_raw_20170907130533477_12_S606311_I901227.dcm"
+                ]
+            }
+        },
+        "PPMI_3171_ses-2": {
+            "anat": {
+                "t1": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3171/MPRAGE_GRAPPA/2013-02-12_12_07_41.0/S188371/PPMI_3171_MR_MPRAGE_GRAPPA__br_raw_20130430090459170_42_S188371_I369349.dcm"
+                ]
+            },
+            "dwi": {
+                "dwi": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3171/DTI_gated/2013-02-12_12_42_53.0/S188372/PPMI_3171_MR_DTI_gated__br_raw_20130430090500340_33_S188372_I369350.dcm"
                 ]
             }
         },
@@ -3104,6 +3896,19 @@
             "dwi": {
                 "dwi": [
                     "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3830/DTI_gated/2016-11-22_11_13_40.0/S526783/PPMI_3830_MR_DTI_gated__br_raw_20170111142919976_21_S526783_I808185.dcm"
+                ]
+            }
+        },
+        "PPMI_3178_ses-4": {
+            "anat": {
+                "t1": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3178/SAG_MPRAGE_GRAPPA/2016-07-21_10_58_09.0/S493617/PPMI_3178_MR_SAG_MPRAGE_GRAPPA__br_raw_20160824133351446_19_S493617_I769276.dcm",
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3178/SAG_MPRAGE_GRAPPA2-NEW2016/2016-07-21_10_58_09.0/S493619/PPMI_3178_MR_SAG_MPRAGE_GRAPPA2-NEW2016_br_raw_20160824133350810_144_S493619_I769279.dcm"
+                ]
+            },
+            "dwi": {
+                "dwi": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3178/DTI_gated/2016-07-21_12_03_51.0/S493620/PPMI_3178_MR_DTI_gated__br_raw_20160824133350887_21_S493620_I769280.dcm"
                 ]
             }
         },
@@ -3413,6 +4218,20 @@
                 ]
             }
         },
+        "PPMI_3175_ses-3": {
+            "anat": {
+                "t1": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3175/MPRAGE_GRAPPA2/2016-08-24_10_47_33.0/S501577/PPMI_3175_MR_MPRAGE_GRAPPA2_br_raw_20160926113640638_60_S501577_I778958.dcm",
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3175/SAG_MPRAGE_GRAPPA/2016-08-24_10_47_33.0/S501576/PPMI_3175_MR_SAG_MPRAGE_GRAPPA__br_raw_20160926113641015_127_S501576_I778956.dcm"
+                ]
+            },
+            "dwi": {
+                "dwi": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3175/DTI_gated/2016-08-24_10_52_31.0/S501574/PPMI_3175_MR_DTI_gated__br_raw_20160926113641526_18_S501574_I778954.dcm",
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3175/DTI_gated/2016-08-24_11_26_44.0/S501575/PPMI_3175_MR_DTI_gated__br_raw_20160926113641078_38_S501575_I778955.dcm"
+                ]
+            }
+        },
         "PPMI_3321_ses-1": {
             "anat": {
                 "t1": [
@@ -3482,6 +4301,68 @@
                 "dwi": [
                     "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3383/DTI_gated/2016-10-12_08_21_14.0/S526770/PPMI_3383_MR_DTI_gated__br_raw_20170111135117515_28_S526770_I808170.dcm",
                     "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3383/DTI_gated/2016-10-12_08_54_02.0/S526771/PPMI_3383_MR_DTI_gated__br_raw_20170111135118167_60_S526771_I808171.dcm"
+                ]
+            }
+        },
+        "PPMI_3301_ses-1": {
+            "anat": {
+                "t1": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3301/MPRAGE_GRAPPA/2011-01-24_13_23_16.0/S103333/PPMI_3301_MR_MPRAGE_GRAPPA__br_raw_20110406124832299_140_S103333_I226414.dcm"
+                ]
+            },
+            "dwi": {
+                "dwi": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3301/DTI_pulse_gated_AC_PC_line/2011-01-24_13_53_01.0/S103338/PPMI_3301_MR_DTI_pulse_gated_AC_PC_line_br_raw_20110406124837471_8_S103338_I226420.dcm"
+                ]
+            }
+        },
+        "PPMI_3120_ses-1": {
+            "anat": {
+                "t1": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3120/MPRAGE_GRAPPA/2012-05-09_11_34_12.0/S151213/PPMI_3120_MR_MPRAGE_GRAPPA__br_raw_20120522094723493_105_S151213_I305849.dcm"
+                ]
+            },
+            "dwi": {
+                "dwi": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3120/DTI_gated/2012-05-09_12_13_59.0/S151215/PPMI_3120_MR_DTI_gated__br_raw_20120522094731540_1_S151215_I305851.dcm"
+                ]
+            }
+        },
+        "PPMI_3120_ses-2": {
+            "anat": {
+                "t1": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3120/MPRAGE_GRAPPA/2013-04-17_10_25_22.0/S191138/PPMI_3120_MR_MPRAGE_GRAPPA__br_raw_20130603094300246_40_S191138_I374856.dcm"
+                ]
+            },
+            "dwi": {
+                "dwi": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3120/DTI_gated/2013-04-17_10_40_48.0/S191135/PPMI_3120_MR_DTI_gated__br_raw_20130603094419686_8_S191135_I374853.dcm",
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3120/DTI_gated/2013-04-17_11_15_11.0/S191139/PPMI_3120_MR_DTI_gated__br_raw_20130603094319466_2_S191139_I374857.dcm"
+                ]
+            }
+        },
+        "PPMI_3120_ses-3": {
+            "anat": {
+                "t1": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3120/Sag_MPRAGE_GRAPPA/2014-05-21_12_19_59.0/S228105/PPMI_3120_MR_Sag_MPRAGE_GRAPPA__br_raw_20140820131643318_171_S228105_I440106.dcm"
+                ]
+            },
+            "dwi": {
+                "dwi": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3120/DTI_gated/2014-05-21_12_32_47.0/S228104/PPMI_3120_MR_DTI_gated__br_raw_20140820131649177_58_S228104_I440105.dcm"
+                ]
+            }
+        },
+        "PPMI_3120_ses-4": {
+            "anat": {
+                "t1": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3120/MPRAGE_GRAPPA2/2016-05-18_11_39_01.0/S467580/PPMI_3120_MR_MPRAGE_GRAPPA2_br_raw_20160617081401876_26_S467580_I738217.dcm",
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3120/Sag_MPRAGE_GRAPPA/2016-05-18_11_39_01.0/S467581/PPMI_3120_MR_Sag_MPRAGE_GRAPPA__br_raw_20160617081401035_5_S467581_I738218.dcm"
+                ]
+            },
+            "dwi": {
+                "dwi": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3120/DTI_gated/2016-05-18_11_43_43.0/S467582/PPMI_3120_MR_DTI_gated__br_raw_20160617081401573_63_S467582_I738219.dcm"
                 ]
             }
         },
@@ -3559,6 +4440,32 @@
                 "dwi": [
                     "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3380/DTI_gated/2017-05-11_09_10_24.0/S606263/PPMI_3380_MR_DTI_gated__br_raw_20170907114558406_64_S606263_I901171.dcm",
                     "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3380/DTI_gated/2017-05-11_09_49_35.0/S606264/PPMI_3380_MR_DTI_gated__br_raw_20170907114558177_48_S606264_I901172.dcm"
+                ]
+            }
+        },
+        "PPMI_3107_ses-4": {
+            "anat": {
+                "t1": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3107/Sag_MPRAGE_GRAPPA/2015-05-08_09_33_05.0/S264293/PPMI_3107_MR_Sag_MPRAGE_GRAPPA__br_raw_20150629091643702_55_S264293_I498876.dcm"
+                ]
+            },
+            "dwi": {
+                "dwi": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3107/DTI_gated/2015-05-08_09_43_35.0/S264297/PPMI_3107_MR_DTI_gated__br_raw_20150629091645385_48_S264297_I498881.dcm"
+                ]
+            }
+        },
+        "PPMI_3107_ses-5": {
+            "anat": {
+                "t1": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3107/MPRAGE_GRAPPA2/2016-04-06_13_56_12.0/S426371/PPMI_3107_MR_MPRAGE_GRAPPA2_br_raw_20160422141531446_108_S426371_I689553.dcm",
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3107/Sag_MPRAGE_GRAPPA/2016-04-06_13_56_12.0/S426368/PPMI_3107_MR_Sag_MPRAGE_GRAPPA__br_raw_20160422141533408_130_S426368_I689550.dcm"
+                ]
+            },
+            "dwi": {
+                "dwi": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3107/DTI_gated/2016-04-06_14_07_07.0/S426370/PPMI_3107_MR_DTI_gated__br_raw_20160422141532537_11_S426370_I689552.dcm",
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3107/DTI_gated/2016-04-06_14_43_43.0/S426367/PPMI_3107_MR_DTI_gated__br_raw_20160422141532334_53_S426367_I689549.dcm"
                 ]
             }
         },
@@ -3700,6 +4607,31 @@
                 ]
             }
         },
+        "PPMI_3105_ses-2": {
+            "anat": {
+                "t1": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3105/MPRAGE_GRAPPA/2012-04-18_11_44_39.0/S148999/PPMI_3105_MR_MPRAGE_GRAPPA__br_raw_20120503102058357_158_S148999_I301558.dcm"
+                ]
+            },
+            "dwi": {
+                "dwi": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3105/DTI_gated/2012-04-18_11_59_32.0/S149001/PPMI_3105_MR_DTI_gated__br_raw_20120503102122138_39_S149001_I301561.dcm"
+                ]
+            }
+        },
+        "PPMI_3105_ses-4": {
+            "anat": {
+                "t1": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3105/Sag_MPRAGE_GRAPPA/2015-03-30_15_27_11.0/S258986/PPMI_3105_MR_Sag_MPRAGE_GRAPPA__br_raw_20150511115948482_31_S258986_I491572.dcm"
+                ]
+            },
+            "dwi": {
+                "dwi": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3105/DTI_gated/2015-03-30_16_08_31.0/S258988/PPMI_3105_MR_DTI_gated__br_raw_20150511115950299_13_S258988_I491574.dcm",
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3105/DTI_gated/2015-03-30_16_52_40.0/S258985/PPMI_3105_MR_DTI_gated__br_raw_20150511115949077_4_S258985_I491571.dcm"
+                ]
+            }
+        },
         "PPMI_3586_ses-1": {
             "anat": {
                 "t1": [
@@ -3776,6 +4708,71 @@
             "dwi": {
                 "dwi": [
                     "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3765/DTI_gated/2012-11-14_08_13_53.0/S179159/PPMI_3765_MR_DTI_gated__br_raw_20130107162819511_9_S179159_I353653.dcm"
+                ]
+            }
+        },
+        "PPMI_3184_ses-2": {
+            "anat": {
+                "t1": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3184/SAG_MPRAGE_GRAPPA/2014-11-13_12_08_53.0/S243806/PPMI_3184_MR_SAG_MPRAGE_GRAPPA__br_raw_20141222094049559_121_S243806_I466873.dcm"
+                ]
+            },
+            "dwi": {
+                "dwi": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3184/DTI_gated/2014-11-13_12_14_34.0/S243808/PPMI_3184_MR_DTI_gated__br_raw_20141222094051041_20_S243808_I466876.dcm",
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3184/DTI_gated/2014-11-13_12_40_11.0/S243807/PPMI_3184_MR_DTI_gated__br_raw_20141222094050027_26_S243807_I466874.dcm"
+                ]
+            }
+        },
+        "PPMI_3125_ses-2": {
+            "anat": {
+                "t1": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3125/MPRAGE_GRAPPA/2013-07-10_09_47_17.0/S199137/PPMI_3125_MR_MPRAGE_GRAPPA__br_raw_20130826113710071_68_S199137_I387309.dcm"
+                ]
+            }
+        },
+        "PPMI_3125_ses-4": {
+            "anat": {
+                "t1": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3125/MPRAGE_GRAPPA2/2016-07-27_11_47_09.0/S493611/PPMI_3125_MR_MPRAGE_GRAPPA2_br_raw_20160824132029373_40_S493611_I769269.dcm",
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3125/Sag_MPRAGE_GRAPPA/2016-07-27_11_47_09.0/S493610/PPMI_3125_MR_Sag_MPRAGE_GRAPPA__br_raw_20160824132028957_135_S493610_I769268.dcm"
+                ]
+            },
+            "dwi": {
+                "dwi": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3125/DTI_gated/2016-07-27_11_54_18.0/S493615/PPMI_3125_MR_DTI_gated__br_raw_20160824132031703_10_S493615_I769274.dcm",
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3125/DTI_gated/2016-07-27_12_32_17.0/S493613/PPMI_3125_MR_DTI_gated__br_raw_20160824132028244_56_S493613_I769272.dcm"
+                ]
+            }
+        },
+        "PPMI_3116_ses-1": {
+            "anat": {
+                "t1": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3116/MPRAGE_GRAPPA/2011-11-09_13_02_41.0/S131486/PPMI_3116_MR_MPRAGE_GRAPPA__br_raw_20111201132730530_62_S131486_I269443.dcm"
+                ]
+            }
+        },
+        "PPMI_3116_ses-3": {
+            "anat": {
+                "t1": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3116/MPRAGE_GRAPPA/2013-11-13_12_55_49.0/S214312/PPMI_3116_MR_MPRAGE_GRAPPA__br_raw_20140319120458124_107_S214312_I417050.dcm"
+                ]
+            },
+            "dwi": {
+                "dwi": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3116/DTI_gated/2013-11-13_13_43_15.0/S214311/PPMI_3116_MR_DTI_gated__br_raw_20140319120458670_53_S214311_I417049.dcm"
+                ]
+            }
+        },
+        "PPMI_3116_ses-4": {
+            "anat": {
+                "t1": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3116/Sag_MPRAGE_GRAPPA/2015-12-09_10_12_52.0/S360801/PPMI_3116_MR_Sag_MPRAGE_GRAPPA__br_raw_20160129112436965_17_S360801_I615216.dcm"
+                ]
+            },
+            "dwi": {
+                "dwi": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3116/DTI_gated/2015-12-09_11_01_57.0/S360803/PPMI_3116_MR_DTI_gated__br_raw_20160129112435761_61_S360803_I615219.dcm"
                 ]
             }
         },
@@ -3955,6 +4952,31 @@
                 "dwi": [
                     "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_4001/DTI_gated/2015-06-02_09_54_09.0/S270804/PPMI_4001_MR_DTI_gated__br_raw_20150831083846635_10_S270804_I507826.dcm",
                     "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_4001/DTI_gated/2015-06-02_10_22_44.0/S270803/PPMI_4001_MR_DTI_gated__br_raw_20150831083846393_57_S270803_I507825.dcm"
+                ]
+            }
+        },
+        "PPMI_3106_ses-1": {
+            "anat": {
+                "t1": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3106/MPRAGE_GRAPPA/2011-03-24_14_13_48.0/S109071/PPMI_3106_MR_MPRAGE_GRAPPA__br_raw_20110517080945092_167_S109071_I235251.dcm"
+                ]
+            },
+            "dwi": {
+                "dwi": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3106/DTI_gated/2011-03-24_14_46_56.0/S109070/PPMI_3106_MR_DTI_gated__br_raw_20110517081021671_57_S109070_I235250.dcm"
+                ]
+            }
+        },
+        "PPMI_3106_ses-3": {
+            "anat": {
+                "t1": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3106/Sag_MPRAGE_GRAPPA/2015-03-30_14_21_51.0/S258993/PPMI_3106_MR_Sag_MPRAGE_GRAPPA__br_raw_20150511121147972_30_S258993_I491581.dcm"
+                ]
+            },
+            "dwi": {
+                "dwi": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3106/DTI_gated/2015-03-30_14_34_39.0/S258992/PPMI_3106_MR_DTI_gated__br_raw_20150511121148839_24_S258992_I491580.dcm",
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3106/DTI_gated/2015-03-30_15_11_41.0/S258991/PPMI_3106_MR_DTI_gated__br_raw_20150511121148330_32_S258991_I491579.dcm"
                 ]
             }
         },
@@ -4159,6 +5181,19 @@
                 ]
             }
         },
+        "PPMI_3132_ses-3": {
+            "anat": {
+                "t1": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3132/Sag_MPRAGE_GRAPPA/2015-04-28_09_15_15.0/S264305/PPMI_3132_MR_Sag_MPRAGE_GRAPPA__br_raw_20150629093810198_132_S264305_I498890.dcm"
+                ]
+            },
+            "dwi": {
+                "dwi": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3132/DTI_gated/2015-04-28_09_26_48.0/S264303/PPMI_3132_MR_DTI_gated__br_raw_20150629093810700_11_S264303_I498888.dcm",
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3132/DTI_gated/2015-04-28_10_01_12.0/S264304/PPMI_3132_MR_DTI_gated__br_raw_20150629093811578_42_S264304_I498889.dcm"
+                ]
+            }
+        },
         "PPMI_4005_ses-1": {
             "anat": {
                 "t1": [
@@ -4273,6 +5308,26 @@
                 "dwi": [
                     "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3563/DTI_gated/2015-08-20_09_11_40.0/S304191/PPMI_3563_MR_DTI_gated__br_raw_20151116105944636_63_S304191_I548995.dcm",
                     "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3563/DTI_gated/2015-08-20_09_44_00.0/S304190/PPMI_3563_MR_DTI_gated__br_raw_20151116105944099_60_S304190_I548993.dcm"
+                ]
+            }
+        },
+        "PPMI_3151_ses-1": {
+            "anat": {
+                "t1": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3151/MPRAGE_GRAPPA/2010-11-09_11_52_58.0/S113807/PPMI_3151_MR_MPRAGE_GRAPPA__br_raw_20111005143241483_99_S113807_I243571.dcm"
+                ]
+            }
+        },
+        "PPMI_3160_ses-2": {
+            "anat": {
+                "t1": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3160/MPRAGE_GRAPPA/2012-03-21_10_44_53.0/S146632/PPMI_3160_MR_MPRAGE_GRAPPA__br_raw_20120409123056237_29_S146632_I296474.dcm"
+                ]
+            },
+            "dwi": {
+                "dwi": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3160/DTI_gated/2012-03-21_10_49_28.0/S146631/PPMI_3160_MR_DTI_gated__br_raw_20120409123108987_1_S146631_I296473.dcm",
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3160/DTI_gated/2012-03-21_11_18_28.0/S146629/PPMI_3160_MR_DTI_gated__br_raw_20120409123118815_13_S146629_I296471.dcm"
                 ]
             }
         },
@@ -4502,6 +5557,18 @@
                 ]
             }
         },
+        "PPMI_3172_ses-1": {
+            "anat": {
+                "t1": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3172/MPRAGE_GRAPPA/2013-01-31_11_20_12.0/S181419/PPMI_3172_MR_MPRAGE_GRAPPA__br_raw_20130204160319410_101_S181419_I357674.dcm"
+                ]
+            },
+            "dwi": {
+                "dwi": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3172/DTI_gated/2013-01-31_11_59_25.0/S181420/PPMI_3172_MR_DTI_gated__br_raw_20130204160324230_50_S181420_I357675.dcm"
+                ]
+            }
+        },
         "PPMI_3327_ses-1": {
             "anat": {
                 "t1": [
@@ -4533,6 +5600,20 @@
                 ]
             }
         },
+        "PPMI_3127_ses-2": {
+            "anat": {
+                "t1": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3127/MPRAGE_GRAPPA2/2017-01-25_13_20_33.0/S575395/PPMI_3127_MR_MPRAGE_GRAPPA2_br_raw_20170627115525314_119_S575395_I864514.dcm",
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3127/Sag_MPRAGE_GRAPPA/2017-01-25_13_20_33.0/S575396/PPMI_3127_MR_Sag_MPRAGE_GRAPPA__br_raw_20170627115525287_73_S575396_I864515.dcm"
+                ]
+            },
+            "dwi": {
+                "dwi": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3127/DTI_gated/2017-01-25_13_25_50.0/S575399/PPMI_3127_MR_DTI_gated__br_raw_20170627115526348_61_S575399_I864518.dcm",
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3127/DTI_gated/2017-01-25_14_05_01.0/S575398/PPMI_3127_MR_DTI_gated__br_raw_20170627115524501_57_S575398_I864517.dcm"
+                ]
+            }
+        },
         "PPMI_3868_ses-1": {
             "anat": {
                 "t1": [
@@ -4554,6 +5635,31 @@
             "dwi": {
                 "dwi": [
                     "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3762/DTI_gated/2013-01-09_10_04_53.0/S181436/PPMI_3762_MR_DTI_gated__br_raw_20130204174304642_5_S181436_I357736.dcm"
+                ]
+            }
+        },
+        "PPMI_3128_ses-3": {
+            "anat": {
+                "t1": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3128/Sag_MPRAGE_GRAPPA/2014-10-30_08_41_33.0/S243788/PPMI_3128_MR_Sag_MPRAGE_GRAPPA__br_raw_20141222092752208_100_S243788_I466846.dcm"
+                ]
+            },
+            "dwi": {
+                "dwi": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3128/DTI_gated/2014-10-30_09_24_52.0/S243795/PPMI_3128_MR_DTI_gated__br_raw_20141222092755148_57_S243795_I466854.dcm"
+                ]
+            }
+        },
+        "PPMI_3128_ses-4": {
+            "anat": {
+                "t1": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3128/MPRAGE_GRAPPA2/2016-10-14_13_27_28.0/S526761/PPMI_3128_MR_MPRAGE_GRAPPA2_br_raw_20170111133905723_95_S526761_I808160.dcm"
+                ]
+            },
+            "dwi": {
+                "dwi": [
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3128/DTI_gated/2016-10-14_13_32_53.0/S526765/PPMI_3128_MR_DTI_gated__br_raw_20170111133905233_21_S526765_I808164.dcm",
+                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3128/DTI_gated/2016-10-14_14_04_52.0/S526764/PPMI_3128_MR_DTI_gated__br_raw_20170111133905022_14_S526764_I808163.dcm"
                 ]
             }
         },
@@ -4580,17 +5686,14 @@
     "ERROR_QUEUE": {
         "PPMI_3866_ses-3": "20200804_0722",
         "PPMI_3869_ses-3": "20200804_0722",
+        "PPMI_3835_ses-3": "20200804_0321",
+        "PPMI_3780_ses-3": "20200804_0425",
+        "PPMI_4032_ses-2": "20200804_0458",
         "PPMI_3105_ses-1": "20200804_0611",
         "PPMI_3124_ses-4": "20200804_0747",
         "PPMI_3372_ses-2": "20200804_0827",
         "PPMI_3558_ses-3": "20200804_0952",
-        "PPMI_3776_ses-2": "20200804_1041",
-        "PPMI_4038_ses-3": "20200804_1146",
-        "PPMI_3832_ses-1": "20200804_1200",
-        "PPMI_4038_ses-4": "20200804_1241",
-        "PPMI_3803_ses-1": "20200804_1412",
-        "PPMI_3125_ses-4": "20200804_0618",
-        "PPMI_3558_ses-2": "20200804_0751"
+        "PPMI_3776_ses-2": "20200804_1041"
     },
     "PROCESSED": {
         "cp2local": [],
@@ -4602,25 +5705,18 @@
         "error_autorecon2": [
             "PPMI_3105_ses-1",
             "PPMI_3780_ses-3",
-            "PPMI_3803_ses-1",
-            "PPMI_4032_ses-2",
-            "PPMI_4038_ses-3",
-            "PPMI_4038_ses-4"
+            "PPMI_3835_ses-3",
+            "PPMI_4032_ses-2"
         ],
         "error_autorecon3": [
             "PPMI_3124_ses-4",
             "PPMI_3372_ses-2",
             "PPMI_3558_ses-3",
-            "PPMI_3776_ses-2",
-            "PPMI_3832_ses-1"
+            "PPMI_3776_ses-2"
         ],
         "error_qcache": [],
         "error_brstem": [],
-        "error_hip": [
-            "PPMI_3558_ses-2"
-        ],
-        "error_tha": [
-            "PPMI_3125_ses-4"
-        ]
+        "error_hip": [],
+        "error_tha": []
     }
 }
