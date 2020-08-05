@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from os import path, makedirs
+from os import path, makedirs, listdir
 
 
 class Management():
@@ -34,11 +34,29 @@ class Management():
             # todo: write the processing thing here
             return True
 
-    def stats(self):
+    def fs_stats(self):
+        """will check if the STATS folder is present and will create if absent
+           will return the folder with unzipped stats folder for each subject"""
+
+        for p in [self.vars["local"]["STATS_PATHS"]["STATS_HOME"],]:
+            if not path.exists(p):
+                makedirs(p)
+
+        PROCESSED_FS_DIR = self.vars["local"]["MRDATA_PATHS"]["PROCESSED_FS_DIR"]
+        
+        if any('.zip' in i for i in listdir(PROCESSED_FS_DIR)):
+            tmp_dir = path.join(PROCESSED_FS_DIR, 'tmp_subject_stats')
+            if not path.exists(tmp_dir):
+                makedirs(tmp_dir)
+                extract_archive(PROCESSED_FS_DIR, ['stats',], tmp_dir)
+            return tmp_dir
+        else:
+            return PROCESSED_FS_DIR
+
 
         print('perform statistical analysis')
 
-    def fsglm(self):
+    def fs_glm(self):
 
         print('start freesurfer GLM')
 

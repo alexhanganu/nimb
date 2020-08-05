@@ -40,7 +40,7 @@ def stats2table(PATHstats, SUBJECTS_DIR, data_only_volumes=True):
     #writing Headers for all sheets
     print('Writing Headers for all sheets')
 
-    from a.lib.statistical_analysis.stats_definitions import (BrStem_Hip_f2rd_stats, BrStem_Hip_f2rd,
+    from stats.stats_definitions import (BrStem_Hip_f2rd_stats, BrStem_Hip_f2rd,
                                                               brstem_hip_header,
                                                               segmentation_parameters,
                                                               segmentations_header, parc_parameters,

@@ -198,6 +198,7 @@ if not path.exists(path.join(cmaindir,'miniconda3')):
     system('./miniconda3/bin/conda install -y numpy')
     system('./miniconda3/bin/conda install -y xlrd')
     system('./miniconda3/bin/conda install -y paramiko')
+    system('./miniconda3/bin/conda install -y xlsxwriter')
 print('FINISHED Setting Up FreeSurfer and miniconda3 with dcm2niix, dcm2bids, pandas, numpy, xlrd, paramiko and dipy')
 
 

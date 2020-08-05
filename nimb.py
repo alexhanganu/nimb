@@ -45,17 +45,23 @@ class NIMB(object):
             from processing.freesurfer import start_fs_pipeline
             start_fs_pipeline.start_fs_pipeline()
 
-        if self.process == 'stats':
-            task.stats()
+        if self.process == 'fs-stats':
+            PROCESSED_FS_DIR = task.fs_stats()
+            print(PROCESSED_FS_DIR)
+            from stats import fs_stats2table
+            fs_stats2table.stats2table(
+                                   self.vars["local"]["STATS_PATHS"]["STATS_HOME"],
+                                   PROCESSED_FS_DIR, data_only_volumes=False)
 
-        if self.process == 'fsglm':
-            task.fsglm()
+        if self.process == 'fs-glm':
+            task.fs_glm()
+            from processing.freesurfer import fs_runglm
 
     def classify(self, ready):
         if ready:
-            return classify_bids.get_dict_MR_files2process(self.vars['local']['NIMB_PATHS']['NIMB_NEW_SUBJECTS'],self.vars['local']['NIMB_PATHS']['NIMB_tmp'])
-
-
+            return classify_bids.get_dict_MR_files2process(
+                                     self.vars['local']['NIMB_PATHS']['NIMB_NEW_SUBJECTS'],
+                                     self.vars['local']['NIMB_PATHS']['NIMB_tmp'])
 
 
 
@@ -74,10 +80,9 @@ def get_parameters():
     parser.add_argument(
         "-process", required=False, 
         default='freesurfer', 
-        choices = ['freesurfer','classify','stats','fsglm'],
-        help="freesurfer (start FreeSurfer pipeline), classify (classify MRIs) stats (perform statistical analysis), fsglm (perform freesurfer mri_glmfit GLM analsysis)",
+        choices = ['freesurfer','classify','fs-stats','fs-glm','stats-general'],
+        help="freesurfer (start FreeSurfer pipeline), classify (classify MRIs) fs-stats (extract freesurfer stats from subjid/stats/* to an excel file), fs-glm (perform freesurfer mri_glmfit GLM analsysis), stats-general (perform statistical analysis)",
     )
-
 
     params = parser.parse_args()
     return params
