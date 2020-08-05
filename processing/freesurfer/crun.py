@@ -1,5 +1,5 @@
 #!/bin/python
-# 2020.08.01
+# 2020.08.04
 
 
 '''
@@ -264,8 +264,8 @@ def check_error():
                                     db['PROCESSED']['error_'+process].remove(subjid)
                                     db['DO'][process].append(subjid)
                                     cdb.Update_status_log(nimb_scratch_dir, '        moving from error_'+process+' to DO '+process)
-                                elif subjid in db['REGISTRATION']:
-                                    if solve == 'voxreg' or solve == 'errorigmgz':
+                                elif solve == 'voxreg' or solve == 'errorigmgz':
+                                    if subjid in db['REGISTRATION']:
                                         solved = True
                                         db['REGISTRATION'][subjid]['anat']['t1'] = db['REGISTRATION'][subjid]['anat']['t1'][:1]
                                         if 'flair' in db['REGISTRATION'][subjid]['anat']:
@@ -274,10 +274,14 @@ def check_error():
                                                 db['REGISTRATION'][subjid]['anat'].pop('t2', None)
                                         db['PROCESSED']['error_'+process].remove(subjid)
                                         db['DO']["registration"].append(subjid)
-                                        cdb.Update_status_log(nimb_scratch_dir, '        moving from error_'+process+' to RUNNING registratoin')
+                                        cdb.Update_status_log(nimb_scratch_dir, '        		removing '+subjid+' from '+SUBJECTS_DIR)
+                                        system('rm -r '+path.join(SUBJECTS_DIR, subjid))
+                                        cdb.Update_status_log(nimb_scratch_dir, '        moving from error_'+process+' to RUNNING registration')
+                                    else:
+                                        cdb.Update_status_log(nimb_scratch_dir, '            solved: '+solve+' but subjid is missing from db[REGISTRATION]')
                                 else:
                                     new_name = 'error_'+fs_error+'_'+subjid
-                                    cdb.Update_status_log(nimb_scratch_dir, '            not solved, maybe subjid is missing from db[REGISTRATION]. Excluding subject from pipeline.')
+                                    cdb.Update_status_log(nimb_scratch_dir, '            not solved')
                             else:
                                 new_name = 'error_'+process+'_'+subjid
                             if not solved:
