@@ -386,7 +386,7 @@ def long_check_groups(_id):
                    if crunfs.checks_from_runfs(SUBJECTS_DIR, process_order[-1], subjid, freesurfer_version, masks):
                         if subjid in db['RUNNING'][process_order[-1]]:
                             db['RUNNING'][process_order[-1]].remove(subjid)
-                        if chk_if_all_done(SUBJECTS_DIR, subjid, process_order, NIMB_tmp, freesurfer_version, masks):
+                        if crunfs.chk_if_all_done(SUBJECTS_DIR, subjid, process_order, NIMB_tmp, freesurfer_version, masks):
                             cdb.Update_status_log(nimb_scratch_dir, '            last process done '+process_order[-1]+' moving to CP2LOCAL')
                             db['PROCESSED']['cp2local'].append(subjid)
                             db['LONG_DIRS'].pop(_id, None)
