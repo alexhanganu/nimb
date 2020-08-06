@@ -45,7 +45,8 @@ class Management():
         PROCESSED_FS_DIR = self.vars["local"]["MRDATA_PATHS"]["PROCESSED_FS_DIR"]
         
         if any('.zip' in i for i in listdir(PROCESSED_FS_DIR)):
-            tmp_dir = path.join(PROCESSED_FS_DIR, 'tmp_subject_stats')
+            NIMB_tmp = self.vars["local"]["NIMB_PATHS"]["NIMB_tmp"]
+            tmp_dir = path.join(NIMB_tmp, 'tmp_subject_stats')
             if not path.exists(tmp_dir):
                 makedirs(tmp_dir)
                 extract_archive(PROCESSED_FS_DIR, ['stats',], tmp_dir)

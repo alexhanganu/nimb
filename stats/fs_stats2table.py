@@ -28,7 +28,7 @@ except ImportError:
         print('Install xlsxwriter and xlrd modules (pip3 install xlsxwriter, xlrd)')
 
 
-def stats2table(PATHstats, SUBJECTS_DIR, data_only_volumes=True):
+def stats2table_oldversion(PATHstats, SUBJECTS_DIR, data_only_volumes=True):
 
     dataf = path.join(PATHstats,file_with_all_sheets)
     data_subcortical_volumes = path.join(PATHstats,file_with_only_subcortical_volumes)
@@ -327,6 +327,54 @@ def stats2table(PATHstats, SUBJECTS_DIR, data_only_volumes=True):
 
 
 
+def chk_if_subjects_ready(PATHstats, SUBJECTS_DIR):
+    ''' this checks if all subjects have all stats files'''
+
+    import json
+    from stats.stats_definitions import (BS_Hip_Tha_stats_f, parc_DK_f2rd, parc_DS_f2rd)
+
+    miss = dict()
+
+    def add_to_miss(miss, _SUBJECT, sheet):
+        if _SUBJECT not in miss:
+            miss[_SUBJECT] = list()
+        if sheet:
+            miss[_SUBJECT].append(sheet)
+        return miss
+
+    subjects = sorted(listdir(SUBJECTS_DIR))
+    for _SUBJECT in subjects:
+        print('reading: ', _SUBJECT, '; left: ', len(subjects[subjects.index(_SUBJECT):]))
+        for sheet in BS_Hip_Tha_stats_f:
+            file_with_stats = [i for i in BS_Hip_Tha_stats_f[sheet] if path.exists(path.join(SUBJECTS_DIR,_SUBJECT,i))][0]
+            if not file_with_stats:
+                print('missing: ', sheet)
+                miss = add_to_miss(_SUBJECT, sheet)
+        if not path.exists(path.join(SUBJECTS_DIR,_SUBJECT, 'stats', 'aseg.stats')):
+                print('missing: ', 'aseg.stats')
+                miss = add_to_miss(_SUBJECT, 'VolSeg')
+        for hemisphere in parc_DK_f2rd:
+            file_with_stats = parc_DK_f2rd[hemisphere]
+            if not path.isfile(path.join(SUBJECTS_DIR,_SUBJECT,'stats',file_with_stats)):
+                print('missing: ', file_with_stats)
+                miss = add_to_miss(_SUBJECT, file_with_stats)
+        for hemisphere in parc_DS_f2rd:
+            file_with_stats = parc_DS_f2rd[hemisphere]
+            if not path.isfile(path.join(SUBJECTS_DIR,_SUBJECT,'stats',file_with_stats)):
+                print('missing: ', file_with_stats)
+                miss = add_to_miss(_SUBJECT, file_with_stats)
+        file_with_stats = 'wmparc.stats'
+        if not path.isfile(path.join(SUBJECTS_DIR,_SUBJECT,'stats',file_with_stats)):
+                miss = add_to_miss(_SUBJECT, file_with_stats)
+                print('missing: ', file_with_stats)
+
+    if miss:
+        print('ERROR: some subjects are missing the required files')
+        with open(path.join(PATHstats, 'subjects_missing.json'), 'w') as j:
+            json.dump(miss, j, indent=4)
+
+
+
 
 
 # works on stats of FreeSurfer 7.1, needs to be confirmed on stats from FreeSurfer <7
@@ -342,7 +390,7 @@ def stats2table_v7(PATHstats, SUBJECTS_DIR, data_only_volumes=True):
     #writing Headers for all sheets
     print('Writing Headers for all sheets')
 
-    from a.lib.statistical_analysis.stats_definitions import (BS_Hip_Tha_stats_f, brstem_hip_header,
+    from stats.stats_definitions import (BS_Hip_Tha_stats_f, brstem_hip_header,
                                                               segmentation_parameters,
                                                               segmentations_header, parc_parameters,
                                                               parc_DK_f2rd,

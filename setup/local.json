@@ -12,7 +12,7 @@
                 },
 "NIMB_PATHS": {
     "NIMB_HOME": "/home/lucaspsy/projects/def-hanganua/nimb",
-    "NIMB_tmp": "/scratch/lucaspsy/a_tmp",
+    "NIMB_tmp": "/scratch/lucaspsy/nimb_tmp",
     "NIMB_NEW_SUBJECTS": "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped",
     "NIMB_PROCESSED_FS": "/home/lucaspsy/projects/def-hanganua/nimb_processed_fs",
     "NIMB_PROCESSED_FS_error": "/home/lucaspsy/projects/def-hanganua/nimb_processed_fs_error"
