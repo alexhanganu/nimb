@@ -359,7 +359,7 @@ def long_check_groups(_id):
                         if len(All_long_ids_done) == len(LONG_TPS):
                             cdb.Update_status_log(nimb_scratch_dir, _id+' moving to cp2local')
                             for subjid in ls:
-                                cdb.Update_status_log(nimb_scratch_dir, 'moving '+subjid+' cp2local')
+                                cdb.Update_status_log(nimb_scratch_dir, 'moving '+subjid+' cp2local from LONG')
                                 db['PROCESSED']['cp2local'].append(subjid)
                             db['LONG_DIRS'].pop(_id, None)
                             db['LONG_TPS'].pop(_id, None)
@@ -383,17 +383,20 @@ def long_check_groups(_id):
         for subjid in ls:
             if subjid not in db["RUNNING_JOBS"]:
                 if crunfs.checks_from_runfs(SUBJECTS_DIR, 'registration', subjid, freesurfer_version, masks):
-                    if crunfs.checks_from_runfs(SUBJECTS_DIR, process_order[-1], subjid, freesurfer_version, masks):
-                        cdb.Update_status_log(nimb_scratch_dir, '            last process done '+process_order[-1]+' moving to CP2LOCAL')
+                   if crunfs.checks_from_runfs(SUBJECTS_DIR, process_order[-1], subjid, freesurfer_version, masks):
                         if subjid in db['RUNNING'][process_order[-1]]:
                             db['RUNNING'][process_order[-1]].remove(subjid)
-                        db['PROCESSED']['cp2local'].append(subjid)
-                        db['LONG_DIRS'].pop(_id, None)
-                        db['LONG_TPS'].pop(_id, None)
-                        if subjid in db['REGISTRATION']:
-                            db['REGISTRATION'].pop(subjid, None)
+                        if chk_if_all_done(SUBJECTS_DIR, subjid, process_order, NIMB_tmp, freesurfer_version, masks):
+                            cdb.Update_status_log(nimb_scratch_dir, '            last process done '+process_order[-1]+' moving to CP2LOCAL')
+                            db['PROCESSED']['cp2local'].append(subjid)
+                            db['LONG_DIRS'].pop(_id, None)
+                            db['LONG_TPS'].pop(_id, None)
+                            if subjid in db['REGISTRATION']:
+                                db['REGISTRATION'].pop(subjid, None)
+                            else:
+                                cdb.Update_status_log(nimb_scratch_dir,'        missing from db[REGISTRATION]')
                         else:
-                            cdb.Update_status_log(nimb_scratch_dir,'        missing from db[REGISTRATION]')
+                            db['PROCESSED']['error_'+process_order[1]].append(subjid)
                 else:
                     cdb.Update_status_log(nimb_scratch_dir, '        '+subjid+' was not registered')
                     if subjid not in db['DO']['registration'] and subjid not in db['RUNNING']['registration']:

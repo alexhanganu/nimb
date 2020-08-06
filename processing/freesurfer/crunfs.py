@@ -136,6 +136,21 @@ def checks_from_runfs(SUBJECTS_DIR, process, subjid, freesurfer_version, masks):
 
 
 
+def chk_if_all_done(SUBJECTS_DIR, subjid, process_order, NIMB_tmp, freesurfer_version, masks):
+        result = True
+        if not chkIsRunning(SUBJECTS_DIR, subjid):
+            for process in process_order[1:]:
+                if not checks_from_runfs(SUBJECTS_DIR, process, subjid, freesurfer_version, masks):
+                    cdb.Update_status_log(NIMB_tmp, '        '+subjid+' is missing '+process)
+                    result = False
+                    break
+        else:
+            cdb.Update_status_log(NIMB_tmp, '            IsRunning file present ')
+            result = False
+        return result
+
+
+
 def chksubjidinfs(SUBJECTS_DIR, subjid):
 
     lsallsubjid=listdir(SUBJECTS_DIR)
@@ -382,4 +397,87 @@ def chkreconf_if_without_error(NIMB_tmp, subjid, SUBJECTS_DIR):
     except FileNotFoundError as e:
         print(e)
         cdb.Update_status_log(NIMB_tmp,'    '+subjid+' '+str(e))
+
+
+
+def get_batch_jobs_status(cuser, cusers_list):
+
+    def get_jobs(jobs, queue):
+
+        for line in queue[1:]:
+                vals = list(filter(None,line.split(' ')))
+                if vals[0] not in jobs:
+                    jobs[vals[0]] = vals[4]
+        return jobs
+
+
+    import subprocess
+
+    jobs = dict()
+    for cuser in cusers_list:
+        queue = list(filter(None,subprocess.run(['squeue','-u',cuser], stdout=subprocess.PIPE).stdout.decode('utf-8').split('\n')))
+        jobs.update(get_jobs(jobs, queue))
+
+    return jobs
+
+
+
+def get_diskusage_report(cuser, cusers_list):
+    '''script to read the available space
+    on compute canada clusters
+    the command diskusage_report is used'''
+
+    def get_diskspace(diskusage, queue):
+
+        for line in queue[1:]:
+                vals = list(filter(None,line.split(' ')))
+                diskusage[vals[0]] = vals[4][:-5].strip('k')
+        return diskusage
+
+
+    import subprocess
+
+    diskusage = dict()
+    for cuser in cusers_list:
+        queue = list(filter(None,subprocess.run(['diskusage_report'], stdout=subprocess.PIPE).stdout.decode('utf-8').split('\n')))
+        diskusage = get_diskspace(diskusage, queue)
+
+    return diskusage
+
+
+def get_mask_codes(structure):
+    structure_codes = {'left_hippocampus':17,'right_hippocampus':53,
+                    'left_thalamus':10,'right_thalamus':49,'left_caudate':11,'right_caudate':50,
+                    'left_putamen':12,'right_putamen':51,'left_pallidum':13,'right_pallidum':52,
+                    'left_amygdala':18,'right_amygdala':54,'left_accumbens':26,'right_accumbens':58,
+                    'left_hippocampus_CA2':550,'right_hippocampus_CA2':500,
+                    'left_hippocampus_CA1':552,'right_hippocampus_CA1':502,
+                    'left_hippocampus_CA4':556,'right_hippocampus_CA4':506,
+                    'left_hippocampus_fissure':555,'right_hippocampus_fissure':505,
+                    'left_amygdala_subiculum':557,'right_amygdala_subiculum':507,
+                    'left_amygdala_presubiculum':554,'right_amygdala_presubiculum':504,
+                    }
+    return structure_codes[structure]
+
+
+
+
+def get_batch_job_status_table():
+    import pandas as pd
+
+    system('squeue -u hanganua > batch_queue')
+    try:
+         df = pd.read_csv(file, sep=' ')
+
+         df.drop(df.iloc[:, 0:8], inplace=True, axis=1)
+         df.drop(df.iloc[:, 1:3], inplace=True, axis=1)
+         df.drop(df.iloc[:, 1:14], inplace=True, axis=1)
+
+         job_ids = df.iloc[:,0].tolist()
+         batch_files = df.iloc[:,1].dropna().tolist()+df.iloc[:,2].dropna().tolist()
+
+         start_batch_cmd = 'sbatch '
+         cacel_batch_cmd = 'scancel -i '
+    except Exception as e:
+        print(e)
 
