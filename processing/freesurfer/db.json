@@ -9,16 +9,6 @@
         "hip": [],
         "tha": []
     },
-    "QUEUE": {
-        "registration": [],
-        "autorecon1": [],
-        "autorecon2": [],
-        "autorecon3": [],
-        "qcache": [],
-        "brstem": [],
-        "hip": [],
-        "tha": []
-    },
     "RUNNING": {
         "registration": [],
         "autorecon1": [],
@@ -30,40 +20,11 @@
         "tha": []
     },
     "RUNNING_JOBS": {
-        "PPMI_3105_ses-2": "47953759",
-        "PPMI_3105_ses-4": "47953763",
-        "PPMI_3107_ses-4": "47958450",
-        "PPMI_3120_ses-1": "47958459",
-        "PPMI_3120_ses-2": "47958462",
-        "PPMI_3120_ses-3": "47958466",
-        "PPMI_3120_ses-4": "47958468",
-        "PPMI_3123_ses-4": "47958589",
-        "PPMI_3130_ses-3": "47958590",
-        "PPMI_3174_ses-4": "47959692",
-        "PPMI_3182_ses-4": "47959699",
-        "PPMI_3184_ses-2": "47959701",
-        "PPMI_3185_ses-1": "47959702",
-        "PPMI_3185_ses-2": "47959704",
-        "PPMI_3190_ses-3": "47959705",
-        "PPMI_3124_ses-4": "48062520",
-        "PPMI_4032_ses-2": "48065661"
+        "ADNI_029_S_0914_ses-1": "48133704"
     },
     "LONG_DIRS": {},
     "LONG_TPS": {},
-    "REGISTRATION": {
-        "PPMI_3105_ses-1": {
-            "anat": {
-                "t1": [
-                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3105/MPRAGE_GRAPPA/2011-03-24_13_04_58.0/S103326/PPMI_3105_MR_MPRAGE_GRAPPA__br_raw_20110406113701177_65_S103326_I226403.dcm"
-                ]
-            },
-            "dwi": {
-                "dwi": [
-                    "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped/PPMI_3105/DTI_gated/2011-03-24_13_32_35.0/S103324/PPMI_3105_MR_DTI_gated__br_raw_20110406113715209_4_S103324_I226401.dcm"
-                ]
-            }
-        }
-    },
+    "REGISTRATION": {},
     "ERROR_QUEUE": {},
     "PROCESSED": {
         "cp2local": [],

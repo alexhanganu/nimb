@@ -365,6 +365,8 @@ def long_check_groups(_id):
                             db['LONG_TPS'].pop(_id, None)
                             if subjid in db['REGISTRATION']:
                                 db['REGISTRATION'].pop(subjid, None)
+                            if subjid in db['RUNNING_JOBS']:
+                                db['RUNNING_JOBS'].pop(subjid, None)
                             else:
                                 cdb.Update_status_log(nimb_scratch_dir, '        missing from db[REGISTRATION]')
                             cdb.Update_status_log(nimb_scratch_dir, '        '+_id+'moved to cp2local')
@@ -379,27 +381,28 @@ def long_check_groups(_id):
                 db['RUNNING']['recon'].append(base_f)
     else:
         for subjid in ls:
-            if crunfs.checks_from_runfs(SUBJECTS_DIR, 'registration', subjid, freesurfer_version, masks):
-                if crunfs.checks_from_runfs(SUBJECTS_DIR, process_order[-1], subjid, freesurfer_version, masks):
-                    cdb.Update_status_log(nimb_scratch_dir, '            last process done '+process_order[-1]+' moving to CP2LOCAL')
-                    if subjid in db['RUNNING'][process_order[-1]]:
-                        db['RUNNING'][process_order[-1]].remove(subjid)
-                    db['PROCESSED']['cp2local'].append(subjid)
-                    db['LONG_DIRS'].pop(_id, None)
-                    db['LONG_TPS'].pop(_id, None)
-                    if subjid in db['REGISTRATION']:
-                        db['REGISTRATION'].pop(subjid, None)
-                    else:
-                        cdb.Update_status_log(nimb_scratch_dir,'        missing from db[REGISTRATION]')
-            else:
-                cdb.Update_status_log(nimb_scratch_dir, '        '+subjid+' was not registered')
-                if subjid not in db['DO']['registration'] and subjid not in db['RUNNING']['registration']:
-                    db['LONG_DIRS'].pop(_id, None)
-                    db['LONG_TPS'].pop(_id, None)
-                    if subjid in db['REGISTRATION']:
-                        db['REGISTRATION'].pop(subjid, None)
-                    else:
-                        cdb.Update_status_log(nimb_scratch_dir, '        missing from db[REGISTRATION]')
+            if subjid not in db["RUNNING_JOBS"]:
+                if crunfs.checks_from_runfs(SUBJECTS_DIR, 'registration', subjid, freesurfer_version, masks):
+                    if crunfs.checks_from_runfs(SUBJECTS_DIR, process_order[-1], subjid, freesurfer_version, masks):
+                        cdb.Update_status_log(nimb_scratch_dir, '            last process done '+process_order[-1]+' moving to CP2LOCAL')
+                        if subjid in db['RUNNING'][process_order[-1]]:
+                            db['RUNNING'][process_order[-1]].remove(subjid)
+                        db['PROCESSED']['cp2local'].append(subjid)
+                        db['LONG_DIRS'].pop(_id, None)
+                        db['LONG_TPS'].pop(_id, None)
+                        if subjid in db['REGISTRATION']:
+                            db['REGISTRATION'].pop(subjid, None)
+                        else:
+                            cdb.Update_status_log(nimb_scratch_dir,'        missing from db[REGISTRATION]')
+                else:
+                    cdb.Update_status_log(nimb_scratch_dir, '        '+subjid+' was not registered')
+                    if subjid not in db['DO']['registration'] and subjid not in db['RUNNING']['registration']:
+                        db['LONG_DIRS'].pop(_id, None)
+                        db['LONG_TPS'].pop(_id, None)
+                        if subjid in db['REGISTRATION']:
+                            db['REGISTRATION'].pop(subjid, None)
+                        else:
+                            cdb.Update_status_log(nimb_scratch_dir, '        missing from db[REGISTRATION]')
     cdb.Update_DB(db, nimb_scratch_dir)
 
 

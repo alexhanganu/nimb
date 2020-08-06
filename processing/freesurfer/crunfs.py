@@ -233,14 +233,14 @@ def chkhipf(SUBJECTS_DIR, subjid):
                 line2read = [line]
                 if any('Everything done' in i for i in line2read):
                     lsmri = listdir(path.join(SUBJECTS_DIR, subjid, 'mri'))
-                    if any('lh.hippoSfVolumes-T1.v10.txt' in i for i in lsmri):
+                    if any('rh.hippoSfVolumes-T1.v10.txt' in i for i in lsmri):
                         try:
                             shutil.copy(path.join(SUBJECTS_DIR, subjid, 'mri', 'lh.hippoSfVolumes-T1.v10.txt'), path.join(SUBJECTS_DIR, subjid, 'stats', 'lh.hipposubfields.T1.v10.stats'))
                             shutil.copy(path.join(SUBJECTS_DIR, subjid, 'mri', 'rh.hippoSfVolumes-T1.v10.txt'), path.join(SUBJECTS_DIR, subjid, 'stats', 'rh.hipposubfields.T1.v10.stats'))
                         except Exception as e:
                             print(e)
                         return True
-                    elif any('lh.hippoSfVolumes-T1.v21.txt' in i for i in lsmri):
+                    elif any('rh.hippoSfVolumes-T1.v21.txt' in i for i in lsmri):
                             try:
                                 for file in files_hip_amy21_mri:
                                     shutil.copy(path.join(SUBJECTS_DIR, subjid, 'mri', file), path.join(SUBJECTS_DIR, subjid, 'stats', files_hip_amy21_mri[file]))
