@@ -1,3 +1,10 @@
+
+'''
+add FS QA tools to rm scans with low SNR (Koh et al 2017)
+https://surfer.nmr.mgh.harvard.edu/fswiki/QATools
+'''
+
+
 STATS:
 * for cross-sectional comparison at each time point, 
 do multivariate analysis to assess potential confounding factors.

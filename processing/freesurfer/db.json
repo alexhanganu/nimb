@@ -16,14 +16,10 @@
         "autorecon3": [],
         "qcache": [],
         "brstem": [],
-        "hip": [
-            "ADNI_123_S_1300_ses-5"
-        ],
+        "hip": [],
         "tha": []
     },
-    "RUNNING_JOBS": {
-        "ADNI_123_S_1300_ses-5": "48137299"
-    },
+    "RUNNING_JOBS": {},
     "LONG_DIRS": {},
     "LONG_TPS": {},
     "REGISTRATION": {},
