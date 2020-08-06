@@ -339,7 +339,7 @@ def chk_subj_in_SUBJECTS_DIR(SUBJECTS_DIR, NIMB_tmp, db, process_order, base_nam
 
     def get_subjs_running(db, process_order):
         ls_subj_running = []
-        for ACTION in ('DO', 'QUEUE', 'RUNNING',):
+        for ACTION in ('DO', 'RUNNING',):
             for process in process_order:
                 for subjid in db[ACTION][process]:
                     if subjid not in ls_subj_running:
