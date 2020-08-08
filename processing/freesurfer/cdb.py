@@ -3,10 +3,12 @@
 
 from os import path, listdir, remove, getenv, rename, mkdir, environ, system, chdir
 import time, shutil, json
+import logging
 
+
+log = logging.getLogger(__name__)
 environ['TZ'] = 'US/Eastern'
 time.tzset()
-
 
 
 def Get_DB(NIMB_HOME, NIMB_tmp, process_order):

@@ -2,13 +2,17 @@ from os import path, makedirs, environ
 import time
 import subprocess
 import json
+import logging
+from .logger import Log
 
 environ['TZ'] = 'US/Eastern'
 time.tzset()
 
-
 with open('processing/freesurfer/vars.json') as vars_json:
         vars = json.load(vars_json)
+
+Log(vars["NIMB_PATHS"]["NIMB_tmp"])
+log = logging.getLogger(__name__)
 
 
 datehour = time.strftime("%Y%m%d_%H%M",time.localtime(time.time()))
@@ -30,8 +34,7 @@ with open(path.join(vars["NIMB_PATHS"]["NIMB_tmp"], 'usedpbs', sh_file),'w') as 
     f.write(vars['PROCESSING']["python3_load_cmd"]+'\n')
     f.write(vars['PROCESSING']["python3_run_cmd"]+' crun.py')
 
-with open(path.join(vars["NIMB_PATHS"]["NIMB_tmp"], 'status.log'),'a') as log:
-    log.write('    '+sh_file+' submitting\n')
+log.info('    '+sh_file+' submitting')
 
 def start_fs_pipeline():
     try:

@@ -73,10 +73,11 @@ class DistributionHelper():
     @staticmethod
     def upload_un_process_subject_to_remote():
         # call the ssh helper to upload the file
+        # to NIMB_NEW_SUBJECTS
         # interface_cluster.copy_subjects_to_cluster(mri_path, subjects_folder, a_folder)
         pass
 
     @staticmethod
     def check_status_of_free_surfer():
-        # todo: ask alex the exisitng function
+        # not important now. todo: ask alex the exisitng function
         pass

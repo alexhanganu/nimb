@@ -67,5 +67,5 @@ def setup_logging(logLevel, logFile=None):
         logger.addHandler(handler)
 
 
-if __name__ == "__main__":
-    Log('/scratch/hanganua/nimb_tmp')
+#if __name__ == "__main__":
+#    Log('/scratch/hanganua/nimb_tmp')

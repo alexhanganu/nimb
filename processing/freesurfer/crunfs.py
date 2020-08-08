@@ -8,6 +8,10 @@ import shutil
 import datetime
 import cdb
 import time
+import logging
+
+
+log = logging.getLogger(__name__)
 
 
 def FS_ready(SUBJECTS_DIR):

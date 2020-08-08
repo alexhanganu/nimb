@@ -12,7 +12,7 @@ class DiskspaceUtility:
     @staticmethod
     def get_free_space( path):
         """
-        return the space in MB of home folder, by running this command <df -hm ~> on local computer
+        return the space in MB of NIMB_NEW_SUBJECTS, FS_SUBJECTS_DIR, folder, by running this command <df -hm ~> on local computer
         :param self:
         :param path: path to calculate the size
         :return: int, size in MG, this number is round(realsize) + 1

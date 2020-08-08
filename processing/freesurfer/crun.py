@@ -1,29 +1,16 @@
 #!/bin/python
 # 2020.08.04
 
-
-'''
-add FS QA tools to rm scans with low SNR (Koh et al 2017)
-https://surfer.nmr.mgh.harvard.edu/fswiki/QATools
-'''
 print_all_subjects = False
 
-
 from os import path, listdir, remove, rename, system, chdir, environ
-import time, shutil
 import json
-from datetime import datetime, timedelta
-
 
 if path.isfile('vars.json'):
     with open('vars.json') as vars_json:
         vars = json.load(vars_json)
 else:
     print('ERROR: vars.json file MISSING')
-try:
-    from pathlib import Path
-except ImportError as e:
-    cdb.Update_status_log(e)
 
 cuser                   = vars["USER"]["user"]
 cusers_list             = vars["USER"]["users_list"]
@@ -74,8 +61,20 @@ else:
 
 
 
+import time, shutil
+from datetime import datetime, timedelta
+import logging
 import crunfs, cdb, cwalltime
+from logger import Log
 
+Log(NIMB_tmp)
+log = logging.getLogger(__name__)
+
+
+try:
+    from pathlib import Path
+except ImportError as e:
+    log.info(e)
 
 print('SUBMITTING is: ', SUBMIT)
 
