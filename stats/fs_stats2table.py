@@ -346,10 +346,14 @@ def chk_if_subjects_ready(PATHstats, SUBJECTS_DIR):
     for _SUBJECT in subjects:
         print('reading: ', _SUBJECT, '; left: ', len(subjects[subjects.index(_SUBJECT):]))
         for sheet in BS_Hip_Tha_stats_f:
-            file_with_stats = [i for i in BS_Hip_Tha_stats_f[sheet] if path.exists(path.join(SUBJECTS_DIR,_SUBJECT,i))][0]
-            if not file_with_stats:
-                print('missing: ', sheet)
-                miss = add_to_miss(_SUBJECT, sheet)
+            try:
+                file_with_stats = [i for i in BS_Hip_Tha_stats_f[sheet] if path.exists(path.join(SUBJECTS_DIR,_SUBJECT,i))][0]
+                if not file_with_stats:
+                    print('missing: ', sheet)
+                    miss = add_to_miss(_SUBJECT, sheet)
+            except Exception as e:
+                print(e)
+                miss = add_to_miss(_SUBJECT, sheet)                
         if not path.exists(path.join(SUBJECTS_DIR,_SUBJECT, 'stats', 'aseg.stats')):
                 print('missing: ', 'aseg.stats')
                 miss = add_to_miss(_SUBJECT, 'VolSeg')
