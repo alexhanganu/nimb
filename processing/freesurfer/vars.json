@@ -20,7 +20,9 @@
         "NIMB_tmp": "/scratch/hanganua/nimb_tmp",
         "NIMB_NEW_SUBJECTS": "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped",
         "NIMB_PROCESSED_FS": "/home/hanganua/projects/def-hanganua/nimb_processed_fs",
-        "NIMB_PROCESSED_FS_error": "/home/hanganua/projects/def-hanganua/nimb_processed_fs_error"
+        "NIMB_PROCESSED_FS_error": "/home/hanganua/projects/def-hanganua/nimb_processed_fs_error",
+        "miniconda_home": "/home/hanganua/miniconda3",
+        "miniconda_python_run": "~/miniconda3/bin/python3.7"
     },
     "PROCESSING": {
         "SUBMIT": 1,
@@ -42,6 +44,12 @@
     },
     "FREESURFER": {
         "FreeSurfer_install": 1,
+        "freesurfer_license": [
+            "hanganu.alexandru@gmail.com",
+            "11009",
+            "*C1QZcOiGGrPE",
+            "FSUt0BPqKfdQc"
+        ],
         "freesurfer_version": 7,
         "FREESURFER_HOME": "/home/hanganua/projects/def-hanganua/freesurfer",
         "FS_SUBJECTS_DIR": "/home/hanganua/projects/def-hanganua/fs-subjects",

@@ -129,6 +129,7 @@ def Get_status_for_subjid_in_queue(subjid, all_running):
 
 def running(process, all_running):
     ACTION = 'RUNNING'
+    log.info(ACTION+' '+process)
     cdb.Update_status_log(nimb_scratch_dir, ACTION+' '+process)
 
     lsr = db[ACTION][process].copy()
@@ -196,6 +197,7 @@ def running(process, all_running):
 
 def do(process):
     ACTION = 'DO'
+    log.info(ACTION+' '+process)
     cdb.Update_status_log(nimb_scratch_dir, ACTION+' '+process)
 
     lsd = db[ACTION][process].copy()
@@ -240,6 +242,7 @@ def do(process):
 
 
 def check_error():
+    log.info('ERROR checking')
     cdb.Update_status_log(nimb_scratch_dir, 'ERROR checking')
 
     for process in process_order:

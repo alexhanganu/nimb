@@ -32,8 +32,8 @@ with open(path.join(vars["NIMB_PATHS"]["NIMB_tmp"], 'usedpbs', sh_file),'w') as 
 
 def start_fs_pipeline():
     try:
-#       log = logging.getLogger(__name__)
-#       log.info('    '+sh_file+' submitting')
+        log = logging.getLogger(__name__)
+        log.info('    '+sh_file+' submitting')
         resp = subprocess.run([vars['PROCESSING']["submit_cmd"],path.join(vars["NIMB_PATHS"]["NIMB_tmp"], 'usedpbs', sh_file)], stdout=subprocess.PIPE).stdout.decode('utf-8')
         print(list(filter(None, resp.split(' ')))[-1].strip('\n'))
     except Exception as e:

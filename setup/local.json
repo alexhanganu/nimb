@@ -17,7 +17,7 @@
     "NIMB_PROCESSED_FS": "/home/lucaspsy/projects/def-hanganua/nimb_processed_fs",
     "NIMB_PROCESSED_FS_error": "/home/lucaspsy/projects/def-hanganua/nimb_processed_fs_error",
     "miniconda_home": "/home/hanganua/miniconda3",
-    "miniconda_python_run": "~/miniconda3/bin/python3.7 "
+    "miniconda_python_run": "~/miniconda3/bin/python3.7"
               },
 "PROCESSING": {
        "SUBMIT": 1,
