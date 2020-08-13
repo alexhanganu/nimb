@@ -1,22 +1,14 @@
-# 2020 Jan 10
-# modules to install: pandas, scipy, glob, shutil, openpyxl, xlrd(data_processing_local.chklog)
-from v02003.a.build import build
+# 2020-08-13
+# works only with python 3
+
 from distribution.lib import database, interface_cluster
 from distribution import SSHHelper
 from tkinter import Tk, ttk, Menu, N, W, E, S, StringVar, HORIZONTAL
-from sys import platform, version_info
-
-if not version_info[0] >= 3:
-    from os import system
-
-    print('INSTALLING PYTHON 3 for CENTOS 7')
-    system('sudo yum install -y https://centos7.iuscommunity.org/ius-release.rpm')
-    system('sudo yum update')
-    system('sudo yum install -y python36u python36u-libs python36u-devel python36u-pip')
+from sys import platform
 
 
 root = Tk()
-root.title("NIMB, "+build)
+root.title("NIMB")
 
 mainframe = ttk.Frame(root, padding="3 3 12 12")
 
@@ -44,32 +36,32 @@ freesurfer = database._get_folder('Main')
 
 
 def setupcredentials():
-    from v02003.a.setup import setupcredentials
+    from setup import setupcredentials
     if setupcredentials():
         clusters = database._get_Table_Data('Clusters', 'all')
         # ccredentials_txt.set(clusters[0][1]+'@'+clusters[0][2])
 
 
 def set_Project_Data(Project):
-    from v02003.a.setup import SetProjectData
+    from setup import SetProjectData
     SetProjectData(Project)
 
 
 def set_MainFolder(Project):
-    from v02003.a.setup import set_MainFolder
+    from setup import set_MainFolder
     freesurfer = set_MainFolder(Project)
     freesurfer_address_var.set(freesurfer)
     print(freesurfer)
 
 
 def set_LocalProcessingFolder():
-    from v02003.a.setup import set_LocalProcessingFolder
+    from setup import set_LocalProcessingFolder
     local = set_LocalProcessingFolder()
     local_fs_address.set(local) # where local_fs_address?
 
 
 def set_Folder(group, Project):
-    from v02003.a.setup import set_Folder
+    from setup import set_Folder
     Projects_all[Project][group].set(set_Folder(group, Project)) # where it is?
 
 
@@ -104,58 +96,20 @@ def StopAllActiveTasks():
 
 def xtrctdata():
     try:
-        from a.lib import makestats
-        status.set('Copying data from Cluster and creating Excel file')
-        makestats.cpfromclusterxtrctdata()
-    except ImportError:
-        print('error importing the makestats file from a.lib')
+        os.system('python nimb.py -process fs-stats')
+        status.set('extracting stats')
+    except Exception as e:
+        print(e)
         pass
 
 
 def runstats(Project_Data, Project):
-    id_col = 'id'
-    group_col = 'group'
-
-    from os import makedirs, path, listdir
-    from datetime import datetime
-
-    file_groups = Project_Data[Project][3]
-    if len(file_groups) > 0:
-        print('file groups present, starting making fsgd files')
-        try:
-            from a.lib import makestats_groups
-            status.set('Creating FSGD files for GLM analysis')
-            GLM_dir = Project_Data[Project][2]+Project+'/'+str(datetime.now().year)+str(
-                datetime.now().month)+str(datetime.now().day)+'/'
-            if not path.isdir(GLM_dir):
-                makedirs(GLM_dir)
-            makestats_groups.MakeStatsForGroups(
-                GLM_dir, file_groups, id_col, group_col, Project_Data[Project][1])
-        except ImportError:
-            print('error importing the makestats_groups from a.lib')
-            pass
-    if platform == 'darwin' or platform == 'linux' or platform == 'linux2':
-        if len(listdir(Project_Data[Project][2])) > 0 and len(database._get_folder('LocalProcessing')) > 0:
-            print('GLM dir not empty, local processing present, performing glm')
-            try:
-                from a.lib import makeglm
-                status.set('Performing GLM')
-                GLM_dir = Project_Data[Project][2]+Project+'/'
-                for folder in listdir(GLM_dir):
-                    if 'results' not in listdir(GLM_dir+folder):
-                        PATH_4glm = GLM_dir+folder+'/'
-                        makeglm.PerformGLM(
-                            PATH_4glm, database._get_folder('LocalProcessing'))
-                    else:
-                        print('results created')
-            except ImportError:
-                print('ERROR importing makeglm module')
-                pass
-
-
-def runplots():
-    from distribution.lib import makestats
-    makestats.mkstatisticsfplots()
+    try:
+        os.system('python nimb.py -process fs-glm')
+        status.set('performing freesurfer whole brain GLM analysis')
+    except Exception as e:
+        print(e)
+        pass
 
 
 def run_processing_on_cluster_2():
@@ -186,7 +140,7 @@ def run_processing_on_cluster_2():
 
 def run(Project):
     # 0 check the variables
-    # check if all the variabled are defined
+    # check if all the variables are defined
     check_defined_variable(Project)
     # it can do better by reading the eml.json or beluga.json and check for the missing var
     # 1. install required library and software on the local computer, including freesurfer
@@ -386,37 +340,3 @@ for child in mainframe.winfo_children():
 
 root.mainloop()
 
-'''
-this script was written for a specific lab, it is probably not needed anymore.
-
-def chkmri():
-    from a.setup import SETUP_APP
-    if not SETUP_APP():
-        print('SETUP not finished')
-        pass
-    try:
-        from a.lib.data_processing_local import chklog
-
-        status.set('Scanning for new data in the INCOMING folder')
-        print('Scanning for new data in the INCOMING folder')
-        lsmiss = chklog()
-        print(lsmiss)
-        count = 0
-        for DIR in lsmiss:
-            count = count + len(lsmiss[DIR])
-        if count > 0:
-            status.set(str(count)+' subjects need to be processed')
-            database.create_lsmiss(lsmiss)
-            try:
-                from a.lib.data_processing_local import cpt1flair
-                status.set('Copying data to '+freesurfer+'raw_data_dcm/')
-                cpt1flair()
-            except ImportError:
-                print('Can\'t copy T1-Flair file - ERROR importing file')
-                pass
-        else:
-            status.set('No new uploads in the INCOMING folder')
-    except ImportError:
-        status.set('ERROR importing the working file')
-        print('ERROR importing the working file')
-'''

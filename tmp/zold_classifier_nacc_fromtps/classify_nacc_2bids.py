@@ -1,125 +1,9 @@
-def log(message):
-        logf = path.join(NIMB_tmp,'log_classifyer')
-	with open(logf,'a') as f:
-		if type(message) == str:
-			f.write(message)
-		if type(message) == list:
-			f.write('      ')
-			for val in message:
-				f.write(val+'\t')
-			f.write('\n')
-
-		
-		
-		
-def chk_visual(d_subjects, mr_type, start):
-	'''code specifically for ADNI db'''
-	for subj in d_subjects:
-		print('\n\n',subj)
-		log('\n\n'+subj+'\n')
-		for ses in d_subjects[subj]:
-			print(' ',ses)
-			log('  '+ses+'\n')
-			if mr_type != 'all':
-				if 'anat' in d_subjects[subj][ses]:
-					if mr_type in d_subjects[subj][ses]['anat']:
-						print('   '+mr_type)
-						log('    '+mr_type+'\n')
-						for key in d_subjects[subj][ses]['anat'][mr_type]:
-							print('     ',key.split('/')[start:])
-							log((key.split('/')[start:]))
-			else:
-				for BIDS_type in d_subjects[subj][ses]:
-					log('    '+BIDS_type+'\n')
-					for mr_type in d_subjects[subj][ses][BIDS_type]:
-						log('      '+mr_type+'\n')
-						for key in d_subjects[subj][ses][BIDS_type][mr_type]:
-							print('     ',key.split('/')[start:])
-							log((key.split('/')[start:]))
-
-
-
-
-#chk_visual(d_subjects, 't1',8)
-#chk_visual(d_subjects, 't2',8)
-#chk_visual(d_subjects, 'flair',8)
-#chk_visual(d_subjects, 'all',8)
-
-
-'''
-def adni_get_dict_downloaded_subjects(file):
-	
-	#reading the subjects from the f_with_downloaded_ids file, these are the subjects
-	#that were downloaded from the ADNI website. Sending all subjects to a dict "subjects"
-	#structure is: 'DOWNLOAD 19 -1631, 19.4 Gb, 10hrs':['subject','subject',...]
-	
-	d_downloaded_subjects = dict()
-    
-	with open(file,'r') as f:
-		for line in f:
-			if 'DOWNLOAD' in line:
-				file_name = line.strip('\n')
-				d_downloaded_subjects[file_name] = list()
-			else:
-				d_downloaded_subjects[file_name].append(line.strip('\n'))
-	return d_downloaded_subjects
-
-#d_subjects = adni_get_dict_downloaded_subjects(path_home+f_with_downloaded_ids)
-
-
-def subjects_less_f(limit, ls_all_raw_subjects):
-    ls_subjects = list()
-    for folder in ls_all_raw_subjects:
-        if len([f for f in listdir(SUBJECTS_DIR_RAW+folder)])<limit:
-            ls_subjects.append(folder)
-
-    return ls_subjects
-
-def subjects_nodcm(ls_all_raw_subjects):
-    ls_subjects = list()
-    for folder in ls_all_raw_subjects:
-        for file in listdir(SUBJECTS_DIR_RAW+folder):
-            if not file.endswith('.dcm'):
-                ls_subjects.append(folder)
-                break
-    return ls_subjects
-
-def subj_no_t1(ls_all_raw_subjects):
-    ls_subjects = list()
-    for folder in ls_all_raw_subjects:
-        if '_flair' in folder:
-                if folder.replace('_flair','_t1') in ls_all_raw_subjects:
-                    pass
-                else:
-                    ls_subjects.append(folder)
-        if '_t2' in folder:
-                if folder.replace('_t2','_t1') in ls_all_raw_subjects:
-                    pass
-                else:
-                    ls_subjects.append(folder)
-    return ls_subjects
-
-
-def check_folder():
-	ls_subjects_no_t1 = subj_no_t1(listdir(SUBJECTS_DIR_RAW))
-	ls_subjects_nodcm = subjects_nodcm(listdir(SUBJECTS_DIR_RAW))
-	ls_subjects_less = subjects_less_f(35, listdir(SUBJECTS_DIR_RAW))
-	ls_subjects_incomplete = ls_subjects_no_t1 + [i for i in ls_subjects_nodcm if i not in 
-		ls_subjects_no_t1] + [i for i in ls_subjects_less if i not in ls_subjects_no_t1]
-	print(len(ls_subjects_no_t1), len(ls_subjects_nodcm), len(ls_subjects_less)))
-	print(len(ls_subjects_incomplete))
-
-'''
-
-
-
-
 
 '''script reads the 'nacc_tp_sorted.csv' and creates the file
 ..._dirs_to_process.csv that has the folders to be copied and 
 the new names to classify - t1, flair, dwi.
 '''
-'''
+
 from os import listdir, chdir, path, mkdir, walk
 import pandas
 
@@ -380,4 +264,4 @@ def rm_empty_folder():
 
 # rm_empty_folder()
 
-'''
+

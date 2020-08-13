@@ -536,7 +536,7 @@ if crunfs.FS_ready(SUBJECTS_DIR):
         cdb.Update_status_log(nimb_scratch_dir, '\n\nWAITING. \nNext run at: '+str(time.strftime("%H:%M",time.localtime(time.time()+time_to_sleep))))
 
         try:
-            shutil.copy(path.join(nimb_scratch_dir,'db.json'),path.join(NIMB_HOME,'processing','freesurfer','db.json'))
+            shutil.copy(path.join(nimb_scratch_dir,'db.json'),path.join(NIMB_HOME,'tmp','db.json'))
             system('chmod 777 '+path.join(NIMB_HOME,'processing','freesurfer','db.json'))
         except Exception as e:
             cdb.Update_status_log(nimb_scratch_dir, str(e))

@@ -3,6 +3,8 @@
 add FS QA tools to rm scans with low SNR (Koh et al 2017)
 https://surfer.nmr.mgh.harvard.edu/fswiki/QATools
 '''
+Classifier:
+implement: subjects_less_f, subjects_nodcm, subj_no_t1
 
 
 STATS:

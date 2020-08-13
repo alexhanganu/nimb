@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
-# 2020.08.12
+# 2020.08.13
 
     from os import path, chdir, system, remove
 
@@ -19,10 +19,14 @@ def setup_miniconda(NIMB_HOME):
         system('./miniconda3/bin/conda install -y dcm2niix')
         system('./miniconda3/bin/conda install -y dcm2bids')
         system('./miniconda3/bin/conda install -y -c conda-forge dipy')
+        system('./miniconda3/bin/conda install -y glob')
+        system('./miniconda3/bin/conda install -y shutil')
         system('./miniconda3/bin/conda install -y pandas')
         system('./miniconda3/bin/conda install -y numpy')
+        system('./miniconda3/bin/conda install -y scipy')
         system('./miniconda3/bin/conda install -y xlrd')
         system('./miniconda3/bin/conda install -y paramiko')
+        system('./miniconda3/bin/conda install -y openpyxl')
         system('./miniconda3/bin/conda install -y xlsxwriter')
     print(
         'FINISHED Installing miniconda3 with dcm2niix, dcm2bids, pandas, numpy, xlrd, xlsxwriter, paramiko, dipy')

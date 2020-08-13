@@ -173,6 +173,38 @@ def classify_by_MR_types(dict_sessions_paths):
 	return d_ses_MR_types
 
 
+def subjects_less_f(limit, ls_all_raw_subjects):
+    ls_subjects = list()
+    for folder in ls_all_raw_subjects:
+        if len([f for f in listdir(SUBJECTS_DIR_RAW+folder)])<limit:
+            ls_subjects.append(folder)
+
+    return ls_subjects
+
+def subjects_nodcm(ls_all_raw_subjects):
+    ls_subjects = list()
+    for folder in ls_all_raw_subjects:
+        for file in listdir(SUBJECTS_DIR_RAW+folder):
+            if not file.endswith('.dcm'):
+                ls_subjects.append(folder)
+                break
+    return ls_subjects
+
+def subj_no_t1(ls_all_raw_subjects):
+    ls_subjects = list()
+    for folder in ls_all_raw_subjects:
+        if '_flair' in folder:
+                if folder.replace('_flair','_t1') in ls_all_raw_subjects:
+                    pass
+                else:
+                    ls_subjects.append(folder)
+        if '_t2' in folder:
+                if folder.replace('_t2','_t1') in ls_all_raw_subjects:
+                    pass
+                else:
+                    ls_subjects.append(folder)
+    return ls_subjects
+
 
 def make_BIDS_structure(d_ses_MR_types):
 	BIDS_groups = {'anat':['t1','flair','t2'],'dwi':['dwi','bval','bvec'],'func':['rsfmri','fieldmap',]}
@@ -217,3 +249,4 @@ def get_dict_MR_files2process(NIMB_NEW_SUBJECTS, NIMB_tmp):
 			return True
 	else:
 			return False
+
