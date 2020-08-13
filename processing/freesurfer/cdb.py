@@ -169,9 +169,13 @@ def keep_files_similar_params(subjid, nimb_dir, NIMB_tmp, t1_ls_f, flair_ls_f, t
                     grouped_by_voxsize[str(vox_size)] = {'t1':[file]}
                 else:
                     grouped_by_voxsize[str(vox_size)]['t1'].append(file)
-            vox_size_used = min(grouped_by_voxsize.keys())
-            Update_status_log(NIMB_tmp, '        voxel size used: '+str(vox_size_used))
-            t1_ls_f = grouped_by_voxsize[vox_size_used]['t1']
+            try:
+                vox_size_used = min(grouped_by_voxsize.keys())
+                Update_status_log(NIMB_tmp, '        voxel size used: '+str(vox_size_used))
+                t1_ls_f = grouped_by_voxsize[vox_size_used]['t1']
+            except Exception as e:
+                print(e)
+                t1_ls_f = t1_ls_f[:1]
         else:
             t1_ls_f = t1_ls_f[:1]
             vox_size_used = ''
