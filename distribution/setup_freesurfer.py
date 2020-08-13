@@ -1,24 +1,82 @@
 #!/usr/bin/env python
 # coding: utf-8
-# 2020.08.09
+# 2020.08.12
+freesurfer_download_path = "https://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/7.1.1/freesurfer-linux-centos7_x86_64-7.1.1.tar.gz"
+freesurfer_install_file = "freesurfer-linux-centos7_x86_64-7.1.1.tar.gz"
+matlab_download_path = "https://ssd.mathworks.com/supportfiles/downloads/R2014b/deployment_files/R2014b/installers/glnxa64/MCR_R2014b_glnxa64_installer.zip"
+matlab_installer = "MCR_R2014b_glnxa64_installer.zip"
 
-def setup_freesurfer(FREESURFER_HOME, NIMB_HOME, fs_license):
-    from os import path, makedirs, chdir, system, remove
-    import time
+from os import path, makedirs, chdir, system, remove
+import time
+
+class SETUP_FREESURFER():
+
+    def __init__(self, FREESURFER_HOME, NIMB_HOME, fs_license):
+        self.FREESURFER_HOME = FREESURFER_HOME
+        self.NIMB_HOME = NIMB_HOME
+
+        if not path.exists(self.FREESURFER_HOME):
+            print("installing freeaurfer")
+            self.freesurfer_install()
+            self.matlab_install()
+            print('FINISHED Installing and Setting Up FreeSurfer')
+        elif not path.exists(path.join(FREESURFER_HOME, 'MCRv84')):
+            self.matlab_install()
+            print('FINISHED Installing MATLAB')
+        else:
+            print('writing license file')
+            self.create_license_file(fs_license)
+            return True
 
 
-    if not path.exists(FREESURFER_HOME):
-        chdir(NIMB_HOME)
-        system(
-            'curl "https://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/7.1.0/freesurfer-linux-centos7_x86_64-7.1.0.tar.gz" -o "freesurfer_installation.tar.gz" ')
-        while not path.isfile(path.join(NIMB_HOME, 'freesurfer_installation.tar.gz')):
-            time.sleep(1000)
-        system('tar xvf freesurfer_installation.tar.gz -'+FREESURFER_HOME.strip('/freesurfer'))
-        remove('freesurfer_installation.tar.gz')
+    def freesurfer_install(self):
+        chdir(self.NIMB_HOME)
+        print('downloading freesurfer')
+        try:
+            system('wget '+freesurfer_download_path)
+            while not path.isfile(path.join(self.NIMB_HOME, freesurfer_install_file)):
+                time.sleep(1000)
+        except Exception:
+            system('curl -o '+freesurfer_install_file+' '+freesurfer_download_path)
+            while not path.isfile(path.join(self.NIMB_HOME, freesurfer_install_file)):
+                time.sleep(1000)
 
-        with open(path.join(FREESURFER_HOME, '.license'), 'w') as f:
+        print('extracting freesurfer')
+        system('tar -C '+self.FREESURFER_HOME.replace('freesurfer','')+' -xvf '+freesurfer_install_file)
+
+        if path.exists(self.FREESURFER_HOME):
+            print('removing installer')
+            remove(freesurfer_install_file)
+        else:
+            print('something wrong, please review')
+
+
+    def matlab_install(self):
+        chdir(self.FREESURFER_HOME)
+        print('downloading matlab')
+        system("wget "+matlab_download_path)
+
+        print('installing matlab')
+        system('unzip '+matlab_installer)
+        system("./install -mode silent -agreeToLicense yes -destinationFolder " + path.join(self.FREESURFER_HOME, 'MCRv84'))
+
+        print('removing matlab installer')
+        remove(matlab_installer)
+
+
+    def create_license_file(self, fs_license):
+        print('creating freesurfer .license file')
+        with open(path.join(self.FREESURFER_HOME, '.license'), 'w') as f:
             for line in fs_license:
                 f.write(line + '\n')
+
+
+
+
+
+
+'''
+script used for freesurer 7.0 for cedar specifically
 
         chdir(path.join(FREESURFER_HOME, 'bin'))
 
@@ -80,34 +138,4 @@ def setup_freesurfer(FREESURFER_HOME, NIMB_HOME, fs_license):
         system(
             'curl https://raw.githubusercontent.com/freesurfer/freesurfer/dev/scripts/fs_run_from_mcr -o fs_run_from_mcr')
         system('chmod +x fs_run_from_mcr')
-
-    if not path.exists(path.join(FREESURFER_HOME, 'MCRv84')):
-        chdir(FREESURFER_HOME)
-        system(
-            "curl https://ssd.mathworks.com/supportfiles/downloads/R2014b/deployment_files/R2014b/installers/glnxa64/MCR_R2014b_glnxa64_installer.zip -o installer.zip")
-        system('unzip installer.zip')
-        system("./install -mode silent -agreeToLicense yes -destinationFolder " + path.join(FREESURFER_HOME,
-                                                                                            'MCRv84'))
-        print('removing installer')
-        remove('installer.zip')
-
-    if not path.exists(path.join(NIMB_HOME, 'miniconda3')):
-        chdir(NIMB_HOME)
-        system('curl https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -o miniconda3.sh')
-        system('chmod +x miniconda3.sh')
-        system('./miniconda3.sh -b -p ' + path.join(NIMB_HOME, 'miniconda3'))
-        remove('miniconda3.sh')
-        cmd = 'export PATH=~..' + path.join(NIMB_HOME, 'miniconda3') + '/bin:$PATH >> $HOME/.bashrc'
-        system('echo "' + cmd + '"')
-        system('/miniconda3/bin/conda init')
-        system('./miniconda3/bin/conda config --set report_errors false')
-        system('./miniconda3/bin/conda install -y dcm2niix')
-        system('./miniconda3/bin/conda install -y dcm2bids')
-        system('./miniconda3/bin/conda install -y -c conda-forge dipy')
-        system('./miniconda3/bin/conda install -y pandas')
-        system('./miniconda3/bin/conda install -y numpy')
-        system('./miniconda3/bin/conda install -y xlrd')
-        system('./miniconda3/bin/conda install -y paramiko')
-        system('./miniconda3/bin/conda install -y xlsxwriter')
-    print(
-        'FINISHED Setting Up FreeSurfer and miniconda3 with dcm2niix, dcm2bids, pandas, numpy, xlrd, paramiko and dipy')
+'''

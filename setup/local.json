@@ -35,7 +35,12 @@
               },
 "FREESURFER": {
        "FreeSurfer_install" : 1,
-       "freesurfer_license" : ["hanganu.alexandru@gmail.com", "11009", "*C1QZcOiGGrPE", "FSUt0BPqKfdQc"],
+       "freesurfer_license" : [
+        "hanganu.alexandru@gmail.com",
+        "11009",
+        "*C1QZcOiGGrPE",
+        "FSUt0BPqKfdQc"
+        ],
        "freesurfer_version" : 7,
        "FREESURFER_HOME" : "/home/lucaspsy/projects/def-hanganua/freesurfer",
        "FS_SUBJECTS_DIR" : "/home/lucaspsy/projects/def-hanganua/fs-subjects",

@@ -350,26 +350,26 @@ def chk_if_subjects_ready(PATHstats, SUBJECTS_DIR):
                 file_with_stats = [i for i in BS_Hip_Tha_stats_f[sheet] if path.exists(path.join(SUBJECTS_DIR,_SUBJECT,i))][0]
                 if not file_with_stats:
                     print('missing: ', sheet)
-                    miss = add_to_miss(_SUBJECT, sheet)
+                    miss = add_to_miss(miss, _SUBJECT, sheet)
             except Exception as e:
                 print(e)
-                miss = add_to_miss(_SUBJECT, sheet)                
+                miss = add_to_miss(miss, _SUBJECT, sheet)                
         if not path.exists(path.join(SUBJECTS_DIR,_SUBJECT, 'stats', 'aseg.stats')):
                 print('missing: ', 'aseg.stats')
-                miss = add_to_miss(_SUBJECT, 'VolSeg')
+                miss = add_to_miss(miss, _SUBJECT, 'VolSeg')
         for hemisphere in parc_DK_f2rd:
             file_with_stats = parc_DK_f2rd[hemisphere]
             if not path.isfile(path.join(SUBJECTS_DIR,_SUBJECT,'stats',file_with_stats)):
                 print('missing: ', file_with_stats)
-                miss = add_to_miss(_SUBJECT, file_with_stats)
+                miss = add_to_miss(miss, _SUBJECT, file_with_stats)
         for hemisphere in parc_DS_f2rd:
             file_with_stats = parc_DS_f2rd[hemisphere]
             if not path.isfile(path.join(SUBJECTS_DIR,_SUBJECT,'stats',file_with_stats)):
                 print('missing: ', file_with_stats)
-                miss = add_to_miss(_SUBJECT, file_with_stats)
+                miss = add_to_miss(miss, _SUBJECT, file_with_stats)
         file_with_stats = 'wmparc.stats'
         if not path.isfile(path.join(SUBJECTS_DIR,_SUBJECT,'stats',file_with_stats)):
-                miss = add_to_miss(_SUBJECT, file_with_stats)
+                miss = add_to_miss(miss, _SUBJECT, file_with_stats)
                 print('missing: ', file_with_stats)
 
     if miss:

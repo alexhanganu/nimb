@@ -29,9 +29,8 @@ class Management():
 
     def freesurfer(self):
         if self.vars['local']['FREESURFER']['FreeSurfer_install'] == 1:
+            self.check_freesurfer_ready()
             print('start freesurfer processing')
-
-            # todo: write the processing thing here
             return True
 
     def fs_stats(self):
@@ -61,12 +60,15 @@ class Management():
 
         print('start freesurfer GLM')
 
+    def check_freesurfer_ready(self):
+        if not path.exists(path.join(self.vars['local']['FREESURFER']['FREESURFER_HOME'], ".license")):
+            self.freesurfer_setup()
+        else:
+            return True
 
+    def freesurfer_setup(self):
+        from .setup_freesurfer import SETUP_FREESURFER
+        SETUP_FREESURFER(self.vars['local']['FREESURFER']['FREESURFER_HOME'],
+                         self.vars['local']['NIMB_PATHS']['NIMB_HOME'],
+                         self.vars['local']['FREESURFER']['freesurfer_license'])
 
-'''
-variables that must be changed in all scripts and must be removed
-'''
-# from os import makedirs
-# for remote_path in (NIMB_RHOME, dir_new_subjects, FS_SUBJECTS_DIR, processed_SUBJECTS_DIR, nimb_scratch_dir):
-#   if not path.isdir(remote_path):
-#       makedirs(remote_path)
