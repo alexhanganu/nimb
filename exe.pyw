@@ -1,7 +1,7 @@
 # 2020-08-13
 # works only with python 3
 
-from distribution.lib import database, interface_cluster
+from distribution import database, interface_cluster
 from distribution import SSHHelper
 from tkinter import Tk, ttk, Menu, N, W, E, S, StringVar, HORIZONTAL
 from sys import platform
@@ -68,7 +68,7 @@ def set_Folder(group, Project):
 def cstatus():
     try:
         clusters = database._get_Table_Data('Clusters', 'all')
-        from distribution.lib.interface_cluster import check_cluster_status
+        from distribution.interface_cluster import check_cluster_status
         cuser = clusters[0][1]
         caddress = clusters[0][2]
         cpw = clusters[0][5]
@@ -88,7 +88,7 @@ def cstatus():
 
 
 def StopAllActiveTasks():
-    from distribution.lib.interface_cluster import delete_all_running_tasks_on_cluster
+    from distribution.interface_cluster import delete_all_running_tasks_on_cluster
     clusters = database._get_Table_Data('Clusters', 'all')
     delete_all_running_tasks_on_cluster(
         clusters[0][1], clusters[0][2], clusters[0][5], clusters[0][3])
@@ -198,9 +198,9 @@ def setting_up_local_linux_with_freesurfer():
     :return:
     """
     try:
-        from v02003.a.setup import SETUP_LOCAL_v2
+        from setup import SETUP_LOCAL_v2
     except:
-        from v02003.a.setup import SETUP_LOCAL_v2
+        from setup import SETUP_LOCAL_v2
 
     SETUP_LOCAL_v2()
 

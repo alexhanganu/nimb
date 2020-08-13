@@ -5,7 +5,7 @@ from os import system, path, remove
 import time
 from sys import platform
 import pandas as pd
-from distribution import SSHHelper
+from . import SSHHelper
 from . import database
 freesurfer = database._get_folder('Main')
 

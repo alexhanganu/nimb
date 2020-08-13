@@ -17,7 +17,7 @@ except ImportError:
 import json
 from pathlib import Path
 
-from distribution.lib import database
+from distribution import database
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(format='%(asctime)s %(module)s %(levelname)s: %(message)s')
@@ -434,7 +434,7 @@ def download_files_from_server(local_folder, remote_folder):
 # kp for testing
 def test():
     """tes the function"""
-    from distribution.lib import database
+    from distribution import database
     clusters = database._get_credentials('all')
     ssh_session = getSSHSession(host_name, user_name, user_password)
     print("ls; cd " + project_folder + "; ls")
@@ -444,7 +444,7 @@ def test():
 
 def test2():
     """tes the function"""
-    from distribution.lib import database
+    from distribution import database
     clusters = database._get_credentials('all')
     host_name = "beluga.calculquebec.ca"
     ssh_session = getSSHSession(host_name, user_name, user_password)

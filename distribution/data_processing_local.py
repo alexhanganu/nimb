@@ -8,9 +8,9 @@ try:
 except ImportError:
     pass
 import shutil
-from ..SSHHelper import *
+from .SSHHelper import *
 import pathlib
-import distribution.lib.database
+from . import database
 
 MainFolder = database._get_folder('Main')
 DIRs_INCOMING = database._get_folder('MRI')

@@ -23,6 +23,7 @@ class DistributionHelper():
         1. get the list of un-processed subject
         2. get the current available space on hard-disk of user
         2. calculate the list of
+		initial script in database -> create_lsmiss
         :param SOURCE_SUBJECTS_DIR:
         :return:
         """
