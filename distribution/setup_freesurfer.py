@@ -68,7 +68,7 @@ class SETUP_FREESURFER():
     def create_license_file(self, fs_license):
         print('creating freesurfer license.txt file for FreeSurfer 7.1.1')
         if path.isfile(path.join(self.FREESURFER_HOME, 'license.txt')):
-		    system("mv "+path.join(self.FREESURFER_HOME, 'license.txt')+" "+path.join(self.FREESURFER_HOME, 'license_freesurfer.txt'))
+            system("mv "+path.join(self.FREESURFER_HOME, 'license.txt')+" "+path.join(self.FREESURFER_HOME, 'license_freesurfer.txt'))
         with open(path.join(self.FREESURFER_HOME, 'license.txt'), 'w') as f:
             for line in fs_license:
                 f.write(line + '\n')
