@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from os import path, makedirs, listdir
+from os import path, makedirs, listdir, system
 
 
 class Management():
@@ -22,10 +22,15 @@ class Management():
                  path.join(self.NIMB_tmp, 'usedpbs'),
                            self.vars['local']['NIMB_PATHS']['NIMB_NEW_SUBJECTS'],
                            self.vars['local']['NIMB_PATHS']['NIMB_PROCESSED_FS'],
-                           self.vars['local']['NIMB_PATHS']['NIMB_PROCESSED_FS_error'],
-                           self.vars['local']['FREESURFER']['FS_SUBJECTS_DIR']):
+                           self.vars['local']['NIMB_PATHS']['NIMB_PROCESSED_FS_error']):
                 if not path.exists(p):
                     makedirs(p)
+        if path.exists(self.vars['local']['FREESURFER']['FREESURFER_HOME']):
+            if not path.exists(self.vars['local']['FREESURFER']['FS_SUBJECTS_DIR']):
+                    makedirs(self.vars['local']['FREESURFER']['FS_SUBJECTS_DIR'])
+                    system("cp -r"+path.join(self.vars['local']['FREESURFER']['FREESURFER_HOME'], "subjects", "fsaverage")+" "+self.vars['local']['FREESURFER']['FS_SUBJECTS_DIR'])
+
+
 
     def freesurfer(self):
         if self.vars['local']['FREESURFER']['FreeSurfer_install'] == 1:

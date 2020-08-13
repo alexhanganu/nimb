@@ -24,8 +24,8 @@ class SETUP_FREESURFER():
             print("installing MATLAB")
             self.matlab_install()
             print('FINISHED Installing MATLAB')
-        print('writing license file')
-        self.create_license_file(vars['local']['FREESURFER']['freesurfer_license'])
+            print('writing license file')
+            self.create_license_file(vars['local']['FREESURFER']['freesurfer_license'])
 
 
     def freesurfer_install(self):
