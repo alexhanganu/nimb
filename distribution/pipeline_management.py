@@ -56,7 +56,7 @@ class Management():
         print('perform statistical analysis')
 
 
-     def fs_glm(self):
+    def fs_glm(self):
 
         print('start freesurfer GLM')
 

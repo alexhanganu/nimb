@@ -44,13 +44,6 @@
     },
     "FREESURFER": {
         "FreeSurfer_install": 1,
-        "freesurfer_license": [
-            "hanganu.alexandru@gmail.com",
-            "11009",
-            "*C1QZcOiGGrPE",
-            "FSUt0BPqKfdQc"
-        ],
-        "freesurfer_version": 7,
         "FREESURFER_HOME": "/home/hanganua/projects/def-hanganua/freesurfer",
         "FS_SUBJECTS_DIR": "/home/hanganua/projects/def-hanganua/fs-subjects",
         "export_FreeSurfer_cmd": "export FREESURFER_HOME=/home/hanganua/projects/def-hanganua/freesurfer",
@@ -162,7 +155,16 @@
         "GLM_thresholds": [
             10
         ],
-        "GLM_MCz_cache": 13
+        "GLM_MCz_cache": 13,
+        "freesurfer_version": 7,
+        "freesurfer_download_path": "https://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/7.1.1/freesurfer-linux-centos7_x86_64-7.1.1.tar.gz",
+        "matlab_download_path": "https://ssd.mathworks.com/supportfiles/downloads/R2014b/deployment_files/R2014b/installers/glnxa64/MCR_R2014b_glnxa64_installer.zip",
+        "freesurfer_license": [
+            "hanganu.alexandru@gmail.com",
+            "11009",
+            "*C1QZcOiGGrPE",
+            "FSUt0BPqKfdQc"
+        ]
     },
     "STATS_PATHS": {
         "STATS_HOME": "/scratch/hanganua/stats"
