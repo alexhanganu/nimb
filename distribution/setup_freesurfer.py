@@ -12,22 +12,21 @@ class SETUP_FREESURFER():
 
         self.NIMB_HOME                = vars['local']['NIMB_PATHS']['NIMB_HOME']
         self.FREESURFER_HOME          = vars['local']['FREESURFER']['FREESURFER_HOME']
-        self.freesurfer_download_path = vars['local']['FREESURFER']['freesurfer_download_path'])
-        self.matlab_download_path     = vars['local']['FREESURFER']['matlab_download_path'])
+        self.freesurfer_download_path = vars['local']['FREESURFER']['freesurfer_download_path']
+        self.matlab_download_path     = vars['local']['FREESURFER']['matlab_download_path']
 
 
         if not path.exists(self.FREESURFER_HOME):
             print("installing freesurfer")
             self.freesurfer_install()
-            self.matlab_install()
             print('FINISHED Installing and Setting Up FreeSurfer')
-        elif not path.exists(path.join(self.FREESURFER_HOME, 'MCRv84')):
+        if not path.exists(path.join(self.FREESURFER_HOME, 'MCRv84')):
+            print("installing MATLAB")
             self.matlab_install()
             print('FINISHED Installing MATLAB')
-        else:
+        if not path.exists(path.join(self.FREESURFER_HOME, '.license')):
             print('writing license file')
             self.create_license_file(vars['local']['FREESURFER']['freesurfer_license'])
-            return True
 
 
     def freesurfer_install(self):

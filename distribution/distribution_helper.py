@@ -81,3 +81,84 @@ class DistributionHelper():
     def check_status_of_free_surfer():
         # not important now. todo: ask alex the exisitng function
         pass
+
+    @staticmethod
+    def move_processed_to_storage():
+        '''
+        this script is a copy paste, it must be adapted. Storage folder (i.e., for ADNI is beluga../projects/../adni)
+        '''
+        HOST = 'beluga.calculquebec.ca'
+        '''
+        username = 'string' # username to access the remote computer
+        mot_de_pass = 'string' # password to access the remote computer
+        HOST = 'name.address.com' # host name of the remote computer
+        '''
+
+        from os import listdir, system, mkdir, path, chdir, getuid, getenv, environ, remove
+        import shutil, getpass, time
+        import paramiko
+        environ['TZ'] = 'US/Eastern'
+        time.tzset()
+        dthm = time.strftime('%Y%m%d_%H%M')
+
+        path_credentials = path.join('/home',username) # path to the txt-like file named "credentials" that will contain the follow$
+        path_log = path.join(path.join('/home',username,'projects','def-hanganua'), 'scripts', 'scp_log.txt') # path where a log file will be stored tha$
+        path_src = path.join(path.join('/home',username,'projects','def-hanganua'), 'subjects_processed') # path that contains the files or folders t$
+        path_dst_dir = path.join(path.join('/home',username,'projects','def-hanganua'), 'adni', 'processed_fs') # on beluga
+
+        path_scratch = path.join('/scratch',username)
+        path_processed = path.join(path_projects,'subjects_processed')
+
+
+        shutil.copy(path.join(path_credentials,'credentials'), path.dirname(path.abspath(__file__))+'/credentials.py')
+        try:
+                from credentials import mot_de_pass
+                remove(path.dirname(path.abspath(__file__))+'/credentials.py')
+        except ImportError:
+                print('file with credentials was not found')
+                raise SystemExit()
+
+        def _get_client(HOST, username, mot_de_pass):
+            # setting up the remote connection
+            client = paramiko.SSHClient()
+            host_keys = client.load_system_host_keys()
+            return client.connect(HOST, username=username, password=mot_de_pass)
+
+        def get_ls2copy(client, path_dst, path_src):
+            # retrieving the list of files in the source folder
+            ls_src = [i for i in listdir(path_src) if '.zip' in i]
+            # retrieving the list of files in the destination folder
+            ls_dst = list()
+            stdin, stdout, stderr = client.exec_command('ls '+path_dst)
+            for line in stdout:
+                    ls_dst.append(line.strip('\n'))
+            return [i for i in ls_src if i not in ls_dst]
+
+        def cp2remote_rm_from_local(client, ls_copy, path_src, username, HOST, path_dst, path_log):
+            # copying the files
+            ls_copy_error = list()
+            sftp = client.open_sftp()
+            for val in ls_copy:
+                    size_src = path.getsize(path_src+'/'+val)
+                    # sftp.put(path_src+'/'+val, path_dst)
+                    print('left to copy: ',len(ls_copy[ls_copy.index(val):]))
+                    system('scp '+path_src+'/'+val+' '+username+'@'+HOST+':'+path_dst)
+                    size_dst = sftp.stat(path_dst+'/'+val).st_size
+                    if size_dst != size_src:
+                            print('        copy error')
+                            ls_copy_error.append(val)
+                    else:
+                            remove(path_src+'/'+val)
+            saving_ls2log(ls_copy_error, path_log)
+
+        def saving_ls2log(ls_copy_error, path_log):
+            print('copy error: ',ls_copy_error)
+            with open(path_log,'w') as f:
+                    for val in ls_copy_error:
+                            f.write(val+'\n')
+
+        client = _get_client(HOST, username, mot_de_pass)
+        ls_copy = get_ls2copy(client, path_dst, path_src)
+        cp2remote_rm_from_local(client, ls_copy, path_src, username, HOST, path_dst)
+        client.close()
+
