@@ -276,7 +276,8 @@ def chk_new_subjects_json_file(SUBJECTS_DIR, NIMB_tmp, db, freesurfer_version, m
                         if 't1' in data[_id][ses]['anat']:
                             if data[_id][ses]['anat']['t1']:
                                 subjid = _id+'_'+ses
-                                db['REGISTRATION'][subjid] = data[_id][ses]
+                                db['REGISTRATION'][subjid] = dict()
+                                db['REGISTRATION'][subjid]['anat'] = data[_id][ses]['anat']
                                 Update_status_log(NIMB_tmp, '        '+subjid+' added to database from new_subjects.json')
                                 db = add_subjid_2_DB(NIMB_tmp, subjid, _id, ses, db, ls_SUBJECTS_in_long_dirs_processed)
                             else:
