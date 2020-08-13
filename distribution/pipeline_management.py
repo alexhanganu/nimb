@@ -68,7 +68,4 @@ class Management():
 
     def freesurfer_setup(self):
         from .setup_freesurfer import SETUP_FREESURFER
-        SETUP_FREESURFER(self.vars['local']['FREESURFER']['FREESURFER_HOME'],
-                         self.vars['local']['NIMB_PATHS']['NIMB_HOME'],
-                         self.vars['local']['FREESURFER']['freesurfer_license'])
-
+        SETUP_FREESURFER(self.vars)

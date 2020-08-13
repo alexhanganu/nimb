@@ -1,52 +1,54 @@
 #!/usr/bin/env python
 # coding: utf-8
 # 2020.08.12
-freesurfer_download_path = "https://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/7.1.1/freesurfer-linux-centos7_x86_64-7.1.1.tar.gz"
-freesurfer_install_file = "freesurfer-linux-centos7_x86_64-7.1.1.tar.gz"
-matlab_download_path = "https://ssd.mathworks.com/supportfiles/downloads/R2014b/deployment_files/R2014b/installers/glnxa64/MCR_R2014b_glnxa64_installer.zip"
-matlab_installer = "MCR_R2014b_glnxa64_installer.zip"
+
 
 from os import path, makedirs, chdir, system, remove
 import time
 
 class SETUP_FREESURFER():
 
-    def __init__(self, FREESURFER_HOME, NIMB_HOME, fs_license):
-        self.FREESURFER_HOME = FREESURFER_HOME
-        self.NIMB_HOME = NIMB_HOME
+    def __init__(self, vars):
+
+        self.NIMB_HOME                = vars['local']['NIMB_PATHS']['NIMB_HOME']
+        self.FREESURFER_HOME          = vars['local']['FREESURFER']['FREESURFER_HOME']
+        self.freesurfer_download_path = vars['local']['FREESURFER']['freesurfer_download_path'])
+        self.matlab_download_path     = vars['local']['FREESURFER']['matlab_download_path'])
+
 
         if not path.exists(self.FREESURFER_HOME):
-            print("installing freeaurfer")
+            print("installing freesurfer")
             self.freesurfer_install()
             self.matlab_install()
             print('FINISHED Installing and Setting Up FreeSurfer')
-        elif not path.exists(path.join(FREESURFER_HOME, 'MCRv84')):
+        elif not path.exists(path.join(self.FREESURFER_HOME, 'MCRv84')):
             self.matlab_install()
             print('FINISHED Installing MATLAB')
         else:
             print('writing license file')
-            self.create_license_file(fs_license)
+            self.create_license_file(vars['local']['FREESURFER']['freesurfer_license'])
             return True
 
 
     def freesurfer_install(self):
         chdir(self.NIMB_HOME)
         print('downloading freesurfer')
+        installer = self.freesurfer_download_path.split("/")[-1]
         try:
-            system('wget '+freesurfer_download_path)
-            while not path.isfile(path.join(self.NIMB_HOME, freesurfer_install_file)):
+            system('wget '+self.freesurfer_download_path)
+            while not path.isfile(path.join(self.NIMB_HOME, installer)):
                 time.sleep(1000)
         except Exception:
-            system('curl -o '+freesurfer_install_file+' '+freesurfer_download_path)
-            while not path.isfile(path.join(self.NIMB_HOME, freesurfer_install_file)):
+            system('curl -o '+installer+' '+self.freesurfer_download_path)
+            while not path.isfile(path.join(self.NIMB_HOME, installer)):
                 time.sleep(1000)
 
         print('extracting freesurfer')
-        system('tar -C '+self.FREESURFER_HOME.replace('freesurfer','')+' -xvf '+freesurfer_install_file)
+        system('tar -C '+self.FREESURFER_HOME.replace('freesurfer','')+' -xvf '+installer)
 
         if path.exists(self.FREESURFER_HOME):
             print('removing installer')
-            remove(freesurfer_install_file)
+            remove(installer)
         else:
             print('something wrong, please review')
 
@@ -54,14 +56,15 @@ class SETUP_FREESURFER():
     def matlab_install(self):
         chdir(self.FREESURFER_HOME)
         print('downloading matlab')
-        system("wget "+matlab_download_path)
+        installer = self.matlab_download_path.split("/")[-1]
+        system("wget "+self.matlab_download_path)
 
         print('installing matlab')
-        system('unzip '+matlab_installer)
+        system('unzip '+installer)
         system("./install -mode silent -agreeToLicense yes -destinationFolder " + path.join(self.FREESURFER_HOME, 'MCRv84'))
 
         print('removing matlab installer')
-        remove(matlab_installer)
+        remove(installer)
 
 
     def create_license_file(self, fs_license):
