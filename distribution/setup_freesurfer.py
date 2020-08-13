@@ -24,9 +24,8 @@ class SETUP_FREESURFER():
             print("installing MATLAB")
             self.matlab_install()
             print('FINISHED Installing MATLAB')
-        if not path.exists(path.join(self.FREESURFER_HOME, '.license')):
-            print('writing license file')
-            self.create_license_file(vars['local']['FREESURFER']['freesurfer_license'])
+        print('writing license file')
+        self.create_license_file(vars['local']['FREESURFER']['freesurfer_license'])
 
 
     def freesurfer_install(self):
@@ -67,8 +66,10 @@ class SETUP_FREESURFER():
 
 
     def create_license_file(self, fs_license):
-        print('creating freesurfer .license file')
-        with open(path.join(self.FREESURFER_HOME, '.license'), 'w') as f:
+        print('creating freesurfer license.txt file for FreeSurfer 7.1.1')
+        if path.isfile(path.join(self.FREESURFER_HOME, 'license.txt')):
+		    system("mv "+path.join(self.FREESURFER_HOME, 'license.txt')+" "+path.join(self.FREESURFER_HOME, 'license_freesurfer.txt'))
+        with open(path.join(self.FREESURFER_HOME, 'license.txt'), 'w') as f:
             for line in fs_license:
                 f.write(line + '\n')
 

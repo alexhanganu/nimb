@@ -62,7 +62,7 @@ class Management():
 
 
     def check_freesurfer_ready(self):
-        if not path.exists(path.join(self.vars['local']['FREESURFER']['FREESURFER_HOME'], ".license")):
+        if not path.exists(path.join(self.vars['local']['FREESURFER']['FREESURFER_HOME'], "MCRv84")):
             self.freesurfer_setup()
         else:
             return True
