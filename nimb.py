@@ -45,7 +45,9 @@ class NIMB(object):
             if self.ready():
                 return classify_bids.get_dict_MR_files2process(
                                      self.vars['local']['NIMB_PATHS']['NIMB_NEW_SUBJECTS'],
-                                     self.vars['local']['NIMB_PATHS']['NIMB_tmp'])
+                                     self.vars['local']['NIMB_PATHS']['NIMB_HOME'],
+                                     self.vars['local']['NIMB_PATHS']['NIMB_tmp'],
+                                     self.vars['local']['FREESURFER']['flair_t2_add'])
 
         if self.process == 'freesurfer':
             if self.ready():
@@ -106,12 +108,3 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
-
-
-
-# cusers_list = users_list
-# cuser = user
-# nimb_dir = NIMB_HOME
-# SUBJECTS_DIR = FS_SUBJECTS_DIR
-# processed_SUBJECTS_DIR = path.join('/home',user,'projects',supervisor_account,'processed_subjects') #must be changed to NIMB_HOME/processed_nimb/processed_fs
-# dir_new_subjects=path.join('/home',user,'projects',supervisor_account,'new_subjects')  #must be changed to NIMB_RHOME/new_subjects

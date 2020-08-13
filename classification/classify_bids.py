@@ -57,25 +57,6 @@ def validate_if_date(date_text):
 	except ValueError:
 		return False
 
-
-
-# def get_ls_sessions(ls):
-# 	d_paths = {}
-# 	ls_sessions = list()
-#
-# 	for mr_path in ls:
-# 		for date in mr_path.split('/')[2:]:
-# 			if validate_if_date(date):
-# 				d_paths[date] = mr_path
-# 				if date not in ls_sessions:
-# 					ls_sessions.append(date)
-# 	return ls_sessions, d_paths
-
-# Kp_note:
-# Current: Extract 1 path by day
-# -> Output: Only get the first path found and skip other types in the same day
-# New: Add Extract more path by day + type
-
 def get_ls_sessions(ls):
 	# add types
 	mr_types = {'t1': ['t1', 'spgr', 'rage', ],
@@ -222,11 +203,18 @@ def make_BIDS_structure(d_ses_MR_types):
 
 
 
-def get_dict_MR_files2process(NIMB_NEW_SUBJECTS, NIMB_tmp):
+def save_json(NIMB_tmp, f_new_subjects, dictionary):
+	with open(f_new_subjects,'w') as f:
+			json.dump(d_subjects, f, indent=4)
+
+
+def get_dict_MR_files2process(NIMB_NEW_SUBJECTS, NIMB_HOME, NIMB_tmp, flair_t2_add):
 	"""
 	# only search for 2 number
 	:return:
 	"""
+	from get_mr_params import verify_MRIs_for_similarity
+
 	f_new_subjects = path.join(NIMB_tmp,'new_subjects.json')
 	d_subjects = dict()
 	for subject in listdir(NIMB_NEW_SUBJECTS):
@@ -243,8 +231,10 @@ def get_dict_MR_files2process(NIMB_NEW_SUBJECTS, NIMB_tmp):
 				#print(d_BIDS_structure)
 				d_subjects[subject] = d_BIDS_structure
 				print("d_subjects:", d_subjects)
-	with open(f_new_subjects,'w') as f:
-			json.dump(d_subjects, f, indent=4)
+	from get_mr_params import verify_MRIs_for_similarity
+	d_subjects = verify_MRIs_for_similarity(d_subjects, NIMB_HOME, NIMB_tmp, flair_t2_add)
+	
+	save_json(NIMB_tmp, f_new_subjects, d_subjects)
 	if path.exists(f_new_subjects):
 			return True
 	else:
