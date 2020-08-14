@@ -23,11 +23,12 @@ class DiskspaceUtility:
         # return int(subprocess.check_output(['du', '-shcm', path]).split()[0].decode('utf-8')) - 1
         home_folder = "~"
         command = f"df -hm {home_folder}" # h: human readable, m = megabyte
-        out = subprocess.check_output(command, shell=True)
-
-        if 'Available' not in out:
-            return 0 # command failed
-        out = int(out.decode('utf8')[1].split()[-3])
+        command = command + "| tail -1 | awk '{print $4}'"
+        out = subprocess.check_output(command, shell=True).decode('utf8')
+        print(command, out)
+        # if 'Available' not in out:
+        #     return 0 # command failed
+        out = int(out)
         return out
 
     @staticmethod
@@ -103,6 +104,9 @@ class DiskspaceUtility:
         list_files = []
         for file in unprocessed_subject_list:
             total_size += os.path.getsize(file)
+            # if file is compressed, add size once more (double it because of zip extraction?)
+            if file.endswith(".gz") or file.endswith(".zip"):
+                total_size += os.path.getsize(file)
             size_in_MB = total_size / 1024.0 / 1024.0
             if size_in_MB < size:
                 list_files.append(file)
@@ -179,7 +183,7 @@ class ListSubjectHelper:
 
 if __name__ == "__main__":
     size = DiskspaceUtility.get_free_space("../v02003/utility")
-    print(f"current size is {size} ")
-    py = DiskspaceUtility.get_files_upto_size(1, "../v02003/utility", "*.*")
+    print(f"current size is {size} MB")
+    py = DiskspaceUtility.get_files_upto_size(1, "../distribution", "*.*")
     print(f"list of python {py}")
 
