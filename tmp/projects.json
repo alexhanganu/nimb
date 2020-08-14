@@ -5,14 +5,22 @@
     "SOURCE_BIDS_DIR": "",
     "PROCESSED_FS_DIR" : ["beluga","/home/hanganua/projects/def-hanganua/database/loni_adni/processed_fs"],
     "PROCESSED_FS_DIR_error": ["beluga","/home/hanganu/projects/def-hanganua/database/loni_adni/processed_fs_error"],
-    "STATS_DIR": ["elm","/home_je/hanganua/database/loni_adni/stats"]
+    "STATS_DIR": ["elm","/home_je/hanganua/database/loni_adni/stats"],
+    "GLM_file_group" : "",
+    "id_col" : "",
+    "group_col" : "",
+    "variables_for_glm" : []
                 },
 "ppmi": {
     "SOURCE_SUBJECTS_DIR": ["elm","/home_je/hanganua/database/loni_ppmi/source/mri"],
     "SOURCE_BIDS_DIR": "",
     "PROCESSED_FS_DIR" : ["elm","/home_je/hanganua/database/loni_ppmi/processed_fs"],
     "PROCESSED_FS_DIR_error": ["elm","/home_je/hanganua/database/loni_ppmi/processed_fs_error"],
-    "STATS_DIR": ["elm","/home_je/hanganua/database/loni_ppmi/stats"]
+    "STATS_DIR": ["elm","/home_je/hanganua/database/loni_ppmi/stats"],
+    "GLM_file_group" : "",
+    "id_col" : "",
+    "group_col" : "",
+    "variables_for_glm" : []
                 },
 "LOCATION": {
     "local": "local",
@@ -27,6 +35,10 @@
     "PROCESSED_FS_DIR"       : "location; path to the folder that has the archived data processed with FreeSurfer",
     "PROCESSED_FS_DIR_error" : "location; path to the folder that has the archived data processed with FreeSurfer but had error during processing",
     "STATS_DIR"              : "location; path to store the statistical results",
+    "GLM_file_group"    : "PATH to the file.csv or file.xlsx that has the subjects, groups and variables for statistical analyis",
+    "id_col"            : "name of the column in the file.csv that includes the names of the subjects similar to the names in PROCESSED_FS_DIR",
+    "group_col"         : "name of the column in the file.csv that includes the groups",
+    "variables_for_glm" : "list of variables from the columns in file.csv file for statistical analysis, FreeSurfer GLM and correlations",
     "LOCATION"               : "list of local or remote environments where data is stored"
    }
 }

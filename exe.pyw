@@ -4,6 +4,7 @@
 from distribution import database
 from tkinter import Tk, ttk, Menu, N, W, E, S, StringVar, HORIZONTAL
 from sys import platform
+from setup.get_vars import Get_Vars
 
 root = Tk()
 root.title("NIMB")
@@ -238,11 +239,13 @@ def run_copy_subject_to_cluster(Project):
     print("subject json: " + mri_path)
     interface_cluster.copy_subjects_to_cluster(mri_path, subjects_folder, a_folder)
 
+getvars = Get_Vars()
+projects = getvars.projects
+locations = getvars.d_all_vars
+
 
 row = 0
-Project_Data = database._get_Table_Data('Projects', 'all')
-if len(Project_Data) > 0:
-    for Project in Project_Data:
+for Project in projects['PROJECTS']:
         col = 0
         button(mainframe, text=Project, command=lambda: set_Project_Data(
             Project)).grid(row=row, column=col)
@@ -258,7 +261,6 @@ if len(Project_Data) > 0:
 
         button(mainframe, text="copy subjects to cluster",
                command=lambda: run_copy_subject_to_cluster(Project)).grid(row=row, column=col)
-        mri_path = database._get_Table_Data('Projects', Project)[Project]['mri_dir']
         col += 1
 
         # button(mainframe, text="do stats", command=lambda: runstats(
@@ -269,23 +271,9 @@ ttk.Separator(mainframe, orient=HORIZONTAL).grid(
     row=row, column=0, columnspan=7, sticky='ew')
 row += 1
 
-# button(mainframe, text="Check new MRI all data", command=chkmri).grid(column=5, row=row, columnspan=2, sticky=W)
-# button(mainframe, text="Extract data all subjects", command=xtrctdata).grid(row=row+1, column=5, columnspan=2, sticky=W)
-# row += 1
 
-clusters = database._get_Table_Data('Clusters', 'all')
-cred = ['not set']
-####
-# clusters = database._get_credentials('all')
-# cuser = clusters[0][1]
-# caddress = clusters[0][2]
-# cpw = clusters[0][5]
-# cmaindir = clusters[0][3]
-
-####
-
-for cred in clusters:
-    button(mainframe, text=cred, command=setupcredentials).grid(
+for location in projects['LOCATION']:
+    button(mainframe, text=location, command=setupcredentials).grid(
         row=row, column=0, sticky=W)
     row += 1
 
@@ -295,6 +283,22 @@ for child in mainframe.winfo_children():
 root.mainloop()
 
 '''
+# Project_Data = database._get_Table_Data('Projects', 'all')
+# mri_path = database._get_Table_Data('Projects', Project)[Project]['mri_dir']
+
+# button(mainframe, text="Check new MRI all data", command=chkmri).grid(column=5, row=row, columnspan=2, sticky=W)
+# button(mainframe, text="Extract data all subjects", command=xtrctdata).grid(row=row+1, column=5, columnspan=2, sticky=W)
+# row += 1
+
+# clusters = database._get_Table_Data('Clusters', 'all')
+# cred = ['not set']
+####
+# clusters = database._get_credentials('all')
+# cuser = clusters[0][1]
+# caddress = clusters[0][2]
+# cpw = clusters[0][5]
+# cmaindir = clusters[0][3]
+
 
 def xtrctdata():
     try:

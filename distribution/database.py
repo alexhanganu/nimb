@@ -36,8 +36,8 @@ def __get_table_cols(table):
 
 
 
-'''REMOTE/CLUSTER DATA SETTINGS:
-
+'''
+DATA SETTINGS:
 setting/changing the data for tables
 gettin them
 deleting them
@@ -75,7 +75,7 @@ def _get_Table_Data(Table, _id):
             ls_credentials = cred[1:]
             credentials[_id] = {}
             for col in ls_col_names:
-                credentials[_id][col] = ls_credentials[ls_col_names.index(col)]            
+                credentials[_id][col] = ls_credentials[ls_col_names.index(col)]
     else:
         _id = 'default'+str(Table)
         credentials_default = __get_table_cols(_id)
