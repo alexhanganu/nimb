@@ -10,10 +10,10 @@ class SETUP_FREESURFER():
 
     def __init__(self, vars):
 
-        self.NIMB_HOME                = vars['local']['NIMB_PATHS']['NIMB_HOME']
-        self.FREESURFER_HOME          = vars['local']['FREESURFER']['FREESURFER_HOME']
-        self.freesurfer_download_path = vars['local']['FREESURFER']['freesurfer_download_path']
-        self.matlab_download_path     = vars['local']['FREESURFER']['matlab_download_path']
+        self.NIMB_HOME            = vars['local']['NIMB_PATHS']['NIMB_HOME']
+        self.FREESURFER_HOME      = vars['local']['FREESURFER']['FREESURFER_HOME']
+        self.freesurfer_installer = vars['local']['FREESURFER']['freesurfer_installer']
+        self.matlab_installer     = vars['local']['FREESURFER']['matlab_installer']
 
 
         if not path.exists(self.FREESURFER_HOME):
@@ -31,13 +31,13 @@ class SETUP_FREESURFER():
     def freesurfer_install(self):
         chdir(self.NIMB_HOME)
         print('downloading freesurfer')
-        installer = self.freesurfer_download_path.split("/")[-1]
+        installer = self.freesurfer_installer.split("/")[-1]
         try:
-            system('wget '+self.freesurfer_download_path)
+            system('wget '+self.freesurfer_installer)
             while not path.isfile(path.join(self.NIMB_HOME, installer)):
                 time.sleep(1000)
         except Exception:
-            system('curl -o '+installer+' '+self.freesurfer_download_path)
+            system('curl -o '+installer+' '+self.freesurfer_installer)
             while not path.isfile(path.join(self.NIMB_HOME, installer)):
                 time.sleep(1000)
 
@@ -54,8 +54,8 @@ class SETUP_FREESURFER():
     def matlab_install(self):
         chdir(self.FREESURFER_HOME)
         print('downloading matlab')
-        installer = self.matlab_download_path.split("/")[-1]
-        system("wget "+self.matlab_download_path)
+        installer = self.matlab_installer.split("/")[-1]
+        system("wget "+self.matlab_installer)
 
         print('installing matlab')
         system('unzip '+installer)

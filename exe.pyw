@@ -35,32 +35,32 @@ freesurfer = database._get_folder('Main')
 
 
 def setupcredentials():
-    from setup import setupcredentials
+    from setup.guitk_setup import setupcredentials
     if setupcredentials():
         clusters = database._get_Table_Data('Clusters', 'all')
         # ccredentials_txt.set(clusters[0][1]+'@'+clusters[0][2])
 
 
 def set_Project_Data(Project):
-    from setup import SetProjectData
+    from setup.guitk_setup import SetProjectData
     SetProjectData(Project)
 
 
 def set_MainFolder(Project):
-    from setup import set_MainFolder
+    from setup.guitk_setup import set_MainFolder
     freesurfer = set_MainFolder(Project)
     freesurfer_address_var.set(freesurfer)
     print(freesurfer)
 
 
 def set_LocalProcessingFolder():
-    from setup import set_LocalProcessingFolder
+    from setup.guitk_setup import set_LocalProcessingFolder
     local = set_LocalProcessingFolder()
     local_fs_address.set(local) # where local_fs_address?
 
 
 def set_Folder(group, Project):
-    from setup import set_Folder
+    from setup.guitk_setup import set_Folder
     Projects_all[Project][group].set(set_Folder(group, Project)) # where it is?
 
 
@@ -151,9 +151,9 @@ def setting_up_local_linux_with_freesurfer():
     :return:
     """
     try:
-        from setup import SETUP_LOCAL_v2
+        from setup.app_setup import SETUP_LOCAL_v2
     except:
-        from setup import SETUP_LOCAL_v2
+        from setup.app_setup import SETUP_LOCAL_v2
 
     SETUP_LOCAL_v2()
 
