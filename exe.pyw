@@ -151,7 +151,7 @@ def run(Project):
 
     print("get list of un-process subject. to be send to the server")
     # must set SOURCE_SUBJECTS_DIR, PROCESSED_FS_DIR before calling
-    # DistributionHelper.get_list_subject_to_be_processed_remote(SOURCE_SUBJECTS_DIR, PROCESSED_FS_DIR)
+    # DistributionHelper.get_list_subject_to_be_processed_remote_version(SOURCE_SUBJECTS_DIR, PROCESSED_FS_DIR)
     # how this part work?
     status.set('Copying data to cluster ')
     #  copy subjects to cluster

@@ -1,9 +1,96 @@
 from distribution.check_disk_space import *
-
+import sys
+import shutil
+from distribution.database import *
+from distribution import SSHHelper
 class DistributionHelper():
-    """
-    document here
-    """
+
+    user = "USER"
+    nimb_path = 'NIMB_PATHS'
+    stat_path = 'STATS_PATHS'
+    freesurfer = "FREESURFER"
+    SOURCE_SUBJECTS_DIR = "SOURCE_SUBJECTS_DIR"
+    PROCESSED_FS_DIR = "PROCESSED_FS_DIR"
+    @staticmethod
+    def get_MRDATA_PATHS_var(var_name, config_file ="../setup/local.json"):
+        """
+        get the PROCESSED_FS_DIR
+        :param config_file:
+        :var_name: like PROCESSED_FS_DIR
+        :return: empty string, or values
+        """
+        with open(config_file) as file:
+            config_dict = json.load(file)
+        # MRDATA_PATHS
+        if "MRDATA_PATHS" not in config_dict.keys():
+            print("There is no path for MRDATA_PATHS and PROCESSED_FS_DIR")
+            return ""
+        return config_dict["MRDATA_PATHS"][var_name]
+    @staticmethod
+    def get_PROCESSED_FS_DIR(config_file ="../setup/local.json"):
+        return DistributionHelper.get_MRDATA_PATHS_var("PROCESSED_FS_DIR", config_file)
+    @staticmethod
+    def get_SOURCE_SUBJECTS_DIR(config_file ="../setup/local.json"):
+        return DistributionHelper.get_MRDATA_PATHS_var("SOURCE_SUBJECTS_DIR",config_file)
+    @staticmethod
+    def get_username_password_cluster_from_sqlite():
+        """
+        get user name and password from sqlite database
+        :return: username, password in string
+        """
+        clusters = database._get_Table_Data('Clusters', 'all')
+        user_name = clusters[list(clusters)[0]]['Username']
+        user_password = clusters[list(clusters)[0]]['Password']
+        if len(user_name) < 1or len(user_password) < 1:
+            print(f"User name or password is not define")
+            return False
+        return user_name, user_password
+    @staticmethod
+    def is_setup_vars_folders(config_file ="../setup/local.json", is_freesurfer_nim=False,
+                              is_nimb_classification=False, is_nimb_fs_stats=False):
+        """
+        check for configuration parameters, will exit (quit) the programme if the variables are not define
+        :param config_file: path to configuration json file
+        :param is_freesurfer_nim: True if run nimb freesurfer
+        :param is_nimb_classification:
+        :param is_nimb_fs_stats:
+        :return: True if there is no error, otherwise, return False
+        """
+        with open(config_file) as file:
+            config_dict = json.load(file)
+        # check for the USER key
+        for key, value in config_dict[DistributionHelper.user].items():
+            if len(value) < 1:
+                print(f"This {key} must be set because it is empy")
+                # sys.exit()
+                return False
+        # check the NIMB_PATHS
+        if is_nimb_classification or is_nimb_classification:
+            for key, value in config_dict[DistributionHelper.nimb_path].items():
+                if len(value) < 1:
+                    print(f"This {key} must be set because it is empy")
+                    # sys.exit()
+                    return False
+        if is_nimb_fs_stats:
+            for key, value in config_dict[DistributionHelper.stat_path].items():
+                if len(value) < 1:
+                    print(f"This {key} must be set because it is empy")
+                    # sys.exit()
+                    return False
+        # if freesurfer install = 1
+        fs_install = 'FreeSurfer_install'
+        fs_home = "FREESURFER_HOME"
+        if config_dict[DistributionHelper.freesurfer][fs_install] == 1:
+            if len(config_dict[DistributionHelper.freesurfer][fs_home]) < 1:
+                print(f"{fs_home} is missing. It must bedefine in {config_file}")
+                return False
+            # MRDATA_PATHS must be defined:
+            if "MRDATA_PATHS" not in config_dict.keys():
+                print(f"MRDATA_PATHS is missing. It must bedefine in f{config_file} when {fs_install} = 1")
+                return False
+        return True
+
+
     @staticmethod
     def is_all_subject_processed(SOURCE_SUBJECTS_DIR, PROCESSED_FS_DIR):
         """
@@ -18,8 +105,10 @@ class DistributionHelper():
         return False
 
     @staticmethod
-    def get_list_subject_to_be_processed_local(SOURCE_SUBJECTS_DIR, PROCESSED_FS_DIR):
+    def get_list_subject_to_be_processed_local_version(SOURCE_SUBJECTS_DIR, PROCESSED_FS_DIR):
         """
+        both SOURCE_SUBJECTS_DIR and PROCESSED_FS_DIR is inside a single computer (i.e., local pc)
+
         1. get the list of un-processed subject
         2. get the current available space on hard-disk of user
         2. calculate the list of
@@ -29,16 +118,23 @@ class DistributionHelper():
         """
         # get the list of unprocessed subjects
         un_process_sj = ListSubjectHelper.get_to_be_processed_subject_local(SOURCE_SUBJECTS_DIR, PROCESSED_FS_DIR)
+        un_process_sj = [os.path.join(SOURCE_SUBJECTS_DIR,file) for file in un_process_sj ]
         # based on availabe space
         to_be_process_subject = DiskspaceUtility.get_subject_to_be_process_with_free_space(un_process_sj)
         #
     @staticmethod
     def helper(ls_output):
-        return ls_output.split("\n")[1:-1]
-    @staticmethod
-    def get_list_subject_to_be_processed_remote(SOURCE_SUBJECTS_DIR, PROCESSED_FS_DIR,
-                                                remote_host, remote_username, remote_password):
         """
+        split the outputs of 'ls' to get all file names
+        :param ls_output:
+        :return:
+        """
+        return ls_output.split("\n")[0:-1]
+    @staticmethod
+    def get_list_subject_to_be_processed_remote_version(SOURCE_SUBJECTS_DIR, PROCESSED_FS_DIR,
+                                                        remote_host, remote_username, remote_password):
+        """
+        use when SOURCE_SUBJECTS_DIR, PROCESSED_FS_DIR, are at two computers
         1. connect to the remote host
         2. get local process subjects
         3. get remote processed subjects
@@ -48,7 +144,7 @@ class DistributionHelper():
         7. (other functions) send those subjects to the remote server
         :param SOURCE_SUBJECTS_DIR: MUST BE FULL PATHS
         :param PROCESSED_FS_DIR:
-        :return:
+        :return: full path of subjects that is not process yet
         """
         ssh_session = getSSHSession(remote_host, remote_username, remote_password)
         (zip_out, err) = runCommandOverSSH(ssh_session, f" cd {PROCESSED_FS_DIR}; ls *.zip") #
@@ -67,21 +163,105 @@ class DistributionHelper():
         print("Remote server has {0}MB free, it can stored {1} subjects".format(free_space, len(to_be_process_subject)))
         ssh_session.close()
         return [os.path.join(SOURCE_SUBJECTS_DIR,subject) for subject in to_be_process_subject] # full path
-        #return to_be_process_subject
-
 
 
     @staticmethod
-    def upload_un_process_subject_to_remote():
+    def load_configuration_json(config_file ="../setup/local.json"):
+        with open(config_file) as file:
+            config_dict = json.load(file)
+        return config_dict
+    @staticmethod
+    def send_subject_data(config_file ="../setup/local.json"):
+        """
+        copy the subject to NIMB_NEW_SUBJECTS
+        it can be on local computer
+        or remote compyuter
+        the list of subject is get by get_list_subject_to_be_processed_local_version for local
+        and get_list_subject_to_be_processed_remote_version for remote
+        :param config_file:
+        :return:
+        """
+        # read all the json configruation files
+        # check if it is FreeSurfer_install
+        # if is local.json
+        # send to NIMB_NEW_SUBJECTS
+        # if remoe
+        # send to NIMB_NEW_SUBECTS, choose the first remote
+        # 1. read the local configuration files
+        config_dict = DistributionHelper.load_configuration_json(config_file)
+        if config_dict[DistributionHelper.freesurfer]["FreeSurfer_install"] == 1:
+            send_path =  config_dict['NIMB_PATHS']['NIMB_NEW_SUBJECTS']
+            # copy subject to this path, using shutil
+            # todo: re-test the local part
+            PROCESSED_FS_DIR = DistributionHelper.get_PROCESSED_FS_DIR(config_file=config_file)
+            SOURCE_SUBJECTS_DIR = DistributionHelper.get_SOURCE_SUBJECTS_DIR(config_file=config_file)
+            subjects = DistributionHelper.get_list_subject_to_be_processed_local_version(SOURCE_SUBJECTS_DIR=SOURCE_SUBJECTS_DIR,
+                                                                                         PROCESSED_FS_DIR=PROCESSED_FS_DIR)
+            for sj in subjects:
+                shutil.copy(sj,send_path)
+            return send_path
+        elif config_dict[DistributionHelper.freesurfer]["FreeSurfer_install"] == 0: # check on remote cluster
+            if "REMOTE" not in config_dict.keys():
+                print("There is no remote server!")
+                return
+            # 2. get the first remote cluster
+            for remote_name, remote_add in config_dict['REMOTE'].items(): # get the first only
+                cluster_name = remote_name
+                cluster_address = remote_add
+                break
+            # 3. open the {cluster_name}.json
+            cluster_config_dict = DistributionHelper.load_configuration_json(f"../setup/{cluster_name}.json")
+            send_path = cluster_config_dict['NIMB_PATHS']['NIMB_NEW_SUBJECTS']
+            # upload all files to send path
+            # 1. get all the subject file path, using exisit helper method
+            PROCESSED_FS_DIR = DistributionHelper.get_PROCESSED_FS_DIR(f"../setup/{cluster_name}.json")
+            SOURCE_SUBJECTS_DIR = DistributionHelper.get_SOURCE_SUBJECTS_DIR(f"../setup/{cluster_name}.json")
+            user_name, user_password = DistributionHelper.get_username_password_cluster_from_sqlite()
+            subjects_to_send = DistributionHelper.get_list_subject_to_be_processed_remote_version(SOURCE_SUBJECTS_DIR=SOURCE_SUBJECTS_DIR,
+                                                                                                  PROCESSED_FS_DIR=PROCESSED_FS_DIR,
+                                                                                                  remote_host=cluster_address,
+                                                                                                  remote_username=user_name,
+                                                                                                  remote_password=user_password)
+
+            ssh_session = getSSHSession(remote_host=cluster_address, remote_username=user_name, remote_password=user_password)
+            # call upload_multiple_files_to_cluster for them
+            SSHHelper.upload_multiple_files_to_cluster(ssh_session=ssh_session,dest_folder=send_path,file_list=subjects_to_send)
+            #
+
+            return send_path
+            # 4. upload the subjects to that path
+    @staticmethod
+    def upload_subject_to_remote(local_path, remote_path, remote_host, remote_username, remote_password):
         # call the ssh helper to upload the file
         # to NIMB_NEW_SUBJECTS
         # interface_cluster.copy_subjects_to_cluster(mri_path, subjects_folder, a_folder)
+        # upload_multiple_files_to_cluster()
+
+        raise NotImplementedError
         pass
 
     @staticmethod
     def check_status_of_free_surfer():
-        # not important now. todo: ask alex the exisitng function
-        pass
+        """
+        not implement yet
+        :return:
+        """
+        raise NotImplementedError
+
+    @staticmethod
+    def download_processed_subject(local_destination, remote_path, remote_host, remote_username, remote_password):
+        """
+        Download from processed folder back to local
+        :param local_destination: place to stored downloaded files and folders
+        :param remote_path:
+        :param remote_host:
+        :param remote_username:
+        :param remote_password:
+        :return: None
+        """
+        ssh_session = getSSHSession(remote_host, remote_username, remote_password)
+        download_files_from_server(ssh_session, remote_path, local_destination)
+        ssh_session.close()
 
     @staticmethod
     def move_processed_to_storage():
@@ -163,3 +343,20 @@ class DistributionHelper():
         cp2remote_rm_from_local(client, ls_copy, path_src, username, HOST, path_dst)
         client.close()
 
+if __name__ == "__main__":
+    #DistributionHelper.is_setup_vars_folders(is_nimb_fs_stats=True, is_nimb_classification=True, is_freesurfer_nim=True)
+    PROCESSED_FS_DIR = DistributionHelper.get_PROCESSED_FS_DIR(config_file="../setup/local.json")
+    SOURCE_SUBJECTS_DIR = DistributionHelper.get_SOURCE_SUBJECTS_DIR(config_file="../setup/local.json")
+    user_name,user_password = DistributionHelper.get_username_password_cluster_from_sqlite()
+    cluster = "cedar.computecanada.ca"
+    subjects = DistributionHelper.get_list_subject_to_be_processed_remote_version("/Users/van/Downloads/tmp/fs","/home/hvt/tmp2",cluster,user_name,user_password)
+    print(subjects)
+    ssh = getSSHSession(cluster, user_name, user_password)
+    SOURCE_SUBJECTS_DIR = "/Users/van/Downloads/tmp/fs"
+    PROCESSED_FS_DIR = "/home/hvt/projects/def-hanganua/fs-subjects/PPMI_51392_ses-1"
+    # download data from remote
+    download_files_from_server(ssh,SOURCE_SUBJECTS_DIR,PROCESSED_FS_DIR)
+    ssh.close()
+
+    # send data
+    DistributionHelper.send_subject_data(config_file="../setup/local.json")

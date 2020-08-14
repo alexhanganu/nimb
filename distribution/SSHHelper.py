@@ -413,7 +413,7 @@ def upload_subject_json_to_server(new_subjects_json_file, dest_folder, ssh_sessi
 
 
 
-def download_files_from_server(local_folder, remote_folder):
+def download_files_from_server(ssh_session, local_folder, remote_folder):
     """
     download files from server
     :param local_folder:
@@ -421,13 +421,31 @@ def download_files_from_server(local_folder, remote_folder):
     :param remote_folder:
     :type remote_folder:
     """
-    ssh_session = getSSHSession(host_name, user_name, user_password)
+    # ssh_session = getSSHSession(host_name, user_name, user_password)
     scp = SCPClient(ssh_session.get_transport(), progress=__progress)
+    # ftp_client = ssh_session.open_sftp()
     #     ftp_client=ssh_client.open_sftp()
     # ftp_client.get(‘remotefileth’,’localfilepath’)
     # ftp_client.close()
-    ftp_client = ssh_session.open_sftp()
-    ftp_client.get('/home/hvt/projects/def-hanganua/a','/Users/van/Downloads/git/nimb/v02003/tmp/make_subj2fs.py')
+    # def sftp_walk(remotepath):
+    #     from stat import S_ISDIR
+    #     path = remotepath
+    #     files = []
+    #     folders = []
+    #     for f in ftp_client.listdir_attr(remotepath):
+    #         if S_ISDIR(f.st_mode):
+    #             folders.append(f.filename)
+    #         else:
+    #             files.append(f.filename)
+    #     if files:
+    #         yield path, files
+    #     for folder in folders:
+    #         new_path = os.path.join(remotepath, folder)
+    #         for x in sftp_walk(new_path):
+    #             yield x
+
+    # ftp_client.get(remote_folder,local_folder)
+    scp.get(remote_folder, local_folder, recursive=True)
 
 
 

@@ -10,7 +10,7 @@ from distribution.pipeline_management import Management
 from setup.get_vars import Get_Vars
 from os import path
 from classification import classify_bids
-
+from distribution.distribution_helper import  DistributionHelper
 __version__ = 'v1'
 
 class NIMB(object):
@@ -42,6 +42,11 @@ class NIMB(object):
         task = Management(self.process, self.vars)
 
         if self.process == 'classify':
+            if not DistributionHelper.is_setup_vars_folders(config_file="../setup/local.json", is_nimb_classification=True):
+                print("Please check the configuration files. There is some missing!")
+                sys.exit()
+            # send the data
+            # DistributionHelper.send_subject_data(config_file="../setup/local.json")
             if self.ready():
                 return classify_bids.get_dict_MR_files2process(
                                      self.vars['local']['NIMB_PATHS']['NIMB_NEW_SUBJECTS'],
@@ -50,6 +55,11 @@ class NIMB(object):
                                      self.vars['local']['FREESURFER']['flair_t2_add'])
 
         if self.process == 'freesurfer':
+            # send the data
+            # DistributionHelper.send_subject_data(config_file="../setup/local.json")
+            if not DistributionHelper.is_setup_vars_folders(config_file="../setup/local.json", is_freesurfer_nim=True):
+                print("Please check the configuration files. There is some missing!")
+                sys.exit()
             if self.ready():
                 vars_f = path.join(self.vars['local']['NIMB_PATHS']['NIMB_HOME'],'processing','freesurfer','vars.json')
                 with open(vars_f,'w') as jf:
@@ -58,6 +68,9 @@ class NIMB(object):
                 start_fs_pipeline.start_fs_pipeline()
 
         if self.process == 'fs-stats':
+            if not DistributionHelper.is_setup_vars_folders(config_file="../setup/local.json", is_nimb_fs_stats=True):
+                print("Please check the configuration files. There is some missing!")
+                sys.exit()
             if self.ready():
                 PROCESSED_FS_DIR = task.fs_stats()
                 print(PROCESSED_FS_DIR)
