@@ -4,7 +4,6 @@
 from distribution import database
 from tkinter import Tk, ttk, Menu, N, W, E, S, StringVar, HORIZONTAL
 from sys import platform
-from credentials_path import credentials_home
 
 root = Tk()
 root.title("NIMB")
