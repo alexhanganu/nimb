@@ -1,8 +1,7 @@
 from sqlite3 import connect, OperationalError
 from os import listdir, path, remove
 from sys import platform
-
-home = path.expanduser("~")+'/'
+from credentials_path import credentials_home
 
 '''DATABASE ACTIONS
 connecting to DB
@@ -11,7 +10,7 @@ provide column names
 '''
 
 def __connect_db__():
-    conn = connect(home+platform+'.db', check_same_thread=False)
+    conn = connect(path.join(credentials_home, platform+'.db'), check_same_thread=False)
     try:
         conn.execute('select count(*) from Clusters')
     except OperationalError:
@@ -279,8 +278,8 @@ def _delete_Project(Project):
 
 def Clear_DIR_incoming():
     print("cleaning")
-    if path.isfile(home+'folder_incoming.py'):
-        open(home+'folder_incoming.py','w').close()
+    if path.isfile(path.join(home,'folder_incoming.py')):
+        open(path.join(home,'folder_incoming.py'), 'w').close()
 
 
 def _get_list_processed_subjects(DIR):
