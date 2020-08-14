@@ -1,25 +1,22 @@
 {
-"PROJECTS": ["adni", "ppmi"],
-"adni": {
-    "SOURCE_SUBJECTS_DIR": ["beluga","/home/hanganua/projects/def-hanganua/database/loni_adni/source/mri"],
+"PROJECTS": ["project1", "project2"],
+"project1": {
+    "SOURCE_SUBJECTS_DIR": ["local","/home/username/database/source/mri"],
     "SOURCE_BIDS_DIR": "",
-    "PROCESSED_FS_DIR" : ["beluga","/home/hanganua/projects/def-hanganua/database/loni_adni/processed_fs"],
-    "PROCESSED_FS_DIR_error": ["beluga","/home/hanganu/projects/def-hanganua/database/loni_adni/processed_fs_error"],
-    "STATS_DIR": ["elm","/home_je/hanganua/database/loni_adni/stats"]
+    "PROCESSED_FS_DIR" : ["local","/home/username/database/processed_fs"],
+    "PROCESSED_FS_DIR_error": ["local","/home/username/database/processed_fs_error"],
+    "STATS_DIR": ["local","/home/username/database/stats"]
                 },
-"ppmi": {
-    "SOURCE_SUBJECTS_DIR": ["elm","/home_je/hanganua/database/loni_ppmi/source/mri"],
+"project2": {
+    "SOURCE_SUBJECTS_DIR": ["remote1","/home/username/database/source/mri"],
     "SOURCE_BIDS_DIR": "",
-    "PROCESSED_FS_DIR" : ["elm","/home_je/hanganua/database/loni_ppmi/processed_fs"],
-    "PROCESSED_FS_DIR_error": ["elm","/home_je/hanganua/database/loni_ppmi/processed_fs_error"],
-    "STATS_DIR": ["elm","/home_je/hanganua/database/loni_ppmi/stats"]
+    "PROCESSED_FS_DIR" : ["remote1","/home/username/database/processed_fs"],
+    "PROCESSED_FS_DIR_error": ["remote1","/home/username/database/processed_fs_error"],
+    "STATS_DIR": ["remote1","/home/username/database/stats"]
                 },
 "LOCATION": {
     "local": "local",
-    "beluga": "beluga.calculquebec.ca",
-    "cedar": "cedar.computecanada.ca",
-    "elm": "elm.criugm.qc.ca",
-    "graham": "graham.computecanada.ca"
+    "remote1": "remote1.remotepath.ca"
           },
 "EXPLANATION": {
     "SOURCE_SUBJECTS_DIR"    : "location; folder that has the raw MRIs of the subjects in archived or non-archived format",

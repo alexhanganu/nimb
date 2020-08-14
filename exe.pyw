@@ -30,7 +30,6 @@ freesurfer_address_var = StringVar()
 status = StringVar()
 folder_for_glm = StringVar()
 
-freesurfer = database._get_folder('Main')
 
 
 def setupcredentials():

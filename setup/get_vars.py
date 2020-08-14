@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from os import path
+from os import path, system
+import shutil
 import json
 from credentials_path import credentials_home
 
@@ -8,7 +9,13 @@ class Get_Vars():
 
 	def __init__(self):
 
-		f_projects = path.join(path.dirname(path.abspath(__file__)), 'projects.json')
+		if path.exists(path.join(credentials_home, 'projects.json')):
+			f_projects = path.join(credentials_home, 'projects.json')
+		else:
+			f_projects = path.join(path.dirname(path.abspath(__file__)), 'projects.json')
+			print('PROJECTS AND VARIABLES ARE NOT DEFINED. this can be done in the files located at: '+credentials_home)
+			for file in ['local.json', 'projects.json', 'remote1.json']:
+				shutil.copy(path.join(path.dirname(path.abspath(__file__)), file), path.join(credentials_home, file))
 		self.projects = self.get_vars(f_projects)
 		self.d_all_vars = dict()
 		for location in self.projects['LOCATION']:

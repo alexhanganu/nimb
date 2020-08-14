@@ -21,28 +21,29 @@ class NIMB(object):
 
     def __init__(
         self,
+        projects,
+        locations,
         process,
         project,
         **_
     ):
 
+        self.projects = projects
+        self.locations = locations
         self.process = process
         self.project = project
-        getvars = Get_Vars()
-        self.vars = getvars.d_all_vars
-        self.projects = getvars.projects
-        print('local user is: '+self.vars['local']['USER']['user'])
+        print('local user is: '+self.locations['local']['USER']['user'])
         self.ready()
 
     def ready(self):
-        task = Management(self.process, self.projects, self.vars)
+        task = Management(self.process, self.projects, self.locations)
         task.freesurfer()
         return True
         
 
     def run(self):
         """Run nimb"""
-        task = Management(self.process, self.projects, self.vars)
+        task = Management(self.process, self.projects, self.locations)
 
         if self.process == 'classify':
             # if not DistributionHelper.is_setup_vars_folders(config_file="../setup/local.json", is_nimb_classification=True):
@@ -52,10 +53,10 @@ class NIMB(object):
             # DistributionHelper.send_subject_data(config_file="../setup/local.json")
             if self.ready():
                 return classify_bids.get_dict_MR_files2process(
-                                     self.vars['local']['NIMB_PATHS']['NIMB_NEW_SUBJECTS'],
-                                     self.vars['local']['NIMB_PATHS']['NIMB_HOME'],
-                                     self.vars['local']['NIMB_PATHS']['NIMB_tmp'],
-                                     self.vars['local']['FREESURFER']['flair_t2_add'])
+                                     self.locations['local']['NIMB_PATHS']['NIMB_NEW_SUBJECTS'],
+                                     self.locations['local']['NIMB_PATHS']['NIMB_HOME'],
+                                     self.locations['local']['NIMB_PATHS']['NIMB_tmp'],
+                                     self.locations['local']['FREESURFER']['flair_t2_add'])
 
         if self.process == 'freesurfer':
             # send the data
@@ -64,9 +65,9 @@ class NIMB(object):
                 # print("Please check the configuration files. There is some missing!")
                 # sys.exit()
             if self.ready():
-                vars_f = path.join(self.vars['local']['NIMB_PATHS']['NIMB_HOME'],'processing','freesurfer','vars.json')
+                vars_f = path.join(self.locations['local']['NIMB_PATHS']['NIMB_HOME'],'processing','freesurfer','vars.json')
                 with open(vars_f,'w') as jf:
-                    json.dump(self.vars['local'], jf, indent=4)
+                    json.dump(self.locations['local'], jf, indent=4)
                 from processing.freesurfer import start_fs_pipeline
                 start_fs_pipeline.start_fs_pipeline()
 
@@ -79,9 +80,9 @@ class NIMB(object):
                 print(PROCESSED_FS_DIR)
                 from stats import fs_stats2table
 
-                fs_stats2table.chk_if_subjects_ready(self.vars["local"]["STATS_PATHS"]["STATS_HOME"], PROCESSED_FS_DIR)
+                fs_stats2table.chk_if_subjects_ready(self.locations["local"]["STATS_PATHS"]["STATS_HOME"], PROCESSED_FS_DIR)
                 fs_stats2table.stats2table_v7(
-                                   self.vars["local"]["STATS_PATHS"]["STATS_HOME"],
+                                   self.locations["local"]["STATS_PATHS"]["STATS_HOME"],
                                    PROCESSED_FS_DIR, data_only_volumes=False)
 
         if self.process == 'fs-glm':
@@ -90,12 +91,8 @@ class NIMB(object):
                 from processing.freesurfer import fs_runglm
 
 
-def get_projects():
-        with open('setup/projects.json') as jf:
-            return json.load(jf)['PROJECTS']
 
-
-def get_parameters():
+def get_parameters(projects):
     """get parameters for nimb"""
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -116,8 +113,8 @@ def get_parameters():
     
     parser.add_argument(
         "-project", required=False,
-        default=get_projects()[0],
-        choices = get_projects(),
+        default=projects[:1],
+        choices = projects,
         help="names of projects located in setup/projects.json -> PROJECTS",
     )
 
@@ -127,9 +124,12 @@ def get_parameters():
 
 def main():
 
-    params = get_parameters()
+    getvars = Get_Vars()
+    projects = getvars.projects
+    locations = getvars.d_all_vars
+    params = get_parameters(projects['PROJECTS'])
     
-    app = NIMB(**vars(params))
+    app = NIMB(projects, locations, **vars(params))
     return app.run()
 
 
