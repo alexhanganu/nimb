@@ -4,12 +4,6 @@
     "users_list"         : ["hanganua","hvt","lucaspsy","hiver85"],
     "supervisor_account": "def-hanganua"
         },
-"MRDATA_PATHS": {
-    "SOURCE_SUBJECTS_DIR": "",
-    "SOURCE_BIDS_DIR": "",
-    "PROCESSED_FS_DIR" : "/scratch/hanganua/database/loni_adni/processed_fs",
-    "PROCESSED_FS_DIR_error": ""
-                },
 "NIMB_PATHS": {
     "NIMB_HOME": "/home/lucaspsy/projects/def-hanganua/nimb",
     "NIMB_tmp": "/scratch/lucaspsy/nimb_tmp",

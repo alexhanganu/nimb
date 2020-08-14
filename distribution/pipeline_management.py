@@ -5,12 +5,13 @@ from os import path, makedirs, listdir, system
 
 class Management():
 
-    def __init__(self, task, vars):
+    def __init__(self, task, projects, vars):
 
         print(task)
 
         self.vars = vars
         self.NIMB_tmp = self.vars["local"]["NIMB_PATHS"]["NIMB_tmp"]
+        self.projects = projects
         print('start distribution')
         self.verify_paths()
 
@@ -39,14 +40,14 @@ class Management():
             return True
             
 
-    def fs_stats(self):
+    def fs_stats(self, project):
         """will check if the STATS folder is present and will create if absent
            will return the folder with unzipped stats folder for each subject"""
 
         if not path.exists(self.vars["local"]["STATS_PATHS"]["STATS_HOME"]):
             makedirs(p)
 
-        PROCESSED_FS_DIR = self.vars["local"]["MRDATA_PATHS"]["PROCESSED_FS_DIR"]
+        PROCESSED_FS_DIR = self.projects[project]["PROCESSED_FS_DIR"]
         
         if any('.zip' in i for i in listdir(PROCESSED_FS_DIR)):
             from .manage_archive import ZipArchiveManagement

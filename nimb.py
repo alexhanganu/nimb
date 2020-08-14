@@ -10,7 +10,7 @@ from distribution.pipeline_management import Management
 from setup.get_vars import Get_Vars
 from os import path
 from classification import classify_bids
-from distribution.distribution_helper import  DistributionHelper
+# from distribution.distribution_helper import  DistributionHelper
 __version__ = 'v1'
 
 class NIMB(object):
@@ -22,29 +22,32 @@ class NIMB(object):
     def __init__(
         self,
         process,
+        project,
         **_
     ):
 
         self.process = process
+        self.project = project
         getvars = Get_Vars()
         self.vars = getvars.d_all_vars
+        self.projects = getvars.projects
         print('local user is: '+self.vars['local']['USER']['user'])
         self.ready()
 
     def ready(self):
-        task = Management(self.process, self.vars)
+        task = Management(self.process, self.projects, self.vars)
         task.freesurfer()
         return True
         
 
     def run(self):
         """Run nimb"""
-        task = Management(self.process, self.vars)
+        task = Management(self.process, self.projects, self.vars)
 
         if self.process == 'classify':
-            if not DistributionHelper.is_setup_vars_folders(config_file="../setup/local.json", is_nimb_classification=True):
-                print("Please check the configuration files. There is some missing!")
-                sys.exit()
+            # if not DistributionHelper.is_setup_vars_folders(config_file="../setup/local.json", is_nimb_classification=True):
+                # print("Please check the configuration files. There is some missing!")
+                # sys.exit()
             # send the data
             # DistributionHelper.send_subject_data(config_file="../setup/local.json")
             if self.ready():
@@ -57,9 +60,9 @@ class NIMB(object):
         if self.process == 'freesurfer':
             # send the data
             # DistributionHelper.send_subject_data(config_file="../setup/local.json")
-            if not DistributionHelper.is_setup_vars_folders(config_file="../setup/local.json", is_freesurfer_nim=True):
-                print("Please check the configuration files. There is some missing!")
-                sys.exit()
+            # if not DistributionHelper.is_setup_vars_folders(config_file="../setup/local.json", is_freesurfer_nim=True):
+                # print("Please check the configuration files. There is some missing!")
+                # sys.exit()
             if self.ready():
                 vars_f = path.join(self.vars['local']['NIMB_PATHS']['NIMB_HOME'],'processing','freesurfer','vars.json')
                 with open(vars_f,'w') as jf:
@@ -68,11 +71,11 @@ class NIMB(object):
                 start_fs_pipeline.start_fs_pipeline()
 
         if self.process == 'fs-stats':
-            if not DistributionHelper.is_setup_vars_folders(config_file="../setup/local.json", is_nimb_fs_stats=True):
-                print("Please check the configuration files. There is some missing!")
-                sys.exit()
+            # if not DistributionHelper.is_setup_vars_folders(config_file="../setup/local.json", is_nimb_fs_stats=True):
+                # print("Please check the configuration files. There is some missing!")
+                # sys.exit()
             if self.ready():
-                PROCESSED_FS_DIR = task.fs_stats()
+                PROCESSED_FS_DIR = task.fs_stats(self.project)
                 print(PROCESSED_FS_DIR)
                 from stats import fs_stats2table
 
@@ -86,6 +89,10 @@ class NIMB(object):
                 task.fs_glm()
                 from processing.freesurfer import fs_runglm
 
+
+def get_projects():
+        with open('setup/projects.json') as jf:
+            return json.load(jf)['PROJECTS']
 
 
 def get_parameters():
@@ -106,6 +113,13 @@ def get_parameters():
         choices = ['ready', 'freesurfer', 'classify', 'fs-stats', 'fs-glm', 'stats-general'],
         help="freesurfer (start FreeSurfer pipeline), classify (classify MRIs) fs-stats (extract freesurfer stats from subjid/stats/* to an excel file), fs-glm (perform freesurfer mri_glmfit GLM analsysis), stats-general (perform statistical analysis)",
     )
+    
+    parser.add_argument(
+        "-project", required=False,
+        default=get_projects()[0],
+        choices = get_projects(),
+        help="names of projects located in setup/projects.json -> PROJECTS",
+    )
 
     params = parser.parse_args()
     return params
@@ -114,7 +128,7 @@ def get_parameters():
 def main():
 
     params = get_parameters()
-
+    
     app = NIMB(**vars(params))
     return app.run()
 

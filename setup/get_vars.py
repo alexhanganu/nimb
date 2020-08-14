@@ -13,6 +13,8 @@ class Get_Vars():
 		self.change_username()
 		for remote_name in self.d_all_vars['local']['REMOTE']:
 			self.d_all_vars[remote_name] = self.get_vars(path.join(path.dirname(path.abspath(__file__)), remote_name+'.json'))
+		f_projects = path.join(path.dirname(path.abspath(__file__)), 'projects.json')
+		self.projects = self.get_vars(f_projects)
 
 	def get_vars(self, file):
 		with open(file) as jf:
