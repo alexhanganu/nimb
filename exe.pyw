@@ -1,8 +1,7 @@
 # 2020-08-13
 # works only with python 3
 
-from distribution import database, interface_cluster
-from distribution import SSHHelper
+from distribution import database
 from tkinter import Tk, ttk, Menu, N, W, E, S, StringVar, HORIZONTAL
 from sys import platform
 
@@ -23,8 +22,8 @@ button = ttk.Button
 menubar = Menu(root)
 filemenu = Menu(menubar, tearoff=0)
 menubar.add_cascade(label='actions', menu=filemenu)
-filemenu.add_command(label='stop all active tasks',
-                     command=lambda: StopAllActiveTasks())
+# filemenu.add_command(label='stop all active tasks',
+                     # command=lambda: StopAllActiveTasks())
 root.config(menu=menubar)
 
 ccredentials_txt = StringVar()
@@ -65,53 +64,6 @@ def set_Folder(group, Project):
     Projects_all[Project][group].set(set_Folder(group, Project)) # where it is?
 
 
-def cstatus():
-    try:
-        clusters = database._get_Table_Data('Clusters', 'all')
-        from distribution.interface_cluster import check_cluster_status
-        cuser = clusters[0][1]
-        caddress = clusters[0][2]
-        cpw = clusters[0][5]
-        cmaindir = clusters[0][3]
-        status.set('Checking the Cluster')
-        status.set('There are '
-                   + str(check_cluster_status(cuser,
-                                              caddress, cpw, cmaindir)[0])
-                   + ' sessions and '
-                   + str(check_cluster_status(cuser,
-                                              caddress, cpw, cmaindir)[1])
-                   + ' are queued')
-    except FileNotFoundError:
-        setupcredentials()
-        clusters = database._get_Table_Data('Clusters', 'all')
-        cstatus()
-
-
-def StopAllActiveTasks():
-    from distribution.interface_cluster import delete_all_running_tasks_on_cluster
-    clusters = database._get_Table_Data('Clusters', 'all')
-    delete_all_running_tasks_on_cluster(
-        clusters[0][1], clusters[0][2], clusters[0][5], clusters[0][3])
-
-
-def xtrctdata():
-    try:
-        os.system('python nimb.py -process fs-stats')
-        status.set('extracting stats')
-    except Exception as e:
-        print(e)
-        pass
-
-
-def runstats(Project_Data, Project):
-    try:
-        os.system('python nimb.py -process fs-glm')
-        status.set('performing freesurfer whole brain GLM analysis')
-    except Exception as e:
-        print(e)
-        pass
-
-
 def run_processing_on_cluster_2():
     '''
     this is an enhanced version of run_processing_on_cluster
@@ -119,6 +71,7 @@ def run_processing_on_cluster_2():
     :return:
     '''
     # version 2: add username, password, and command line to run here
+    from distribution import SSHHelper
     clusters = database._get_Table_Data('Clusters', 'all')
     user_name = clusters[list(clusters)[0]]['Username']
     user_password = clusters[list(clusters)[0]]['Password']
@@ -210,6 +163,7 @@ def setting_up_remote_linux_with_freesurfer():
     # 0. prepare the python load the python 3.7.4
     # 1. git clone the repository
     # 2. run the python file remote_setupv2.py
+    from distribution import SSHHelper
 
     clusters = database._get_Table_Data('Clusters', 'all')
     user_name = clusters[list(clusters)[0]]['Username']
@@ -273,6 +227,8 @@ def run_copy_subject_to_cluster(Project):
     :return: None
     '''
     # todo: how to get the active cluster for this project
+    from distribution import interface_cluster
+
     clusters = database._get_Table_Data('Clusters', 'all')
     cname = [*clusters.keys()][0]
     project_folder = clusters[cname]['HOME']
@@ -340,3 +296,50 @@ for child in mainframe.winfo_children():
 
 root.mainloop()
 
+'''
+
+def xtrctdata():
+    try:
+        os.system('python nimb.py -process fs-stats')
+        status.set('extracting stats')
+    except Exception as e:
+        print(e)
+        pass
+
+
+def runstats(Project_Data, Project):
+    try:
+        os.system('python nimb.py -process fs-glm')
+        status.set('performing freesurfer whole brain GLM analysis')
+    except Exception as e:
+        print(e)
+        pass
+        
+def cstatus():
+    try:
+        clusters = database._get_Table_Data('Clusters', 'all')
+        from distribution.interface_cluster import check_cluster_status
+        cuser = clusters[0][1]
+        caddress = clusters[0][2]
+        cpw = clusters[0][5]
+        cmaindir = clusters[0][3]
+        status.set('Checking the Cluster')
+        status.set('There are '
+                   + str(check_cluster_status(cuser,
+                                              caddress, cpw, cmaindir)[0])
+                   + ' sessions and '
+                   + str(check_cluster_status(cuser,
+                                              caddress, cpw, cmaindir)[1])
+                   + ' are queued')
+    except FileNotFoundError:
+        setupcredentials()
+        clusters = database._get_Table_Data('Clusters', 'all')
+        cstatus()
+
+
+def StopAllActiveTasks():
+    from distribution.interface_cluster import delete_all_running_tasks_on_cluster
+    clusters = database._get_Table_Data('Clusters', 'all')
+    delete_all_running_tasks_on_cluster(
+        clusters[0][1], clusters[0][2], clusters[0][5], clusters[0][3])
+'''

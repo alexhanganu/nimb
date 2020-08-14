@@ -1,7 +1,10 @@
-numpy==1.18.1
+paramiko=2.7.1
+scp==
 pandas==1.0.0
+numpy==1.18.1
+scipy==
 scikit-learn==0.22.1
 seaborn==0.10.0
 matplotlib==3.1.2
 statsmodels==0.11.0
-paramiko=2.7.1
+

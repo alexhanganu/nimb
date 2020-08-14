@@ -4,7 +4,6 @@
 from os import system, path, remove
 import time
 from sys import platform
-import pandas as pd
 from . import SSHHelper
 from . import database
 freesurfer = database._get_folder('Main')
@@ -221,6 +220,10 @@ def delete_specific_tasks_on_cluster(cuser, caddress, cpw, cmaindir, text2search
         remove(freesurfer+'logs/del_tasks.scr')
 
 def check_active_tasks_being_on_cluster(cmaindir):
+    try:
+        import pandas as pd
+    except ImportError:
+        pass
     if path.getsize(cmaindir+'status_cluster')>0:
         data = pd.read_fwf(cmaindir+'status_cluster')
         data.columns = data.iloc[2]
