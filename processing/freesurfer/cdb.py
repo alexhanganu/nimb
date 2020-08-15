@@ -292,16 +292,15 @@ def chk_new_subjects_json_file(SUBJECTS_DIR, NIMB_tmp, db, freesurfer_version, m
     return db
 
 
-
 def get_registration_files(subjid, db, nimb_dir, NIMB_tmp, flair_t2_add):
         Update_status_log(NIMB_tmp, '    '+subjid+' reading registration files')
         t1_ls_f = db['REGISTRATION'][subjid]['anat']['t1']
         flair_ls_f = 'none'
         t2_ls_f = 'none'
-        if 'flair' in db['REGISTRATION'][subjid]['anat'] and flair_t2_add:
+        if 'flair' in db['REGISTRATION'][subjid]['anat'] and flair_t2_add == 1:
             if db['REGISTRATION'][subjid]['anat']['flair']:
                 flair_ls_f = db['REGISTRATION'][subjid]['anat']['flair']
-        if 't2' in db['REGISTRATION'][subjid]['anat'] and flair_t2_add:
+        if 't2' in db['REGISTRATION'][subjid]['anat'] and flair_t2_add == 1:
             if db['REGISTRATION'][subjid]['anat']['t2'] and flair_ls_f == 'none':
                 t2_ls_f = db['REGISTRATION'][subjid]['anat']['t2']
         Update_status_log(NIMB_tmp, '        from db[\'REGISTRATION\']')

@@ -1,3 +1,4 @@
+
 #!/bin/python
 # 2020.07.31
 
@@ -58,7 +59,8 @@ def makesubmitpbs(cmd, subjid, run, walltime, params):
         f.write('\n')
         f.write(cmd+'\n')
     print('    submitting '+sh_file)
-    if params["SUBMIT"]:
+    if params["SUBMIT"] == 1:
+        print('SUBMITTING is ALLOWED')
 
         time.sleep(2)
         try:
@@ -68,6 +70,7 @@ def makesubmitpbs(cmd, subjid, run, walltime, params):
             print(e)
             return 0
     else:
+        print('SUBMITTING is stopped')
         return 0
 
 def submit_tmux(cmd, subjid):
