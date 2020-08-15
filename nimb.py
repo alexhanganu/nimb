@@ -28,10 +28,10 @@ class NIMB(object):
         **_
     ):
 
-        self.projects = projects
+        self.projects  = projects
         self.locations = locations
-        self.process = process
-        self.project = project
+        self.process   = process
+        self.project   = project
         print('local user is: '+self.locations['local']['USER']['user'])
         self.ready()
 

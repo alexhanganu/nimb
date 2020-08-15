@@ -10,8 +10,8 @@ class Get_Vars():
 	def __init__(self):
 
 		if path.exists(path.join(credentials_home, 'projects.json')):
-			self.projects = self.read_file(path.join(credentials_home, 'projects.json'))
-			self.d_all_vars = self.get_vars(self.projects)
+			self.projects   = self.read_file(path.join(credentials_home, 'projects.json'))
+			self.d_all_vars = self.get_vars(self.projects, credentials_home)
 		else:
 			shutil.copy(path.join(path.dirname(path.abspath(__file__)), 'projects.json'), path.join(credentials_home, 'projects.json'))
 			shutil.copy(path.join(path.dirname(path.abspath(__file__)), 'remote1.json'), path.join(credentials_home, 'remote1.json'))
@@ -24,18 +24,18 @@ class Get_Vars():
 			return json.load(jf)
 
 
-	def get_vars(self, projects):
+	def get_vars(self, projects, path_files):
 		d_all_vars = dict()
 		for location in projects['LOCATION']:
 			try:
-				d_all_vars[location] = self.read_file(path.join(path.dirname(path.abspath(__file__)), location+'.json'))
+				d_all_vars[location] = self.read_file(path.join(path_files, location+'.json'))
 			except Exception as e:
 				print(e)
 		d_all_vars = self.change_username(d_all_vars)
 		return d_all_vars
 
 	def get_default_vars(self, projects):
-		d_all_vars = self.get_vars(projects)
+		d_all_vars = self.get_vars(projects, path.dirname(path.abspath(__file__)))
 		d_all_vars['local'] = self.set_local_nimb(d_all_vars['local'], projects['PROJECTS'][0])
 		self.save_json('local.json', d_all_vars['local'], credentials_home)
 		print('PROJECTS AND VARIABLES ARE NOT DEFINED. this can be done in the files located at: '+credentials_home)
@@ -44,14 +44,13 @@ class Get_Vars():
 	def verify_local_user(self, user):
 		from .get_username import _get_username
 		user_local = _get_username()
-		if user_local != user:
-			return True, user_local
+		return user_local
 
 	def change_username(self, data):
-		if 'local' in data:
+		if 'local' in data and len(data['local']['USER']['users_list']) > 1:
 			user = data['local']['USER']['user']
-			change,user_local = self.verify_local_user(user)
-			if change:
+			user_local = self.verify_local_user(user)
+			if user_local != user:
 				print('changing username')
 				data['local']['USER']['user'] = user_local
 				for variable in data['local']['NIMB_PATHS']:

@@ -25,9 +25,11 @@ class Management():
                            self.vars['local']['NIMB_PATHS']['NIMB_PROCESSED_FS'],
                            self.vars['local']['NIMB_PATHS']['NIMB_PROCESSED_FS_error']):
                 if not path.exists(p):
+                    print('creating path ',p)
                     makedirs(p)
         if path.exists(self.vars['local']['FREESURFER']['FREESURFER_HOME']):
             if not path.exists(self.vars['local']['FREESURFER']['FS_SUBJECTS_DIR']):
+                    print('creating path ',p)
                     makedirs(self.vars['local']['FREESURFER']['FS_SUBJECTS_DIR'])
                     system("cp -r"+path.join(self.vars['local']['FREESURFER']['FREESURFER_HOME'], "subjects", "fsaverage")+" "+self.vars['local']['FREESURFER']['FS_SUBJECTS_DIR'])
 
