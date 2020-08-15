@@ -24,10 +24,7 @@
                 },
 "LOCATION": {
     "local": "local",
-    "beluga": "beluga.calculquebec.ca",
-    "cedar": "cedar.computecanada.ca",
-    "elm": "elm.criugm.qc.ca",
-    "graham": "graham.computecanada.ca"
+    "remote1": "remote1.remotepath.ca"
           },
 "EXPLANATION": {
     "SOURCE_SUBJECTS_DIR"    : "location; folder that has the raw MRIs of the subjects in archived or non-archived format",
