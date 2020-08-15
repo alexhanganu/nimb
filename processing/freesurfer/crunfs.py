@@ -11,7 +11,7 @@ import cdb
 import time
 import logging
 
-
+import logging
 log = logging.getLogger(__name__)
 
 
@@ -148,10 +148,12 @@ def chk_if_all_done(SUBJECTS_DIR, subjid, process_order, NIMB_tmp, freesurfer_ve
         if not chkIsRunning(SUBJECTS_DIR, subjid):
             for process in process_order[1:]:
                 if not checks_from_runfs(SUBJECTS_DIR, process, subjid, freesurfer_version, masks):
+                    log.info('        '+subjid+' is missing '+process)
                     cdb.Update_status_log(NIMB_tmp, '        '+subjid+' is missing '+process)
                     result = False
                     break
         else:
+            log.info('            IsRunning file present ')
             cdb.Update_status_log(NIMB_tmp, '            IsRunning file present ')
             result = False
         return result
@@ -319,41 +321,51 @@ def fs_find_error(subjid, SUBJECTS_DIR, NIMB_tmp):
             f = open(file_2read,'r').readlines()
             for line in reversed(f):
                 if  'ERROR: MultiRegistration::loadMovables: images have different voxel sizes.' in line:
+                    log.info('        ERROR: Voxel size is different, Multiregistration is not supported; consider registration with less entries')
                     cdb.Update_status_log(NIMB_tmp,'        ERROR: Voxel size is different, Multiregistration is not supported; consider registration with less entries')
                     error = 'voxsizediff'
                     break
                 elif  'error: mghRead' in line:
+                    log.info('        ERROR: orig bad registration, probably due to multiple -i entries, rerun with less entries')
                     cdb.Update_status_log(NIMB_tmp,'        ERROR: orig bad registration, probably due to multiple -i entries, rerun with less entries')
                     error = 'errorigmgz'
                     break
                 elif 'error: MRISreadCurvature:' in line:
+                    log.info('                    ERROR: MRISreadCurvature')
                     cdb.Update_status_log(NIMB_tmp,'                    ERROR: MRISreadCurvature')
                     error = 'errCurvature'
                     break
                 if 'ERROR: Talairach failed!' in line or 'error: transforms/talairach.m3z' in line:
+                    log.info('        ERROR: Manual Talairach alignment may be necessary, or include the -notal-check flag to skip this test, making sure the -notal-check flag follows -all or -autorecon1 in the command string.')
                     cdb.Update_status_log(NIMB_tmp,'        ERROR: Manual Talairach alignment may be necessary, or include the -notal-check flag to skip this test, making sure the -notal-check flag follows -all or -autorecon1 in the command string.')
                     error = 'talfail'
                     break
                 elif 'ERROR: no run data found' in line:
+                    log.info('        ERROR: file has no registration')
                     cdb.Update_status_log(NIMB_tmp,'        ERROR: file has no registration')
                     error = 'noreg'
                     break
                 elif 'ERROR: inputs have mismatched dimensions!' in line:
+                    log.info('        ERROR: files have mismatched dimension, repeat registration will be performed')
                     cdb.Update_status_log(NIMB_tmp,'        ERROR: files have mismatched dimension, repeat registration will be performed')
                     error = 'regdim'
                     break
                 elif 'ERROR: cannot find' in line:
+                    log.info('        ERROR: cannot find files')
                     cdb.Update_status_log(NIMB_tmp,'        ERROR: cannot find files')
                     error = 'cannotfind'
                     break
                 elif 'error: MRIresample():' in line:
+                    log.info('        ERROR: MRIresample error')
                     cdb.Update_status_log(NIMB_tmp,'        ERROR: MRIresample error')
                     error = 'errMRIresample'
                     break
         else:
+            log.info('        ERROR: '+file_2read+' not in '+path.join(SUBJECTS_DIR,subjid,'scripts'))
             cdb.Update_status_log(NIMB_tmp,'        ERROR: '+file_2read+' not in '+path.join(SUBJECTS_DIR,subjid,'scripts'))
     except FileNotFoundError as e:
         print(e)
+        log.info('    '+subjid+' '+str(e))
         cdb.Update_status_log(NIMB_tmp,'    '+subjid+' '+str(e))
     return error
 
@@ -368,6 +380,7 @@ def solve_error(subjid, error, SUBJECTS_DIR, NIMB_tmp):
                 break
         if line_nr:
             if [i for i in f[line_nr:line_nr+20] if 'Skipping this (and any remaining) curvature files' in i]:
+                log.info('                        MRISreadCurvature error, but is skipped')
                 cdb.Update_status_log(NIMB_tmp,'                        MRISreadCurvature error, but is skipped')
                 return 'continue'
         else:
@@ -389,6 +402,7 @@ def chkreconf_if_without_error(NIMB_tmp, subjid, SUBJECTS_DIR):
                     return True
                     break
                 elif 'exited with ERRORS' in line:
+                    log.info('        exited with ERRORS')
                     cdb.Update_status_log(NIMB_tmp,'        exited with ERRORS')
                     return False
                     break
@@ -396,6 +410,7 @@ def chkreconf_if_without_error(NIMB_tmp, subjid, SUBJECTS_DIR):
                     return False
                     break
                 else:
+                    log.info('        not clear if finished with or without ERROR')
                     cdb.Update_status_log(NIMB_tmp,'        not clear if finished with or without ERROR')
                     return False
                     break
@@ -403,6 +418,7 @@ def chkreconf_if_without_error(NIMB_tmp, subjid, SUBJECTS_DIR):
             return False
     except FileNotFoundError as e:
         print(e)
+        log.info('    '+subjid+' '+str(e))
         cdb.Update_status_log(NIMB_tmp,'    '+subjid+' '+str(e))
 
 

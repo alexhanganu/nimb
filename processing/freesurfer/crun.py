@@ -421,6 +421,7 @@ def move_processed_subjects(subject, db_source, new_name):
     file_mrparams = path.join(NIMB_tmp,'mriparams',subject+'_mrparams')
     if path.isfile(file_mrparams):
         shutil.move(file_mrparams, path.join(SUBJECTS_DIR, subject, 'stats'))
+    log.info('    '+subject+' copying from '+db_source)
     cdb.Update_status_log(NIMB_tmp, '    '+subject+' copying from '+db_source)
     size_src = sum(f.stat().st_size for f in Path(path.join(SUBJECTS_DIR, subject)).glob('**/*') if f.is_file())
     if not new_name:
@@ -429,19 +430,24 @@ def move_processed_subjects(subject, db_source, new_name):
         if size_src == size_dst:
             db['PROCESSED'][db_source].remove(subject)
             cdb.Update_DB(db, NIMB_tmp)
+            log.info('    copied correctly, removing from SUBJECTS_DIR')
             cdb.Update_status_log(NIMB_tmp, '    copied correctly, removing from SUBJECTS_DIR')
             shutil.rmtree(path.join(SUBJECTS_DIR, subject))
             if vars["PROCESSING"]["archive_processed"] == 1:
+                log.info('        archiving ...')
                 cdb.Update_status_log(NIMB_tmp, '        archiving ...')
                 chdir(vars["NIMB_PATHS"]["NIMB_PROCESSED_FS"])
                 system('zip -r -q -m '+subject+'.zip '+subject)
         else:
+            log.info('        ERROR in moving, not moved correctly '+str(size_src)+' '+str(size_dst))
             cdb.Update_status_log(NIMB_tmp, '        ERROR in moving, not moved correctly '+str(size_src)+' '+str(size_dst))
             shutil.rmtree(path.join(vars["NIMB_PATHS"]["NIMB_PROCESSED_FS"], subject))
     else:
+        log.info('        renaming '+subject+' to '+new_name+', moving to processed error')
         cdb.Update_status_log(NIMB_tmp, '        renaming '+subject+' to '+new_name+', moving to processed error')
         shutil.move(path.join(SUBJECTS_DIR, subject), path.join(vars["NIMB_PATHS"]["NIMB_PROCESSED_FS_error"], new_name))
         db['PROCESSED'][db_source].remove(subject)
+    log.info('        moving DONE')
     cdb.Update_status_log(NIMB_tmp, '        moving DONE')
 
 
@@ -458,6 +464,7 @@ def run():
 
     check_error()
 
+    log.info('CHECKING subjects')
     cdb.Update_status_log(NIMB_tmp, 'CHECKING subjects')
     ls_long_dirs = list()
     for key in db['LONG_DIRS']:
@@ -465,10 +472,12 @@ def run():
 
     for _id in ls_long_dirs:
         if print_all_subjects:
+            log.info('    '+_id+': '+str(db['LONG_DIRS'][_id]))
             cdb.Update_status_log(NIMB_tmp, '    '+_id+': '+str(db['LONG_DIRS'][_id]))
         long_check_groups(_id)
 
 
+    log.info('MOVING the processed')
     cdb.Update_status_log(NIMB_tmp, 'MOVING the processed')
     for subject in db['PROCESSED']['cp2local'][::-1]:
         move_processed_subjects(subject, 'cp2local', '')
@@ -482,6 +491,7 @@ def check_active_tasks(db):
     for _id in db['LONG_DIRS']:
         active_subjects = active_subjects + len(db['LONG_DIRS'][_id])
     active_subjects = active_subjects+len(db['PROCESSED']['cp2local'])
+    log.info('\n                 '+str(active_subjects)+'\n                 '+str(error)+' error')
     cdb.Update_status_log(NIMB_tmp, '\n                 '+str(active_subjects)+'\n                 '+str(error)+' error')
     return active_subjects
 
@@ -497,25 +507,28 @@ def  len_Running():
 def Count_TimeSleep():
     time2sleep = 600 # 10 minutes
     if len_Running() >= vars["PROCESSING"]["max_nr_running_batches"]:
-        cdb.Update_status_log(NIMB_tmp, 'queue and running: '+str(len_Running())+' max: '+str(vars["PROCESSING"]["max_nr_running_batches"]))
+        log.info('running: '+str(len_Running())+' max: '+str(vars["PROCESSING"]["max_nr_running_batches"]))
+        cdb.Update_status_log(NIMB_tmp, 'running: '+str(len_Running())+' max: '+str(vars["PROCESSING"]["max_nr_running_batches"]))
         time2sleep = 1800 # 30 minutes
     return time2sleep
 
 
 if crunfs.FS_ready(SUBJECTS_DIR):
     print('updating status')
-    cdb.Update_status_log(NIMB_tmp, '\n\n\n\n========nimb version: ',True)
 
     t0 = time.time()
     time_elapsed = 0
     count_run = 0
 
+    log.info('pipeline started')
     cdb.Update_status_log(NIMB_tmp, 'pipeline started')
     cdb.Update_running(NIMB_HOME, vars["USER"]["user"], 1)
 
+    log.info('reading database')
     cdb.Update_status_log(NIMB_tmp, 'reading database')
     db = cdb.Get_DB(NIMB_HOME, NIMB_tmp, process_order)
 
+    log.info('NEW SUBJECTS searching:')
     cdb.Update_status_log(NIMB_tmp, 'NEW SUBJECTS searching:')
     db = cdb.Update_DB_new_subjects_and_SUBJECTS_DIR(NIMB_tmp, SUBJECTS_DIR,db, process_order, vars["FREESURFER"]["base_name"], vars["FREESURFER"]["long_name"], vars["FREESURFER"]["freesurfer_version"], vars["FREESURFER"]["masks"])
     cdb.Update_DB(db, NIMB_tmp)
@@ -528,21 +541,26 @@ if crunfs.FS_ready(SUBJECTS_DIR):
 
     while active_subjects >0 and time.strftime("%H:%M:%S",time.gmtime(time_elapsed)) < max_batch_running:
         count_run += 1
+        log.info('restarting run, '+str(count_run))
+        log.info('elapsed time: '+time.strftime("%H:%M",time.gmtime(time_elapsed))+' max walltime: '+vars["PROCESSING"]["batch_walltime"][:-6])
         cdb.Update_status_log(NIMB_tmp, 'restarting run, '+str(count_run))
         cdb.Update_status_log(NIMB_tmp, 'elapsed time: '+time.strftime("%H:%M",time.gmtime(time_elapsed))+' max walltime: '+vars["PROCESSING"]["batch_walltime"][:-6])
         if count_run % 5 == 0:
+            log.info('NEW SUBJECTS searching:')
             cdb.Update_status_log(NIMB_tmp, 'NEW SUBJECTS searching:')
             db = cdb.Update_DB_new_subjects_and_SUBJECTS_DIR(NIMB_tmp, SUBJECTS_DIR, db, process_order, vars["FREESURFER"]["base_name"], vars["FREESURFER"]["long_name"], vars["FREESURFER"]["freesurfer_version"], vars["FREESURFER"]["masks"])
             cdb.Update_DB(db, NIMB_tmp)
         run()
 
         time_to_sleep = Count_TimeSleep()
+        log.info('\n\nWAITING. \nNext run at: '+str(time.strftime("%H:%M",time.localtime(time.time()+time_to_sleep))))
         cdb.Update_status_log(NIMB_tmp, '\n\nWAITING. \nNext run at: '+str(time.strftime("%H:%M",time.localtime(time.time()+time_to_sleep))))
 
         try:
             shutil.copy(path.join(NIMB_tmp,'db.json'),path.join(NIMB_HOME,'tmp','db.json'))
             system('chmod 777 '+path.join(NIMB_HOME,'processing','freesurfer','db.json'))
         except Exception as e:
+            log.info(str(e))
             cdb.Update_status_log(NIMB_tmp, str(e))
 
         time_elapsed = time.time() - t0
@@ -558,8 +576,10 @@ if crunfs.FS_ready(SUBJECTS_DIR):
 
     if active_subjects == 0:
         cdb.Update_running(NIMB_tmp, vars["USER"]["user"], 0)
+        log.info('ALL TASKS FINISHED')
         cdb.Update_status_log(NIMB_tmp, 'ALL TASKS FINISHED')
     else:
+        log.info('Sending new batch to scheduler')
         cdb.Update_status_log(NIMB_tmp, 'Sending new batch to scheduler')
         chdir(NIMB_HOME)
         system('python processing/freesurfer/start_fs_pipeline.py')
