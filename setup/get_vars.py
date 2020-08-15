@@ -26,12 +26,12 @@ class Get_Vars():
 
 	def get_vars(self, projects):
 		d_all_vars = dict()
-                for location in projects['LOCATION']:
-                        try:
-                                d_all_vars[location] = self.read_file(path.join(path.dirname(path.abspath(__file__)), location+'.json'))
-                        except Exception as e:
-                                print(e)
-                d_all_vars = self.change_username(d_all_vars)
+		for location in projects['LOCATION']:
+			try:
+				d_all_vars[location] = self.read_file(path.join(path.dirname(path.abspath(__file__)), location+'.json'))
+			except Exception as e:
+				print(e)
+		d_all_vars = self.change_username(d_all_vars)
 		return d_all_vars
 
 	def get_default_vars(self, projects):
