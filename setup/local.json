@@ -5,14 +5,14 @@
     "supervisor_account" : ""
         },
 "NIMB_PATHS": {
-    "NIMB_HOME": "/home/user1/nimb",
-    "NIMB_tmp": "/home/user1/nimb/nimb_tmp",
-    "NIMB_NEW_SUBJECTS": "/home/user1/nimb/tmp/mri_unzipped",
-    "NIMB_PROCESSED_FS": "/home/user1/nimb/tmp/nimb_processed_fs",
-    "NIMB_PROCESSED_FS_error": "/home/user1/nimb/tmp/nimb_processed_fs_error",
-    "miniconda_home": "/home/user1/nimb/miniconda3",
+    "NIMB_HOME": "~/nimb",
+    "NIMB_tmp": "~/nimb_tmp",
+    "NIMB_NEW_SUBJECTS": "~/nimb_tmp/new_subjects",
+    "NIMB_PROCESSED_FS": "~/nimb_tmp/nimb_processed_fs",
+    "NIMB_PROCESSED_FS_error": "~/nimb_tmp/nimb_processed_fs_error",
+    "miniconda_home": "~/miniconda3",
     "miniconda_installer": "https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh",
-    "miniconda_python_run": "~/nimb/miniconda3/bin/python3.7"
+    "miniconda_python_run": "~/miniconda3/bin/python3.7"
               },
 "PROCESSING": {
        "SUBMIT": 1,
@@ -30,9 +30,9 @@
               },
 "FREESURFER": {
        "FreeSurfer_install" : 0,
-       "FREESURFER_HOME" : "/home/user1/nimb/freesurfer",
-       "FS_SUBJECTS_DIR" : "/home/user1/nimb/freesurfer/subjects",
-       "export_FreeSurfer_cmd" : "export FREESURFER_HOME=/home/user1/nimb/freesurfer",
+       "FREESURFER_HOME" : "~/freesurfer",
+       "FS_SUBJECTS_DIR" : "~/freesurfer/subjects",
+       "export_FreeSurfer_cmd" : "export FREESURFER_HOME=~/freesurfer",
        "source_FreeSurfer_cmd" : "$FREESURFER_HOME/SetUpFreeSurfer.sh",
        "process_order" : ["registration","autorecon1","autorecon2","autorecon3","qcache","brstem","hip","tha"],
        "masks" : [],
@@ -40,7 +40,7 @@
        "DO_LONG" : 0,
        "base_name" : "base",
        "long_name" : "ses-",
-       "GLM_dir" : "/home/user1/nimb/projects/glm",
+       "GLM_dir" : "~/nimb_tmp/projects/glm",
        "GLM_measurements" : ["thickness","area","volume"],
        "GLM_thresholds" : [10],
        "GLM_MCz_cache" : 13,
@@ -50,7 +50,7 @@
        "freesurfer_license" : ["email", "00000", " *ABCDEFGHIJKI", " ABCDEFGHIJKLM"]
      },
 "STATS_PATHS": {
-       "STATS_HOME": "/home/user1/nimb/projects/stats"
+       "STATS_HOME": "~/nimb_tmp/projects/stats"
      },
 "EXPLANATION": {
        "user"               : "username to access the remote computer. Password will be asked by nimb and stored in sqlite",

@@ -1,23 +1,23 @@
 {
 "USER":{
-    "user"               : "username",
+    "user"               : "user1",
     "users_list"         : ["user1","user2"],
-    "supervisor_account": "def-supervisor"
+    "supervisor_account" : ""
         },
 "NIMB_PATHS": {
-    "NIMB_HOME": "/home/user1/nimb",
-    "NIMB_tmp": "/scratch/user1/nimb/tmp",
-    "NIMB_NEW_SUBJECTS": "/scratch/user1/nimb/tmp/nimb_new_subjects",
-    "NIMB_PROCESSED_FS": "/home/user1/nimb/tmp/nimb_processed_fs",
-    "NIMB_PROCESSED_FS_error": "/home/user1/nimb/tmp/nimb_processed_fs_error",
-    "miniconda_home": "/home/user1/nimb/miniconda3",
+    "NIMB_HOME": "~/nimb",
+    "NIMB_tmp": "~/nimb_tmp",
+    "NIMB_NEW_SUBJECTS": "~/nimb_tmp/new_subjects",
+    "NIMB_PROCESSED_FS": "~/nimb_tmp/nimb_processed_fs",
+    "NIMB_PROCESSED_FS_error": "~/nimb_tmp/nimb_processed_fs_error",
+    "miniconda_home": "~/miniconda3",
     "miniconda_installer": "https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh",
-    "miniconda_python_run": "~/nimb/miniconda3/bin/python3.7"
+    "miniconda_python_run": "~/miniconda3/bin/python3.7"
               },
 "PROCESSING": {
        "SUBMIT": 1,
        "processing_env"         : "slurm",
-       "max_nr_running_batches" : 150,
+       "max_nr_running_batches" : 100,
        "text4_scheduler"        : ["#!/bin/sh","#SBATCH --account=def-supervisor","#SBATCH --mem=8G"],
        "batch_walltime_cmd"     : "#SBATCH --time=",
        "batch_output_cmd"       : "#SBATCH --output=",
@@ -29,10 +29,10 @@
        "archive_processed" : 1
               },
 "FREESURFER": {
-       "FreeSurfer_install" : 1,
-       "FREESURFER_HOME" : "/home/user1/nimb/freesurfer",
-       "FS_SUBJECTS_DIR" : "/home/user1/nimb/freesurfer/subjects",
-       "export_FreeSurfer_cmd" : "export FREESURFER_HOME=/home/user1/nimb/freesurfer",
+       "FreeSurfer_install" : 0,
+       "FREESURFER_HOME" : "~/freesurfer",
+       "FS_SUBJECTS_DIR" : "~/freesurfer/subjects",
+       "export_FreeSurfer_cmd" : "export FREESURFER_HOME=~/freesurfer",
        "source_FreeSurfer_cmd" : "$FREESURFER_HOME/SetUpFreeSurfer.sh",
        "process_order" : ["registration","autorecon1","autorecon2","autorecon3","qcache","brstem","hip","tha"],
        "masks" : [],
@@ -40,11 +40,7 @@
        "DO_LONG" : 0,
        "base_name" : "base",
        "long_name" : "ses-",
-       "GLM_file_group" : "",
-       "id_col" : "",
-       "group_col" : "",
-       "variables_for_glm" : ["AGE", "EDUCATION"],
-       "GLM_dir" : "/home/user1/nimb/project_name/glm",
+       "GLM_dir" : "~/nimb_tmp/projects/glm",
        "GLM_measurements" : ["thickness","area","volume"],
        "GLM_thresholds" : [10],
        "GLM_MCz_cache" : 13,
@@ -54,7 +50,7 @@
        "freesurfer_license" : ["email", "00000", " *ABCDEFGHIJKI", " ABCDEFGHIJKLM"]
      },
 "STATS_PATHS": {
-       "STATS_HOME": "/home/user1/nimb/prject_name/stats"
+       "STATS_HOME": "~/nimb_tmp/projects/stats"
      },
 "EXPLANATION": {
        "user"               : "username to access the remote computer. Password will be asked by nimb and stored in sqlite",
@@ -83,7 +79,7 @@
        "batch_walltime"         : "walltime maximal for the pipeline to reinitate itself; 3 hours is the duration that is used by the scheduler to quickly deploy the script",
        "python3_load_cmd"       : "command if python is used as module, can be: module load python/3.8.2",
        "python3_run_cmd"        : " command used on the local or remote computer that is used to initiate python 3",
-       
+
        "FreeSurfer_install"    : "1 = install, 0 = no installation; define if the local/remote compute will be used to perform FreeSurfer analysis",
        "freesurfer_version"    : "default is 7 (for 7.1.0) but pipeline should also work with versions 6 and 5",
        "FREESURFER_HOME"       : " path to the freesurfer folder. Default is $NIMB_HOME/freesurfer. If OS is Windows, pipeline will ask the credentials for a remote Linux/Mac",
@@ -98,10 +94,6 @@
        "base_name"             : "the name of the base subject that will be created during the longitudinal analysis with FreeSurfer",
        "long_name"             : "abbreviation used to define the longitudinal time points for subjects; default is ses-",
 
-       "GLM_file_group"    : "PATH to the file.csv or file.xlsx that has the subjects, groups and variables for statistical analyis",
-       "id_col"            : "name of the column in the file.csv that includes the names of the subjects similar to the names in PROCESSED_FS_DIR",
-       "group_col"         : "name of the column in the file.csv that includes the groups",
-       "variables_for_glm" : "list of variables from the columns in file.csv file for statistical analysis, FreeSurfer GLM and correlations",
        "GLM_dir"           : "path to the folder were the glm analysis will be made",
        "GLM_measurements"  : "cortical parameters that will be used for FreeSurfer GLM analysis: thickness,area,volume,curv",
        "GLM_thresholds"    : "threshold levels for smoothing in mm, used for FreeSurfer GLM analysis: 5,10,15,20,25",
