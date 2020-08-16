@@ -12,7 +12,7 @@ class DistributionHelper():
     SOURCE_SUBJECTS_DIR = "SOURCE_SUBJECTS_DIR"
     PROCESSED_FS_DIR = "PROCESSED_FS_DIR"
     @staticmethod
-    def get_MRDATA_PATHS_var(var_name, config_file ="../setup/local.json"):
+    def get_MRDATA_PATHS_var(var_name, config_file ="~/nimb/projects.json"):
         """
         get the PROCESSED_FS_DIR
         :param config_file:
@@ -27,7 +27,7 @@ class DistributionHelper():
             return ""
         return config_dict["MRDATA_PATHS"][var_name]
     @staticmethod
-    def get_PROCESSED_FS_DIR(config_file ="../setup/local.json"):
+    def get_PROCESSED_FS_DIR(config_file ="~/nimb/local.json"):
         return DistributionHelper.get_MRDATA_PATHS_var("PROCESSED_FS_DIR", config_file)
     @staticmethod
     def get_SOURCE_SUBJECTS_DIR(config_file ="../setup/local.json"):
@@ -46,7 +46,7 @@ class DistributionHelper():
             return False
         return user_name, user_password
     @staticmethod
-    def is_setup_vars_folders(config_file ="../setup/local.json", is_freesurfer_nim=False,
+    def is_setup_vars_folders(config_file ="~/nimb/local.json", is_freesurfer_nim=False,
                               is_nimb_classification=False, is_nimb_fs_stats=False):
         """
         check for configuration parameters, will exit (quit) the programme if the variables are not define

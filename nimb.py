@@ -10,7 +10,7 @@ from distribution.pipeline_management import Management
 from setup.get_vars import Get_Vars
 from os import path
 from classification import classify_bids
-# from distribution.distribution_helper import  DistributionHelper
+#from distribution.distribution_helper import  DistributionHelper
 __version__ = 'v1'
 
 class NIMB(object):
@@ -33,17 +33,16 @@ class NIMB(object):
         self.process   = process
         self.project   = project
         print('local user is: '+self.locations['local']['USER']['user'])
+        self.task = Management(self.process, self.projects, self.locations)
         self.ready()
 
     def ready(self):
-        task = Management(self.process, self.projects, self.locations)
-        task.freesurfer()
+        self.task.freesurfer()
         return True
         
 
     def run(self):
         """Run nimb"""
-        task = Management(self.process, self.projects, self.locations)
 
         if self.process == 'classify':
             # if not DistributionHelper.is_setup_vars_folders(config_file="../setup/local.json", is_nimb_classification=True):
@@ -87,7 +86,7 @@ class NIMB(object):
 
         if self.process == 'fs-glm':
             if self.ready():
-                task.fs_glm()
+                self.task.fs_glm()
                 from processing.freesurfer import fs_runglm
 
 

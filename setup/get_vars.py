@@ -66,7 +66,7 @@ class Get_Vars():
 
 	def set_local_nimb(self, data, project):
 		NIMB_HOME = path.abspath(path.join(path.dirname(__file__), '..'))
-                print('NIMB_HOME is: ',NIMB_HOME)
+		print('NIMB_HOME is: ',NIMB_HOME)
 		data['NIMB_PATHS']['NIMB_HOME']               = NIMB_HOME
 		data['NIMB_PATHS']['NIMB_tmp']                = path.join(NIMB_HOME, '..', 'nimb_tmp')
 		data['NIMB_PATHS']['NIMB_NEW_SUBJECTS']       = path.join(NIMB_HOME, '..', 'nimb_tmp', 'nimb_new_subjects')
