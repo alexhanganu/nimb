@@ -53,16 +53,10 @@ class SETUP_FREESURFER():
 
     def matlab_install(self):
         chdir(self.FREESURFER_HOME)
-        print('downloading matlab')
-        installer = self.matlab_installer.split("/")[-1]
-        system("wget "+self.matlab_installer)
-
         print('installing matlab')
-        system('unzip '+installer)
-        system("./install -mode silent -agreeToLicense yes -destinationFolder " + path.join(self.FREESURFER_HOME, 'MCRv84'))
-
-        print('removing matlab installer')
-        remove(installer)
+        system("export FREESURFER_HOME=/home/hanganua/projects/def-hanganua/freesurfer")
+        system("source_FreeSurfer_cmd" : "$FREESURFER_HOME/SetUpFreeSurfer.sh")
+        system("fs_install_mcr R2014b")
 
 
     def create_license_file(self, fs_license):
