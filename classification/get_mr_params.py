@@ -120,19 +120,19 @@ def verify_MRIs_for_similarity(d_subjects, nimb_dir, NIMB_tmp, flair_t2_add):
         # log.info(NIMB_tmp, '    '+subjid+' reading registration files')
         for subject in d_subjects:
             for session in d_subjects[subject]:
-			    subjid = subject+'_'+session
+                subjid = subject+'_'+session
                 t1_ls_f = d_subjects[subject][session]['anat']['t1']
-				flair_ls_f = 'none'
-				t2_ls_f = 'none'
-				if 'flair' in d_subjects[subject][session]['anat'] and flair_t2_add:
-					if d_subjects[subject][session]['anat']['flair']:
-						flair_ls_f = d_subjects[subject][session]['anat']['flair']
-				if 't2' in d_subjects[subject][session]['anat'] and flair_t2_add:
-					if d_subjects[subject][session]]['anat']['t2'] and flair_ls_f == 'none':
-						t2_ls_f = d_subjects[subject][session]['anat']['t2']
+                flair_ls_f = 'none'
+                t2_ls_f = 'none'
+                if 'flair' in d_subjects[subject][session]['anat'] and flair_t2_add:
+                    if d_subjects[subject][session]['anat']['flair']:
+                        flair_ls_f = d_subjects[subject][session]['anat']['flair']
+                if 't2' in d_subjects[subject][session]['anat'] and flair_t2_add:
+                    if d_subjects[subject][session]]['anat']['t2'] and flair_ls_f == 'none':
+                        t2_ls_f = d_subjects[subject][session]['anat']['t2']
                 # log.info(NIMB_tmp, '        from db[\'REGISTRATION\']')
                 t1_ls_f, flair_ls_f, t2_ls_f = keep_files_similar_params(subjid, nimb_dir, NIMB_tmp, t1_ls_f, flair_ls_f, t2_ls_f)
-				d_subjects[subject][session]['anat']['t1'] = t1_ls_f
-				d_subjects[subject][session]['anat']['flair'] = flair_ls_f
-				d_subjects[subject][session]['anat']['t2'] = t2_ls_f
+                d_subjects[subject][session]['anat']['t1'] = t1_ls_f
+                d_subjects[subject][session]['anat']['flair'] = flair_ls_f
+                d_subjects[subject][session]['anat']['t2'] = t2_ls_f
         return d_subjects
