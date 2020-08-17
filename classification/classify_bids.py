@@ -213,8 +213,8 @@ def keep_only1_T1(d_subjects):
     return d_subjects
 
 
-def save_json(NIMB_tmp, f_new_subjects, dictionary):
-    with open(f_new_subjects,'w') as f:
+def save_json(NIMB_tmp, file, dictionary):
+    with open(path.join(NIMB_tmp, file),'w') as f:
         json.dump(d_subjects, f, indent=4)
 
 
@@ -248,8 +248,8 @@ def get_dict_MR_files2process(NIMB_NEW_SUBJECTS, NIMB_HOME, NIMB_tmp, multiple_T
     else:
         d_subjects = keep_only1_T1(d_subjects)
 
-    save_json(NIMB_tmp, f_new_subjects, d_subjects)
-    if path.exists(f_new_subjects):
+    save_json(path.join(NIMB_tmp, f_new_subjects), d_subjects)
+    if path.exists(path.join(NIMB_tmp, f_new_subjects)):
         return True
     else:
         return False
