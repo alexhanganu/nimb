@@ -1,8 +1,10 @@
 from distribution.check_disk_space import *
 import sys
 import shutil
+from credentials_path import credentials_home
+
 from distribution.database import *
-from distribution import SSHHelper
+# from distribution import SSHHelper
 class DistributionHelper():
 
     user = "USER"
@@ -11,8 +13,18 @@ class DistributionHelper():
     freesurfer = "FREESURFER"
     SOURCE_SUBJECTS_DIR = "SOURCE_SUBJECTS_DIR"
     PROCESSED_FS_DIR = "PROCESSED_FS_DIR"
+    
+        # print(task)
+
+        # self.vars = vars
+        # self.NIMB_tmp = self.vars["local"]["NIMB_PATHS"]["NIMB_tmp"]
+        # self.projects = projects
+        # print('start distribution')
+        # self.verify_paths()
+
+
     @staticmethod
-    def get_MRDATA_PATHS_var(var_name, config_file ="~/nimb/projects.json"):
+    def get_MRDATA_PATHS_var(var_name, config_file =path.join(credentials_home, "projects.json")):
         """
         get the PROCESSED_FS_DIR
         :param config_file:
@@ -27,10 +39,10 @@ class DistributionHelper():
             return ""
         return config_dict["MRDATA_PATHS"][var_name]
     @staticmethod
-    def get_PROCESSED_FS_DIR(config_file ="~/nimb/local.json"):
+    def get_PROCESSED_FS_DIR(config_file =path.join(credentials_home, "local.json")):
         return DistributionHelper.get_MRDATA_PATHS_var("PROCESSED_FS_DIR", config_file)
     @staticmethod
-    def get_SOURCE_SUBJECTS_DIR(config_file ="../setup/local.json"):
+    def get_SOURCE_SUBJECTS_DIR(config_file =path.join(credentials_home, "local.json")):
         return DistributionHelper.get_MRDATA_PATHS_var("SOURCE_SUBJECTS_DIR",config_file)
     @staticmethod
     def get_username_password_cluster_from_sqlite():
@@ -46,8 +58,10 @@ class DistributionHelper():
             return False
         return user_name, user_password
     @staticmethod
-    def is_setup_vars_folders(config_file ="~/nimb/local.json", is_freesurfer_nim=False,
-                              is_nimb_classification=False, is_nimb_fs_stats=False):
+    def is_setup_vars_folders(config_file =path.join(credentials_home, "local.json"),
+                              is_freesurfer_nim=False,
+                              is_nimb_classification=False,
+                              is_nimb_fs_stats=False):
         """
         check for configuration parameters, will exit (quit) the programme if the variables are not define
         :param config_file: path to configuration json file
@@ -89,6 +103,66 @@ class DistributionHelper():
                 print(f"MRDATA_PATHS is missing. It must bedefine in f{config_file} when {fs_install} = 1")
                 return False
         return True
+
+
+    def verify_paths(self):
+        # to verify paths and if not present - create them or return error
+        if path.exists(self.vars['local']['NIMB_PATHS']['NIMB_HOME']):
+            for p in (     self.NIMB_tmp,
+                 path.join(self.NIMB_tmp, 'mriparams'),
+                 path.join(self.NIMB_tmp, 'usedpbs'),
+                           self.vars['local']['NIMB_PATHS']['NIMB_NEW_SUBJECTS'],
+                           self.vars['local']['NIMB_PATHS']['NIMB_PROCESSED_FS'],
+                           self.vars['local']['NIMB_PATHS']['NIMB_PROCESSED_FS_error']):
+                if not path.exists(p):
+                    print('creating path ',p)
+                    makedirs(p)
+        if path.exists(self.vars['local']['FREESURFER']['FREESURFER_HOME']):
+            if not path.exists(self.vars['local']['FREESURFER']['FS_SUBJECTS_DIR']):
+                    print('creating path ',p)
+                    makedirs(self.vars['local']['FREESURFER']['FS_SUBJECTS_DIR'])
+                    system("cp -r"+path.join(self.vars['local']['FREESURFER']['FREESURFER_HOME'], "subjects", "fsaverage")+" "+self.vars['local']['FREESURFER']['FS_SUBJECTS_DIR'])
+
+
+    def freesurfer(self):
+        if self.vars['local']['FREESURFER']['FreeSurfer_install'] == 1:
+            self.check_freesurfer_ready()
+            print('start freesurfer processing')
+            return True
+
+    def check_freesurfer_ready(self):
+        if not path.exists(path.join(self.vars['local']['FREESURFER']['FREESURFER_HOME'], "MCRv84")):
+            from .setup_freesurfer import SETUP_FREESURFER
+            SETUP_FREESURFER(self.vars, self.installers)
+        else:
+            return True
+
+
+    def fs_stats(self, project):
+        """will check if the STATS folder is present and will create if absent
+           will return the folder with unzipped stats folder for each subject"""
+
+        if not path.exists(self.vars["local"]["STATS_PATHS"]["STATS_HOME"]):
+            makedirs(p)
+
+        PROCESSED_FS_DIR = self.projects[project]["PROCESSED_FS_DIR"]
+        
+        if any('.zip' in i for i in listdir(PROCESSED_FS_DIR)):
+            from .manage_archive import ZipArchiveManagement
+            zipmanager = ZipArchiveManagement()
+            tmp_dir = path.join(self.NIMB_tmp, 'tmp_subject_stats')
+            if not path.exists(tmp_dir):
+                makedirs(tmp_dir)
+            zipmanager.extract_archive(PROCESSED_FS_DIR, ['stats',], tmp_dir)
+            return tmp_dir
+        else:
+            return PROCESSED_FS_DIR
+        print('perform statistical analysis')
+
+
+    def fs_glm(self):
+
+        print('start freesurfer GLM')
 
 
     @staticmethod

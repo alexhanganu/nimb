@@ -6,11 +6,10 @@
 import argparse
 import sys
 import json
-from distribution.pipeline_management import Management
 from setup.get_vars import Get_Vars
 from os import path
 from classification import classify_bids
-#from distribution.distribution_helper import  DistributionHelper
+# from distribution.distribution_helper import  DistributionHelper
 __version__ = 'v1'
 
 class NIMB(object):
@@ -23,6 +22,7 @@ class NIMB(object):
         self,
         projects,
         locations,
+        installers,
         process,
         project,
         **_
@@ -30,16 +30,16 @@ class NIMB(object):
 
         self.projects  = projects
         self.locations = locations
+        self.installers = installers
         self.process   = process
         self.project   = project
         print('local user is: '+self.locations['local']['USER']['user'])
-        self.task = Management(self.process, self.projects, self.locations)
         self.ready()
 
     def ready(self):
-        self.task.freesurfer()
-        return True
-        
+       # DistributionHelper.freesurfer(self.installers)
+       return True
+
 
     def run(self):
         """Run nimb"""
@@ -75,7 +75,7 @@ class NIMB(object):
                 # print("Please check the configuration files. There is some missing!")
                 # sys.exit()
             if self.ready():
-                PROCESSED_FS_DIR = task.fs_stats(self.project)
+                PROCESSED_FS_DIR = DistributionHelper.fs_stats(self.project)
                 print(PROCESSED_FS_DIR)
                 from stats import fs_stats2table
 
@@ -86,7 +86,7 @@ class NIMB(object):
 
         if self.process == 'fs-glm':
             if self.ready():
-                self.task.fs_glm()
+                DistributionHelper.fs_glm()
                 from processing.freesurfer import fs_runglm
 
 
@@ -126,9 +126,10 @@ def main():
     getvars = Get_Vars()
     projects = getvars.projects
     locations = getvars.d_all_vars
+    installers = getvars.installers
     params = get_parameters(projects['PROJECTS'])
-    
-    app = NIMB(projects, locations, **vars(params))
+
+    app = NIMB(projects, locations, installers, **vars(params))
     return app.run()
 
 

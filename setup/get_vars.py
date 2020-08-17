@@ -17,6 +17,7 @@ class Get_Vars():
 			shutil.copy(path.join(path.dirname(path.abspath(__file__)), 'remote1.json'), path.join(credentials_home, 'remote1.json'))
 			self.projects = self.read_file(path.join(path.dirname(path.abspath(__file__)), 'projects.json'))
 			self.d_all_vars = self.get_default_vars(self.projects)
+		self.installers = self.read_file(path.join(path.dirname(path.abspath(__file__)), 'installers.json'))
 
 
 	def read_file(self, file):
