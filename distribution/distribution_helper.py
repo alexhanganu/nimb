@@ -177,7 +177,7 @@ class DistributionHelper():
         return user_name, user_password
 
     def check_freesurfer_ready(self):
-        if not path.exists(path.join(self.vars['local']['FREESURFER']['FREESURFER_HOME'], "MCRv84")):
+        if not path.exists(path.join(self.locations['local']['FREESURFER']['FREESURFER_HOME'], "MCRv84")):
             print('FreeSurfer must be installed')
             from .setup_freesurfer import SETUP_FREESURFER
             SETUP_FREESURFER(self.vars, self.installers)
