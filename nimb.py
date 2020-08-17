@@ -63,7 +63,6 @@ class NIMB(object):
                 print("FreeSurfer is not ready. Please check the configuration files.")
                 sys.exit()
             else:
-                self.distribution.make_fs_vars_file()
                 from processing.freesurfer import start_fs_pipeline
                 start_fs_pipeline.start_fs_pipeline()
 

@@ -524,7 +524,7 @@ if crunfs.FS_ready(SUBJECTS_DIR):
 
     log.info('pipeline started')
     cdb.Update_status_log(NIMB_tmp, 'pipeline started')
-    cdb.Update_running(NIMB_HOME, vars["USER"]["user"], 1)
+    cdb.Update_running(NIMB_tmp, 1)
 
     log.info('reading database')
     cdb.Update_status_log(NIMB_tmp, 'reading database')
@@ -570,7 +570,7 @@ if crunfs.FS_ready(SUBJECTS_DIR):
         active_subjects = check_active_tasks(db)
 
     if active_subjects == 0:
-        cdb.Update_running(NIMB_tmp, vars["USER"]["user"], 0)
+        cdb.Update_running(NIMB_tmp, 0)
         log.info('ALL TASKS FINISHED')
         cdb.Update_status_log(NIMB_tmp, 'ALL TASKS FINISHED')
     else:

@@ -3,7 +3,11 @@ import time
 import subprocess
 import json
 import logging
-from get_username import _get_username
+try:
+    from .get_username import _get_username
+except Exception as e:
+    from get_username import _get_username
+    print(e)
 
 try:
     credentials_home = str(open('credentials_path').readlines()[0]).replace("~","/home/"+_get_username())
@@ -36,8 +40,8 @@ def start_fs_pipeline():
     try:
         log = logging.getLogger(__name__)
         log.info('    '+sh_file+' submitting')
-#        resp = subprocess.run([vars['PROCESSING']["submit_cmd"],path.join(vars["NIMB_PATHS"]["NIMB_tmp"], 'usedpbs', sh_file)], stdout=subprocess.PIPE).stdout.decode('utf-8')
-#        print(list(filter(None, resp.split(' ')))[-1].strip('\n'))
+        resp = subprocess.run([vars['PROCESSING']["submit_cmd"],path.join(vars["NIMB_PATHS"]["NIMB_tmp"], 'usedpbs', sh_file)], stdout=subprocess.PIPE).stdout.decode('utf-8')
+        print(list(filter(None, resp.split(' ')))[-1].strip('\n'))
     except Exception as e:
         print(e)
 

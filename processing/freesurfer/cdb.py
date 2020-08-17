@@ -61,8 +61,8 @@ def Update_status_log(NIMB_tmp, cmd, update=True):
         f.write(dthm+' '+cmd+'\n')
 
 
-def Update_running(NIMB_HOME, cuser, cmd):
-    file = path.join(NIMB_HOME, 'tmp', 'running_'+str(cuser)+'_')
+def Update_running(NIMB_tmp, cmd):
+    file = path.join(NIMB_tmp, 'running_'+'_')
     if cmd == 1:
         if path.isfile(file+'0'):
             rename(file+'0', file+'1')
