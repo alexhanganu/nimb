@@ -4,17 +4,18 @@ import subprocess
 import json
 import logging
 
+try:
+    credentials_home = open('credentials_path').readlines()[0]
+except Exception:
+    credentials_home = open('../../credentials_path').readlines()[0]
+
 environ['TZ'] = 'US/Eastern'
 time.tzset()
 
-with open('processing/freesurfer/vars.json') as vars_json:
-        vars = json.load(vars_json)
+with open(path.join(credentials_home, 'local.json')) as local_vars:
+    vars = json.load(local_vars)
 
 datehour = time.strftime("%Y%m%d_%H%M",time.localtime(time.time()))
-
-if not path.exists(path.join(vars["NIMB_PATHS"]["NIMB_tmp"],'usedpbs')):
-    makedirs(path.join(vars["NIMB_PATHS"]["NIMB_tmp"],'usedpbs'))
-
 
 sh_file = 'nimb_run_'+datehour+'.sh'
 out_file = 'nimb_run_'+datehour+'.out'

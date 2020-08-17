@@ -6,11 +6,13 @@ print_all_subjects = False
 from os import path, listdir, remove, rename, system, chdir, environ
 import json
 
-if path.isfile('vars.json'):
-    with open('vars.json') as vars_json:
-        vars = json.load(vars_json)
+
+if path.isfile('../../credentials_path'):
+    credentials_home = open('../../credentials_path').readlines()[0]
+    with open(path.join(credentials_home, 'local.json')) as local_vars:
+    vars = json.load(local_vars)
 else:
-    print('ERROR: vars.json file MISSING')
+    print('ERROR: credential file or local.json file is MISSING')
 
 
 NIMB_HOME               = vars["NIMB_PATHS"]["NIMB_HOME"]

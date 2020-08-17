@@ -3,11 +3,14 @@
 from os import path, system
 import shutil
 import json
-from credentials_path import credentials_home
 
 class Get_Vars():
 
     def __init__(self):
+
+        credentials_home = open('credentials_path').readlines()[0]
+        if not path.exists(credentials_home):
+            makedirs(credentials_home)
 
         if path.exists(path.join(credentials_home, 'projects.json')):
             self.projects   = self.read_file(path.join(credentials_home, 'projects.json'))

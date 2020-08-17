@@ -1,13 +1,14 @@
 from sqlite3 import connect, OperationalError
 from os import listdir, path, remove
 from sys import platform
-from credentials_path import credentials_home
 
 '''DATABASE ACTIONS
 connecting to DB
 if no table - create it
 provide column names
 '''
+credentials_home = open('credentials_path').readlines()[0]
+
 
 def __connect_db__():
     conn = connect(path.join(credentials_home, platform+'.db'), check_same_thread=False)

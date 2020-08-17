@@ -1,6 +1,5 @@
 import sys
 import shutil
-from credentials_path import credentials_home
 from os import makedirs, system
 import json
 
@@ -25,6 +24,7 @@ class DistributionHelper():
         self.NIMB_tmp = locations["local"]["NIMB_PATHS"]["NIMB_tmp"]
         self.locations = locations
         self.projects = projects
+        self.credentials_home = open('credentials_path').readlines()[0]
 
     def ready(self):
         """
@@ -43,6 +43,12 @@ class DistributionHelper():
         else:
             print("NIMB ready to perform FreeSurfer processing")
         self.make_fs_vars_file()
+        try:
+            system("chmod 777 "+self.NIMB_HOME)
+            system("chmod 777 "+path.join(self.NIMB_HOME,'processing'))
+            system("chmod 777 "+path.join(self.NIMB_HOME,'processing','freesurfer'))
+        except Exception as e:
+            print(e)
         return ready
 
     def classify_ready(self):
@@ -153,14 +159,14 @@ class DistributionHelper():
         """
         # PROJECT_DATA
         if project not in self.projects.keys():
-            print("There is no path for project: "+project+" defined. Please check the file: "+path.join(credentials_home, "projects.json"))
+            print("There is no path for project: "+project+" defined. Please check the file: "+path.join(self.credentials_home, "projects.json"))
             return ""
         return self.projects[project][var_name]
     @staticmethod
-    def get_PROCESSED_FS_DIR(config_file =path.join(credentials_home, "local.json")):
+    def get_PROCESSED_FS_DIR(config_file =path.join(self.credentials_home, "local.json")):
         return DistributionHelper.get_MRDATA_PATHS_var("PROCESSED_FS_DIR", config_file)
     @staticmethod
-    def get_SOURCE_SUBJECTS_DIR(config_file =path.join(credentials_home, "local.json")):
+    def get_SOURCE_SUBJECTS_DIR(config_file =path.join(self.credentials_home, "local.json")):
         return DistributionHelper.get_MRDATA_PATHS_var("SOURCE_SUBJECTS_DIR",config_file)
     @staticmethod
     def get_username_password_cluster_from_sqlite():
@@ -466,18 +472,19 @@ class DistributionHelper():
         cp2remote_rm_from_local(client, ls_copy, path_src, username, HOST, path_dst)
         client.close()
 
-if __name__ == "__main__":
-    #DistributionHelper.is_setup_vars_folders(is_nimb_fs_stats=True, is_nimb_classification=True, is_freesurfer_nim=True)
-    PROCESSED_FS_DIR = DistributionHelper.get_PROCESSED_FS_DIR(config_file=path.join(credentials_home, "projects.json"))
-    SOURCE_SUBJECTS_DIR = DistributionHelper.get_SOURCE_SUBJECTS_DIR(config_file=path.join(credentials_home, "projects.json"))
-    user_name,user_password = DistributionHelper.get_username_password_cluster_from_sqlite()
-    cluster = "cedar.computecanada.ca"
-    subjects = DistributionHelper.get_list_subject_to_be_processed_remote_version("/Users/van/Downloads/tmp/fs","/home/hvt/tmp2",cluster,user_name,user_password)
-    print(subjects)
-    ssh = getSSHSession(cluster, user_name, user_password)
-    # download data from remote
-    download_files_from_server(ssh,SOURCE_SUBJECTS_DIR,PROCESSED_FS_DIR)
-    ssh.close()
+# if __name__ == "__main__":
+    # distribution = DistributionHelper(projects,
+                                               # locations,
+                                               # installers)
+    # #DistributionHelper.is_setup_vars_folders(is_nimb_fs_stats=True, is_nimb_classification=True, is_freesurfer_nim=True)
+    # user_name,user_password = DistributionHelper.get_username_password_cluster_from_sqlite()
+    # cluster = "cedar.computecanada.ca"
+    # subjects = DistributionHelper.get_list_subject_to_be_processed_remote_version("/Users/van/Downloads/tmp/fs","/home/hvt/tmp2",cluster,user_name,user_password)
+    # print(subjects)
+    # ssh = getSSHSession(cluster, user_name, user_password)
+    # # download data from remote
+    # download_files_from_server(ssh,SOURCE_SUBJECTS_DIR,PROCESSED_FS_DIR)
+    # ssh.close()
 
-    # send data
-    DistributionHelper.send_subject_data(config_file=path.join(credentials_home, "projects.json"))
+    # # send data
+    # DistributionHelper.send_subject_data(config_file=path.join(credentials_home, "projects.json"))
