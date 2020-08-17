@@ -57,6 +57,7 @@ class SETUP_FREESURFER():
 
         print('extracting freesurfer')
         system('tar -C '+self.FREESURFER_HOME.replace('freesurfer','')+' -xvf '+installer_f)
+        system('chmod -R 777 '+path.join(self.FREESURFER_HOME, "subjects"))
 
         if path.exists(self.FREESURFER_HOME):
             print('removing installer')

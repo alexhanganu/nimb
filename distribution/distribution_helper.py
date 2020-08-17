@@ -1,65 +1,75 @@
-from distribution.check_disk_space import *
 import sys
 import shutil
 from credentials_path import credentials_home
+from os import makedirs, system
+import json
 
 from distribution.database import *
+# from distribution.check_disk_space import *
 # from distribution import SSHHelper
+
+
+class ErrorMessages:
+
+    def error_classify():
+        print("NIMB is not ready to perform the classification. Please check the configuration files.") 
+    def error_fsready():
+        print("NIMB not ready to perform FreeSurfer processing. Please check the configuration files.") 
+
+
 class DistributionHelper():
 
-    user = "USER"
-    nimb_path = 'NIMB_PATHS'
-    stat_path = 'STATS_PATHS'
-    freesurfer = "FREESURFER"
-    SOURCE_SUBJECTS_DIR = "SOURCE_SUBJECTS_DIR"
-    PROCESSED_FS_DIR = "PROCESSED_FS_DIR"
-    
-        # print(task)
+    def __init__(self, projects, locations, installers):
 
-        # self.vars = vars
-        # self.NIMB_tmp = self.vars["local"]["NIMB_PATHS"]["NIMB_tmp"]
-        # self.projects = projects
-        # print('start distribution')
-        # self.verify_paths()
+        self.NIMB_HOME = locations["local"]["NIMB_PATHS"]["NIMB_HOME"]
+        self.NIMB_tmp = locations["local"]["NIMB_PATHS"]["NIMB_tmp"]
+        self.locations = locations
+        self.projects = projects
+
+    def ready(self):
+        """
+        verify if NIMB is ready to be used
+        :return: bool
+        """
+        ready = True
+        if not self.classify_ready():
+            ErrorMessages.error_classify()
+            ready = False
+        else:
+            print("NIMB ready to perform classification")
+        if not self.fs_ready():
+            ErrorMessages.error_fsready()
+            ready = False
+        else:
+            print("NIMB ready to perform FreeSurfer processing")
+        self.make_fs_vars_file()
+        return ready
+
+    def classify_ready(self):
+        ready = True
+        for p in (self.locations['local']['NIMB_PATHS']['NIMB_NEW_SUBJECTS'],
+                  self.NIMB_HOME,self.NIMB_tmp):
+            if not path.exists(p):
+                try:
+                    makedirs(p)
+                except Exception as e:
+                    print(e)
+            if not path.exists(p):
+                ready = False
+                ErrorMessages.error_classify()
+                break
+        return ready
 
 
-    @staticmethod
-    def get_MRDATA_PATHS_var(var_name, config_file =path.join(credentials_home, "projects.json")):
-        """
-        get the PROCESSED_FS_DIR
-        :param config_file:
-        :var_name: like PROCESSED_FS_DIR
-        :return: empty string, or values
-        """
-        with open(config_file) as file:
-            config_dict = json.load(file)
-        # MRDATA_PATHS
-        if "MRDATA_PATHS" not in config_dict.keys():
-            print("There is no path for MRDATA_PATHS and PROCESSED_FS_DIR")
-            return ""
-        return config_dict["MRDATA_PATHS"][var_name]
-    @staticmethod
-    def get_PROCESSED_FS_DIR(config_file =path.join(credentials_home, "local.json")):
-        return DistributionHelper.get_MRDATA_PATHS_var("PROCESSED_FS_DIR", config_file)
-    @staticmethod
-    def get_SOURCE_SUBJECTS_DIR(config_file =path.join(credentials_home, "local.json")):
-        return DistributionHelper.get_MRDATA_PATHS_var("SOURCE_SUBJECTS_DIR",config_file)
-    @staticmethod
-    def get_username_password_cluster_from_sqlite():
-        """
-        get user name and password from sqlite database
-        :return: username, password in string
-        """
-        clusters = database._get_Table_Data('Clusters', 'all')
-        user_name = clusters[list(clusters)[0]]['Username']
-        user_password = clusters[list(clusters)[0]]['Password']
-        if len(user_name) < 1or len(user_password) < 1:
-            print(f"User name or password is not define")
+    def fs_ready(self):
+        if self.locations['local']['FREESURFER']['FreeSurfer_install'] == 1:
+            return self.check_freesurfer_ready()
+        else:
             return False
-        return user_name, user_password
+
+
     @staticmethod
-    def is_setup_vars_folders(config_file =path.join(credentials_home, "local.json"),
-                              is_freesurfer_nim=False,
+    def is_setup_vars_folders(is_freesurfer_nim=False,
                               is_nimb_classification=False,
                               is_nimb_fs_stats=False):
         """
@@ -124,21 +134,59 @@ class DistributionHelper():
                     system("cp -r"+path.join(self.vars['local']['FREESURFER']['FREESURFER_HOME'], "subjects", "fsaverage")+" "+self.vars['local']['FREESURFER']['FS_SUBJECTS_DIR'])
 
 
-    def freesurfer(self):
-        if self.vars['local']['FREESURFER']['FreeSurfer_install'] == 1:
-            self.check_freesurfer_ready()
-            print('start freesurfer processing')
-            return True
+    def make_fs_vars_file(self):
+        vars_f = path.join(self.NIMB_HOME,'processing','freesurfer','vars.json')
+        with open(vars_f,'w') as jf:
+            json.dump(self.locations['local'], jf, indent=4)
+            try:
+                system("chmod 777 "+path.join(self.NIMB_HOME,'processing','freesurfer','vars.json'))
+            except Exception as e:
+                print(e)
+
+    @staticmethod
+    def get_project_vars(var_name, project):
+        """
+        get the PROCESSED_FS_DIR
+        :param config_file:
+        :var_name: like PROCESSED_FS_DIR
+        :return: empty string, or values
+        """
+        # PROJECT_DATA
+        if project not in self.projects.keys():
+            print("There is no path for project: "+project+" defined. Please check the file: "+path.join(credentials_home, "projects.json"))
+            return ""
+        return self.projects[project][var_name]
+    @staticmethod
+    def get_PROCESSED_FS_DIR(config_file =path.join(credentials_home, "local.json")):
+        return DistributionHelper.get_MRDATA_PATHS_var("PROCESSED_FS_DIR", config_file)
+    @staticmethod
+    def get_SOURCE_SUBJECTS_DIR(config_file =path.join(credentials_home, "local.json")):
+        return DistributionHelper.get_MRDATA_PATHS_var("SOURCE_SUBJECTS_DIR",config_file)
+    @staticmethod
+    def get_username_password_cluster_from_sqlite():
+        """
+        get user name and password from sqlite database
+        :return: username, password in string
+        """
+        clusters = database._get_Table_Data('Clusters', 'all')
+        user_name = clusters[list(clusters)[0]]['Username']
+        user_password = clusters[list(clusters)[0]]['Password']
+        if len(user_name) < 1or len(user_password) < 1:
+            print(f"User name or password is not define")
+            return False
+        return user_name, user_password
 
     def check_freesurfer_ready(self):
         if not path.exists(path.join(self.vars['local']['FREESURFER']['FREESURFER_HOME'], "MCRv84")):
+            print('FreeSurfer must be installed')
             from .setup_freesurfer import SETUP_FREESURFER
             SETUP_FREESURFER(self.vars, self.installers)
         else:
+            print('start freesurfer processing')
             return True
 
 
-    def fs_stats(self, project):
+    def nimb_stats_ready(self, project):
         """will check if the STATS folder is present and will create if absent
            will return the folder with unzipped stats folder for each subject"""
 
@@ -420,18 +468,16 @@ class DistributionHelper():
 
 if __name__ == "__main__":
     #DistributionHelper.is_setup_vars_folders(is_nimb_fs_stats=True, is_nimb_classification=True, is_freesurfer_nim=True)
-    PROCESSED_FS_DIR = DistributionHelper.get_PROCESSED_FS_DIR(config_file="../setup/local.json")
-    SOURCE_SUBJECTS_DIR = DistributionHelper.get_SOURCE_SUBJECTS_DIR(config_file="../setup/local.json")
+    PROCESSED_FS_DIR = DistributionHelper.get_PROCESSED_FS_DIR(config_file=path.join(credentials_home, "projects.json"))
+    SOURCE_SUBJECTS_DIR = DistributionHelper.get_SOURCE_SUBJECTS_DIR(config_file=path.join(credentials_home, "projects.json"))
     user_name,user_password = DistributionHelper.get_username_password_cluster_from_sqlite()
     cluster = "cedar.computecanada.ca"
     subjects = DistributionHelper.get_list_subject_to_be_processed_remote_version("/Users/van/Downloads/tmp/fs","/home/hvt/tmp2",cluster,user_name,user_password)
     print(subjects)
     ssh = getSSHSession(cluster, user_name, user_password)
-    SOURCE_SUBJECTS_DIR = "/Users/van/Downloads/tmp/fs"
-    PROCESSED_FS_DIR = "/home/hvt/projects/def-hanganua/fs-subjects/PPMI_51392_ses-1"
     # download data from remote
     download_files_from_server(ssh,SOURCE_SUBJECTS_DIR,PROCESSED_FS_DIR)
     ssh.close()
 
     # send data
-    DistributionHelper.send_subject_data(config_file="../setup/local.json")
+    DistributionHelper.send_subject_data(config_file=path.join(credentials_home, "projects.json"))

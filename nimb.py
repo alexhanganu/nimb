@@ -9,7 +9,9 @@ import json
 from setup.get_vars import Get_Vars
 from os import path
 from classification import classify_bids
-# from distribution.distribution_helper import  DistributionHelper
+from distribution.distribution_helper import DistributionHelper
+from distribution.distribution_helper import ErrorMessages
+
 __version__ = 'v1'
 
 class NIMB(object):
@@ -33,24 +35,22 @@ class NIMB(object):
         self.installers = installers
         self.process   = process
         self.project   = project
-        print('local user is: '+self.locations['local']['USER']['user'])
-        self.ready()
-
-    def ready(self):
-       # DistributionHelper.freesurfer(self.installers)
-       return True
+        self.distribution = DistributionHelper(projects,
+                                               locations,
+                                               installers)
 
 
     def run(self):
         """Run nimb"""
 
+        if self.process == 'ready':
+            self.distribution.ready()
+
         if self.process == 'classify':
-            # if not DistributionHelper.is_setup_vars_folders(config_file="../setup/local.json", is_nimb_classification=True):
-                # print("Please check the configuration files. There is some missing!")
-                # sys.exit()
-            # send the data
-            # DistributionHelper.send_subject_data(config_file="../setup/local.json")
-            if self.ready():
+            if not self.distribution.classify_ready():
+                ErrorMessages.error_classify()
+                sys.exit()
+            else:
                 return classify_bids.get_dict_MR_files2process(
                                      self.locations['local']['NIMB_PATHS']['NIMB_NEW_SUBJECTS'],
                                      self.locations['local']['NIMB_PATHS']['NIMB_HOME'],
@@ -59,24 +59,20 @@ class NIMB(object):
                                      self.locations['local']['FREESURFER']['flair_t2_add'])
 
         if self.process == 'freesurfer':
-            # send the data
-            # DistributionHelper.send_subject_data(config_file="../setup/local.json")
-            # if not DistributionHelper.is_setup_vars_folders(config_file="../setup/local.json", is_freesurfer_nim=True):
-                # print("Please check the configuration files. There is some missing!")
-                # sys.exit()
-            if self.ready():
-                vars_f = path.join(self.locations['local']['NIMB_PATHS']['NIMB_HOME'],'processing','freesurfer','vars.json')
-                with open(vars_f,'w') as jf:
-                    json.dump(self.locations['local'], jf, indent=4)
+            if not self.distribution.fs_ready():
+                print("FreeSurfer is not ready. Please check the configuration files.")
+                sys.exit()
+            else:
+                self.distribution.make_fs_vars_file()
                 from processing.freesurfer import start_fs_pipeline
                 start_fs_pipeline.start_fs_pipeline()
 
         if self.process == 'fs-stats':
-            # if not DistributionHelper.is_setup_vars_folders(config_file="../setup/local.json", is_nimb_fs_stats=True):
-                # print("Please check the configuration files. There is some missing!")
-                # sys.exit()
-            if self.ready():
-                PROCESSED_FS_DIR = DistributionHelper.fs_stats(self.project)
+            if not self.distribution.nimb_stats_ready():
+                print("NIMB is not ready to perform statistics. Please check the configuration files.")
+                sys.exit()
+            else:
+                PROCESSED_FS_DIR = self.distribution.fs_stats(self.project)
                 print(PROCESSED_FS_DIR)
                 from stats import fs_stats2table
 
@@ -86,8 +82,8 @@ class NIMB(object):
                                    PROCESSED_FS_DIR, data_only_volumes=False)
 
         if self.process == 'fs-glm':
-            if self.ready():
-                DistributionHelper.fs_glm()
+            if self.distribution.fs_ready():
+                self.distribution.fs_glm()
                 from processing.freesurfer import fs_runglm
 
 
@@ -126,7 +122,7 @@ def main():
 
     getvars = Get_Vars()
     projects = getvars.projects
-    locations = getvars.d_all_vars
+    locations = getvars.location_vars
     installers = getvars.installers
     params = get_parameters(projects['PROJECTS'])
 
