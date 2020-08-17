@@ -55,6 +55,7 @@ class NIMB(object):
                                      self.locations['local']['NIMB_PATHS']['NIMB_NEW_SUBJECTS'],
                                      self.locations['local']['NIMB_PATHS']['NIMB_HOME'],
                                      self.locations['local']['NIMB_PATHS']['NIMB_tmp'],
+                                     self.locations['local']['FREESURFER']['multiple_T1_entries'],
                                      self.locations['local']['FREESURFER']['flair_t2_add'])
 
         if self.process == 'freesurfer':

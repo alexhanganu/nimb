@@ -202,41 +202,55 @@ def make_BIDS_structure(d_ses_MR_types):
 	return d_BIDS_structure
 
 
+def keep_only1_T1(d_subjects):
+    for subject in d_subjects:
+        for session in d_subjects[subject]:
+            d_subjects[subject][session]['anat']['t1'] = d_subjects[subject][session]['anat']['t1'][:1]
+            if 'flair' in d_subjects[subject][session]['anat']:
+                d_subjects[subject][session]['anat'].pop('flair', None)
+            if 't2' in d_subjects[subject][session]['anat'] and flair_t2_add:
+                d_subjects[subject][session]['anat'].pop('t2', None)
+    return d_subjects
+
 
 def save_json(NIMB_tmp, f_new_subjects, dictionary):
-	with open(f_new_subjects,'w') as f:
-			json.dump(d_subjects, f, indent=4)
+    with open(f_new_subjects,'w') as f:
+        json.dump(d_subjects, f, indent=4)
 
 
-def get_dict_MR_files2process(NIMB_NEW_SUBJECTS, NIMB_HOME, NIMB_tmp, flair_t2_add):
-	"""
-	# only search for 2 number
-	:return:
-	"""
-	from get_mr_params import verify_MRIs_for_similarity
+def get_dict_MR_files2process(NIMB_NEW_SUBJECTS, NIMB_HOME, NIMB_tmp, multiple_T1_entries, flair_t2_add):
+    """
+    # only search for 2 number
+    :return:
+    """
+    from get_mr_params import verify_MRIs_for_similarity
 
-	f_new_subjects = path.join(NIMB_tmp,'new_subjects.json')
-	d_subjects = dict()
-	for subject in listdir(NIMB_NEW_SUBJECTS):
-				d_subjects[subject] = {}
-				ls_MR_paths = exclude_MR_types(get_paths2dcm_files(path.join(NIMB_NEW_SUBJECTS,subject)))
-				print("ls_MR_paths: ", ls_MR_paths)
-				ls_sessions, d_paths = get_ls_sessions(ls_MR_paths)
-				#print(ls_sessions)
-				d_sessions = classify_by_sessions(ls_sessions)
-				#print(d_sessions)
-				dict_sessions_paths = make_dict_sessions_with_paths(d_paths, d_sessions)
-				d_ses_MR_types = classify_by_MR_types(dict_sessions_paths)
-				d_BIDS_structure = make_BIDS_structure(d_ses_MR_types)
-				#print(d_BIDS_structure)
-				d_subjects[subject] = d_BIDS_structure
-				print("d_subjects:", d_subjects)
-	from get_mr_params import verify_MRIs_for_similarity
-	d_subjects = verify_MRIs_for_similarity(d_subjects, NIMB_HOME, NIMB_tmp, flair_t2_add)
-	
-	save_json(NIMB_tmp, f_new_subjects, d_subjects)
-	if path.exists(f_new_subjects):
-			return True
-	else:
-			return False
+    f_new_subjects = path.join(NIMB_tmp,'new_subjects.json')
+    d_subjects = dict()
+    for subject in listdir(NIMB_NEW_SUBJECTS):
+        d_subjects[subject] = {}
+        ls_MR_paths = exclude_MR_types(get_paths2dcm_files(path.join(NIMB_NEW_SUBJECTS,subject)))
+        print("ls_MR_paths: ", ls_MR_paths)
+        ls_sessions, d_paths = get_ls_sessions(ls_MR_paths)
+        #print(ls_sessions)
+        d_sessions = classify_by_sessions(ls_sessions)
+        #print(d_sessions)
+        dict_sessions_paths = make_dict_sessions_with_paths(d_paths, d_sessions)
+        d_ses_MR_types = classify_by_MR_types(dict_sessions_paths)
+        d_BIDS_structure = make_BIDS_structure(d_ses_MR_types)
+        #print(d_BIDS_structure)
+        d_subjects[subject] = d_BIDS_structure
+        print("classification of new subjects is complete")
+        save_json(NIMB_tmp, "all_subjects", d_subjects)
+    if multiple_T1_entries == 1:
+        from get_mr_params import verify_MRIs_for_similarity
+        d_subjects = verify_MRIs_for_similarity(d_subjects, NIMB_HOME, NIMB_tmp, flair_t2_add)
+    else:
+        d_subjects = keep_only1_T1(d_subjects)
+
+    save_json(NIMB_tmp, f_new_subjects, d_subjects)
+    if path.exists(f_new_subjects):
+        return True
+    else:
+        return False
 
