@@ -42,13 +42,6 @@ class DistributionHelper():
             ready = False
         else:
             print("NIMB ready to perform FreeSurfer processing")
-        self.make_fs_vars_file()
-        try:
-            system("chmod 777 "+self.NIMB_HOME)
-            system("chmod 777 "+path.join(self.NIMB_HOME,'processing'))
-            system("chmod 777 "+path.join(self.NIMB_HOME,'processing','freesurfer'))
-        except Exception as e:
-            print(e)
         return ready
 
     def classify_ready(self):
@@ -139,16 +132,6 @@ class DistributionHelper():
                     makedirs(self.vars['local']['FREESURFER']['FS_SUBJECTS_DIR'])
                     system("cp -r"+path.join(self.vars['local']['FREESURFER']['FREESURFER_HOME'], "subjects", "fsaverage")+" "+self.vars['local']['FREESURFER']['FS_SUBJECTS_DIR'])
 
-
-    def make_fs_vars_file(self):
-        vars_f = path.join(self.NIMB_HOME,'processing','freesurfer','vars.json')
-        with open(vars_f,'w') as jf:
-            json.dump(self.locations['local'], jf, indent=4)
-            try:
-                system("chmod 777 "+path.join(self.NIMB_HOME,'processing','freesurfer','vars.json'))
-            except Exception as e:
-                print(e)
-
     @staticmethod
     def get_project_vars(var_name, project):
         """
@@ -164,11 +147,11 @@ class DistributionHelper():
         return self.projects[project][var_name]
     @staticmethod
     def get_PROCESSED_FS_DIR():
-        return DistributionHelper.get_MRDATA_PATHS_var("PROCESSED_FS_DIR", self.credentials_home, "local.json)
+        return DistributionHelper.get_MRDATA_PATHS_var("PROCESSED_FS_DIR", self.credentials_home, "local.json")
 
     @staticmethod
     def get_SOURCE_SUBJECTS_DIR():
-        return DistributionHelper.get_MRDATA_PATHS_var("SOURCE_SUBJECTS_DIR",self.credentials_home, "local.json)
+        return DistributionHelper.get_MRDATA_PATHS_var("SOURCE_SUBJECTS_DIR",self.credentials_home, "local.json")
 
     @staticmethod
     def get_username_password_cluster_from_sqlite():
