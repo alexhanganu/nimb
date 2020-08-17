@@ -215,7 +215,7 @@ def keep_only1_T1(d_subjects):
 
 def save_json(NIMB_tmp, file, dictionary):
     with open(path.join(NIMB_tmp, file),'w') as f:
-        json.dump(d_subjects, f, indent=4)
+        json.dump(dictionary, f, indent=4)
 
 
 def get_dict_MR_files2process(NIMB_NEW_SUBJECTS, NIMB_HOME, NIMB_tmp, multiple_T1_entries, flair_t2_add):
