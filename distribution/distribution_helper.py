@@ -163,11 +163,13 @@ class DistributionHelper():
             return ""
         return self.projects[project][var_name]
     @staticmethod
-    def get_PROCESSED_FS_DIR(config_file =path.join(self.credentials_home, "local.json")):
-        return DistributionHelper.get_MRDATA_PATHS_var("PROCESSED_FS_DIR", config_file)
+    def get_PROCESSED_FS_DIR():
+        return DistributionHelper.get_MRDATA_PATHS_var("PROCESSED_FS_DIR", self.credentials_home, "local.json)
+
     @staticmethod
-    def get_SOURCE_SUBJECTS_DIR(config_file =path.join(self.credentials_home, "local.json")):
-        return DistributionHelper.get_MRDATA_PATHS_var("SOURCE_SUBJECTS_DIR",config_file)
+    def get_SOURCE_SUBJECTS_DIR():
+        return DistributionHelper.get_MRDATA_PATHS_var("SOURCE_SUBJECTS_DIR",self.credentials_home, "local.json)
+
     @staticmethod
     def get_username_password_cluster_from_sqlite():
         """

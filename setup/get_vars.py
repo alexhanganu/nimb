@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from os import path, system
+from os import path, system, makedirs
 import shutil
 import json
 
@@ -8,16 +8,16 @@ class Get_Vars():
 
     def __init__(self):
 
-        credentials_home = open('credentials_path').readlines()[0]
-        if not path.exists(credentials_home):
-            makedirs(credentials_home)
+        self.credentials_home = open('credentials_path').readlines()[0]
+        if not path.exists(self.credentials_home):
+            makedirs(self.credentials_home)
 
-        if path.exists(path.join(credentials_home, 'projects.json')):
-            self.projects   = self.read_file(path.join(credentials_home, 'projects.json'))
-            self.location_vars = self.get_vars(self.projects, credentials_home)
+        if path.exists(path.join(self.credentials_home, 'projects.json')):
+            self.projects   = self.read_file(path.join(self.credentials_home, 'projects.json'))
+            self.location_vars = self.get_vars(self.projects, self.credentials_home)
         else:
-            shutil.copy(path.join(path.dirname(path.abspath(__file__)), 'projects.json'), path.join(credentials_home, 'projects.json'))
-            shutil.copy(path.join(path.dirname(path.abspath(__file__)), 'remote1.json'), path.join(credentials_home, 'remote1.json'))
+            shutil.copy(path.join(path.dirname(path.abspath(__file__)), 'projects.json'), path.join(self.credentials_home, 'projects.json'))
+            shutil.copy(path.join(path.dirname(path.abspath(__file__)), 'remote1.json'), path.join(self.credentials_home, 'remote1.json'))
             self.projects = self.read_file(path.join(path.dirname(path.abspath(__file__)), 'projects.json'))
             self.location_vars = self.get_default_vars(self.projects)
         print('local user is: '+self.location_vars['local']['USER']['user'])
@@ -42,8 +42,8 @@ class Get_Vars():
     def get_default_vars(self, projects):
         d_all_vars = self.get_vars(projects, path.dirname(path.abspath(__file__)))
         d_all_vars['local'] = self.set_local_nimb(d_all_vars['local'], projects['PROJECTS'][0])
-        self.save_json('local.json', d_all_vars['local'], credentials_home)
-        print('PROJECTS AND VARIABLES ARE NOT DEFINED. this can be done in the files located at: '+credentials_home)
+        self.save_json('local.json', d_all_vars['local'], self.credentials_home)
+        print('PROJECTS AND VARIABLES ARE NOT DEFINED. this can be done in the files located at: '+self.credentials_home)
         return d_all_vars
 
     def verify_local_user(self, user):
