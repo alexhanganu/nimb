@@ -223,7 +223,7 @@ def get_dict_MR_files2process(NIMB_NEW_SUBJECTS, NIMB_HOME, NIMB_tmp, multiple_T
     # only search for 2 number
     :return:
     """
-    from get_mr_params import verify_MRIs_for_similarity
+    from .get_mr_params import verify_MRIs_for_similarity
 
     f_new_subjects = path.join(NIMB_tmp,'new_subjects.json')
     d_subjects = dict()
