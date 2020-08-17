@@ -5,14 +5,14 @@ print_all_subjects = False
 
 from os import path, listdir, remove, rename, system, chdir, environ
 import json
+from get_username import _get_username
 
-
-if path.isfile('../../credentials_path'):
-    credentials_home = open('../../credentials_path').readlines()[0]
+try:
+    credentials_home = str(open('../../credentials_path').readlines()[0]).replace("~","/home/"+_get_username())
     with open(path.join(credentials_home, 'local.json')) as local_vars:
-    vars = json.load(local_vars)
-else:
-    print('ERROR: credential file or local.json file is MISSING')
+        vars = json.load(local_vars)
+except Exception as e: 
+    print(e, 'ERROR: credential file or local.json file is MISSING')
 
 
 NIMB_HOME               = vars["NIMB_PATHS"]["NIMB_HOME"]
@@ -557,13 +557,6 @@ if crunfs.FS_ready(SUBJECTS_DIR):
         time_to_sleep = Count_TimeSleep()
         log.info('\n\nWAITING. \nNext run at: '+str(time.strftime("%H:%M",time.localtime(time.time()+time_to_sleep))))
         cdb.Update_status_log(NIMB_tmp, '\n\nWAITING. \nNext run at: '+str(time.strftime("%H:%M",time.localtime(time.time()+time_to_sleep))))
-
-        try:
-            shutil.copy(path.join(NIMB_tmp,'db.json'),path.join(NIMB_HOME,'tmp','db.json'))
-            system('chmod 777 '+path.join(NIMB_HOME,'processing','freesurfer','db.json'))
-        except Exception as e:
-            log.info(str(e))
-            cdb.Update_status_log(NIMB_tmp, str(e))
 
         time_elapsed = time.time() - t0
 #        if time.strftime("%H:%M:%S",time.gmtime(time_elapsed+time_to_sleep)) < max_batch_running:

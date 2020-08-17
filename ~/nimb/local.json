@@ -16,7 +16,7 @@
 "PROCESSING": {
        "SUBMIT": 1,
        "processing_env"         : "slurm",
-       "max_nr_running_batches" : 5,
+       "max_nr_running_batches" : 10,
        "text4_scheduler"        : ["#!/bin/sh","#SBATCH --account=def-supervisor","#SBATCH --mem=8G"],
        "batch_walltime_cmd"     : "#SBATCH --time=",
        "batch_output_cmd"       : "#SBATCH --output=",
