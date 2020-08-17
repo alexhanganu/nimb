@@ -241,7 +241,7 @@ def run_copy_subject_to_cluster(Project):
 
 getvars = Get_Vars()
 projects = getvars.projects
-locations = getvars.d_all_vars
+locations = getvars.location_vars
 
 
 row = 0

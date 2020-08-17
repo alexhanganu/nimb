@@ -7,15 +7,14 @@ connecting to DB
 if no table - create it
 provide column names
 '''
-credentials_home = open('credentials_path').readlines()[0]
-
+from setup.get_credentials_home import _get_credentials_home
 
 def __connect_db__():
-    conn = connect(path.join(credentials_home, platform+'.db'), check_same_thread=False)
+    conn = connect(path.join(_get_credentials_home(), platform+'.db'), check_same_thread=False)
     try:
         conn.execute('select count(*) from Clusters')
     except OperationalError:
-        __create_table__(conn)    
+        __create_table__(conn)
     return conn
 
 
@@ -209,7 +208,7 @@ def _get_folder(folder_type):
         else:
                 DIRs_INCOMING['no project'] = 'dir not set'
     conn.close()
-    return DIRs_INCOMING        
+    return DIRs_INCOMING
 
 def _set_Project_Data(id, mri_dir, results_dir, glm_dir, file_groups):
     conn = __connect_db__()
@@ -243,7 +242,7 @@ def _get_Project_Data(Project):
     elif len(data)>1:
         for project in data:
             Project_Data[project[0]] = [project[1],project[2],project[3],project[4]]
-			
+
     else:
         Project_Data['not set'] = ['','','','',]
     conn.close()
@@ -270,7 +269,7 @@ def _get_Project_Data_d(Project):
         Project_Data_d[project]['glm_dir'] = Project_Data[project][2]
         Project_Data_d[project]['file_groups'] = Project_Data[project][3]
     return Project_Data_d
-	
+
 def _delete_Project(Project):
     conn = __connect_db__()
     conn.execute('DELETE FROM Projects WHERE id = "{}" '.format(Project)).fetchall()

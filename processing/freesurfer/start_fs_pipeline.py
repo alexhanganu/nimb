@@ -3,6 +3,7 @@ import time
 import subprocess
 import json
 import logging
+
 try:
     from .get_username import _get_username
 except Exception as e:
@@ -10,7 +11,7 @@ except Exception as e:
     print(e)
 
 try:
-    credentials_home = str(open('credentials_path').readlines()[0]).replace("~","/home/"+_get_username())
+    from setup.get_credentials_home import _get_credentials_home
 except Exception:
     credentials_home = str(open('../../credentials_path').readlines()[0]).replace("~","/home/"+_get_username())
 

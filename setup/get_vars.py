@@ -4,16 +4,14 @@ from os import path, system, makedirs
 import shutil
 import json
 from .get_username import _get_username
+from .get_credentials_home import _get_credentials_home
 
 class Get_Vars():
 
     def __init__(self):
 
-        self.credentials_home = str(open('credentials_path').readlines()[0]).replace("~","/home/"+_get_username()) 
+        self.credentials_home = _get_credentials_home()
 
-        if not path.exists(self.credentials_home):
-            makedirs(path.exists(self.credentials_home))
-        print(self.credentials_home)
         if path.exists(path.join(self.credentials_home, 'projects.json')):
             self.projects   = self.read_file(path.join(self.credentials_home, 'projects.json'))
             self.location_vars = self.get_vars(self.projects, self.credentials_home)
