@@ -5,19 +5,19 @@
     "supervisor_account" : ""
         },
 "NIMB_PATHS": {
-    "NIMB_HOME"               : "~/nimb",
-    "NIMB_tmp"                : "~/nimb_tmp",
-    "NIMB_NEW_SUBJECTS"       : "~/nimb_tmp/new_subjects",
-    "NIMB_PROCESSED_FS"       : "~/nimb_tmp/nimb_processed_fs",
-    "NIMB_PROCESSED_FS_error" : "~/nimb_tmp/nimb_processed_fs_error",
-    "miniconda_home"          : "~/miniconda3",
-    "miniconda_python_run"    : "~/miniconda3/bin/python3.7"
+    "NIMB_HOME"               : "/home/USER/projects/def-supervisor/nimb",
+    "NIMB_tmp"                : "/scratch/USER/nimb_tmp",
+    "NIMB_NEW_SUBJECTS"       : "/scratch/USER/nimb_tmp/new_subjects",
+    "NIMB_PROCESSED_FS"       : "/scratch/USER/nimb_tmp/nimb_processed_fs",
+    "NIMB_PROCESSED_FS_error" : "/scratch/USER/nimb_tmp/nimb_processed_fs_error",
+    "miniconda_home"          : "/home/USER/projects/def-supervisor/miniconda3",
+    "miniconda_python_run"    : "~/projects/def-supervisor/miniconda3/bin/python3.7"
               },
 "PROCESSING": {
        "SUBMIT": 1,
        "processing_env"         : "slurm",
-       "max_nr_running_batches" : 5,
-       "text4_scheduler"        : ["#!/bin/sh","#SBATCH --account=def-supervisor","#SBATCH --mem=8G"],
+       "max_nr_running_batches" : 10,
+       "text4_scheduler"        : ["#!/bin/sh","#SBATCH --nodes=1","#SBATCH --cpus-per-task=40", "#SBATCH --mem=8G"],
        "batch_walltime_cmd"     : "#SBATCH --time=",
        "batch_output_cmd"       : "#SBATCH --output=",
        "submit_cmd"             : "sbatch",
@@ -28,10 +28,10 @@
        "archive_processed"      : 1
               },
 "FREESURFER": {
-       "FreeSurfer_install"    : 0,
-       "FREESURFER_HOME"       : "~/freesurfer",
-       "FS_SUBJECTS_DIR"       : "~/freesurfer/subjects",
-       "export_FreeSurfer_cmd" : "export FREESURFER_HOME=~/freesurfer",
+       "FreeSurfer_install"    : 1,
+       "FREESURFER_HOME"       : "/home/USER/projects/def-supervisor/freesurfer",
+       "FS_SUBJECTS_DIR"       : "/home/USER/projects/def-supervisor/freesurfer/subjects",
+       "export_FreeSurfer_cmd" : "export FREESURFER_HOME=/home/USER/projects/def-supervisor/freesurfer",
        "source_FreeSurfer_cmd" : "$FREESURFER_HOME/SetUpFreeSurfer.sh",
        "process_order"         : ["registration","autorecon1","autorecon2","autorecon3","qcache","brstem","hip","tha"],
        "masks"                 : [],
@@ -40,7 +40,7 @@
        "DO_LONG"               : 0,
        "base_name"             : "base",
        "long_name"             : "ses-",
-       "GLM_dir"               : "~/nimb_tmp/projects/glm",
+       "GLM_dir"               : "/scratch/USER/nimb_tmp/projects/glm",
        "GLM_measurements"      : ["thickness","area","volume"],
        "GLM_thresholds"        : [10],
        "GLM_MCz_cache"         : 13,
@@ -48,7 +48,7 @@
        "freesurfer_license"    : ["email", "00000", " *ABCDEFGHIJKL", " ABCDEFGHIJKLM"]
      },
 "STATS_PATHS": {
-       "STATS_HOME"            : "~/nimb_tmp/projects/stats"
+       "STATS_HOME": "/scratch/USER/nimb_tmp/projects/stats"
      },
 "EXPLANATION": {
        "user"               : "username to access the remote computer. Password will be asked by nimb and stored in sqlite",

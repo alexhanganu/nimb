@@ -74,7 +74,9 @@ def makesubmitpbs(cmd, subjid, run, walltime, params):
         return 0
 
 def submit_tmux(cmd, subjid):
-    #https://gist.github.com/henrik/1967800
+    # https://gist.github.com/henrik/1967800
+    # https://unix.stackexchange.com/questions/409861/its-possible-to-send-input-to-a-tmux-session-without-connecting-to-it
+    # batch_output_cmd = 'screen -S minecraft -p 0 -X stuff "stop^M"'
     tmux_session = 'tmux_'+str(subjid)
 
     make_tmux_screen = 'tmux new -d -s '+tmux_session

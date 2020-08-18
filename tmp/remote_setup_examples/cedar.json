@@ -1,24 +1,23 @@
 {
 "USER":{
-    "user"               : "lucaspsy",
-    "users_list"         : ["hanganua","hvt","lucaspsy","hiver85"],
-    "supervisor_account": "def-hanganua"
+    "user"               : "user1",
+    "users_list"         : ["user1","user2"],
+    "supervisor_account" : ""
         },
 "NIMB_PATHS": {
-    "NIMB_HOME": "/home/lucaspsy/projects/def-hanganua/nimb",
-    "NIMB_tmp": "/scratch/lucaspsy/nimb_tmp",
-    "NIMB_NEW_SUBJECTS": "/scratch/hanganua/database/loni_ppmi/source/mri_unzipped",
-    "NIMB_PROCESSED_FS": "/home/lucaspsy/projects/def-hanganua/nimb_processed_fs",
-    "NIMB_PROCESSED_FS_error": "/home/lucaspsy/projects/def-hanganua/nimb_processed_fs_error",
-    "miniconda_home": "/home/hanganua/miniconda3",
-    "miniconda_installer": "https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh",
-    "miniconda_python_run": "~/miniconda3/bin/python3.7"
+    "NIMB_HOME"               : "/home/USER/projects/def-supervisor/nimb",
+    "NIMB_tmp"                : "/scratch/USER/nimb_tmp",
+    "NIMB_NEW_SUBJECTS"       : "/scratch/USER/nimb_tmp/new_subjects",
+    "NIMB_PROCESSED_FS"       : "/scratch/USER/nimb_tmp/nimb_processed_fs",
+    "NIMB_PROCESSED_FS_error" : "/scratch/USER/nimb_tmp/nimb_processed_fs_error",
+    "miniconda_home"          : "/home/USER/projects/def-supervisor/miniconda3",
+    "miniconda_python_run"    : "~/projects/def-supervisor/miniconda3/bin/python3.7"
               },
 "PROCESSING": {
        "SUBMIT": 1,
        "processing_env"         : "slurm",
-       "max_nr_running_batches" : 150,
-       "text4_scheduler"        : ["#!/bin/sh","#SBATCH --account=def-hanganua","#SBATCH --mem=8G"],
+       "max_nr_running_batches" : 50,
+       "text4_scheduler"        : ["#!/bin/sh","#SBATCH --account=def-supervisor","#SBATCH --mem=8G"],
        "batch_walltime_cmd"     : "#SBATCH --time=",
        "batch_output_cmd"       : "#SBATCH --output=",
        "submit_cmd"             : "sbatch",
@@ -26,31 +25,30 @@
        "batch_walltime"         : "12:00:00",
        "python3_load_cmd"       : "module load python/3.8.2",
        "python3_run_cmd"        : "python",
-       "archive_processed" : 1
+       "archive_processed"      : 1
               },
 "FREESURFER": {
-       "FreeSurfer_install" : 0,
-       "FREESURFER_HOME" : "/home/lucaspsy/projects/def-hanganua/freesurfer",
-       "FS_SUBJECTS_DIR" : "/home/lucaspsy/projects/def-hanganua/fs-subjects",
-       "export_FreeSurfer_cmd" : "export FREESURFER_HOME=/home/lucaspsy/projects/def-hanganua/freesurfer",
+       "FreeSurfer_install"    : 1,
+       "FREESURFER_HOME"       : "/home/USER/projects/def-supervisor/freesurfer",
+       "FS_SUBJECTS_DIR"       : "/home/USER/projects/def-supervisor/freesurfer/subjects",
+       "export_FreeSurfer_cmd" : "export FREESURFER_HOME=/home/USER/projects/def-supervisor/freesurfer",
        "source_FreeSurfer_cmd" : "$FREESURFER_HOME/SetUpFreeSurfer.sh",
-       "process_order" : ["registration","autorecon1","autorecon2","autorecon3","qcache","brstem","hip","tha"],
-       "masks" : [],
-       "flair_t2_add" : 0,
-       "DO_LONG" : 0,
-       "base_name" : "base",
-       "long_name" : "ses-",
-       "GLM_dir" : "/scratch/lucaspsy/adni/glm",
-       "GLM_measurements" : ["thickness","area","volume"],
-       "GLM_thresholds" : [10],
-       "GLM_MCz_cache" : 13,
-       "freesurfer_version" : 7,
-       "freesurfer_installer" : "https://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/7.1.1/freesurfer-linux-centos7_x86_64-7.1.1.tar.gz",
-       "matlab_installer" : "https://ssd.mathworks.com/supportfiles/downloads/R2014b/deployment_files/R2014b/installers/glnxa64/MCR_R2014b_glnxa64_installer.zip",
-       "freesurfer_license" : ["alexandru.hanganu@umontreal.ca", "49203", " *CZJRu8f2ozyc", " FShcQvYXXTGaI"]
+       "process_order"         : ["registration","autorecon1","autorecon2","autorecon3","qcache","brstem","hip","tha"],
+       "masks"                 : [],
+       "multiple_T1_entries"   : 0,
+       "flair_t2_add"          : 0,
+       "DO_LONG"               : 0,
+       "base_name"             : "base",
+       "long_name"             : "ses-",
+       "GLM_dir"               : "/scratch/USER/nimb_tmp/projects/glm",
+       "GLM_measurements"      : ["thickness","area","volume"],
+       "GLM_thresholds"        : [10],
+       "GLM_MCz_cache"         : 13,
+       "freesurfer_version"    : 7,
+       "freesurfer_license"    : ["email", "00000", " *ABCDEFGHIJKL", " ABCDEFGHIJKLM"]
      },
 "STATS_PATHS": {
-       "STATS_HOME": "/scratch/hanganua/stats"
+       "STATS_HOME": "/scratch/USER/nimb_tmp/projects/stats"
      },
 "EXPLANATION": {
        "user"               : "username to access the remote computer. Password will be asked by nimb and stored in sqlite",
@@ -79,7 +77,7 @@
        "batch_walltime"         : "walltime maximal for the pipeline to reinitate itself; 3 hours is the duration that is used by the scheduler to quickly deploy the script",
        "python3_load_cmd"       : "command if python is used as module, can be: module load python/3.8.2",
        "python3_run_cmd"        : " command used on the local or remote computer that is used to initiate python 3",
-       
+
        "FreeSurfer_install"    : "1 = install, 0 = no installation; define if the local/remote compute will be used to perform FreeSurfer analysis",
        "freesurfer_version"    : "default is 7 (for 7.1.0) but pipeline should also work with versions 6 and 5",
        "FREESURFER_HOME"       : " path to the freesurfer folder. Default is $NIMB_HOME/freesurfer. If OS is Windows, pipeline will ask the credentials for a remote Linux/Mac",
