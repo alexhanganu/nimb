@@ -1,5 +1,0 @@
-pandas to read json
-
-
-new_subjects.json ==> malform json format, fixed by hand
-Classification_dict.json ==> works fine.

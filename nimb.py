@@ -21,20 +21,20 @@ class NIMB(object):
 
     def __init__(
         self,
+        credentials_home,
         projects,
         locations,
+        installers,
         process,
         project,
-        **_
     ):
 
         self.projects  = projects
         self.locations = locations
         self.process   = process
         self.project   = project
-        self.distribution = DistributionHelper(projects,
-                                               locations)
-
+        self.distribution = DistributionHelper(credentials_home, projects,
+                                               locations, installers)
 
     def run(self):
         """Run nimb"""
@@ -43,6 +43,7 @@ class NIMB(object):
             self.distribution.ready()
 
         if self.process == 'classify':
+            print('starting')
             if not self.distribution.classify_ready():
                 ErrorMessages.error_classify()
                 sys.exit()
@@ -104,7 +105,7 @@ def get_parameters(projects):
     
     parser.add_argument(
         "-project", required=False,
-        default=projects[:1],
+        default=projects[:1][0],
         choices = projects,
         help="names of projects located in credentials_path.py/nimb/projects.json -> PROJECTS",
     )
@@ -116,11 +117,14 @@ def get_parameters(projects):
 def main():
 
     getvars = Get_Vars()
+    credentials_home = getvars.credentials_home
     projects = getvars.projects
     locations = getvars.location_vars
+    installers = getvars.installers
+
     params = get_parameters(projects['PROJECTS'])
 
-    app = NIMB(projects, locations, **vars(params))
+    app = NIMB(credentials_home, projects, locations, installers, params.process, params.project)
     return app.run()
 
 

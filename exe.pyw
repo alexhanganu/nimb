@@ -38,12 +38,22 @@ def setupcredentials():
         clusters = database._get_Table_Data("Clusters", "all")
         # ccredentials_txt.set(clusters[0][1]+'@'+clusters[0][2])
 
+def classify(Project):
+    app = NIMB(credentials_home, projects, locations, installers, 'classify', Project)
+    app.run()
+
+
+from nimb import NIMB
 
 getvars = Get_Vars()
+credentials_home = getvars.credentials_home
 projects = getvars.projects
 locations = getvars.location_vars
-distribution = DistributionHelper(projects, locations)
-distribution.ready()
+installers = getvars.installers
+
+NIMB(credentials_home, projects, locations, installers, 'ready', projects['PROJECTS'][:1][0])
+distribution = DistributionHelper(credentials_home, projects, locations, installers)
+
 
 row = 0
 for Project in projects['PROJECTS']:
@@ -55,11 +65,10 @@ for Project in projects['PROJECTS']:
             Project)).grid(row=row, column=col)
         col += 1
 
-        button(mainframe, text="copy subjects to cluster",
-               command=lambda: distribution.run_copy_subject_to_cluster(Project)).grid(row=row, column=col)
+        button(mainframe, text="classify",
+               command=lambda: classify(Project)).grid(row=row, column=col)
         col += 1
-        # button(mainframe, text="Check new MRI all data", command=lambda: distribution.chkmri(Project)).grid(column=5, row=row, columnspan=2, sticky=W)
-        
+
         row += 1
 
 ttk.Separator(mainframe, orient=HORIZONTAL).grid(

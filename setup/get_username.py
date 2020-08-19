@@ -11,7 +11,7 @@ def _get_username():
         import pwd
         username = pwd.getpwuid( getuid() ) [0]
     except ImportError as e:
-        print(e)
+        pass
     if not username:
         try:
             import getpass

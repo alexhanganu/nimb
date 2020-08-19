@@ -2,8 +2,6 @@ import sys
 import shutil
 from os import makedirs, system
 import json
-from setup.get_vars import Get_Vars
-from setup.get_credentials_home import _get_credentials_home
 from distribution.database import *
 # from distribution.check_disk_space import *
 # from distribution import SSHHelper
@@ -15,19 +13,24 @@ class ErrorMessages:
         print("NIMB is not ready to perform the classification. Please check the configuration files.") 
     def error_fsready():
         print("NIMB not ready to perform FreeSurfer processing. Please check the configuration files.") 
+    def password():
+        print("password to login to remote cluster is missing")
 
 
 class DistributionHelper():
 
-    def __init__(self, projects, locations):
+    def __init__(self, credentials_home, projects, locations, installers):
 
         self.NIMB_HOME = locations["local"]["NIMB_PATHS"]["NIMB_HOME"]
         self.NIMB_tmp = locations["local"]["NIMB_PATHS"]["NIMB_tmp"]
         self.locations = locations
         self.projects = projects
-        self.credentials_home = _get_credentials_home()
-        self.installers = Get_Vars().installers
-        
+        self.credentials_home = credentials_home
+
+# =========================================
+# UNITE:
+# ready, classify_ready, fs_ready and verify_paths must be put together in the is_setup_vars_folders
+
     def ready(self):
         """
         verify if NIMB is ready to be used
@@ -81,8 +84,6 @@ class DistributionHelper():
         :param is_nimb_fs_stats:
         :return: True if there is no error, otherwise, return False
         """
-        with open(config_file) as file:
-            config_dict = json.load(file)
         # check for the USER key
         for key, value in config_dict[DistributionHelper.user].items():
             if len(value) < 1:
@@ -133,11 +134,10 @@ class DistributionHelper():
                     print('creating path ',p)
                     makedirs(self.vars['local']['FREESURFER']['FS_SUBJECTS_DIR'])
                     system("cp -r"+path.join(self.vars['local']['FREESURFER']['FREESURFER_HOME'], "subjects", "fsaverage")+" "+self.vars['local']['FREESURFER']['FS_SUBJECTS_DIR'])
+# UNITE until here
+# =========================================
 
-    def error_message(variable):
-        print(f"{variable} is empty or not defined, please check it again ")
-        print("The application is now exit")
-        exit()
+
                     
     def check_defined_variable(Project):
         """
@@ -150,22 +150,19 @@ class DistributionHelper():
         clusters = database._get_Table_Data('Clusters', 'all')
         cname = [*clusters.keys()][0]
         password = clusters[cname]['Password']
-        supervisor_ccri = clusters[cname]['Supervisor_CCRI']
         if not password:
-            error_message("password to login to remote cluster")
-        if not supervisor_ccri:
-            error_message("supervisor_ccri")
-        if not cname:
-            error_message("cluster name ")
-        project_folder = clusters[cname]['HOME']
-        if not project_folder:
-            error_message("your home folder")
-        a_folder = clusters[cname]['App_DIR']
-        if not a_folder:
-            error_message("a_folder")
-        subjects_folder = clusters[cname]['Subjects_raw_DIR']
-        if not subjects_folder:
-            error_message("Subjects_raw_DIR")
+            ErrorMessages.password()
+        # if not cname:
+            # error_message("cluster name ")
+        # project_folder = clusters[cname]['HOME']
+        # if not project_folder:
+            # error_message("your home folder")
+        # a_folder = clusters[cname]['App_DIR']
+        # if not a_folder:
+            # error_message("a_folder")
+        # subjects_folder = clusters[cname]['Subjects_raw_DIR']
+        # if not subjects_folder:
+            # error_message("Subjects_raw_DIR")
         # mri_path = database._get_Table_Data('Projects', Project)[Project]['mri_dir']
         # mri path is not in the sqlite location. must be updated
 
@@ -272,8 +269,8 @@ class DistributionHelper():
         print(mri_path)
         print("subject json: " + mri_path)
         interface_cluster.copy_subjects_to_cluster(mri_path, subjects_folder, a_folder)
-    
-    
+
+
     def check_freesurfer_ready(self):
         if not path.exists(path.join(self.locations['local']['FREESURFER']['FREESURFER_HOME'], "MCRv84")):
             print('FreeSurfer must be installed')
