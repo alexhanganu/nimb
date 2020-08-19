@@ -86,19 +86,20 @@ def classify_by_sessions(ls):
 	d = {}
 	oneday = dt.timedelta(days=1)
 	n = 1
-	d['ses-'+str(n)] = list()
+	ses_name = 'ses-'+str(n).zfill(2)
+	d[ses_name] = list()
 	for ses in sorted(ls):
-		if len(d['ses-'+str(n)])<1:
-			d['ses-'+str(n)].append(ses)
+		if len(d[ses_name])<1:
+			d[ses_name].append(ses)
 		else:
 			date_new = dt.datetime.strptime(ses, '%Y-%m-%d_%H_%M_%S.%f')
 			date_before = dt.datetime.strptime(d['ses-'+str(n)][0], '%Y-%m-%d_%H_%M_%S.%f')
 			if date_new-date_before < oneday:
-				d['ses-'+str(n)].append(ses)
+				d[ses_name].append(ses)
 			else:
 				n +=1
-				d['ses-'+str(n)] = list()
-				d['ses-'+str(n)].append(ses)
+				d[ses_name] = list()
+				d[ses_name].append(ses)
 	return d
 
 
