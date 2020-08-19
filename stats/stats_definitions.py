@@ -228,21 +228,21 @@ segmentations_header = {'Left-Lateral-Ventricle':'ventricleLateralL','Left-Inf-L
                             'Optic-Chiasm':'opticChiasm','CC_Posterior':'ccPosterior','CC_Mid_Posterior':'ccMidPosterior',
                             'CC_Central':'ccCentral','CC_Mid_Anterior':'ccMidAnterior','CC_Anterior':'ccAnterior','BrainSegVol':'volBrainSeg',
                             'BrainSegVolNotVent':'volBrainSegNotVent','BrainSegVolNotVentSurf':'volBrainSegNotVentSurf',
-							'VentricleChoroidVol':'volVentricleChoroid','lhCortexVol':'volCortexL',
+                            'VentricleChoroidVol':'volVentricleChoroid','lhCortexVol':'volCortexL',
                             'rhCortexVol':'volCortexR','CortexVol':'volCortex','lhCerebralWhiteMatterVol':'volCerebralWhiteMatterL',
                             'rhCerebralWhiteMatterVol':'volCerebralWhiteMatterR','CerebralWhiteMatterVol':'volCerebralWhiteMatter',
                             'SubCortGrayVol':'volSubCortGray','TotalGrayVol':'volTotalGray','SupraTentorialVol':'volSupraTentorial',
                             'SupraTentorialVolNotVent':'volSupraTentorialNotVent','SupraTentorialVolNotVentVox':'volSupraTentorialNotVentVox',
                             'MaskVol':'volMask','BrainSegVol-to-eTIV':'volBrainSegtoeTIV','MaskVol-to-eTIV':'volMasktoeTIV',
                             'lhSurfaceHoles':'surfaceHolesL','rhSurfaceHoles':'surfaceHolesR','SurfaceHoles':'surfaceHoles','eTIV':'eTIV'}
-		
-																							
+
+
 parc_parameters= {'ThickAvg':'Thick','SurfArea':'Area',
                   'GrayVol':'Vol','MeanCurv':'Curv',
                   'NumVert':'NumVert','ThickStd':'ThickStd',
                   'GausCurv':'CurvGaus','CurvInd':'CurvInd',
                   'FoldInd':'FoldInd'}
-										
+
 parc_DK_f2rd ={'L':'lh.aparc.stats','R':'rh.aparc.stats'}
 
 
@@ -359,7 +359,7 @@ def get_names_of_structures():
         name_structures.append(brstem_hip_header['all'][val])
     for val in parc_DS_header:
         name_structures.append(parc_DS_header[val])
-		
+
     return name_structures
 
 name_structures = get_names_of_structures()
@@ -377,7 +377,7 @@ def get_names_of_measurements():
         for atlas in ('_DK','_DS',):
             for meas in parc_parameters:
                 name_measurement.append(parc_parameters[meas]+hemi+atlas)
-		
+
     return name_measurement
 
 name_measurement = get_names_of_measurements()

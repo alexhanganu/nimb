@@ -4,27 +4,27 @@
 group descriptions: mkstatisticsf
     descriptions - significant differences put in red
     correlations must be done per GROUP on the same file, saved in another file in /results/
-	+ correlations 07, 08 must be done per GROUP on the same file, saved in separate sheets and outlined in red the sig
-	significant diff between groups in volumes and clinical, if sig -> make plot.
+    + correlations 07, 08 must be done per GROUP on the same file, saved in separate sheets and outlined in red the sig
+    significant diff between groups in volumes and clinical, if sig -> make plot.
 
-	
+
 logistic regression:
     https://scikit-learn.org/stable/auto_examples/linear_model/plot_sgd_comparison.html
-	https://scikit-learn.org/stable/auto_examples/linear_model/plot_iris_logistic.html
-	https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html
+    https://scikit-learn.org/stable/auto_examples/linear_model/plot_iris_logistic.html
+    https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html
 
 STATS methods:
     (1) creating 2 columns of a report showing statistically sig baseline diff M vs. W.
-	(2) comparison of the estimate of effect by sex can be achieved by using the raw data to construct two separate 2 x 2 tables, then calculating measures of association between the exposure and outcome for men and women separately
-	(3) stratification example (another): building a structural equation model with the data and testing the goodness of fit, or diff in specific paths in the model, separately for each sex
-	(4) mediation modelling allow to understand the mechanisms that produce the m/f diff in the health outcome - they show what the contribution of individual sex- and gender- related factors have on m/f diff in the outcome. this approach allow to estimate what m/f diff would remain if these factors were equal between m and w. 
+    (2) comparison of the estimate of effect by sex can be achieved by using the raw data to construct two separate 2 x 2 tables, then calculating measures of association between the exposure and outcome for men and women separately
+    (3) stratification example (another): building a structural equation model with the data and testing the goodness of fit, or diff in specific paths in the model, separately for each sex
+    (4) mediation modelling allow to understand the mechanisms that produce the m/f diff in the health outcome - they show what the contribution of individual sex- and gender- related factors have on m/f diff in the outcome. this approach allow to estimate what m/f diff would remain if these factors were equal between m and w. 
     controlling or adjusting for sex in multivariable regression or modelling analysis is not the same as stratification. Controlling for sex eliminates the ability to explore data separately for men and women. If the relationship between the variable of interest and the outcome differes for men and women, adjustment for sex will provide an estimate of the average relationship between the variable and the outcome, if sex was held constant.
-	A commong error is toreport baseline sex differences in Table 1 of a paper then only present adjusted analysis in the rest of the results section. Stratified analysis should always be presented when there is evidence that the effect of exposure differts (or there is reason to believe it might differ) for men and owmen.
-	(5) testing sex as a modifying variable using interaction terms: y=b0+b1X1+b2X2+B3X1*X2; creating an interaction term with sex then testing for sig using regression anal. is equiv to stratifying by sex and comparing if estimated for m and w diff.; if the interaction term is sig, data points can be introduced into equation to calcualte estimates of effect separately for m and w; creating an interaction term is commonly used to determine whether sex modifies the relationship between a given exposure and outcome; when analysis are presented separately by sex, this provides the clearest picture of where exposure might differ for m and w. the diff in estimated between m and w should always be formally tested, but oftern it is quite difficult to calculate and interpret diff using coef from multiple interaction.
-	(6) 4 common strategies are used to analyze gender: account for gender by using sex-related associations; look for a gender story by applying second-level disaggregation by sex; look for a gender story by using gender-related variables; create a composite gender index/gender score to analyze gender independently of sex.
-	=> to create a gender index/score: (1) sum up diff vars to create a score; (2) regress vars to predict m/f; (3) factor analysis to capture underlying gender-based constructs; (4) create a ranking based on the m/f distribution to a single var (e.g.: vars -> PCA -> LogisticRegression-> predictive vars retained[Pelletier R, Ditto B, Pilote L, 2015]{predictive vars: info who is the primary earner in the household; personal income, nr of hrs of housework, responsibility for housework, lvl of stress at home, measures of masculinity, measures of femininity Bem Sex Role Inventory})
-	
-	zipf's law https://getpocket.com/explore/item/mathematical-model-reveals-the-patterns-of-how-innovations-arise
+    A commong error is toreport baseline sex differences in Table 1 of a paper then only present adjusted analysis in the rest of the results section. Stratified analysis should always be presented when there is evidence that the effect of exposure differts (or there is reason to believe it might differ) for men and owmen.
+    (5) testing sex as a modifying variable using interaction terms: y=b0+b1X1+b2X2+B3X1*X2; creating an interaction term with sex then testing for sig using regression anal. is equiv to stratifying by sex and comparing if estimated for m and w diff.; if the interaction term is sig, data points can be introduced into equation to calcualte estimates of effect separately for m and w; creating an interaction term is commonly used to determine whether sex modifies the relationship between a given exposure and outcome; when analysis are presented separately by sex, this provides the clearest picture of where exposure might differ for m and w. the diff in estimated between m and w should always be formally tested, but oftern it is quite difficult to calculate and interpret diff using coef from multiple interaction.
+    (6) 4 common strategies are used to analyze gender: account for gender by using sex-related associations; look for a gender story by applying second-level disaggregation by sex; look for a gender story by using gender-related variables; create a composite gender index/gender score to analyze gender independently of sex.
+    => to create a gender index/score: (1) sum up diff vars to create a score; (2) regress vars to predict m/f; (3) factor analysis to capture underlying gender-based constructs; (4) create a ranking based on the m/f distribution to a single var (e.g.: vars -> PCA -> LogisticRegression-> predictive vars retained[Pelletier R, Ditto B, Pilote L, 2015]{predictive vars: info who is the primary earner in the household; personal income, nr of hrs of housework, responsibility for housework, lvl of stress at home, measures of masculinity, measures of femininity Bem Sex Role Inventory})
+
+    zipf's law https://getpocket.com/explore/item/mathematical-model-reveals-the-patterns-of-how-innovations-arise
 '''
 
 
@@ -88,8 +88,8 @@ def Make_Dirs(dir):
     if not path.isdir(dir):
         makedirs(dir)
 
-		
-		
+
+
 '''
 ======================================
 ======================================
@@ -884,75 +884,6 @@ def RUN_ANOVA_SimpleLinearRegression(data_anova, PARAMETER_x_Age, PARAMETERS_INT
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 '''Standardizing DATA, transforming in z-score (z-value=(x-mean)/sd)
 clinical values are z scores, structural are raw scores'''
 def Z_Scores_create():
@@ -980,13 +911,6 @@ def Z_Scores_create():
     dfzvalues = pd.concat(frame_final,axis=1)
     dfzvalues.to_excel(writer)
     writer.save()
-
-
-
-
-
-
-
 
 
 '''II: CORRELATIONS: ASSESS THE PRESENCE OF CORRELATION between COL and PARAMETER'''
@@ -1174,184 +1098,6 @@ https://stackoverflow.com/questions/34276686/prediction-plots-for-statsmodels-ol
 
 
 
-
-
-
-class PrepareForGLM():
-
-    #https://surfer.nmr.mgh.harvard.edu/fswiki/FsgdExamples
-    def __init__(self, path_save_fsgd, file_clinical_data, id_col, group_col):
-        self.PATH = path_save_fsgd
-        self.PATHfsgd = self.PATH+'fsgd/'
-        self.PATHmtx = self.PATH+'contrasts/'
-        Make_Dirs(self.PATHfsgd)
-        Make_Dirs(self.PATHmtx)
-        print(self.PATHfsgd)
-        shutil.copy(file_clinical_data, self.PATH+file_clinical_data[file_clinical_data.rfind('/')+1:])
-        self.group_col = group_col
-        d_init = pd.read_excel(file_clinical_data, sheet_name = 'data').to_dict()
-        self.d_subjid = {}
-        ls_all_vars = [key for key in d_init if key != id_col]
-        self.ls_groups = []
-        for rownr in d_init[id_col]:
-            id = d_init[id_col][rownr]
-            self.d_subjid[id] = {}
-            for key in ls_all_vars:
-                self.d_subjid[id][key] = d_init[key][rownr]
-        for id in self.d_subjid:
-            if self.d_subjid[id][group_col] not in self.ls_groups:
-                self.ls_groups.append(self.d_subjid[id][group_col])
-        self.ls_vars_stats = ls_all_vars
-        self.ls_vars_stats.remove(group_col)
-
-        self.contrasts = {'g1v1':{'slope.mtx':['0 1','t-test with the slope>0 being positive; is the slope equal to 0? does the correlation between thickness and variable differ from zero ?',],},
-            'g2v0':{'group.diff.mtx':['1 -1','t-test with Group1>Group2 being positive; is there a difference between the group intercepts? Is there a difference between groups?',],},
-            'g2v1':{'group.diff.mtx':['1 -1 0 0','t-test with Group1>Group2 being positive; is there a difference between the group intercepts? Is there a difference between groups regressing out the effect of age?',],'group-x-var.mtx':['0 0 1 -1','t-test with Group1>Group2 being positive; is there a difference between the group age slopes? Note: this is an interaction between group and age. Note: not possible to test with DOSS',],
-                    'g1g2.var.mtx':['0 0 0.5 0.5','This is a t-test with (Group1+Group2)/2 > 0 being positive (red/yellow). If the mean is < 0, then it will be displayed in blue/cyan; does mean of group age slope differ from 0? Is there an average affect of age regressing out the effect of group?',],}}
-        # contrasts_not_used = 
-                # {'g1v0':{'intercept.mtx':['1','t-test with the intercept>0 being positive; is the intercept/mean equal to 0?',],},
-                # 'g1v1':{'intercept.mtx':['1 0','t-test with the intercept>0 being positive; is the intercept equal to 0? Does the average thickness differ from zero ?',],},
-                # 'g1v2':{'main.mtx':['1 0 0','t-test with offset>0 being positive; the intercept/offset is different than 0 after regressing out the effects of var1 and var2',],'var1.mtx':['0 1 0','t-test with var1 slope>0 being positive',],'var2.mtx':['0 0 1','t-test with var2 slope>0 being positive',],},
-                # 'g2v0':{'group1.mtx':['1 0','t-test with Group1>0 being positive; is there a main effect of Group1? Does the mean of Group1 equal 0?',],'group2.mtx':['0 1','t-test with Group2>0 being positive; is there a main effect of Group2? Does the mean of Group2 equal 0?',],'g1g2.intercept.mtx':['0.5 0.5','t-test with (Group1+Group2)/2 > 0 being positive (red/yellow). If the mean is < 0, then it will be displayed in blue/cyan; does mean of the group means differ from 0?',],}
-                # 'g2v1':{'g1g2.intercept.mtx':['0.5 0.5 0 0','t-test with (Group1+Group2)/2 > 0 being positive (red/yellow). If the mean is < 0, then it will be displayed in blue/cyan; does mean of group intercepts differ from 0? Is there an average main effect regressing out age?',]},}
-        gd2 = {'g1v1':['dods',],'g2v0':['doss','dods',],'g2v1':['dods',],}#gd2_not_used = {'g1v0':['dods',],'g1v2':['dods',],}
-        self.files_glm = {}
-        for contrast_type in self.contrasts:
-            self.files_glm[contrast_type]={}
-            self.files_glm[contrast_type]['fsgd'] = []
-            self.files_glm[contrast_type]['mtx'] = []
-            self.files_glm[contrast_type]['mtx_explanation'] = []
-            self.files_glm[contrast_type]['gd2mtx'] = gd2[contrast_type]
-
-        print('creating fsgd for g1g2v0')
-        self.make_fsgd_g1g2v0()
-        print('creating fsgd for g1v1')
-        self.make_fsgd_g1v1()
-        print('creating fsgd for g1v2')
-        # self.make_fsgd_g1v2()
-        # print('creating fsgd for g2v1')
-        self.make_fsgd_g2v1()
-        print('creating contrasts')
-        self.make_contrasts()
-        print('creating py file with all data')
-        self.make_py_f()
-        print('creating qdec fsgd files')
-        self.make_qdec_fsgd_g2()
-
-    def make_fsgd_g1g2v0(self):
-        file = 'g2v0'+'_'+self.ls_groups[0]+'_'+self.ls_groups[1]+'.fsgd'
-        open(self.PATHfsgd+file, 'w').close()
-        with open(self.PATHfsgd+file, 'a') as f:
-            f.write('GroupDescriptorFile 1\nClass '+self.ls_groups[0]+' plus blue\nClass '+self.ls_groups[1]+' circle green\n')
-            for subjid in self.d_subjid:
-                f.write('Input '+subjid+' '+self.d_subjid[subjid][self.group_col]+'\n')
-        self.files_glm['g2v0']['fsgd'].append(file)
-        # for group in self.ls_groups:
-            # file = 'g1v0'+'_'+group+'.fsgd'
-            # open(self.PATHfsgd+file, 'w').close()
-            # with open(self.PATHfsgd+file, 'a') as f:
-                # f.write('GroupDescriptorFile 1\nClass Main\n')
-                # for subjid in self.d_subjid:
-                    # if self.d_subjid[subjid][self.group_col] == group:
-                        # f.write('Input '+subjid+' Main\n')
-            # self.files_glm['g1v0']['fsgd'].append(file)
-
-    def check_var_zero(self, var, group):
-        ls = []
-        for subjid in self.d_subjid:
-            if self.d_subjid[subjid][self.group_col] == group:
-                ls.append(self.d_subjid[subjid][var])
-        return all(v == 0 for v in ls)
-            
-    def make_fsgd_g1v1(self):
-        for group in self.ls_groups:
-            for variable in self.ls_vars_stats:
-                if not self.check_var_zero(variable, group):
-                    file = 'g1v1'+'_'+group+'_'+variable+'.fsgd'
-                    open(self.PATHfsgd+file, 'w').close()
-                    with open(self.PATHfsgd+file, 'a') as f:
-                        f.write('GroupDescriptorFile 1\nClass Main\nVariables '+variable+'\n')
-                        for subjid in self.d_subjid:
-                            if self.d_subjid[subjid][self.group_col] == group:
-                                f.write('Input '+subjid+' Main '+str(self.d_subjid[subjid][variable])+'\n')
-                    self.files_glm['g1v1']['fsgd'].append(file)
-
-
-    def make_fsgd_g1v2(self):
-        for group in self.ls_groups:
-            for variable in self.ls_vars_stats[:-1]:
-                if not self.check_var_zero(variable, group):
-                    for variable2 in self.ls_vars_stats[self.ls_vars_stats.index(variable)+1:]:
-                        if not self.check_var_zero(variable2, group):
-                            file = 'g1v2'+'_'+group+'_'+variable+'_'+variable2+'.fsgd'
-                            open(self.PATHfsgd+file, 'w').close()
-                            with open(self.PATHfsgd+file, 'a') as f:
-                                f.write('GroupDescriptorFile 1\nClass Main\nVariables '+variable+' '+variable2+'\n')
-                                for subjid in self.d_subjid:
-                                    if self.d_subjid[subjid][self.group_col] == group:
-                                        f.write('Input '+subjid+' Main '+str(self.d_subjid[subjid][variable])+' '+str(self.d_subjid[subjid][variable2])+'\n')
-                            self.files_glm['g1v2']['fsgd'].append(file)
-
-    def make_fsgd_g2v1(self):
-        for variable in self.ls_vars_stats:
-            if not self.check_var_zero(variable, self.ls_groups[0]) and not self.check_var_zero(variable, self.ls_groups[1]):
-                file = 'g2v1'+'_'+self.ls_groups[0]+'_'+self.ls_groups[1]+'_'+variable+'.fsgd'
-                open(self.PATHfsgd+file, 'w').close()
-                with open(self.PATHfsgd+file, 'a') as f:
-                    f.write('GroupDescriptorFile 1\nClass '+self.ls_groups[0]+' plus blue\nClass '+self.ls_groups[1]+' circle green\nVariables ')
-                    f.write(variable+'\n')
-                    for subjid in self.d_subjid:
-                        f.write('Input '+subjid+' '+self.d_subjid[subjid][self.group_col]+' '+str(self.d_subjid[subjid][variable])+'\n')
-                self.files_glm['g2v1']['fsgd'].append(file)
-
-    def make_qdec_fsgd_g2(self):
-        file = 'qdec_g2.fsgd'
-        open(self.PATH+file, 'w').close()
-        with open(self.PATH+file, 'a') as f:
-            f.write('fsid group ')
-            for variable in self.ls_vars_stats:
-                if not self.check_var_zero(variable, self.ls_groups[0]) and not self.check_var_zero(variable, self.ls_groups[1]):
-                    f.write(variable+' ')
-            f.write('\n')
-            for id in self.d_subjid:
-                f.write(id+' '+self.d_subjid[id][self.group_col]+' ')
-                for variable in self.ls_vars_stats:
-                    f.write(self.d_subjid[id][variable]+' ')
-                f.write('\n')
-
-    def make_contrasts(self):
-        for contrast_type in self.contrasts:
-            for contrast_name in self.contrasts[contrast_type]:
-                file = contrast_type+'_'+contrast_name
-                open(self.PATHmtx+file, 'w').close()
-                with open(self.PATHmtx+file, 'a') as f:
-                    f.write(self.contrasts[contrast_type][contrast_name][0])
-                self.files_glm[contrast_type]['mtx'].append(file)
-                self.files_glm[contrast_type]['mtx_explanation'].append(self.contrasts[contrast_type][contrast_name][1])
-
-
-
-    def make_py_f(self):
-        file = 'files_for_glm.py'
-        open(self.PATH+file, 'w').close()
-        with open(self.PATH+file, 'a') as f:
-            f.write('#!/bin/python/\nfiles_for_glm = {')
-            for contrast_type in self.files_glm:
-                f.write('\''+contrast_type+'\':{')
-                for group in self.files_glm[contrast_type]:
-                    f.write('\''+group+'\':[')
-                    for value in self.files_glm[contrast_type][group]:
-                        f.write('\''+value+'\',')
-                    f.write('],')
-                f.write('},')
-            f.write('}')
-
-			
-			
-			
-			
-			
-			
 '''
 ==============================================================
 PROBABLY NOT NEEDED OR NEED ADJUSTMENTS
