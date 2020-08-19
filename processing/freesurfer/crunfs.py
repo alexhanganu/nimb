@@ -180,28 +180,26 @@ def chk_if_autorecon_done(SUBJECTS_DIR, lvl, subjid):
                 2:['stats/lh.curv.stats','stats/rh.curv.stats',],
                 3:['stats/aseg.stats','stats/wmparc.stats',]}
     for path_f in f_autorecon[lvl]:
-            if not path.exists(path.join(SUBJECTS_DIR,subjid,path_f)):
+            if not path.exists(path.join(SUBJECTS_DIR, subjid, path_f)):
                 return False
                 break
             else:
                 return True
 
 
-
 def chk_if_recon_done(SUBJECTS_DIR, subjid):
 
     '''must check for all files: https://surfer.nmr.mgh.harvard.edu/fswiki/ReconAllDevTable
-	'''
-    if 'wmparc.mgz' in listdir(path.join(SUBJECTS_DIR,subjid,'mri')):
+    '''
+    if path.exists(path.join(SUBJECTS_DIR,subjid, 'mri', 'wmparc.mgz')):
         return True
     else:
         return False
 
 
-
 def chk_if_qcache_done(SUBJECTS_DIR, subjid):
 
-    if 'rh.w-g.pct.mgh.fsaverage.mgh' and 'lh.thickness.fwhm10.fsaverage.mgh' in listdir(path.join(SUBJECTS_DIR,subjid,'surf')):
+    if 'rh.w-g.pct.mgh.fsaverage.mgh' and 'lh.thickness.fwhm10.fsaverage.mgh' in listdir(path.join(SUBJECTS_DIR, subjid, 'surf')):
         return True
     else:
         return False
@@ -219,84 +217,66 @@ log_files = {
     },
 }
 
-
-def chkbrstemf(SUBJECTS_DIR, subjid, freesurfer_version):
-
-    lsscripts=listdir(path.join(SUBJECTS_DIR,subjid,'scripts'))
-    log_file = log_files['bs'][freesurfer_version]
-    if any(log_file in i for i in lsscripts):
-        with open(path.join(SUBJECTS_DIR, subjid, 'scripts', log_file), 'rt') as readlog:
-            for line in readlog:
-                line2read=[line]
-                if any('Everything done' in i for i in line2read):
-                    lsmri = listdir(path.join(SUBJECTS_DIR, subjid, 'mri'))
-                    bs_f_stats = [i for i in lsmri if 'brainstemSsVolumes' in i][0]
-                    if bs_f_stats:
-                        if 'brainstemSsVolumes.v10' in bs_f_stats:
-                            try:
-                                shutil.copy(path.join(SUBJECTS_DIR, subjid, 'mri', bs_f_stats), path.join(SUBJECTS_DIR, subjid, 'stats', 'brainstem.v10.stats'))
-                            except Exception as e:
-                                print(e)
-                        return True
-                    else:
-                        return False
-    else:
-        return False 
-
-
 files_hip_amy21_mri = {
     'lh.hippoSfVolumes-T1.v21.txt':'lh.hipposubfields.T1.v21.stats',
     'rh.hippoSfVolumes-T1.v21.txt':'rh.hipposubfields.T1.v21.stats',
     'lh.amygNucVolumes-T1.v21.txt':'lh.amygdalar-nuclei.T1.v21.stats',
     'rh.amygNucVolumes-T1.v21.txt':'rh.amygdalar-nuclei.T1.v21.stats',
                       }
-def chkhipf(SUBJECTS_DIR, subjid):
 
-    lsscripts = listdir(path.join(SUBJECTS_DIR, subjid, 'scripts'))
-    if any('hippocampal-subfields-T1' in i for i in lsscripts):
-        with open(path.join(SUBJECTS_DIR, subjid, 'scripts', 'hippocampal-subfields-T1.log'), 'rt') as readlog:
-            for line in readlog:
-                line2read = [line]
-                if any('Everything done' in i for i in line2read):
-                    lsmri = listdir(path.join(SUBJECTS_DIR, subjid, 'mri'))
-                    if any('rh.hippoSfVolumes-T1.v10.txt' in i for i in lsmri):
-                        try:
-                            shutil.copy(path.join(SUBJECTS_DIR, subjid, 'mri', 'lh.hippoSfVolumes-T1.v10.txt'), path.join(SUBJECTS_DIR, subjid, 'stats', 'lh.hipposubfields.T1.v10.stats'))
-                            shutil.copy(path.join(SUBJECTS_DIR, subjid, 'mri', 'rh.hippoSfVolumes-T1.v10.txt'), path.join(SUBJECTS_DIR, subjid, 'stats', 'rh.hipposubfields.T1.v10.stats'))
-                        except Exception as e:
-                            print(e)
-                        return True
-                    elif any('rh.hippoSfVolumes-T1.v21.txt' in i for i in lsmri):
-                            try:
-                                for file in files_hip_amy21_mri:
-                                    shutil.copy(path.join(SUBJECTS_DIR, subjid, 'mri', file), path.join(SUBJECTS_DIR, subjid, 'stats', files_hip_amy21_mri[file]))
-                            except Exception as e:
-                                print(e)
-                            return True
-                    else:
-                        return False
+def chkbrstemf(SUBJECTS_DIR, subjid, freesurfer_version):
+    log_file = path.join(SUBJECTS_DIR,subjid,'scripts', log_files['bs'][freesurfer_version])
+    if path.exists(log_file) and any('Everything done' in i for i in open(log_file, 'rt').readlines()):
+        lsmri = listdir(path.join(SUBJECTS_DIR, subjid, 'mri'))
+        bs_f_stats = [i for i in lsmri if 'brainstemSsVolumes' in i][0]
+        if bs_f_stats:
+            if 'brainstemSsVolumes.v10' in bs_f_stats:
+                try:
+                    shutil.copy(path.join(SUBJECTS_DIR, subjid, 'mri', bs_f_stats), path.join(SUBJECTS_DIR, subjid, 'stats', 'brainstem.v10.stats'))
+                except Exception as e:
+                    print(e)
+            return True
+    else:
+        return False
+
+
+def chkhipf(SUBJECTS_DIR, subjid):
+    log_file = path.join(SUBJECTS_DIR, subjid, 'scripts', 'hippocampal-subfields-T1.log')
+    if path.exists(log_file) and any('Everything done' in i for i in open(log_file, 'rt').readlines())
+        lsmri = listdir(path.join(SUBJECTS_DIR, subjid, 'mri'))
+        if any('rh.hippoSfVolumes-T1.v10.txt' in i for i in lsmri):
+            try:
+                shutil.copy(path.join(SUBJECTS_DIR, subjid, 'mri', 'lh.hippoSfVolumes-T1.v10.txt'), path.join(SUBJECTS_DIR, subjid, 'stats', 'lh.hipposubfields.T1.v10.stats'))
+                shutil.copy(path.join(SUBJECTS_DIR, subjid, 'mri', 'rh.hippoSfVolumes-T1.v10.txt'), path.join(SUBJECTS_DIR, subjid, 'stats', 'rh.hipposubfields.T1.v10.stats'))
+            except Exception as e:
+                print(e)
+            return True
+        elif any('rh.hippoSfVolumes-T1.v21.txt' in i for i in lsmri):
+                try:
+                    for file in files_hip_amy21_mri:
+                        shutil.copy(path.join(SUBJECTS_DIR, subjid, 'mri', file), path.join(SUBJECTS_DIR, subjid, 'stats', files_hip_amy21_mri[file]))
+                except Exception as e:
+                    print(e)
+                return True
+        else:
+            return False
     else:
         return False
 
 
 
 def chkthaf(SUBJECTS_DIR, subjid):
-
-    lsscripts=listdir(path.join(SUBJECTS_DIR,subjid,'scripts'))
-    if any('thalamic-nuclei-mainFreeSurferT1.log' in i for i in lsscripts):
-        with open(path.join(SUBJECTS_DIR, subjid, 'scripts', 'thalamic-nuclei-mainFreeSurferT1.log'), 'rt') as readlog:
-            for line in readlog:
-                line2read = [line]
-                if any('Everything done' in i for i in line2read):
-                    lsmri = listdir(path.join(SUBJECTS_DIR, subjid, 'mri'))
-                    if any('ThalamicNuclei.v12.T1.volumes.txt' in i for i in lsmri):
-                            try:
-                                shutil.copy(path.join(SUBJECTS_DIR, subjid, 'mri', 'ThalamicNuclei.v12.T1.volumes.txt'), path.join(SUBJECTS_DIR, subjid, 'stats', 'thalamic-nuclei.v12.T1.stats'))
-                            except Exception as e:
-                                print(e)
-                            return True
-                    else:
-                        return False
+    log_file = path.join(SUBJECTS_DIR, subjid, 'scripts', 'thalamic-nuclei-mainFreeSurferT1.log')
+    if path.exists(log_file) and any('Everything done' in i for i in open(log_file, 'rt').readlines())
+        lsmri = listdir(path.join(SUBJECTS_DIR, subjid, 'mri'))
+        if any('ThalamicNuclei.v12.T1.volumes.txt' in i for i in lsmri):
+                try:
+                    shutil.copy(path.join(SUBJECTS_DIR, subjid, 'mri', 'ThalamicNuclei.v12.T1.volumes.txt'), path.join(SUBJECTS_DIR, subjid, 'stats', 'thalamic-nuclei.v12.T1.stats'))
+                except Exception as e:
+                    print(e)
+                return True
+        else:
+            return False
     else:
         return False
 
@@ -435,7 +415,6 @@ def get_batch_jobs_status(cuser, cusers_list):
                     jobs[vals[0]] = vals[4]
         return jobs
 
-
     import subprocess
 
     jobs = dict()
@@ -458,7 +437,6 @@ def get_diskusage_report(cuser, cusers_list):
                 vals = list(filter(None,line.split(' ')))
                 diskusage[vals[0]] = vals[4][:-5].strip('k')
         return diskusage
-
 
     import subprocess
 
@@ -485,8 +463,6 @@ def get_mask_codes(structure):
     return structure_codes[structure]
 
 
-
-
 def get_batch_job_status_table():
     import pandas as pd
 
@@ -506,3 +482,32 @@ def get_batch_job_status_table():
     except Exception as e:
         print(e)
 
+
+'''
+
+
+def old_chkbrstemf(SUBJECTS_DIR, subjid, freesurfer_version):
+
+    lsscripts=listdir(path.join(SUBJECTS_DIR,subjid,'scripts'))
+    log_file = log_files['bs'][freesurfer_version]
+    if any(log_file in i for i in lsscripts):
+        with open(path.join(SUBJECTS_DIR, subjid, 'scripts', log_file), 'rt') as readlog:
+            for line in readlog:
+                line2read=[line]
+                if any('Everything done' in i for i in line2read):
+                    lsmri = listdir(path.join(SUBJECTS_DIR, subjid, 'mri'))
+                    bs_f_stats = [i for i in lsmri if 'brainstemSsVolumes' in i][0]
+                    if bs_f_stats:
+                        if 'brainstemSsVolumes.v10' in bs_f_stats:
+                            try:
+                                shutil.copy(path.join(SUBJECTS_DIR, subjid, 'mri', bs_f_stats), path.join(SUBJECTS_DIR, subjid, 'stats', 'brainstem.v10.stats'))
+                            except Exception as e:
+                                print(e)
+                        return True
+                    else:
+                        return False
+    else:
+        return False
+
+
+'''
