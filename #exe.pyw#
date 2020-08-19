@@ -23,8 +23,6 @@ button = ttk.Button
 menubar = Menu(root)
 filemenu = Menu(menubar, tearoff=0)
 menubar.add_cascade(label='actions', menu=filemenu)
-# filemenu.add_command(label='stop all active tasks',
-                     # command=lambda: StopAllActiveTasks())
 root.config(menu=menubar)
 
 

@@ -11,7 +11,7 @@ class Get_Vars():
     def __init__(self):
 
         self.credentials_home = _get_credentials_home()
-
+        print("credentials are located at: "+self.credentials_home)        
         if path.exists(path.join(self.credentials_home, 'projects.json')):
             self.projects   = self.read_file(path.join(self.credentials_home, 'projects.json'))
             self.location_vars = self.get_vars(self.projects, self.credentials_home)

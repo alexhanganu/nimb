@@ -5,7 +5,6 @@
 
 import argparse
 import sys
-import json
 from setup.get_vars import Get_Vars
 from os import path
 from classification import classify_bids
@@ -24,7 +23,6 @@ class NIMB(object):
         self,
         projects,
         locations,
-        installers,
         process,
         project,
         **_
@@ -32,12 +30,10 @@ class NIMB(object):
 
         self.projects  = projects
         self.locations = locations
-        self.installers = installers
         self.process   = process
         self.project   = project
         self.distribution = DistributionHelper(projects,
-                                               locations,
-                                               installers)
+                                               locations)
 
 
     def run(self):
@@ -110,7 +106,7 @@ def get_parameters(projects):
         "-project", required=False,
         default=projects[:1],
         choices = projects,
-        help="names of projects located in setup/projects.json -> PROJECTS",
+        help="names of projects located in credentials_path.py/nimb/projects.json -> PROJECTS",
     )
 
     params = parser.parse_args()
@@ -122,10 +118,9 @@ def main():
     getvars = Get_Vars()
     projects = getvars.projects
     locations = getvars.location_vars
-    installers = getvars.installers
     params = get_parameters(projects['PROJECTS'])
 
-    app = NIMB(projects, locations, installers, **vars(params))
+    app = NIMB(projects, locations, **vars(params))
     return app.run()
 
 
