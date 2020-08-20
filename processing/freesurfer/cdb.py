@@ -284,16 +284,13 @@ def chk_subj_in_SUBJECTS_DIR(SUBJECTS_DIR, NIMB_tmp, db, process_order, base_nam
             if _id in db['LONG_DIRS']:
                 if subjid not in db['LONG_DIRS'][_id]:
                     # log.info('        '+subjid+' to LONG_DIRS[\''+_id+'\']')
-                    # Update_status_log(NIMB_tmp, '        '+subjid+' to LONG_DIRS[\''+_id+'\']')
                     db['LONG_DIRS'][_id].append(subjid)
             if _id not in db['LONG_TPS']:
                 # log.info('    adding '+_id+' to LONG_TPS')
-                # Update_status_log(NIMB_tmp, '    adding '+_id+' to LONG_TPS')
                 db['LONG_TPS'][_id] = list()
             if _id in db['LONG_TPS']:
                 if longitud not in db['LONG_TPS'][_id]:
                     # log.info('    adding '+longitud+' to LONG_TPS[\''+_id+'\']')
-                    # Update_status_log(NIMB_tmp, '    adding '+longitud+' to LONG_TPS[\''+_id+'\']')
                     db['LONG_TPS'][_id].append(longitud)
             if base_name not in subjid:
                 if subjid not in ls_SUBJECTS_running:
