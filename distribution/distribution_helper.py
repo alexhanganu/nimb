@@ -60,7 +60,6 @@ class DistributionHelper():
                     print(e)
             if not path.exists(p):
                 ready = False
-                ErrorMessages.error_classify()
                 break
         return ready
 
