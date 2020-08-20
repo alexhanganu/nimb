@@ -3,8 +3,8 @@
 # 2020.08.17
 
 
-from os import path, makedirs, chdir, system, remove
-import time
+from os import path, chdir, system, remove
+import time, shutil
 
 class SETUP_FREESURFER():
 
@@ -25,18 +25,17 @@ class SETUP_FREESURFER():
             print('writing license file')
         self.check_freesurfer_license(vars['local']['FREESURFER']['freesurfer_license'])
 
-        def check_freesurfer_license(self, license):
-            if license:
-                print('creating freesurfer license.txt file for FreeSurfer 7.1.1')
-                if path.isfile(path.join(self.FREESURFER_HOME, 'license.txt')):
-                    try:
-                        system("mv "+path.join(self.FREESURFER_HOME, 'license.txt')+" "+path.join(self.FREESURFER_HOME, 'license_freesurfer.txt'))
-                    except Exception as e:
-                        print(e)
-                        system("rm "+path.join(self.FREESURFER_HOME, 'license.txt'))
-                with open(path.join(self.FREESURFER_HOME, 'license.txt'), 'w') as f:
-                    for line in fs_license:
-                        f.write(line + '\n')
+    def check_freesurfer_license(self, license):
+        print('creating freesurfer license.txt file for FreeSurfer 7.1.1')
+        if path.isfile(path.join(self.FREESURFER_HOME, 'license.txt')):
+            try:
+                shutil.move(path.join(self.FREESURFER_HOME, 'license.txt'),path.join(self.FREESURFER_HOME, 'license_freesurfer.txt'))
+            except Exception as e:
+                print(e)
+                remove(path.join(self.FREESURFER_HOME, 'license.txt'))
+        with open(path.join(self.FREESURFER_HOME, 'license.txt'), 'w') as f:
+            for line in fs_license:
+                f.write(line + '\n')
 
     def freesurfer_install(self, freesurfer_version, installers):
         if freesurfer_version == 7:
@@ -72,5 +71,6 @@ class SETUP_FREESURFER():
             f.write(export_FreeSurfer_cmd+"\n")
             f.write(source_FreeSurfer_cmd+"\n")
             f.write("fs_install_mcr R2014b\n")
-        system("fs_install_mcr R2014b")
+        system("chmod +x setup_fs_matlab.sh")
+        system("./setup_fs_matlab.sh")
 

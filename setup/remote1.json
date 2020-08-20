@@ -1,7 +1,7 @@
 {
 "USER":{
     "user"               : "user1",
-    "users_list"         : ["user1","user2"],
+    "users_list"         : [],
     "supervisor_account" : ""
         },
 "NIMB_PATHS": {
@@ -32,7 +32,7 @@
        "FREESURFER_HOME" : "~/freesurfer",
        "FS_SUBJECTS_DIR" : "~/freesurfer/subjects",
        "export_FreeSurfer_cmd" : "export FREESURFER_HOME=~/freesurfer",
-       "source_FreeSurfer_cmd" : "$FREESURFER_HOME/SetUpFreeSurfer.sh",
+       "source_FreeSurfer_cmd" : "source $FREESURFER_HOME/SetUpFreeSurfer.sh",
        "process_order" : ["registration","autorecon1","autorecon2","autorecon3","qcache","brstem","hip","tha"],
        "masks" : [],
        "flair_t2_add" : 0,

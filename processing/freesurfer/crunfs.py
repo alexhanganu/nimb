@@ -52,7 +52,7 @@ def makesubmitpbs(cmd, subjid, run, walltime, params):
         f.write('\n')
         f.write('\n')
         f.write(params["export_FreeSurfer_cmd"]+'\n')
-        f.write('source '+params["source_FreeSurfer_cmd"]+'\n')
+        f.write(params["source_FreeSurfer_cmd"]+'\n')
         f.write('export SUBJECTS_DIR='+params["SUBJECTS_DIR"]+'\n')
         f.write('\n')
         f.write(cmd+'\n')
