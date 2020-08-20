@@ -43,7 +43,7 @@ class Get_Vars():
         d_all_vars = self.get_vars(projects, path.dirname(path.abspath(__file__)))
         d_all_vars['local'] = self.set_local_nimb(d_all_vars['local'], projects['PROJECTS'][0])
         self.save_json('local.json', d_all_vars['local'], self.credentials_home)
-        print('PROJECTS AND VARIABLES ARE NOT DEFINED. this can be done in the files located at: '+self.credentials_home)
+        print('PROJECTS AND VARIABLES ARE NOT DEFINED. check: '+self.credentials_home)
         return d_all_vars
 
     def verify_local_user(self, user):
@@ -51,17 +51,16 @@ class Get_Vars():
         return user_local
 
     def change_username(self, data):
-        if 'local' in data and len(data['local']['USER']['users_list']) > 1:
-            user = data['local']['USER']['user']
-            user_local = self.verify_local_user(user)
-            if user_local != user:
-                print('changing username')
-                data['local']['USER']['user'] = user_local
-                for variable in data['local']['NIMB_PATHS']:
-                    data['local']['NIMB_PATHS'][variable] = data['local']['NIMB_PATHS'][variable].replace(user, user_local)
-                data['local']['FREESURFER']["FREESURFER_HOME"] = data['local']['FREESURFER']["FREESURFER_HOME"].replace(user, user_local)
-                data['local']['FREESURFER']["FS_SUBJECTS_DIR"] = data['local']['FREESURFER']["FS_SUBJECTS_DIR"].replace(user, user_local)
-                data['local']['FREESURFER']["export_FreeSurfer_cmd"] = data['local']['FREESURFER']["export_FreeSurfer_cmd"].replace(user, user_local)
+        user = data['local']['USER']['user']
+        user_local = self.verify_local_user(user)
+        if user_local != user:
+            print('changing username')
+            data['local']['USER']['user'] = user_local
+            for variable in data['local']['NIMB_PATHS']:
+                data['local']['NIMB_PATHS'][variable] = data['local']['NIMB_PATHS'][variable].replace(user, user_local)
+            data['local']['FREESURFER']["FREESURFER_HOME"] = data['local']['FREESURFER']["FREESURFER_HOME"].replace(user, user_local)
+            data['local']['FREESURFER']["FS_SUBJECTS_DIR"] = data['local']['FREESURFER']["FS_SUBJECTS_DIR"].replace(user, user_local)
+            data['local']['FREESURFER']["export_FreeSurfer_cmd"] = data['local']['FREESURFER']["export_FreeSurfer_cmd"].replace(user, user_local)
         return data
 
     def save_json(self, file, data, dst):

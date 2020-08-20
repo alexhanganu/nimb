@@ -61,7 +61,7 @@ class NIMB(object):
                 sys.exit()
             else:
                 from processing.freesurfer import start_fs_pipeline
-                start_fs_pipeline.start_fs_pipeline()
+                start_fs_pipeline.start_fs_pipeline(self.locations['local'])
 
         if self.process == 'fs-stats':
             if not self.distribution.nimb_stats_ready():
