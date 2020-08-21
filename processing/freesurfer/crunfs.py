@@ -1,6 +1,5 @@
-
 #!/bin/python
-# 2020.07.31
+# 2020.08.21
 
 
 from os import listdir, path, system, remove
