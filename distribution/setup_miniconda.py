@@ -1,12 +1,11 @@
 #!/usr/bin/env python
 # coding: utf-8
 # 2020.08.13
+from os import path, chdir, system, remove
 
-    from os import path, chdir, system, remove
+def setup_miniconda(NIMB_HOME = "~/nimb"):
 
-def setup_miniconda(NIMB_HOME):
-
-    if not path.exists(path.join(NIMB_HOME, 'miniconda3')):
+    if not path.exists(path.join(NIMB_HOME,"..", 'miniconda3')):
         chdir(NIMB_HOME)
         system('curl https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -o miniconda3.sh')
         system('chmod +x miniconda3.sh')
@@ -30,3 +29,7 @@ def setup_miniconda(NIMB_HOME):
         system('./miniconda3/bin/conda install -y xlsxwriter')
     print(
         'FINISHED Installing miniconda3 with dcm2niix, dcm2bids, pandas, numpy, xlrd, xlsxwriter, paramiko, dipy')
+
+
+if __name__ == "__main__":
+    setup_miniconda()
