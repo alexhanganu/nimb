@@ -1,7 +1,6 @@
 from os import path, environ
 import time
 import subprocess
-import json
 import logging
 
 
@@ -34,15 +33,3 @@ def start_fs_pipeline(vars_local):
         print(e)
 
 
-if __name__ == "__main__":
-
-    import sys
-    from pathlib import Path
-
-    file = Path(__file__).resolve()
-    parent, top = file.parent, file.parents[2]
-    sys.path.append(str(top))
-
-    from setup.get_vars import Get_Vars
-    getvars = Get_Vars()
-    start_fs_pipeline(getvars.location_vars['local'])
