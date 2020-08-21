@@ -2,6 +2,7 @@ paramiko=2.7.1
 scp==
 pandas==1.0.0
 numpy==1.18.1
+xlrd==1.2.0
 scipy==
 scikit-learn==0.22.1
 seaborn==0.10.0
