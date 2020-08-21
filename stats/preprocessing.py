@@ -54,12 +54,8 @@ def get_df_with_params(df, params):
 
 
 
-# def get_df_group(group, df):
-    # if definitions.groups[group] == '>=':
-            # df_group = df[df[definitions.params['group_param']] >= definitions.params['group_threshold']]
-    # elif definitions.groups[group] == '<':
-            # df_group = df[df[definitions.params['group_param']] < definitions.params['group_threshold']]
-    # return df_group
+def get_df_group(df, group_col, group):
+    return df[df[group_col] == group]
 
 
 
