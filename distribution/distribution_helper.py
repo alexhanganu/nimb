@@ -180,12 +180,20 @@ class DistributionHelper():
         return self.projects[project][var_name]
 
     def get_PROCESSED_FS_DIR(self):
+        """
 
-        return self.projects[self.project_name]['PROCESSED_FS_DIR']
+        :return: like ["local","/home/username/database/source/mri"],
+        """
+        machine, path =  self.projects[self.project_name]['PROCESSED_FS_DIR']
+        return machine, path
 
     def get_SOURCE_SUBJECTS_DIR(self):
-        return self.projects[self.project_name]['SOURCE_SUBJECTS_DIR']
+        """
 
+        :return: machine and path in that machine like ["local","/home/username/database/source/mri"],
+        """
+        machine, path =  self.projects[self.project_name]['SOURCE_SUBJECTS_DIR']
+        return machine, path
 
     def run(self, Project):
         # 0 check the variables
