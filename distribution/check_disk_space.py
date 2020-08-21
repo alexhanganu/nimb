@@ -32,14 +32,11 @@ class DiskspaceUtility:
         return out
 
     @staticmethod
-    def get_free_space_remote(ssh_session):
+    def get_free_space_remote(ssh_session, new_subject_folder):
         """
         return the space in MB
-
-        :param self:
-        :output the output of diskusage_report running at remote server,
-        output is got from this line (out, err) = runCommandOverSSH(ssh_session, f"ls  {PROCESSED_FS_DIR}/*.gz")
-        :param sshconnection: the ssh connection to the remote server
+        :param ssh_session:
+        :param new_subject_folder:
         :return: int, size in MG, this number is round(realsize) + 1
         """
         (output, err) = runCommandOverSSH(ssh_session, "diskusage_report")
