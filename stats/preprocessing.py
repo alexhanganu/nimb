@@ -53,12 +53,6 @@ def get_df_with_params(df, params):
     return df_subcort_atlas, ls_cols_X_atlas
 
 
-
-def get_df_group(df, group_col, group):
-    return df[df[group_col] == group]
-
-
-
 def get_groups(df, group_col, group_criteria):
     try:
         groups = [i for i in group_criteria.keys()]
