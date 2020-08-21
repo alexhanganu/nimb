@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from os import path, system, makedirs
+from os import path, system
 import shutil
 import json
 from .get_username import _get_username
@@ -14,9 +14,9 @@ class SetProject():
     def set_project(self, NIMB_HOME, STATS_PATHS, project):
         STATS_PATHS['FS_GLM_dir']             = path.join(NIMB_HOME, '..', 'nimb_tmp', project, 'fs_glm')
         STATS_PATHS['STATS_HOME']             = path.join(NIMB_HOME, '..', 'nimb_tmp', project, 'stats')
-        STATS_PATHS["predict_dir"]            = "C:\\Users\\Jessica\\Desktop\\nimb\\..\\nimb_tmp\\project1\\stats\\predict",
-        STATS_PATHS["logistic_regression_dir"]= "C:\\Users\\Jessica\\Desktop\\nimb\\..\\nimb_tmp\\project1\\stats\\logistic_regression",
-        STATS_PATHS["linreg_moderation_dir"]  = "C:\\Users\\Jessica\\Desktop\\nimb\\..\\nimb_tmp\\project1\\stats\\linreg_moderation"
+        STATS_PATHS["predict_dir"]            = path.join(NIMB_HOME, '..', 'nimb_tmp', project, 'stats', "predict")
+        STATS_PATHS["logistic_regression_dir"]= path.join(NIMB_HOME, '..', 'nimb_tmp', project, 'stats', "logistic_regression")
+        STATS_PATHS["linreg_moderation_dir"]  = path.join(NIMB_HOME, '..', 'nimb_tmp', project, 'stats', "linreg_moderation")
         return STATS_PATHS
 
 class Get_Vars():

@@ -129,5 +129,5 @@ def extract_regions(dic, path_save_results, atlas):
     df_feat = pd.DataFrame.from_dict(regions, orient='index', columns=cols)
     df_feat.sort_values(by=['explained_variance'], inplace=True, ascending=False)
 
-    db_processing.save_df_tocsv(df_feat, path_save_results+'/regions_from_pca_features_'+atlas+'.csv')
+    db_processing.save_df_tocsv(df_feat, path.join(path_save_results,'regions_from_pca_features_'+atlas+'.csv'))
  

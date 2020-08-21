@@ -2,7 +2,7 @@
 # !/usr/bin/env python
 # coding: utf-8
 
-# import os
+from os import path
 # path_main_dir = [p for p in ('/home_je/hanganua/sSylvie',
 # 						'J:/OneDrive - Universite de Montreal/s/s2018-sylvie-reserve',
 # 						'J:/Dropbox/2004étSylvie/materials') if os.path.exists(p)][0]
@@ -103,9 +103,7 @@ def preprocessing_data(data, target):
     return X_scaled, y_transform, data_x
 
 
-def get_features_based_on_pca(threshold, X_scaled, ls_cols_X, group, atlas):
-
-    path_save_results = varia.get_dir(varia.get_dir(definitions.paths['PATH_results'] +"_"+definitions.params['date'])+'/'+definitions.folders['dir_pca_features'])
+def get_features_based_on_pca(dir_pca, threshold, X_scaled, ls_cols_X, group, atlas):
 
     print('nr of features to analyze: ',len(ls_cols_X))
     model = PCA(n_components=threshold)
@@ -131,13 +129,13 @@ def get_features_based_on_pca(threshold, X_scaled, ls_cols_X, group, atlas):
     print('nr of features chosen by PCA: ', len(dic_feat_comps.keys()))
 
 
-    varia.extract_regions(dic_feat_comps, path_save_results, atlas)
+    varia.extract_regions(dic_feat_comps, dir_pca, atlas)
 
     # save results
-    df_feat_comps.to_csv(path_save_results+'/features_from_pca_'+group+'_'+atlas+'.csv')
+    df_feat_comps.to_csv(path.join(dir_pca, 'features_from_pca_'+group+'_'+atlas+'.csv'))
     plotting.plot_simple(vals=np.cumsum(model.explained_variance_ratio_), 
                     xlabel='nombre de composants', ylabel='variance expliquée cumulative',
-                    path_to_save_file=path_save_results+'/pca_'+group+'_'+atlas+'.png')
+                    path_to_save_file=path.join(dir_pca,'pca_'+group+'_'+atlas+'.png'))
 
     return list(dic_feat_comps.keys())
 
