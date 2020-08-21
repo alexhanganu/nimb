@@ -57,13 +57,16 @@ class DistributionHelper():
         get user name and password from sqlite database
         :return: username, password in string
         """
-        clusters = database._get_Table_Data('Clusters', 'all')
-        user_name = clusters[list(clusters)[0]]['Username']
-        user_password = clusters[list(clusters)[0]]['Password']
-        if len(user_name) < 1or len(user_password) < 1:
-            ErrorMessages.password()
-            return False
-        return user_name, user_password
+        try:
+            clusters = database._get_Table_Data('Clusters', 'all')
+            user_name = clusters[list(clusters)[0]]['Username']
+            user_password = clusters[list(clusters)[0]]['Password']
+            return user_name, user_password
+            if len(user_name) < 1or len(user_password) < 1:
+                ErrorMessages.password()
+                return False
+        except TypeError:
+            return 'none', 'none'
 
 # =========================================
 # UNITE:

@@ -123,7 +123,7 @@ def main():
     installers = getvars.installers
 
     params = get_parameters(projects['PROJECTS'])
-    locations['local']['STATS_PATHS'] = SetProject(NIMB_HOME, locations['local']['STATS_PATHS'], params.project).STATS_PATHS
+    locations['local']['STATS_PATHS'] = SetProject(locations['local']['NIMB_PATHS']['NIMB_HOME'], locations['local']['STATS_PATHS'], params.project).STATS_PATHS
 
     app = NIMB(credentials_home, projects, locations, installers, params.process, params.project)
     return app.run()
