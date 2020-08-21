@@ -40,13 +40,14 @@ class ErrorMessages:
 
 class DistributionHelper():
 
-    def __init__(self, credentials_home, projects, locations, installers):
+    def __init__(self, credentials_home, projects, locations, installers, project):
 
         self.NIMB_HOME = locations["local"]["NIMB_PATHS"]["NIMB_HOME"]
         self.NIMB_tmp = locations["local"]["NIMB_PATHS"]["NIMB_tmp"]
-        self.locations = locations
-        self.projects = projects
+        self.locations = locations # ưlocal, remote] json configuration
+        self.projects = projects # project.json
         self.credentials_home = credentials_home
+        self.project_name = project
         # self.var = Get_Vars().get_default_vars()
         self.user_name, self.user_password = self.get_username_password_cluster_from_sqlite()
 
@@ -179,10 +180,12 @@ class DistributionHelper():
         return self.projects[project][var_name]
 
     def get_PROCESSED_FS_DIR(self):
-        return self.locations['local']['NIMB_PATHS']["NIMB_PROCESSED_FS"]
+
+        return self.projects[self.project_name]['PROCESSED_FS_DIR']
 
     def get_SOURCE_SUBJECTS_DIR(self):
-        return self.locations['local']['NIMB_PATHS']["NIMB_NEW_SUBJECTS"]
+        return self.projects[self.project_name]['SOURCE_SUBJECTS_DIR']
+
 
     def run(self, Project):
         # 0 check the variables

@@ -34,7 +34,7 @@ class NIMB(object):
         self.process   = process
         self.project   = project
         self.distribution = DistributionHelper(credentials_home, projects,
-                                               locations, installers)
+                                               locations, installers, project)
 
     def run(self):
         """Run nimb"""
