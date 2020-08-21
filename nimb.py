@@ -5,7 +5,7 @@
 
 import argparse
 import sys
-from setup.get_vars import Get_Vars
+from setup.get_vars import Get_Vars, SetProject
 from os import path
 from classification import classify_bids
 from distribution.distribution_helper import DistributionHelper
@@ -123,6 +123,7 @@ def main():
     installers = getvars.installers
 
     params = get_parameters(projects['PROJECTS'])
+    locations['local']['STATS_PATHS'] = SetProject(NIMB_HOME, locations['local']['STATS_PATHS'], params.project).STATS_PATHS
 
     app = NIMB(credentials_home, projects, locations, installers, params.process, params.project)
     return app.run()

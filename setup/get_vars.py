@@ -6,6 +6,19 @@ import json
 from .get_username import _get_username
 from .get_credentials_home import _get_credentials_home
 
+class SetProject():
+
+    def __init__(self, NIMB_HOME, STATS_PATHS, project):
+        self.STATS_PATHS = self.set_project(NIMB_HOME, STATS_PATHS, project)
+
+    def set_project(self, NIMB_HOME, STATS_PATHS, project):
+        STATS_PATHS['FS_GLM_dir']             = path.join(NIMB_HOME, '..', 'nimb_tmp', project, 'fs_glm')
+        STATS_PATHS['STATS_HOME']             = path.join(NIMB_HOME, '..', 'nimb_tmp', project, 'stats')
+        STATS_PATHS["predict_dir"]            = "C:\\Users\\Jessica\\Desktop\\nimb\\..\\nimb_tmp\\project1\\stats\\predict",
+        STATS_PATHS["logistic_regression_dir"]= "C:\\Users\\Jessica\\Desktop\\nimb\\..\\nimb_tmp\\project1\\stats\\logistic_regression",
+        STATS_PATHS["linreg_moderation_dir"]  = "C:\\Users\\Jessica\\Desktop\\nimb\\..\\nimb_tmp\\project1\\stats\\linreg_moderation"
+        return STATS_PATHS
+
 class Get_Vars():
 
     def __init__(self):
@@ -41,7 +54,7 @@ class Get_Vars():
 
     def get_default_vars(self, projects):
         d_all_vars = self.get_vars(projects, path.dirname(path.abspath(__file__)))
-        d_all_vars['local'] = self.set_local_nimb(d_all_vars['local'], projects['PROJECTS'][0])
+        d_all_vars['local'] = self.setup_default_local_nimb(d_all_vars['local'], projects['PROJECTS'][0])
         self.save_json('local.json', d_all_vars['local'], self.credentials_home)
         print('PROJECTS AND VARIABLES ARE NOT DEFINED. check: '+self.credentials_home)
         return d_all_vars
@@ -67,7 +80,7 @@ class Get_Vars():
         with open(path.join(dst, file), 'w') as jf:
             json.dump(data, jf, indent=4)
 
-    def set_local_nimb(self, data, project):
+    def setup_default_local_nimb(self, data, project):
         NIMB_HOME = path.abspath(path.join(path.dirname(__file__), '..'))
         print('NIMB_HOME is: ',NIMB_HOME)
         data['NIMB_PATHS']['NIMB_HOME']               = NIMB_HOME
@@ -77,9 +90,9 @@ class Get_Vars():
         data['NIMB_PATHS']['NIMB_PROCESSED_FS_error'] = path.join(NIMB_HOME, '..', 'nimb_tmp', 'nimb_processed_fs_error')
         data['NIMB_PATHS']['miniconda_home']          = path.join(NIMB_HOME, '..', 'miniconda3')
         data['NIMB_PATHS']['miniconda_python_run']    = path.join(NIMB_HOME, '..', 'miniconda3','bin','python3.7').replace(path.expanduser("~"),"~")
-        data['FREESURFER']['FREESURFER_HOME']         = path.join(NIMB_HOME,'..', 'freesurfer')
+        data['FREESURFER']['FREESURFER_HOME']         = path.join(NIMB_HOME, '..', 'freesurfer')
         data['FREESURFER']['FS_SUBJECTS_DIR']         = path.join(NIMB_HOME, '..', 'freesurfer', 'subjects')
         data['FREESURFER']['export_FreeSurfer_cmd']   = "export FREESURFER_HOME="+path.join(NIMB_HOME, '..', 'freesurfer')
-        data['FREESURFER']['GLM_dir']                 = path.join(NIMB_HOME, '..', 'nimb_tmp', project, 'glm')
-        data['STATS_PATHS']['STATS_HOME']             = path.join(NIMB_HOME, '..', 'nimb_tmp', project, 'stats')
+        data['STATS_PATHS'] = SetProject(NIMB_HOME, data['STATS_PATHS'], project).STATS_PATHS
         return data
+
