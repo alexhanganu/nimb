@@ -1,6 +1,5 @@
-
 #!/bin/python
-# 2020.07.31
+# 2020.08.21
 
 
 from os import listdir, path, system, remove
@@ -282,7 +281,7 @@ def bs_hip_tha_chk_log_if_done(process, SUBJECTS_DIR, subjid, freesurfer_version
     log_file = path.join(SUBJECTS_DIR, subjid, 'scripts', log_files[process][freesurfer_version])
     if path.exists(log_file) and any('Everything done' in i for i in open(log_file, 'rt').readlines()):
         return True
-    else
+    else:
         return False
 
 bs_hip_tha_stats_file_inmri = {
@@ -325,7 +324,7 @@ def bs_hip_tha_get_stats_file(process, SUBJECTS_DIR, subjid, freesurfer_version)
         except Exception as e:
             print(e)
         return file_stats
-    else
+    else:
         return ''
 
 

@@ -269,7 +269,7 @@ def check_error():
                             log.info('        moving from error_'+process+' to RUNNING '+process)
                 else:
                     if subjid in db["ERROR_QUEUE"]:
-                        log.info('    '+db['ERROR_QUEUE'][subjid]+' '+str(format(datetime.now(), "%Y%m%d_%H%M")))
+                        log.info('     waiting until: '+db['ERROR_QUEUE'][subjid])
                         if db['ERROR_QUEUE'][subjid] < str(format(datetime.now(), "%Y%m%d_%H%M")):
                             log.info('    removing from ERROR_QUEUE')
                             db['ERROR_QUEUE'].pop(subjid, None)
