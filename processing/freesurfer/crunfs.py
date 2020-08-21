@@ -325,7 +325,7 @@ def bs_hip_tha_get_stats_file(process, SUBJECTS_DIR, subjid, freesurfer_version)
         except Exception as e:
             print(e)
         return file_stats
-    else
+    else:
         return ''
 
 
