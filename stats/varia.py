@@ -7,7 +7,7 @@
 
 from os import path, makedirs
 from shutil import copyfile
-import db_processing
+from stats import db_processing
 
 
 def get_dir(path_dir):

@@ -40,7 +40,6 @@
        "DO_LONG"               : 0,
        "base_name"             : "base",
        "long_name"             : "ses-",
-       "GLM_dir"               : "~/nimb_tmp/projects/glm",
        "GLM_measurements"      : ["thickness","area","volume"],
        "GLM_thresholds"        : [10],
        "GLM_MCz_cache"         : 13,
@@ -48,7 +47,11 @@
        "freesurfer_license"    : ["email", "00000", " *ABCDEFGHIJKL", " ABCDEFGHIJKLM"]
      },
 "STATS_PATHS": {
-       "STATS_HOME"            : "~/nimb_tmp/projects/stats"
+       "STATS_HOME"             : "~/nimb_tmp/projects/stats",
+       "FS_GLM_dir"             : "~/nimb_tmp/projects/stats/fs_glm",
+       "predict_dir"            : "~/nimb_tmp/projects/stats/predict",
+       "logistic_regression_dir": "~/nimb_tmp/projects/stats/logistic_regression",
+       "linreg_moderation_dir"  : "~/nimb_tmp/projects/stats/linreg_moderation"
      },
 "EXPLANATION": {
        "user"                 : "username to access the remote computer. Password will be asked by nimb and stored in sqlite",
