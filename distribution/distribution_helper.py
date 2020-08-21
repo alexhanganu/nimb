@@ -1,9 +1,14 @@
 import sys
 import shutil
-from os import makedirs, system, path
-import json
+from os import makedirs, system, path, listdir
+import logging
 from distribution import database
-
+from setup.get_vars import Get_Vars
+# -- for logging, instead of using print --
+logger = logging.getLogger(__name__)
+logging.basicConfig(format='%(asctime)s %(module)s %(levelname)s: %(message)s')
+logger.setLevel(logging.DEBUG)
+# --
 from distribution.check_disk_space import *
 from distribution import SSHHelper
 
@@ -12,15 +17,26 @@ class ErrorMessages:
     @staticmethod
     def error_classify():
         print("NIMB is not ready to perform the classification. Please check the configuration files.")
+        logger.fatal("NIMB is not ready to perform the classification. Please check the configuration files.")
 
     @staticmethod
     def error_fsready():
         print("NIMB not ready to perform FreeSurfer processing. Please check the configuration files.")
+        logger.fatal("NIMB not ready to perform FreeSurfer processing. Please check the configuration files.")
 
     @staticmethod
     def password():
         print("password to login to remote cluster is missing")
+        logger.fatal("password to login to remote cluster is missing")
 
+    @staticmethod
+    def error_nimb_ready():
+        print(" NIMB is not yet set up")
+        logger.fatal(" NIMB is not yet set up")
+    @staticmethod
+    def error_stat_path():
+        logger.fatal("STATS_PATHS or STATS_HOME is missing")
+        print("STATS_PATHS is missing")
 
 class DistributionHelper():
 
@@ -31,11 +47,65 @@ class DistributionHelper():
         self.locations = locations
         self.projects = projects
         self.credentials_home = credentials_home
+        # self.var = Get_Vars().get_default_vars()
+        self.user_name, self.user_password = self.get_username_password_cluster_from_sqlite()
+
+
+    def get_username_password_cluster_from_sqlite(self):
+        """
+        get user name and password from sqlite database
+        :return: username, password in string
+        """
+        clusters = database._get_Table_Data('Clusters', 'all')
+        user_name = clusters[list(clusters)[0]]['Username']
+        user_password = clusters[list(clusters)[0]]['Password']
+        if len(user_name) < 1or len(user_password) < 1:
+            ErrorMessages.password()
+            return False
+        return user_name, user_password
 
 # =========================================
 # UNITE:
 # ready, classify_ready, fs_ready and verify_paths must be put together in the is_setup_vars_folders
 
+
+    def is_setup_vars_folders(self,is_freesurfer_nim=False,
+                              is_nimb_classification=False,
+                              is_nimb_fs_stats=False):
+        """
+        check for configuration parameters, will exit (quit) the programme if the variables are not define
+        :param config_file: path to configuration json file
+        :param is_freesurfer_nim: True if run nimb freesurfer
+        :param is_nimb_classification:
+        :param is_nimb_fs_stats:
+        :return: True if there is no error, otherwise, return False
+        """
+        # self.verify_paths()
+        if is_nimb_classification or is_nimb_classification:
+            if "NIMB_PATHS" not in self.locations['local'].keys():
+                logger.fatal("NIMB_PATHS is missing")
+                return False
+            for key, val in self.locations['local']:
+                if len(val) < 1:
+                    logger.fatal(f"{key} is missing")
+                    return False
+        if is_nimb_fs_stats:
+
+            if "STATS_PATHS" not in self.locations['local'].keys():
+                ErrorMessages.error_stat_path()
+                return False
+            if "STATS_HOME" not in self.locations['local']['STATS_PATHS']:
+                ErrorMessages.error_stat_path()
+                return False
+
+        if self.locations['local']['FREESURFER']['FreeSurfer_install'] == 1:
+            if len(self.locations['local']['FREESURFER']['FREESURFER_HOME']) < 1:
+                logger.fatal("FREESURFER_HOME is missing.")
+                return False
+            if "MRDATA_PATHS" not in self.locations['local'].keys():
+                logger.fatal("MRDATA_PATHS is missing.")
+                return False
+        return True
     def ready(self):
         """
         verify if NIMB is ready to be used
@@ -75,52 +145,6 @@ class DistributionHelper():
         else:
             return False
 
-
-    @staticmethod
-    def is_setup_vars_folders(config_dict, is_freesurfer_nim=False,
-                              is_nimb_classification=False,
-                              is_nimb_fs_stats=False):
-        """
-        check for configuration parameters, will exit (quit) the programme if the variables are not define
-        :param config_file: path to configuration json file
-        :param is_freesurfer_nim: True if run nimb freesurfer
-        :param is_nimb_classification:
-        :param is_nimb_fs_stats:
-        :return: True if there is no error, otherwise, return False
-        """
-        # check for the USER key
-        for key, value in config_dict[DistributionHelper.user].items():
-            if len(value) < 1:
-                #print(f"This {key} must be set because it is empy")
-                # sys.exit()
-                return False
-        # check the NIMB_PATHS
-        if is_nimb_classification or is_nimb_classification:
-            for key, value in config_dict[DistributionHelper.nimb_path].items():
-                if len(value) < 1:
-                    #print(f"This {key} must be set because it is empy")
-                    # sys.exit()
-                    return False
-        if is_nimb_fs_stats:
-            for key, value in config_dict[DistributionHelper.stat_path].items():
-                if len(value) < 1:
-                    #print(f"This {key} must be set because it is empy")
-                    # sys.exit()
-                    return False
-        # if freesurfer install = 1
-        fs_install = 'FreeSurfer_install'
-        fs_home = "FREESURFER_HOME"
-        if config_dict[DistributionHelper.freesurfer][fs_install] == 1:
-            if len(config_dict[DistributionHelper.freesurfer][fs_home]) < 1:
-                #print(f"{fs_home} is missing. It must bedefine in {config_file}")
-                return False
-            # MRDATA_PATHS must be defined:
-            if "MRDATA_PATHS" not in config_dict.keys():
-                #print(f"MRDATA_PATHS is missing. It must bedefine in f{config_file} when {fs_install} = 1")
-                return False
-        return True
-
-
     def verify_paths(self):
         # to verify paths and if not present - create them or return error
         if path.exists(self.vars['local']['NIMB_PATHS']['NIMB_HOME']):
@@ -141,39 +165,7 @@ class DistributionHelper():
 # UNITE until here
 # =========================================
 
-
-                    
-    def check_defined_variable(Project):
-        """
-        The application with immediately quit if any of these variable is not define
-        :param Project:
-        :return: None
-        """
-        # todo: refactor to remove duplicate code
-        # todo:
-        clusters = database._get_Table_Data('Clusters', 'all')
-        cname = [*clusters.keys()][0]
-        password = clusters[cname]['Password']
-        if not password:
-            ErrorMessages.password()
-        # if not cname:
-            # error_message("cluster name ")
-        # project_folder = clusters[cname]['HOME']
-        # if not project_folder:
-            # error_message("your home folder")
-        # a_folder = clusters[cname]['App_DIR']
-        # if not a_folder:
-            # error_message("a_folder")
-        # subjects_folder = clusters[cname]['Subjects_raw_DIR']
-        # if not subjects_folder:
-            # error_message("Subjects_raw_DIR")
-        # mri_path = database._get_Table_Data('Projects', Project)[Project]['mri_dir']
-        # mri path is not in the sqlite location. must be updated
-
-
-                    
-    @staticmethod
-    def get_project_vars(var_name, project):
+    def get_project_vars(self, var_name, project):
         """
         get the PROCESSED_FS_DIR
         :param config_file:
@@ -185,73 +177,60 @@ class DistributionHelper():
             print("There is no path for project: "+project+" defined. Please check the file: "+path.join(self.credentials_home, "projects.json"))
             return ""
         return self.projects[project][var_name]
-    @staticmethod
-    def get_PROCESSED_FS_DIR():
-        return DistributionHelper.get_MRDATA_PATHS_var("PROCESSED_FS_DIR", self.credentials_home, "local.json")
 
-    @staticmethod
-    def get_SOURCE_SUBJECTS_DIR():
-        return DistributionHelper.get_MRDATA_PATHS_var("SOURCE_SUBJECTS_DIR",self.credentials_home, "local.json")
+    def get_PROCESSED_FS_DIR(self):
+        return self.locations['local']['NIMB_PATHS']["NIMB_PROCESSED_FS"]
 
-    @staticmethod
-    def get_username_password_cluster_from_sqlite():
-        """
-        get user name and password from sqlite database
-        :return: username, password in string
-        """
-        clusters = database._get_Table_Data('Clusters', 'all')
-        user_name = clusters[list(clusters)[0]]['Username']
-        user_password = clusters[list(clusters)[0]]['Password']
-        if len(user_name) < 1or len(user_password) < 1:
-            print(f"User name or password is not define")
-            return False
-        return user_name, user_password
+    def get_SOURCE_SUBJECTS_DIR(self):
+        return self.locations['local']['NIMB_PATHS']["NIMB_NEW_SUBJECTS"]
 
-
-    def run(Project):
+    def run(self, Project):
         # 0 check the variables
-        # check if all the variables are defined
-        check_defined_variable(Project)
-        # it can do better by reading the eml.json or beluga.json and check for the missing var
-        # 1. install required library and software on the local computer, including freesurfer
-        setting_up_local_computer()
-        # 2. check and install required library on remote computer
-        print("Setting up the remote server")
-        setting_up_remote_linux_with_freesurfer()
+        # if FreeSurfer_install = 1:
+        if self.fs_ready():
+            # 1. install required library and software on the local computer, including freesurfer
+            self.setting_up_local_computer()
+
+        else:
+            logger.debug("Setting up the remote server")
+            # 2. check and install required library on remote computer
+            self.setting_up_remote_linux_with_freesurfer()
 
         print("get list of un-process subject. to be send to the server")
         # must set SOURCE_SUBJECTS_DIR, PROCESSED_FS_DIR before calling
         # DistributionHelper.get_list_subject_to_be_processed_remote_version(SOURCE_SUBJECTS_DIR, PROCESSED_FS_DIR)
         # how this part work?
-        status.set('Copying data to cluster ')
+        # status.set('Copying data to cluster ')
+        logger.debug('Copying data to cluster ')
         #  copy subjects to cluster
-        run_copy_subject_to_cluster(Project)
-        status.set('Cluster analysis started')
-        status.set("Cluster analysing running....")
-        run_processing_on_cluster_2()
+        self.run_copy_subject_to_cluster(Project)
+        # status.set('Cluster analysis started')
+        # status.set("Cluster analysing running....")
+        logger.debug('Cluster analysis started')
+        logger.debug("Cluster analysing running....")
+        self.run_processing_on_cluster_2()
 
 
     def run_processing_on_cluster_2(self):
         '''
-        this is an enhanced version of run_processing_on_cluster
-        it does not need to use th config.py to get data
+        execute the python a/crun.py on the remote cluster
         :return:
         '''
         # version 2: add username, password, and command line to run here
         from distribution import SSHHelper
         clusters = database._get_Table_Data('Clusters', 'all')
-        user_name = clusters[list(clusters)[0]]['Username']
-        user_password = clusters[list(clusters)[0]]['Password']
-        project_folder = clusters[list(clusters)[0]]['HOME']
+        # user_name = clusters[list(clusters)[0]]['Username']
+        # user_password = clusters[list(clusters)[0]]['Password']
+        # project_folder = clusters[list(clusters)[0]]['HOME']
         cmd_run = " python a/crun.py -submit false" #submit=true
         load_python_3 = 'module load python/3.7.4;'
         cmd_run_crun_on_cluster = load_python_3 +"cd " + "/home/hvt/" + "; " + cmd_run
         print("command: "+ cmd_run_crun_on_cluster)
-        host_name = clusters[list(clusters)[0]]['remote_address']
+        host_name = clusters[list(clusters)[0]]['remote_address'] #
 
         print("Start running the the command via SSH in cluster: python a/crun.py")
-        SSHHelper.running_command_ssh_2(host_name=host_name, user_name=user_name,
-                                    user_password=user_password,
+        SSHHelper.running_command_ssh_2(host_name=host_name, user_name=self.user_name,
+                                    user_password=self.user_password,
                                     cmd_run_crun_on_cluster=cmd_run_crun_on_cluster)
 
     def run_copy_subject_to_cluster(Project):
@@ -276,13 +255,16 @@ class DistributionHelper():
 
 
     def check_freesurfer_ready(self):
+        ready = False
         if not path.exists(path.join(self.locations['local']['FREESURFER']['FREESURFER_HOME'], "MCRv84")):
             print('FreeSurfer must be installed')
             from .setup_freesurfer import SETUP_FREESURFER
             SETUP_FREESURFER(self.vars, self.installers)
+            ready = True
         else:
             print('start freesurfer processing')
-            return True
+            ready =  True
+        return ready
 
 
     def nimb_stats_ready(self, project):
@@ -290,7 +272,7 @@ class DistributionHelper():
            will return the folder with unzipped stats folder for each subject"""
 
         if not path.exists(self.vars["local"]["STATS_PATHS"]["STATS_HOME"]):
-            makedirs(p)
+            makedirs(self.vars["local"]["STATS_PATHS"]["STATS_HOME"])
 
         PROCESSED_FS_DIR = self.projects[project]["PROCESSED_FS_DIR"]
         
@@ -311,18 +293,18 @@ class DistributionHelper():
 
         print('start freesurfer GLM')
 
-    def setting_up_local_computer():
+    def setting_up_local_computer(self):
         if platform.startswith('linux'):
             print("Currently only support setting up on Ubuntu-based system")
             # do the job here
-            setting_up_local_linux_with_freesurfer()
+            self.setting_up_local_linux_with_freesurfer()
         elif platform in ["win32"]:
             print("The system is not fully supported in Windows OS. The application quits now .")
             exit()
         else: # like freebsd,
             print("This platform is not supported")
             exit()
-    def setting_up_local_linux_with_freesurfer():
+    def setting_up_local_linux_with_freesurfer(self):
         """
         install the require libarary
         :return:
