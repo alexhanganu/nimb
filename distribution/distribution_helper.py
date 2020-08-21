@@ -1,18 +1,23 @@
 import sys
 import shutil
-from os import makedirs, system
+from os import makedirs, system, path
 import json
-from distribution.database import *
-# from distribution.check_disk_space import *
-# from distribution import SSHHelper
+from distribution import database
+
+from distribution.check_disk_space import *
+from distribution import SSHHelper
 
 
 class ErrorMessages:
-
+    @staticmethod
     def error_classify():
-        print("NIMB is not ready to perform the classification. Please check the configuration files.") 
+        print("NIMB is not ready to perform the classification. Please check the configuration files.")
+
+    @staticmethod
     def error_fsready():
-        print("NIMB not ready to perform FreeSurfer processing. Please check the configuration files.") 
+        print("NIMB not ready to perform FreeSurfer processing. Please check the configuration files.")
+
+    @staticmethod
     def password():
         print("password to login to remote cluster is missing")
 
@@ -72,7 +77,7 @@ class DistributionHelper():
 
 
     @staticmethod
-    def is_setup_vars_folders(is_freesurfer_nim=False,
+    def is_setup_vars_folders(config_dict, is_freesurfer_nim=False,
                               is_nimb_classification=False,
                               is_nimb_fs_stats=False):
         """
@@ -226,7 +231,7 @@ class DistributionHelper():
         run_processing_on_cluster_2()
 
 
-    def run_processing_on_cluster_2():
+    def run_processing_on_cluster_2(self):
         '''
         this is an enhanced version of run_processing_on_cluster
         it does not need to use th config.py to get data
@@ -433,6 +438,8 @@ class DistributionHelper():
 
     @staticmethod
     def load_configuration_json(config_file ="../setup/local.json"):
+        # todo: this method is going to be abandon later: reason stop
+        # using static method
         with open(config_file) as file:
             config_dict = json.load(file)
         return config_dict
