@@ -9,6 +9,7 @@ from datetime import datetime, timedelta
 import logging
 import crunfs, cdb, cwalltime
 from logger import Log
+from pathlib import Path
 
 environ['TZ'] = 'US/Eastern'
 time.tzset()
@@ -417,7 +418,7 @@ def Count_TimeSleep():
 
 def run(varslocal):   
 
-    global vars_local, NIMB_HOME, NIMB_tmp, SUBJECTS_DIR, max_walltime, process_order, scheduler_params
+    global vars_local, NIMB_HOME, NIMB_tmp, SUBJECTS_DIR, max_walltime, process_order, scheduler_params, log, db
     vars_local       = varslocal
     NIMB_HOME        = vars_local["NIMB_PATHS"]["NIMB_HOME"]
     NIMB_tmp         = vars_local["NIMB_PATHS"]["NIMB_tmp"]
@@ -434,13 +435,7 @@ def run(varslocal):
                         'source_FreeSurfer_cmd': vars_local["FREESURFER"]["source_FreeSurfer_cmd"],
                         'SUBMIT'               : vars_local["PROCESSING"]["SUBMIT"]}
     Log(NIMB_tmp)
-    global log
     log = logging.getLogger(__name__)
-
-    try:
-        from pathlib import Path
-    except ImportError as e:
-        print('pathlib library is missing')#log.info(e)
     
     t0 = time.time()
     time_elapsed = 0
