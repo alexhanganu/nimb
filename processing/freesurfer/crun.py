@@ -10,26 +10,6 @@ import logging
 import crunfs, cdb, cwalltime
 from logger import Log
 
-
-
-
-
-
-# Log(NIMB_tmp)
-# log = logging.getLogger(__name__)
-
-
-#scheduler_params = {'NIMB_HOME'            : NIMB_HOME,
-#                    'NIMB_tmp'             : NIMB_tmp,
-#                    'SUBJECTS_DIR'         : SUBJECTS_DIR,
-#                    'text4_scheduler'      : vars["PROCESSING"]["text4_scheduler"],
-#                    'batch_walltime_cmd'   : vars["PROCESSING"]["batch_walltime_cmd"],
-#                    'batch_output_cmd'     : vars["PROCESSING"]["batch_output_cmd"],
-#                    'export_FreeSurfer_cmd': vars["FREESURFER"]["export_FreeSurfer_cmd"],
-#                    'source_FreeSurfer_cmd': vars["FREESURFER"]["source_FreeSurfer_cmd"],
-#                    'SUBMIT'               : vars["PROCESSING"]["SUBMIT"]}
-
-
 environ['TZ'] = 'US/Eastern'
 time.tzset()
 
@@ -436,7 +416,6 @@ def Count_TimeSleep():
 
 
 def run(varslocal):   
-    print('updating status')
 
     global vars_local, NIMB_HOME, NIMB_tmp, SUBJECTS_DIR, max_walltime, process_order, scheduler_params
     vars_local       = varslocal
@@ -454,14 +433,13 @@ def run(varslocal):
                         'export_FreeSurfer_cmd': vars_local["FREESURFER"]["export_FreeSurfer_cmd"],
                         'source_FreeSurfer_cmd': vars_local["FREESURFER"]["source_FreeSurfer_cmd"],
                         'SUBMIT'               : vars_local["PROCESSING"]["SUBMIT"]}
-
     Log(NIMB_tmp)
     log = logging.getLogger(__name__)
 
     try:
         from pathlib import Path
     except ImportError as e:
-        log.info(e)
+        print('pathlib library is missing')#log.info(e)
     
     t0 = time.time()
     time_elapsed = 0
@@ -515,8 +493,6 @@ def run(varslocal):
         cdb.Update_status_log(NIMB_tmp, 'Sending new batch to scheduler')
         import start_fs_pipeline
         start_fs_pipeline.start_fs_pipeline(vars_local)
-#        chdir(NIMB_HOME)
-#        system('python processing/freesurfer/start_fs_pipeline.py')
 
 
 
@@ -535,15 +511,6 @@ if __name__ == "__main__":
     run(getvars.location_vars['local'])
 
 
-
-#    from get_username import _get_username
-#    import json
-#    try:
-#        credentials_home = str(open('../../credentials_path').readlines()[0]).replace("~","/home/"+_get_username())
-#        with open(path.join(credentials_home, 'local.json')) as local_vars:
-#            vars = json.load(local_vars)
-#    except Exception as e: 
-#        print(e, 'ERROR: credential file or local.json file is MISSING')
 
 
         

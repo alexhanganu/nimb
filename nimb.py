@@ -58,11 +58,11 @@ class NIMB(object):
         if self.process == 'freesurfer':
             from processing.freesurfer.crunfs import FS_ready
             if not self.distribution.fs_ready():
-                print("FreeSurfer is not ready. Please check the configuration files.")
+                print("FreeSurfer is not ready or freesurfer_install is set to 0. Please check the configuration files.")
                 sys.exit()
-            elif not FS_ready(self.locations['local']['FS_SUBJECTS_DIR']):
-                print("FreeSurfer is not ready. Please check the fsaverage subject or reinstall FreeSurfer")
-                sys.exit()
+#            elif not FS_ready(self.locations['local']['FS_SUBJECTS_DIR']):
+#                print("FreeSurfer is not ready. Please check the fsaverage subject or reinstall FreeSurfer")
+#                sys.exit()
             else:
                 from processing.freesurfer import start_fs_pipeline
                 start_fs_pipeline.start_fs_pipeline(self.locations['local'])
