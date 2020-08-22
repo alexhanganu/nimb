@@ -434,6 +434,7 @@ def run(varslocal):
                         'source_FreeSurfer_cmd': vars_local["FREESURFER"]["source_FreeSurfer_cmd"],
                         'SUBMIT'               : vars_local["PROCESSING"]["SUBMIT"]}
     Log(NIMB_tmp)
+    global log
     log = logging.getLogger(__name__)
 
     try:
