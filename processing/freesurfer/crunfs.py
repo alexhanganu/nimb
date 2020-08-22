@@ -415,6 +415,10 @@ def fs_find_error(subjid, SUBJECTS_DIR, NIMB_tmp):
                     log.info('        ERROR: MRIresample error')
                     error = 'errMRIresample'
                     break
+                elif 'ERROR: Invalid FreeSurfer license key' in line:
+                    log.info('        ERROR: FreeSurfer license key is missing')
+                    error = 'errlicense'
+                    break
         else:
             log.info('        ERROR: '+file_2read+' not in '+path.join(SUBJECTS_DIR,subjid,'scripts'))
     except FileNotFoundError as e:
@@ -437,8 +441,8 @@ def solve_error(subjid, error, SUBJECTS_DIR, NIMB_tmp):
                 return 'continue'
         else:
             return 'unsolved'
-    if error == 'voxsizediff' or error == 'errorigmgz':
-        return 'voxreg'
+    if error == 'voxsizediff' or error == 'errorigmgz' or error == 'errlicense':
+        return 'repeat_reg'
 
 
 

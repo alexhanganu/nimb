@@ -183,7 +183,7 @@ def check_error():
                                     db['PROCESSED']['error_'+process].remove(subjid)
                                     db['DO'][process].append(subjid)
                                     log.info('        moving from error_'+process+' to DO '+process)
-                                elif solve == 'voxreg' or solve == 'errorigmgz':
+                                elif solve == 'repeat_reg':
                                     if subjid in db['REGISTRATION']:
                                         solved = True
                                         db['REGISTRATION'][subjid]['anat']['t1'] = db['REGISTRATION'][subjid]['anat']['t1'][:1]
