@@ -149,6 +149,18 @@ class DistributionHelper():
         else:
             return False
 
+    def fs_chk_folders_ready(self):
+        if 'fsaverage' in listdir(SUBJECTS_DIR):
+            if 'xhemi' in listdir(path.join(SUBJECTS_DIR,'fsaverage')):
+                return True
+            else:
+                print(' fsaverage/xhemi is missing')
+                return False
+        else:
+             print(' fsaverage is missing in SUBJECTS_DIR')
+             return False
+
+
     def verify_paths(self):
         # to verify paths and if not present - create them or return error
         if path.exists(self.vars['local']['NIMB_PATHS']['NIMB_HOME']):
