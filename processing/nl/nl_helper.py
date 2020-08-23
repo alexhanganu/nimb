@@ -7,6 +7,8 @@ class Extractions():
     def extract_atlas_rois(self,image):
         #Extract the 2D ROIs from 4D BOLD image using atlas labels get from nilearn
         atlas = datasets.fetch_atlas_harvard_oxford('cort-maxprob-thr25-2mm')
+#        atlas = datasets.fetch_atlas_surf_destrieux()
+# https://nilearn.github.io/auto_examples/01_plotting/plot_surf_stat_map.html#sphx-glr-auto-examples-01-plotting-plot-surf-stat-map-py
         atlas_filename = atlas.maps
         # Create a masker object that we can use to select ROIs
         masker = input_data.NiftiLabelsMasker(labels_img=atlas_filename)
