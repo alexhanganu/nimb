@@ -4,7 +4,8 @@ from nilearn import image
 import matplotlib.pyplot as plt
 # %%
 #load file
-im_bold1 = image.load_img("D:/PROGRAMMING/Alex/nilearn/001PD/P001_run1_bold.nii.gz")
+im_bold1 = image.load_img("/home/hanganua/projects/def-hanganua/nilearn/001PD/P001_run1_bold.nii.gz")
+
 
 #%%
 #initialize

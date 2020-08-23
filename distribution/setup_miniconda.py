@@ -18,6 +18,7 @@ def setup_miniconda(NIMB_HOME = "~/nimb"):
         system('./miniconda3/bin/conda install -y dcm2niix')
         system('./miniconda3/bin/conda install -y dcm2bids')
         system('./miniconda3/bin/conda install -y -c conda-forge dipy')
+        system('./miniconda3/bin/conda install -y -c conda-forge nilearn')
         system('./miniconda3/bin/conda install -y glob')
         system('./miniconda3/bin/conda install -y shutil')
         system('./miniconda3/bin/conda install -y pandas')
