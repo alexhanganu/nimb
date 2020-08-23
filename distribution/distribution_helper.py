@@ -145,7 +145,8 @@ class DistributionHelper():
 
     def fs_ready(self):
         if self.locations['local']['FREESURFER']['FreeSurfer_install'] == 1:
-            return self.check_freesurfer_ready()
+            if self.fs_chk_folders_ready():
+                return self.check_freesurfer_ready()
         else:
             return False
 
