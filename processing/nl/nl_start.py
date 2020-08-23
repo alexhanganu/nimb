@@ -1,5 +1,5 @@
 # %%
-import nl.nl_helper as hp
+import nl_helper as hp
 from nilearn import image
 import matplotlib.pyplot as plt
 # %%
