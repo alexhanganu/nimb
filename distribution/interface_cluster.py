@@ -59,28 +59,6 @@ def get_db_from_cluster():
             time.sleep(1)
     elif platform == 'win32':
         print(cuser, cname, caddress, cmaindir, chomedir, cpw, supervisor_ccri)
-        # with open(freesurfer+'psftpcpdb.scr','a') as scr:
-            # scr.write('get /scratch/'+cuser+'/a_tmp/db '+'C:/Users/Jessica/Desktop/\n')
-            # scr.write('quit')
-        # cmd = ('psftp '+cuser+'@'+caddress+' -pw '+cpw+' -b '+freesurfer+'psftpcpdb.scr')
-        # system(cmd)
-        # remove(freesurfer+'psftpcpdb.scr')
-
-        # count = 0
-        # while count <4 and not path.exists(freesurfer+'logs/status_cluster'):
-            # time.sleep(2)
-            # system(cmd)
-            # count += 1
-        # if count == 3 and not path.exists(freesurfer+'logs/status_cluster'):
-            # open(freesurfer+'logs/psftpcpstatus.scr','w').close()
-            # with open(freesurfer+'logs/psftpcpstatus.scr','a') as scr:
-                # scr.write('get '+chomedir+'status_cluster '+freesurfer+'logs/status_cluster\n')
-                # scr.write('del '+chomedir+'status_cluster\n')
-                # scr.write('quit')
-            # cmd = ('psftp '+cuser+'@'+caddress+' -pw '+cpw+' -b '+freesurfer+'logs/psftpcpstatus.scr')
-		
-        # remove(freesurfer+'logs/psftpcpstatus.scr')
-
 
 
 def get_cluster_status_file():

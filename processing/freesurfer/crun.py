@@ -198,6 +198,7 @@ def check_error():
                                         system('rm -r '+path.join(SUBJECTS_DIR, subjid))
                                         log.info('        moving from error_'+process+' to RUNNING registration')
                                     else:
+                                        new_name = 'error_noreg_'+subjid
                                         log.info('            solved: '+solve+' but subjid is missing from db[REGISTRATION]')
                                 else:
                                     new_name = 'error_'+fs_error+'_'+subjid
@@ -487,8 +488,8 @@ def run(varslocal):
     else:
         log.info('Sending new batch to scheduler')
         cdb.Update_status_log(NIMB_tmp, 'Sending new batch to scheduler')
-        import start_fs_pipeline
-        start_fs_pipeline.start_fs_pipeline(vars_local)
+        import submit_4processing
+        submit_4processing.start_fs_pipeline(vars_local)
 
 
 
@@ -505,59 +506,4 @@ if __name__ == "__main__":
     from setup.get_vars import Get_Vars
     getvars = Get_Vars()
     run(getvars.location_vars['local'])
-
-
-
-
-        
-'''THIS script was used for the longitudinal analysis. It has changed and it should not be needed now, but a longitudinal analysis must be made to confirm'''
-
-# def long_check_pipeline(all_running):
-#     lsq_long = list()
-#     for val in db['RUNNING_LONG']['queue']:
-#         lsq_long.append(val)	
-
-
-#     for subjid in lsq_long:
-#         if subjid in db['RUNNING_JOBS']:
-#             status = Get_status_for_subjid_in_queue(subjid, all_running)
-#             if status =='R' or status == 'none' and crunfs.checks_from_runfs(SUBJECTS_DIR, 'registration',subjid):
-#                 print('       ',subjid,' status: ',status,'; moving from queue to running')
-#                 cdb.Update_status_log(nimb_scratch_dir, 'moving '+subjid+' from queue to running')
-#                 db['RUNNING_LONG']['queue'].remove(subjid)
-#                 db['RUNNING']['recon'].append(subjid)
-#             elif status == 'none' and not crunfs.checks_from_runfs(SUBJECTS_DIR, 'registration',subjid):
-#                 db['RUNNING_LONG']['queue'].remove(subjid)
-#                 db['PROCESSED']['error_recon'].append(subjid)
-#         else:
-#             print(subjid,'    queue, NOT in RUNNING_JOBS')
-#             if crunfs.checks_from_runfs(SUBJECTS_DIR, 'registration',subjid):
-#                 if crunfs.chkIsRunning(SUBJECTS_DIR, subjid):
-#                     cdb.Update_status_log(nimb_scratch_dir, 'moving '+subjid+' from long_QUEUE to long_RUNNING')
-#                     db['RUNNING_LONG']['queue'].remove(subjid)
-#                     db['RUNNING']['recon'].append(subjid)
-#                 elif crunfs.checks_from_runfs(SUBJECTS_DIR, 'recon', subjid):
-#                     cdb.Update_status_log(nimb_scratch_dir, subjid+' long recon DONE')
-#                     db['RUNNING_LONG']['queue'].remove(subjid)
-
-#     lsr_long = list()
-#     for val in db['RUNNING_LONG']['running']:
-#         lsr_long.append(val)
-
-#     LOOP was sent to RUNNING/recon
-#     for subjid in lsr_long:
-#         if subjid in db['RUNNING_JOBS']:
-#             status = Get_status_for_subjid_in_queue(subjid, all_running)
-#             if status == 'none':
-#                 db['RUNNING_LONG']['running'].remove(subjid)
-#                 db['RUNNING_JOBS'].pop(subjid, None)
-#                 if crunfs.chkIsRunning(SUBJECTS_DIR, subjid) or not crunfs.checks_from_runfs(SUBJECTS_DIR, 'recon', subjid):
-#                     db['PROCESSED']['error_recon'].append(subjid)
-#         else:
-#             print('    ',subjid,'    queue, NOT in RUNNING_JOBS')
-#             if not crunfs.chkIsRunning(SUBJECTS_DIR, subjid):
-#                 db['RUNNING_LONG']['running'].remove(subjid)
-#                 if not crunfs.checks_from_runfs(SUBJECTS_DIR, 'recon', subjid):
-#                     db['PROCESSED']['error_recon'].append(subjid)
-#     cdb.Update_DB(db, nimb_scratch_dir)
 
