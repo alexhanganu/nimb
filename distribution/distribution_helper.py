@@ -151,8 +151,8 @@ class DistributionHelper():
             return False
 
     def fs_chk_folders_ready(self):
-        if 'fsaverage' in listdir(SUBJECTS_DIR):
-            if 'xhemi' in listdir(path.join(SUBJECTS_DIR,'fsaverage')):
+        if 'fsaverage' in listdir(self.locations['local']['FREESURFER']['FS_SUBJECTS_DIR']):
+            if 'xhemi' in listdir(path.join(self.locations['local']['FREESURFER']['FS_SUBJECTS_DIR'],'fsaverage')):
                 return True
             else:
                 print(' fsaverage/xhemi is missing')
@@ -729,10 +729,9 @@ def predict_error(src, dst):   #code by Mithril
                 yield e
 
 def copytree(src, dst, symlinks=False, ignore=None, overwrite=False): #code by Mithril
-    '''
-    would overwrite if src and dst are both file
-    but would not use folder overwrite file, or viceverse
-    '''
+#    would overwrite if src and dst are both file
+#    but would not use folder overwrite file, or viceverse
+
     if not overwrite:
         errors = list(predict_error(src, dst))
         if errors:
@@ -989,10 +988,8 @@ def copy_T1_file(DIR, dir2read, FILE_name):
 
 
 def cpt1flair():
-    '''
-    will copy the t1 and flair files from the Incoming folder to the
-    MainFolder raw_t1 folder based on the logmiss.xlsx file
-    '''
+#    will copy the t1 and flair files from the Incoming folder to the
+#    MainFolder raw_t1 folder based on the logmiss.xlsx file
 
     lsmiss = database._get_lsmiss()
 
@@ -1021,10 +1018,9 @@ def cpt1flair():
             database._update_lsmiss(DIR, dir2read)
 
 def cp2cluster():
-    '''
-    will copy the t1 and flair folders from the raw_t1 to the cluster
-    in the "subjects" folder. Removes the logmiss.xlsx, subj2fs, f2cp files
-    '''
+#    will copy the t1 and flair folders from the raw_t1 to the cluster
+#    in the "subjects" folder. Removes the logmiss.xlsx, subj2fs, f2cp files
+
     from sys import platform
     from distribution.lib.interface_cluster import start_cluster
 
