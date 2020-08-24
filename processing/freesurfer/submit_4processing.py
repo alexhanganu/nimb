@@ -7,59 +7,62 @@ environ['TZ'] = 'US/Eastern'
 time.tzset()
 
 
-class Submit2Process():
+class Submit_task():
 
-    def __init__(self, vars_local):
+    def __init__(self, vars_local, cmd, name, task, walltime, activate_freesurfer, cd_cmd):
         self.NIMB_tmp = vars_local['NIMB_tmp']
+        self.vars_local = vars_local
+        self.activate_freesurfer = activate_freesurfer
+        self.cd_cmd = cd_cmd
         self.job_id = '0'
-        if params["SUBMIT"] == 1:
+        if vars_local["PROCESSING"]["SUBMIT"] == 1:
             print('SUBMITTING is ALLOWED')
-
-        
-    def submit_4_processing(self, processing_env, cmd, subjid, run, walltime):
-        if processing_env == 'slurm':
-            makesubmitpbs(cmd, subjid, run, walltime)
-        elif processing_env == 'tmux':
-            submit_tmux(cmd, subjid)
-        else:
-            print('ERROR: processing environment not provided or incorrect')
-        return job_id
-
-
-    def submit_scheduler(self, cmd, subjid, run, walltime, params):
-
-        date=datetime.datetime.now()
-        dt=str(date.year)+str(date.month)+str(date.day)
-
-        sh_file = subjid+'_'+run+'_'+str(dt)+'.sh'
-        out_file = subjid+'_'+run+'_'+str(dt)+'.out'
-
-        with open(path.join(params["NIMB_tmp"], 'usedpbs', sh_file), 'w') as f:
-            for line in params["text4_scheduler"]:
-                f.write(line+'\n')
-            f.write(params["batch_walltime_cmd"]+walltime+'\n')
-            f.write(params["batch_output_cmd"]+path.join(params["NIMB_tmp"],'usedpbs',out_file)+'\n')
-            f.write('\n')
-            f.write('\n')
-            f.write(params["export_FreeSurfer_cmd"]+'\n')
-            f.write(params["source_FreeSurfer_cmd"]+'\n')
-            f.write('export SUBJECTS_DIR='+params["SUBJECTS_DIR"]+'\n')
-            f.write('\n')
-            f.write(cmd+'\n')
-        print('    submitting '+sh_file)
-        if params["SUBMIT"] == 1:
-
-            time.sleep(2)
-            try:
-                resp = subprocess.run(['sbatch',path.join(params["NIMB_tmp"],'usedpbs',sh_file)], stdout=subprocess.PIPE).stdout.decode('utf-8')
-                self.job_id = list(filter(None, resp.split(' ')))[-1].strip('\n')
-            except Exception as e:
-                print(e)
+            self.submit_4_processing(processing_env, cmd, name, task, walltime)
         else:
             print('SUBMITTING is stopped')
+        
+    def submit_4_processing(self, processing_env, cmd, name, task, walltime):
+        if processing_env == 'slurm':
+            sh_file = self.make_submit_file(cmd, name, task, walltime)
+            self.submit_2scheduler(sh_file)
+        elif processing_env == 'tmux':
+            submit_2tmux(cmd, name)
+        else:
+            print('ERROR: processing environment not provided or incorrect')
 
+    def get_submit_file_names(self, name, task):
+        date=datetime.datetime.now()
+        dt=str(date.year)+str(date.month)+str(date.day)
+        sh_file = name+'_'+task+'_'+str(dt)+'.sh'
+        out_file = name+'_'+task+'_'+str(dt)+'.out'
+        return sh_file, out_file
 
-    def submit_tmux(cmd, subjid):
+    def make_submit_file(self, cmd, name, task, walltime):
+        sh_file, out_file = self.get_submit_file_names(name, task)
+        with open(path.join(self.vars_local["NIMB_tmp"], 'usedpbs', sh_file), 'w') as f:
+            for line in self.vars_local["text4_scheduler"]:
+                f.write(line+'\n')
+            f.write(self.vars_local["batch_walltime_cmd"]+walltime+'\n')
+            f.write(self.vars_local["batch_output_cmd"]+path.join(self.vars_local["NIMB_tmp"],'usedpbs',out_file)+'\n')
+            if self.activate_freesurfer:
+                f.write(self.vars_local["export_FreeSurfer_cmd"]+'\n')
+                f.write(self.vars_local["source_FreeSurfer_cmd"]+'\n')
+                f.write('export SUBJECTS_DIR='+self.vars_local["SUBJECTS_DIR"]+'\n')
+            if self.cd_cmd:
+                f.write(self.cd_cmd+'\n')
+            f.write(cmd+'\n')
+        return sh_file
+    
+    def submit_2scheduler(self, sh_file):
+        print('    submitting '+sh_file)
+        time.sleep(1)
+        try:
+            resp = subprocess.run(['sbatch',path.join(self.NIMB_tmp,'usedpbs',sh_file)], stdout=subprocess.PIPE).stdout.decode('utf-8')
+            self.job_id = list(filter(None, resp.split(' ')))[-1].strip('\n')
+        except Exception as e:
+            print(e)
+
+    def submit_2tmux(cmd, subjid):
         tmux_session = 'tmux_'+str(subjid)
         make_tmux_screen = 'tmux new -d -s '+tmux_session
         system('tmux send-keys -t '+str(tmux_session)+' '+cmd+' ENTER') #tmux send-keys -t session "echo 'Hello world'" ENTER
@@ -154,8 +157,7 @@ def start_fs_pipeline(vars_local):
         f.write(vars_local['PROCESSING']["batch_output_cmd"]+path.join(vars_local["NIMB_PATHS"]["NIMB_tmp"],'usedpbs',out_file)+'\n')
         f.write('\n')
         f.write('cd '+path.join(vars_local["NIMB_PATHS"]["NIMB_HOME"], 'processing', 'freesurfer')+'\n')
-        f.write(vars_local['PROCESSING']["python3_load_cmd"]+'\n')
-        f.write(vars_local['PROCESSING']["python3_run_cmd"]+' crun.py')
+        f.write(vars_local['PROCESSING']["python3_load_cmd"]+'\n'+vars_local['PROCESSING']["python3_run_cmd"]+' crun.py')
 
     try:
         log = logging.getLogger(__name__)

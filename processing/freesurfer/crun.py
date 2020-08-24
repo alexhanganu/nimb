@@ -198,6 +198,7 @@ def check_error():
                                         system('rm -r '+path.join(SUBJECTS_DIR, subjid))
                                         log.info('        moving from error_'+process+' to RUNNING registration')
                                     else:
+                                        new_name = 'error_noreg_'+subjid
                                         log.info('            solved: '+solve+' but subjid is missing from db[REGISTRATION]')
                                 else:
                                     new_name = 'error_'+fs_error+'_'+subjid
@@ -487,8 +488,8 @@ def run(varslocal):
     else:
         log.info('Sending new batch to scheduler')
         cdb.Update_status_log(NIMB_tmp, 'Sending new batch to scheduler')
-        import start_fs_pipeline
-        start_fs_pipeline.start_fs_pipeline(vars_local)
+        import submit_4processing
+        submit_4processing.start_fs_pipeline(vars_local)
 
 
 
