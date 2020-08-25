@@ -1,5 +1,5 @@
 #!/bin/python
-# 2020.07.23
+# 2020.08.25
 
 from os import path, listdir, rename, environ
 import time, json
@@ -11,10 +11,6 @@ log = logging.getLogger(__name__)
 
 
 def Get_DB(NIMB_HOME, NIMB_tmp, process_order):
-
-    ''' 
-    DataBase has a py structure so that in the future it can be easily transfered to an sqlite database
-    '''
 
     dbjson = dict()
     db_json_file = path.join(NIMB_tmp, 'db.json')
@@ -60,7 +56,7 @@ def Update_status_log(NIMB_tmp, cmd, update=True):
 
 
 def Update_running(NIMB_tmp, cmd):
-    file = path.join(NIMB_tmp, 'running_'+'_')
+    file = path.join(NIMB_tmp, 'running_')
     if cmd == 1:
         if path.isfile(file+'0'):
             rename(file+'0', file+'1')

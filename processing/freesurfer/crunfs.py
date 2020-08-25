@@ -1,5 +1,5 @@
 #!/bin/python
-# 2020.08.21
+# 2020.08.25
 
 
 from os import listdir, path, system, remove
@@ -313,6 +313,10 @@ def fs_find_error(subjid, SUBJECTS_DIR, NIMB_tmp):
                 elif 'error: MRIresample():' in line:
                     log.info('        ERROR: MRIresample error')
                     error = 'errMRIresample'
+                    break
+                elif 'Disk quota exceeded' in line:
+                    log.info('        ERROR: Disk quota exceeded')
+                    error = 'errdiskquota'
                     break
                 elif 'ERROR: Invalid FreeSurfer license key' in line:
                     log.info('        ERROR: FreeSurfer license key is missing')
