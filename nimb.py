@@ -80,9 +80,22 @@ class NIMB(object):
         if self.process == 'fs-glm':
             if self.distribution.fs_ready():
                 self.distribution.fs_glm()
-                from processing.freesurfer import fs_runglm
-
-
+                from processing.freesurfer import fs_glm_runglm
+                print('\nSTEP 1 of 2: creating files required for GLM')
+                df_groups_clin = get_df_for_variable(self.locations["local"]["STATS_PATHS"]["FS_GLM_dir"],
+                                                     self.projects[self.project]["GLM_file_group"],
+                                                     self.projects[self.project]["variables_for_glm"])
+                fs_glm_runglm.PrepareForGLM(self.locations["local"]["STATS_PATHS"]["FS_GLM_dir"],
+                                            df_groups_clin,
+                                            self.projects[self.project]["id_col"],
+                                            self.projects[self.project]["group_col"])
+                print('\nSTEP 2 of 2: performing GLM analysis')
+                fs_glm_runglm.PerformGLM(self.locations["local"]["STATS_PATHS"]["FS_GLM_dir"],
+                                        self.locations["local"]["FREESURFER"]["FREESURFER_HOME"],
+                                        self.locations["local"]["FREESURFER"]["FS_SUBJECTS_DIR"],
+                                        self.locations["local"]["FREESURFER"]["GLM_measurements"],
+                                        self.locations["local"]["FREESURFER"]["GLM_thresholds"],
+                                        self.locations["local"]["FREESURFER"]["GLM_MCz_cache"])
 
 def get_parameters(projects):
     """get parameters for nimb"""
