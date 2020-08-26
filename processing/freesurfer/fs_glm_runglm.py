@@ -95,16 +95,9 @@ class PrepareForGLM():
 
         _, subjects_per_group = _GET_Groups(df_groups_clin, id_col, self.group_col)
 
-        file = 'subjects_per_group.py'
-        open(path.join(self.PATH_GLM_dir,file), 'w').close()
-        with open(path.join(self.PATH_GLM_dir,file), 'a') as f:
-            f.write('#!/bin/python/\nsubjects_per_group = {')
-            for group in subjects_per_group:
-                f.write('\''+group+'\':[')
-                for subject in subjects_per_group[group]:
-                    f.write('\''+subject+'\',')
-                f.write('],')
-            f.write('}')
+        file = 'subjects_per_group.json'
+        with open(path.join(self.PATH_GLM_dir, file), 'w') as f:
+            json.dump(subjects_per_group, f, indent=4)
 
 
     def make_fsgd_g1g2v0(self):
@@ -209,19 +202,19 @@ class PrepareForGLM():
 
 
     def make_py_f(self):
-        file = 'files_for_glm.py'
-        open(path.join(self.PATH_GLM_dir,file), 'w').close()
-        with open(path.join(self.PATH_GLM_dir,file), 'a') as f:
-            f.write('#!/bin/python/\nfiles_for_glm = {')
-            for contrast_type in self.files_glm:
-                f.write('\''+contrast_type+'\':{')
-                for group in self.files_glm[contrast_type]:
-                    f.write('\''+group+'\':[')
-                    for value in self.files_glm[contrast_type][group]:
-                        f.write('\''+value+'\',')
-                    f.write('],')
-                f.write('},')
-            f.write('}')
+        file = 'files_for_glm.json'
+        with open(path.join(self.PATH_GLM_dir, file), 'w') as f:
+            json.dump(files_for_glm, f, indent=4)
+#            f.write('#!/bin/python/\nfiles_for_glm = {')
+#            for contrast_type in self.files_glm:
+#                f.write('\''+contrast_type+'\':{')
+#                for group in self.files_glm[contrast_type]:
+#                    f.write('\''+group+'\':[')
+#                    for value in self.files_glm[contrast_type][group]:
+#                        f.write('\''+value+'\',')
+#                    f.write('],')
+#                f.write('},')
+#            f.write('}')
 
 
 
@@ -237,22 +230,20 @@ class PerformGLM():
         for subdir in (self.PATHglm_glm, self.PATHglm_results):
             if not path.isdir(subdir): makedirs(subdir)
 
-        for file in ('subjects_per_group.py','files_for_glm.py'):
-            shutil.copy(path.join(self.PATHglm,file), path.join(path.dirname(path.abspath(__file__)),file))
         try:
-            from subjects_per_group import subjects_per_group
-            remove(path.join(path.dirname(__file__),'subjects_per_group.py'))
-            print('subjects per group imported')
-            try:
-                from files_for_glm import files_for_glm
-                remove(path.join(path.dirname(__file__),'files_for_glm.py'))
-                print('files for glm imported')
-            except ImportError as e:
-                print(e)
-                sys.exit('files for glm is missing')
-        except ImportError as e:
+            with open(path.join(self.PATHglm, 'subjects_per_group.json'),'r') as jf:
+                subjects_per_group = json.load(jf)
+                print('subjects per group imported')
+        except Exception as e:
             print(e)
             sys.exit('subjects per group is missing')
+        try:
+            with open(path.join(self.PATHglm, 'files_for_glm.json'),'r') as jf:
+                files_for_glm = json.load(jf)
+                print('files for glm imported')
+        except ImportError as e:
+                print(e)
+                sys.exit('files for glm is missing')
 
         for group in subjects_per_group:
             for subject in subjects_per_group[group]:
