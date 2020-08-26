@@ -232,7 +232,7 @@ def check_error():
                 else:
                     if subjid in db["ERROR_QUEUE"]:
                         log.info('     waiting until: '+db['ERROR_QUEUE'][subjid])
-                        if db['ERROR_QUEUE'][subjid] < str(format(datetime.now(), "%Y%m%d_%H%M")):
+                        if not crunfs.chkIsRunning(SUBJECTS_DIR, subjid) or db['ERROR_QUEUE'][subjid] < str(format(datetime.now(), "%Y%m%d_%H%M")):
                             log.info('    removing from ERROR_QUEUE')
                             db['ERROR_QUEUE'].pop(subjid, None)
                     else:
