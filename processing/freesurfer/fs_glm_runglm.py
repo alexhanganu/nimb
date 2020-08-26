@@ -363,7 +363,7 @@ class PerformGLM():
             f.write(path.join(glmdir,contrast_name)+'\n')
 
 
-def get_df_for_variable(GLM_dir, GLM_file_group, variables):
+def get_df_for_variable(GLM_dir, GLM_file_group, id_col, group_col, variables):
     if not path.isdir(GLM_dir): makedirs(GLM_dir)
     shutil.copy(GLM_file_group, path.join(GLM_dir,Path(GLM_file_group).name))
     
@@ -373,7 +373,7 @@ def get_df_for_variable(GLM_dir, GLM_file_group, variables):
         df = pd.read_excel(GLM_file_group)
     cols2drop = list()
     for col in df.columns.tolist():
-        if col not in variables+[id_col,group_col]:
+        if col not in variables+[id_col, group_col]:
             cols2drop.append(col)
     if cols2drop:
         df.drop(columns=cols2drop, inplace=True)

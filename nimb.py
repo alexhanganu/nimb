@@ -84,6 +84,8 @@ class NIMB(object):
                 print('\nSTEP 1 of 2: creating files required for GLM')
                 df_groups_clin = fs_glm_runglm.get_df_for_variable(self.locations["local"]["STATS_PATHS"]["FS_GLM_dir"],
                                                      self.projects[self.project]["GLM_file_group"],
+                                                     self.projects[self.project]["id_col"],
+                                                     self.projects[self.project]["group_col"],
                                                      self.projects[self.project]["variables_for_glm"])
                 fs_glm_runglm.PrepareForGLM(self.locations["local"]["STATS_PATHS"]["FS_GLM_dir"],
                                             df_groups_clin,
