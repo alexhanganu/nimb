@@ -267,7 +267,6 @@ class DistributionHelper():
         :return: None
         '''
         # todo: how to get the active cluster for this project
-        from distribution import interface_cluster
 
         clusters = database._get_Table_Data('Clusters', 'all')
         cname = [*clusters.keys()][0]
@@ -278,7 +277,7 @@ class DistributionHelper():
         mri_path = database._get_Table_Data('Projects', Project)[Project]['mri_dir']
         print(mri_path)
         print("subject json: " + mri_path)
-        interface_cluster.copy_subjects_to_cluster(mri_path, subjects_folder, a_folder)
+        SSHHelper.copy_subjects_to_cluster(mri_path, subjects_folder, a_folder)
 
 
     def check_freesurfer_ready(self):
@@ -516,7 +515,7 @@ class DistributionHelper():
     def upload_subject_to_remote(local_path, remote_path, remote_host, remote_username, remote_password):
         # call the ssh helper to upload the file
         # to NIMB_NEW_SUBJECTS
-        # interface_cluster.copy_subjects_to_cluster(mri_path, subjects_folder, a_folder)
+        # SSHHelper.copy_subjects_to_cluster(mri_path, subjects_folder, a_folder)
         # upload_multiple_files_to_cluster()
 
         raise NotImplementedError
@@ -637,7 +636,7 @@ class DistributionHelper():
     def cstatus():
         try:
             clusters = database._get_Table_Data('Clusters', 'all')
-            from distribution.interface_cluster import check_cluster_status
+            from distribution.SSHHelper import check_cluster_status
             cuser = clusters[0][1]
             caddress = clusters[0][2]
             cpw = clusters[0][5]
@@ -657,7 +656,7 @@ class DistributionHelper():
 
 
     def StopAllActiveTasks():
-        from distribution.interface_cluster import delete_all_running_tasks_on_cluster
+        from distribution.SSHHelper import delete_all_running_tasks_on_cluster
         clusters = database._get_Table_Data('Clusters', 'all')
         delete_all_running_tasks_on_cluster(
             clusters[0][1], clusters[0][2], clusters[0][5], clusters[0][3])
@@ -1022,7 +1021,7 @@ def cp2cluster():
 #    in the "subjects" folder. Removes the logmiss.xlsx, subj2fs, f2cp files
 
     from sys import platform
-    from distribution.lib.interface_cluster import start_cluster
+    from distribution.lib.SSHHelper import start_cluster
 
 
     def platform_linux_darwin(cuser, caddress, subj2cp, dirs2cp, cmaindir):

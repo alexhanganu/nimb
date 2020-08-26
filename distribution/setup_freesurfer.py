@@ -23,7 +23,6 @@ class SETUP_FREESURFER():
             self.matlab_install(vars['local']['FREESURFER']['export_FreeSurfer_cmd'],
                                 vars['local']['FREESURFER']['source_FreeSurfer_cmd'])
             print('FINISHED Installing MATLAB')
-            print('writing license file')
 
     def check_freesurfer_license(self, license):
         print('creating freesurfer license.txt file for FreeSurfer 7.1.1')
