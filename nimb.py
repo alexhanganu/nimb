@@ -81,23 +81,13 @@ class NIMB(object):
             if self.distribution.fs_ready():
                 self.distribution.fs_glm()
                 from processing.freesurfer import fs_glm_runglm
-                print('\nSTEP 1 of 2: creating files required for GLM')
-                df_groups_clin = fs_glm_runglm.get_df_for_variable(self.locations["local"]["STATS_PATHS"]["FS_GLM_dir"],
-                                                     self.projects[self.project]["GLM_file_group"],
-                                                     self.projects[self.project]["id_col"],
-                                                     self.projects[self.project]["group_col"],
-                                                     self.projects[self.project]["variables_for_glm"])
-                fs_glm_runglm.PrepareForGLM(self.locations["local"]["STATS_PATHS"]["FS_GLM_dir"],
-                                            df_groups_clin,
-                                            self.projects[self.project]["id_col"],
-                                            self.projects[self.project]["group_col"])
-                print('\nSTEP 2 of 2: performing GLM analysis')
-                fs_glm_runglm.PerformGLM(self.locations["local"]["STATS_PATHS"]["FS_GLM_dir"],
-                                        self.locations["local"]["FREESURFER"]["FREESURFER_HOME"],
-                                        self.locations["local"]["FREESURFER"]["FS_SUBJECTS_DIR"],
-                                        self.locations["local"]["FREESURFER"]["GLM_measurements"],
-                                        self.locations["local"]["FREESURFER"]["GLM_thresholds"],
-                                        self.locations["local"]["FREESURFER"]["GLM_MCz_cache"])
+                print('Please check that all required variables for the GLM analysis are defined in the var.py file')
+                print('before running the script, remember to source $FREESURFER_HOME')
+                print('check if fsaverage is present in SUBJECTS_DIR')
+                print('each subject must include at least the folders: surf and label')
+                from processing.freesurfer import submit_4processing
+                submit_4processing.start_fs_glm_runglm(self.locations['local'], self.project)
+
 
 def get_parameters(projects):
     """get parameters for nimb"""

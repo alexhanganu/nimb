@@ -29,29 +29,35 @@ def _GET_Groups(df, id_col, group_col):
 class PrepareForGLM():
 
     #https://surfer.nmr.mgh.harvard.edu/fswiki/FsgdExamples
-    def __init__(self, GLM_dir, df_groups_clin, id_col, group_col):
+    def __init__(self, GLM_dir, GLM_file_group, id_col, group_col, variables):
 
         self.PATH_GLM_dir = GLM_dir
+        self.group_col = group_col
+        self.id_col = id_col
         self.PATHfsgd = path.join(self.PATH_GLM_dir,'fsgd')
         self.PATHmtx = path.join(self.PATH_GLM_dir,'contrasts')
+
+        if not path.isdir(self.PATH_GLM_dir): makedirs(self.PATH_GLM_dir)
+        shutil.copy(GLM_file_group, path.join(self.PATH_GLM_dir, Path(GLM_file_group).name))
         if not path.isdir(self.PATHfsgd): makedirs(self.PATHfsgd)
         if not path.isdir(self.PATHmtx): makedirs(self.PATHmtx)
         print(self.PATHfsgd)
-        self.group_col = group_col
+
+        df_groups_clin = self.get_df_for_variables(GLM_file_group, variables)
         d_init = df_groups_clin.to_dict()
         self.d_subjid = {}
-        ls_all_vars = [key for key in d_init if key != id_col]
+        ls_all_vars = [key for key in d_init if key != self.id_col]
         self.ls_groups = []
-        for rownr in d_init[id_col]:
-            id = d_init[id_col][rownr]
+        for rownr in d_init[self.id_col]:
+            id = d_init[self.id_col][rownr]
             self.d_subjid[id] = {}
             for key in ls_all_vars:
                 self.d_subjid[id][key] = d_init[key][rownr]
         for id in self.d_subjid:
-            if self.d_subjid[id][group_col] not in self.ls_groups:
-                self.ls_groups.append(self.d_subjid[id][group_col])
+            if self.d_subjid[id][self.group_col] not in self.ls_groups:
+                self.ls_groups.append(self.d_subjid[id][self.group_col])
         self.ls_vars_stats = ls_all_vars
-        self.ls_vars_stats.remove(group_col)
+        self.ls_vars_stats.remove(self.group_col)
 
         self.contrasts = {'g1v1':{'slope.mtx':['0 1','t-test with the slope>0 being positive; is the slope equal to 0? does the correlation between thickness and variable differ from zero ?',],},
             'g2v0':{'group.diff.mtx':['1 -1','t-test with Group1>Group2 being positive; is there a difference between the group intercepts? Is there a difference between groups?',],},
@@ -73,7 +79,7 @@ class PrepareForGLM():
             self.files_glm[contrast_type]['gd2mtx'] = gd2[contrast_type]
 
         print('creating list of subjects')
-        self.make_py_f_subjects(df_groups_clin, id_col)
+        self.make_subjects_per_group(df_groups_clin)
         print('creating fsgd for g1g2v0')
         self.make_fsgd_g1g2v0()
         print('creating fsgd for g1v1')
@@ -87,14 +93,25 @@ class PrepareForGLM():
         print('creating contrasts')
         self.make_contrasts()
         print('creating py file with all data')
-        self.make_py_f()
+        self.make_files_for_glm()
         print('creating qdec fsgd files')
         self.make_qdec_fsgd_g2()
 
-    def make_py_f_subjects(self, df_groups_clin, id_col):
+    def get_df_for_variables(self, GLM_file_group, variables):
+        if '.csv' in GLM_file_group:
+            df = pd.read_csv(GLM_file_group)
+        elif '.xlsx' in GLM_file_group or '.xls' in file_group:
+            df = pd.read_excel(GLM_file_group)
+        cols2drop = list()
+        for col in df.columns.tolist():
+            if col not in variables+[self.id_col, self.group_col]:
+                cols2drop.append(col)
+        if cols2drop:
+            df.drop(columns=cols2drop, inplace=True)
+        return df
 
-        _, subjects_per_group = _GET_Groups(df_groups_clin, id_col, self.group_col)
-
+    def make_subjects_per_group(self, df_groups_clin):
+        _, subjects_per_group = _GET_Groups(df_groups_clin, self.id_col, self.group_col)
         file = 'subjects_per_group.json'
         with open(path.join(self.PATH_GLM_dir, file), 'w') as f:
             json.dump(subjects_per_group, f, indent=4)
@@ -200,21 +217,10 @@ class PrepareForGLM():
                 self.files_glm[contrast_type]['mtx_explanation'].append(self.contrasts[contrast_type][contrast_name][1])
 
 
-
-    def make_py_f(self):
+    def make_files_for_glm(self):
         file = 'files_for_glm.json'
         with open(path.join(self.PATH_GLM_dir, file), 'w') as f:
             json.dump(self.files_glm, f, indent=4)
-#            f.write('#!/bin/python/\nfiles_for_glm = {')
-#            for contrast_type in self.files_glm:
-#                f.write('\''+contrast_type+'\':{')
-#                for group in self.files_glm[contrast_type]:
-#                    f.write('\''+group+'\':[')
-#                    for value in self.files_glm[contrast_type][group]:
-#                        f.write('\''+value+'\',')
-#                    f.write('],')
-#                f.write('},')
-#            f.write('}')
 
 
 
@@ -354,44 +360,51 @@ class PerformGLM():
             f.write(path.join(glmdir,contrast_name)+'\n')
 
 
-def get_df_for_variable(GLM_dir, GLM_file_group, id_col, group_col, variables):
-    if not path.isdir(GLM_dir): makedirs(GLM_dir)
-    shutil.copy(GLM_file_group, path.join(GLM_dir,Path(GLM_file_group).name))
-    
-    if '.csv' in GLM_file_group:
-        df = pd.read_csv(GLM_file_group)
-    elif '.xlsx' in GLM_file_group or '.xls' in file_group:
-        df = pd.read_excel(GLM_file_group)
-    cols2drop = list()
-    for col in df.columns.tolist():
-        if col not in variables+[id_col, group_col]:
-            cols2drop.append(col)
-    if cols2drop:
-        df.drop(columns=cols2drop, inplace=True)
-    return df
+def get_parameters(projects):
+    """get parameters for nimb"""
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description="""text {}""".format(
+            __version__
+        ),
+        epilog="""
+            Documentation at https://github.com/alexhanganu/nimb
+            """,
+    )
 
-if __name__ == '__main__':
+    parser.add_argument(
+        "-project", required=False,
+        default=projects[:1][0],
+        choices = projects,
+        help="names of projects located in credentials_path.py/nimb/projects.json -> PROJECTS",
+    )
+
+    params = parser.parse_args()
+    return params
 
 
-    print('Please check that all required variables for the GLM analysis are defined in the var.py file')
-    print('before running the script, remember to source $FREESURFER_HOME')
-    print('check if fsaverage is present in SUBJECTS_DIR')
-    print('each subject must include at least the folders: surf and label')
+if __name__ == "__main__":
 
-    from var import FREESURFER_HOME, SUBJECTS_DIR, GLM_dir, GLM_file_group, id_col, group_col, variables_for_glm, GLM_measurements, GLM_thresholds, GLM_MCz_cache
+    file = Path(__file__).resolve()
+    parent, top = file.parent, file.parents[2]
+    sys.path.append(str(top))
 
-    print('current variables are: '+
-        '\n    FREESURFER_HOME: '+FREESURFER_HOME+
-        '\n    SUBJECTS_DIR: '+SUBJECTS_DIR+
-        '\n    GLM_dir: '+GLM_dir+
-        '\n    GLM_file_group: '+GLM_file_group+
-        '\n    id_col: '+id_col+
-        '\n    group_col: '+group_col)
+    from setup.get_vars import Get_Vars
+    getvars = Get_Vars()
+    vars_local = getvars.location_vars['local']
+    projects = getvars.projects
+    params = get_parameters(projects['PROJECTS'])
+    vars_project = getvars.projects[params.project]
 
-    df_groups_clin = get_df_for_variable(GLM_dir, GLM_file_group, variables_for_glm)
-
-    print('\nSTEP 1 of 2: creating files required for GLM')
-    PrepareForGLM(GLM_dir, df_groups_clin, id_col, group_col)
-
+    PrepareForGLM(vars_local["STATS_PATHS"]["FS_GLM_dir"],
+                  vars_project["GLM_file_group"],
+                  vars_project["id_col"],
+                  vars_project["group_col"],
+                  vars_project["variables_for_glm"])
     print('\nSTEP 2 of 2: performing GLM analysis')
-    PerformGLM(GLM_dir, FREESURFER_HOME, SUBJECTS_DIR, GLM_measurements, GLM_thresholds, GLM_MCz_cache)
+    PerformGLM(vars_local["STATS_PATHS"]["FS_GLM_dir"],
+                            vars_local["FREESURFER"]["FREESURFER_HOME"],
+                            vars_local["FREESURFER"]["FS_SUBJECTS_DIR"],
+                            vars_local["FREESURFER"]["GLM_measurements"],
+                            vars_local["FREESURFER"]["GLM_thresholds"],
+                            vars_local["FREESURFER"]["GLM_MCz_cache"])
