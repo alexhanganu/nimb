@@ -3,7 +3,7 @@
 
 
 from os import system, listdir, makedirs, path, remove
-import shutil, linecache, sys
+import shutil, linecache, sys, json
 try:
     import pandas as pd
     import xlrd
@@ -204,7 +204,7 @@ class PrepareForGLM():
     def make_py_f(self):
         file = 'files_for_glm.json'
         with open(path.join(self.PATH_GLM_dir, file), 'w') as f:
-            json.dump(files_for_glm, f, indent=4)
+            json.dump(self.files_glm, f, indent=4)
 #            f.write('#!/bin/python/\nfiles_for_glm = {')
 #            for contrast_type in self.files_glm:
 #                f.write('\''+contrast_type+'\':{')
