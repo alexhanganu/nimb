@@ -365,13 +365,7 @@ class PerformGLM():
 def get_parameters(projects):
     """get parameters for nimb"""
     parser = argparse.ArgumentParser(
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        description="""text {}""".format(
-            __version__
-        ),
-        epilog="""
-            Documentation at https://github.com/alexhanganu/nimb
-            """,
+        formatter_class=argparse.RawDescriptionHelpFormatter
     )
 
     parser.add_argument(
