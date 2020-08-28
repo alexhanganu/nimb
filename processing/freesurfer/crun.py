@@ -3,52 +3,13 @@
 
 print_all_subjects = False
 
-from os import path, listdir, remove, rename, system, chdir, environ
-import json
-from get_username import _get_username
-
-try:
-    credentials_home = str(open('../../credentials_path').readlines()[0]).replace("~","/home/"+_get_username())
-    with open(path.join(credentials_home, 'local.json')) as local_vars:
-        vars = json.load(local_vars)
-except Exception as e: 
-    print(e, 'ERROR: credential file or local.json file is MISSING')
-
-
-NIMB_HOME               = vars["NIMB_PATHS"]["NIMB_HOME"]
-NIMB_tmp                = vars["NIMB_PATHS"]["NIMB_tmp"]
-max_walltime            = vars["PROCESSING"]["max_walltime"]
-SUBJECTS_DIR            = vars["FREESURFER"]["FS_SUBJECTS_DIR"]
-process_order           = vars["FREESURFER"]["process_order"]
-
-
-
+from os import path, system, chdir, environ
 import time, shutil
 from datetime import datetime, timedelta
 import logging
 import crunfs, cdb, cwalltime
 from logger import Log
-
-Log(NIMB_tmp)
-log = logging.getLogger(__name__)
-
-
-try:
-    from pathlib import Path
-except ImportError as e:
-    log.info(e)
-
-
-scheduler_params = {'NIMB_HOME'            : NIMB_HOME,
-                    'NIMB_tmp'             : NIMB_tmp,
-                    'SUBJECTS_DIR'         : SUBJECTS_DIR,
-                    'text4_scheduler'      : vars["PROCESSING"]["text4_scheduler"],
-                    'batch_walltime_cmd'   : vars["PROCESSING"]["batch_walltime_cmd"],
-                    'batch_output_cmd'     : vars["PROCESSING"]["batch_output_cmd"],
-                    'export_FreeSurfer_cmd': vars["FREESURFER"]["export_FreeSurfer_cmd"],
-                    'source_FreeSurfer_cmd': vars["FREESURFER"]["source_FreeSurfer_cmd"],
-                    'SUBMIT'               : vars["PROCESSING"]["SUBMIT"]}
-
+from pathlib import Path
 
 environ['TZ'] = 'US/Eastern'
 time.tzset()
@@ -69,8 +30,8 @@ class Get_cmd:
     def autorecon2(_id): return "recon-all -autorecon2 -s {}".format(_id)
     def autorecon3(_id): return "recon-all -autorecon3 -s {}".format(_id)
     def qcache(_id): return "recon-all -qcache -s {}".format(_id)
-    def brstem(_id): return 'segmentBS.sh {}'.format(_id) if vars["FREESURFER"]["freesurfer_version"]>6 else 'recon-all -s {} -brainstem-structures'.format(_id)
-    def hip(_id): return 'segmentHA_T1.sh {}'.format(_id) if vars["FREESURFER"]["freesurfer_version"]>6 else 'recon-all -s {} -hippocampal-subfields-T1'.format(_id)
+    def brstem(_id): return 'segmentBS.sh {}'.format(_id) if vars_local["FREESURFER"]["freesurfer_version"]>6 else 'recon-all -s {} -brainstem-structures'.format(_id)
+    def hip(_id): return 'segmentHA_T1.sh {}'.format(_id) if vars_local["FREESURFER"]["freesurfer_version"]>6 else 'recon-all -s {} -hippocampal-subfields-T1'.format(_id)
     def tha(_id): return "segmentThalamicNuclei.sh {}".format(_id)
     def masks(_id): return "cd "+path.join(NIMB_HOME,'processing','freesurfer')+"\npython run_masks.py {}".format(_id)
 
@@ -100,17 +61,17 @@ def running(process, all_running):
             if status == 'none':
                 db[ACTION][process].remove(subjid)
                 db['RUNNING_JOBS'].pop(subjid, None)
-                if vars["FREESURFER"]["base_name"] in subjid:
+                if vars_local["FREESURFER"]["base_name"] in subjid:
                     log.info('    reading '+process+', '+subjid+' subjid is long or base ')
                     if crunfs.chkIsRunning(SUBJECTS_DIR, subjid):
                         log.info('    '+subjid+', '+process+' -> ERROR, IsRunning')
                         db['ERROR_QUEUE'][subjid] = str(format(datetime.now()+timedelta(hours=datetime.strptime(cwalltime.Get_walltime(process, max_walltime), '%H:%M:%S').hour), "%Y%m%d_%H%M"))
                         db['PROCESSED']['error_recon'].append(subjid)
                 else:
-                    if not crunfs.chkIsRunning(SUBJECTS_DIR, subjid) and crunfs.checks_from_runfs(SUBJECTS_DIR, process, subjid, vars["FREESURFER"]["freesurfer_version"], vars["FREESURFER"]["masks"]):
+                    if not crunfs.chkIsRunning(SUBJECTS_DIR, subjid) and crunfs.checks_from_runfs(SUBJECTS_DIR, process, subjid, vars_local["FREESURFER"]["freesurfer_version"], vars_local["FREESURFER"]["masks"]):
                         if process != process_order[-1]:
                             next_process = process_order[process_order.index(process)+1]
-                            if not crunfs.checks_from_runfs(SUBJECTS_DIR, next_process, subjid, vars["FREESURFER"]["freesurfer_version"], vars["FREESURFER"]["masks"]):
+                            if not crunfs.checks_from_runfs(SUBJECTS_DIR, next_process, subjid, vars_local["FREESURFER"]["freesurfer_version"], vars_local["FREESURFER"]["masks"]):
                                 db['DO'][next_process].append(subjid)
                                 log.info('    '+subjid+', '+ACTION+' '+process+' -> DO '+next_process)
                             else:
@@ -126,16 +87,16 @@ def running(process, all_running):
             log.info('    '+subjid+' NOT in RUNNING_JOBS')
             db[ACTION][process].remove(subjid)
             if not crunfs.chkIsRunning(SUBJECTS_DIR, subjid):
-                if vars["FREESURFER"]["base_name"] in subjid:
+                if vars_local["FREESURFER"]["base_name"] in subjid:
                     log.info('    reading '+process+', '+subjid+' subjid is long or base ')
-                    if not crunfs.checks_from_runfs(SUBJECTS_DIR, 'recon', subjid, vars["FREESURFER"]["freesurfer_version"], vars["FREESURFER"]["masks"]):
+                    if not crunfs.checks_from_runfs(SUBJECTS_DIR, 'recon', subjid, vars_local["FREESURFER"]["freesurfer_version"], vars_local["FREESURFER"]["masks"]):
                         log.info('    '+subjid+' recon, -> ERROR, not all files were created')
                         db['PROCESSED']['error_recon'].append(subjid)
                 else:
-                    if crunfs.checks_from_runfs(SUBJECTS_DIR, process, subjid, vars["FREESURFER"]["freesurfer_version"], vars["FREESURFER"]["masks"]):
+                    if crunfs.checks_from_runfs(SUBJECTS_DIR, process, subjid, vars_local["FREESURFER"]["freesurfer_version"], vars_local["FREESURFER"]["masks"]):
                         if process != process_order[-1]:
                             next_process = process_order[process_order.index(process)+1]
-                            if not crunfs.checks_from_runfs(SUBJECTS_DIR, next_process, subjid, vars["FREESURFER"]["freesurfer_version"], vars["FREESURFER"]["masks"]):
+                            if not crunfs.checks_from_runfs(SUBJECTS_DIR, next_process, subjid, vars_local["FREESURFER"]["freesurfer_version"], vars_local["FREESURFER"]["masks"]):
                                 db['DO'][next_process].append(subjid)
                                 log.info('    '+subjid+', '+ACTION+' '+process+' -> DO '+next_process)
                             else:
@@ -162,12 +123,12 @@ def do(process):
 
     for subjid in lsd:
         log.info('   '+subjid)
-        if len_Running()<= vars["PROCESSING"]["max_nr_running_batches"]:
+        if len_Running()<= vars_local["PROCESSING"]["max_nr_running_batches"]:
             db[ACTION][process].remove(subjid)
             if process == 'registration':
-                if not crunfs.checks_from_runfs(SUBJECTS_DIR, 'registration',subjid, vars["FREESURFER"]["freesurfer_version"], vars["FREESURFER"]["masks"]):
-                    t1_ls_f, flair_ls_f, t2_ls_f = cdb.get_registration_files(subjid, db, NIMB_HOME, NIMB_tmp, vars["FREESURFER"]["flair_t2_add"])
-                    # job_id = crunfs.submit_4_processing(vars["PROCESSING"]["processing_env"], cmd, subjid, run, walltime)
+                if not crunfs.checks_from_runfs(SUBJECTS_DIR, 'registration',subjid, vars_local["FREESURFER"]["freesurfer_version"], vars_local["FREESURFER"]["masks"]):
+                    t1_ls_f, flair_ls_f, t2_ls_f = cdb.get_registration_files(subjid, db, NIMB_HOME, NIMB_tmp, vars_local["FREESURFER"]["flair_t2_add"])
+                    # job_id = crunfs.submit_4_processing(vars_local["PROCESSING"]["processing_env"], cmd, subjid, run, walltime)
                     job_id = crunfs.makesubmitpbs(Get_cmd.registration(subjid, t1_ls_f, flair_ls_f, t2_ls_f), subjid, process, cwalltime.Get_walltime(process, max_walltime), scheduler_params)
                 else:
                     job_id = 0
@@ -212,7 +173,7 @@ def check_error():
                     log.info('        checking the recon-all-status.log for error for: '+process)
                     crunfs.chkreconf_if_without_error(NIMB_tmp, subjid, SUBJECTS_DIR)
                     log.info('        checking if all files were created for: '+process)
-                    if not crunfs.checks_from_runfs(SUBJECTS_DIR, process, subjid, vars["FREESURFER"]["freesurfer_version"], vars["FREESURFER"]["masks"]):
+                    if not crunfs.checks_from_runfs(SUBJECTS_DIR, process, subjid, vars_local["FREESURFER"]["freesurfer_version"], vars_local["FREESURFER"]["masks"]):
                             log.info('            some files were not created and recon-all-status has errors.')
                             fs_error = crunfs.fs_find_error(subjid, SUBJECTS_DIR, NIMB_tmp)
                             solved = False
@@ -223,7 +184,7 @@ def check_error():
                                     db['PROCESSED']['error_'+process].remove(subjid)
                                     db['DO'][process].append(subjid)
                                     log.info('        moving from error_'+process+' to DO '+process)
-                                elif solve == 'voxreg' or solve == 'errorigmgz':
+                                elif solve == 'repeat_reg':
                                     if subjid in db['REGISTRATION']:
                                         solved = True
                                         db['REGISTRATION'][subjid]['anat']['t1'] = db['REGISTRATION'][subjid]['anat']['t1'][:1]
@@ -237,6 +198,7 @@ def check_error():
                                         system('rm -r '+path.join(SUBJECTS_DIR, subjid))
                                         log.info('        moving from error_'+process+' to RUNNING registration')
                                     else:
+                                        new_name = 'error_noreg_'+subjid
                                         log.info('            solved: '+solve+' but subjid is missing from db[REGISTRATION]')
                                 else:
                                     new_name = 'error_'+fs_error+'_'+subjid
@@ -245,7 +207,7 @@ def check_error():
                                 new_name = 'error_'+process+'_'+subjid
                             if not solved:
                                 log.info('            Excluding '+subjid+' from pipeline')
-                                _id, _ = cdb.get_id_long(subjid, db['LONG_DIRS'], vars["FREESURFER"]["base_name"], vars["FREESURFER"]["long_name"])
+                                _id, _ = cdb.get_id_long(subjid, db['LONG_DIRS'], vars_local["FREESURFER"]["base_name"], vars_local["FREESURFER"]["long_name"])
                                 if _id != 'none':
                                     try:
                                         db['LONG_DIRS'][_id].remove(subjid)
@@ -270,7 +232,7 @@ def check_error():
                 else:
                     if subjid in db["ERROR_QUEUE"]:
                         log.info('     waiting until: '+db['ERROR_QUEUE'][subjid])
-                        if db['ERROR_QUEUE'][subjid] < str(format(datetime.now(), "%Y%m%d_%H%M")):
+                        if not crunfs.chkIsRunning(SUBJECTS_DIR, subjid) or db['ERROR_QUEUE'][subjid] < str(format(datetime.now(), "%Y%m%d_%H%M")):
                             log.info('    removing from ERROR_QUEUE')
                             db['ERROR_QUEUE'].pop(subjid, None)
                     else:
@@ -284,27 +246,27 @@ def check_error():
 def long_check_groups(_id):
     ls = db['LONG_DIRS'][_id]
     LONG_TPS = db['LONG_TPS'][_id]
-    if vars["FREESURFER"]["DO_LONG"] == 1 and len(LONG_TPS)>1:
+    if vars_local["FREESURFER"]["DO_LONG"] == 1 and len(LONG_TPS)>1:
         All_cross_ids_done = list()
         for ses in LONG_TPS:
-            if _id+ses in ls and crunfs.checks_from_runfs(SUBJECTS_DIR, process_order[-1], _id+ses, vars["FREESURFER"]["freesurfer_version"], vars["FREESURFER"]["masks"]):
+            if _id+ses in ls and crunfs.checks_from_runfs(SUBJECTS_DIR, process_order[-1], _id+ses, vars_local["FREESURFER"]["freesurfer_version"], vars_local["FREESURFER"]["masks"]):
                 All_cross_ids_done.append(_id+ses)
 
         if len(All_cross_ids_done) == len(LONG_TPS):
-            base_f = _id+vars["FREESURFER"]["base_name"]
+            base_f = _id+vars_local["FREESURFER"]["base_name"]
             if base_f in ls:
                 if base_f not in db['RUNNING']['recon'] and base_f not in db['PROCESSED']['error_recon'] and not crunfs.chkIsRunning(SUBJECTS_DIR, base_f):
-                    if crunfs.checks_from_runfs(SUBJECTS_DIR, 'recon', base_f, vars["FREESURFER"]["freesurfer_version"], vars["FREESURFER"]["masks"]):
+                    if crunfs.checks_from_runfs(SUBJECTS_DIR, 'recon', base_f, vars_local["FREESURFER"]["freesurfer_version"], vars_local["FREESURFER"]["masks"]):
                         All_long_ids_done = list()
                         for ses in LONG_TPS:
-                            long_f = _id+ses+'.long.'+_id+vars["FREESURFER"]["base_name"]
+                            long_f = _id+ses+'.long.'+_id+vars_local["FREESURFER"]["base_name"]
                             if long_f not in ls:
-                                job_id = crunfs.makesubmitpbs(Get_cmd.reclong(_id+ses, _id+vars["FREESURFER"]["base_name"]), _id+ses, 'reclong', cwalltime.Get_walltime('reclong'), scheduler_params)
+                                job_id = crunfs.makesubmitpbs(Get_cmd.reclong(_id+ses, _id+vars_local["FREESURFER"]["base_name"]), _id+ses, 'reclong', cwalltime.Get_walltime('reclong'), scheduler_params)
                                 db['RUNNING_JOBS'][long_f] = job_id
                                 db['RUNNING']['recon'].append(long_f)
                                 db['LONG_DIRS'][_id].append(long_f)
-                            elif crunfs.checks_from_runfs(SUBJECTS_DIR, 'registration',long_f, vars["FREESURFER"]["freesurfer_version"], vars["FREESURFER"]["masks"]):
-                                if crunfs.checks_from_runfs(SUBJECTS_DIR, 'recon', long_f, vars["FREESURFER"]["freesurfer_version"], vars["FREESURFER"]["masks"]):
+                            elif crunfs.checks_from_runfs(SUBJECTS_DIR, 'registration',long_f, vars_local["FREESURFER"]["freesurfer_version"], vars_local["FREESURFER"]["masks"]):
+                                if crunfs.checks_from_runfs(SUBJECTS_DIR, 'recon', long_f, vars_local["FREESURFER"]["freesurfer_version"], vars_local["FREESURFER"]["masks"]):
                                     All_long_ids_done.append(long_f)
                                 else:
                                     log.info(long_f+' moving to error_recon')
@@ -341,12 +303,12 @@ def long_check_groups(_id):
     else:
         for subjid in ls:
             if subjid not in db["RUNNING_JOBS"]:
-                if crunfs.checks_from_runfs(SUBJECTS_DIR, 'registration', subjid, vars["FREESURFER"]["freesurfer_version"], vars["FREESURFER"]["masks"]):
-                   if crunfs.checks_from_runfs(SUBJECTS_DIR, process_order[-1], subjid, vars["FREESURFER"]["freesurfer_version"], vars["FREESURFER"]["masks"]):
+                if crunfs.checks_from_runfs(SUBJECTS_DIR, 'registration', subjid, vars_local["FREESURFER"]["freesurfer_version"], vars_local["FREESURFER"]["masks"]):
+                   if crunfs.checks_from_runfs(SUBJECTS_DIR, process_order[-1], subjid, vars_local["FREESURFER"]["freesurfer_version"], vars_local["FREESURFER"]["masks"]):
                         log.info('            last process done '+process_order[-1])
                         if subjid in db['RUNNING'][process_order[-1]]:
                             db['RUNNING'][process_order[-1]].remove(subjid)
-                        if crunfs.chk_if_all_done(SUBJECTS_DIR, subjid, process_order, NIMB_tmp, vars["FREESURFER"]["freesurfer_version"], vars["FREESURFER"]["masks"]):
+                        if crunfs.chk_if_all_done(SUBJECTS_DIR, subjid, process_order, NIMB_tmp, vars_local["FREESURFER"]["freesurfer_version"], vars_local["FREESURFER"]["masks"]):
                             log.info('            all processes done, moving to CP2LOCAL')
                             db['PROCESSED']['cp2local'].append(subjid)
                             db['LONG_DIRS'].pop(_id, None)
@@ -377,31 +339,31 @@ def move_processed_subjects(subject, db_source, new_name):
     log.info('    '+subject+' copying from '+db_source)
     size_src = sum(f.stat().st_size for f in Path(path.join(SUBJECTS_DIR, subject)).glob('**/*') if f.is_file())
     if not new_name:
-        shutil.copytree(path.join(SUBJECTS_DIR, subject), path.join(vars["NIMB_PATHS"]["NIMB_PROCESSED_FS"], subject))
-        size_dst = sum(f.stat().st_size for f in Path(path.join(vars["NIMB_PATHS"]["NIMB_PROCESSED_FS"], subject)).glob('**/*') if f.is_file())
+        shutil.copytree(path.join(SUBJECTS_DIR, subject), path.join(vars_local["NIMB_PATHS"]["NIMB_PROCESSED_FS"], subject))
+        size_dst = sum(f.stat().st_size for f in Path(path.join(vars_local["NIMB_PATHS"]["NIMB_PROCESSED_FS"], subject)).glob('**/*') if f.is_file())
         if size_src == size_dst:
             db['PROCESSED'][db_source].remove(subject)
             cdb.Update_DB(db, NIMB_tmp)
             log.info('    copied correctly, removing from SUBJECTS_DIR')
             shutil.rmtree(path.join(SUBJECTS_DIR, subject))
-            if vars["PROCESSING"]["archive_processed"] == 1:
+            if vars_local["PROCESSING"]["archive_processed"] == 1:
                 log.info('        archiving ...')
-                chdir(vars["NIMB_PATHS"]["NIMB_PROCESSED_FS"])
+                chdir(vars_local["NIMB_PATHS"]["NIMB_PROCESSED_FS"])
                 system('zip -r -q -m '+subject+'.zip '+subject)
         else:
             log.info('        ERROR in moving, not moved correctly '+str(size_src)+' '+str(size_dst))
-            shutil.rmtree(path.join(vars["NIMB_PATHS"]["NIMB_PROCESSED_FS"], subject))
+            shutil.rmtree(path.join(vars_local["NIMB_PATHS"]["NIMB_PROCESSED_FS"], subject))
     else:
         log.info('        renaming '+subject+' to '+new_name+', moving to processed error')
-        shutil.move(path.join(SUBJECTS_DIR, subject), path.join(vars["NIMB_PATHS"]["NIMB_PROCESSED_FS_error"], new_name))
+        shutil.move(path.join(SUBJECTS_DIR, subject), path.join(vars_local["NIMB_PATHS"]["NIMB_PROCESSED_FS_error"], new_name))
         db['PROCESSED'][db_source].remove(subject)
     log.info('        moving DONE')
 
 
 
-def run():
+def loop_run():
     cdb.Update_DB(db, NIMB_tmp)
-    all_running = cdb.get_batch_jobs_status(vars["USER"]["user"], vars["USER"]["users_list"])
+    all_running = cdb.get_batch_jobs_status(vars_local["USER"]["user"], vars_local["USER"]["users_list"])
 
     for process in process_order[::-1]:
         if len(db['RUNNING'][process])>0:
@@ -449,15 +411,33 @@ def  len_Running():
 
 def Count_TimeSleep():
     time2sleep = 600 # 10 minutes
-    if len_Running() >= vars["PROCESSING"]["max_nr_running_batches"]:
-        log.info('running: '+str(len_Running())+' max: '+str(vars["PROCESSING"]["max_nr_running_batches"]))
+    if len_Running() >= vars_local["PROCESSING"]["max_nr_running_batches"]:
+        log.info('running: '+str(len_Running())+' max: '+str(vars_local["PROCESSING"]["max_nr_running_batches"]))
         time2sleep = 1800 # 30 minutes
     return time2sleep
 
 
-if crunfs.FS_ready(SUBJECTS_DIR):
-    print('updating status')
+def run(varslocal):   
 
+    global vars_local, NIMB_HOME, NIMB_tmp, SUBJECTS_DIR, max_walltime, process_order, scheduler_params, log, db
+    vars_local       = varslocal
+    NIMB_HOME        = vars_local["NIMB_PATHS"]["NIMB_HOME"]
+    NIMB_tmp         = vars_local["NIMB_PATHS"]["NIMB_tmp"]
+    max_walltime     = vars_local["PROCESSING"]["max_walltime"]
+    SUBJECTS_DIR     = vars_local["FREESURFER"]["FS_SUBJECTS_DIR"]
+    process_order    = vars_local["FREESURFER"]["process_order"]
+    scheduler_params = {'NIMB_HOME'            : NIMB_HOME,
+                        'NIMB_tmp'             : NIMB_tmp,
+                        'SUBJECTS_DIR'         : SUBJECTS_DIR,
+                        'text4_scheduler'      : vars_local["PROCESSING"]["text4_scheduler"],
+                        'batch_walltime_cmd'   : vars_local["PROCESSING"]["batch_walltime_cmd"],
+                        'batch_output_cmd'     : vars_local["PROCESSING"]["batch_output_cmd"],
+                        'export_FreeSurfer_cmd': vars_local["FREESURFER"]["export_FreeSurfer_cmd"],
+                        'source_FreeSurfer_cmd': vars_local["FREESURFER"]["source_FreeSurfer_cmd"],
+                        'SUBMIT'               : vars_local["PROCESSING"]["SUBMIT"]}
+    Log(NIMB_tmp)
+    log = logging.getLogger(__name__)
+    
     t0 = time.time()
     time_elapsed = 0
     count_run = 0
@@ -469,24 +449,24 @@ if crunfs.FS_ready(SUBJECTS_DIR):
     db = cdb.Get_DB(NIMB_HOME, NIMB_tmp, process_order)
 
     log.info('NEW SUBJECTS searching:')
-    db = cdb.Update_DB_new_subjects_and_SUBJECTS_DIR(NIMB_tmp, SUBJECTS_DIR,db, process_order, vars["FREESURFER"]["base_name"], vars["FREESURFER"]["long_name"], vars["FREESURFER"]["freesurfer_version"], vars["FREESURFER"]["masks"])
+    db = cdb.Update_DB_new_subjects_and_SUBJECTS_DIR(NIMB_tmp, SUBJECTS_DIR,db, process_order, vars_local["FREESURFER"]["base_name"], vars_local["FREESURFER"]["long_name"], vars_local["FREESURFER"]["freesurfer_version"], vars_local["FREESURFER"]["masks"])
     cdb.Update_DB(db, NIMB_tmp)
     active_subjects = check_active_tasks(db)
 
     # extracting 40 minutes from the maximum time for the batch to run
     # since it is expected that less then 35 minutes will be required for the pipeline to perform all the steps
     # while the batch is running, and start new batch
-    max_batch_running = time.strftime('%H:%M:%S',time.localtime(time.mktime(time.strptime(vars["PROCESSING"]["batch_walltime"],"%H:%M:%S"))-2400))
+    max_batch_running = time.strftime('%H:%M:%S',time.localtime(time.mktime(time.strptime(vars_local["PROCESSING"]["batch_walltime"],"%H:%M:%S"))-2400))
 
     while active_subjects >0 and time.strftime("%H:%M:%S",time.gmtime(time_elapsed)) < max_batch_running:
         count_run += 1
         log.info('restarting run, '+str(count_run))
-        log.info('elapsed time: '+time.strftime("%H:%M",time.gmtime(time_elapsed))+' max walltime: '+vars["PROCESSING"]["batch_walltime"][:-6])
+        log.info('elapsed time: '+time.strftime("%H:%M",time.gmtime(time_elapsed))+' max walltime: '+vars_local["PROCESSING"]["batch_walltime"][:-6])
         if count_run % 5 == 0:
             log.info('NEW SUBJECTS searching:')
-            db = cdb.Update_DB_new_subjects_and_SUBJECTS_DIR(NIMB_tmp, SUBJECTS_DIR, db, process_order, vars["FREESURFER"]["base_name"], vars["FREESURFER"]["long_name"], vars["FREESURFER"]["freesurfer_version"], vars["FREESURFER"]["masks"])
+            db = cdb.Update_DB_new_subjects_and_SUBJECTS_DIR(NIMB_tmp, SUBJECTS_DIR, db, process_order, vars_local["FREESURFER"]["base_name"], vars_local["FREESURFER"]["long_name"], vars_local["FREESURFER"]["freesurfer_version"], vars_local["FREESURFER"]["masks"])
             cdb.Update_DB(db, NIMB_tmp)
-        run()
+        loop_run()
 
         time_to_sleep = Count_TimeSleep()
         log.info('\n\nWAITING. \nNext run at: '+str(time.strftime("%H:%M",time.localtime(time.time()+time_to_sleep))))
@@ -508,58 +488,22 @@ if crunfs.FS_ready(SUBJECTS_DIR):
     else:
         log.info('Sending new batch to scheduler')
         cdb.Update_status_log(NIMB_tmp, 'Sending new batch to scheduler')
-        chdir(NIMB_HOME)
-        system('python processing/freesurfer/start_fs_pipeline.py')
+        import submit_4processing
+        submit_4processing.start_fs_pipeline(vars_local)
 
 
-'''THIS script was used for the longitudinal analysis. It has changed and it should not be needed now, but a longitudinal analysis must be made to confirm'''
-
-# def long_check_pipeline(all_running):
-#     lsq_long = list()
-#     for val in db['RUNNING_LONG']['queue']:
-#         lsq_long.append(val)	
 
 
-#     for subjid in lsq_long:
-#         if subjid in db['RUNNING_JOBS']:
-#             status = Get_status_for_subjid_in_queue(subjid, all_running)
-#             if status =='R' or status == 'none' and crunfs.checks_from_runfs(SUBJECTS_DIR, 'registration',subjid):
-#                 print('       ',subjid,' status: ',status,'; moving from queue to running')
-#                 cdb.Update_status_log(nimb_scratch_dir, 'moving '+subjid+' from queue to running')
-#                 db['RUNNING_LONG']['queue'].remove(subjid)
-#                 db['RUNNING']['recon'].append(subjid)
-#             elif status == 'none' and not crunfs.checks_from_runfs(SUBJECTS_DIR, 'registration',subjid):
-#                 db['RUNNING_LONG']['queue'].remove(subjid)
-#                 db['PROCESSED']['error_recon'].append(subjid)
-#         else:
-#             print(subjid,'    queue, NOT in RUNNING_JOBS')
-#             if crunfs.checks_from_runfs(SUBJECTS_DIR, 'registration',subjid):
-#                 if crunfs.chkIsRunning(SUBJECTS_DIR, subjid):
-#                     cdb.Update_status_log(nimb_scratch_dir, 'moving '+subjid+' from long_QUEUE to long_RUNNING')
-#                     db['RUNNING_LONG']['queue'].remove(subjid)
-#                     db['RUNNING']['recon'].append(subjid)
-#                 elif crunfs.checks_from_runfs(SUBJECTS_DIR, 'recon', subjid):
-#                     cdb.Update_status_log(nimb_scratch_dir, subjid+' long recon DONE')
-#                     db['RUNNING_LONG']['queue'].remove(subjid)
+if __name__ == "__main__":
 
-#     lsr_long = list()
-#     for val in db['RUNNING_LONG']['running']:
-#         lsr_long.append(val)
+    import sys
+    from pathlib import Path
 
-#     LOOP was sent to RUNNING/recon
-#     for subjid in lsr_long:
-#         if subjid in db['RUNNING_JOBS']:
-#             status = Get_status_for_subjid_in_queue(subjid, all_running)
-#             if status == 'none':
-#                 db['RUNNING_LONG']['running'].remove(subjid)
-#                 db['RUNNING_JOBS'].pop(subjid, None)
-#                 if crunfs.chkIsRunning(SUBJECTS_DIR, subjid) or not crunfs.checks_from_runfs(SUBJECTS_DIR, 'recon', subjid):
-#                     db['PROCESSED']['error_recon'].append(subjid)
-#         else:
-#             print('    ',subjid,'    queue, NOT in RUNNING_JOBS')
-#             if not crunfs.chkIsRunning(SUBJECTS_DIR, subjid):
-#                 db['RUNNING_LONG']['running'].remove(subjid)
-#                 if not crunfs.checks_from_runfs(SUBJECTS_DIR, 'recon', subjid):
-#                     db['PROCESSED']['error_recon'].append(subjid)
-#     cdb.Update_DB(db, nimb_scratch_dir)
+    file = Path(__file__).resolve()
+    parent, top = file.parent, file.parents[2]
+    sys.path.append(str(top))
+
+    from setup.get_vars import Get_Vars
+    getvars = Get_Vars()
+    run(getvars.location_vars['local'])
 

@@ -65,7 +65,3 @@ def setup_logging(logLevel, logFile=None):
         handler.setFormatter(formatter)
         handler.setLevel("DEBUG")
         logger.addHandler(handler)
-
-
-#if __name__ == "__main__":
-#    Log('/scratch/hanganua/nimb_tmp')

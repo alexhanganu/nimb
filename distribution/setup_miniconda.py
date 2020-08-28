@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # coding: utf-8
 # 2020.08.13
+
+
 from os import path, chdir, system, remove
 
 def setup_miniconda(NIMB_HOME = "~/nimb"):
@@ -18,6 +20,8 @@ def setup_miniconda(NIMB_HOME = "~/nimb"):
         system('./miniconda3/bin/conda install -y dcm2niix')
         system('./miniconda3/bin/conda install -y dcm2bids')
         system('./miniconda3/bin/conda install -y -c conda-forge dipy')
+        system('./miniconda3/bin/conda install -y -c conda-forge nilearn')
+        system('./miniconda3/bin/conda install -y -c conda-forge nipype')
         system('./miniconda3/bin/conda install -y glob')
         system('./miniconda3/bin/conda install -y shutil')
         system('./miniconda3/bin/conda install -y pandas')
@@ -27,8 +31,14 @@ def setup_miniconda(NIMB_HOME = "~/nimb"):
         system('./miniconda3/bin/conda install -y paramiko')
         system('./miniconda3/bin/conda install -y openpyxl')
         system('./miniconda3/bin/conda install -y xlsxwriter')
+        system('./miniconda3/bin/conda install -y xlrd')
+        system('./miniconda3/bin/conda install -y -c conda-forge nipy')
+
     print(
         'FINISHED Installing miniconda3 with dcm2niix, dcm2bids, pandas, numpy, xlrd, xlsxwriter, paramiko, dipy')
+
+def check_that_modules_are_installed():
+    print('checking that modules are installed')
 
 
 if __name__ == "__main__":

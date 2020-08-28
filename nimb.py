@@ -57,11 +57,11 @@ class NIMB(object):
 
         if self.process == 'freesurfer':
             if not self.distribution.fs_ready():
-                print("FreeSurfer is not ready. Please check the configuration files.")
+                print("FreeSurfer is not ready or freesurfer_install is set to 0. Please check the configuration files.")
                 sys.exit()
             else:
-                from processing.freesurfer import start_fs_pipeline
-                start_fs_pipeline.start_fs_pipeline(self.locations['local'])
+                from processing.freesurfer import submit_4processing
+                submit_4processing.start_fs_pipeline(self.locations['local'])
 
         if self.process == 'fs-stats':
             if not self.distribution.nimb_stats_ready():
@@ -80,8 +80,13 @@ class NIMB(object):
         if self.process == 'fs-glm':
             if self.distribution.fs_ready():
                 self.distribution.fs_glm()
-                from processing.freesurfer import fs_runglm
-
+                from processing.freesurfer import fs_glm_runglm
+                print('Please check that all required variables for the GLM analysis are defined in the var.py file')
+                print('before running the script, remember to source $FREESURFER_HOME')
+                print('check if fsaverage is present in SUBJECTS_DIR')
+                print('each subject must include at least the folders: surf and label')
+                from processing.freesurfer import submit_4processing
+                submit_4processing.start_fs_glm_runglm(self.locations['local'], self.project)
 
 
 def get_parameters(projects):
@@ -123,7 +128,7 @@ def main():
     installers = getvars.installers
 
     params = get_parameters(projects['PROJECTS'])
-    locations['local']['STATS_PATHS'] = SetProject(NIMB_HOME, locations['local']['STATS_PATHS'], params.project).STATS_PATHS
+    locations['local']['STATS_PATHS'] = SetProject(locations['local']['NIMB_PATHS']['NIMB_HOME'], locations['local']['STATS_PATHS'], params.project).STATS_PATHS
 
     app = NIMB(credentials_home, projects, locations, installers, params.process, params.project)
     return app.run()
