@@ -53,9 +53,12 @@ class DistributionHelper():
         self.credentials_home = credentials_home
         self.project_name = project
         self.installers = installers
+
         # self.var = Get_Vars().get_default_vars()
         self.user_name, self.user_password = self.get_username_password_cluster_from_sqlite()
-
+        # setup folder
+        self.setup_folder = "../setup"
+        self.git_repo = "https://github.com/alexhanganu/nimb"
 
     def get_username_password_cluster_from_sqlite(self):
         """
@@ -239,10 +242,13 @@ class DistributionHelper():
         else:
             logger.debug("Setting up the remote server")
             # --get the name and the address of remote server
-            # a. load content of projects.json
-            # 2. check and install required library on remote computer
-            self.setting_up_remote_linux_with_freesurfer()
-
+            for machine_name, machine_config in self.locations.items():
+                if machine_name == 'local': # skip
+                    continue
+                # a. check the fs_install == 1
+                if machine_config['FREESURFER']['FreeSurfer_install'] == 1:
+                    host_name = self.projects['LOCATION'][machine_name]
+                    self.setting_up_remote_linux_with_freesurfer(host_name=host_name)
         print("get list of un-process subject. to be send to the server")
         # must set SOURCE_SUBJECTS_DIR, PROCESSED_FS_DIR before calling
         # DistributionHelper.get_list_subject_to_be_processed_remote_version(SOURCE_SUBJECTS_DIR, PROCESSED_FS_DIR)
@@ -359,7 +365,7 @@ class DistributionHelper():
         """
         setup_miniconda(self.NIMB_HOME)
 
-    def setting_up_remote_linux_with_freesurfer(self):
+    def setting_up_remote_linux_with_freesurfer(self, host_name):
         # go the remote server by ssh, enter the $HOME (~) folder
         # execute following commands
         # 0. prepare the python load the python 3.7.4
@@ -373,18 +379,14 @@ class DistributionHelper():
         #   f. setup freesurfer
         #   g. setup miniconda
         #   h. run the command to process ready
-        clusters = database._get_Table_Data('Clusters', 'all')
-        # user_name = clusters[list(clusters)[0]]['Username']
-        # user_password = clusters[list(clusters)[0]]['Password']
-        git_repo = "https://github.com/alexhanganu/nimb"
         # get the nimb_home at remote server
-        load_python_3 = 'module load python/3.7.4;'
-        cmd_git = f" cd ~; git clone {git_repo};  "
+        load_python_3 = 'module load python/3.7.4; module load python/3.8.2;' # python 2 is okay, need to check
+        cmd_git = f" cd ~; git clone {self.git_repo};  "
+        cmd_install_miniconda = "python nimb/distribution/setup_miniconda.py; "
         cmd_run_setup = " cd nimb/setup; python nimb.py -process ready"
 
-        cmd_run_crun_on_cluster = load_python_3 + cmd_git + cmd_run_setup
+        cmd_run_crun_on_cluster = load_python_3 + cmd_git + cmd_install_miniconda + cmd_run_setup
         print("command: " + cmd_run_crun_on_cluster)
-        host_name = clusters[list(clusters)[0]]['remote_address']
         # todo: how to know if the setting up is failed?
         print("Setting up the remote cluster")
         SSHHelper.running_command_ssh_2(host_name=host_name, user_name=self.user_name,
