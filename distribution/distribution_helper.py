@@ -4,13 +4,16 @@ from os import makedirs, system, path, listdir
 import logging
 from distribution import database
 from setup.get_vars import Get_Vars
+from distribution.setup_app import  *
+
+from distribution.check_disk_space import *
+from distribution import SSHHelper
+
 # -- for logging, instead of using print --
 logger = logging.getLogger(__name__)
 logging.basicConfig(format='%(asctime)s %(module)s %(levelname)s: %(message)s')
 logger.setLevel(logging.DEBUG)
 # --
-from distribution.check_disk_space import *
-from distribution import SSHHelper
 
 
 class ErrorMessages:
@@ -81,17 +84,19 @@ class DistributionHelper():
         :param is_nimb_fs_stats:
         :return: True if there is no error, otherwise, return False
         """
-        # self.verify_paths()
-        if is_nimb_classification or is_nimb_classification:
+        # check path exisits and create path if needed
+        self.verify_paths()
+
+        if is_nimb_classification or is_freesurfer_nim:
             if "NIMB_PATHS" not in self.locations['local'].keys():
                 logger.fatal("NIMB_PATHS is missing")
+                # sys.exit()
                 return False
             for key, val in self.locations['local']:
                 if len(val) < 1:
                     logger.fatal(f"{key} is missing")
                     return False
         if is_nimb_fs_stats:
-
             if "STATS_PATHS" not in self.locations['local'].keys():
                 ErrorMessages.error_stat_path()
                 return False
@@ -139,6 +144,9 @@ class DistributionHelper():
                 break
         return ready
 
+    def exisit_or_created(self, folder_name):
+        if not os.path.exists(folder_name):
+            os.mkdir(folder_name)
 
     def fs_ready(self):
         if self.locations['local']['FREESURFER']['FreeSurfer_install'] == 1:
@@ -196,6 +204,11 @@ class DistributionHelper():
         return machine, path
 
     def run(self, Project):
+        """
+        # todo:
+        :param Project:
+        :return:
+        """
         # 0 check the variables
         # if FreeSurfer_install = 1:
         if self.fs_ready():
@@ -228,10 +241,8 @@ class DistributionHelper():
         :return:
         '''
         # version 2: add username, password, and command line to run here
-        from distribution import SSHHelper
         clusters = database._get_Table_Data('Clusters', 'all')
-        # user_name = clusters[list(clusters)[0]]['Username']
-        # user_password = clusters[list(clusters)[0]]['Password']
+
         # project_folder = clusters[list(clusters)[0]]['HOME']
         cmd_run = " python a/crun.py -submit false" #submit=true
         load_python_3 = 'module load python/3.7.4;'
@@ -266,6 +277,10 @@ class DistributionHelper():
 
 
     def check_freesurfer_ready(self):
+        """
+        check and install freesurfer
+        :return:
+        """
         ready = False
         if not path.exists(path.join(self.locations['local']['FREESURFER']['FREESURFER_HOME'], "MCRv84")):
             print('FreeSurfer must be installed')
@@ -282,8 +297,8 @@ class DistributionHelper():
         """will check if the STATS folder is present and will create if absent
            will return the folder with unzipped stats folder for each subject"""
 
-        if not path.exists(self.vars["local"]["STATS_PATHS"]["STATS_HOME"]):
-            makedirs(self.vars["local"]["STATS_PATHS"]["STATS_HOME"])
+        if not path.exists(self.locations["local"]["STATS_PATHS"]["STATS_HOME"]):
+            makedirs(self.locations["local"]["STATS_PATHS"]["STATS_HOME"])
 
         PROCESSED_FS_DIR = self.projects[project]["PROCESSED_FS_DIR"]
         
@@ -320,37 +335,33 @@ class DistributionHelper():
         install the require libarary
         :return:
         """
-        try:
-            from setup.app_setup import SETUP_LOCAL_v2
-        except:
-            from setup.app_setup import SETUP_LOCAL_v2
-
         SETUP_LOCAL_v2()
 
-    def setting_up_remote_linux_with_freesurfer():
+        return NotImplementedError
+
+    def setting_up_remote_linux_with_freesurfer(self):
         # go the remote server by ssh, enter the $HOME (~) folder
+
         # execute following commands
         # 0. prepare the python load the python 3.7.4
-        # 1. git clone the repository
+        # 1. git clone the repository to NIMB_HOME
         # 2. run the python file remote_setupv2.py
-        from distribution import SSHHelper
-
         clusters = database._get_Table_Data('Clusters', 'all')
-        user_name = clusters[list(clusters)[0]]['Username']
-        user_password = clusters[list(clusters)[0]]['Password']
-        #todo:
-        git_repo = "https://github.com/alexhanganu/nimb/"
+        # user_name = clusters[list(clusters)[0]]['Username']
+        # user_password = clusters[list(clusters)[0]]['Password']
+        git_repo = "https://github.com/alexhanganu/nimb"
+        # get the nimb_home at remote server
         load_python_3 = 'module load python/3.7.4;'
         cmd_git = f" cd ~; git clone {git_repo};  "
-        cmd_run_setup = " cd nimb/setup; python remote_setupv2.py"
+        cmd_run_setup = " cd nimb/setup; python nimb.py -process ready"
 
         cmd_run_crun_on_cluster = load_python_3 + cmd_git + cmd_run_setup
         print("command: " + cmd_run_crun_on_cluster)
         host_name = clusters[list(clusters)[0]]['remote_address']
         # todo: how to know if the setting up is failed?
         print("Setting up the remote cluster")
-        SSHHelper.running_command_ssh_2(host_name=host_name, user_name=user_name,
-                                    user_password=user_password,
+        SSHHelper.running_command_ssh_2(host_name=host_name, user_name=self.user_name,
+                                    user_password=self.user_password,
                                     cmd_run_crun_on_cluster=cmd_run_crun_on_cluster)
 
 
