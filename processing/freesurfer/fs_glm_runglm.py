@@ -396,6 +396,7 @@ if __name__ == "__main__":
     params = get_parameters(projects['PROJECTS'])
     vars_project = getvars.projects[params.project]
 
+    print('\nSTEP 1 of 2: preparing data for GLM analysis')
     PrepareForGLM(vars_local["STATS_PATHS"]["FS_GLM_dir"],
                   vars_project["GLM_file_group"],
                   vars_project["id_col"],

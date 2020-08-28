@@ -16,10 +16,11 @@ class Submit_task():
         self.cd_cmd = cd_cmd
         self.job_id = '0'
         if vars_local["PROCESSING"]["SUBMIT"] == 1:
-            print('SUBMITTING is ALLOWED')
-            self.submit_4_processing(processing_env, cmd, name, task, walltime)
+            print('        SUBMITTING is ALLOWED')
+            self.submit_4_processing(vars_local["PROCESSING"]["processing_env"],
+                                    cmd, name, task, walltime)
         else:
-            print('SUBMITTING is stopped')
+            print('        SUBMITTING is stopped')
         
     def submit_4_processing(self, processing_env, cmd, name, task, walltime):
         if processing_env == 'slurm':
@@ -64,85 +65,22 @@ class Submit_task():
 
     def submit_2tmux(cmd, subjid):
         tmux_session = 'tmux_'+str(subjid)
-        make_tmux_screen = 'tmux new -d -s '+tmux_session
-        system('tmux send-keys -t '+str(tmux_session)+' '+cmd+' ENTER') #tmux send-keys -t session "echo 'Hello world'" ENTER
+        print('    submitting to tmux session:'+tmux_session)
+        system('tmux new -d -s {}'.format(tmux_session))
+        if self.activate_freesurfer:
+            system('tmux send-keys -t {0} \"{1}\" ENTER'.format(str(tmux_session), self.vars_local["export_FreeSurfer_cmd"]))
+            system('tmux send-keys -t {0} \"{1}\" ENTER'.format(str(tmux_session), self.vars_local["source_FreeSurfer_cmd"]))
+            system('tmux send-keys -t {0} \"export SUBJECTS_DIR={1}\" ENTER'.format(str(tmux_session), self.vars_local["SUBJECTS_DIR"]))
+        if self.cd_cmd:
+            system('tmux send-keys -t {0} \"{1}\" ENTER'.format(str(tmux_session),self.cd_cmd+'\" ENTER'))
+        system('tmux send-keys -t {0} \"{1}\" ENTER'.format(str(tmux_session),cmd))
         return tmux_session
 
-    # class tmux_env():
-        # https://gist.github.com/henrik/1967800
-        # https://unix.stackexchange.com/questions/409861/its-possible-to-send-input-to-a-tmux-session-without-connecting-to-it
-        # batch_output_cmd = 'screen -S minecraft -p 0 -X stuff "stop^M"'
 
-        # PROJECT_PATH = 'path_to_your_project'
-        # ACTIVATE_VENV = '. path_to_your_virtualenv/bin/activate'
-        # # example: one tab with vim, other tab with two consoles (vertical split)
-        # # with virtualenvs on the project, and a third tab with the server running
-
-        # # vim in project
-        # tmux('select-window -t 0')
-        # tmux_shell('cd %s' % PROJECT_PATH)
-        # tmux_shell('vim')
-        # tmux('rename-window "vim"')
-
-        # # console in project
-        # tmux('new-window')
-        # tmux('select-window -t 1')
-        # tmux_shell('cd %s' % PROJECT_PATH)
-        # tmux_shell(ACTIVATE_VENV)
-        # tmux('rename-window "consola"')
-        # # second console as split
-        # tmux('split-window -v')
-        # tmux('select-pane -t 1')
-        # tmux_shell('cd %s' % PROJECT_PATH)
-        # tmux_shell(ACTIVATE_VENV)
-        # tmux('rename-window "consola"')
-
-        # # local server
-        # tmux('new-window')
-        # tmux('select-window -t 2')
-        # tmux_shell('cd %s' % PROJECT_PATH)
-        # tmux_shell(ACTIVATE_VENV)
-        # tmux_shell('python manage.py runserver')
-        # tmux('rename-window "server"')
+def kill_tmux_session(session):
+    system('tmux kill-session -t {}'.format(session))
 
 
-        # # go back to the first window
-        # tmux('select-window -t 0')
-
-        # def tmux(command):
-            # system('tmux %s' % command)
-
-        # def tmux_shell(command):
-            # tmux('send-keys "%s" "C-m"' % command)
-
-        # def bash_run():
-            # function flask-boilerplate-tmux
-            # {
-                # # https://github.com/swaroopch/flask-boilerplate
-                # BASE="$HOME/code/flask-boilerplate"
-                # cd $BASE
-
-                # tmux start-server
-                # tmux new-session -d -s flaskboilerplate -n model
-                # tmux new-window -t flaskboilerplate:2 -n controller
-                # tmux new-window -t flaskboilerplate:3 -n view
-                # tmux new-window -t flaskboilerplate:4 -n console
-                # tmux new-window -t flaskboilerplate:5 -n tests
-                # tmux new-window -t flaskboilerplate:6 -n git
-
-                # tmux send-keys -t flaskboilerplate:1 "cd $BASE/flask_application; vim models.py" C-m
-                # tmux send-keys -t flaskboilerplate:2 "cd $BASE/flask_application/controllers; ls" C-m
-                # tmux send-keys -t flaskboilerplate:3 "cd $BASE/flask_application/templates; ls" C-m
-                # tmux send-keys -t flaskboilerplate:4 "bpython -i play.py" C-m
-                # tmux send-keys -t flaskboilerplate:5 "python tests.py" C-m
-                # tmux send-keys -t flaskboilerplate:6 "git status" C-m
-
-                # tmux select-window -t flaskboilerplate:1
-                # tmux attach-session -t flaskboilerplate
-            # }
-
-
-        
 def start_fs_pipeline(vars_local):
 
     datehour = time.strftime("%Y%m%d_%H%M",time.localtime(time.time()))
