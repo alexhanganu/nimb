@@ -52,6 +52,7 @@ class DistributionHelper():
         self.projects = projects # project.json
         self.credentials_home = credentials_home
         self.project_name = project
+        self.installers = installers
         # self.var = Get_Vars().get_default_vars()
         self.user_name, self.user_password = self.get_username_password_cluster_from_sqlite()
 
@@ -221,19 +222,6 @@ class DistributionHelper():
         machine, path =  self.projects[self.project_name]['SOURCE_SUBJECTS_DIR']
         return machine, path
 
-    def get_installers_json(self, installers_file = "../setup/installers.json"):
-        """
-        read the installers.json configuration
-        :param installers_file:
-        :return: None or the dictionary from json file
-        """
-        if not path.isfile(installers_file):
-            print("installer file is not defined")
-            return None
-        with open(installers_file, 'rt') as file:
-            installers = json.load(file)
-        return installers
-
 
     def run(self, Project):
         """
@@ -247,10 +235,11 @@ class DistributionHelper():
             # 1. install required library and software on the local computer, including freesurfer
             self.setting_up_local_computer()
             # install freesurfer locally
-            installers = self.get_installers_json(installers_file="../setup/installers.json")
-            setup = SETUP_FREESURFER(self.locations,installers=installers)
+            setup = SETUP_FREESURFER(self.locations,installers=self.installers)
         else:
             logger.debug("Setting up the remote server")
+            # --get the name and the address of remote server
+            # a. load content of projects.json
             # 2. check and install required library on remote computer
             self.setting_up_remote_linux_with_freesurfer()
 

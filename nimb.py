@@ -6,7 +6,6 @@
 import argparse
 import sys
 from setup.get_vars import Get_Vars, SetProject
-from os import path
 from classification import classify_bids
 from distribution.distribution_helper import DistributionHelper
 from distribution.distribution_helper import ErrorMessages
@@ -87,7 +86,7 @@ class NIMB(object):
                 print('each subject must include at least the folders: surf and label')
                 from processing.freesurfer import submit_4processing
                 submit_4processing.start_fs_glm_runglm(self.locations['local'], self.project)
-
+        return 1
 
 def get_parameters(projects):
     """get parameters for nimb"""
