@@ -133,6 +133,9 @@ def start_fs_glm_runglm(vars_local, project):
         f.write(vars_local['PROCESSING']["batch_walltime_cmd"]+vars_local['PROCESSING']["batch_walltime"]+'\n')
         f.write(vars_local['PROCESSING']["batch_output_cmd"]+path.join(vars_local["NIMB_PATHS"]["NIMB_tmp"],'usedpbs',out_file)+'\n')
         f.write('\n')
+        f.write(vars_local['FREESURFER']["export_FreeSurfer_cmd"]+'\n')
+        f.write(vars_local['FREESURFER']["source_FreeSurfer_cmd"]+'\n')
+        f.write('export SUBJECTS_DIR='+vars_local['FREESURFER']["FS_SUBJECTS_DIR"]+'\n')
         f.write('cd '+path.join(vars_local["NIMB_PATHS"]["NIMB_HOME"], 'processing', 'freesurfer')+'\n')
         f.write(vars_local['NIMB_PATHS']["miniconda_python_run"]+' fs_glm_runglm.py -project '+project)
 
