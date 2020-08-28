@@ -42,7 +42,8 @@ def Update_DB(db, NIMB_tmp):
         json.dump(db, jf, indent=4)
 
 
-
+'''
+# READY TO BE REMOVED
 def Update_status_log(NIMB_tmp, cmd, update=True):
     print(cmd)
     file = path.join(NIMB_tmp, 'status.log')
@@ -53,7 +54,7 @@ def Update_status_log(NIMB_tmp, cmd, update=True):
     dthm = time.strftime('%Y/%m/%d %H:%M')
     with open(file, 'a') as f:
         f.write(dthm+' '+cmd+'\n')
-
+'''
 
 def Update_running(NIMB_tmp, cmd):
     file = path.join(NIMB_tmp, 'running_')
@@ -108,14 +109,12 @@ def add_subjid_2_DB(NIMB_tmp, subjid, _id, ses, db, ls_SUBJECTS_in_long_dirs_pro
         db['DO']['registration'].append(subjid)
     else:
         log.info('ERROR: '+subjid+' in database! new one cannot be registered')
-        Update_status_log(NIMB_tmp, 'ERROR: '+subjid+' in database! new one cannot be registered')
     return db
 
 
 
 def chk_subjects2fs_file(SUBJECTS_DIR, NIMB_tmp, db, base_name, long_name, freesurfer_version, masks):
     log.info('    NEW_SUBJECTS_DIR checking ...')
-    Update_status_log(NIMB_tmp, '    NEW_SUBJECTS_DIR checking ...')
 
     ls_SUBJECTS_in_long_dirs_processed = get_ls_subjids_in_long_dirs(db)
     from crunfs import checks_from_runfs
@@ -125,12 +124,10 @@ def chk_subjects2fs_file(SUBJECTS_DIR, NIMB_tmp, db, base_name, long_name, frees
         ls_subj2fs = ls_from_subj2fs(NIMB_tmp, f_subj2fs)
         for subjid in ls_subj2fs:
             log.info('    adding '+subjid+' to database')
-            Update_status_log(NIMB_tmp, '    adding '+subjid+' to database')
             _id, ses = get_id_long(subjid, db['LONG_DIRS'], base_name, long_name)
             if not checks_from_runfs(SUBJECTS_DIR, 'registration',_id, freesurfer_version, masks):
                 db = add_subjid_2_DB(NIMB_tmp, subjid, _id, ses, db, ls_SUBJECTS_in_long_dirs_processed)
         log.info('new subjects were added from the subjects folder')
-        Update_status_log(NIMB_tmp, 'new subjects were added from the subjects folder')
     return db
 
 
@@ -145,12 +142,10 @@ def chk_new_subjects_json_file(SUBJECTS_DIR, NIMB_tmp, db, freesurfer_version, m
                 ls_subjids.append(val.strip('\r\n'))
         rename(f_subj2fs, path.join(NIMB_tmp,'zdone_subjects2fs'))
         log.info('subjects2fs was read')
-        Update_status_log(NIMB_tmp, 'subjects2fs was read')
         return ls_subjids
 
 
     log.info('    new_subjects.json checking ...')
-    Update_status_log(NIMB_tmp, '    new_subjects.json checking ...')
 
     ls_SUBJECTS_in_long_dirs_processed = get_ls_subjids_in_long_dirs(db)
     from crunfs import checks_from_runfs
@@ -170,21 +165,17 @@ def chk_new_subjects_json_file(SUBJECTS_DIR, NIMB_tmp, db, freesurfer_version, m
                                 db['REGISTRATION'][subjid] = dict()
                                 db['REGISTRATION'][subjid]['anat'] = data[_id][ses]['anat']
                                 log.info('        '+subjid+' added to database from new_subjects.json')
-                                Update_status_log(NIMB_tmp, '        '+subjid+' added to database from new_subjects.json')
                                 db = add_subjid_2_DB(NIMB_tmp, subjid, _id, ses, db, ls_SUBJECTS_in_long_dirs_processed)
                             else:
                                 db['PROCESSED']['error_registration'].append(subjid)
                                 log.info('ERROR: '+_id+' was read and but was not added to database')
-                                Update_status_log(NIMB_tmp, 'ERROR: '+_id+' was read and but was not added to database')
         rename(f_new_subjects, path.join(NIMB_tmp,'znew_subjects_registered_to_db_'+time.strftime("%Y%m%d_%H%M",time.localtime(time.time()))+'.json'))
         log.info('        new subjects were added from the new_subjects.json file')
-        Update_status_log(NIMB_tmp, '        new subjects were added from the new_subjects.json file')
     return db
 
 
 def get_registration_files(subjid, db, nimb_dir, NIMB_tmp, flair_t2_add):
         log.info('    '+subjid+' reading registration files')
-        Update_status_log(NIMB_tmp, '    '+subjid+' reading registration files')
         t1_ls_f = db['REGISTRATION'][subjid]['anat']['t1']
         flair_ls_f = 'none'
         t2_ls_f = 'none'
@@ -195,7 +186,6 @@ def get_registration_files(subjid, db, nimb_dir, NIMB_tmp, flair_t2_add):
             if db['REGISTRATION'][subjid]['anat']['t2'] and flair_ls_f == 'none':
                 t2_ls_f = db['REGISTRATION'][subjid]['anat']['t2']
         log.info('        from db[\'REGISTRATION\']')
-        Update_status_log(NIMB_tmp, '        from db[\'REGISTRATION\']')
         return t1_ls_f, flair_ls_f, t2_ls_f
 
 
@@ -222,7 +212,6 @@ def get_id_long(subjid, LONG_DIRS, base_name, long_name):
 
 def chk_subj_in_SUBJECTS_DIR(SUBJECTS_DIR, NIMB_tmp, db, process_order, base_name, long_name, freesurfer_version, masks):
     log.info('    SUBJECTS_DIR checking ...')
-    Update_status_log(NIMB_tmp, '    SUBJECTS_DIR checking ...')
 
     from crunfs import chkIsRunning, checks_from_runfs
 
@@ -249,12 +238,10 @@ def chk_subj_in_SUBJECTS_DIR(SUBJECTS_DIR, NIMB_tmp, db, process_order, base_nam
             for process in process_order[1:]:
                 if not checks_from_runfs(SUBJECTS_DIR, process, subjid, freesurfer_version, masks):
                     log.info('        '+subjid+' sent for DO '+process)
-                    Update_status_log(NIMB_tmp, '        '+subjid+' sent for DO '+process)
                     db['DO'][process].append(subjid)
                     break
         else:
             log.info('            IsRunning file present, adding to RUNNING '+process_order[1])
-            Update_status_log(NIMB_tmp, '            IsRunning file present, adding to RUNNING '+process_order[1])
             db['RUNNING'][process_order[1]].append(subjid)
 
     ls_SUBJECTS = sorted([i for i in listdir(SUBJECTS_DIR) if not chk_if_exclude(i)])
@@ -264,14 +251,11 @@ def chk_subj_in_SUBJECTS_DIR(SUBJECTS_DIR, NIMB_tmp, db, process_order, base_nam
     for subjid in ls_SUBJECTS:
         if subjid not in ls_SUBJECTS_in_long_dirs_processed:
             log.info('    '+subjid+' not in PROCESSED')
-            Update_status_log(NIMB_tmp, '    '+subjid+' not in PROCESSED')
             _id, longitud = get_id_long(subjid, db['LONG_DIRS'], base_name, long_name)
             log.info('        adding to database: id: '+_id+', long name: '+longitud)
-            Update_status_log(NIMB_tmp, '        adding to database: id: '+_id+', long name: '+longitud)
             if _id == subjid:
                 subjid = _id+'_'+longitud
                 log.info('   no '+long_name+' in '+_id+' Changing name to: '+subjid)
-                Update_status_log(NIMB_tmp, '   no '+long_name+' in '+_id+' Changing name to: '+subjid)
                 rename(path.join(SUBJECTS_DIR,_id), path.join(SUBJECTS_DIR,subjid))
             if _id not in db['LONG_DIRS']:
                 db['LONG_DIRS'][_id] = list()

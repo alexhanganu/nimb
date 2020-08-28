@@ -4,7 +4,6 @@ from os import makedirs, system, path, listdir
 import logging
 from distribution import database
 from setup.get_vars import Get_Vars
-from distribution.setup_app import  *
 
 from distribution.check_disk_space import *
 from distribution import SSHHelper

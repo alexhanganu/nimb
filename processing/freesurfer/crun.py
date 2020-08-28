@@ -487,7 +487,6 @@ def run(varslocal):
         log.info('ALL TASKS FINISHED')
     else:
         log.info('Sending new batch to scheduler')
-        cdb.Update_status_log(NIMB_tmp, 'Sending new batch to scheduler')
         import submit_4processing
         submit_4processing.start_fs_pipeline(vars_local)
 
