@@ -4,7 +4,7 @@
 
 
 from os import path, chdir, system, remove
-
+# can be improved by using a yml file
 def setup_miniconda(NIMB_HOME = "~/nimb"):
 
     if not path.exists(path.join(NIMB_HOME,"..", 'miniconda3')):
@@ -42,4 +42,4 @@ def check_that_modules_are_installed():
 
 
 if __name__ == "__main__":
-    setup_miniconda()
+    setup_miniconda(NIMB_HOME = "~/nimb")
