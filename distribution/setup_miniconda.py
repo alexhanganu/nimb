@@ -33,7 +33,8 @@ def setup_miniconda(NIMB_HOME = "~/nimb"):
         system('./miniconda3/bin/conda install -y xlsxwriter')
         system('./miniconda3/bin/conda install -y xlrd')
         system('./miniconda3/bin/conda install -y -c conda-forge nipy')
-
+        # must activate the conda environment before using by sourcing the bash profile. Otherwise, does not work
+        system("source $HOME/.bashrc")
     print(
         'FINISHED Installing miniconda3 with dcm2niix, dcm2bids, pandas, numpy, xlrd, xlsxwriter, paramiko, dipy')
 
