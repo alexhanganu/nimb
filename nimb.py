@@ -60,7 +60,8 @@ class NIMB(object):
                 sys.exit()
             else:
                 from processing.freesurfer import submit_4processing
-                submit_4processing.start_fs_pipeline(self.locations['local'])
+#                submit_4processing.start_fs_pipeline(self.locations['local'])
+                submit_4processing.Submit_task(self.locations['local'],                                                                                                                                                                         self.locations['local']['PROCESSING']["python3_load_cmd"]+'\n'+self.locations['local']['PROCESSING']["python3_run_cmd"]+' crun.py',                                                              'nimb','run', self.locations['local']['PROCESSING']["batch_walltime"],                                                                                                                           False, 'cd '+path.join(self.locations['local']["NIMB_PATHS"]["NIMB_HOME"], 'processing', 'freesurfer'))
 
         if self.process == 'fs-stats':
             if not self.distribution.nimb_stats_ready():
