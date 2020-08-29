@@ -47,17 +47,18 @@ class Submit_task():
         self.job_id = '0'
         self.submit_4_processing(vars_local["PROCESSING"]["processing_env"],
                                     cmd, name, task, walltime)
+        print(self.job_id)
 
     def submit_4_processing(self, processing_env, cmd, name, task, walltime):
         if processing_env == 'slurm':
             sh_file = self.make_submit_file(cmd, name, task, walltime)
-            if vars_local["PROCESSING"]["SUBMIT"] == 1:
+            if self.vars_local["PROCESSING"]["SUBMIT"] == 1:
                 print('        SUBMITTING is ALLOWED')
                 self.submit_2scheduler(sh_file)
             else:
                 print('        SUBMITTING is stopped')
         elif processing_env == 'tmux':
-            if vars_local["PROCESSING"]["SUBMIT"] == 1:
+            if self.vars_local["PROCESSING"]["SUBMIT"] == 1:
                 print('        SUBMITTING is ALLOWED')
                 submit_2tmux(cmd, name)
             else:
@@ -66,8 +67,7 @@ class Submit_task():
             print('ERROR: processing environment not provided or incorrect')
 
     def get_submit_file_names(self, name, task):
-        date=datetime.datetime.now()
-        dt=str(date.year)+str(date.month)+str(date.day)
+        dt = time.strftime("%Y%m%d_%H%M",time.localtime(time.time()))
         sh_file = name+'_'+task+'_'+str(dt)+'.sh'
         out_file = name+'_'+task+'_'+str(dt)+'.out'
         return sh_file, out_file
