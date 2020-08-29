@@ -488,7 +488,11 @@ def run(varslocal):
     else:
         log.info('Sending new batch to scheduler')
         import submit_4processing
-        submit_4processing.start_fs_pipeline(vars_local)
+#        submit_4processing.start_fs_pipeline(vars_local)
+        submit_4processing.Submit_task(vars_local,
+                                    vars_local['PROCESSING']["python3_load_cmd"]+'\n'+vars_local['PROCESSING']["python3_run_cmd"]+' crun.py',
+                                    'nimb','run', vars_local['PROCESSING']["batch_walltime"],
+                                    False, 'cd '+path.join(vars_local["NIMB_PATHS"]["NIMB_HOME"], 'processing', 'freesurfer'))
 
 
 
