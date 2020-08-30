@@ -93,7 +93,7 @@ def classify_by_sessions(ls):
 			d[ses_name].append(ses)
 		else:
 			date_new = dt.datetime.strptime(ses, '%Y-%m-%d_%H_%M_%S.%f')
-			date_before = dt.datetime.strptime(d['ses-'+str(n)][0], '%Y-%m-%d_%H_%M_%S.%f')
+			date_before = dt.datetime.strptime(d[ses_name][0], '%Y-%m-%d_%H_%M_%S.%f')
 			if date_new-date_before < oneday:
 				d[ses_name].append(ses)
 			else:
