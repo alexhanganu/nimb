@@ -95,7 +95,7 @@ class Havard_Atlas():
 
 # https://nilearn.github.io/auto_examples/01_plotting/plot_surf_stat_map.html#sphx-glr-auto-examples-01-plotting-plot-surf-stat-map-py
 class Destrieux_Atlas():
-    def extract_surface_ts(self, nifti_image, hemi='map_left', mesh='fsaverage.infl_left'):
+    def extract_surface_ts(self, nifti_image, hemi='map_left', mesh='fsaverage.infl_left', output_name):
         """
         Input params:
             - hemi (hemisphere) = 'map_left' or 'map_right'
@@ -106,19 +106,38 @@ class Destrieux_Atlas():
                     'fsaverage.sulc_left'
                     'fsaverage.sulc_right'
         """
-        # get destrieux atlas
-        destrieux_atlas = datasets.fetch_atlas_surf_destrieux()
-        labels = destrieux_atlas['labels'] # get labels
-
-        # getting the mesh for surface mapping
-        fsaverage = datasets.fetch_surf_fsaverage()
-
-        # get parcellation atlas
-        parcellation = destrieux_atlas[hemi]
+        # extract surface data from nifti image ###################
         surface_data = surface.vol_to_surf(nifti_image, surf_mesh=mesh)
-
         timeseries = surface.load_surf_data(surface_data)
         # fill Nan value with 0 and infinity with large finite numbers
         timeseries = np.nan_to_num(timeseries)
 
-        return timeseries
+        # get destrieux atlas ######################################
+        destrieux_atlas = datasets.fetch_atlas_surf_destrieux()
+        labels = destrieux_atlas['labels']  # get labels
+        parcellation = destrieux_atlas[hemi] # get parcellation
+
+        # getting the mesh for surface mapping #####################
+        fsaverage = datasets.fetch_surf_fsaverage()
+
+        # convert timeseries surface to 2D matrix where each column is a ROI
+        rois = []
+        for i in range(len(labels)):
+            pcc_labels = np.where(parcellation == i)[0]
+            # each parcellation to 1D matrix
+            seed_timeseries = np.mean(timeseries[pcc_labels], axis=0)
+            rois.append(np.array(seed_timeseries))
+
+        rois = np.array(rois).T
+        rois = np.nan_to_num(rois)
+
+        # extract correlation matrix
+        correlation_measure = ConnectivityMeasure(kind='correlation')
+        corr_rois = correlation_measure.fit_transform([rois])[0]
+        corr_rois_z = np.arctanh(corr_rois) # normalize to z-fisher
+
+        # save the correlation to csv
+        df = pd.DataFrame(corr_rois_z)
+        df.to_csv(output_name, index=False, header=None)
+
+        return rois, corr_rois_z
