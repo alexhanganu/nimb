@@ -405,3 +405,60 @@ class cols_per_measure_per_atlas():
                     if all_data[atlas]['parameters'][meas] in col and all_data['atlas_ending'][atlas] in col:
                         result[atlas][meas].append(ls_columns.index(col))
         return result
+
+def get_structure_measurement(name, ls_meas, ls_struct):
+    if name == 'eTIV':
+        measurement = 'eTIV'
+        structure = 'eTIV'
+    else:
+        measurement = ''
+        structure = ''
+        i = 0
+        while structure not in ls_struct and i<5:
+            if measurement not in ls_meas:
+                for meas in ls_meas:
+                    if meas in name:
+                        measurement = meas
+                        break
+            else:
+                ls_meas = ls_meas[ls_meas.index(measurement)+1:]
+                for meas in ls_meas:
+                    if meas in name:
+                        measurement = meas
+                        break
+
+            structure = name.replace('_'+measurement,'')
+            i += 1
+    if structure != 'eTIV' and structure+'_'+measurement != name:
+            print('ERROR in get_structure_measurement')
+    return measurement, structure
+
+
+def get_atlas_measurements():
+    measurements = {}
+    for meas in parc_parameters:
+        measurements[parc_parameters[meas]] = list()
+        for atlas in ('_DK','_DS',):
+            measurements[parc_parameters[meas]].append(parc_parameters[meas]+'L'+atlas)
+            measurements[parc_parameters[meas]].append(parc_parameters[meas]+'R'+atlas)
+    return measurements
+    
+def change_column_name(df, sheet):
+        columns_2_remove = ['ventricle_5th','wm_hypointensities_L',
+                        'wm_hypointensities_R','non_wm_hypointensities',
+                        'non_wm_hypointensities_L','non_wm_hypointensities_R',
+                        'eTIV', 'volBrainSegNotVent','lhSurfaceHoles',
+                        'rhSurfaceHoles','SurfaceHoles',]
+        ls = df.columns.tolist()
+        columns_2_drop = []
+        for col in columns_2_remove:
+            if col in ls:
+                columns_2_drop.append(col)
+                ls.remove(col)
+            
+        if len(columns_2_drop)>0:
+            df.drop(columns=columns_2_drop, inplace=True)
+        for col in ls:
+            ls[ls.index(col)] = col+'_'+sheet
+        df.columns = ls
+        return df
