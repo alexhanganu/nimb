@@ -76,9 +76,9 @@ class DistributionHelper():
         except TypeError:
             return 'none', 'none'
 
-# =========================================
-# UNITE:
-# ready, classify_ready, fs_ready and verify_paths must be put together in the is_setup_vars_folders
+    # =========================================
+    # UNITE:
+    # ready, classify_ready, fs_ready and verify_paths must be put together in the is_setup_vars_folders
 
 
     def is_setup_vars_folders(self,is_freesurfer_nim=False,
@@ -159,12 +159,12 @@ class DistributionHelper():
 
     def fs_ready(self):
         if self.locations['local']['FREESURFER']['FreeSurfer_install'] == 1:
-            if self.fs_chk_folders_ready():
-                return self.check_freesurfer_ready()
+            if self.check_freesurfer_ready():
+                return self.fs_chk_fsaverage_ready()
         else:
             return False
 
-    def fs_chk_folders_ready(self):
+    def fs_chk_fsaverage_ready(self):
         if 'fsaverage' in listdir(self.locations['local']['FREESURFER']['FS_SUBJECTS_DIR']):
             if 'xhemi' in listdir(path.join(self.locations['local']['FREESURFER']['FS_SUBJECTS_DIR'],'fsaverage')):
                 return True
@@ -193,8 +193,8 @@ class DistributionHelper():
                     print('creating path ',p)
                     makedirs(self.vars['local']['FREESURFER']['FS_SUBJECTS_DIR'])
                     system("cp -r"+path.join(self.vars['local']['FREESURFER']['FREESURFER_HOME'], "subjects", "fsaverage")+" "+self.vars['local']['FREESURFER']['FS_SUBJECTS_DIR'])
-# UNITE until here
-# =========================================
+    # UNITE until here
+    # =========================================
 
     def get_project_vars(self, var_name, project):
         """
@@ -313,7 +313,7 @@ class DistributionHelper():
         if not path.exists(path.join(self.locations['local']['FREESURFER']['FREESURFER_HOME'], "MCRv84")):
             print('FreeSurfer must be installed')
             from .setup_freesurfer import SETUP_FREESURFER
-            SETUP_FREESURFER(self.vars, self.installers)
+            SETUP_FREESURFER(self.locations, self.installers)
             ready = True
         else:
             print('start freesurfer processing')
