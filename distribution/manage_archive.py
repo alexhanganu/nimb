@@ -5,21 +5,28 @@ script extracts of specific folders
 
 from os import path, makedirs, listdir
 import zipfile
+import shutil
 
 class ZipArchiveManagement():
 
-    def __init__(self, zip_file, path2xtrct, dirs2xtrct = list()):
-        self.zip_file = zip_file
+    def __init__(self, zip_file, path2xtrct, path_err, dirs2xtrct = list()):
+        self.zip_file   = zip_file
         self.path2xtrct = path2xtrct
         self.dirs2xtrct = dirs2xtrct
-        self.extract_archive()
+        self.path_err   = path_err
+        if self.chk_if_zipfile():
+            self.extract_archive()
+
+    def chk_if_zipfile(self):
+        if not zipfile.is_zipfile(self.zip_file):
+            print(self.zip_file,' not a zip file')
+            self.move_error()
+            return False
+        else:
+            return True
 
     def read_zip(self):
-        if zipfile.is_zipfile(self.zip_file):
-            return zipfile.ZipFile(self.zip_file, 'r')
-        else:
-            print(zip_file,' not a zip file')
-            sys.exit()
+        return zipfile.ZipFile(self.zip_file, 'r')
 
     def zip_file_content(self, zip_f):
         return zip_f.namelist()
@@ -50,3 +57,7 @@ class ZipArchiveManagement():
                             pattern = folder)
         else:
             self.xtrct_all(zip_file_open)
+
+    def move_error(self):
+        shutil.move(self.zip_file, self.path_err)
+        shutil.rename(path.join(self.path_err, self.zip_file), path.join(self.path_err, 'errzip_'+self.zip_file))
