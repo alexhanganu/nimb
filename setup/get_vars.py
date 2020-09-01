@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from os import path, system
+from os import path, system, sep
 import shutil
 import json
 from .get_username import _get_username
@@ -15,9 +15,10 @@ class SetProject():
         for key in STATS_PATHS:
             if project not in STATS_PATHS[key]:
                 if key != "STATS_HOME":
-                    STATS_PATHS[key] = path.join(NIMB_tmp, project, '/'.join(STATS_PATHS[key].split('/')[-2:]))
+                    new_ending = '/'.join(STATS_PATHS[key].replace(sep, '/').split('/')[-2:])
                 else:
-                    STATS_PATHS[key] = path.join(NIMB_tmp, project, '/'.join(STATS_PATHS[key].split('/')[-1:]))
+                    new_ending = '/'.join(STATS_PATHS[key].replace(sep, '/').split('/')[-1:])
+                STATS_PATHS[key] = path.join(NIMB_tmp, project, new_ending).replace(sep, '/')
         return STATS_PATHS
 
 class Get_Vars():
