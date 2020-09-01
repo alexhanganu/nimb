@@ -42,20 +42,6 @@ def Update_DB(db, NIMB_tmp):
         json.dump(db, jf, indent=4)
 
 
-'''
-# READY TO BE REMOVED
-def Update_status_log(NIMB_tmp, cmd, update=True):
-    print(cmd)
-    file = path.join(NIMB_tmp, 'status.log')
-    if not update:
-        print('cleaning status file', file)
-        open(file,'w').close()
-
-    dthm = time.strftime('%Y/%m/%d %H:%M')
-    with open(file, 'a') as f:
-        f.write(dthm+' '+cmd+'\n')
-'''
-
 def Update_running(NIMB_tmp, cmd):
     file = path.join(NIMB_tmp, 'running_')
     if cmd == 1:
