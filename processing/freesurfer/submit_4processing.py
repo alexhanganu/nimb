@@ -1,4 +1,4 @@
-from os import path, environ
+from os import path, environ, system
 import time
 import subprocess
 import logging
@@ -146,3 +146,6 @@ def start_fs_glm_runglm(vars_local, project):
         print(list(filter(None, resp.split(' ')))[-1].strip('\n'))
     except Exception as e:
         print(e)
+
+
+
