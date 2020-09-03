@@ -61,7 +61,6 @@ class NIMB(object):
                 sys.exit()
             else:
                 from processing.freesurfer import submit_4processing
-#                submit_4processing.start_fs_pipeline(self.locations['local'])
                 submit_4processing.Submit_task(self.locations['local'],                                                                                                                                           self.locations['local']['PROCESSING']["python3_load_cmd"]+'\n'+self.locations['local']['PROCESSING']["python3_run_cmd"]+' crun.py',
                                                'nimb','run', self.locations['local']['PROCESSING']["batch_walltime"],
                                                False, 'cd '+path.join(self.locations['local']["NIMB_PATHS"]["NIMB_HOME"], 'processing', 'freesurfer'))
@@ -83,13 +82,23 @@ class NIMB(object):
         if self.process == 'fs-glm':
             if self.distribution.fs_ready():
                 self.distribution.fs_glm()
-                from processing.freesurfer import fs_glm_runglm
+                from processing.freesurfer import submit_4processing
                 print('Please check that all required variables for the GLM analysis are defined in the var.py file')
                 print('before running the script, remember to source $FREESURFER_HOME')
                 print('check if fsaverage is present in SUBJECTS_DIR')
                 print('each subject must include at least the folders: surf and label')
+                submit_4processing.Submit_task(self.locations['local'], self.locations['local']['NIMB_PATHS']["miniconda_python_run"]+' fs_glm_run_glm.py -project '+self.project,
+                                               'fs_glm','run_glm', self.locations['local']['PROCESSING']["batch_walltime"],
+                                               True, 'cd '+path.join(self.locations['local']["NIMB_PATHS"]["NIMB_HOME"], 'processing', 'freesurfer'))
+
+                
+        if self.process == 'fs-glm-image':
+            if self.distribution.fs_ready():
                 from processing.freesurfer import submit_4processing
-                submit_4processing.start_fs_glm_runglm(self.locations['local'], self.project)
+                print('before running the script, remember to source $FREESURFER_HOME')
+                submit_4processing.Submit_task(self.locations['local'], self.locations['local']['NIMB_PATHS']["miniconda_python_run"]+' fs_glm_extract_images.py -project '+self.project,
+                                               'fs_glm','extract_images', self.locations['local']['PROCESSING']["batch_walltime"],
+                                               True, 'cd '+path.join(self.locations['local']["NIMB_PATHS"]["NIMB_HOME"], 'processing', 'freesurfer'))
         return 1
 
 def get_parameters(projects):
@@ -107,7 +116,7 @@ def get_parameters(projects):
     parser.add_argument(
         "-process", required=False, 
         default='ready', 
-        choices = ['ready', 'freesurfer', 'classify', 'fs-stats', 'fs-glm', 'stats-general'],
+        choices = ['ready', 'freesurfer', 'classify', 'fs-stats', 'fs-glm', 'fs-glm-image', 'stats-general'],
         help="freesurfer (start FreeSurfer pipeline), classify (classify MRIs) fs-stats (extract freesurfer stats from subjid/stats/* to an excel file), fs-glm (perform freesurfer mri_glmfit GLM analsysis), stats-general (perform statistical analysis)",
     )
     

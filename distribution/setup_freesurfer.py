@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
-# 2020.08.17
+# 2020.09.02
 
 
 from os import path, chdir, system, remove
@@ -18,10 +18,19 @@ class SETUP_FREESURFER():
             self.freesurfer_install(vars['local']['FREESURFER']['freesurfer_version'], installers)
             print('FINISHED Installing')
         self.check_freesurfer_license(vars['local']['FREESURFER']['freesurfer_license'])
+        self.check_matlab_installation('install')
+        self.check_matlab_installation('none')
+
+    def check_matlab_installation(self, action):
         if not path.exists(path.join(self.FREESURFER_HOME, 'MCRv84')):
-            print("installing MATLAB")
-            self.matlab_install(vars['local']['FREESURFER']['export_FreeSurfer_cmd'],
-                                vars['local']['FREESURFER']['source_FreeSurfer_cmd'])
+            print('Matlab is required to perform processing of brainstem, hippocampus, amygdala and thalamus')
+            if action == 'install':
+                print("trying to install MATLAB...")
+                self.matlab_install(vars['local']['FREESURFER']['export_FreeSurfer_cmd'],
+                                    vars['local']['FREESURFER']['source_FreeSurfer_cmd'])
+            else:
+                print('sorry, something whent wrong, cannot install MATLAB. Try to source freesurfer and run setup_fs_matlab.sh')
+        else:
             print('FINISHED Installing MATLAB')
 
     def check_freesurfer_license(self, license):
