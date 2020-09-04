@@ -57,7 +57,7 @@ class Submit_task():
                 f.write(self.cd_cmd+'\n')
             f.write(cmd+'\n')
         return sh_file
-    
+
     def submit_2scheduler(self, sh_file):
         print('    submitting '+sh_file)
         time.sleep(1)
@@ -82,3 +82,12 @@ class Submit_task():
 
 def kill_tmux_session(session):
     system('tmux kill-session -t {}'.format(session))
+
+
+def get_jobs_status(user):
+    queue = list(filter(None,subprocess.run(['squeue','-u',user], stdout=subprocess.PIPE).stdout.decode('utf-8').split('\n')))
+    scheduler_jobs = dict()
+    for line in queue[1:]:
+            vals = list(filter(None,line.split(' ')))
+            scheduler_jobs[vals[0]] = [vals[3], vals[4]]
+    return scheduler_jobs

@@ -1,5 +1,5 @@
 #!/bin/python
-# 2020.08.04
+# 2020.09.03
 
 print_all_subjects = False
 
@@ -7,7 +7,7 @@ from os import path, system, chdir, environ
 import time, shutil
 from datetime import datetime, timedelta
 import logging
-import crunfs, cdb, cwalltime
+import crunfs, cdb, cwalltime, submit_4processing
 from logger import Log
 from pathlib import Path
 
@@ -36,35 +36,45 @@ class Get_cmd:
     def masks(_id): return "cd "+path.join(NIMB_HOME,'processing','freesurfer')+"\npython run_masks.py {}".format(_id)
 
 
-
-def Get_status_for_subjid_in_queue(subjid, all_running):
-    if subjid in db['RUNNING_JOBS']:
-        job_id = str(db['RUNNING_JOBS'][subjid])
-        if job_id in all_running:
-           return all_running[job_id]
+def Get_status_for_subjid_in_queue(running_jobs, subjid, scheduler_jobs):
+    if subjid in running_jobs:
+        job_id = str(running_jobs[subjid])
+        if job_id in scheduler_jobs:
+           print('scheduler_jobs for job_id is: {}'.format(scheduler_jobs[job_id]))
+           print('job_id is: {}'.format(scheduler_jobs[job_id][1]))
+           return running_jobs, scheduler_jobs[job_id][1]
         else:
-           return 'none'
+           return running_jobs, 'none'
     else:
-        return 'none'
+        return try_to_infer_jobid(running_jobs, subjid, scheduler_jobs)
+
+def try_to_infer_jobid(running_jobs, subjid, scheduler_jobs):
+    probable_jobids = [i for i in scheduler_jobs if scheduler_jobs[i][0] in subjid]
+    if probable_jobids:
+        print('job_id inferred, probable jobids: {}'.format(str(probable_jobids)))
+        if len(probable_jobids)>1:
+            running_jobs[subjid] = 0
+        else:
+            running_jobs[subjid] = probable_jobids[0]
+        return running_jobs, 'PD'
+    else:
+        return running_jobs, 'none'
 
 
-
-def running(process, all_running):
+def running(process, scheduler_jobs):
     ACTION = 'RUNNING'
     log.info(ACTION+' '+process)
-
     lsr = db[ACTION][process].copy()
-
     for subjid in lsr:
-        if subjid in db['RUNNING_JOBS']:
-            status = Get_status_for_subjid_in_queue(subjid, all_running)
+            db['RUNNING_JOBS'], status = Get_status_for_subjid_in_queue(running_jobs, subjid, scheduler_jobs)
             if status == 'none':
                 db[ACTION][process].remove(subjid)
-                db['RUNNING_JOBS'].pop(subjid, None)
+                if subjid in db['RUNNING_JOBS']:
+                    db['RUNNING_JOBS'].pop(subjid, None)
                 if vars_local["FREESURFER"]["base_name"] in subjid:
                     log.info('    reading '+process+', '+subjid+' subjid is long or base ')
-                    if crunfs.chkIsRunning(SUBJECTS_DIR, subjid):
-                        log.info('    '+subjid+', '+process+' -> ERROR, IsRunning')
+                    if crunfs.chkIsRunning(SUBJECTS_DIR, subjid) of not crunfs.checks_from_runfs(SUBJECTS_DIR, 'recon', subjid, vars_local["FREESURFER"]["freesurfer_version"], vars_local["FREESURFER"]["masks"]):
+                        log.info('    '+subjid+', '+process+' -> ERROR, IsRunning or not all files created')
                         db['ERROR_QUEUE'][subjid] = str(format(datetime.now()+timedelta(hours=datetime.strptime(cwalltime.Get_walltime(process, max_walltime), '%H:%M:%S').hour), "%Y%m%d_%H%M"))
                         db['PROCESSED']['error_recon'].append(subjid)
                 else:
@@ -83,34 +93,6 @@ def running(process, all_running):
                         log.info('    '+subjid+', '+process+' -> ERROR; IsRunning, status= '+status)
                         db['ERROR_QUEUE'][subjid] = str(format(datetime.now()+timedelta(hours=datetime.strptime(cwalltime.Get_walltime(process, max_walltime), '%H:%M:%S').hour), "%Y%m%d_%H%M"))
                         db['PROCESSED']['error_'+process].append(subjid)
-        else:
-            log.info('    '+subjid+' NOT in RUNNING_JOBS')
-            db[ACTION][process].remove(subjid)
-            if not crunfs.chkIsRunning(SUBJECTS_DIR, subjid):
-                if vars_local["FREESURFER"]["base_name"] in subjid:
-                    log.info('    reading '+process+', '+subjid+' subjid is long or base ')
-                    if not crunfs.checks_from_runfs(SUBJECTS_DIR, 'recon', subjid, vars_local["FREESURFER"]["freesurfer_version"], vars_local["FREESURFER"]["masks"]):
-                        log.info('    '+subjid+' recon, -> ERROR, not all files were created')
-                        db['PROCESSED']['error_recon'].append(subjid)
-                else:
-                    if crunfs.checks_from_runfs(SUBJECTS_DIR, process, subjid, vars_local["FREESURFER"]["freesurfer_version"], vars_local["FREESURFER"]["masks"]):
-                        if process != process_order[-1]:
-                            next_process = process_order[process_order.index(process)+1]
-                            if not crunfs.checks_from_runfs(SUBJECTS_DIR, next_process, subjid, vars_local["FREESURFER"]["freesurfer_version"], vars_local["FREESURFER"]["masks"]):
-                                db['DO'][next_process].append(subjid)
-                                log.info('    '+subjid+', '+ACTION+' '+process+' -> DO '+next_process)
-                            else:
-                                db[ACTION][next_process].append(subjid)
-                                log.info('    '+subjid+', '+ACTION+' '+process+' -> '+ACTION+' '+next_process)
-                        else:
-                            log.info('    '+subjid+' processing DONE')
-                    else:
-                        log.info('    '+subjid+' '+process+' -> ERROR, not all files were created')
-                        db['PROCESSED']['error_'+process].append(subjid)
-            else:
-                log.info('    '+subjid+' '+process+' -> ERROR, not in RUNNING_JOBS, IsRunning')
-                db['ERROR_QUEUE'][subjid] = str(format(datetime.now()+timedelta(hours=datetime.strptime(cwalltime.Get_walltime(process, max_walltime), '%H:%M:%S').hour), "%Y%m%d_%H%M"))
-                db['PROCESSED']['error_'+process].append(subjid)
     db[ACTION][process].sort()
     cdb.Update_DB(db, NIMB_tmp)
 
@@ -128,8 +110,8 @@ def do(process):
             if process == 'registration':
                 if not crunfs.checks_from_runfs(SUBJECTS_DIR, 'registration',subjid, vars_local["FREESURFER"]["freesurfer_version"], vars_local["FREESURFER"]["masks"]):
                     t1_ls_f, flair_ls_f, t2_ls_f = cdb.get_registration_files(subjid, db, NIMB_HOME, NIMB_tmp, vars_local["FREESURFER"]["flair_t2_add"])
-                    # job_id = crunfs.submit_4_processing(vars_local["PROCESSING"]["processing_env"], cmd, subjid, run, walltime)
-                    job_id = crunfs.makesubmitpbs(Get_cmd.registration(subjid, t1_ls_f, flair_ls_f, t2_ls_f), subjid, process, cwalltime.Get_walltime(process, max_walltime), scheduler_params)
+                    job_id = submit_4_processing.Submit_task(vars_local, Get_cmd.registration(subjid, t1_ls_f, flair_ls_f, t2_ls_f), subjid, process, cwalltime.Get_walltime(process, max_walltime), True, '')
+                    # job_id = crunfs.makesubmitpbs(Get_cmd.registration(subjid, t1_ls_f, flair_ls_f, t2_ls_f), subjid, process, cwalltime.Get_walltime(process, max_walltime), scheduler_params)
                 else:
                     job_id = 0
             elif process == 'recon':
@@ -160,7 +142,7 @@ def do(process):
     cdb.Update_DB(db, NIMB_tmp)
 
 
-def check_error():
+def check_error(scheduler_jobs):
     log.info('ERROR checking')
 
     for process in process_order:
@@ -231,8 +213,14 @@ def check_error():
                             log.info('        moving from error_'+process+' to RUNNING '+process)
                 else:
                     if subjid in db["ERROR_QUEUE"]:
+                        db['RUNNING_JOBS'], status = Get_status_for_subjid_in_queue(running_jobs, subjid, scheduler_jobs)
+                        if status != 'none' and subjid in db['RUNNING_JOBS']:
+                            log.info('     status is: {}, should be moving back to RUNNING_JOBS'.format(status))
+                            db['ERROR_QUEUE'].pop(subjid, None)
+                            db['PROCESSED']['error_'+process].remove(subjid)
+                            db['RUNNING'][process].append(subjid)
                         log.info('     waiting until: '+db['ERROR_QUEUE'][subjid])
-                        if not crunfs.chkIsRunning(SUBJECTS_DIR, subjid) or db['ERROR_QUEUE'][subjid] < str(format(datetime.now(), "%Y%m%d_%H%M")):
+                        elif not crunfs.chkIsRunning(SUBJECTS_DIR, subjid) or db['ERROR_QUEUE'][subjid] < str(format(datetime.now(), "%Y%m%d_%H%M")):
                             log.info('    removing from ERROR_QUEUE')
                             db['ERROR_QUEUE'].pop(subjid, None)
                     else:
@@ -363,15 +351,15 @@ def move_processed_subjects(subject, db_source, new_name):
 
 def loop_run():
     cdb.Update_DB(db, NIMB_tmp)
-    all_running = cdb.get_batch_jobs_status(vars_local["USER"]["user"], vars_local["USER"]["users_list"])
+    scheduler_jobs = submit_4processing.get_jobs_status(vars_local["USER"]["user"])
 
     for process in process_order[::-1]:
         if len(db['RUNNING'][process])>0:
-            running(process,all_running)
+            running(process, scheduler_jobs)
         if len(db['DO'][process])>0:
             do(process)
 
-    check_error()
+    check_error(scheduler_jobs)
 
     log.info('CHECKING subjects')
     ls_long_dirs = list()
@@ -426,9 +414,9 @@ def run(varslocal):
     max_walltime     = vars_local["PROCESSING"]["max_walltime"]
     SUBJECTS_DIR     = vars_local["FREESURFER"]["FS_SUBJECTS_DIR"]
     process_order    = vars_local["FREESURFER"]["process_order"]
-    scheduler_params = {'NIMB_HOME'            : NIMB_HOME,
-                        'NIMB_tmp'             : NIMB_tmp,
-                        'SUBJECTS_DIR'         : SUBJECTS_DIR,
+    scheduler_params = {'NIMB_HOME'            : vars_local["NIMB_PATHS"]["NIMB_HOME"],
+                        'NIMB_tmp'             : vars_local["NIMB_PATHS"]["NIMB_tmp",
+                        'SUBJECTS_DIR'         : vars_local["FREESURFER"]["FS_SUBJECTS_DIR"],
                         'text4_scheduler'      : vars_local["PROCESSING"]["text4_scheduler"],
                         'batch_walltime_cmd'   : vars_local["PROCESSING"]["batch_walltime_cmd"],
                         'batch_output_cmd'     : vars_local["PROCESSING"]["batch_output_cmd"],

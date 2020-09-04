@@ -165,16 +165,11 @@ class DistributionHelper():
             return False
 
     def fs_chk_fsaverage_ready(self):
-        if 'fsaverage' in listdir(self.locations['local']['FREESURFER']['FS_SUBJECTS_DIR']):
-            if 'xhemi' in listdir(path.join(self.locations['local']['FREESURFER']['FS_SUBJECTS_DIR'],'fsaverage')):
-                return True
-            else:
-                print(' fsaverage/xhemi is missing')
-                return False
+        if not path.exists(path.join(self.locations['local']['FREESURFER']['FS_SUBJECTS_DIR'],'fsaverage', 'xhemi')):
+            print('fsaverage or fsaverage/xhemi is missing from SUBJECTS_DIR: {}'.format(self.locations['local']['FREESURFER']['FS_SUBJECTS_DIR']))
+            return False
         else:
-             print(' fsaverage is missing in SUBJECTS_DIR')
-             return False
-
+            return True
 
     def verify_paths(self):
         # to verify paths and if not present - create them or return error

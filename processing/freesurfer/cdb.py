@@ -263,22 +263,43 @@ def chk_subj_in_SUBJECTS_DIR(SUBJECTS_DIR, NIMB_tmp, db, process_order, base_nam
 
 
 
-def get_batch_jobs_status(cuser, cusers_list):
+def get_batch_jobs_status(user):
 
     def get_jobs(jobs, queue):
-
         for line in queue[1:]:
                 vals = list(filter(None,line.split(' ')))
                 if vals[0] not in jobs:
-                    jobs[vals[0]] = vals[4]
+                    jobs[vals[0]] = [vals[3], vals[4]]
         return jobs
-
 
     import subprocess
 
     jobs = dict()
-    for cuser in cusers_list:
-        queue = list(filter(None,subprocess.run(['squeue','-u',cuser], stdout=subprocess.PIPE).stdout.decode('utf-8').split('\n')))
-        jobs.update(get_jobs(jobs, queue))
-
+    queue = list(filter(None,subprocess.run(['squeue','-u',user], stdout=subprocess.PIPE).stdout.decode('utf-8').split('\n')))
+    jobs.update(get_jobs(jobs, queue))
     return jobs
+
+
+def Get_status_for_subjid_in_queue(db, subjid, all_running):
+    if subjid in db['RUNNING_JOBS']:
+        job_id = str(db['RUNNING_JOBS'][subjid])
+        if job_id in all_running:
+           print('all_running for job_id is: {}'.format(all_running[job_id]))
+           print('job_id is: {}'.format(all_running[job_id][1]))
+           return db, all_running[job_id][1]
+        else:
+           return db, 'none'
+    else:
+        return try_to_infer_jobid(db, subjid, all_running)
+
+def try_to_infer_jobid(db, subjid, all_running):
+    probable_jobids = [i for i in all_running if all_running[i][0] in subjid]
+    if probable_jobids:
+        print('job_id inferred, probable jobids: {}'.format(str(probable_jobids)))
+        if len(probable_jobids)>1:
+            db['RUNNING_JOBS'][subjid] = 0
+        else:
+            db['RUNNING_JOBS'][subjid] = probable_jobids[0]
+        return db, 'PD'
+    else:
+        return db, 'none'
