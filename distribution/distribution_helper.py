@@ -234,6 +234,7 @@ class DistributionHelper():
         """
         # 0 check the variables
         # if FreeSurfer_install = 1:
+        host_name = ""
         if self.fs_ready():
             # 1. install required library and software on the local computer, including freesurfer
             self.setting_up_local_computer()
@@ -249,9 +250,17 @@ class DistributionHelper():
                 if machine_config['FREESURFER']['FreeSurfer_install'] == 1:
                     host_name = self.projects['LOCATION'][machine_name]
                     self.setting_up_remote_linux_with_freesurfer(host_name=host_name)
+
+        # continue working from below
         print("get list of un-process subject. to be send to the server")
-        # must set SOURCE_SUBJECTS_DIR, PROCESSED_FS_DIR before calling
+        # must set SOURCE_SUBJECTS_DIR, PROCESSED_FS_DIR before calling: get from project
+        # project name get from where?
+
+        machine_PROCESSED_FS_DIR, PROCESSED_FS_DIR = self.get_PROCESSED_FS_DIR()
+        machine_SOURCE_SUBJECTS_DIR, SOURCE_SUBJECTS_DIR = self.get_SOURCE_SUBJECTS_DIR()
+
         # DistributionHelper.get_list_subject_to_be_processed_remote_version(SOURCE_SUBJECTS_DIR, PROCESSED_FS_DIR)
+        # DistributionHelper.get_list_subject_to_be_processed_remote_version(remote_host=host_name,PROCESSED_FS_DIR=)
         # how this part work?
         # status.set('Copying data to cluster ')
         logger.debug('Copying data to cluster ')
