@@ -87,10 +87,10 @@ def stats2table_v7(PATHstats, SUBJECTS_DIR, data_only_volumes=True):
     print('Writing Headers for all sheets')
 
     from stats.stats_definitions import (BS_Hip_Tha_stats_f, brstem_hip_header,
-                                                              segmentation_parameters,
-                                                              segmentations_header, parc_parameters,
-                                                              parc_DK_f2rd,
-                                                              parc_DK_header, parc_DS_f2rd, parc_DS_header)
+                                         segmentation_parameters,
+                                         segmentations_header, parc_parameters,
+                                         parc_DK_f2rd, parc_DK_header,
+                                         parc_DS_f2rd, parc_DS_header)
 
 
     def read_BS_HIP_AMY_THA_v12_v21(file, _SUBJECT):

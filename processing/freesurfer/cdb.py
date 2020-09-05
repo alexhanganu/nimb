@@ -42,20 +42,6 @@ def Update_DB(db, NIMB_tmp):
         json.dump(db, jf, indent=4)
 
 
-'''
-# READY TO BE REMOVED
-def Update_status_log(NIMB_tmp, cmd, update=True):
-    print(cmd)
-    file = path.join(NIMB_tmp, 'status.log')
-    if not update:
-        print('cleaning status file', file)
-        open(file,'w').close()
-
-    dthm = time.strftime('%Y/%m/%d %H:%M')
-    with open(file, 'a') as f:
-        f.write(dthm+' '+cmd+'\n')
-'''
-
 def Update_running(NIMB_tmp, cmd):
     file = path.join(NIMB_tmp, 'running_')
     if cmd == 1:
@@ -274,25 +260,3 @@ def chk_subj_in_SUBJECTS_DIR(SUBJECTS_DIR, NIMB_tmp, db, process_order, base_nam
                 if subjid not in ls_SUBJECTS_running:
                     add_new_subjid_to_db(subjid, process_order, NIMB_tmp, freesurfer_version, masks)
     return db
-
-
-
-def get_batch_jobs_status(cuser, cusers_list):
-
-    def get_jobs(jobs, queue):
-
-        for line in queue[1:]:
-                vals = list(filter(None,line.split(' ')))
-                if vals[0] not in jobs:
-                    jobs[vals[0]] = vals[4]
-        return jobs
-
-
-    import subprocess
-
-    jobs = dict()
-    for cuser in cusers_list:
-        queue = list(filter(None,subprocess.run(['squeue','-u',cuser], stdout=subprocess.PIPE).stdout.decode('utf-8').split('\n')))
-        jobs.update(get_jobs(jobs, queue))
-
-    return jobs

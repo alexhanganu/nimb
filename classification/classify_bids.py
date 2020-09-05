@@ -93,11 +93,12 @@ def classify_by_sessions(ls):
 			d[ses_name].append(ses)
 		else:
 			date_new = dt.datetime.strptime(ses, '%Y-%m-%d_%H_%M_%S.%f')
-			date_before = dt.datetime.strptime(d['ses-'+str(n)][0], '%Y-%m-%d_%H_%M_%S.%f')
+			date_before = dt.datetime.strptime(d[ses_name][0], '%Y-%m-%d_%H_%M_%S.%f')
 			if date_new-date_before < oneday:
 				d[ses_name].append(ses)
 			else:
 				n +=1
+				ses_name = 'ses-'+str(n).zfill(2)
 				d[ses_name] = list()
 				d[ses_name].append(ses)
 	return d
@@ -231,7 +232,7 @@ def get_dict_MR_files2process(NIMB_NEW_SUBJECTS, NIMB_HOME, NIMB_tmp, multiple_T
     for subject in listdir(NIMB_NEW_SUBJECTS):
         d_subjects[subject] = {}
         ls_MR_paths = exclude_MR_types(get_paths2dcm_files(path.join(NIMB_NEW_SUBJECTS,subject)))
-        print("ls_MR_paths: ", ls_MR_paths)
+        #print("ls_MR_paths: ", ls_MR_paths)
         ls_sessions, d_paths = get_ls_sessions(ls_MR_paths)
         #print(ls_sessions)
         d_sessions = classify_by_sessions(ls_sessions)

@@ -40,7 +40,7 @@ def create_df_from_dict(d):
 	return pd.DataFrame(d)
 
 def rm_cols_from_df(df, cols):
-	return df.drop(columns=cols,inplace=True)
+	return df.drop(columns=cols)
 
 def save_df(df, f_path_to_save, sheet_name):
 	df.to_excel(f_path_to_save, sheet_name=sheet_name)
@@ -50,4 +50,4 @@ def save_df_tocsv(df, f_path_to_save):
 
 
 def get_df_per_parameter(df, param_col, param):
-    return df[df[param_col] == param]
+	return df[df[param_col] == param]

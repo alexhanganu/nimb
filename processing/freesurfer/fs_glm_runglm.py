@@ -1,5 +1,5 @@
 #!/bin/python
-# 2020.07.10
+# 2020.09.02
 
 
 from os import system, listdir, makedirs, path, remove
@@ -27,11 +27,10 @@ def _GET_Groups(df, id_col, group_col):
         return groups, subjects_per_group
 
 
-
 class PrepareForGLM():
 
     #https://surfer.nmr.mgh.harvard.edu/fswiki/FsgdExamples
-    def __init__(self, GLM_dir, GLM_file_group, id_col, group_col, variables):
+    def __init__(self, GLM_dir, GLM_file_group, id_col, group_col, variables, vars_fs):
 
         self.PATH_GLM_dir = GLM_dir
         self.group_col = group_col
@@ -46,6 +45,8 @@ class PrepareForGLM():
         print(self.PATHfsgd)
 
         df_groups_clin = self.get_df_for_variables(GLM_file_group, variables)
+        if not self.check_ready4glm(df_groups_clin[self.id_col].tolist(), vars_fs):
+            sys.exit()
         d_init = df_groups_clin.to_dict()
         self.d_subjid = {}
         ls_all_vars = [key for key in d_init if key != self.id_col]
@@ -111,6 +112,31 @@ class PrepareForGLM():
         if cols2drop:
             df.drop(columns=cols2drop, inplace=True)
         return df
+
+    def check_ready4glm(self, ids, vars_fs):
+
+        def add_to_miss(miss, _id, file):
+            if _id not in miss:
+                miss[_id] = list()
+            miss[_id].append(file)
+            return miss
+
+        res = True
+        miss = {}
+        for _id in ids:
+            if path.exists(path.join(vars_fs["FS_SUBJECTS_DIR"], _id)):
+                for hemi in ['lh','rh']:
+                    for meas in vars_fs["GLM_measurements"]:
+                        for thresh in vars_fs["GLM_thresholds"]:
+                            file = hemi+'.'+meas+'.fwhm'+str(thresh)+'.fsaverage.mgh'
+                            if not path.exists(path.join(vars_fs["FS_SUBJECTS_DIR"], _id, 'surf', file)):
+                                miss = add_to_miss(miss, _id, file)
+            else:
+                miss = add_to_miss(miss, _id, 'none')
+        if miss.keys():
+            print('some subjects or files are missing: {}'.format(miss))
+            res = False
+        return res
 
     def make_subjects_per_group(self, df_groups_clin):
         _, subjects_per_group = _GET_Groups(df_groups_clin, self.id_col, self.group_col)
@@ -379,25 +405,47 @@ def get_parameters(projects):
     return params
 
 
+def initiate_fs_from_sh(vars_local):
+    sh_file = path.join(vars_local["NIMB_PATHS"]["NIMB_tmp"], 'source_fs.sh')
+    with open(sh_file, 'w') as f:
+        f.write(vars_local["FREESURFER"]["export_FreeSurfer_cmd"]+'\n')
+        f.write(vars_local["FREESURFER"]["source_FreeSurfer_cmd"]+'\n')
+        f.write("export SUBJECTS_DIR="+vars_local["FREESURFER"]["FS_SUBJECTS_DIR"]+'\n')
+    system("chmod +x {}".format(sh_file))
+    return ("source {}".format(sh_file))
+
+
+
 if __name__ == "__main__":
 
     file = Path(__file__).resolve()
     parent, top = file.parent, file.parents[2]
     sys.path.append(str(top))
 
-    from setup.get_vars import Get_Vars
+    import subprocess
+    from setup.get_vars import Get_Vars, SetProject
     getvars = Get_Vars()
     vars_local = getvars.location_vars['local']
     projects = getvars.projects
     params = get_parameters(projects['PROJECTS'])
     vars_project = getvars.projects[params.project]
+    SetProject(vars_local['NIMB_PATHS']['NIMB_tmp'], vars_local['STATS_PATHS'], params.project)
+    fs_start_cmd = initiate_fs_from_sh(vars_local)
+
+    try:
+        subprocess.run(['mri_info'], stdout=subprocess.PIPE).stdout.decode('utf-8')
+    except Exception as e:
+        print(e)
+        print('please initiate freesurfer using the command: \n    {}'.format(fs_start_cmd))
 
     print('\nSTEP 1 of 2: preparing data for GLM analysis')
     PrepareForGLM(vars_local["STATS_PATHS"]["FS_GLM_dir"],
                   vars_project["GLM_file_group"],
                   vars_project["id_col"],
                   vars_project["group_col"],
-                  vars_project["variables_for_glm"])
+                  vars_project["variables_for_glm"],
+                  vars_local["FREESURFER"])
+
     print('\nSTEP 2 of 2: performing GLM analysis')
     PerformGLM(vars_local["STATS_PATHS"]["FS_GLM_dir"],
                             vars_local["FREESURFER"]["FREESURFER_HOME"],
@@ -405,3 +453,4 @@ if __name__ == "__main__":
                             vars_local["FREESURFER"]["GLM_measurements"],
                             vars_local["FREESURFER"]["GLM_thresholds"],
                             vars_local["FREESURFER"]["GLM_MCz_cache"])
+

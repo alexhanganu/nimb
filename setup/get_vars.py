@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from os import path, system
+from os import path, system, sep
 import shutil
 import json
 from .get_username import _get_username
@@ -8,15 +8,17 @@ from .get_credentials_home import _get_credentials_home
 
 class SetProject():
 
-    def __init__(self, NIMB_HOME, STATS_PATHS, project):
-        self.STATS_PATHS = self.set_project(NIMB_HOME, STATS_PATHS, project)
+    def __init__(self, NIMB_tmp, STATS_PATHS, project):
+        self.STATS_PATHS = self.set_project(NIMB_tmp, STATS_PATHS, project)
 
-    def set_project(self, NIMB_HOME, STATS_PATHS, project):
-        STATS_PATHS['FS_GLM_dir']             = path.join(NIMB_HOME, '..', 'nimb_tmp', project, 'fs_glm')
-        STATS_PATHS['STATS_HOME']             = path.join(NIMB_HOME, '..', 'nimb_tmp', project, 'stats')
-        STATS_PATHS["predict_dir"]            = path.join(NIMB_HOME, '..', 'nimb_tmp', project, 'stats', "predict")
-        STATS_PATHS["logistic_regression_dir"]= path.join(NIMB_HOME, '..', 'nimb_tmp', project, 'stats', "logistic_regression")
-        STATS_PATHS["linreg_moderation_dir"]  = path.join(NIMB_HOME, '..', 'nimb_tmp', project, 'stats', "linreg_moderation")
+    def set_project(self, NIMB_tmp, STATS_PATHS, project):
+        for key in STATS_PATHS:
+            if project not in STATS_PATHS[key]:
+                if key != "STATS_HOME":
+                    new_ending = '/'.join(STATS_PATHS[key].replace(sep, '/').split('/')[-2:])
+                else:
+                    new_ending = '/'.join(STATS_PATHS[key].replace(sep, '/').split('/')[-1:])
+                STATS_PATHS[key] = path.join(NIMB_tmp, project, new_ending).replace(sep, '/')
         return STATS_PATHS
 
 class Get_Vars():

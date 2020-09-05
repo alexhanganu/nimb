@@ -49,6 +49,9 @@
 "STATS_PATHS": {
        "STATS_HOME"             : "~/nimb_tmp/projects/stats",
        "FS_GLM_dir"             : "~/nimb_tmp/projects/stats/fs_glm",
+       "features"               : "~/nimb_tmp/projects/stats/features",
+       "anova"                  : "~/nimb_tmp/projects/stats/anova",
+       "laterality_dir"         : "~/nimb_tmp/projects/stats/laterality",
        "predict_dir"            : "~/nimb_tmp/projects/stats/predict",
        "logistic_regression_dir": "~/nimb_tmp/projects/stats/logistic_regression",
        "linreg_moderation_dir"  : "~/nimb_tmp/projects/stats/linreg_moderation"
