@@ -3,12 +3,29 @@
 
 import pandas as pd
 
-def run_laterality(db_f, group_col, PATH_save_results):
-	df = pd.read_excel(db_f)
+class RReplace():
+	def __init__(self, features):
+		self.features = features
+		tmp = list()
+		tmp = tmp + self.get_tmp_list("L","R")
+		tmp = tmp + self.get_tmp_list("R","L")
+		self.lhrh_list = features + [i for i in tmp if i not in features]
+
+	def get_tmp_list(self, old, new):
+		new_ls = list()
+		for feat in self.features:
+			new_ls.append(self.rreplace(feat, old, new, 1))
+		return new_ls
+
+	def rreplace(self, s, old, new, occurence):
+		li = s.rsplit(old, 1)
+		return new.join(li)
+
+
+def run_laterality(df, group_col, PATH_save_results):
 	ls_columns = df.columns
 
-
-	from stats_definitions import all_data, cols_per_measure_per_atlas
+	from stats.stats_definitions import all_data, cols_per_measure_per_atlas
 	cols2meas2atlas = cols_per_measure_per_atlas(df)
 	cols_to_meas = cols2meas2atlas.cols_to_meas_to_atlas
 

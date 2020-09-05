@@ -78,11 +78,12 @@ class SaveGLMimages():
         fv_cmds = ['-ss '+path.join(self.PATH_save_mc, analysis_name+'_'+contrast+'_lat_mc_'+direction+cache+'.tiff -noquit'),
                     '-cam Azimuth 180',
                     '-ss '+path.join(self.PATH_save_mc, analysis_name+'_'+contrast+'_med_mc_'+direction+cache+'.tiff -quit'),]
-        with open('fv.cmd','w') as f:
+        f_with_cmds = path.join(self.PATHglm, 'fv.cmd')
+        with open(f_with_cmds,'w') as f:
             for line in fv_cmds:
                 f.write(line+'\n')
 
-        system('freeview -f $SUBJECTS_DIR/fsaverage/surf/'+hemi+'.inflated:overlay='+cwsig_mc_f+':overlay_threshold='+str(thresh)+',5:annot='+oannot_mc_f+' -viewport 3d -layout 1 -cmd fv.cmd')
+        system('freeview -f $SUBJECTS_DIR/fsaverage/surf/'+hemi+'.inflated:overlay='+cwsig_mc_f+':overlay_threshold='+str(thresh)+',5:annot='+oannot_mc_f+' -viewport 3d -layout 1 -cmd '+f_with_cmds)
 
 
     def make_images_results_fdr(self, hemi, glmdir, contrast_name, file, thresh):
@@ -99,11 +100,12 @@ class SaveGLMimages():
                          'rotate_brain_y 180', 'redraw', 'save_tiff '+path.join(self.PATH_save_fdr, contrast_name+'_'+str(3.0)+'_med.tiff'),
                          'sclv_set_current_threshold_using_fdr 0.05 0', 'redraw', 'save_tiff '+path.join(self.PATH_save_fdr, contrast_name+'_fdr_med.tiff'),
                          'rotate_brain_y 180', 'redraw', 'save_tiff '+path.join(self.PATH_save_fdr, contrast_name+'_fdr_lat.tiff'), 'exit']
-        with open('scr.tcl','w') as f:
+        f_with_tkcmds = path.join(self.PATHglm, 'tkcmd.cmd')
+        with open(f_with_tkcmds,'w') as f:
             for line in tksurfer_cmds:
                 f.write(line+'\n')
-        print('tksurfer fsaverage '+hemi+' inflated -overlay '+path.join(glmdir, contrast_name, file+' -fthresh '+str(thresh)+' -tcl scr.tcl'))
-        system('tksurfer fsaverage '+hemi+' inflated -overlay '+path.join(glmdir, contrast_name, file+' -fthresh '+str(thresh)+' -tcl scr.tcl'))
+        print('tksurfer fsaverage '+hemi+' inflated -overlay '+path.join(glmdir, contrast_name, file+' -fthresh '+str(thresh)+' -tcl '+f_with_tkcmds))
+        system('tksurfer fsaverage '+hemi+' inflated -overlay '+path.join(glmdir, contrast_name, file+' -fthresh '+str(thresh)+' -tcl '+f_with_tkcmds))
 
 
 

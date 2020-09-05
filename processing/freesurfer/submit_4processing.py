@@ -7,6 +7,7 @@ environ['TZ'] = 'US/Eastern'
 time.tzset()
 
 
+
 class Submit_task():
 
     def __init__(self, vars_local, cmd, name, task, walltime, activate_freesurfer, cd_cmd):
@@ -22,17 +23,9 @@ class Submit_task():
     def submit_4_processing(self, processing_env, cmd, name, task, walltime):
         if processing_env == 'slurm':
             sh_file = self.make_submit_file(cmd, name, task, walltime)
-            if self.vars_local["PROCESSING"]["SUBMIT"] == 1:
-                print('        SUBMITTING is ALLOWED')
-                self.submit_2scheduler(sh_file)
-            else:
-                print('        SUBMITTING is stopped')
+            self.submit_2scheduler(sh_file)
         elif processing_env == 'tmux':
-            if self.vars_local["PROCESSING"]["SUBMIT"] == 1:
-                print('        SUBMITTING is ALLOWED')
-                submit_2tmux(cmd, name)
-            else:
-                print('        SUBMITTING is stopped')
+            submit_2tmux(cmd, name)
         else:
             print('ERROR: processing environment not provided or incorrect')
 
@@ -59,25 +52,31 @@ class Submit_task():
         return sh_file
 
     def submit_2scheduler(self, sh_file):
-        print('    submitting '+sh_file)
-        time.sleep(1)
-        try:
-            resp = subprocess.run(['sbatch',path.join(self.NIMB_tmp,'usedpbs',sh_file)], stdout=subprocess.PIPE).stdout.decode('utf-8')
-            self.job_id = list(filter(None, resp.split(' ')))[-1].strip('\n')
-        except Exception as e:
-            print(e)
+        if self.vars_local["PROCESSING"]["SUBMIT"] == 1:
+            print('        submitting {}'.format(sh_file))
+            time.sleep(1)
+            try:
+                resp = subprocess.run(['sbatch',path.join(self.NIMB_tmp,'usedpbs',sh_file)], stdout=subprocess.PIPE).stdout.decode('utf-8')
+                self.job_id = list(filter(None, resp.split(' ')))[-1].strip('\n')
+            except Exception as e:
+                print(e)
+        else:
+                print('        SUBMITTING is stopped')
 
     def submit_2tmux(cmd, subjid):
-        self.job_id = 'tmux_'+str(subjid)
-        print('    submitting to tmux session:'+self.job_id)
-        system('tmux new -d -s {}'.format(self.job_id))
-        if self.activate_freesurfer:
-            system('tmux send-keys -t {0} \"{1}\" ENTER'.format(str(self.job_id), self.vars_local['FREESURFER']["export_FreeSurfer_cmd"]))
-            system('tmux send-keys -t {0} \"{1}\" ENTER'.format(str(self.job_id), self.vars_local['FREESURFER']["source_FreeSurfer_cmd"]))
-            system('tmux send-keys -t {0} \"export SUBJECTS_DIR={1}\" ENTER'.format(str(self.job_id), self.vars_local['FREESURFER']["FS_SUBJECTS_DIR"]))
-        if self.cd_cmd:
-            system('tmux send-keys -t {0} \"{1}\" ENTER'.format(str(self.job_id),self.cd_cmd+'\" ENTER'))
-        system('tmux send-keys -t {0} \"{1}\" ENTER'.format(str(self.job_id),cmd))
+        if self.vars_local["PROCESSING"]["SUBMIT"] == 1:
+            self.job_id = 'tmux_'+str(subjid)
+            print('        submitting to tmux session: {}'.format(self.job_id))
+            system('tmux new -d -s {}'.format(self.job_id))
+            if self.activate_freesurfer:
+                system('tmux send-keys -t {0} \"{1}\" ENTER'.format(str(self.job_id), self.vars_local['FREESURFER']["export_FreeSurfer_cmd"]))
+                system('tmux send-keys -t {0} \"{1}\" ENTER'.format(str(self.job_id), self.vars_local['FREESURFER']["source_FreeSurfer_cmd"]))
+                system('tmux send-keys -t {0} \"export SUBJECTS_DIR={1}\" ENTER'.format(str(self.job_id), self.vars_local['FREESURFER']["FS_SUBJECTS_DIR"]))
+            if self.cd_cmd:
+                system('tmux send-keys -t {0} \"{1}\" ENTER'.format(str(self.job_id),self.cd_cmd+'\" ENTER'))
+            system('tmux send-keys -t {0} \"{1}\" ENTER'.format(str(self.job_id),cmd))
+        else:
+            print('        SUBMITTING is stopped')
 
 
 def kill_tmux_session(session):
@@ -85,9 +84,31 @@ def kill_tmux_session(session):
 
 
 def get_jobs_status(user):
-    queue = list(filter(None,subprocess.run(['squeue','-u',user], stdout=subprocess.PIPE).stdout.decode('utf-8').split('\n')))
     scheduler_jobs = dict()
+    queue = list(filter(None,subprocess.run(['squeue','-u',user], stdout=subprocess.PIPE).stdout.decode('utf-8').split('\n')))
     for line in queue[1:]:
             vals = list(filter(None,line.split(' ')))
             scheduler_jobs[vals[0]] = [vals[3], vals[4]]
     return scheduler_jobs
+
+
+def get_diskusage_report(cuser, cusers_list):
+    '''script to read the available space
+    on compute canada clusters
+    the command diskusage_report is used'''
+
+    def get_diskspace(diskusage, queue):
+
+        for line in queue[1:]:
+                vals = list(filter(None,line.split(' ')))
+                diskusage[vals[0]] = vals[4][:-5].strip('k')
+        return diskusage
+
+
+    diskusage = dict()
+    for cuser in cusers_list:
+        queue = list(filter(None,subprocess.run(['diskusage_report'], stdout=subprocess.PIPE).stdout.decode('utf-8').split('\n')))
+        diskusage = get_diskspace(diskusage, queue)
+
+    return diskusage
+

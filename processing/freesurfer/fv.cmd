@@ -1,3 +1,0 @@
--ss /home/kali/Desktop/lucas_nps_mci/project1/fs_glm/results/mc/g2v0_AD_CN.thickness.rh.fwhm10_group.diff_lat_mc_neg13.tiff -noquit
--cam Azimuth 180
--ss /home/kali/Desktop/lucas_nps_mci/project1/fs_glm/results/mc/g2v0_AD_CN.thickness.rh.fwhm10_group.diff_med_mc_neg13.tiff -quit
