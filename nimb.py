@@ -91,7 +91,7 @@ class NIMB(object):
                                                'fs_glm','run_glm', self.locations['local']['PROCESSING']["batch_walltime"],
                                                True, 'cd '+path.join(self.locations['local']["NIMB_PATHS"]["NIMB_HOME"], 'processing', 'freesurfer'))
 
-                
+
         if self.process == 'fs-glm-image':
             if self.distribution.fs_ready():
                 from processing.freesurfer import submit_4processing
@@ -119,7 +119,7 @@ def get_parameters(projects):
         choices = ['ready', 'freesurfer', 'classify', 'fs-stats', 'fs-glm', 'fs-glm-image', 'stats-general'],
         help="freesurfer (start FreeSurfer pipeline), classify (classify MRIs) fs-stats (extract freesurfer stats from subjid/stats/* to an excel file), fs-glm (perform freesurfer mri_glmfit GLM analsysis), stats-general (perform statistical analysis)",
     )
-    
+
     parser.add_argument(
         "-project", required=False,
         default=projects[:1][0],

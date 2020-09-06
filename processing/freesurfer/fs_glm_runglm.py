@@ -169,7 +169,7 @@ class PrepareForGLM():
             if self.d_subjid[subjid][self.group_col] == group:
                 ls.append(self.d_subjid[subjid][var])
         return all(v == 0 for v in ls)
-            
+
     def make_fsgd_g1v1(self):
         for group in self.ls_groups:
             for variable in self.ls_vars_stats:

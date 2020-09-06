@@ -103,7 +103,7 @@ def chk_subjects2fs_file(SUBJECTS_DIR, NIMB_tmp, db, base_name, long_name, frees
     log.info('    NEW_SUBJECTS_DIR checking ...')
 
     ls_SUBJECTS_in_long_dirs_processed = get_ls_subjids_in_long_dirs(db)
-    from crunfs import checks_from_runfs
+    from fs_checker import checks_from_runfs
 
     f_subj2fs = path.join(NIMB_tmp, 'subjects2fs')
     if path.isfile(f_subj2fs):
@@ -134,7 +134,7 @@ def chk_new_subjects_json_file(SUBJECTS_DIR, NIMB_tmp, db, freesurfer_version, m
     log.info('    new_subjects.json checking ...')
 
     ls_SUBJECTS_in_long_dirs_processed = get_ls_subjids_in_long_dirs(db)
-    from crunfs import checks_from_runfs
+    from fs_checker import checks_from_runfs
 
     f_new_subjects = path.join(NIMB_tmp,"new_subjects.json")
     if path.isfile(f_new_subjects):
@@ -199,7 +199,7 @@ def get_id_long(subjid, LONG_DIRS, base_name, long_name):
 def chk_subj_in_SUBJECTS_DIR(SUBJECTS_DIR, NIMB_tmp, db, process_order, base_name, long_name, freesurfer_version, masks):
     log.info('    SUBJECTS_DIR checking ...')
 
-    from crunfs import chkIsRunning, checks_from_runfs
+    from fs_checker import chkIsRunning, checks_from_runfs
 
     def chk_if_exclude(subjid):
         exclude = False

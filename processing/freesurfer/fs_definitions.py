@@ -16,6 +16,20 @@ suggested_times = {
         'masks':'12:00:00',
         }
 
+IsRunning_files = ['IsRunning.lh+rh', 'IsRunningBSsubst', 'IsRunningHPsubT1.lh+rh', 'IsRunningThalamicNuclei_mainFreeSurferT1']
+
+f_autorecon = {1:['mri/nu.mgz','mri/orig.mgz','mri/brainmask.mgz',],
+                2:['stats/lh.curv.stats','stats/rh.curv.stats',],
+                3:['stats/aseg.stats','stats/wmparc.stats',]}
+
+ '''must check for all files: https://surfer.nmr.mgh.harvard.edu/fswiki/ReconAllDevTable '''
+files_created = {
+    'recon-all' : ['mri/wmparc.mgz',],
+    'autorecon1': ['mri/nu.mgz','mri/orig.mgz','mri/brainmask.mgz',],
+    'autorecon2': ['stats/lh.curv.stats','stats/rh.curv.stats',],
+    'autorecon3': ['stats/aseg.stats','stats/wmparc.stats',],
+    'qcache'    : ['surf/rh.w-g.pct.mgh.fsaverage.mgh', 'surf/lh.thickness.fwhm10.fsaverage.mgh']
+}
 
 log_files = {
     'bs':{
@@ -51,7 +65,7 @@ bs_hip_tha_stats_file_instats = {
     'hipL':{
         7:'lh.hipposubfields.T1.v21.stats', 6:'lh.hipposubfields.T1.v10.stats',},
     'hipR':{
-        7:'rh.hipposubfields.T1.v21.stats', 6:'rh.hipposubfields.T1.v10.txt',},
+        7:'rh.hipposubfields.T1.v21.stats', 6:'rh.hipposubfields.T1.v10.stats',},
     'amyL':{
         7:'lh.amygdalar-nuclei.T1.v21.stats', 6:'',},
     'amyR':{

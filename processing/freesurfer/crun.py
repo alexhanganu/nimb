@@ -14,10 +14,9 @@ from pathlib import Path
 environ['TZ'] = 'US/Eastern'
 time.tzset()
 
+class get_cmd_v2():
 
-class Get_cmd:
-
-#    def __init__(self, process, _id, id_base = '', ls_tps = []):
+    def __init__(self, process, _id, id_base = '', ls_tps = []):
 #        if process = 'registration':
 #            self.cmd = self.registration(_id)
 #        if process = 'recbase':
@@ -34,14 +33,17 @@ class Get_cmd:
 #            self.cmd = self.autorecon3(_id)
 #        if process = 'qcache':
 #            self.cmd = self.qcache(_id)
-#        if process = 'brstem':
-#            self.cmd = self.brstem(_id)
-#        if process = 'hip':
-#            self.cmd = self.hip(_id)
-#        if process = 'tha':
-#            self.cmd = self.tha(_id)
-#        if process = 'masks':
-#            self.cmd = self.masks(_id)
+        if process = 'brstem':
+            self.cmd = 'segmentBS.sh {}'.format(_id) if vars_local["FREESURFER"]["freesurfer_version"]>6 else 'recon-all -s {} -brainstem-structures'.format(_id)
+        if process = 'hip':
+            self.cmd = 'segmentHA_T1.sh {}'.format(_id) if vars_local["FREESURFER"]["freesurfer_version"]>6 else 'recon-all -s {} -hippocampal-subfields-T1'.format(_id)
+        if process = 'tha':
+            self.cmd = "segmentThalamicNuclei.sh {}".format(_id)
+        if process = 'masks':
+            self.cmd = "cd "+path.join(NIMB_HOME,'processing','freesurfer')+"\npython run_masks.py {}".format(_id)
+
+class Get_cmd:
+
     def registration(_id):
         t1_ls_f, flair_ls_f, t2_ls_f = cdb.get_registration_files(_id, db, NIMB_HOME, NIMB_tmp, vars_local["FREESURFER"]["flair_t2_add"])
         flair_cmd = '{}'.format(''.join([' -FLAIR '+i for i in flair_f])) if flair_f != 'none' else ''
@@ -151,11 +153,14 @@ def do(process):
             elif process == 'qcache':
                 job_id = submit_4processing.Submit_task(vars_local, Get_cmd.qcache(subjid), subjid, process, Get_walltime(process), True, '').job_id
             elif process == 'brstem':
-                job_id = submit_4processing.Submit_task(vars_local, Get_cmd.brstem(subjid), subjid, process, Get_walltime(process), True, '').job_id
+                job_id = submit_4processing.Submit_task(vars_local, get_cmd_v2(process, subjid).cmd, subjid, process, Get_walltime(process), True, '').job_id
+#                job_id = submit_4processing.Submit_task(vars_local, Get_cmd.brstem(subjid), subjid, process, Get_walltime(process), True, '').job_id
             elif process == 'hip':
-                job_id = submit_4processing.Submit_task(vars_local, Get_cmd.hip(subjid), subjid, process, Get_walltime(process), True, '').job_id
+                job_id = submit_4processing.Submit_task(vars_local, get_cmd_v2(process, subjid).cmd, subjid, process, Get_walltime(process), True, '').job_id
+#                job_id = submit_4processing.Submit_task(vars_local, Get_cmd.hip(subjid), subjid, process, Get_walltime(process), True, '').job_id
             elif process == 'tha':
-                job_id = submit_4processing.Submit_task(vars_local, Get_cmd.tha(subjid), subjid, process, Get_walltime(process), True, '').job_id
+                job_id = submit_4processing.Submit_task(vars_local, get_cmd_v2(process, subjid).cmd, subjid, process, Get_walltime(process), True, '').job_id
+#                job_id = submit_4processing.Submit_task(vars_local, Get_cmd.tha(subjid), subjid, process, Get_walltime(process), True, '').job_id
             elif process == 'masks':
                 job_id = submit_4processing.Submit_task(vars_local, Get_cmd.masks(subjid), subjid, process, Get_walltime(process), True, '').job_id
             db['RUNNING_JOBS'][subjid] = job_id
@@ -168,18 +173,17 @@ def do(process):
     cdb.Update_DB(db, NIMB_tmp)
 
 
-def check_error(scheduler_jobs):
+def check_error(scheduler_jobs, process):
     log.info('ERROR checking')
 
-    for process in process_order:
-        if db['PROCESSED']['error_'+process]:
+    if db['PROCESSED']['error_'+process]:
             lserr = db['PROCESSED']['error_'+process].copy()
             for subjid in lserr:
                 log.info('    '+subjid)
                 if subjid not in db["ERROR_QUEUE"] and path.exists(path.join(SUBJECTS_DIR, subjid)): #path.exists was added due to moving the subjects too early; requires adjustment
                     fs_checker.IsRunning_rm(SUBJECTS_DIR, subjid)
                     log.info('        checking the recon-all-status.log for error for: '+process)
-                    fs_checker.chkreconf_if_without_error(NIMB_tmp, subjid, SUBJECTS_DIR)
+                    fs_err_helper.chkreconf_if_without_error(NIMB_tmp, subjid, SUBJECTS_DIR)
                     log.info('        checking if all files were created for: '+process)
                     if not fs_checker.checks_from_runfs(SUBJECTS_DIR, process, subjid, vars_local["FREESURFER"]["freesurfer_version"], vars_local["FREESURFER"]["masks"]):
                             log.info('            some files were not created and recon-all-status has errors.')
@@ -276,7 +280,6 @@ def long_check_groups(_id):
                             long_f = _id+ses+'.long.'+_id+vars_local["FREESURFER"]["base_name"]
                             if long_f not in ls:
                                 job_id = submit_4processing.Submit_task(vars_local, Get_cmd.reclong(_id+ses, _id+vars_local["FREESURFER"]["base_name"]), _id+ses, 'reclong', Get_walltime('reclong'), True, '').job_id
-                                #job_id = submit_4processing.makesubmitpbs(Get_cmd.reclong(_id+ses, _id+vars_local["FREESURFER"]["base_name"]), _id+ses, 'reclong', Get_walltime('reclong'), scheduler_params)
                                 db['RUNNING_JOBS'][long_f] = job_id
                                 db['RUNNING']['recon'].append(long_f)
                                 db['LONG_DIRS'][_id].append(long_f)
@@ -312,7 +315,6 @@ def long_check_groups(_id):
                         db['PROCESSED']['error_recon'].append(base_f)
             else:
                 job_id = submit_4processing.Submit_task(vars_local, Get_cmd.recbase(base_f, All_cross_ids_done), base_f, 'recbase', Get_walltime('recbase'), True, '').job_id
-                # job_id = submit_4processing.makesubmitpbs(Get_cmd.recbase(base_f, All_cross_ids_done), base_f, 'recbase', Get_walltime('recbase'), scheduler_params)
                 db['RUNNING_JOBS'][base_f] = job_id
                 db['LONG_DIRS'][_id].append(base_f)
                 db['RUNNING']['recon'].append(base_f)
@@ -387,7 +389,8 @@ def loop_run():
         if len(db['DO'][process])>0:
             do(process)
 
-    check_error(scheduler_jobs)
+    for process in process_order:
+        check_error(scheduler_jobs)
 
     log.info('CHECKING subjects')
     ls_long_dirs = list()
@@ -433,22 +436,14 @@ def Count_TimeSleep():
 
 def run(varslocal):
 
-    global vars_local, NIMB_HOME, NIMB_tmp, SUBJECTS_DIR, max_walltime, process_order, scheduler_params, log, db
+    global vars_local, NIMB_HOME, NIMB_tmp, SUBJECTS_DIR, max_walltime, process_order, log, db
     vars_local       = varslocal
     NIMB_HOME        = vars_local["NIMB_PATHS"]["NIMB_HOME"]
     NIMB_tmp         = vars_local["NIMB_PATHS"]["NIMB_tmp"]
     max_walltime     = vars_local["PROCESSING"]["max_walltime"]
     SUBJECTS_DIR     = vars_local["FREESURFER"]["FS_SUBJECTS_DIR"]
     process_order    = vars_local["FREESURFER"]["process_order"]
-    scheduler_params = {'NIMB_HOME'            : vars_local["NIMB_PATHS"]["NIMB_HOME"],
-                        'NIMB_tmp'             : vars_local["NIMB_PATHS"]["NIMB_tmp"],
-                        'SUBJECTS_DIR'         : vars_local["FREESURFER"]["FS_SUBJECTS_DIR"],
-                        'text4_scheduler'      : vars_local["PROCESSING"]["text4_scheduler"],
-                        'batch_walltime_cmd'   : vars_local["PROCESSING"]["batch_walltime_cmd"],
-                        'batch_output_cmd'     : vars_local["PROCESSING"]["batch_output_cmd"],
-                        'export_FreeSurfer_cmd': vars_local["FREESURFER"]["export_FreeSurfer_cmd"],
-                        'source_FreeSurfer_cmd': vars_local["FREESURFER"]["source_FreeSurfer_cmd"],
-                        'SUBMIT'               : vars_local["PROCESSING"]["SUBMIT"]}
+
     Log(NIMB_tmp)
     log = logging.getLogger(__name__)
 
