@@ -15,6 +15,9 @@ BrStem_Hip_f2rd_stats={'Brainstem':'aseg.brainstem.volume.stats','HIPL':'aseg.hi
                  'HIPR':'aseg.hippo.rh.volume.stats'}
 BrStem_Hip_f2rd={'Brainstem':'brainstemSsVolumes.v10.txt','HIPL':'lh.hippoSfVolumes-T1.v10.txt',
                  'HIPR':'rh.hippoSfVolumes-T1.v10.txt'}
+parc_DK_f2rd ={'L':'lh.aparc.stats','R':'rh.aparc.stats'}
+parc_DS_f2rd ={'L':'lh.aparc.a2009s.stats','R':'rh.aparc.a2009s.stats'}
+
 all_data = {
     'atlases':['Brainstem','HIP','Vol','ParcDK','ParcDS'],
     'atlas_ending':{'Brainstem':'','HIP':'','Vol':'','ParcDK':'_DK','ParcDS':'_DS'},
@@ -175,10 +178,7 @@ all_data = {
                 'S_temporal_transverse': 'temporal_transverse_Sulc'}},
 }
 
-BrStem_Hip_f2rd_stats={'Brainstem':'aseg.brainstem.volume.stats','HIPL':'aseg.hippo.lh.volume.stats',
-                 'HIPR':'aseg.hippo.rh.volume.stats'}
-BrStem_Hip_f2rd={'Brainstem':'brainstemSsVolumes.v10.txt','HIPL':'lh.hippoSfVolumes-T1.v10.txt',
-                 'HIPR':'rh.hippoSfVolumes-T1.v10.txt'}
+
 brstem_hip_header = {
     'all':{'Medulla':'medulla','Pons':'pons','SCP':'scp','Midbrain':'midbrain',
             'Whole_brainstem':'wholeBrainstem','Hippocampal_tail':'hippocampal-tail',
@@ -242,10 +242,6 @@ parc_parameters= {'ThickAvg':'Thick','SurfArea':'Area',
                   'NumVert':'NumVert','ThickStd':'ThickStd',
                   'GausCurv':'CurvGaus','CurvInd':'CurvInd',
                   'FoldInd':'FoldInd'}
-
-parc_DK_f2rd ={'L':'lh.aparc.stats','R':'rh.aparc.stats'}
-
-
 parc_DK_header={'bankssts':'temporal_superior_sulcus_bank','caudalanteriorcingulate':'cingulate_anterior_caudal','caudalmiddlefrontal':'frontal_middle_caudal',
             'cuneus':'occipital_cuneus','entorhinal':'temporal_entorhinal','fusiform':'temporal_fusiform','inferiorparietal':'parietal_inferior',
             'inferiortemporal':'temporal_inferior','isthmuscingulate':'cingulate_isthmus','lateraloccipital':'occipital_lateral',
@@ -261,9 +257,6 @@ parc_DK_header={'bankssts':'temporal_superior_sulcus_bank','caudalanteriorcingul
             'Cortex_WhiteSurfArea':'cortex_area','Cortex_CortexVol':'cortex_vol',
             'Cortex_NumVert':'cortex_numvert',
             'UnsegmentedWhiteMatter':'WMUnsegmented',}
-
-parc_DS_f2rd ={'L':'lh.aparc.a2009s.stats','R':'rh.aparc.a2009s.stats'}
-
 parc_DS_header={'G&S_frontomargin': 'frontal_margin_GS',
                 'G_and_S_frontomargin': 'frontal_margin_GS',
                 'G&S_occipital_inf': 'occipital_inf_GS',
@@ -442,7 +435,7 @@ def get_atlas_measurements():
             measurements[parc_parameters[meas]].append(parc_parameters[meas]+'L'+atlas)
             measurements[parc_parameters[meas]].append(parc_parameters[meas]+'R'+atlas)
     return measurements
-    
+
 def change_column_name(df, sheet):
         columns_2_remove = ['ventricle_5th','wm_hypointensities_L',
                         'wm_hypointensities_R','non_wm_hypointensities',
@@ -455,7 +448,7 @@ def change_column_name(df, sheet):
             if col in ls:
                 columns_2_drop.append(col)
                 ls.remove(col)
-            
+
         if len(columns_2_drop)>0:
             df.drop(columns=columns_2_drop, inplace=True)
         for col in ls:

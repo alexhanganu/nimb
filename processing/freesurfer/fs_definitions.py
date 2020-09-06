@@ -51,7 +51,7 @@ bs_hip_tha_stats_file_instats = {
     'hipL':{
         7:'lh.hipposubfields.T1.v21.stats', 6:'lh.hipposubfields.T1.v10.stats',},
     'hipR':{
-        7:'rh.hipposubfields.T1.v21.stats', 6:'rh.hipposubfields.T1.v10.txt',},
+        7:'rh.hipposubfields.T1.v21.stats', 6:'rh.hipposubfields.T1.v10.stats',},
     'amyL':{
         7:'lh.amygdalar-nuclei.T1.v21.stats', 6:'',},
     'amyR':{
