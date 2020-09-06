@@ -183,3 +183,32 @@ def solve_error(subjid, error, SUBJECTS_DIR, NIMB_tmp):
     if error == 'voxsizediff' or error == 'errorigmgz' or error == 'errlicense':
         return 'repeat_reg'
 
+
+
+def chkreconf_if_without_error(NIMB_tmp, subjid, SUBJECTS_DIR):
+
+    file_2read = 'recon-all-status.log'
+    try:
+        if file_2read in listdir(path.join(SUBJECTS_DIR,subjid,'scripts')):
+            f = open(path.join(SUBJECTS_DIR,subjid,'scripts',file_2read),'r').readlines()
+
+            for line in reversed(f):
+                if 'finished without error' in line:
+                    return True
+                    break
+                elif 'exited with ERRORS' in line:
+                    log.info('        exited with ERRORS')
+                    return False
+                    break
+                elif 'recon-all -s' in line:
+                    return False
+                    break
+                else:
+                    log.info('        not clear if finished with or without ERROR')
+                    return False
+                    break
+        else:
+            return False
+    except FileNotFoundError as e:
+        print(e)
+        log.info('    '+subjid+' '+str(e))

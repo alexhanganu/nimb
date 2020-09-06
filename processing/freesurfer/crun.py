@@ -183,7 +183,7 @@ def check_error(scheduler_jobs, process):
                 if subjid not in db["ERROR_QUEUE"] and path.exists(path.join(SUBJECTS_DIR, subjid)): #path.exists was added due to moving the subjects too early; requires adjustment
                     fs_checker.IsRunning_rm(SUBJECTS_DIR, subjid)
                     log.info('        checking the recon-all-status.log for error for: '+process)
-                    fs_checker.chkreconf_if_without_error(NIMB_tmp, subjid, SUBJECTS_DIR)
+                    fs_err_helper.chkreconf_if_without_error(NIMB_tmp, subjid, SUBJECTS_DIR)
                     log.info('        checking if all files were created for: '+process)
                     if not fs_checker.checks_from_runfs(SUBJECTS_DIR, process, subjid, vars_local["FREESURFER"]["freesurfer_version"], vars_local["FREESURFER"]["masks"]):
                             log.info('            some files were not created and recon-all-status has errors.')
