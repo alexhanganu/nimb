@@ -109,6 +109,22 @@ def chk_if_qcache_done(SUBJECTS_DIR, subjid):
         return False
 # == up to here
 
+def check_qcache_files(subjid, vars_fs):
+
+        res = True
+        miss = list()
+        for hemi in ['lh','rh']:
+            for meas in vars_fs["GLM_measurements"]:
+                for thresh in vars_fs["GLM_thresholds"]:
+                    file = hemi+'.'+meas+'.fwhm'+str(thresh)+'.fsaverage.mgh'
+                    if not path.exists(path.join(vars_fs["FS_SUBJECTS_DIR"], subjid, 'surf', file)):
+                        miss.append(file)
+        if miss:
+            print('some subjects or files are missing: {}'.format(str(miss)))
+            res = False
+        return res
+
+
 def bs_hip_tha_chk_log_if_done(process, SUBJECTS_DIR, subjid, freesurfer_version):
     log_file = path.join(SUBJECTS_DIR, subjid, 'scripts', fs_definitions.log_files[process][freesurfer_version])
     if path.exists(log_file) and any('Everything done' in i for i in open(log_file, 'rt').readlines()):
