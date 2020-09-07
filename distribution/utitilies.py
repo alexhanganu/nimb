@@ -8,11 +8,8 @@ except Exception as e:
 import subprocess
 import os
 
-def is_command_ran_sucessfully2(command):
-    command = f"""
-        {command} && echo "YES" || echo "NO"
-    """
-    return is_command_return_okay(command)
+
+
 def is_command_ran_sucessfully(command):
     command = f"""
         {command} > /dev/null
@@ -23,7 +20,10 @@ def is_command_ran_sucessfully(command):
         fi
     """
     print(command)
-    return is_command_return_okay(command)
+    result =  is_command_return_okay(command)
+    if result is False:
+        ErrorMessages.error_bash_command(command)
+    return result
 def is_command_return_okay(command):
     out = subprocess.getoutput(command)
     print(out)

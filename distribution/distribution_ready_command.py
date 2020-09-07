@@ -5,7 +5,9 @@ from distribution.utitilies import is_writable_directory, is_conda_module_instal
 from distribution.setup_miniconda import setup_miniconda, is_miniconda_installed
 from distribution.distribution_helper import logger
 class DistributionReady(DistributionHelper):
-
+    """
+    This file sole for the READY command.
+    """
     local_json = "~/nimb/local.json"
     module_list = ["dcm2niix", "dcm2bids", "pandas", "numpy", "xlrd", "xlsxwriter", "paramiko", "dipy"]
     def check_ready(self):
