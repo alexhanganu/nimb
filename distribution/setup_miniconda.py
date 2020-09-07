@@ -5,6 +5,7 @@
 
 from os import path, chdir, system, remove
 import subprocess
+from distribution.utitilies import is_command_ran_sucessfully
 # can be improved by using a yml file
 def setup_miniconda(NIMB_HOME = "~/nimb"):
     #if is_miniconda_installed():
@@ -12,7 +13,8 @@ def setup_miniconda(NIMB_HOME = "~/nimb"):
     #    return
     if not path.exists(path.join(NIMB_HOME,"..", 'miniconda3')):
         chdir(NIMB_HOME)
-        system('curl https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -o miniconda3.sh')
+        # system('curl https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -o miniconda3.sh')
+        is_command_ran_sucessfully('curl https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -o miniconda3.sh')
         system('chmod +x miniconda3.sh')
         system('./miniconda3.sh -b -p ' + path.join(NIMB_HOME, 'miniconda3'))
         remove('miniconda3.sh')

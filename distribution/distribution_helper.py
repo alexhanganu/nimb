@@ -142,21 +142,21 @@ class DistributionHelper():
 
     def verify_paths(self):
         # to verify paths and if not present - create them or return error
-        if path.exists(self.vars['local']['NIMB_PATHS']['NIMB_HOME']):
+        if path.exists(self.locations['local']['NIMB_PATHS']['NIMB_HOME']):
             for p in (     self.NIMB_tmp,
                  path.join(self.NIMB_tmp, 'mriparams'),
                  path.join(self.NIMB_tmp, 'usedpbs'),
-                           self.vars['local']['NIMB_PATHS']['NIMB_NEW_SUBJECTS'],
-                           self.vars['local']['NIMB_PATHS']['NIMB_PROCESSED_FS'],
-                           self.vars['local']['NIMB_PATHS']['NIMB_PROCESSED_FS_error']):
+                           self.locations['local']['NIMB_PATHS']['NIMB_NEW_SUBJECTS'],
+                           self.locations['local']['NIMB_PATHS']['NIMB_PROCESSED_FS'],
+                           self.locations['local']['NIMB_PATHS']['NIMB_PROCESSED_FS_error']):
                 if not path.exists(p):
                     print('creating path ',p)
                     makedir_version2(p)
-        if path.exists(self.vars['local']['FREESURFER']['FREESURFER_HOME']):
-            if not path.exists(self.vars['local']['FREESURFER']['FS_SUBJECTS_DIR']):
+        if path.exists(self.locations['local']['FREESURFER']['FREESURFER_HOME']):
+            if not path.exists(self.locations['local']['FREESURFER']['FS_SUBJECTS_DIR']):
                     print('creating path ',p)
-                    makedir_version2(self.vars['local']['FREESURFER']['FS_SUBJECTS_DIR'])
-                    system("cp -r"+path.join(self.vars['local']['FREESURFER']['FREESURFER_HOME'], "subjects", "fsaverage")+" "+self.vars['local']['FREESURFER']['FS_SUBJECTS_DIR'])
+                    makedir_version2(self.locations['local']['FREESURFER']['FS_SUBJECTS_DIR'])
+                    system("cp -r"+path.join(self.locations['local']['FREESURFER']['FREESURFER_HOME'], "subjects", "fsaverage")+" "+self.vars['local']['FREESURFER']['FS_SUBJECTS_DIR'])
     # UNITE until here
     # =========================================
 
