@@ -9,7 +9,7 @@ import sys
 from setup.get_vars import Get_Vars, SetProject
 from classification import classify_bids
 from distribution.distribution_helper import DistributionHelper
-from distribution.distribution_helper import ErrorMessages
+from distribution.utitilies import ErrorMessages
 
 __version__ = 'v1'
 
