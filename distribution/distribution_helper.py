@@ -1,6 +1,6 @@
 import shutil
-from os import makedirs, system, path, listdir
-from distribution.utitilies import ErrorMessages
+from os import system, path, listdir
+from distribution.utitilies import ErrorMessages, makedir_version2
 from distribution.setup_miniconda import setup_miniconda
 from distribution.setup_freesurfer import SETUP_FREESURFER
 
@@ -113,7 +113,8 @@ class DistributionHelper():
                   self.NIMB_HOME,self.NIMB_tmp):
             if not path.exists(p):
                 try:
-                    makedirs(p)
+                    # if path start with ~
+                    makedir_version2(p)
                 except Exception as e:
                     print(e)
             if not path.exists(p):
@@ -150,11 +151,11 @@ class DistributionHelper():
                            self.vars['local']['NIMB_PATHS']['NIMB_PROCESSED_FS_error']):
                 if not path.exists(p):
                     print('creating path ',p)
-                    makedirs(p)
+                    makedir_version2(p)
         if path.exists(self.vars['local']['FREESURFER']['FREESURFER_HOME']):
             if not path.exists(self.vars['local']['FREESURFER']['FS_SUBJECTS_DIR']):
                     print('creating path ',p)
-                    makedirs(self.vars['local']['FREESURFER']['FS_SUBJECTS_DIR'])
+                    makedir_version2(self.vars['local']['FREESURFER']['FS_SUBJECTS_DIR'])
                     system("cp -r"+path.join(self.vars['local']['FREESURFER']['FREESURFER_HOME'], "subjects", "fsaverage")+" "+self.vars['local']['FREESURFER']['FS_SUBJECTS_DIR'])
     # UNITE until here
     # =========================================
@@ -298,7 +299,7 @@ class DistributionHelper():
            will return the folder with unzipped stats folder for each subject"""
 
         if not path.exists(self.locations["local"]["STATS_PATHS"]["STATS_HOME"]):
-            makedirs(self.locations["local"]["STATS_PATHS"]["STATS_HOME"])
+            makedir_version2(self.locations["local"]["STATS_PATHS"]["STATS_HOME"])
 
         PROCESSED_FS_DIR = self.projects[project]["PROCESSED_FS_DIR"]
         
@@ -307,7 +308,7 @@ class DistributionHelper():
             zipmanager = ZipArchiveManagement()
             tmp_dir = path.join(self.NIMB_tmp, 'tmp_subject_stats')
             if not path.exists(tmp_dir):
-                makedirs(tmp_dir)
+                makedir_version2(tmp_dir)
             zipmanager.extract_archive(PROCESSED_FS_DIR, ['stats',], tmp_dir)
             return tmp_dir
         else:

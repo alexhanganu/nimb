@@ -2,10 +2,13 @@
 this module contains common commands that use freqently
 """
 import subprocess
-
+import os
 from distribution.distribution_helper import logger
 
-
+def makedir_version2(path):
+    if path.startswith("~"):
+        path = os.path.expanduser(path)
+    os.makedirs(path)
 
 def is_ENV_defined(environment_var):
     command = f'if [[ -v {environment_var} ]] ;then echo "YES"; else echo "NO"; fi'
