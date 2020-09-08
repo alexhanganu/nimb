@@ -6,9 +6,11 @@ try:
 except Exception as e:
     print(e)
 import subprocess
-import os
+import os, logging
 
-
+logger = logging.getLogger(__name__)
+logging.basicConfig(format='%(asctime)s %(module)s %(levelname)s: %(message)s')
+logger.setLevel(logging.DEBUG)
 
 def is_command_ran_sucessfully(command):
     command = f"""

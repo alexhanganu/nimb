@@ -10,6 +10,7 @@ class DistributionReady(DistributionHelper):
     """
     local_json = "~/nimb/local.json"
     module_list = ["dcm2niix", "dcm2bids", "pandas", "numpy", "xlrd", "xlsxwriter", "paramiko", "dipy"]
+
     def check_ready(self):
         """
 
