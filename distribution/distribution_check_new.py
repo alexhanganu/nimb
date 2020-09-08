@@ -1,5 +1,9 @@
 from .distribution_helper import DistributionHelper
 import os
+
+from .utitilies import get_username_password
+
+
 class DistributionCheckNew(DistributionHelper):
 
     def read(self):
@@ -16,14 +20,32 @@ class DistributionCheckNew(DistributionHelper):
                 pass
 
     def check_project(self):
-        SOURCE_MR = self.
-        if os.path.isdir(self.projects['project1']['SOURCE_SUBJECTS_DIR']):
+        # todo: must test this function first
+        # if
+        if os.path.isdir(self.projects[self.project_name]['SOURCE_SUBJECTS_DIR']):
             # check if all subject is project: call
             # self.is_all_subject_processed(self.get_SOURCE_SUBJECTS_DIR()) == modify it
-        else:
-            # get the list: call the function here
+            # local version
+            machine, source_fs = self.get_SOURCE_SUBJECTS_DIR()
+            _, process_fs = self.get_PROCESSED_FS_DIR()
+            if machine == "local":
+                if not self.is_all_subject_processed(source_fs, process_fs): # test this function
+                    #get the list of subjects in SOURCE_SUBJECTS_DIR
+                    to_be_processed = self.get_list_subject_to_be_processed_local_version(source_fs,process_fs)
 
-        pass
+            else:# remote version: source is at remote
+                # go to the remote server to check
+                username, password = get_username_password(machine)
+                host = self.projects['LOCATION'][machine]
+                to_be_processed = self.get_list_subject_to_be_processed_remote_version(source_fs, process_fs,remote_username=username,
+                                                                     remote_host=host, remote_password=password)
+        else: # if SOURCE_SUBJECTS_DIR is not set
+            # get the list: call the function here
+            # local version
+            # remote version
+
+            return NotImplementedError
+
 
 """
     - process CHECK_NEW
@@ -31,7 +53,9 @@ class DistributionCheckNew(DistributionHelper):
         - else: check for all projects
         - per projects: check if ~/nimb/projects.json → project → SOURCE_MR is provided.
         - If yes: check that all subjects were processed.
-        - If not: get the list of subjects in SOURCE_SUBJECTS_DIR (archived zip or .gz) that didn’t undergo the FreeSurfer (missing in $PROCESSED_FS_DIR), get_list_subject_to_be_processed_remote() (verify: {“ppmi”: “SOURCE_SUBJECTS_DIR” : [elm, ‘/home_je/hanganua/database/loni_ppmi/source/mri]; “PROCESSED_FS_DIR” : [elm, ‘home_je/hanganua/database/loni_ppmi/processed_fs]})
+        - If not: get the list of subjects in SOURCE_SUBJECTS_DIR (archived zip or .gz) that didn’t undergo the FreeSurfer (missing in $PROCESSED_FS_DIR), 
+        get_list_subject_to_be_processed_remote() 
+        (verify: {“ppmi”: “SOURCE_SUBJECTS_DIR” : [elm, ‘/home_je/hanganua/database/loni_ppmi/source/mri]; “PROCESSED_FS_DIR” : [elm, ‘home_je/hanganua/database/loni_ppmi/processed_fs]})
         - create distrib-DATABASE (track files) ~/nimb/distribution.json:
             - ACTION = notprocessed, copied2process
             - LOCATION = local, remote_name1, remote_name2, remote_name_n

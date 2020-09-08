@@ -367,8 +367,8 @@ class DistributionHelper():
                                     cmd_run_crun_on_cluster=cmd_run_crun_on_cluster)
 
 
-    @staticmethod
-    def is_all_subject_processed(SOURCE_SUBJECTS_DIR, PROCESSED_FS_DIR):
+    # @staticmethod
+    def is_all_subject_processed(self, SOURCE_SUBJECTS_DIR, PROCESSED_FS_DIR):
         """
         must be absolute path
         :param SOURCE_SUBJECTS_DIR:
@@ -380,8 +380,8 @@ class DistributionHelper():
             return True
         return False
 
-    @staticmethod
-    def get_list_subject_to_be_processed_local_version(SOURCE_SUBJECTS_DIR, PROCESSED_FS_DIR):
+    # @staticmethod
+    def get_list_subject_to_be_processed_local_version(self, SOURCE_SUBJECTS_DIR, PROCESSED_FS_DIR):
         """
         both SOURCE_SUBJECTS_DIR and PROCESSED_FS_DIR is inside a single computer (i.e., local pc)
 
@@ -406,8 +406,8 @@ class DistributionHelper():
         :return:
         """
         return ls_output.split("\n")[0:-1]
-    @staticmethod
-    def get_list_subject_to_be_processed_remote_version(SOURCE_SUBJECTS_DIR, PROCESSED_FS_DIR,
+    # @staticmethod
+    def get_list_subject_to_be_processed_remote_version(self, SOURCE_SUBJECTS_DIR, PROCESSED_FS_DIR,
                                                         remote_host, remote_username, remote_password):
         """
         use when SOURCE_SUBJECTS_DIR, PROCESSED_FS_DIR, are at two computers
