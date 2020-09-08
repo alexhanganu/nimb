@@ -113,7 +113,7 @@ class NIMB(object):
 
     def check_new(self):
         print('checking new')
-        self.distribution.download_processed_subject()
+        self.distribution.download_processed_subject(local_destination, remote_path, remote_host, remote_username, remote_password)
         return 1
 
 
