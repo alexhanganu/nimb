@@ -65,9 +65,9 @@ class NIMB(object):
                                                'nimb','run', self.locations['local']['PROCESSING']["batch_walltime"],
                                                False, 'cd '+path.join(self.locations['local']["NIMB_PATHS"]["NIMB_HOME"], 'processing', 'freesurfer'))
 
-        if self.process == 'fs-stats':
+        if self.process == 'fs-get-stats':
             if not self.distribution.nimb_stats_ready():
-                print("NIMB is not ready to perform statistics. Please check the configuration files.")
+                print("NIMB is not ready to extract the FreeSurfer statistics per user. Please check the configuration files.")
                 sys.exit()
             else:
                 PROCESSED_FS_DIR = self.distribution.fs_stats(self.project)
@@ -99,6 +99,13 @@ class NIMB(object):
                 submit_4processing.Submit_task(self.locations['local'], self.locations['local']['NIMB_PATHS']["miniconda_python_run"]+' fs_glm_extract_images.py -project '+self.project,
                                                'fs_glm','extract_images', self.locations['local']['PROCESSING']["batch_walltime"],
                                                True, 'cd '+path.join(self.locations['local']["NIMB_PATHS"]["NIMB_HOME"], 'processing', 'freesurfer'))
+        if self.process == 'run_stats':
+            if not self.distribution.run_stats_ready():
+                print("NIMB is not ready to run the stats. Please check the configuration files.")
+                sys.exit()
+            else:
+                from stats import stats_helper.py
+                stats_helper.RUN_stats(self.locations["local"], self.projects, self.project)
         return 1
 
 def get_parameters(projects):
@@ -114,9 +121,9 @@ def get_parameters(projects):
     )
 
     parser.add_argument(
-        "-process", required=False, 
-        default='ready', 
-        choices = ['ready', 'freesurfer', 'classify', 'fs-stats', 'fs-glm', 'fs-glm-image', 'stats-general'],
+        "-process", required=False,
+        default='ready',
+        choices = ['ready', 'freesurfer', 'classify', 'fs-get-stats', 'fs-glm', 'fs-glm-image', 'run_stats'],
         help="freesurfer (start FreeSurfer pipeline), classify (classify MRIs) fs-stats (extract freesurfer stats from subjid/stats/* to an excel file), fs-glm (perform freesurfer mri_glmfit GLM analsysis), stats-general (perform statistical analysis)",
     )
 
@@ -124,7 +131,7 @@ def get_parameters(projects):
         "-project", required=False,
         default=projects[:1][0],
         choices = projects,
-        help="names of projects located in credentials_path.py/nimb/projects.json -> PROJECTS",
+        help="names of projects are located in credentials_path.py/nimb/projects.json -> PROJECTS",
     )
 
     params = parser.parse_args()

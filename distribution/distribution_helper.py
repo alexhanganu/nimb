@@ -302,7 +302,7 @@ class DistributionHelper():
             makedir_version2(self.locations["local"]["STATS_PATHS"]["STATS_HOME"])
 
         PROCESSED_FS_DIR = self.projects[project]["PROCESSED_FS_DIR"]
-        
+
         if any('.zip' in i for i in listdir(PROCESSED_FS_DIR)):
             from .manage_archive import ZipArchiveManagement
             zipmanager = ZipArchiveManagement()
@@ -319,6 +319,17 @@ class DistributionHelper():
     def fs_glm(self):
 
         print('start freesurfer GLM')
+
+    def run_stats_ready(self):
+        """will check if xlsx file for project is provided
+           if all variables are provided
+           if all paths for stats are created
+           if NIMB is ready to perform statistical analysis"""
+        ready = True
+        if not path.exists(self.projects[self.project_name]["GLM_file_group"]):
+            print("data file is missing from nimb_credentials.py/projects.json -> project")
+            ready = False
+        return ready
 
     def setting_up_local_computer(self):
         if platform.startswith('linux'):
@@ -630,7 +641,7 @@ class DistributionHelper():
         except Exception as e:
             print(e)
             pass
-        
+
     def cstatus():
         try:
             clusters = database._get_Table_Data('Clusters', 'all')
@@ -658,7 +669,7 @@ class DistributionHelper():
         clusters = database._get_Table_Data('Clusters', 'all')
         delete_all_running_tasks_on_cluster(
             clusters[0][1], clusters[0][2], clusters[0][5], clusters[0][3])
-        
+
 # if __name__ == "__main__":
     # distribution = DistributionHelper(projects,
                                                # locations,
