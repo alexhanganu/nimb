@@ -1,5 +1,5 @@
 import shutil
-from os import system, path, listdir
+from os import system, path, listdir, environ, remove
 from distribution.utilities import ErrorMessages, makedir_version2
 from distribution.setup_miniconda import setup_miniconda
 from distribution.setup_freesurfer import SETUP_FREESURFER
@@ -12,7 +12,6 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(format='%(asctime)s %(module)s %(levelname)s: %(message)s')
 logger.setLevel(logging.DEBUG)
 # --
-
 
 class DistributionHelper():
 
@@ -539,7 +538,7 @@ class DistributionHelper():
         raise NotImplementedError
 
     @staticmethod
-    def download_processed_subject(local_destination, remote_path, remote_host, remote_username, remote_password):
+    def download_processed_subject():#local_destination, remote_path, remote_host, remote_username, remote_password):
         """
         Download from processed folder back to local
         :param local_destination: place to stored downloaded files and folders
@@ -549,28 +548,16 @@ class DistributionHelper():
         :param remote_password:
         :return: None
         """
+        print('inside')
         ssh_session = getSSHSession(remote_host, remote_username, remote_password)
         download_files_from_server(ssh_session, remote_path, local_destination)
         ssh_session.close()
 
-    @staticmethod
-    def move_processed_to_storage():
-        '''
-        this script is a copy paste, it must be adapted. Storage folder (i.e., for ADNI is beluga../projects/../adni)
-        '''
-        HOST = 'beluga.calculquebec.ca'
-        '''
-        username = 'string' # username to access the remote computer
-        mot_de_pass = 'string' # password to access the remote computer
-        HOST = 'name.address.com' # host name of the remote computer
-        '''
+        #HOST = 'beluga.calculquebec.ca'
 
-        from os import listdir, system, path, environ, remove
-        import shutil, time
-        import paramiko
-        environ['TZ'] = 'US/Eastern'
-        time.tzset()
-        dthm = time.strftime('%Y%m%d_%H%M')
+        username = 'string'
+        mot_de_pass = 'string'
+        HOST = 'name.address.com'
 
         path_credentials = path.join('/home',username) # path to the txt-like file named "credentials" that will contain the follow$
         path_log = path.join(path.join('/home',username,'projects','def-hanganua'), 'scripts', 'scp_log.txt') # path where a log file will be stored tha$
@@ -632,36 +619,6 @@ class DistributionHelper():
         ls_copy = get_ls2copy(client, path_dst, path_src)
         cp2remote_rm_from_local(client, ls_copy, path_src, username, HOST, path_dst)
         client.close()
-
-
-    def runstats(Project_Data, Project):
-        try:
-            os.system('python nimb.py -process fs-glm')
-            status.set('performing freesurfer whole brain GLM analysis')
-        except Exception as e:
-            print(e)
-            pass
-
-    def cstatus():
-        try:
-            clusters = database._get_Table_Data('Clusters', 'all')
-            from distribution.SSHHelper import check_cluster_status
-            cuser = clusters[0][1]
-            caddress = clusters[0][2]
-            cpw = clusters[0][5]
-            cmaindir = clusters[0][3]
-            status.set('Checking the Cluster')
-            status.set('There are '
-                   + str(check_cluster_status(cuser,
-                                              caddress, cpw, cmaindir)[0])
-                   + ' sessions and '
-                   + str(check_cluster_status(cuser,
-                                              caddress, cpw, cmaindir)[1])
-                   + ' are queued')
-        except FileNotFoundError:
-            setupcredentials()
-            clusters = database._get_Table_Data('Clusters', 'all')
-            cstatus()
 
 
     def StopAllActiveTasks():

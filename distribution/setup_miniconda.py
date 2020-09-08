@@ -5,7 +5,7 @@
 
 from os import path, chdir, system, remove
 import subprocess
-from distribution.utitilies import is_command_ran_sucessfully
+from distribution.utilities import is_command_ran_sucessfully
 # can be improved by using a yml file
 def setup_miniconda(NIMB_HOME = "~/nimb"):
     #if is_miniconda_installed():

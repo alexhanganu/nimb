@@ -9,7 +9,7 @@ import sys
 from setup.get_vars import Get_Vars, SetProject
 from classification import classify_bids
 from distribution.distribution_helper import DistributionHelper
-from distribution.utitilies import ErrorMessages
+from distribution.utilities import ErrorMessages
 
 __version__ = 'v1'
 
@@ -55,6 +55,9 @@ class NIMB(object):
                                      self.locations['local']['FREESURFER']['multiple_T1_entries'],
                                      self.locations['local']['FREESURFER']['flair_t2_add'])
 
+        if self.process == 'check-new':
+            self.check_new()
+
         if self.process == 'freesurfer':
             if not self.distribution.fs_ready():
                 print("FreeSurfer is not ready or freesurfer_install is set to 0. Please check the configuration files.")
@@ -99,14 +102,20 @@ class NIMB(object):
                 submit_4processing.Submit_task(self.locations['local'], self.locations['local']['NIMB_PATHS']["miniconda_python_run"]+' fs_glm_extract_images.py -project '+self.project,
                                                'fs_glm','extract_images', self.locations['local']['PROCESSING']["batch_walltime"],
                                                True, 'cd '+path.join(self.locations['local']["NIMB_PATHS"]["NIMB_HOME"], 'processing', 'freesurfer'))
-        if self.process == 'run_stats':
+        if self.process == 'run-stats':
             if not self.distribution.run_stats_ready():
                 print("NIMB is not ready to run the stats. Please check the configuration files.")
                 sys.exit()
             else:
-                from stats import stats_helper.py
+                from stats import stats_helper
                 stats_helper.RUN_stats(self.locations["local"], self.projects, self.project)
         return 1
+
+    def check_new(self):
+        print('checking new')
+        self.distribution.download_processed_subject()
+        return 1
+
 
 def get_parameters(projects):
     """get parameters for nimb"""
@@ -123,7 +132,7 @@ def get_parameters(projects):
     parser.add_argument(
         "-process", required=False,
         default='ready',
-        choices = ['ready', 'freesurfer', 'classify', 'fs-get-stats', 'fs-glm', 'fs-glm-image', 'run_stats'],
+        choices = ['ready', 'check-new', 'freesurfer', 'classify', 'fs-get-stats', 'fs-glm', 'fs-glm-image', 'run-stats'],
         help="freesurfer (start FreeSurfer pipeline), classify (classify MRIs) fs-stats (extract freesurfer stats from subjid/stats/* to an excel file), fs-glm (perform freesurfer mri_glmfit GLM analsysis), stats-general (perform statistical analysis)",
     )
 
