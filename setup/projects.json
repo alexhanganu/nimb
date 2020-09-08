@@ -2,7 +2,7 @@
 "PROJECTS" : ["project1", "project2"],
 "project1" : {
     "SOURCE_SUBJECTS_DIR"    : ["local","/home/username/database/source/mri"],
-    "SOURCE_BIDS_DIR"        : "",
+    "SOURCE_BIDS_DIR"        : ["",""],
     "PROCESSED_FS_DIR"       : ["local","/home/username/database/processed_fs"],
     "PROCESSED_FS_DIR_error" : ["local","/home/username/database/processed_fs_error"],
     "STATS_DIR"              : ["local","/home/username/database/stats"],
@@ -14,7 +14,7 @@
                 },
 "project2" : {
     "SOURCE_SUBJECTS_DIR"   : ["remote1","/home/username/database/source/mri"],
-    "SOURCE_BIDS_DIR"       : "",
+    "SOURCE_BIDS_DIR"       : ["",""],
     "PROCESSED_FS_DIR"      : ["remote1","/home/username/database/processed_fs"],
     "PROCESSED_FS_DIR_error": ["remote1","/home/username/database/processed_fs_error"],
     "STATS_DIR"             : ["remote1","/home/username/database/stats"],
