@@ -1,7 +1,7 @@
 from .distribution_helper import DistributionHelper
 import os, sys
 from setup.get_vars import Get_Vars
-from distribution.utitilies import is_writable_directory, is_conda_module_installed, is_ENV_defined
+from distribution.utilities import is_writable_directory, is_conda_module_installed, is_ENV_defined
 from distribution.setup_miniconda import setup_miniconda, is_miniconda_installed
 from distribution.distribution_helper import logger
 class DistributionReady(DistributionHelper):

@@ -1,6 +1,6 @@
 import shutil
 from os import system, path, listdir
-from distribution.utitilies import ErrorMessages, makedir_version2
+from distribution.utilities import ErrorMessages, makedir_version2
 from distribution.setup_miniconda import setup_miniconda
 from distribution.setup_freesurfer import SETUP_FREESURFER
 

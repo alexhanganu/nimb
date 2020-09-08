@@ -1,7 +1,7 @@
 from .distribution_helper import DistributionHelper
 import os
 
-from .utitilies import get_username_password
+from .utilities import get_username_password
 
 
 class DistributionCheckNew(DistributionHelper):

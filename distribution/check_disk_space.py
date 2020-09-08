@@ -8,7 +8,7 @@ import subprocess, re
 from distribution.SSHHelper import *
 
 class DiskspaceUtility:
-    
+
     @staticmethod
     def get_free_space( path):
         """
