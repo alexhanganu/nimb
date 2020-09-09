@@ -1,0 +1,38 @@
+#!/bin/python
+question_confirm ={
+        'type': 'confirm',
+        'name': 'path',
+        'message': 'Is this path correct?',
+        'default': False}
+question_input ={
+        'type': 'input',
+        'name': 'entry',
+        'message': 'message'}
+
+class PyInqQuest():
+
+    def __init__(self, path_2confirm):
+
+        confirm = question_confirm
+        confirm[path] = path_2confirm
+    def run(self):
+        print('running')
+        reponse = self.ask_q(confirm)
+        print(reponse)
+
+    def ask_q(self, confirm):
+        return prompt(confirm)
+
+
+
+class ArgQuest():
+    pass
+
+
+try:
+        from PyInquirer import prompt
+        print('ok import')
+        termquest = PyInqQuest('/home/kali/github')
+except ImportError:
+        import argparse
+        termquest = ArgQuest()
