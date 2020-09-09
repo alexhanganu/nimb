@@ -34,8 +34,7 @@ class NIMB(object):
         self.stats_vars  = all_vars.stats_vars
         self.vars_local  = self.locations['local']
 
-        self.distribution = DistributionHelper(all_vars.credentials_home, self.projects,
-                                               self.locations, all_vars.installers, self.project)
+        self.distribution = DistributionHelper(all_vars, self.projects, self.project)
 
     def run(self):
         """Run nimb"""

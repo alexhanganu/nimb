@@ -16,15 +16,15 @@ logger.setLevel(logging.DEBUG)
 
 class DistributionHelper():
 
-    def __init__(self, credentials_home, projects, locations, installers, project):
+    def __init__(self, all_vars, projects, project):
 
-        self.NIMB_HOME = locations["local"]["NIMB_PATHS"]["NIMB_HOME"]
-        self.NIMB_tmp = locations["local"]["NIMB_PATHS"]["NIMB_tmp"]
-        self.locations = locations # ưlocal, remote] json configuration
-        self.projects = projects # project.json
-        self.credentials_home = credentials_home
-        self.project_name = project
-        self.installers = installers
+        self.credentials_home = all_vars.credentials_home # NIMB_HOME/credentials_paths.py
+        self.installers       = all_vars.installers # NIMB_HOME/setup/installers.json
+        self.locations        = all_vars.location_vars # credentials_home/local.json + remotes.json
+        self.projects         = projects # credentials_home/project.json
+        self.project_name     = project
+        self.NIMB_HOME        = self.locations["local"]["NIMB_PATHS"]["NIMB_HOME"]
+        self.NIMB_tmp         = self.locations["local"]["NIMB_PATHS"]["NIMB_tmp"]
 
         # self.var = Get_Vars().get_default_vars()
         self.user_name, self.user_password = self.get_username_password_cluster_from_sqlite()
@@ -157,8 +157,6 @@ class DistributionHelper():
                     print('creating path ',p)
                     makedir_version2(self.locations['local']['FREESURFER']['FS_SUBJECTS_DIR'])
                     system("cp -r"+path.join(self.locations['local']['FREESURFER']['FREESURFER_HOME'], "subjects", "fsaverage")+" "+self.vars['local']['FREESURFER']['FS_SUBJECTS_DIR'])
-    # UNITE until here
-    # =========================================
 
     def get_project_vars(self, var_name, project):
         """

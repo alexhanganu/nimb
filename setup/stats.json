@@ -11,7 +11,8 @@
    },
 "STATS_PARAMS": {
        "file_name_corrected"    : "eTIVNaNOutcor",
-       "prediction_vars"        : {"target" : group, "pca_threshold":0.5, "skf_NUM_ITER": 150, "NUM_ITER": 10, >
+       "prediction_vars"        : {"target" : "group", "pca_threshold":0.5, "skf_NUM_ITER": 150, "NUM_ITER": 10, "nr_threads" : 15},
+
        "cor_methods"            : ["pearson","spearman","kendall"],
        "cor_level_chosen"       : ["STRONG","MODERATE","WEAK"]
    },
