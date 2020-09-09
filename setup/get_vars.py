@@ -8,33 +8,37 @@ from .get_credentials_home import _get_credentials_home
 
 class SetProject():
 
-    def __init__(self, NIMB_tmp, STATS_PATHS, project):
-        self.STATS_PATHS = self.set_project(NIMB_tmp, STATS_PATHS, project)
+    def __init__(self, NIMB_tmp, stats, project):
+        self.stats = self.set_project(NIMB_tmp, stats, project)
 
-    def set_project(self, NIMB_tmp, STATS_PATHS, project):
-        for key in STATS_PATHS:
-            if project not in STATS_PATHS[key]:
-                if key != "STATS_HOME":
-                    new_ending = '/'.join(STATS_PATHS[key].replace(sep, '/').split('/')[-2:])
-                else:
-                    new_ending = '/'.join(STATS_PATHS[key].replace(sep, '/').split('/')[-1:])
-                STATS_PATHS[key] = path.join(NIMB_tmp, project, new_ending).replace(sep, '/')
-        return STATS_PATHS
+    def set_project(self, NIMB_tmp, stats, project):
+        for key in stats['STATS_PATHS']:
+            if project not in stats['STATS_PATHS'][key]:
+                    if key != "STATS_HOME":
+                        new_ending = '/'.join(stats['STATS_PATHS'][key].replace(sep, '/').split('/')[-2:])
+                    else:
+                        new_ending = '/'.join(stats['STATS_PATHS'][key].replace(sep, '/').split('/')[-1:])
+                    stats['STATS_PATHS'][key] = path.join(NIMB_tmp, project, new_ending).replace(sep, '/')
+        return stats
 
 class Get_Vars():
 
     def __init__(self):
 
         self.credentials_home = _get_credentials_home()
-        print("credentials are located at: "+self.credentials_home)        
+        print("credentials are located at: "+self.credentials_home)
         if path.exists(path.join(self.credentials_home, 'projects.json')):
             self.projects   = self.read_file(path.join(self.credentials_home, 'projects.json'))
             self.location_vars = self.get_vars(self.projects, self.credentials_home)
+            self.stats_vars = self.read_file(path.join(self.credentials_home, 'stats.json'))
         else:
             shutil.copy(path.join(path.dirname(path.abspath(__file__)), 'projects.json'), path.join(self.credentials_home, 'projects.json'))
+            shutil.copy(path.join(path.dirname(path.abspath(__file__)), 'local.json'), path.join(self.credentials_home, 'local.json'))
             shutil.copy(path.join(path.dirname(path.abspath(__file__)), 'remote1.json'), path.join(self.credentials_home, 'remote1.json'))
-            self.projects = self.read_file(path.join(path.dirname(path.abspath(__file__)), 'projects.json'))
+            shutil.copy(path.join(path.dirname(path.abspath(__file__)), 'stats.json'), path.join(self.credentials_home, 'stats.json'))
+            self.projects = self.read_file(path.join(self.credentials_home, 'projects.json'))
             self.location_vars = self.get_default_vars(self.projects)
+            self.stats_vars = self.read_file(path.join(self.credentials_home, 'stats.json'))
         print('local user is: '+self.location_vars['local']['USER']['user'])
         self.installers = self.read_file(path.join(path.dirname(path.abspath(__file__)), 'installers.json'))
 

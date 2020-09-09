@@ -53,12 +53,9 @@ def get_df_with_params(df, params):
     return df_subcort_atlas, ls_cols_X_atlas
 
 
-def get_groups(df, group_col, group_criteria):
-    try:
-        groups = [i for i in group_criteria.keys()]
-    except AttributeError:
-        groups = []
-        for val in df[group_col]:
+def get_groups(df, group_col):
+    groups = []
+    for val in df[group_col]:
             if val not in groups:
                 groups.append(val)
     return groups

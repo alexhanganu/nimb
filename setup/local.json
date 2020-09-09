@@ -46,16 +46,6 @@
        "freesurfer_version"    : 7,
        "freesurfer_license"    : ["email", "00000", " *ABCDEFGHIJKL", " ABCDEFGHIJKLM"]
      },
-"STATS_PATHS": {
-       "STATS_HOME"             : "~/nimb_tmp/projects/stats",
-       "FS_GLM_dir"             : "~/nimb_tmp/projects/stats/fs_glm",
-       "features"               : "~/nimb_tmp/projects/stats/features",
-       "anova"                  : "~/nimb_tmp/projects/stats/anova",
-       "laterality_dir"         : "~/nimb_tmp/projects/stats/laterality",
-       "predict_dir"            : "~/nimb_tmp/projects/stats/predict",
-       "logistic_regression_dir": "~/nimb_tmp/projects/stats/logistic_regression",
-       "linreg_moderation_dir"  : "~/nimb_tmp/projects/stats/linreg_moderation"
-     },
 "EXPLANATION": {
        "user"                 : "username to access the remote computer. Password will be asked by nimb and stored in sqlite",
        "users_list"           : "if the number of users on the remote computer are more than 1, can be: ['user1','user2']",
@@ -96,7 +86,6 @@
        "base_name"             : "the name of the base subject that will be created during the longitudinal analysis with FreeSurfer",
        "long_name"             : "abbreviation used to define the longitudinal time points for subjects; default is ses-",
 
-       "GLM_dir"            : "path to the folder were the glm analysis will be made",
        "GLM_measurements"   : "cortical parameters that will be used for FreeSurfer GLM analysis: thickness,area,volume,curv",
        "GLM_thresholds"     : "threshold levels for smoothing in mm, used for FreeSurfer GLM analysis: 5,10,15,20,25",
        "GLM_MCz_cache"      : "level of FreeSurfer GLM MCZ simulation threshold 13 equals to p:0.05",

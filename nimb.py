@@ -21,20 +21,21 @@ class NIMB(object):
 
     def __init__(
         self,
-        credentials_home,
-        projects,
-        locations,
-        installers,
         process,
         project,
+        projects,
+        all_vars
     ):
 
-        self.projects  = projects
-        self.locations = locations
-        self.process   = process
-        self.project   = project
-        self.distribution = DistributionHelper(credentials_home, projects,
-                                               locations, installers, project)
+        self.process     = process
+        self.project     = project
+        self.projects    = projects
+        self.locations   = all_vars.location_vars
+        self.stats_vars  = all_vars.stats_vars
+        self.vars_local  = self.locations['local']
+
+        self.distribution = DistributionHelper(all_vars.credentials_home, self.projects,
+                                               self.locations, all_vars.installers, self.project)
 
     def run(self):
         """Run nimb"""
@@ -49,11 +50,11 @@ class NIMB(object):
                 sys.exit()
             else:
                 return classify_bids.get_dict_MR_files2process(
-                                     self.locations['local']['NIMB_PATHS']['NIMB_NEW_SUBJECTS'],
-                                     self.locations['local']['NIMB_PATHS']['NIMB_HOME'],
-                                     self.locations['local']['NIMB_PATHS']['NIMB_tmp'],
-                                     self.locations['local']['FREESURFER']['multiple_T1_entries'],
-                                     self.locations['local']['FREESURFER']['flair_t2_add'])
+                                     self.vars_local['NIMB_PATHS']['NIMB_NEW_SUBJECTS'],
+                                     self.vars_local['NIMB_PATHS']['NIMB_HOME'],
+                                     self.vars_local['NIMB_PATHS']['NIMB_tmp'],
+                                     self.vars_local['FREESURFER']['multiple_T1_entries'],
+                                     self.vars_local['FREESURFER']['flair_t2_add'])
 
         if self.process == 'check-new':
             self.check_new()
@@ -64,9 +65,9 @@ class NIMB(object):
                 sys.exit()
             else:
                 from processing.freesurfer import submit_4processing
-                submit_4processing.Submit_task(self.locations['local'],                                                                                                                                           self.locations['local']['PROCESSING']["python3_load_cmd"]+'\n'+self.locations['local']['PROCESSING']["python3_run_cmd"]+' crun.py',
-                                               'nimb','run', self.locations['local']['PROCESSING']["batch_walltime"],
-                                               False, 'cd '+path.join(self.locations['local']["NIMB_PATHS"]["NIMB_HOME"], 'processing', 'freesurfer'))
+                submit_4processing.Submit_task(self.vars_local,                                                                                                                                           self.vars_local['PROCESSING']["python3_load_cmd"]+'\n'+self.vars_local['PROCESSING']["python3_run_cmd"]+' crun.py',
+                                               'nimb','run', self.vars_local['PROCESSING']["batch_walltime"],
+                                               False, 'cd '+path.join(self.vars_local["NIMB_PATHS"]["NIMB_HOME"], 'processing', 'freesurfer'))
 
         if self.process == 'fs-get-stats':
             if not self.distribution.nimb_stats_ready():
@@ -77,9 +78,9 @@ class NIMB(object):
                 print(PROCESSED_FS_DIR)
                 from stats import fs_stats2table
 
-                fs_stats2table.chk_if_subjects_ready(self.locations["local"]["STATS_PATHS"]["STATS_HOME"], PROCESSED_FS_DIR)
+                fs_stats2table.chk_if_subjects_ready(self.stats_vars["STATS_HOME"], PROCESSED_FS_DIR)
                 fs_stats2table.stats2table_v7(
-                                   self.locations["local"]["STATS_PATHS"]["STATS_HOME"],
+                                   self.stats_vars["STATS_HOME"],
                                    PROCESSED_FS_DIR, data_only_volumes=False)
 
         if self.process == 'fs-glm':
@@ -90,25 +91,26 @@ class NIMB(object):
                 print('before running the script, remember to source $FREESURFER_HOME')
                 print('check if fsaverage is present in SUBJECTS_DIR')
                 print('each subject must include at least the folders: surf and label')
-                submit_4processing.Submit_task(self.locations['local'], self.locations['local']['NIMB_PATHS']["miniconda_python_run"]+' fs_glm_run_glm.py -project '+self.project,
-                                               'fs_glm','run_glm', self.locations['local']['PROCESSING']["batch_walltime"],
-                                               True, 'cd '+path.join(self.locations['local']["NIMB_PATHS"]["NIMB_HOME"], 'processing', 'freesurfer'))
+                submit_4processing.Submit_task(self.vars_local, self.vars_local['NIMB_PATHS']["miniconda_python_run"]+' fs_glm_run_glm.py -project '+self.project,
+                                               'fs_glm','run_glm', self.vars_local['PROCESSING']["batch_walltime"],
+                                               True, 'cd '+path.join(self.vars_local["NIMB_PATHS"]["NIMB_HOME"], 'processing', 'freesurfer'))
 
 
         if self.process == 'fs-glm-image':
             if self.distribution.fs_ready():
                 from processing.freesurfer import submit_4processing
                 print('before running the script, remember to source $FREESURFER_HOME')
-                submit_4processing.Submit_task(self.locations['local'], self.locations['local']['NIMB_PATHS']["miniconda_python_run"]+' fs_glm_extract_images.py -project '+self.project,
-                                               'fs_glm','extract_images', self.locations['local']['PROCESSING']["batch_walltime"],
-                                               True, 'cd '+path.join(self.locations['local']["NIMB_PATHS"]["NIMB_HOME"], 'processing', 'freesurfer'))
+                submit_4processing.Submit_task(self.vars_local, self.vars_local['NIMB_PATHS']["miniconda_python_run"]+' fs_glm_extract_images.py -project '+self.project,
+                                               'fs_glm','extract_images', self.vars_local['PROCESSING']["batch_walltime"],
+                                               True, 'cd '+path.join(self.vars_local["NIMB_PATHS"]["NIMB_HOME"], 'processing', 'freesurfer'))
         if self.process == 'run-stats':
+            self.stats_vars = SetProject(self.vars_local['NIMB_PATHS']['NIMB_tmp'], self.stats_vars, self.project).stats
             if not self.distribution.run_stats_ready():
                 print("NIMB is not ready to run the stats. Please check the configuration files.")
                 sys.exit()
             else:
                 from stats import stats_helper
-                stats_helper.RUN_stats(self.locations["local"], self.projects, self.project)
+                stats_helper.RUN_stats(self.stats_vars, self.projects[self.project]).run_stats()
         return 1
 
     def check_new(self):
@@ -149,16 +151,11 @@ def get_parameters(projects):
 
 def main():
 
-    getvars = Get_Vars()
-    credentials_home = getvars.credentials_home
-    projects = getvars.projects
-    locations = getvars.location_vars
-    installers = getvars.installers
+    all_vars = Get_Vars()
+    projects = all_vars.projects
 
     params = get_parameters(projects['PROJECTS'])
-    locations['local']['STATS_PATHS'] = SetProject(locations['local']['NIMB_PATHS']['NIMB_HOME'], locations['local']['STATS_PATHS'], params.project).STATS_PATHS
-
-    app = NIMB(credentials_home, projects, locations, installers, params.process, params.project)
+    app = NIMB(params.process, params.project, projects, all_vars)
     return app.run()
 
 
