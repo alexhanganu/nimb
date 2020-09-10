@@ -1,5 +1,5 @@
 #!/bin/python
-# 2020.09.03
+# 2020.09.10
 
 print_all_subjects = False
 
@@ -33,13 +33,13 @@ class get_cmd_v2():
 #            self.cmd = self.autorecon3(_id)
 #        if process = 'qcache':
 #            self.cmd = self.qcache(_id)
-        if process = 'brstem':
+        if process == 'brstem':
             self.cmd = 'segmentBS.sh {}'.format(_id) if vars_local["FREESURFER"]["freesurfer_version"]>6 else 'recon-all -s {} -brainstem-structures'.format(_id)
-        if process = 'hip':
+        if process == 'hip':
             self.cmd = 'segmentHA_T1.sh {}'.format(_id) if vars_local["FREESURFER"]["freesurfer_version"]>6 else 'recon-all -s {} -hippocampal-subfields-T1'.format(_id)
-        if process = 'tha':
+        if process == 'tha':
             self.cmd = "segmentThalamicNuclei.sh {}".format(_id)
-        if process = 'masks':
+        if process == 'masks':
             self.cmd = "cd "+path.join(NIMB_HOME,'processing','freesurfer')+"\npython run_masks.py {}".format(_id)
 
 class Get_cmd:
