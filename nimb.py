@@ -63,7 +63,7 @@ class NIMB(object):
                 print("FreeSurfer is not ready or freesurfer_install is set to 0. Please check the configuration files.")
                 sys.exit()
             else:
-                from processing.freesurfer import submit_4processing
+                from processing import submit_4processing
                 submit_4processing.Submit_task(self.vars_local,                                                                                                                                           self.vars_local['PROCESSING']["python3_load_cmd"]+'\n'+self.vars_local['PROCESSING']["python3_run_cmd"]+' crun.py',
                                                'nimb','run', self.vars_local['PROCESSING']["batch_walltime"],
                                                False, 'cd '+path.join(self.vars_local["NIMB_PATHS"]["NIMB_HOME"], 'processing', 'freesurfer'))
@@ -85,7 +85,7 @@ class NIMB(object):
         if self.process == 'fs-glm':
             if self.distribution.fs_ready():
                 self.distribution.fs_glm()
-                from processing.freesurfer import submit_4processing
+                from processing import submit_4processing
                 print('Please check that all required variables for the GLM analysis are defined in the var.py file')
                 print('before running the script, remember to source $FREESURFER_HOME')
                 print('check if fsaverage is present in SUBJECTS_DIR')
@@ -97,7 +97,7 @@ class NIMB(object):
 
         if self.process == 'fs-glm-image':
             if self.distribution.fs_ready():
-                from processing.freesurfer import submit_4processing
+                from processing import submit_4processing
                 print('before running the script, remember to source $FREESURFER_HOME')
                 submit_4processing.Submit_task(self.vars_local, self.vars_local['NIMB_PATHS']["miniconda_python_run"]+' fs_glm_extract_images.py -project '+self.project,
                                                'fs_glm','extract_images', self.vars_local['PROCESSING']["batch_walltime"],

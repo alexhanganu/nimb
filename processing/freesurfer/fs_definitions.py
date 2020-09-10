@@ -22,7 +22,7 @@ f_autorecon = {1:['mri/nu.mgz','mri/orig.mgz','mri/brainmask.mgz',],
                 2:['stats/lh.curv.stats','stats/rh.curv.stats',],
                 3:['stats/aseg.stats','stats/wmparc.stats',]}
 
- '''must check for all files: https://surfer.nmr.mgh.harvard.edu/fswiki/ReconAllDevTable '''
+# must check for all files: https://surfer.nmr.mgh.harvard.edu/fswiki/ReconAllDevTable
 files_created = {
     'recon-all' : ['mri/wmparc.mgz',],
     'autorecon1': ['mri/nu.mgz','mri/orig.mgz','mri/brainmask.mgz',],

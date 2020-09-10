@@ -17,22 +17,22 @@ time.tzset()
 class get_cmd_v2():
 
     def __init__(self, process, _id, id_base = '', ls_tps = []):
-#        if process = 'registration':
-#            self.cmd = self.registration(_id)
-#        if process = 'recbase':
-#            self.cmd = self.recbase(_id, ls_tps)
-#        if process = 'reclong':
-#            self.cmd = self.reclong(_id, id_base)
-#        if process = 'recon':
-#            self.cmd = self.recon(_id)
-#        if process = 'autorecon1':
-#            self.cmd = self.autorecon1(_id)
-#        if process = 'autorecon2':
-#            self.cmd = self.autorecon2(_id)
-#        if process = 'autorecon3':
-#            self.cmd = self.autorecon3(_id)
-#        if process = 'qcache':
-#            self.cmd = self.qcache(_id)
+        if process == 'registration':
+            self.cmd = self.registration(_id)
+        if process == 'recbase':
+            self.cmd = "recon-all -base {0}{1} -all".format(_id, ''.join([' -tp '+i for i in ls_tps]))
+        if process == 'reclong':
+            self.cmd = "recon-all -long {0} {1} -all".format(_id, id_base)
+        if process == 'recon':
+            self.cmd = "recon-all -all -s {}".format(_id)
+        if process == 'autorecon1':
+            self.cmd = "recon-all -autorecon1 -s {}".format(_id)
+        if process == 'autorecon2':
+            self.cmd = "recon-all -autorecon2 -s {}".format(_id)
+        if process == 'autorecon3':
+            self.cmd = "recon-all -autorecon3 -s {}".format(_id)
+        if process == 'qcache':
+            self.cmd = "recon-all -qcache -s {}".format(_id)
         if process == 'brstem':
             self.cmd = 'segmentBS.sh {}'.format(_id) if vars_local["FREESURFER"]["freesurfer_version"]>6 else 'recon-all -s {} -brainstem-structures'.format(_id)
         if process == 'hip':
@@ -41,6 +41,13 @@ class get_cmd_v2():
             self.cmd = "segmentThalamicNuclei.sh {}".format(_id)
         if process == 'masks':
             self.cmd = "cd "+path.join(NIMB_HOME,'processing','freesurfer')+"\npython run_masks.py {}".format(_id)
+
+    def registration(self, _id):
+        t1_ls_f, flair_ls_f, t2_ls_f = cdb.get_registration_files(_id, db, NIMB_HOME, NIMB_tmp, vars_local["FREESURFER"]["flair_t2_add"])
+        flair_cmd = '{}'.format(''.join([' -FLAIR '+i for i in flair_f])) if flair_f != 'none' else ''
+        t2_cmd = '{}'.format(''.join([' -T2 '+i for i in t2_f])) if t2_f != 'none' else ''
+        return "recon-all{}".format(''.join([' -i '+i for i in t1_f]))+flair_cmd+t2_cmd+' -s '+_id
+
 
 class Get_cmd:
 
@@ -73,8 +80,8 @@ def Get_status_for_subjid_in_queue(running_jobs, subjid, scheduler_jobs):
     if subjid in running_jobs:
         job_id = str(running_jobs[subjid])
         if job_id in scheduler_jobs:
-           print('scheduler_jobs for job_id is: {}'.format(scheduler_jobs[job_id]))
-           print('job_id is: {}'.format(scheduler_jobs[job_id][1]))
+           print('            scheduler_jobs for job_id {} is: {}'.format(job_id, scheduler_jobs[job_id]))
+           print('            job_status is: {}'.format(scheduler_jobs[job_id][1]))
            return running_jobs, scheduler_jobs[job_id][1]
         else:
            return running_jobs, 'none'
@@ -84,7 +91,7 @@ def Get_status_for_subjid_in_queue(running_jobs, subjid, scheduler_jobs):
 def try_to_infer_jobid(running_jobs, subjid, scheduler_jobs):
     probable_jobids = [i for i in scheduler_jobs if scheduler_jobs[i][0] in subjid]
     if probable_jobids:
-        print('job_id inferred, probable jobids: {}'.format(str(probable_jobids)))
+        print('            job_id for subject {} inferred, probable jobids: {}'.format(subjid, str(probable_jobids[0])))
         if len(probable_jobids)>1:
             running_jobs[subjid] = 0
         else:
@@ -141,17 +148,23 @@ def do(process):
         if len_Running()<= vars_local["PROCESSING"]["max_nr_running_batches"]:
             db[ACTION][process].remove(subjid)
             if process == 'registration':
-                job_id = submit_4processing.Submit_task(vars_local, Get_cmd.registration(subjid), subjid, process, Get_walltime(process), True, '').job_id
+                job_id = submit_4processing.Submit_task(vars_local, get_cmd_v2(process, subjid).cmd, subjid, process, Get_walltime(process), True, '').job_id
+#                job_id = submit_4processing.Submit_task(vars_local, Get_cmd.registration(subjid), subjid, process, Get_walltime(process), True, '').job_id
             elif process == 'recon':
-                job_id = submit_4processing.Submit_task(vars_local, Get_cmd.recon(subjid), subjid, process, Get_walltime(process), True, '').job_id
+                job_id = submit_4processing.Submit_task(vars_local, get_cmd_v2(process, subjid).cmd, subjid, process, Get_walltime(process), True, '').job_id
+#                job_id = submit_4processing.Submit_task(vars_local, Get_cmd.recon(subjid), subjid, process, Get_walltime(process), True, '').job_id
             elif process == 'autorecon1':
-                job_id = submit_4processing.Submit_task(vars_local, Get_cmd.autorecon1(subjid), subjid, process, Get_walltime(process), True, '').job_id
+                job_id = submit_4processing.Submit_task(vars_local, get_cmd_v2(process, subjid).cmd, subjid, process, Get_walltime(process), True, '').job_id
+#                job_id = submit_4processing.Submit_task(vars_local, Get_cmd.autorecon1(subjid), subjid, process, Get_walltime(process), True, '').job_id
             elif process == 'autorecon2':
-                job_id = submit_4processing.Submit_task(vars_local, Get_cmd.autorecon2(subjid), subjid, process, Get_walltime(process), True, '').job_id
+                job_id = submit_4processing.Submit_task(vars_local, get_cmd_v2(process, subjid).cmd, subjid, process, Get_walltime(process), True, '').job_id
+#                job_id = submit_4processing.Submit_task(vars_local, Get_cmd.autorecon2(subjid), subjid, process, Get_walltime(process), True, '').job_id
             elif process == 'autorecon3':
-                job_id = submit_4processing.Submit_task(vars_local, Get_cmd.autorecon3(subjid), subjid, process, Get_walltime(process), True, '').job_id
+                job_id = submit_4processing.Submit_task(vars_local, get_cmd_v2(process, subjid).cmd, subjid, process, Get_walltime(process), True, '').job_id
+#                job_id = submit_4processing.Submit_task(vars_local, Get_cmd.autorecon3(subjid), subjid, process, Get_walltime(process), True, '').job_id
             elif process == 'qcache':
-                job_id = submit_4processing.Submit_task(vars_local, Get_cmd.qcache(subjid), subjid, process, Get_walltime(process), True, '').job_id
+                job_id = submit_4processing.Submit_task(vars_local, get_cmd_v2(process, subjid).cmd, subjid, process, Get_walltime(process), True, '').job_id
+#                job_id = submit_4processing.Submit_task(vars_local, Get_cmd.qcache(subjid), subjid, process, Get_walltime(process), True, '').job_id
             elif process == 'brstem':
                 job_id = submit_4processing.Submit_task(vars_local, get_cmd_v2(process, subjid).cmd, subjid, process, Get_walltime(process), True, '').job_id
 #                job_id = submit_4processing.Submit_task(vars_local, Get_cmd.brstem(subjid), subjid, process, Get_walltime(process), True, '').job_id
@@ -246,7 +259,7 @@ def check_error(scheduler_jobs, process):
                         db['RUNNING_JOBS'], status = Get_status_for_subjid_in_queue(db['RUNNING_JOBS'], subjid, scheduler_jobs)
                         log.info('     waiting until: '+db['ERROR_QUEUE'][subjid])
                         if status != 'none' and subjid in db['RUNNING_JOBS']:
-                            log.info('     status is: {}, should be moving back to RUNNING_JOBS'.format(status))
+                            log.info('     status is: {}, error_{}-> RUNNING {}'.format(status, process, process))
                             db['ERROR_QUEUE'].pop(subjid, None)
                             db['PROCESSED']['error_'+process].remove(subjid)
                             db['RUNNING'][process].append(subjid)
@@ -390,7 +403,7 @@ def loop_run():
             do(process)
 
     for process in process_order:
-        check_error(scheduler_jobs)
+        check_error(scheduler_jobs, process)
 
     log.info('CHECKING subjects')
     ls_long_dirs = list()
