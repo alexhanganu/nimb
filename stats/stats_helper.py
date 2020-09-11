@@ -1,3 +1,12 @@
+STEP_LinRegModeration   = False
+STEP_Anova_SimpLinReg   = False
+STEP_LogisticRegression = False
+STEP_Laterality         = True
+STEP_Predict_RF_SKF     = False
+STEP_Predict_RF_LOO     = False
+STEP_get_param_based_db = False
+
+
 from os import environ, path, chdir, system
 import sys
 import time
@@ -8,19 +17,9 @@ from stats.stats_groups_anova import RUN_GroupAnalysis_ANOVA_SimpleLinearRegress
 class RUN_stats():
     """will run statistical analysis for the provided groups file"""
 
-    def __init__(self, nimb_stats, project_vars, run_step = 'all'):
+    def __init__(self, nimb_stats, project_vars):
 
-        self.run_step = run_step
         self.atlas = ('DK','DS','DKDS')[1]
-        STEP1_Make_Files        = False
-        STEP_LinRegModeration   = False
-        STEP_Anova_SimpLinReg   = False
-        STEP_LogisticRegression = False
-        STEP_Laterality         = True
-        STEP_Predict_RF_SKF     = False
-        STEP_Predict_RF_LOO     = False
-        STEP_get_param_based_db = False
-
         self.project_vars = project_vars
         self.stats_paths = nimb_stats['STATS_PATHS']
         self.stats_params = nimb_stats['STATS_PARAMS']
@@ -44,47 +43,28 @@ class RUN_stats():
 
 
     def run_stats(self):
-        if self.run_step == 'all':
-            print('performing all stats')
-        STEP_LinRegModeration   = False
-        STEP_Anova_SimpLinReg   = False
-        STEP_LogisticRegression = False
-        STEP_Laterality         = True
-        STEP_Predict_RF_SKF     = False
-        STEP_Predict_RF_LOO     = False
-        STEP_get_param_based_db = False
-
-        for group in self.groups + ['all',]: #'all' stands for all participants
+         for group in self.groups+['all',]: #'all' stands for all groups
             df_X, y_labeled, X_scaled, df_clin_group = self.get_X_data_per_group_all_groups(group)
-            if self.feature_algo == 'PCA':# using PCA
-                features = predict.get_features_based_on_pca(varia.get_dir(path.join(self.stats_paths['STATS_HOME'], self.stats_paths['features'])),
-                                                    self.prediction_vars['pca_threshold'],
-                                                    X_scaled, self.ls_cols_X_atlas,
-                                                    group, self.atlas)
-            elif self.feature_algo == 'RFE': # using RFE
-                features, features_rfe_and_rank_df = predict.feature_ranking(X_scaled,
-                                                                    y_labeled,
-                                                                    self.ls_cols_X_atlas)
-                print("number of features extracted by RFE: ",len(features_rfe_and_rank_df.feature))
-            # print(features)
-            df_with_features = db_processing.get_df_from_df(df_X, usecols = features)
-            df_with_features_lhrh = db_processing.get_df_from_df(df_X, usecols = sorted(stats_laterality.RReplace(features).contralateral_features))
-            print(df_with_features_lhrh)
-
+            df_with_features, features, features_rfe_and_rank_df = self.get_df_per_group(group, X_scaled, y_labeled, df_X)
             # STEP run Linear Regression Moderation
             if STEP_LinRegModeration:
+                print('performing Linear Regression Moderation analysis')
                 linear_regression_moderation.linreg_moderation_results(db_processing.join_dfs(df_clin_group, df_with_features),
                         features, group_param, regression_param,
                         varia.get_dir(path.join(self.stats_paths['STATS_HOME'], self.stats_paths['linreg_moderation_dir'])),
                         self.atlas, group)
             if STEP_Laterality:
-                stats_laterality.LateralityAnalysis(db_processing.join_dfs(df_clin_group, df_with_features_lhrh),
-                                                    self.project_vars["group_col"],
+                print('performing Laterality analysis')
+                lhrh_feat_d = stats_laterality.RReplace(features).contralateral_features
+                lhrh_features_list = [i for i in lhrh_feat_d.keys()] + [v for v in lhrh_feat_d.values()]
+                df_with_features_lhrh = db_processing.get_df_from_df(df_X, usecols = sorted(lhrh_features_list))
+                stats_laterality.LateralityAnalysis(df_with_features_lhrh, lhrh_feat_d, group,
                                                     varia.get_dir(path.join(self.stats_paths['STATS_HOME'],
-                                                                            self.stats_paths['laterality_dir']+'_'+group))).run()
+                                                                            self.stats_paths['laterality_dir']))).run()
             if group == 'all':
                 # STEP run ANOVA and Simple Linear Regression
                 if STEP_Anova_SimpLinReg:
+                    print('performing ANOVA Simple Linear Regression for all groups')
                     RUN_GroupAnalysis_ANOVA_SimpleLinearRegression(db_processing.join_dfs(df_clin_group, df_with_features),
                                                             groups,
                                                             self.project_vars['variables_for_glm'],
@@ -94,15 +74,17 @@ class RUN_stats():
                                                             features)
                 # STEP run ANOVA and Simple Logistic Regression
                 if STEP_LogisticRegression:
+                    print('performing Logistic Regression for all groups')
                     stats_LogisticRegression.Logistic_Regression(X_scaled, y_labeled, self.project_vars['group_col'],
                                                         varia.get_dir(path.join(self.stats_paths['STATS_HOME'], self.stats_paths['logistic_regression_dir']+'_'+group)))
 
                 # STEP run Prediction RF SKF
                 if STEP_Predict_RF_SKF:
+                    print('    performing RF SKF Prediction for all groups')
                     df_X_scaled = db_processing.create_df(X_scaled, index_col=range(X_scaled.shape[0]), cols=self.ls_cols_X_atlas)
                     accuracy, best_estimator, average_score_list, _ = predict.SKF_algorithm(
                             features, df_X_scaled[features].values, y_labeled)
-                    print("prediction accuracy computed with RF and SKF based on PCA features is: ",accuracy)
+                    print("    prediction accuracy computed with RF and SKF based on PCA features is: ",accuracy)
 
                     # accuracy, best_estimator, average_score_list, _ = predict.SKF_algorithm(
                     #         features_rfe_and_rank_df.feature, df_X_scaled[features_rfe_and_rank_df.feature].values, y_labeled)
@@ -111,13 +93,14 @@ class RUN_stats():
 
                 # STEP run Prediction RF LOO
                 if STEP_Predict_RF_LOO:
+                    print('performing RF Leave-One_out Prediction for all groups')
                     df_X_scaled = db_processing.create_df(X_scaled, index_col=range(X_scaled.shape[0]), cols=self.ls_cols_X_atlas)
                     accuracy, best_estimator, average_score_list, _ = predict.LOO_algorithm(
                             features, df_X_scaled[features].values, y_labeled)
-                    print("prediction accuracy computed with RF and SKF based on PCA features is: ",accuracy)
+                    print("    prediction accuracy computed with RF and SKF based on PCA features is: ",accuracy)
                     accuracy, best_estimator, average_score_list, _ = predict.LOO_algorithm(
                             features_rfe_and_rank_df.feature, df_X_scaled[features_rfe_and_rank_df.feature].values, y_labeled)
-                    print("prediction accuracy computed with RF and SKF based on RFE features is: ",accuracy)
+                    print("    prediction accuracy computed with RF and SKF based on RFE features is: ",accuracy)
 
 
     def get_tables(self):
@@ -140,7 +123,7 @@ class RUN_stats():
     # extract X_scaled values for the brain parameters
         if group == 'all':
                 df_clin_group = self.df_clin
-                df_X = df_sub_and_cort
+                df_X = self.df_sub_and_cort
                 y_labeled = preprocessing.label_y(self.df_clin, self.prediction_vars['target'])
                 X_scaled = preprocessing.scale_X(df_X)
         else:
@@ -156,3 +139,19 @@ class RUN_stats():
                                      prediction_vars['nr_threads'], 
                                      definitions.sys.platform,
                                      time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()))
+
+    def get_df_per_group(self, group, X_scaled, y_labeled, df_X):
+        if self.feature_algo == 'PCA':# using PCA
+                features = predict.get_features_based_on_pca(varia.get_dir(path.join(self.stats_paths['STATS_HOME'], self.stats_paths['features'])),
+                                                    self.prediction_vars['pca_threshold'],
+                                                    X_scaled, self.ls_cols_X_atlas,
+                                                    group, self.atlas)
+                features_rfe_and_rank_df = 'none'
+        elif self.feature_algo == 'RFE': # using RFE
+                features, features_rfe_and_rank_df = predict.feature_ranking(X_scaled,
+                                                                    y_labeled,
+                                                                    self.ls_cols_X_atlas)
+                print("    number of features extracted by RFE: ",len(features_rfe_and_rank_df.feature))
+        df_with_features = db_processing.get_df_from_df(df_X, usecols = features)
+        return df_with_features, features, features_rfe_and_rank_df
+
