@@ -20,7 +20,7 @@ class DistributionCheckNew(DistributionHelper):
                 pass
 
     def check_project(self):
-        # todo: must test this function first
+        # todo:   must test this function first
         # if
         if os.path.isdir(self.projects[self.project_name]['SOURCE_SUBJECTS_DIR']):
             # check if all subject is project: call

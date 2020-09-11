@@ -4,6 +4,8 @@ from setup.get_vars import Get_Vars
 from distribution.utitilies import is_writable_directory, is_conda_module_installed, is_ENV_defined
 from distribution.setup_miniconda import setup_miniconda, is_miniconda_installed
 from distribution.distribution_helper import logger
+
+
 class DistributionReady(DistributionHelper):
     """
     This file sole for the READY command.
@@ -18,9 +20,9 @@ class DistributionReady(DistributionHelper):
                 Otherwise True
         """
         if not os.path.isfile(self.local_json):
-            vars = Get_Vars() # to make it create loca.json, is it good to be here?
-        self.verify_paths() # check NIMB_PATHS and create folder if not exist
-        self.get_user_paths_from_terminal() # to do, which ones are get from user?
+            vars = Get_Vars()  # to make it create loca.json, is it good to be here?
+        self.verify_paths()  # check NIMB_PATHS and create folder if not exist
+        self.get_user_paths_from_terminal()  # to do, which ones are get from user?
         if not is_miniconda_installed():
             # if has permission to install
             mini_conda_path = self.locations['local']['NIMB_PATHS']['miniconda_home']
@@ -43,7 +45,6 @@ class DistributionReady(DistributionHelper):
             logger.fatal("$FREESURFER_HOME is not defined")
             return False
 
-
     def get_user_paths_from_terminal(self):
         """
         using terminal to ask for user inputs of variable.
@@ -54,6 +55,8 @@ class DistributionReady(DistributionHelper):
         # 2. set the variable from inputs
         # 3. modify other variables
         pass
+
+
 """
 
         - check that ~/nimb/local.json file is present

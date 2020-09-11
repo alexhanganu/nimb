@@ -691,3 +691,4 @@ if __name__ == "__main__":
     d = DistributionHelper()
     if d.is_setup_vars_folders(is_freesurfer_nim=True, is_nimb_fs_stats=True, is_nimb_classification=False): # True
         pass
+
