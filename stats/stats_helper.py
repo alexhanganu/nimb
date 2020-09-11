@@ -8,10 +8,10 @@ from stats.stats_groups_anova import RUN_GroupAnalysis_ANOVA_SimpleLinearRegress
 class RUN_stats():
     """will run statistical analysis for the provided groups file"""
 
-    def __init__(self, nimb_stats, project_vars):
+    def __init__(self, nimb_stats, project_vars, run_step = 'all'):
 
+        self.run_step = run_step
         self.atlas = ('DK','DS','DKDS')[1]
-        All_Steps               = False
         STEP1_Make_Files        = False
         STEP_LinRegModeration   = False
         STEP_Anova_SimpLinReg   = False
@@ -44,30 +44,16 @@ class RUN_stats():
 
 
     def run_stats(self):
-        # TABLES get for stats start ===============================================
-        f_CoreTIVNaNOut = self.stats_params["file_name_corrected"]
-        atlas_sub = 'Subcort'
-        atlas_DK = 'DK'
-        atlas_DS = 'DS'
-        f_subcort    = path.join(self.project_vars['materials_DIR'][1], f_CoreTIVNaNOut+atlas_sub+'.xlsx')
-        f_atlas_DK   = path.join(self.project_vars['materials_DIR'][1], f_CoreTIVNaNOut+atlas_DK+'.xlsx')
-        f_atlas_DS   = path.join(self.project_vars['materials_DIR'][1], f_CoreTIVNaNOut+atlas_DS+'.xlsx')
-        self.df_clin = db_processing.get_df(path.join(self.project_vars['materials_DIR'][1], self.project_vars['GLM_file_group']),
-                                    usecols=[self.project_vars['id_col'], self.project_vars['group_col'], 'education', 'age', 'moca'],
-                                    index_col = self.project_vars['id_col'])
-        self.groups = preprocessing.get_groups(self.df_clin, self.project_vars['group_col'])
-        self.df_sub_and_cort, self.ls_cols_X_atlas = preprocessing.get_df(f_subcort, f_atlas_DK, f_atlas_DS,
-                                                         self.atlas, self.project_vars['id_col'])
-        self.df_clin_atlas = db_processing.join_dfs(self.df_clin, self.df_sub_and_cort, how='outer')
-        # TABLES get for stats  end ===============================================
+        if self.run_step == 'all':
+            print('performing all stats')
+        STEP_LinRegModeration   = False
+        STEP_Anova_SimpLinReg   = False
+        STEP_LogisticRegression = False
+        STEP_Laterality         = True
+        STEP_Predict_RF_SKF     = False
+        STEP_Predict_RF_LOO     = False
+        STEP_get_param_based_db = False
 
-
-        # stats = predict.get_stats_df(len(ls_cols_X_atlas), atlas,
-        #                             prediction_vars['nr_threads'], 
-        #                             definitions.sys.platform,
-        #                             time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()))
-
-        # analyses per GROUP and for ALL participants
         for group in self.groups + ['all',]: #'all' stands for all participants
             df_X, y_labeled, X_scaled, df_clin_group = self.get_X_data_per_group_all_groups(group)
             if self.feature_algo == 'PCA':# using PCA
@@ -82,7 +68,8 @@ class RUN_stats():
                 print("number of features extracted by RFE: ",len(features_rfe_and_rank_df.feature))
             # print(features)
             df_with_features = db_processing.get_df_from_df(df_X, usecols = features)
-            df_with_features_lhrh = db_processing.get_df_from_df(df_X, usecols = sorted(stats_laterality.RReplace(features).lhrh_list))
+            df_with_features_lhrh = db_processing.get_df_from_df(df_X, usecols = sorted(stats_laterality.RReplace(features).contralateral_features))
+            print(df_with_features_lhrh)
 
             # STEP run Linear Regression Moderation
             if STEP_LinRegModeration:
@@ -91,8 +78,10 @@ class RUN_stats():
                         varia.get_dir(path.join(self.stats_paths['STATS_HOME'], self.stats_paths['linreg_moderation_dir'])),
                         self.atlas, group)
             if STEP_Laterality:
-                stats_laterality.run_laterality(db_processing.join_dfs(df_clin_group, df_with_features_lhrh), self.project_vars["group_col"],
-                        varia.get_dir(path.join(self.stats_paths['STATS_HOME'], self.stats_paths['laterality_dir']+'_'+group)))
+                stats_laterality.LateralityAnalysis(db_processing.join_dfs(df_clin_group, df_with_features_lhrh),
+                                                    self.project_vars["group_col"],
+                                                    varia.get_dir(path.join(self.stats_paths['STATS_HOME'],
+                                                                            self.stats_paths['laterality_dir']+'_'+group))).run()
             if group == 'all':
                 # STEP run ANOVA and Simple Linear Regression
                 if STEP_Anova_SimpLinReg:
@@ -140,7 +129,7 @@ class RUN_stats():
         f_atlas_DK   = path.join(self.project_vars['materials_DIR'][1], f_CoreTIVNaNOut+atlas_DK+'.xlsx')
         f_atlas_DS   = path.join(self.project_vars['materials_DIR'][1], f_CoreTIVNaNOut+atlas_DS+'.xlsx')
         self.df_clin = db_processing.get_df(path.join(self.project_vars['materials_DIR'][1], self.project_vars['GLM_file_group']),
-                                    usecols=[self.project_vars['id_col'], self.project_vars['group_col'], 'education', 'age', 'moca'],
+                                    usecols=[self.project_vars['id_col'], self.project_vars['group_col']]+self.project_vars['variables_for_glm'],
                                     index_col = self.project_vars['id_col'])
         self.groups = preprocessing.get_groups(self.df_clin, self.project_vars['group_col'])
         self.df_sub_and_cort, self.ls_cols_X_atlas = preprocessing.get_df(f_subcort, f_atlas_DK, f_atlas_DS,
@@ -161,3 +150,9 @@ class RUN_stats():
                 y_labeled     = preprocessing.label_y(df_group, self.prediction_vars['target'])
                 X_scaled      = preprocessing.scale_X(df_X)
         return df_X, y_labeled, X_scaled, df_clin_group
+
+    def log(self):
+        stats = predict.get_stats_df(len(ls_cols_X_atlas), atlas,
+                                     prediction_vars['nr_threads'], 
+                                     definitions.sys.platform,
+                                     time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()))
