@@ -6,7 +6,6 @@ from distribution.setup_freesurfer import SETUP_FREESURFER
 
 from distribution.check_disk_space import *
 from distribution import SSHHelper
-import logging
 
 # -- for logging, instead of using print --
 logger = logging.getLogger(__name__)
@@ -16,15 +15,14 @@ logger.setLevel(logging.DEBUG)
 
 class DistributionHelper():
 
-    def __init__(self, all_vars, projects, project):
-
-        self.credentials_home = all_vars.credentials_home # NIMB_HOME/credentials_paths.py
-        self.installers       = all_vars.installers # NIMB_HOME/setup/installers.json
-        self.locations        = all_vars.location_vars # credentials_home/local.json + remotes.json
-        self.projects         = projects # credentials_home/project.json
-        self.project_name     = project
-        self.NIMB_HOME        = self.locations["local"]["NIMB_PATHS"]["NIMB_HOME"]
-        self.NIMB_tmp         = self.locations["local"]["NIMB_PATHS"]["NIMB_tmp"]
+    def __init__(self, credentials_home, projects, locations, installers, projec
+        self.NIMB_HOME = locations["local"]["NIMB_PATHS"]["NIMB_HOME"]
+        self.NIMB_tmp = locations["local"]["NIMB_PATHS"]["NIMB_tmp"]
+        self.locations = locations # ưlocal, remote] json configuration
+        self.projects = projects # project.json
+        self.credentials_home = credentials_home
+        self.project_name = project
+        self.installers = installers
 
         # self.var = Get_Vars().get_default_vars()
         self.user_name, self.user_password = self.get_username_password_cluster_from_sqlite()
@@ -157,6 +155,8 @@ class DistributionHelper():
                     print('creating path ',p)
                     makedir_version2(self.locations['local']['FREESURFER']['FS_SUBJECTS_DIR'])
                     system("cp -r"+path.join(self.locations['local']['FREESURFER']['FREESURFER_HOME'], "subjects", "fsaverage")+" "+self.vars['local']['FREESURFER']['FS_SUBJECTS_DIR'])
+    # UNITE until here
+    # =========================================
 
     def get_project_vars(self, var_name, project):
         """
@@ -167,7 +167,7 @@ class DistributionHelper():
         """
         # PROJECT_DATA
         if project not in self.projects.keys():
-            print("There is no path for project: "+project+" defined. Please check the file: {}".format(path.join(self.credentials_home, "projects.json")))
+            print("There is no path for project: "+project+" defined. Please check the file: "+path.join(self.credentials_home, "projects.json"))
             return ""
         return self.projects[project][var_name]
 
@@ -323,12 +323,10 @@ class DistributionHelper():
            if all variables are provided
            if all paths for stats are created
            if NIMB is ready to perform statistical analysis"""
-        ready = False
-        file = self.projects[self.project_name]["GLM_file_group"]
-        if self.projects[self.project_name]["materials_DIR"][0] == 'local' and path.exists(path.join(self.projects[self.project_name]["materials_DIR"][1], file)):
-            ready = True
-        else:
-            print("data file is missing or not located on a local folder. Check file {}".format(path.join(self.credentials_home, 'projects.json', self.project_name)))
+        ready = True
+        if not path.exists(self.projects[self.project_name]["GLM_file_group"]):
+            print("data file is missing from nimb_credentials.py/projects.json -> project")
+            ready = False
         return ready
 
     def setting_up_local_computer(self):
@@ -593,4 +591,3 @@ if __name__ == "__main__":
     d = DistributionHelper()
     if d.is_setup_vars_folders(is_freesurfer_nim=True, is_nimb_fs_stats=True, is_nimb_classification=False): # True
         pass
-

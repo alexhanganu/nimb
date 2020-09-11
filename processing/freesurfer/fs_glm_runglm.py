@@ -423,6 +423,7 @@ if __name__ == "__main__":
     sys.path.append(str(top))
 
     import subprocess
+    from distribution.logger import Log
     from setup.get_vars import Get_Vars, SetProject
     getvars = Get_Vars()
     vars_local = getvars.location_vars['local']

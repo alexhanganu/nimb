@@ -11,13 +11,14 @@ class SETUP_FREESURFER():
     def __init__(self, vars, installers):
 
         self.NIMB_HOME            = vars['local']['NIMB_PATHS']['NIMB_HOME']
-        self.FREESURFER_HOME      = vars['local']['FREESURFER']['FREESURFER_HOME']
+        self.FS_vars              = vars['local']['FREESURFER'] 
+        self.FREESURFER_HOME      = self.FS_vars['FREESURFER_HOME']
 
         if not path.exists(self.FREESURFER_HOME):
             print("freesurfer requires to be installed")
-            self.freesurfer_install(vars['local']['FREESURFER']['freesurfer_version'], installers)
+            self.freesurfer_install(self.FS_vars['freesurfer_version'], installers)
             print('FINISHED Installing')
-        self.check_freesurfer_license(vars['local']['FREESURFER']['freesurfer_license'])
+        self.check_freesurfer_license(self.FS_vars['freesurfer_license'])
         self.check_matlab_installation('install')
         self.check_matlab_installation('none')
 
@@ -26,8 +27,8 @@ class SETUP_FREESURFER():
             print('Matlab is required to perform processing of brainstem, hippocampus, amygdala and thalamus')
             if action == 'install':
                 print("trying to install MATLAB...")
-                self.matlab_install(vars['local']['FREESURFER']['export_FreeSurfer_cmd'],
-                                    vars['local']['FREESURFER']['source_FreeSurfer_cmd'])
+                self.matlab_install(self.FS_vars['export_FreeSurfer_cmd'],
+                                    self.FS_vars['source_FreeSurfer_cmd'])
             else:
                 print('sorry, something whent wrong, cannot install MATLAB. Try to source freesurfer and run setup_fs_matlab.sh')
         else:
@@ -47,7 +48,7 @@ class SETUP_FREESURFER():
 
     def freesurfer_install(self, freesurfer_version, installers):
         if freesurfer_version == 7:
-            installer = installers['INSTALLERS']['freesurfer7.1.1_installer']
+            installer = installers['freesurfer7.1.1_installer']
         else:
             print('freesurfer version not defined')
         chdir(self.NIMB_HOME)

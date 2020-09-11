@@ -33,7 +33,7 @@ class setupcredentials():
         ttk.Button(tab, text='Change data', command=lambda: self.ChangeAddCluster(clusters, rname)).grid(row=row +1, column=0)
         ttk.Button(tab, text='Add cluster', command=lambda: self.ChangeAddCluster(database._get_Table_Data('Clusters','defaultClusters'), 'defaultClusters')).grid(row=row +1, column=1)
         # ttk.Button(tab, text='Add cluster', command=lambda: self.ChangeAddCluster(database._get_credentials('default'), 'default')).grid(row=row +1, column=1)
-        
+
     def ChangeAddCluster(self, clusters,rname):
             self.ChangeAddClusterFrame = Tk()
             row = 0
@@ -98,7 +98,7 @@ class setupcredentials():
                 self.EntryProcessedSubjectsDir.insert(0, clusters[rname]['Processed_SUBJECTS_DIR'])
             else:
                 self.EntryProcessedSubjectsDir.insert(0, '/scratch/USER/processed')
-                
+
             row += 1
             Label(self.ChangeAddClusterFrame, text='Password:').grid(row = row, column = 0)
             self.EntryPW = Entry(self.ChangeAddClusterFrame, show='*')
@@ -136,13 +136,13 @@ class setupcredentials():
         database._set_credentials(credentials, cname)
         #send_2_thread(SETUP_CLUSTER(cname, cuser, caddress, chome_dir, cscratch_dir, cpw, supervisor_ccri)
         self.ChangeAddClusterFrame.destroy()
-        self.main.destroy()		
+        self.main.destroy()
 
     def DeleteCluster(self):
         cname = str(self.EntryClusterName.get())
         database._delete_credentials(cname)
         self.ChangeAddClusterFrame.destroy()
-        self.main.destroy()		
+        self.main.destroy()
 
 
 def send_2_thread(program):
@@ -266,13 +266,13 @@ class SetProjectData():
 
         # database._set_Project_Data(id, mri_dir, results_dir, glm_dir, file_groups)
         self.ChangeAddProjectFrame.destroy()
-        self.main.destroy()		
+        self.main.destroy()
 
     def DeleteProject(self):
         id = str(self.EntryProjectID.get())
         database._delete_Project(id)
         self.ChangeAddProjectFrame.destroy()
-        self.main.destroy()		
+        self.main.destroy()
 
 def set_MainFolder(Project):
     setdir = filedialog.askdirectory()
