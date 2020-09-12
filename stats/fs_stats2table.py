@@ -241,7 +241,6 @@ def stats2table_v7(PATHstats, SUBJECTS_DIR, data_only_volumes=True):
                         df2.rename(columns=lambda ROI: parc_DK_header[ROI], inplace=True)
                         df2.to_excel(writer,sheet_name=sheetName,startcol=0, startrow=0, header=True, index=True)
                         sheetnames.append(sheetName)
-        
 
 
         '''Extracting PARCELLATIONS Destrieux'''
@@ -275,7 +274,7 @@ def stats2table_v7(PATHstats, SUBJECTS_DIR, data_only_volumes=True):
                         df2.rename(columns=lambda ROI: parc_DS_header[ROI], inplace=True)
                         df2.to_excel(writer,sheet_name=sheetName,startcol=0, startrow=0, header=True, index=True)
                         sheetnames.append(sheetName)
-        
+
 
 
         '''Extracting PARCELLATIONS Desikan WhiteMatter'''
@@ -321,7 +320,7 @@ def stats2table_v7(PATHstats, SUBJECTS_DIR, data_only_volumes=True):
                         'wm_hypointensities_R','non_wm_hypointensities',
                         'non_wm_hypointensities_L','non_wm_hypointensities_R',
                         'eTIV', 'volBrainSegNotVent']
-    
+
     def change_column_name(df, sheet):
         ls = df.columns.tolist()
         columns_2_drop = []
@@ -329,7 +328,7 @@ def stats2table_v7(PATHstats, SUBJECTS_DIR, data_only_volumes=True):
             if col in ls:
                 columns_2_drop.append(col)
                 ls.remove(col)
-            
+
         if len(columns_2_drop)>0:
             df.drop(columns=columns_2_drop, inplace=True)
         for col in ls:
@@ -352,7 +351,7 @@ def stats2table_v7(PATHstats, SUBJECTS_DIR, data_only_volumes=True):
 
     frame_final = (df_concat, df_final)
     df_concat = pd.concat(frame_final,axis=1, sort=True)
-    
+
     if data_only_volumes:
         writer = pd.ExcelWriter(data_subcortical_volumes, engine='xlsxwriter')
         df_concat.to_excel(writer, 'stats')
@@ -373,7 +372,7 @@ def stats2table_v7(PATHstats, SUBJECTS_DIR, data_only_volumes=True):
 
     frame_final = (df_concat, df_final)
     df_concat = pd.concat(frame_final,axis=1, sort=True)
-    
+
     writer = pd.ExcelWriter(data_big, engine='xlsxwriter')
     df_concat.to_excel(writer, 'stats')
     writer.save()
@@ -418,7 +417,7 @@ def create_HIP_to_cortex_ratio(df_data_big, HIP_to_cortex_ratio_DK, HIP_to_corte
 	for index in cols_to_meas['HIP']['HIPR']:
 		ls_HIP.append(ls_columns[index])
 	df_HIP = df_data_big[ls_HIP]
-	
+
 	ls_Vol_CORTEX_DK = []
 	for index in cols_to_meas['ParcDK']['GrayVol']:
 		ls_Vol_CORTEX_DK.append(ls_columns[index])
@@ -461,17 +460,17 @@ def create_SurfArea_to_Vol_ratio(df_data_big, f_SA_to_Vol_ratio_DK, f_SA_to_Vol_
 	for index in cols_to_meas['ParcDK']['SurfArea']:
 		ls_Surf_DK.append(ls_columns[index])
 	df_Surf_DK = df_data_big[ls_Surf_DK]
-	
+
 	ls_Surf_DS = []
 	for index in cols_to_meas['ParcDS']['SurfArea']:
 		ls_Surf_DS.append(ls_columns[index])
 	df_Surf_DS = df_data_big[ls_Surf_DS]
-	
+
 	ls_Vol_CORTEX_DK = []
 	for index in cols_to_meas['ParcDK']['GrayVol']:
 		ls_Vol_CORTEX_DK.append(ls_columns[index])
 	df_Vol_CORTEX_DK = df_data_big[ls_Vol_CORTEX_DK]
-	
+
 	ls_Vol_CORTEX_DS = []
 	for index in cols_to_meas['ParcDS']['GrayVol']:
 		ls_Vol_CORTEX_DS.append(ls_columns[index])
