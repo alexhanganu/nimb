@@ -24,7 +24,7 @@ def compute_linreg_data(df, ls_cols_X, group_param, regression_param):
     d1['Region'] = ls_cols_X
     X = df[[group_param, regression_param]]
     X = sm.add_constant(X.to_numpy())
-    
+
     for region in ls_cols_X:
         y = df[[region]]
         model = sm.OLS(y, X).fit()
