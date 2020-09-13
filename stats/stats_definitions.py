@@ -378,8 +378,8 @@ name_measurement = get_names_of_measurements()
 
 class cols_per_measure_per_atlas():
 
-    def __init__(self, df_main):
-        self.df = df_main
+    def __init__(self, ls_columns):
+        self.ls_columns = ls_columns
         self.cols_to_meas_to_atlas = self.get_columns()
 
     def get_columns(self):
@@ -390,13 +390,11 @@ class cols_per_measure_per_atlas():
             for meas in all_data[atlas]['parameters']:
                 result[atlas][meas] = list()
 
-        ls_columns = self.df.columns.tolist()
-
-        for col in ls_columns:
+        for col in self.ls_columns:
             for atlas in all_data['atlases']:
                 for meas in all_data[atlas]['parameters']:
                     if all_data[atlas]['parameters'][meas] in col and all_data['atlas_ending'][atlas] in col:
-                        result[atlas][meas].append(ls_columns.index(col))
+                        result[atlas][meas].append(self.ls_columns.index(col))
         return result
 
 def get_structure_measurement(name, ls_meas, ls_struct):

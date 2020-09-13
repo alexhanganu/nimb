@@ -113,7 +113,7 @@ def extract_regions(dic, path_save_results, atlas):
     for key in regions:
         regions[key][0] = '{:.4}'.format(regions[key][0])
         regions[key] = [regions[key][0]]+sorted(regions[key][1:], reverse=True)
-        print(regions[key])
+#        print(regions[key])
 
         if len(regions[key])> n_vals:
             n_vals = len(regions[key])
@@ -130,4 +130,4 @@ def extract_regions(dic, path_save_results, atlas):
     df_feat.sort_values(by=['explained_variance'], inplace=True, ascending=False)
 
     db_processing.save_df_tocsv(df_feat, path.join(path_save_results,'regions_from_pca_features_'+atlas+'.csv'))
- 
+

@@ -488,7 +488,6 @@ def run(varslocal):
 #        if time.strftime("%H:%M:%S",time.gmtime(time_elapsed+time_to_sleep)) < max_batch_running:
 #                  batch gets closed by the scheduler, trying to calculate time left until batch is finished,
 #                  line if was creating an infinitie loop, without the time.sleep, might have been related to missing :%S in strpftime
-#                  commented now, needs to be checked
 
         time.sleep(time_to_sleep)
 

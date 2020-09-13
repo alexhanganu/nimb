@@ -97,7 +97,7 @@ def preprocessing_data(data, target):
 
     x_scaler = QuantileTransformer()
 
-    print(x_scaler.fit(data_x))
+    print('    scaler: {}'.format(x_scaler.fit(data_x)))
 
     X_scaled = x_scaler.transform(data_x)
     return X_scaled, y_transform, data_x
@@ -105,13 +105,13 @@ def preprocessing_data(data, target):
 
 def get_features_based_on_pca(dir_pca, threshold, X_scaled, ls_cols_X, group, atlas):
 
-    print('nr of features to analyze: ',len(ls_cols_X))
+    print('    nr of features to analyze by PCA: {}'.format(len(ls_cols_X)))
     model = PCA(n_components=threshold)
     model.fit_transform(X_scaled)
 
     # extracting most relevant features
     ls_expl_variance = model.explained_variance_ratio_
-    
+
     dic_feat_comps = dict()
     n_components = model.components_.shape[0]
 
@@ -125,8 +125,7 @@ def get_features_based_on_pca(dir_pca, threshold, X_scaled, ls_cols_X, group, at
             dic_feat_comps[feat] = new_variance
     df_feat_comps = db_processing.create_df(dic_feat_comps.values(), index_col = dic_feat_comps.keys(), cols=['explained_variance'])
 
-    print('nr of components chosen by PCA: ', len(ls_expl_variance))
-    print('nr of features chosen by PCA: ', len(dic_feat_comps.keys()))
+    print('    PCA chose {} components and {} features '.format(len(ls_expl_variance), len(dic_feat_comps.keys())))
 
 
     varia.extract_regions(dic_feat_comps, dir_pca, atlas)
