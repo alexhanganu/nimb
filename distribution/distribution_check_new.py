@@ -6,28 +6,46 @@ from .utilities import get_username_password
 
 class DistributionCheckNew(DistributionHelper):
 
-    def read(self):
+    def __init__(self, all_vars, projects, project):
+        super().__init__(all_vars=all_vars, projects=projects, project=project)
+    def ready(self):
+        self.check_projects(self.project_name)
+        # if self.project_name:
+        #     # check that project
+        #     self.check_projects(self.project_name)
+        #
+        # else: # check all project
+        #     # get all project names
+        #     for prj in self.projects['PROJECTS']:
+        #
+        #         pass
 
-        if self.project_name:
-            # check that project
-            self.check_project(self.project_name)
-
+    def check_projects(self, project_name=None):
+        """
+        todo: project_name is never none because it has default value! must correct this one later via getting project name
+        if project_name is None, means that user does not input the project name, it will check for all projects
+        :param project_name: None or user input project
+        :return:
+        """
+        if project_name:
+            self.check_single_project(project_name=project_name)
         else: # check all project
-            # get all project names
+            for project_name in self.projects['PROJECT']:
+                self.check_single_project(project_name=project_name)
 
-            for prj in self.projects['PROJECTS']:
-
-                pass
-
-    def check_project(self):
-        # todo:   must test this function first
-        # if
-        if os.path.isdir(self.projects[self.project_name]['SOURCE_SUBJECTS_DIR']):
+    def check_single_project(self, project_name):
+        """
+        return the list of subjects to be processed, works on both local and remote computer
+        :param project_name: name of the project, cannot be None
+        :return: a list of subject to be processed
+        """
+        if project_name and os.path.isdir(self.projects[self.project_name]['SOURCE_SUBJECTS_DIR']): # if there is project input by user
             # check if all subject is project: call
             # self.is_all_subject_processed(self.get_SOURCE_SUBJECTS_DIR()) == modify it
             # local version
             machine, source_fs = self.get_SOURCE_SUBJECTS_DIR()
             _, process_fs = self.get_PROCESSED_FS_DIR()
+            to_be_processed = []
             if machine == "local":
                 if not self.is_all_subject_processed(source_fs, process_fs): # test this function
                     #get the list of subjects in SOURCE_SUBJECTS_DIR
@@ -39,19 +57,25 @@ class DistributionCheckNew(DistributionHelper):
                 host = self.projects['LOCATION'][machine]
                 to_be_processed = self.get_list_subject_to_be_processed_remote_version(source_fs, process_fs,remote_username=username,
                                                                      remote_host=host, remote_password=password)
-        else: # if SOURCE_SUBJECTS_DIR is not set
-            # get the list: call the function here
-            # local version
-            # remote version
+        return to_be_processed
 
-            return NotImplementedError
-
+if __name__ == "__main__":
+    """
+    
+    """
+    # this is to verify verify:
+    # {“ppmi”: “SOURCE_SUBJECTS_DIR” : [elm, ‘/home_je/hanganua/database/loni_ppmi/source/mri];
+    # “PROCESSED_FS_DIR” : [elm, ‘home_je/hanganua/database/loni_ppmi/processed_fs]}
+    # cannot connect to ELM, time-out or wrong pass??
+    # distribution = DistributionCheckNew()
+    pass
 
 """
     - process CHECK_NEW
         - if project is provided by user: check per project
         - else: check for all projects
-        - per projects: check if ~/nimb/projects.json → project → SOURCE_MR is provided.
+            
+        - per projects: check if ~/nimb/projects.json → project → SOURCE_MR is provided.  ==> start
         - If yes: check that all subjects were processed.
         - If not: get the list of subjects in SOURCE_SUBJECTS_DIR (archived zip or .gz) that didn’t undergo the FreeSurfer (missing in $PROCESSED_FS_DIR), 
         get_list_subject_to_be_processed_remote() 

@@ -12,7 +12,8 @@ class DistributionReady(DistributionHelper):
     """
     local_json = "~/nimb/local.json"
     module_list = ["dcm2niix", "dcm2bids", "pandas", "numpy", "xlrd", "xlsxwriter", "paramiko", "dipy"]
-
+    def __init__(self, all_vars, projects, project):
+        super().__init__(all_vars=all_vars, projects=projects, project=project)
     def check_ready(self):
         """
 
