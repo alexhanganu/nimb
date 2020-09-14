@@ -448,7 +448,6 @@ def run(varslocal):
     SUBJECTS_DIR     = vars_local["FREESURFER"]["FS_SUBJECTS_DIR"]
     process_order    = vars_local["FREESURFER"]["process_order"]
 
-    Log(NIMB_tmp)
     log = logging.getLogger(__name__)
 
     t0 = time.time()
@@ -521,5 +520,7 @@ if __name__ == "__main__":
     from processing import submit_4processing
     from setup.get_vars import Get_Vars
     getvars = Get_Vars()
-    run(getvars.location_vars['local'])
+    vars_local = getvars.location_vars['local']
+    Log(vars_local['NIMB_PATHS']['NIMB_tmp'])
+    run(vars_local)
 

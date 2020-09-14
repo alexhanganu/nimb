@@ -11,7 +11,7 @@ from os import environ, path, chdir, system
 import sys
 import time
 
-from stats import (db_processing, preprocessing, predict, varia, linear_regression_moderation, stats_LogisticRegression, stats_laterality)
+from stats import (db_processing, preprocessing, predict, varia, stats_models, stats_LogisticRegression, stats_laterality)
 from stats.stats_groups_anova import RUN_GroupAnalysis_ANOVA_SimpleLinearRegression
 
 class RUN_stats():
@@ -49,7 +49,7 @@ class RUN_stats():
             # STEP run Linear Regression Moderation
             if STEP_LinRegModeration:
                 print('performing Linear Regression Moderation analysis')
-                linear_regression_moderation.linreg_moderation_results(db_processing.join_dfs(df_clin_group, df_with_features),
+                stats_models.linreg_moderation_results(db_processing.join_dfs(df_clin_group, df_with_features),
                         features, group_param, regression_param,
                         varia.get_dir(path.join(self.stats_paths['STATS_HOME'], self.stats_paths['linreg_moderation_dir'])),
                         self.atlas, group)
