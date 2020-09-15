@@ -21,7 +21,6 @@ class DistributionHelper():
         self.credentials_home = all_vars.credentials_home # NIMB_HOME/credentials_paths.py
         self.installers       = all_vars.installers # NIMB_HOME/setup/installers.json
         self.locations        = all_vars.location_vars # credentials_home/local.json + remotes.json
-        self.stats_vars       = all_vars.stats_vars
         self.projects         = projects # credentials_home/project.json
         self.project_name     = project
         self.NIMB_HOME        = self.locations["local"]["NIMB_PATHS"]["NIMB_HOME"]
@@ -36,11 +35,9 @@ class DistributionHelper():
         verify if NIMB is ready to be used
         :return: bool
         """
-        ready = True
         self.verify_paths()
-        self.is_setup_vars(self.locations['local']['NIMB_PATHS'])
-        self.is_setup_vars(self.locations['local']['PROCESSING'])
-        if self.classify_ready():
+        ready = True
+        if self.classify_ready()
             print("NIMB ready to perform classification")
         else:
             ErrorMessages.error_classify()
@@ -51,20 +48,6 @@ class DistributionHelper():
             ErrorMessages.error_fsready()
             ready = False
         return ready
-
-    def is_setup_vars(self, dict):
-        """
-        check if variables are defined in json
-        :param config_file: path to configuration json file
-        :return: True if there is no error, otherwise, return False
-        """
-        # check path exisits and create path if needed
-        for key in dict:
-            print(type(dict[key]))
-            if type(dict[key]) != int and len(dict[key]) < 1:
-                logger.fatal(f"{key} is missing")
-                return False
-        return True
 
     def verify_paths(self):
         # to verify paths and if not present - create them or return error
@@ -79,51 +62,27 @@ class DistributionHelper():
                     print('creating path ',p)
                     makedir_ifnot_exist(p)
 
-    def classify_ready(self):
-        ready = True
-        for p in (self.locations['local']['NIMB_PATHS']['NIMB_NEW_SUBJECTS'],
-                  self.NIMB_HOME,self.NIMB_tmp):
-            if not path.exists(p):
-                try:
-                    # if path start with ~
-                    makedir_ifnot_exist(p)
-                except Exception as e:
-                    print(e)
-            if not path.exists(p):
-                ready = False
-                break
-        return ready
-
-    def fs_ready(self):
-        if self.locations['local']['FREESURFER']['FreeSurfer_install'] == 1:
-            if len(self.locations['local']['FREESURFER']['FREESURFER_HOME']) < 1:
-                logger.fatal("FREESURFER_HOME is missing.")
-                return False
-            if not path.exists(self.locations['local']['FREESURFER']['FS_SUBJECTS_DIR']):
-                    print('creating path ', self.locations['local']['FREESURFER']['FS_SUBJECTS_DIR'])
-                    makedir_ifnot_exist(self.locations['local']['FREESURFER']['FS_SUBJECTS_DIR'])
-            if self.check_freesurfer_ready():
-                return self.fs_chk_fsaverage_ready()
-        else:
-            return False
-
-    def fs_chk_fsaverage_ready(self):
-        self.fs_fsaverage_copy()
-        if not path.exists(path.join(self.locations['local']['FREESURFER']['FS_SUBJECTS_DIR'],'fsaverage', 'xhemi')):
-            print('fsaverage or fsaverage/xhemi is missing from SUBJECTS_DIR: {}'.format(self.locations['local']['FREESURFER']['FS_SUBJECTS_DIR']))
-            return False
-        else:
-            return True
-
-    def fs_fsaverage_copy(self):
-        if not path.exists(path.join(self.locations['local']['FREESURFER']['FS_SUBJECTS_DIR'],'fsaverage', 'xhemi')):
-            fsaverage_path = path.join(self.locations['local']['FREESURFER']['FREESURFER_HOME'], "subjects", "fsaverage")
-            shutil.copytree(fsaverage_path, path.join(self.vars['local']['FREESURFER']['FS_SUBJECTS_DIR'], 'fsaverage'))
-
-    def check_freesurfer_ready(self):
+    def is_setup_vars_folders(self,is_freesurfer_nim=False,
+                              is_nimb_classification=False,
+                              is_nimb_fs_stats=False):
         """
-        check and install freesurfer
-        :return:
+        check if those variables are defined in json or not
+        for example check NIMB_PATHS exists in the local.json
+        :param config_file: path to configuration json file
+        :param is_freesurfer_nim: True if run nimb freesurfer
+        :param is_nimb_classification:
+        :param is_nimb_fs_stats:
+        :return: True if there is no error, otherwise, return False
+        """
+        # check path exisits and create path if needed
+        fsaverage_path = path.join(self.locations['local']['FREESURFER']['FREESURFER_HOME'], "subjects", "fsaverage")
+        if path.exists(fsaverage_path):
+            system("cp -r"+fsaverage_path+" "+self.vars['local']['FREESURFER']['FS_SUBJECTS_DIR'])
+        
+    def check_freesurfer_ready(self):
+        """                                                                                                                                                               
+        check and install freesurfer                                                                                                                                      
+        :return:                                                                                                                                                          
         """
         ready = False
         if not path.exists(path.join(self.locations['local']['FREESURFER']['FREESURFER_HOME'], "MCRv84")):
@@ -138,12 +97,11 @@ class DistributionHelper():
 
 
     def nimb_stats_ready(self, project):
-        """will check if the STATS folder is present and will create if absent
+        """will check if the STATS folder is present and will create if absent                                                                                            
            will return the folder with unzipped stats folder for each subject"""
-        self.is_setup_vars(self, self.stats_vars)
 
-        if not path.exists(self.stats_vars["STATS_PATHS"]["STATS_HOME"]):
-            makedir_ifnot_exist(self.stats_vars["STATS_PATHS"]["STATS_HOME"])
+        if not path.exists(self.locations["local"]["STATS_PATHS"]["STATS_HOME"]):
+            makedir_ifnot_exist(self.locations["local"]["STATS_PATHS"]["STATS_HOME"])
 
         PROCESSED_FS_DIR = self.projects[project]["PROCESSED_FS_DIR"]
 
@@ -165,9 +123,9 @@ class DistributionHelper():
         print('start freesurfer GLM')
 
     def run_stats_ready(self):
-        """will check if xlsx file for project is provided
-           if all variables are provided
-           if all paths for stats are created
+        """will check if xlsx file for project is provided                                                                                                                
+           if all variables are provided                                                                                                                                  
+           if all paths for stats are created                                                                                                                             
            if NIMB is ready to perform statistical analysis"""
         ready = False
         file = self.projects[self.project_name]["GLM_file_group"]
@@ -178,6 +136,7 @@ class DistributionHelper():
         return ready
 
 
+        
     def get_project_vars(self, var_name, project):
         """
         get the PROCESSED_FS_DIR
@@ -471,7 +430,7 @@ class DistributionHelper():
             SOURCE_SUBJECTS_DIR = DistributionHelper.get_SOURCE_SUBJECTS_DIR(f"../setup/{cluster_name}.json")
             subjects_to_send = DistributionHelper.get_list_subject_to_be_processed_remote_version(SOURCE_SUBJECTS_DIR=SOURCE_SUBJECTS_DIR,
                                                                                                   PROCESSED_FS_DIR=PROCESSED_FS_DIR,
-                                                                                                  remote = cluster_name)
+                                                                                                  cluster_name)
 
             ssh_session = SSHHelper.getSSHSession(remote=cluster_name)
             # call upload_multiple_files_to_cluster for them

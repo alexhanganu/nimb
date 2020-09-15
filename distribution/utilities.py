@@ -14,20 +14,6 @@ logging.basicConfig(format='%(asctime)s %(module)s %(levelname)s: %(message)s')
 logger.setLevel(logging.DEBUG)
 
 
-def get_username_password(cluster_name):
-    """
-    given the clustername, get its username and password
-    :param cluster_name: name of the cluster, it must be the same as inside sqlite database and json files. There must be a
-        cluster_name.json
-    :return: username and password if existed, or None, None
-    """
-    clusters = database._get_Table_Data('Clusters', 'all')
-    if not cluster_name in clusters.keys():
-        logger.fatal(cluster_name + " is not exisited in the sqlite dabase. Please input its values")
-        return None, None
-    return clusters[cluster_name]['Username'], clusters[cluster_name]['Password']
-
-
 def is_command_ran_sucessfully(command):
     command = f"""
         {command} > /dev/null
@@ -49,10 +35,11 @@ def is_command_return_okay(command):
         return True
     return False
 
-def makedir_version2(path):
-    if path.startswith("~"):
-        path = os.path.expanduser(path)
-    os.makedirs(path)
+def makedir_ifnot_exist(path2chk):
+    if path2chk.startswith("~"):
+        path = os.path.expanduser(path2chk)
+    if not os.path.exists(path2chk):
+        os.makedirs(path2chk)
 
 def is_ENV_defined(environment_var):
     command = f'if [[ -v {environment_var} ]] ;then echo "YES"; else echo "NO"; fi'
