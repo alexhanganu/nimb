@@ -143,7 +143,7 @@ class ListSubjectHelper:
 
     @staticmethod
     def get_all_subjects_at_remote(PROCESSED_FS_DIR,
-                                   remote_host, remote_username, remote_password,
+                                   remote_id,
                                    extension=["*.zip", "*.gz"]):
         """
         get all subject in SOURCE_SUBJECTS_DIR
@@ -152,7 +152,7 @@ class ListSubjectHelper:
         :return: all files with defined extensions, such as ID.zip or ID.gz,
                 and are not in full path
         """
-        ssh_session = getSSHSession(remote_host, remote_username, remote_password)
+        ssh_session = getSSHSession(remote_id)
         all_subjects = []
         for ext in extension:
             command = f" cd {PROCESSED_FS_DIR}; ls {ext}"

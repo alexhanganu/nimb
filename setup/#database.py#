@@ -10,7 +10,7 @@ provide column names
 from setup.get_credentials_home import _get_credentials_home
 
 TABLES = {
-        'remotes':('id', 'username', 'host', 'password'),
+        'remotes':('id', 'username', 'host', 'Password'),
         }
 
 def __connect_db__():
@@ -36,11 +36,10 @@ def _set_Table_Data(Table, data_requested, _id):
             if data_requested[_id][key] != Table_Data[_id][key]:
                 conn.execute('''UPDATE {0} SET {1} = "{2}" WHERE id = "{3}" '''.format(Table, key, data_requested[_id][key], _id))
     else:
-        print(Table, data_requested, _id)
         data = [_id]
-        for key in data_requested[_id]:
+        for key in TABLES[Table][1:]:
             data.append(data_requested[_id][key])
-        question_marks = ", ".join(["?"] * len(data))
+        question_marks = ", ".join(["?"] * len(data_requested[_id]))
         conn.execute('''INSERT INTO {0} VALUES ({1})'''.format(Table, question_marks), data)
     conn.commit()
     conn.close()
@@ -53,6 +52,9 @@ def _get_Table_Data(Table, _id):
         data = conn.execute('''SELECT * FROM {}'''.format(Table)).fetchall()
     else:
         data = conn.execute('SELECT * FROM {0} WHERE id = "{1}" '.format(Table, _id)).fetchall()
+
+    table_data[_id] = {}
+
     ls_col_names = TABLES[Table][1:]
 
     if len(data)>0:
@@ -65,7 +67,6 @@ def _get_Table_Data(Table, _id):
     else:
         print('parameters for {} are missing'.format(_id))
         _id = 'default'
-        table_data[_id] = {}
         for col in ls_col_names:
             table_data[_id][col] = ''
     conn.close()

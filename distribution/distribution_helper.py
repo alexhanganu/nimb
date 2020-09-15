@@ -26,27 +26,9 @@ class DistributionHelper():
         self.NIMB_HOME        = self.locations["local"]["NIMB_PATHS"]["NIMB_HOME"]
         self.NIMB_tmp         = self.locations["local"]["NIMB_PATHS"]["NIMB_tmp"]
 
-        # self.var = Get_Vars().get_default_vars()
-        self.user_name, self.user_password = self.get_username_password_cluster_from_sqlite()
         # setup folder
         self.setup_folder = "../setup"
         self.git_repo = "https://github.com/alexhanganu/nimb"
-
-    def get_username_password_cluster_from_sqlite(self):
-        """
-        get user name and password from sqlite database
-        :return: username, password in string
-        """
-        try:
-            clusters = database._get_Table_Data('Clusters', 'all')
-            user_name = clusters[list(clusters)[0]]['Username']
-            user_password = clusters[list(clusters)[0]]['Password']
-            if len(user_name) < 1 or len(user_password) < 1:
-                ErrorMessages.password()
-            return user_name, user_password
-        except TypeError:
-            return 'none', 'none'
-
 
 
     def is_setup_vars_folders(self,is_freesurfer_nim=False,
@@ -419,7 +401,7 @@ class DistributionHelper():
         return ls_output.split("\n")[0:-1]
     # @staticmethod
     def get_list_subject_to_be_processed_remote_version(self, SOURCE_SUBJECTS_DIR, PROCESSED_FS_DIR,
-                                                        remote_host, remote_username, remote_password):
+                                                        remote):
         """
         use when SOURCE_SUBJECTS_DIR, PROCESSED_FS_DIR, are at two computers
         1. connect to the remote host
@@ -433,7 +415,7 @@ class DistributionHelper():
         :param PROCESSED_FS_DIR:
         :return: full path of subjects that is not process yet
         """
-        ssh_session = SSHHelper.getSSHSession(remote_host, remote_username, remote_password)
+        ssh_session = SSHHelper.getSSHSession(remote)
         (zip_out, err) = runCommandOverSSH(ssh_session, f" cd {PROCESSED_FS_DIR}; ls *.zip") #
         (gz_out, err) = runCommandOverSSH(ssh_session, f"cd {PROCESSED_FS_DIR}; ls *.gz")
         # at remote
@@ -495,9 +477,8 @@ class DistributionHelper():
                 print("There is no remote server!")
                 return
             # 2. get the first remote cluster
-            for remote_name, remote_add in config_dict['REMOTE'].items(): # get the first only
+            for remote_name in [i for i in config_dict['LOCATION'] if i != 'local']: # get the first only
                 cluster_name = remote_name
-                cluster_address = remote_add
                 break
             # 3. open the {cluster_name}.json
             cluster_config_dict = DistributionHelper.load_configuration_json(f"../setup/{cluster_name}.json")
@@ -506,14 +487,11 @@ class DistributionHelper():
             # 1. get all the subject file path, using exisit helper method
             PROCESSED_FS_DIR = DistributionHelper.get_PROCESSED_FS_DIR(f"../setup/{cluster_name}.json")
             SOURCE_SUBJECTS_DIR = DistributionHelper.get_SOURCE_SUBJECTS_DIR(f"../setup/{cluster_name}.json")
-            user_name, user_password = DistributionHelper.get_username_password_cluster_from_sqlite()
             subjects_to_send = DistributionHelper.get_list_subject_to_be_processed_remote_version(SOURCE_SUBJECTS_DIR=SOURCE_SUBJECTS_DIR,
                                                                                                   PROCESSED_FS_DIR=PROCESSED_FS_DIR,
-                                                                                                  remote_host=cluster_address,
-                                                                                                  remote_username=user_name,
-                                                                                                  remote_password=user_password)
+                                                                                                  cluster_name)
 
-            ssh_session = SSHHelper.getSSHSession(remote_host=cluster_address, remote_username=user_name, remote_password=user_password)
+            ssh_session = SSHHelper.getSSHSession(remote=cluster_name)
             # call upload_multiple_files_to_cluster for them
             SSHHelper.upload_multiple_files_to_cluster(ssh_session=ssh_session,dest_folder=send_path,file_list=subjects_to_send)
             #
@@ -539,7 +517,7 @@ class DistributionHelper():
         raise NotImplementedError
 
     @staticmethod
-    def download_processed_subject(local_destination, remote_path, remote_host, remote_username, remote_password):
+    def download_processed_subject(local_destination, remote_id, remote_path):
         """
         Download from processed folder back to local
         :param local_destination: place to stored downloaded files and folders
@@ -549,7 +527,7 @@ class DistributionHelper():
         :param remote_password:
         :return: None
         """
-        ssh_session = SSHHelper.getSSHSession(remote_host, remote_username, remote_password)
+        ssh_session = SSHHelper.getSSHSession(remote_id)
         stdin, stdout, stderr = ssh_session.exec_command('ls '+path_dst)
         ls_copy = [line.strip('\n') for line in stdout]
         sftp = ssh_session.open_sftp()
@@ -571,6 +549,111 @@ class DistributionHelper():
         clusters = database._get_Table_Data('Clusters', 'all')
         delete_all_running_tasks_on_cluster(
             clusters[0][1], clusters[0][2], clusters[0][5], clusters[0][3])
+
+
+'''
+def _get_list_processed_subjects(DIR):
+    MainFolder = _get_folder('Main')
+    ls = []
+    if path.isfile(MainFolder+'logs/processed_subjects_'+DIR+'.txt'):
+        with open(MainFolder+'logs/processed_subjects_'+DIR+'.txt', 'r') as f:
+            for line in f:
+                ls.append(line.strip('\n'))
+    else:
+        print(MainFolder+'logs/processed_subjects_'+DIR+'.txt is not SETUP yet')
+    return ls
+
+def _update_list_processed_subjects(DIR, dir2read):
+    Processed_Subjects = {}
+    Processed_Subjects[DIR] = []
+    MainFolder = _get_folder('Main')
+    if path.isfile(MainFolder+'logs/processed_subjects_'+DIR+'.txt'):
+        ls = []
+        with open(MainFolder+'logs/processed_subjects_'+DIR+'.txt', 'r') as f:
+                for line in f:
+                    ls.append(line.strip('\n'))
+        Processed_Subjects[DIR] = ls[1:]
+    Processed_Subjects[DIR].append(dir2read)
+    open(MainFolder+'logs/processed_subjects_'+DIR+'.txt','w').close()
+    with open(MainFolder+'logs/processed_subjects_'+DIR+'.txt','a') as f:
+        f.write(DIR+'\n')
+        for subject in Processed_Subjects[DIR]:
+            f.write(subject+'\n')
+
+
+
+def create_lsmiss(lsmiss):
+    MainFolder = _get_folder('Main')
+    for DIR in lsmiss:
+        if path.isfile(MainFolder+'logs/miss_'+DIR+'.txt'):
+            ls = []
+            with open(MainFolder+'logs/miss_'+DIR+'.txt','r') as f:
+                for line in f:
+                    ls.append(line.strip('\n'))
+            for value in lsmiss[DIR]:
+                if value in ls[1:]:
+                    lsmiss[DIR].remove(value)
+            for value in ls[1:]:
+                if value not in lsmiss[DIR]:
+                    lsmiss[DIR].append(value)
+            lsmiss[DIR] = sorted(lsmiss[DIR])
+        open(MainFolder+'logs/miss_'+DIR+'.txt','w').close()
+        with open(MainFolder+'logs/miss_'+DIR+'.txt','a') as f:
+            f.write(DIR+'\n')
+            for subject in lsmiss[DIR]:
+                f.write(subject+'\n')
+
+
+def _get_lsmiss():
+    MainFolder = _get_folder('Main')
+    lsmiss = {}
+    for file in listdir(MainFolder+'logs/'):
+        if 'miss_' in file:
+            ls = []
+            with open(MainFolder+'logs/'+file, 'r') as f:
+                for line in f:
+                    ls.append(line.strip('\n'))
+            lsmiss[ls[0]] = ls[1:]
+    print('lsmiss from get_lsmiss is: ',lsmiss)
+    return lsmiss
+
+def _update_lsmiss(DIR, dir2read):
+    MainFolder = _get_folder('Main')
+    lsmiss = {}
+    if path.isfile(MainFolder+'logs/miss_'+DIR+'.txt'):
+        ls = []
+        with open(MainFolder+'logs/miss_'+DIR+'.txt', 'r') as f:
+            for line in f:
+                ls.append(line.strip('\n'))
+        lsmiss[ls[0]] = ls[1:]
+        lsmiss[DIR].remove(dir2read)
+        if len(lsmiss[DIR])>0:
+            open(MainFolder+'logs/miss_'+DIR+'.txt','w').close()
+            with open(MainFolder+'logs/miss_'+DIR+'.txt','a') as f:
+                f.write(DIR+'\n')
+                for subject in lsmiss[DIR]:
+                    f.write(subject+'\n')
+        else:
+            remove(MainFolder+'logs/miss_'+DIR+'.txt')
+    else:
+        print(MainFolder+'logs/miss_'+DIR+'.txt'+' is not a file')
+
+
+def update_ls_subj2fs(SUBJECT_ID):
+    #subj2fs file is the list of subjects that need to undergo the FS pipeline processing?
+    newlssubj = []
+    MainFolder = _get_folder('Main')
+    if path.isfile(MainFolder+'logs/subj2fs'):
+        lssubj = [line.rstrip('\n') for line in open(MainFolder+'logs/subj2fs')]
+        for subjid in lssubj:
+            if subjid not in newlssubj:
+                newlssubj.append(subjid)
+    newlssubj.append(SUBJECT_ID)
+    open(MainFolder+'logs/subj2fs','w').close()
+    with open(MainFolder+'logs/subj2fs','a') as f:
+        for subj in newlssubj:
+            f.write(subj+'\n')
+'''
 
 # if __name__ == "__main__":
     # distribution = DistributionHelper(projects,

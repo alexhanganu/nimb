@@ -25,10 +25,7 @@
     "group_col"             : "",
     "variables_for_glm"     : ["AGE", "EDUCATION"]
                 },
-"LOCATION" : {
-    "local"  : "local",
-    "remote1": "remote1.remotepath.ca"
-          },
+"LOCATION" : ["local", "remote1"],
 "EXPLANATION" : {
     "SOURCE_SUBJECTS_DIR"    : "location; folder that has the raw MRIs of the subjects in archived or non-archived format",
     "SOURCE_BIDS_DIR"        : "location; path to the folder that, if NOT blank, pipeline will convert SOURCE_SUBJECTS_DIR to BIDS format",

@@ -53,15 +53,13 @@ class DistributionCheckNew(DistributionHelper):
 
             else:# remote version: source is at remote
                 # go to the remote server to check
-                username, password = get_username_password(machine)
                 host = self.projects['LOCATION'][machine]
-                to_be_processed = self.get_list_subject_to_be_processed_remote_version(source_fs, process_fs,remote_username=username,
-                                                                     remote_host=host, remote_password=password)
+                to_be_processed = self.get_list_subject_to_be_processed_remote_version(source_fs, process_fs,remote_id)
         return to_be_processed
 
 if __name__ == "__main__":
     """
-    
+
     """
     # this is to verify verify:
     # {“ppmi”: “SOURCE_SUBJECTS_DIR” : [elm, ‘/home_je/hanganua/database/loni_ppmi/source/mri];
@@ -74,7 +72,7 @@ if __name__ == "__main__":
     - process CHECK_NEW
         - if project is provided by user: check per project
         - else: check for all projects
-            
+
         - per projects: check if ~/nimb/projects.json → project → SOURCE_MR is provided.  ==> start
         - If yes: check that all subjects were processed.
         - If not: get the list of subjects in SOURCE_SUBJECTS_DIR (archived zip or .gz) that didn’t undergo the FreeSurfer (missing in $PROCESSED_FS_DIR), 
