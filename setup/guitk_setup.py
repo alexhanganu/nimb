@@ -1,12 +1,23 @@
-#2020 jan 15
+#20200915
 
-from sys import platform, modules
-import os, threading, time, shutil
-from os import listdir, system, path, makedirs, getcwd, remove, chdir
-
+import threading
 from tkinter import Tk, Frame, ttk, Entry, Label, StringVar, filedialog, simpledialog
+from setup import database
 
-from distribution import database
+class term_setup():
+    def __init__(self, remote):
+        print(remote)
+        clusters = database._get_credentials(remote)
+        if 'defaultClusters' in clusters:
+            self.credentials = self.setupcredentials()
+        else:
+            self.credentials = clusters[remote]
+               
+    def setupcredentials(self):
+        from setup.term_questionnaire import PyInqQuest
+        qa = PyInqQuest('/home/kali/Desktop')
+        return qa
+
 
 class setupcredentials():
     def __init__(self):

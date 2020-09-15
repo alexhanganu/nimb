@@ -147,7 +147,7 @@ def _get_credentials(cname):
     else:
         data = conn.execute('SELECT * FROM Clusters WHERE id = "{}" '.format(cname)).fetchall()
     ls_col_names = __get_table_cols('Clusters')[1:]
-    if len(data)>0:
+    if len(data) > 0:
         for cred in data:
             _id = cred[0]
             ls_credentials = cred[1:]
@@ -155,6 +155,7 @@ def _get_credentials(cname):
             for col in ls_col_names:
                 credentials[_id][col] = ls_credentials[ls_col_names.index(col)]
     else:
+        print('credentials missing')
         _id = 'defaultClusters'
         credentials_default = __get_table_cols(_id)
         credentials[_id] = {}
