@@ -7,7 +7,7 @@ except Exception as e:
     print(e)
 import subprocess
 import os, logging
-from distribution import database
+from setup import database
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(format='%(asctime)s %(module)s %(levelname)s: %(message)s')

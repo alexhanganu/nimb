@@ -32,3 +32,5 @@ class PyInqQuest():
     def ask_input(self):
         return prompt(q_input)
 
+
+
