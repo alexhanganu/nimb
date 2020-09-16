@@ -13,7 +13,7 @@ from pathlib import Path
 environ['TZ'] = 'US/Eastern'
 time.tzset()
 
-class get_cmd_v2():
+class get_cmd():
 
     def __init__(self, process, _id, id_base = '', ls_tps = []):
         if process == 'registration':
@@ -46,26 +46,6 @@ class get_cmd_v2():
         flair_cmd = '{}'.format(''.join([' -FLAIR '+i for i in flair_f])) if flair_f != 'none' else ''
         t2_cmd = '{}'.format(''.join([' -T2 '+i for i in t2_f])) if t2_f != 'none' else ''
         return "recon-all{}".format(''.join([' -i '+i for i in t1_f]))+flair_cmd+t2_cmd+' -s '+_id
-
-
-class Get_cmd:
-
-    def registration(_id):
-        t1_ls_f, flair_ls_f, t2_ls_f = cdb.get_registration_files(_id, db, NIMB_HOME, NIMB_tmp, vars_local["FREESURFER"]["flair_t2_add"])
-        flair_cmd = '{}'.format(''.join([' -FLAIR '+i for i in flair_f])) if flair_f != 'none' else ''
-        t2_cmd = '{}'.format(''.join([' -T2 '+i for i in t2_f])) if t2_f != 'none' else ''
-        return "recon-all{}".format(''.join([' -i '+i for i in t1_f]))+flair_cmd+t2_cmd+' -s '+_id
-    def recbase(_id, ls_tps): return "recon-all -base {0}{1} -all".format(_id, ''.join([' -tp '+i for i in ls_tps]))
-    def reclong(_id, id_base): return "recon-all -long {0} {1} -all".format(_id, id_base)
-#    def recon(_id): return "recon-all -all -s {}".format(_id)
-#    def autorecon1(_id): return "recon-all -autorecon1 -s {}".format(_id)
-#    def autorecon2(_id): return "recon-all -autorecon2 -s {}".format(_id)
-#    def autorecon3(_id): return "recon-all -autorecon3 -s {}".format(_id)
-#    def qcache(_id): return "recon-all -qcache -s {}".format(_id)
-#    def brstem(_id): return 'segmentBS.sh {}'.format(_id) if vars_local["FREESURFER"]["freesurfer_version"]>6 else 'recon-all -s {} -brainstem-structures'.format(_id)
-#    def hip(_id): return 'segmentHA_T1.sh {}'.format(_id) if vars_local["FREESURFER"]["freesurfer_version"]>6 else 'recon-all -s {} -hippocampal-subfields-T1'.format(_id)
-#    def tha(_id): return "segmentThalamicNuclei.sh {}".format(_id)
-#    def masks(_id): return "cd "+path.join(NIMB_HOME,'processing','freesurfer')+"\npython run_masks.py {}".format(_id)
 
 
 def Get_walltime(process):
@@ -144,27 +124,7 @@ def do(process):
         log.info('   '+subjid)
         if len_Running()<= vars_local["PROCESSING"]["max_nr_running_batches"]:
             db[ACTION][process].remove(subjid)
-            job_id = submit_4processing.Submit_task(vars_local, get_cmd_v2(process, subjid).cmd, subjid, process, Get_walltime(process), True, '').job_id
-#            if process == 'registration':
-#                job_id = submit_4processing.Submit_task(vars_local, get_cmd_v2(process, subjid).cmd, subjid, process, Get_walltime(process), True, '').job_id
-#            elif process == 'recon':
-#                job_id = submit_4processing.Submit_task(vars_local, get_cmd_v2(process, subjid).cmd, subjid, process, Get_walltime(process), True, '').job_id
-#            elif process == 'autorecon1':
-#                job_id = submit_4processing.Submit_task(vars_local, get_cmd_v2(process, subjid).cmd, subjid, process, Get_walltime(process), True, '').job_id
-#            elif process == 'autorecon2':
-#                job_id = submit_4processing.Submit_task(vars_local, get_cmd_v2(process, subjid).cmd, subjid, process, Get_walltime(process), True, '').job_id
-#            elif process == 'autorecon3':
-#                job_id = submit_4processing.Submit_task(vars_local, get_cmd_v2(process, subjid).cmd, subjid, process, Get_walltime(process), True, '').job_id
-#            elif process == 'qcache':
-#                job_id = submit_4processing.Submit_task(vars_local, get_cmd_v2(process, subjid).cmd, subjid, process, Get_walltime(process), True, '').job_id
-#            elif process == 'brstem':
-#                job_id = submit_4processing.Submit_task(vars_local, get_cmd_v2(process, subjid).cmd, subjid, process, Get_walltime(process), True, '').job_id
-#            elif process == 'hip':
-#                job_id = submit_4processing.Submit_task(vars_local, get_cmd_v2(process, subjid).cmd, subjid, process, Get_walltime(process), True, '').job_id
-#            elif process == 'tha':
-#                job_id = submit_4processing.Submit_task(vars_local, get_cmd_v2(process, subjid).cmd, subjid, process, Get_walltime(process), True, '').job_id
-#            elif process == 'masks':
-#                job_id = submit_4processing.Submit_task(vars_local, get_cmd_v2(process, subjid).cmd, subjid, process, Get_walltime(process), True, '').job_id
+            job_id = submit_4processing.Submit_task(vars_local, get_cmd(process, subjid).cmd, subjid, process, Get_walltime(process), True, '').job_id
             db['RUNNING_JOBS'][subjid] = job_id
             db['RUNNING'][process].append(subjid)
             try:
@@ -281,8 +241,7 @@ def long_check_groups(_id):
                         for ses in LONG_TPS:
                             long_f = _id+ses+'.long.'+_id+vars_local["FREESURFER"]["base_name"]
                             if long_f not in ls:
-                                job_id = submit_4processing.Submit_task(vars_local, get_cmd_v2('reclong', _id+ses, id_base = _id+vars_local["FREESURFER"]["base_name"]).cmd, _id+ses, 'reclong', Get_walltime('reclong'), True, '').job_id
-#                                job_id = submit_4processing.Submit_task(vars_local, Get_cmd.reclong(_id+ses, _id+vars_local["FREESURFER"]["base_name"]), _id+ses, 'reclong', Get_walltime('reclong'), True, '').job_id
+                                job_id = submit_4processing.Submit_task(vars_local, get_cmd('reclong', _id+ses, id_base = _id+vars_local["FREESURFER"]["base_name"]).cmd, _id+ses, 'reclong', Get_walltime('reclong'), True, '').job_id
                                 db['RUNNING_JOBS'][long_f] = job_id
                                 db['RUNNING']['recon'].append(long_f)
                                 db['LONG_DIRS'][_id].append(long_f)
@@ -317,8 +276,7 @@ def long_check_groups(_id):
                         db['ERROR_QUEUE'][subjid] = str(format(datetime.now()+timedelta(hours=datetime.strptime(Get_walltime(process), '%H:%M:%S').hour), "%Y%m%d_%H%M"))
                         db['PROCESSED']['error_recon'].append(base_f)
             else:
-                job_id = submit_4processing.Submit_task(vars_local, get_cmd_v2('recbase', base_f, ls_tps = All_cross_ids_done).cmd, base_f, 'recbase', Get_walltime('recbase'), True, '').job_id
-#                job_id = submit_4processing.Submit_task(vars_local, Get_cmd.recbase(base_f, All_cross_ids_done), base_f, 'recbase', Get_walltime('recbase'), True, '').job_id
+                job_id = submit_4processing.Submit_task(vars_local, get_cmd('recbase', base_f, ls_tps = All_cross_ids_done).cmd, base_f, 'recbase', Get_walltime('recbase'), True, '').job_id
                 db['RUNNING_JOBS'][base_f] = job_id
                 db['LONG_DIRS'][_id].append(base_f)
                 db['RUNNING']['recon'].append(base_f)
