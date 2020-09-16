@@ -207,11 +207,12 @@ def make_BIDS_structure(d_ses_MR_types):
 def keep_only1_T1(d_subjects):
     for subject in d_subjects:
         for session in d_subjects[subject]:
-            d_subjects[subject][session]['anat']['t1'] = d_subjects[subject][session]['anat']['t1'][:1]
-            if 'flair' in d_subjects[subject][session]['anat']:
-                d_subjects[subject][session]['anat'].pop('flair', None)
-            if 't2' in d_subjects[subject][session]['anat']:
-                d_subjects[subject][session]['anat'].pop('t2', None)
+            if 'anat' in d_subjects[subject][session] and 't1' in d_subjects[subject][session]['anat']:
+                d_subjects[subject][session]['anat']['t1'] = d_subjects[subject][session]['anat']['t1'][:1]
+                if 'flair' in d_subjects[subject][session]['anat']:
+                    d_subjects[subject][session]['anat'].pop('flair', None)
+                if 't2' in d_subjects[subject][session]['anat']:
+                    d_subjects[subject][session]['anat'].pop('t2', None)
     return d_subjects
 
 
@@ -227,6 +228,7 @@ def get_dict_MR_files2process(NIMB_NEW_SUBJECTS, NIMB_HOME, NIMB_tmp, multiple_T
     """
     from .get_mr_params import verify_MRIs_for_similarity
 
+    print("classification of new subjects is running ...")
     f_new_subjects = path.join(NIMB_tmp,'new_subjects.json')
     d_subjects = dict()
     for subject in listdir(NIMB_NEW_SUBJECTS):
