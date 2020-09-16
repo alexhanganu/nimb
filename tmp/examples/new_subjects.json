@@ -1,0 +1,31 @@
+{
+    "sub_52006": {
+        "ses-01": {
+            "anat": {
+                "t1": [
+                    "/home/user/sub_52006/MPRAGE_GRAPPA2/2016-02-03_14_12_51.0/S385568/PPMI_52006_MR_MPRAGE_GRAPPA2_br_raw_20160302122118487_133_S385568_I643398.dcm",
+                    "/home/user/sub_52006/MPRAGE/2016-02-03_14_12_51.0/S385566/PPMI_52006_MR_MPRAGE_br_raw_20160302122117984_48_S385566_I643396.dcm"
+                ],
+                "t2": [
+                    "/home/user/sub_52006/AXIAL_T2_STAR/2016-02-03_14_12_51.0/S385570/PPMI_52006_MR_AXIAL_T2_STAR__br_raw_20160302122119676_28_S385570_I643400.dcm"
+                ],
+                "flair": [
+                    "/home/user/sub_52006/Axial_T2-FLAIR/2016-02-03_14_12_51.0/S385569/PPMI_52006_MR_Axial_T2-FLAIR_br_raw_20160302122119319_17_S385569_I643399.dcm"
+                ]
+            },
+            "func": {
+                "fieldmap": [
+                    "/home/user/sub_52006/Field_mapping/2016-02-03_14_12_51.0/S385562/PPMI_52006_MR_Field_mapping__br_raw_20160302122118421_6_S385562_I643392.dcm"
+                ],
+                "rsfmri": [
+                    "/home/user/sub_52006/Resting_state/2016-02-03_14_18_51.0/S385562/PPMI_52006_MR_Field_mapping__br_raw_20160302122118421_6_S385562_I643392.dcm"
+                ]
+            },
+            "dwi": {
+                "dwi": [
+                    "/home/user/sub_52006/DTI_gated_AC-PC_LINE/2016-02-03_15_00_59.0/S385565/PPMI_52006_MR_DTI_gated_AC-PC_LINE_br_raw_20160302122119478_1_S385565_I643395.dcm"
+                ]
+            }
+        }
+    }
+}

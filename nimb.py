@@ -43,7 +43,7 @@ class NIMB(object):
             self.distribution.ready()
 
         if self.process == 'classify':
-            print('starting')
+            print('checking if ready to classify')
             if not self.distribution.classify_ready():
                 ErrorMessages.error_classify()
                 sys.exit()
