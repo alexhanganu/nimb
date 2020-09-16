@@ -1,0 +1,6 @@
+,id,group,age,mms_score,sex,education
+0,sub_011_ses-1,group1,74,28,1,16
+1,sub_012_ses-1,group1,74,29,1,16
+2,sub_013_ses-1,group2,81,20,1,18
+3,sub_013_ses-2,group1,84,28,2,18
+4,sub_013_ses-3,group2,65,28,1,9
