@@ -121,16 +121,15 @@ def do(process):
     lsd = db[ACTION][process].copy()
 
     for subjid in lsd:
-        log.info('   '+subjid)
         if len_Running()<= vars_local["PROCESSING"]["max_nr_running_batches"]:
             db[ACTION][process].remove(subjid)
             job_id = submit_4processing.Submit_task(vars_local, get_cmd(process, subjid).cmd, subjid, process, Get_walltime(process), True, '').job_id
             db['RUNNING_JOBS'][subjid] = job_id
             db['RUNNING'][process].append(subjid)
             try:
-                log.info('                                   submited id: '+str(job_id))
+                log.info('            {} submited id: {}'.format(subjid, str(job_id)))
             except Exception as e:
-                log.info('        err in do: '+str(e))
+                log.info('        {} err in do: '.format(subjid, str(e)))
     db[ACTION][process].sort()
     cdb.Update_DB(db, NIMB_tmp)
 
@@ -318,25 +317,24 @@ def move_processed_subjects(subject, db_source, new_name):
         shutil.move(file_mrparams, path.join(SUBJECTS_DIR, subject, 'stats'))
     log.info('    '+subject+' copying from '+db_source)
     size_src = sum(f.stat().st_size for f in Path(path.join(SUBJECTS_DIR, subject)).glob('**/*') if f.is_file())
-    if not new_name:
-        shutil.copytree(path.join(SUBJECTS_DIR, subject), path.join(vars_local["NIMB_PATHS"]["NIMB_PROCESSED_FS"], subject))
-        size_dst = sum(f.stat().st_size for f in Path(path.join(vars_local["NIMB_PATHS"]["NIMB_PROCESSED_FS"], subject)).glob('**/*') if f.is_file())
-        if size_src == size_dst:
-            db['PROCESSED'][db_source].remove(subject)
-            cdb.Update_DB(db, NIMB_tmp)
-            log.info('    copied correctly, removing from SUBJECTS_DIR')
-            shutil.rmtree(path.join(SUBJECTS_DIR, subject))
-            if vars_local["PROCESSING"]["archive_processed"] == 1:
-                log.info('        archiving ...')
-                chdir(vars_local["NIMB_PATHS"]["NIMB_PROCESSED_FS"])
-                system('zip -r -q -m '+subject+'.zip '+subject)
-        else:
-            log.info('        ERROR in moving, not moved correctly '+str(size_src)+' '+str(size_dst))
-            shutil.rmtree(path.join(vars_local["NIMB_PATHS"]["NIMB_PROCESSED_FS"], subject))
-    else:
-        log.info('        renaming '+subject+' to '+new_name+', moving to processed error')
-        shutil.move(path.join(SUBJECTS_DIR, subject), path.join(vars_local["NIMB_PATHS"]["NIMB_PROCESSED_FS_error"], new_name))
+    shutil.copytree(path.join(SUBJECTS_DIR, subject), path.join(vars_local["NIMB_PATHS"]["NIMB_PROCESSED_FS"], subject))
+    size_dst = sum(f.stat().st_size for f in Path(path.join(vars_local["NIMB_PATHS"]["NIMB_PROCESSED_FS"], subject)).glob('**/*') if f.is_file())
+    if size_src == size_dst:
         db['PROCESSED'][db_source].remove(subject)
+        cdb.Update_DB(db, NIMB_tmp)
+        log.info('    copied correctly, removing from SUBJECTS_DIR')
+        shutil.rmtree(path.join(SUBJECTS_DIR, subject))
+        if vars_local["PROCESSING"]["archive_processed"] == 1:
+            log.info('        archiving ...')
+            chdir(vars_local["NIMB_PATHS"]["NIMB_PROCESSED_FS"])
+            system('zip -r -q -m '+subject+'.zip '+subject)
+        if new_name:
+            log.info('        renaming '+subject+' to '+new_name+', moving to processed error')
+            shutil.move(path.join(vars_local["NIMB_PATHS"]["NIMB_PROCESSED_FS"], subject+'.zip'),
+                        path.join(vars_local["NIMB_PATHS"]["NIMB_PROCESSED_FS_error"], new_name+'.zip'))
+    else:
+        log.info('        ERROR in moving, not moved correctly '+str(size_src)+' '+str(size_dst))
+        shutil.rmtree(path.join(vars_local["NIMB_PATHS"]["NIMB_PROCESSED_FS"], subject))
     log.info('        moving DONE')
 
 
