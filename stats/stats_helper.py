@@ -1,7 +1,8 @@
+STEP_stats_ttest        = True
 STEP_LinRegModeration   = False
 STEP_Anova_SimpLinReg   = False
 STEP_LogisticRegression = False
-STEP_Laterality         = True
+STEP_Laterality         = False
 STEP_Predict_RF_SKF     = False
 STEP_Predict_RF_LOO     = False
 STEP_get_param_based_db = False
@@ -62,6 +63,14 @@ class RUN_stats():
                                                     varia.get_dir(path.join(self.stats_paths['STATS_HOME'],
                                                                             self.stats_paths['laterality_dir']))).run()
             if group == 'all':
+                # STEP run general stats
+                if STEP_stats_ttest:
+                    from stats_stats import ttest_do
+                    ttest_do(db_processing.join_dfs(df_clin_group, df_with_features),
+                             self.project_vars['group_col'],
+                             self.project_vars['variables_for_glm']+features,
+                             p_thresh = 0.05)
+
                 # STEP run ANOVA and Simple Linear Regression
                 if STEP_Anova_SimpLinReg:
                     print('performing ANOVA Simple Linear Regression for all groups')
