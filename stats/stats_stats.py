@@ -10,7 +10,7 @@ from os import path
 
 
 class ttest_do():
-    def __init__(self, df, group_col, ls_cols, p_thresh = 0.05)
+    def __init__(self, df, group_col, ls_cols, path_save_res, p_thresh = 0.05):
         self.df = df
         self.group_col = group_col
         self.ls_cols = ls_cols
@@ -28,3 +28,7 @@ class ttest_do():
                 res_ttest[col].append(ttest_eq_pop_var[1])
                 res_ttest[col].append(ttest_welch[1])
         return res_ttest
+
+#    def save_res(self, df):
+#        df = db_processing()
+#        df.to_csv(path.join('.csv'))

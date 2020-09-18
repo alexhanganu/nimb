@@ -133,17 +133,11 @@ def compute_linreg_data(df, ls_cols_X, group_param, regression_param):
         d1['Intercept'].append(reg.intercept_[0])
     return d1
 
-def linreg_moderation_results(df_X_linreg, ls_cols_X_atlas, group_param, regression_param, path_dir_s>
+def linreg_moderation_results(df_X_linreg, ls_cols_X_atlas, group_param, regression_param,
+                              path_dir_save_results, group):
     d_result = compute_linreg_data(df_X_linreg,
                                    ls_cols_X_atlas,
                                    group_param,
                                    regression_param)
     df_result = db_processing.create_df_from_dict(d_result)
-    db_processing.save_df(df_result, path.join(path_dir_save_results,'linreg_moderation_'+atlas+'_'+g>
-
-
-
-
-
-
-
+    db_processing.save_df(df_result, path.join(path_dir_save_results,'linreg_moderation_'+group+'.csv'))
