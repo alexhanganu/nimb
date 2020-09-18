@@ -10,13 +10,13 @@ from sklearn.metrics import confusion_matrix, classification_report, roc_curve, 
 
 
 class Logistic_Regression():
-        
+
     def __init__(self, X_scaled, y_labeled, group_col, path_results):
 
         X_train, X_test, y_train, y_test = train_test_split(X_scaled, y_labeled, test_size=0.3, random_state=0)
 
         logreg = LogisticRegression(C=1e5) #(solver='sag')#newton-cg, lbfgs, liblinear, sag, saga
-        logreg.fit(X_train, y_train)      
+        logreg.fit(X_train, y_train)
         y_pred = logreg.predict(X_test)
         print("\nAccuracy of logistic regression classifier on test set: {:.2f}'".format(logreg.score(X_test, y_test))+'\n')
 

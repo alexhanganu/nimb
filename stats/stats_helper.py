@@ -44,20 +44,20 @@ class RUN_stats():
 
 
     def run_stats(self):
-         for group in self.groups+['all',]: #'all' stands for all groups
+         for group in ['all',]:#+self.groups: #'all' stands for all groups
             df_X, y_labeled, X_scaled, df_clin_group = self.get_X_data_per_group_all_groups(group)
-            df_with_features, features, features_rfe_and_rank_df = self.get_df_per_group(group, X_scaled, y_labeled, df_X)
+            df_with_features, features, features_rfe_and_rank_df = self.get_features_df_per_group(group, X_scaled, y_labeled, df_X)
 
             if group == 'all':
                 # STEP run general stats
                 if STEP_stats_ttest:
                     from stats.stats_stats import ttest_do
-                    ttest_res = ttest_do(db_processing.join_dfs(df_clin_group, df_with_features),
+                    ttest_res = ttest_do(db_processing.join_dfs(df_clin_group, df_X),
                              self.project_vars['group_col'],
-                             self.project_vars['variables_for_glm']+features,
+                             self.project_vars['variables_for_glm']+df_X.columns.tolist(),
+                             self.groups,
                              varia.get_dir(path.join(self.stats_paths['STATS_HOME'], group)),
-                             p_thresh = 0.05)
-                    print(ttest_res)
+                             p_thresh = 0.05).res_ttest
 
                 # STEP run ANOVA and Simple Linear Regression
                 if STEP_Anova_SimpLinReg:
@@ -163,7 +163,7 @@ class RUN_stats():
                                      definitions.sys.platform,
                                      time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()))
 
-    def get_df_per_group(self, group, X_scaled, y_labeled, df_X):
+    def get_features_df_per_group(self, group, X_scaled, y_labeled, df_X):
         if self.feature_algo == 'PCA':# using PCA
                 features = predict.get_features_based_on_pca(varia.get_dir(path.join(self.stats_paths['STATS_HOME'], self.stats_paths['features'])),
                                                     self.prediction_vars['pca_threshold'],
