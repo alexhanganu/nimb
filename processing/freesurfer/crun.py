@@ -33,16 +33,16 @@ class get_cmd():
         if process == 'qcache':
             self.cmd = "recon-all -qcache -s {}".format(_id)
         if process == 'brstem':
-            self.cmd = 'segmentBS.sh {}'.format(_id) if vars_local["FREESURFER"]["freesurfer_version"]>6 else 'recon-all -s {} -brainstem-structures'.format(_id)
+            self.cmd = 'segmentBS.sh {}'.format(_id) if vars_freesurfer["freesurfer_version"]>6 else 'recon-all -s {} -brainstem-structures'.format(_id)
         if process == 'hip':
-            self.cmd = 'segmentHA_T1.sh {}'.format(_id) if vars_local["FREESURFER"]["freesurfer_version"]>6 else 'recon-all -s {} -hippocampal-subfields-T1'.format(_id)
+            self.cmd = 'segmentHA_T1.sh {}'.format(_id) if vars_freesurfer["freesurfer_version"]>6 else 'recon-all -s {} -hippocampal-subfields-T1'.format(_id)
         if process == 'tha':
             self.cmd = "segmentThalamicNuclei.sh {}".format(_id)
         if process == 'masks':
             self.cmd = "cd "+path.join(NIMB_HOME,'processing','freesurfer')+"\npython run_masks.py {}".format(_id)
 
     def registration(self, _id):
-        t1_ls_f, flair_ls_f, t2_ls_f = cdb.get_registration_files(_id, db, NIMB_HOME, NIMB_tmp, vars_local["FREESURFER"]["flair_t2_add"])
+        t1_ls_f, flair_ls_f, t2_ls_f = cdb.get_registration_files(_id, db, NIMB_HOME, NIMB_tmp, vars_freesurfer["flair_t2_add"])
         flair_cmd = '{}'.format(''.join([' -FLAIR '+i for i in flair_f])) if flair_f != 'none' else ''
         t2_cmd = '{}'.format(''.join([' -T2 '+i for i in t2_f])) if t2_f != 'none' else ''
         return "recon-all{}".format(''.join([' -i '+i for i in t1_f]))+flair_cmd+t2_cmd+' -s '+_id
@@ -88,17 +88,17 @@ def running(process, scheduler_jobs):
             db[ACTION][process].remove(subjid)
             if subjid in db['RUNNING_JOBS']:
                 db['RUNNING_JOBS'].pop(subjid, None)
-            if vars_local["FREESURFER"]["base_name"] in subjid:
+            if vars_freesurfer["base_name"] in subjid:
                 log.info('    reading '+process+', '+subjid+' subjid is long or base ')
-                if fs_checker.chkIsRunning(SUBJECTS_DIR, subjid) or not fs_checker.checks_from_runfs(SUBJECTS_DIR, 'recon', subjid, vars_local["FREESURFER"]["freesurfer_version"], vars_local["FREESURFER"]["masks"]):
+                if fs_checker.chkIsRunning(SUBJECTS_DIR, subjid) or not fs_checker.checks_from_runfs(SUBJECTS_DIR, 'recon', subjid, vars_freesurfer["freesurfer_version"], vars_freesurfer["masks"]):
                         log.info('    '+subjid+', '+process+' -> ERROR, IsRunning or not all files created')
                         db['ERROR_QUEUE'][subjid] = str(format(datetime.now()+timedelta(hours=datetime.strptime(Get_walltime(process), '%H:%M:%S').hour), "%Y%m%d_%H%M"))
                         db['PROCESSED']['error_recon'].append(subjid)
             else:
-                if not fs_checker.chkIsRunning(SUBJECTS_DIR, subjid) and fs_checker.checks_from_runfs(SUBJECTS_DIR, process, subjid, vars_local["FREESURFER"]["freesurfer_version"], vars_local["FREESURFER"]["masks"]):
+                if not fs_checker.chkIsRunning(SUBJECTS_DIR, subjid) and fs_checker.checks_from_runfs(SUBJECTS_DIR, process, subjid, vars_freesurfer["freesurfer_version"], vars_freesurfer["masks"]):
                     if process != process_order[-1]:
                         next_process = process_order[process_order.index(process)+1]
-                        if not fs_checker.checks_from_runfs(SUBJECTS_DIR, next_process, subjid, vars_local["FREESURFER"]["freesurfer_version"], vars_local["FREESURFER"]["masks"]):
+                        if not fs_checker.checks_from_runfs(SUBJECTS_DIR, next_process, subjid, vars_freesurfer["freesurfer_version"], vars_freesurfer["masks"]):
                             db['DO'][next_process].append(subjid)
                             log.info('    '+subjid+', '+ACTION+' '+process+' -> DO '+next_process)
                         else:
@@ -121,9 +121,9 @@ def do(process):
     lsd = db[ACTION][process].copy()
 
     for subjid in lsd:
-        if len_Running()<= vars_local["PROCESSING"]["max_nr_running_batches"]:
+        if len_Running()<= vars_processing["max_nr_running_batches"]:
             db[ACTION][process].remove(subjid)
-            job_id = submit_4processing.Submit_task(vars_local, get_cmd(process, subjid).cmd, subjid, process, Get_walltime(process), True, '').job_id
+            job_id = Submit_task(vars_local, get_cmd(process, subjid).cmd, subjid, process, Get_walltime(process), True, '').job_id
             db['RUNNING_JOBS'][subjid] = job_id
             db['RUNNING'][process].append(subjid)
             try:
@@ -146,7 +146,7 @@ def check_error(scheduler_jobs, process):
                     log.info('        checking the recon-all-status.log for error for: '+process)
                     fs_err_helper.chkreconf_if_without_error(NIMB_tmp, subjid, SUBJECTS_DIR)
                     log.info('        checking if all files were created for: '+process)
-                    if not fs_checker.checks_from_runfs(SUBJECTS_DIR, process, subjid, vars_local["FREESURFER"]["freesurfer_version"], vars_local["FREESURFER"]["masks"]):
+                    if not fs_checker.checks_from_runfs(SUBJECTS_DIR, process, subjid, vars_freesurfer["freesurfer_version"], vars_freesurfer["masks"]):
                             log.info('            some files were not created and recon-all-status has errors.')
                             fs_error = fs_err_helper.fs_find_error(subjid, SUBJECTS_DIR, NIMB_tmp)
                             solved = False
@@ -180,7 +180,7 @@ def check_error(scheduler_jobs, process):
                                 new_name = 'error_'+process+'_'+subjid
                             if not solved:
                                 log.info('            Excluding '+subjid+' from pipeline')
-                                _id, _ = cdb.get_id_long(subjid, db['LONG_DIRS'], vars_local["FREESURFER"]["base_name"], vars_local["FREESURFER"]["long_name"])
+                                _id, _ = cdb.get_id_long(subjid, db['LONG_DIRS'], vars_freesurfer["base_name"], vars_freesurfer["long_name"])
                                 if _id != 'none':
                                     try:
                                         db['LONG_DIRS'][_id].remove(subjid)
@@ -225,27 +225,27 @@ def check_error(scheduler_jobs, process):
 def long_check_groups(_id):
     ls = db['LONG_DIRS'][_id]
     LONG_TPS = db['LONG_TPS'][_id]
-    if vars_local["FREESURFER"]["DO_LONG"] == 1 and len(LONG_TPS)>1:
+    if vars_freesurfer["DO_LONG"] == 1 and len(LONG_TPS)>1:
         All_cross_ids_done = list()
         for ses in LONG_TPS:
-            if _id+ses in ls and fs_checker.checks_from_runfs(SUBJECTS_DIR, process_order[-1], _id+ses, vars_local["FREESURFER"]["freesurfer_version"], vars_local["FREESURFER"]["masks"]):
+            if _id+ses in ls and fs_checker.checks_from_runfs(SUBJECTS_DIR, process_order[-1], _id+ses, vars_freesurfer["freesurfer_version"], vars_freesurfer["masks"]):
                 All_cross_ids_done.append(_id+ses)
 
         if len(All_cross_ids_done) == len(LONG_TPS):
-            base_f = _id+vars_local["FREESURFER"]["base_name"]
+            base_f = _id+vars_freesurfer["base_name"]
             if base_f in ls:
                 if base_f not in db['RUNNING']['recon'] and base_f not in db['PROCESSED']['error_recon'] and not fs_checker.chkIsRunning(SUBJECTS_DIR, base_f):
-                    if fs_checker.checks_from_runfs(SUBJECTS_DIR, 'recon', base_f, vars_local["FREESURFER"]["freesurfer_version"], vars_local["FREESURFER"]["masks"]):
+                    if fs_checker.checks_from_runfs(SUBJECTS_DIR, 'recon', base_f, vars_freesurfer["freesurfer_version"], vars_freesurfer["masks"]):
                         All_long_ids_done = list()
                         for ses in LONG_TPS:
-                            long_f = _id+ses+'.long.'+_id+vars_local["FREESURFER"]["base_name"]
+                            long_f = _id+ses+'.long.'+_id+vars_freesurfer["base_name"]
                             if long_f not in ls:
-                                job_id = submit_4processing.Submit_task(vars_local, get_cmd('reclong', _id+ses, id_base = _id+vars_local["FREESURFER"]["base_name"]).cmd, _id+ses, 'reclong', Get_walltime('reclong'), True, '').job_id
+                                job_id = Submit_task(vars_local, get_cmd('reclong', _id+ses, id_base = _id+vars_freesurfer["base_name"]).cmd, _id+ses, 'reclong', Get_walltime('reclong'), True, '').job_id
                                 db['RUNNING_JOBS'][long_f] = job_id
                                 db['RUNNING']['recon'].append(long_f)
                                 db['LONG_DIRS'][_id].append(long_f)
-                            elif fs_checker.checks_from_runfs(SUBJECTS_DIR, 'registration',long_f, vars_local["FREESURFER"]["freesurfer_version"], vars_local["FREESURFER"]["masks"]):
-                                if fs_checker.checks_from_runfs(SUBJECTS_DIR, 'recon', long_f, vars_local["FREESURFER"]["freesurfer_version"], vars_local["FREESURFER"]["masks"]):
+                            elif fs_checker.checks_from_runfs(SUBJECTS_DIR, 'registration',long_f, vars_freesurfer["freesurfer_version"], vars_freesurfer["masks"]):
+                                if fs_checker.checks_from_runfs(SUBJECTS_DIR, 'recon', long_f, vars_freesurfer["freesurfer_version"], vars_freesurfer["masks"]):
                                     All_long_ids_done.append(long_f)
                                 else:
                                     log.info(long_f+' moving to error_recon')
@@ -275,19 +275,19 @@ def long_check_groups(_id):
                         db['ERROR_QUEUE'][subjid] = str(format(datetime.now()+timedelta(hours=datetime.strptime(Get_walltime(process), '%H:%M:%S').hour), "%Y%m%d_%H%M"))
                         db['PROCESSED']['error_recon'].append(base_f)
             else:
-                job_id = submit_4processing.Submit_task(vars_local, get_cmd('recbase', base_f, ls_tps = All_cross_ids_done).cmd, base_f, 'recbase', Get_walltime('recbase'), True, '').job_id
+                job_id = Submit_task(vars_local, get_cmd('recbase', base_f, ls_tps = All_cross_ids_done).cmd, base_f, 'recbase', Get_walltime('recbase'), True, '').job_id
                 db['RUNNING_JOBS'][base_f] = job_id
                 db['LONG_DIRS'][_id].append(base_f)
                 db['RUNNING']['recon'].append(base_f)
     else:
         for subjid in ls:
             if subjid not in db["RUNNING_JOBS"]:
-                if fs_checker.checks_from_runfs(SUBJECTS_DIR, 'registration', subjid, vars_local["FREESURFER"]["freesurfer_version"], vars_local["FREESURFER"]["masks"]):
-                   if fs_checker.checks_from_runfs(SUBJECTS_DIR, process_order[-1], subjid, vars_local["FREESURFER"]["freesurfer_version"], vars_local["FREESURFER"]["masks"]):
+                if fs_checker.checks_from_runfs(SUBJECTS_DIR, 'registration', subjid, vars_freesurfer["freesurfer_version"], vars_freesurfer["masks"]):
+                   if fs_checker.checks_from_runfs(SUBJECTS_DIR, process_order[-1], subjid, vars_freesurfer["freesurfer_version"], vars_freesurfer["masks"]):
                         log.info('            last process done '+process_order[-1])
                         if subjid in db['RUNNING'][process_order[-1]]:
                             db['RUNNING'][process_order[-1]].remove(subjid)
-                        if fs_checker.chk_if_all_done(SUBJECTS_DIR, subjid, process_order, NIMB_tmp, vars_local["FREESURFER"]["freesurfer_version"], vars_local["FREESURFER"]["masks"]):
+                        if fs_checker.chk_if_all_done(SUBJECTS_DIR, subjid, process_order, NIMB_tmp, vars_freesurfer["freesurfer_version"], vars_freesurfer["masks"]):
                             log.info('            all processes done, moving to CP2LOCAL')
                             db['PROCESSED']['cp2local'].append(subjid)
                             db['LONG_DIRS'].pop(_id, None)
@@ -317,31 +317,31 @@ def move_processed_subjects(subject, db_source, new_name):
         shutil.move(file_mrparams, path.join(SUBJECTS_DIR, subject, 'stats'))
     log.info('    '+subject+' copying from '+db_source)
     size_src = sum(f.stat().st_size for f in Path(path.join(SUBJECTS_DIR, subject)).glob('**/*') if f.is_file())
-    shutil.copytree(path.join(SUBJECTS_DIR, subject), path.join(vars_local["NIMB_PATHS"]["NIMB_PROCESSED_FS"], subject))
-    size_dst = sum(f.stat().st_size for f in Path(path.join(vars_local["NIMB_PATHS"]["NIMB_PROCESSED_FS"], subject)).glob('**/*') if f.is_file())
+    shutil.copytree(path.join(SUBJECTS_DIR, subject), path.join(vars_nimb["NIMB_PROCESSED_FS"], subject))
+    size_dst = sum(f.stat().st_size for f in Path(path.join(vars_nimb["NIMB_PROCESSED_FS"], subject)).glob('**/*') if f.is_file())
     if size_src == size_dst:
         db['PROCESSED'][db_source].remove(subject)
         cdb.Update_DB(db, NIMB_tmp)
         log.info('    copied correctly, removing from SUBJECTS_DIR')
         shutil.rmtree(path.join(SUBJECTS_DIR, subject))
-        if vars_local["PROCESSING"]["archive_processed"] == 1:
+        if vars_processing["archive_processed"] == 1:
             log.info('        archiving ...')
-            chdir(vars_local["NIMB_PATHS"]["NIMB_PROCESSED_FS"])
+            chdir(vars_nimb["NIMB_PROCESSED_FS"])
             system('zip -r -q -m '+subject+'.zip '+subject)
         if new_name:
             log.info('        renaming '+subject+' to '+new_name+', moving to processed error')
-            shutil.move(path.join(vars_local["NIMB_PATHS"]["NIMB_PROCESSED_FS"], subject+'.zip'),
-                        path.join(vars_local["NIMB_PATHS"]["NIMB_PROCESSED_FS_error"], new_name+'.zip'))
+            shutil.move(path.join(vars_nimb["NIMB_PROCESSED_FS"], subject+'.zip'),
+                        path.join(vars_nimb["NIMB_PROCESSED_FS_error"], new_name+'.zip'))
     else:
         log.info('        ERROR in moving, not moved correctly '+str(size_src)+' '+str(size_dst))
-        shutil.rmtree(path.join(vars_local["NIMB_PATHS"]["NIMB_PROCESSED_FS"], subject))
+        shutil.rmtree(path.join(vars_nimb["NIMB_PROCESSED_FS"], subject))
     log.info('        moving DONE')
 
 
 
 def loop_run():
     cdb.Update_DB(db, NIMB_tmp)
-    scheduler_jobs = submit_4processing.get_jobs_status(vars_local["USER"]["user"])
+    scheduler_jobs = get_jobs_status(vars_local["USER"]["user"])
 
     for process in process_order[::-1]:
         if len(db['RUNNING'][process])>0:
@@ -388,8 +388,8 @@ def  len_Running():
 def Count_TimeSleep():
     time2sleep = 600 # 10 minutes
     len_all_running_jobs = len_Running()
-    log.info('running: '+str(len_all_running_jobs)+' max: '+str(vars_local["PROCESSING"]["max_nr_running_batches"]))
-    if len_all_running_jobs >= vars_local["PROCESSING"]["max_nr_running_batches"]:
+    log.info('running: '+str(len_all_running_jobs)+' max: '+str(vars_processing["max_nr_running_batches"]))
+    if len_all_running_jobs >= vars_processing["max_nr_running_batches"]:
         time2sleep = 1800 # 30 minutes
     return time2sleep
 
@@ -398,11 +398,15 @@ def run(varslocal):
 
     global vars_local, NIMB_HOME, NIMB_tmp, SUBJECTS_DIR, max_walltime, process_order, log, db
     vars_local       = varslocal
-    NIMB_HOME        = vars_local["NIMB_PATHS"]["NIMB_HOME"]
-    NIMB_tmp         = vars_local["NIMB_PATHS"]["NIMB_tmp"]
-    max_walltime     = vars_local["PROCESSING"]["max_walltime"]
-    SUBJECTS_DIR     = vars_local["FREESURFER"]["FS_SUBJECTS_DIR"]
-    process_order    = vars_local["FREESURFER"]["process_order"]
+    vars_freesurfer  = vars_local["FREESURFER"]
+    vars_processing  = vars_local["PROCESSING"]
+    vars_nimb        = vars_local["NIMB_PATHS"]
+
+    NIMB_HOME        = vars_nimb["NIMB_HOME"]
+    NIMB_tmp         = vars_nimb["NIMB_tmp"]
+    max_walltime     = vars_processing["max_walltime"]
+    SUBJECTS_DIR     = vars_freesurfer["FS_SUBJECTS_DIR"]
+    process_order    = vars_freesurfer["process_order"]
 
     log = logging.getLogger(__name__)
 
@@ -417,22 +421,22 @@ def run(varslocal):
     db = cdb.Get_DB(NIMB_HOME, NIMB_tmp, process_order)
 
     log.info('NEW SUBJECTS searching:')
-    db = cdb.Update_DB_new_subjects_and_SUBJECTS_DIR(NIMB_tmp, SUBJECTS_DIR,db, process_order, vars_local["FREESURFER"]["base_name"], vars_local["FREESURFER"]["long_name"], vars_local["FREESURFER"]["freesurfer_version"], vars_local["FREESURFER"]["masks"])
+    db = cdb.Update_DB_new_subjects_and_SUBJECTS_DIR(NIMB_tmp, SUBJECTS_DIR,db, process_order, vars_freesurfer["base_name"], vars_freesurfer["long_name"], vars_freesurfer["freesurfer_version"], vars_freesurfer["masks"])
     cdb.Update_DB(db, NIMB_tmp)
     active_subjects = check_active_tasks(db)
 
     # extracting 40 minutes from the maximum time for the batch to run
     # since it is expected that less then 35 minutes will be required for the pipeline to perform all the steps
     # while the batch is running, and start new batch
-    max_batch_running = time.strftime('%H:%M:%S',time.localtime(time.mktime(time.strptime(vars_local["PROCESSING"]["batch_walltime"],"%H:%M:%S"))-2400))
+    max_batch_running = time.strftime('%H:%M:%S',time.localtime(time.mktime(time.strptime(vars_processing["batch_walltime"],"%H:%M:%S"))-2400))
 
     while active_subjects >0 and time.strftime("%H:%M:%S",time.gmtime(time_elapsed)) < max_batch_running:
         count_run += 1
         log.info('restarting run, '+str(count_run))
-        log.info('elapsed time: '+time.strftime("%H:%M",time.gmtime(time_elapsed))+' max walltime: '+vars_local["PROCESSING"]["batch_walltime"][:-6])
+        log.info('elapsed time: '+time.strftime("%H:%M",time.gmtime(time_elapsed))+' max walltime: '+vars_processing["batch_walltime"][:-6])
         if count_run % 5 == 0:
             log.info('NEW SUBJECTS searching:')
-            db = cdb.Update_DB_new_subjects_and_SUBJECTS_DIR(NIMB_tmp, SUBJECTS_DIR, db, process_order, vars_local["FREESURFER"]["base_name"], vars_local["FREESURFER"]["long_name"], vars_local["FREESURFER"]["freesurfer_version"], vars_local["FREESURFER"]["masks"])
+            db = cdb.Update_DB_new_subjects_and_SUBJECTS_DIR(NIMB_tmp, SUBJECTS_DIR, db, process_order, vars_freesurfer["base_name"], vars_freesurfer["long_name"], vars_freesurfer["freesurfer_version"], vars_freesurfer["masks"])
             cdb.Update_DB(db, NIMB_tmp)
         loop_run()
 
@@ -454,29 +458,30 @@ def run(varslocal):
         log.info('ALL TASKS FINISHED')
     else:
         log.info('Sending new batch to scheduler')
-        import submit_4processing
-        submit_4processing.Submit_task(vars_local,
-                                    vars_local['PROCESSING']["python3_load_cmd"]+'\n'+vars_local['PROCESSING']["python3_run_cmd"]+' crun.py',
-                                    'nimb','run', vars_local['PROCESSING']["batch_walltime"],
-                                    False, 'cd '+path.join(vars_local["NIMB_PATHS"]["NIMB_HOME"], 'processing', 'freesurfer'))
+        Submit_task(vars_local,
+                    vars_processing["python3_load_cmd"]+'\n'+vars_processing["python3_run_cmd"]+' crun.py',
+                    'nimb','run', vars_processing["batch_walltime"],
+                    False, 'cd '+path.join(NIMB_HOME, 'processing', 'freesurfer'))
 
 
 
 
 if __name__ == "__main__":
 
-    import sys
     from pathlib import Path
+    import sys
 
     file = Path(__file__).resolve()
     parent, top = file.parent, file.parents[2]
     sys.path.append(str(top))
 
-    from distribution.logger import Log
-    from processing import submit_4processing
     from setup.get_vars import Get_Vars
     getvars = Get_Vars()
     vars_local = getvars.location_vars['local']
+
+    from processing.schedule_helper import Submit_task, get_jobs_status
+    from distribution.logger import Log
     Log(vars_local['NIMB_PATHS']['NIMB_tmp'])
+
     run(vars_local)
 
