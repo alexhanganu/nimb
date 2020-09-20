@@ -19,7 +19,6 @@ import seaborn as sns
 from os import listdir, path, mkdir
 
 def Make_plot_group_difference(data_groups_anova, col, measurement, structure, PATH_plots_groups, group_col, groups):
-    # groups = _GET_Groups(data_groups_anova, group_col)
     df = pd.DataFrame({'Groupe':data_groups_anova[group_col],\
                   groups[0]:data_groups_anova[data_groups_anova[group_col] == groups[0]][col],\
                   groups[1]:data_groups_anova[data_groups_anova[group_col] == groups[1]][col]})
