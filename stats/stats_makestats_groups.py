@@ -727,20 +727,6 @@ def Make_csv_results(model,parameter,measurement):
     d[parameter] = '%.4f'%res.x
     d['vs_'+parameter] = str('%.4f'%posthoc1min1.pvalue)
     return d
-def Compute_ttest_for_col(col):
-    sig = False
-    
-    res_ttest_sig = {}
-    group1 = data_groups_anova[data_groups_anova['Groupe'] == group1][col]
-    group2 = data_groups_anova[data_groups_anova['Groupe'] == group2][col]
-    ttest_eq_pop_var = stats.ttest_ind(group1, group2, equal_var=True)
-    #ttest_welch = stats.ttest_ind(group1, group2, equal_var=False)
-    if ttest_eq_pop_var[1] < 0.05:
-        #res_ttest_sig[col] = []
-        #res_ttest_sig[col].append(ttest_eq_pop_var[1])
-        #res_ttest_sig[col].append(ttest_welch[1])
-        sig = True
-    return sig
 def _GET_Groups(df, group_col):
     groups = []
     for val in df[group_col]:

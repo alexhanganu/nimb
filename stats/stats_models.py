@@ -85,24 +85,6 @@ class ANOVA_do():
     def save_results(self, df, path2save):
         df.to_csv(path2save)
 
-    #res_ttest_sig = self.compute_ttest_for_col(col)
-
-    def compute_ttest_for_col(self, col):
-        from scipy import stats
-        sig = False
-        res_ttest_sig = {}
-        group1 = data_groups_anova[data_groups_anova['Groupe'] == group1][col]
-        group2 = data_groups_anova[data_groups_anova['Groupe'] == group2][col]
-        ttest_eq_pop_var = stats.ttest_ind(group1, group2, equal_var=True)
-        #ttest_welch = stats.ttest_ind(group1, group2, equal_var=False)
-        if ttest_eq_pop_var[1] < 0.05:
-            #res_ttest_sig[col] = []
-            #res_ttest_sig[col].append(ttest_eq_pop_var[1])
-            #res_ttest_sig[col].append(ttest_welch[1])
-            sig = True
-        return sig
-
-
 
 def get_main_dict(group_param, regression_param):
     d = {}

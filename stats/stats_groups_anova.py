@@ -41,27 +41,6 @@ def Make_Plot_Regression(data_groups_anova, col, parameter,model, measurement, s
     plt.close()
 
 
-def Compute_ttest_for_col(col):
-    sig = False
-    
-    res_ttest_sig = {}
-    group1 = data_groups_anova[data_groups_anova['Groupe'] == group1][col]
-    group2 = data_groups_anova[data_groups_anova['Groupe'] == group2][col]
-    ttest_eq_pop_var = stats.ttest_ind(group1, group2, equal_var=True)
-    #ttest_welch = stats.ttest_ind(group1, group2, equal_var=False)
-    if ttest_eq_pop_var[1] < 0.05:
-        #res_ttest_sig[col] = []
-        #res_ttest_sig[col].append(ttest_eq_pop_var[1])
-        #res_ttest_sig[col].append(ttest_welch[1])
-        sig = True
-    return sig
-# def _GET_Groups(df, group_col):
-    # groups = []
-    # for val in df[group_col]:
-        # if val not in groups:
-            # groups.append(val)
-    # return groups
-
 def RUN_GroupAnalysis_ANOVA_SimpleLinearRegression(df, 
                                                     groups, 
                                                     PARAMETERS_y, 
@@ -82,19 +61,6 @@ def RUN_GroupAnalysis_ANOVA_SimpleLinearRegression(df,
     '''
     ls_meas = get_names_of_measurements()
     ls_struct = get_names_of_structures()
-    columns_main_DK_order = ('VolSeg','VolL_DK', 'VolR_DK', 'ThickL_DK', 'ThickR_DK', 'AreaL_DK', 'AreaR_DK', 'CurvL_DK', 'CurvR_DK', 
-                     'NumVertL_DK','NumVertR_DK','FoldIndL_DK','FoldIndR_DK', 'CurvIndL_DK', 'CurvIndR_DK',
-                     'CurvGausL_DK','CurvGausR_DK', 'VolSegWM_DK',
-                     'ThickStdL_DS',  'ThickStdR_DS', 'eTIV')
-    columns_main_DS_order = ('VolL_DS', 'VolR_DS','ThickL_DS', 'ThickR_DS', 'AreaL_DS', 'AreaR_DS', 'CurvL_DS', 'CurvR_DS', 
-                     'NumVertL_DS', 'NumVertR_DS', 'FoldIndL_DS','FoldIndR_DS','CurvIndL_DS','CurvIndR_DS',  
-                     'CurvGausL_DS','CurvGausR_DS',
-                      'ThickStdL_DS',  'ThickStdR_DS',)
-    columns_secondary_order = ('VolSegWM_DK','VolSegNVoxels', 'VolSegnormMean', 'VolSegnormStdDev', 'VolSegnormMin',
-                     'NumVertL_DS', 'ThickStdL_DS', 'CurvIndL_DS', 'FoldIndL_DS', 'NumVertR_DS', 'ThickStdR_DS',
-                     'CurvGausR_DS', 'CurvIndR_DS', 'FoldIndR_DS', 'VolSegWMNVoxels_DK', 'VolSegWMnormMean_DK',
-                     'VolSegWMnormStdDev_DK', 'VolSegWMnormMin_DK', 'VolSegWMnormMax_DK', 'VolSegWMnormRange_DK')
-
 
     for PARAMETER_y in PARAMETERS_y:
         PATH_plots_regression = PATH2save+'/'+str(PARAMETER_y)+'_regression_pca'
