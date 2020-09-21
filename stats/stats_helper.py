@@ -1,6 +1,7 @@
-STEP_stats_ttest        = True
+STEP_stats_ttest        = False
+STEP_Anova              = True
 STEP_LinRegModeration   = False
-STEP_Anova_SimpLinReg   = False
+STEP_SimpLinReg         = False
 STEP_LogisticRegression = False
 STEP_Laterality         = False
 STEP_Predict            = False
@@ -60,9 +61,22 @@ class RUN_stats():
                              p_thresh = 0.05).res_ttest
 
                 # STEP run ANOVA and Simple Linear Regression
-                if STEP_Anova_SimpLinReg:
+                if STEP_Anova:
+                    from stats.stats_models import ANOVA_do
+                    print('performing ANOVA')
+                    sig_cols = ANOVA_do(db_processing.join_dfs(df_clin_group, df_with_features),
+                                       self.project_vars['variables_for_glm'], features,
+                                       varia.get_dir(path.join(self.stats_paths['STATS_HOME'], self.stats_paths['anova'])),
+                                       p_thresh = 0.05, intercept_thresh = 0.05).sig_cols
+                    print(sig_cols)
+                if STEP_SimpLinReg:
+                    if STEP_Anova:
+                        cols = sig_cols
+                        print('performing Simple Linear Regression based on ANOVA significant columns')
+                    else:
+                        cols = features
+                        print('performing Simple Linear Regression based on Feature Selector (PCA or RFE) results')
                     from stats.stats_groups_anova import RUN_GroupAnalysis_ANOVA_SimpleLinearRegression
-                    print('performing ANOVA Simple Linear Regression for all groups')
                     RUN_GroupAnalysis_ANOVA_SimpleLinearRegression(db_processing.join_dfs(df_clin_group, df_with_features),
                                                             groups,
                                                             self.project_vars['variables_for_glm'],

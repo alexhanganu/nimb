@@ -50,22 +50,26 @@ class ANOVA_do():
         self.params_y = params_y
         self.ls_cols4anova = ls_cols4anova
         self.sig_cols = dict()
+        self.run_anova(p_thresh, intercept_thresh, path2save)
 
-    def run_anova(self):
+    def run_anova(self, p_thresh, intercept_thresh, path2save):
         for param_y in self.params_y:
-            self.sig_cols[param_y] = dict()
             x = np.array(self.df[param_y])
-            df_result = self.get_new_df(param_y)
-            df_result_list = self.get_new_df(param_y)
+            df_result = db_processing.get_clean_df()
+            df_result_list = df_result.copy()
+            df_result[param_y] = ''
+            df_result_list[param_y] = ''
             ix = 1
             ixx = 1
             for col in self.ls_cols4anova:
-                print(col, '    left to analyse:',len(self.ls_cols4anova[self.ls_cols4anova.index(col):]),'\n')
-                y = np.array(df[col])
+                print('{}    left to analyse: {}'.format(col, len(self.ls_cols4anova[self.ls_cols4anova.index(col):])))
+                y = np.array(self.df[col])
                 data_tmp = pd.DataFrame({'x':x,col:y})
                 model = ols(col+" ~ x", data_tmp).fit()
                 if model.pvalues.Intercept < p_thresh and model.pvalues.x < intercept_thresh:
                     measurement, structure = get_structure_measurement(col, self.ls_meas, self.ls_struct)
+                    if param_y not in self.sig_cols:
+                        self.sig_cols[param_y] = dict()
                     self.sig_cols[param_y][col] = model
                     df_result_list = self.populate_df(df_result_list, ixx, {param_y: structure, 'measure': measurement, 'pvalue': '%.4f'%model.pvalues.x})
                     if structure not in df_result[param_y].tolist():
@@ -74,16 +78,13 @@ class ANOVA_do():
                     else:
                         df_result = self.populate_df(df_result, df_result[param_y].tolist().index(structure), {measurement: '%.4f'%model.pvalues.x})
                     ixx += 1
-        self.save_df(self, df_result_list, path.join(self.path2save, 'anova_per_significance_'+param_y+'.csv'))
-        self.save_df(self, df_result, path.join(self.path2save, 'anova_per_structure_'+param_y+'.csv'))
+        db_processing.save_df_tocsv(df_result_list, path.join(path2save, 'anova_per_significance_'+param_y+'.csv'))
+        db_processing.save_df_tocsv(df_result, path.join(path2save, 'anova_per_structure_'+param_y+'.csv'))
 
     def populate_df(self, df, idx, cols_vals):
         for col in cols_vals:
             df.at[idx, col] = cols_vals[col]
         return df
-
-    def save_results(self, df, path2save):
-        df.to_csv(path2save)
 
 
 def get_main_dict(group_param, regression_param):
