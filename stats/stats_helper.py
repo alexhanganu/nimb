@@ -1,15 +1,3 @@
-STEP_stats_ttest        = False
-STEP_Anova              = True
-STEP_LinRegModeration   = False
-STEP_SimpLinReg         = False
-STEP_LogisticRegression = False
-STEP_Laterality         = False
-STEP_Predict            = False
-STEP_Predict_RF_SKF     = False
-STEP_Predict_RF_LOO     = False
-STEP_get_param_based_db = False
-
-
 from os import environ, path, chdir, system
 import sys
 import time
@@ -43,7 +31,17 @@ class RUN_stats():
 
         self.get_tables()
 
-
+        self.STEP_stats_ttest        = False
+        self.STEP_Anova              = True
+        self.STEP_SimpLinReg         = True # requires Anova to be True
+        self.STEP_LinRegModeration   = False
+        self.STEP_LogisticRegression = False
+        self.STEP_Laterality         = False
+        self.STEP_Predict            = False
+        self.STEP_Predict_RF_SKF     = False
+        self.STEP_Predict_RF_LOO     = False
+        self.STEP_get_param_based_db = False
+        
     def run_stats(self):
          for group in ['all',]:#+self.groups: #'all' stands for all groups
             df_X, y_labeled, X_scaled, df_clin_group = self.get_X_data_per_group_all_groups(group)
@@ -51,7 +49,7 @@ class RUN_stats():
 
             if group == 'all':
                 # STEP run general stats
-                if STEP_stats_ttest:
+                if self.STEP_stats_ttest:
                     from stats.stats_stats import ttest_do
                     ttest_res = ttest_do(db_processing.join_dfs(df_clin_group, df_X),
                              self.project_vars['group_col'],
@@ -61,40 +59,43 @@ class RUN_stats():
                              p_thresh = 0.05).res_ttest
 
                 # STEP run ANOVA and Simple Linear Regression
-                if STEP_Anova:
+                if self.STEP_Anova:
                     from stats.stats_models import ANOVA_do
                     print('performing ANOVA')
                     sig_cols = ANOVA_do(db_processing.join_dfs(df_clin_group, df_with_features),
                                        self.project_vars['variables_for_glm'], features,
-                                       varia.get_dir(path.join(self.stats_paths['STATS_HOME'], self.stats_paths['anova'])),
+                                       varia.get_dir(self.stats_paths['anova']),
                                        p_thresh = 0.05, intercept_thresh = 0.05).sig_cols
                     print(sig_cols)
-                if STEP_SimpLinReg:
-                    if STEP_Anova:
-                        cols = sig_cols
+                    if self.STEP_SimpLinReg:
                         print('performing Simple Linear Regression based on ANOVA significant columns')
-                    else:
-                        cols = features
-                        print('performing Simple Linear Regression based on Feature Selector (PCA or RFE) results')
-                    from stats.stats_groups_anova import RUN_GroupAnalysis_ANOVA_SimpleLinearRegression
-                    RUN_GroupAnalysis_ANOVA_SimpleLinearRegression(db_processing.join_dfs(df_clin_group, df_with_features),
-                                                            groups,
-                                                            self.project_vars['variables_for_glm'],
-                                                            other_params,
-                                                            varia.get_dir(path.join(self.stats_paths['STATS_HOME'], self.stats_paths['anova']+'_'+group)),
-                                                            self.project_vars['group_col'],
-                                                            features)
+                        from stats.plotting import Make_Plot_Regression
+                        Make_Plot_Regression(db_processing.join_dfs(df_clin_group, df_with_features),
+                                             sig_cols, self.project_vars['group_col'],
+                                             varia.get_dir(self.stats_paths['simp_lin_reg_dir']))
+                        Make_plot_group_difference(db_processing.join_dfs(df_clin_group, df_with_features),
+                                                   sig_cols, self.project_vars['group_col'], self.groups,
+                                                   varia.get_dir(self.stats_paths['anova']))
+
+#                    from stats.stats_groups_anova import RUN_GroupAnalysis_ANOVA_SimpleLinearRegression
+#                    RUN_GroupAnalysis_ANOVA_SimpleLinearRegression(db_processing.join_dfs(df_clin_group, df_with_features),
+#                                                            groups,
+#                                                            self.project_vars['variables_for_glm'],
+#                                                            other_params,
+#                                                            varia.get_dir(path.join(self.stats_paths['STATS_HOME'], self.stats_paths['anova']+'_'+group)),
+#                                                            self.project_vars['group_col'],
+#                                                            features)
 
                 # STEP run ANOVA and Simple Logistic Regression
-                if STEP_LogisticRegression:
+                if self.STEP_LogisticRegression:
                     from stats import stats_LogisticRegression
                     print('performing Logistic Regression for all groups')
                     stats_LogisticRegression.Logistic_Regression(X_scaled, y_labeled, self.project_vars['group_col'],
                                                         varia.get_dir(path.join(self.stats_paths['STATS_HOME'], self.stats_paths['logistic_regression_dir']+'_'+group)))
 
-                if STEP_Predict:
+                if self.STEP_Predict:
                     # STEP run Prediction RF SKF
-                    if STEP_Predict_RF_SKF:
+                    if self.STEP_Predict_RF_SKF:
                         print('    performing RF SKF Prediction for all groups')
                         df_X_scaled = db_processing.create_df(X_scaled, index_col=range(X_scaled.shape[0]), cols=self.ls_cols_X_atlas)
                         accuracy, best_estimator, average_score_list, _ = predict.SKF_algorithm(
@@ -105,7 +106,7 @@ class RUN_stats():
                         # print("prediction accuracy computed with RF and SKF based on RFE features is: ",accuracy)
 
                     # STEP run Prediction RF LOO
-                    if STEP_Predict_RF_LOO:
+                    if self.STEP_Predict_RF_LOO:
                         print('performing RF Leave-One_out Prediction for all groups')
                         df_X_scaled = db_processing.create_df(X_scaled, index_col=range(X_scaled.shape[0]), cols=self.ls_cols_X_atlas)
                         accuracy, best_estimator, average_score_list, _ = predict.LOO_algorithm(
@@ -117,7 +118,7 @@ class RUN_stats():
 
             else:
                 # STEP run Linear Regression Moderation
-                if STEP_LinRegModeration:
+                if self.STEP_LinRegModeration:
                     from stats import stats_models
                     print('performing Linear Regression Moderation analysis')
                     stats_models.linreg_moderation_results(
@@ -128,7 +129,7 @@ class RUN_stats():
                             group)
 
                 # STEP run Laterality
-                if STEP_Laterality:
+                if self.STEP_Laterality:
                     from stats import stats_laterality
                     print('performing Laterality analysis')
                     lhrh_feat_d = stats_laterality.RReplace(features).contralateral_features

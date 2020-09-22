@@ -28,6 +28,8 @@ Repeated measures Anova using least squares regression
 The full model regression residual sum of squares is used to compare with the reduced model for calculating the within-subject effect sum of squares [1].
 Currently, only fully balanced within-subject designs are supported. Calculation of between-subject effects and corrections for violation of sphericity are not yet implemented.
 '''
+# check that "results per structure" have the same structures as in the "results" file
+
 # last update: 2020-09-14
 # linear regression on 2 variables (moderation analysis): Lynn Valeyry Verty, Alex Hanganu
 
@@ -70,7 +72,7 @@ class ANOVA_do():
                     measurement, structure = get_structure_measurement(col, self.ls_meas, self.ls_struct)
                     if param_y not in self.sig_cols:
                         self.sig_cols[param_y] = dict()
-                    self.sig_cols[param_y][col] = model
+                    self.sig_cols[param_y][col] = {'pvalues':model.pvalues.x, 'intercept': model.pvalues.Intercept, 'meas': measurement, 'struct': structure}
                     df_result_list = self.populate_df(df_result_list, ixx, {param_y: structure, 'measure': measurement, 'pvalue': '%.4f'%model.pvalues.x})
                     if structure not in df_result[param_y].tolist():
                         df_result = self.populate_df(df_result, ix, {param_y: structure, measurement: '%.4f'%model.pvalues.x})

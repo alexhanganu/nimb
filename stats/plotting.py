@@ -24,23 +24,30 @@ def plot_features(df): #written by Lynn Valeyry Verty, adapted by Alex Hanganu
     plt.title('All Parameters', loc='center')
     plt.show()
 
-def Make_plot_group_difference(data_groups_anova, col, measurement, structure, PATH_plots_groups, group_col, groups):
-    df = pd.DataFrame({'Groupe':data_groups_anova[group_col],\
-                  groups[0]:data_groups_anova[data_groups_anova[group_col] == groups[0]][col],\
-                  groups[1]:data_groups_anova[data_groups_anova[group_col] == groups[1]][col]})
-    df = df[['Groupe',groups[0],groups[1]]]
-    dd=pd.melt(df,id_vars=['Groupe'],value_vars=[groups[0],groups[1]],var_name=col)
-    group_plot = sns.boxplot(x='Groupe',y='value',data=dd,hue=col)
-    group_plot.figure.savefig(PATH_plots_groups+'/'+structure+'_'+measurement)
-    plt.close()
+def Make_plot_group_difference(df, param_feat, group_col, groups, PATH_plots_groups):
+    for param_y in param_features:
+        for feat in param_features[param_y]:
+            df_group = pd.DataFrame({'group':df[group_col],\
+                  groups[0]:df[df[group_col] == groups[0]][feat],\
+                  groups[1]:df[df[group_col] == groups[1]][feat]})
+            df_2 = df_group[['group', groups[0], groups[1]]]
+            dd=pd.melt(df_2, id_vars=['group'], value_vars=[groups[0], groups[1]], var_name=feat)
+            group_plot = sns.boxplot(x='group', y='value', data=dd, hue=feat)
+            group_plot.figure.savefig(path.join(PATH_plots_groups,'{}_{}.png'.format(param_features[param_y][feat]['struct'], param_features[param_y][feat]['meas'])))
+            plt.close()
 
-def Make_Plot_Regression(data_groups_anova, col, parameter,model, measurement, structure, PATH_plots_regression, group_col):
-    df_plot = pd.DataFrame({
-        'Groupe':np.array(data_groups_anova[group_col]),
-        parameter:np.array(data_groups_anova[parameter]),
-        col:np.array(data_groups_anova[col])})
-    sns_plot = sns.lmplot(x=parameter, y=col,hue='Groupe', data=df_plot)#, robust=True
-    axes = sns_plot.axes.flatten()
-    axes[0].set_title('Groupe diff. p='+str('%.4f'%model.pvalues.x)+'; intercept='+str('%.4f'%model.pvalues.Intercept))
-    sns_plot.savefig(PATH_plots_regression+'/'+structure+'_'+measurement+'.png')
-    plt.close()
+def Make_Plot_Regression(df, param_features, group_col,
+                         PATH_plots_regression):
+
+    for param_y in param_features:
+        for feat in param_features[param_y]:
+            df_plot = pd.DataFrame({
+                'group':np.array(df[group_col]),
+                parameter:np.array(df[param_y]),
+                col:np.array(df[col])})
+            sns_plot = sns.lmplot(x=parameter, y=col, hue='group', data=df_plot)#, robust=True
+            axes = sns_plot.axes.flatten()
+            axes[0].set_title('Group diff. p='+str('%.4f'%param_features[param_y][feat]['pvalues'])+'; intercept='+str('%.4f'%param_features[param_y][feat]['intercept']))
+        #    axes[0].set_title('Group diff. p='+str('%.4f'%model.pvalues.x)+'; intercept='+str('%.4f'%model.pvalues.Intercept))
+            sns_plot.savefig(path.join(PATH_plots_regression, '{}_{}_{}.png'.format(param_y,param_features[param_y][feat]['struct'], param_features[param_y][feat]['meas'])))
+            plt.close()

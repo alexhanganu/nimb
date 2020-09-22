@@ -40,52 +40,32 @@ def Make_Plot_Regression(data_groups_anova, col, parameter,model, measurement, s
     plt.close()
 
 
-def RUN_GroupAnalysis_ANOVA_SimpleLinearRegression(df, 
-                                                    groups, 
-                                                    PARAMETERS_y, 
-                                                    Other_Params, 
+def RUN_GroupAnalysis_ANOVA_SimpleLinearRegression(df,
+                                                    groups,
+                                                    PARAMETERS_y,
+                                                    Other_Params,
                                                     PATH2save,
                                                     group_col,
                                                     ls_brain_regions):
-    '''
-    Interpreting the Regression Results
-    model.summary()
-
-    Adjusted. R-squared reflects the fit of the model. R-squared values range from 0 to 1, where a higher value generally indicates a better fit, assuming certain conditions are met.
-    Y-intercept. means that if both the Interest_Rate and Unemployment_Rate coefficients are zero, then the expected output (i.e., the Y) would be equal to the const coefficient.
-    x coefficient represents the change in the output Y due to a change of one unit in the x (everything else held constant)
-    std err reflects the level of accuracy of the coefficients. The lower it is, the higher is the level of accuracy
-    P >|t| is your p-value. A p-value of less than 0.05 is considered to be statistically significant
-    Confidence Interval represents the range in which our coefficients are likely to fall (with a likelihood of 95%)
-    '''
     ls_meas = get_names_of_measurements()
     ls_struct = get_names_of_structures()
-
     for PARAMETER_y in PARAMETERS_y:
         PATH_plots_regression = PATH2save+'/'+str(PARAMETER_y)+'_regression_pca'
         if not path.exists(PATH_plots_regression):
             mkdir(PATH_plots_regression)
-        # PATH_plots_groups = PATH2save+'/'+str(PARAMETER_y)+'_group'
-        # if not path.exists(PATH_plots_groups):
-        #     mkdir(PATH_plots_groups)
         x = np.array(df[PARAMETER_y])
         df_result = pd.DataFrame(columns=[PARAMETER_y])
         df_result_list = pd.DataFrame(columns=[PARAMETER_y])
-
         ix = 1
         ixx = 1
-
         for col in ls_brain_regions[10:]:
             print('    left to analyse:',len(ls_brain_regions[ls_brain_regions.index(col):]),'\n')
             print(col)
-            #res_ttest_sig = Compute_ttest_for_col(col)
             y = np.array(df[col])
             data_tmp = pd.DataFrame({'x':x,col:y})
             model = ols(col+" ~ x", data_tmp).fit()
             if model.pvalues.Intercept < 0.05:# and model.pvalues.x < 0.05:
-                # print("    ",model.pvalues)
                 measurement, structure = get_structure_measurement(col, ls_meas, ls_struct)
-                # if structure+'_'+measurement not in listdir(PATH_plots_groups):
                 # Make_plot_group_difference(df, col, measurement, structure, PATH_plots_groups, group_col, groups)
                 Make_Plot_Regression(df, col,PARAMETER_y,model, measurement, structure, PATH_plots_regression, group_col)
                 df_result_list.at[ixx,PARAMETER_y] = structure
