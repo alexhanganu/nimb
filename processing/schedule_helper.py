@@ -22,7 +22,6 @@ class Submit_task():
         self.job_id = '0'
         self.submit_4_processing(vars_local["PROCESSING"]["processing_env"],
                                     cmd, name, task, walltime)
-        print(self.job_id)
 
     def submit_4_processing(self, processing_env, cmd, name, task, walltime):
         if processing_env == 'slurm':
@@ -57,7 +56,7 @@ class Submit_task():
 
     def submit_2scheduler(self, sh_file):
         if self.vars_local["PROCESSING"]["SUBMIT"] == 1:
-            print('        submitting {}'.format(sh_file))
+            log.info('        submitting {}'.format(sh_file))
             time.sleep(1)
             try:
                 resp = subprocess.run(['sbatch',path.join(self.NIMB_tmp,'usedpbs',sh_file)], stdout=subprocess.PIPE).stdout.decode('utf-8')

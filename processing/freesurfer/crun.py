@@ -80,7 +80,7 @@ def try_to_infer_jobid(running_jobs, subjid, scheduler_jobs):
 
 def running(process, scheduler_jobs):
     ACTION = 'RUNNING'
-    log.info(ACTION+' '+process)
+    log.info('{} {}'.format(ACTION, process))
     lsr = db[ACTION][process].copy()
     for subjid in lsr:
         db['RUNNING_JOBS'], status = Get_status_for_subjid_in_queue(db['RUNNING_JOBS'], subjid, scheduler_jobs)
@@ -89,9 +89,9 @@ def running(process, scheduler_jobs):
             if subjid in db['RUNNING_JOBS']:
                 db['RUNNING_JOBS'].pop(subjid, None)
             if vars_freesurfer["base_name"] in subjid:
-                log.info('    reading '+process+', '+subjid+' subjid is long or base ')
+                log.info('    reading {}, {} is long or base '.format(process, subjid))
                 if fs_checker.chkIsRunning(SUBJECTS_DIR, subjid) or not fs_checker.checks_from_runfs(SUBJECTS_DIR, 'recon', subjid, vars_freesurfer["freesurfer_version"], vars_freesurfer["masks"]):
-                        log.info('    '+subjid+', '+process+' -> ERROR, IsRunning or not all files created')
+                        log.info('    {}, {} -> ERROR, IsRunning or not all files created'.format(subjid, process))
                         db['ERROR_QUEUE'][subjid] = str(format(datetime.now()+timedelta(hours=datetime.strptime(Get_walltime(process), '%H:%M:%S').hour), "%Y%m%d_%H%M"))
                         db['PROCESSED']['error_recon'].append(subjid)
             else:
@@ -100,14 +100,14 @@ def running(process, scheduler_jobs):
                         next_process = process_order[process_order.index(process)+1]
                         if not fs_checker.checks_from_runfs(SUBJECTS_DIR, next_process, subjid, vars_freesurfer["freesurfer_version"], vars_freesurfer["masks"]):
                             db['DO'][next_process].append(subjid)
-                            log.info('    '+subjid+', '+ACTION+' '+process+' -> DO '+next_process)
+                            log.info('    {}, {} {} -> DO {}'.format(subjid, ACTION, process, next_process))
                         else:
                             db[ACTION][next_process].append(subjid)
-                            log.info('    '+subjid+', '+ACTION+' '+process+' -> '+ACTION+' '+next_process)
+                            log.info('    {}, {} {} -> {} {}'.format(subjid, ACTION, process, ACTION, next_process))
                     else:
-                        log.info('    '+subjid+' processing DONE')
+                        log.info('    {} processing DONE'.format(subjid))
                 else:
-                    log.info('    '+subjid+', '+process+' -> ERROR; IsRunning, status= '+status)
+                    log.info('    {}, {} -> ERROR; IsRunning, status= {}'.format(subjid, process, status))
                     db['ERROR_QUEUE'][subjid] = str(format(datetime.now()+timedelta(hours=datetime.strptime(Get_walltime(process), '%H:%M:%S').hour), "%Y%m%d_%H%M"))
                     db['PROCESSED']['error_'+process].append(subjid)
     db[ACTION][process].sort()
@@ -116,7 +116,7 @@ def running(process, scheduler_jobs):
 
 def do(process):
     ACTION = 'DO'
-    log.info(ACTION+' '+process)
+    log.info('{} {}'.format(ACTION, process))
 
     lsd = db[ACTION][process].copy()
 
@@ -140,12 +140,12 @@ def check_error(scheduler_jobs, process):
     if db['PROCESSED']['error_'+process]:
             lserr = db['PROCESSED']['error_'+process].copy()
             for subjid in lserr:
-                log.info('    '+subjid)
+                log.info('    {}'.format(subjid))
                 if subjid not in db["ERROR_QUEUE"] and path.exists(path.join(SUBJECTS_DIR, subjid)): #path.exists was added due to moving the subjects too early; requires adjustment
                     fs_checker.IsRunning_rm(SUBJECTS_DIR, subjid)
-                    log.info('        checking the recon-all-status.log for error for: '+process)
+                    log.info('        checking the recon-all-status.log for error for: {}'.format(process))
                     fs_err_helper.chkreconf_if_without_error(NIMB_tmp, subjid, SUBJECTS_DIR)
-                    log.info('        checking if all files were created for: '+process)
+                    log.info('        checking if all files were created for: {}'.format(process))
                     if not fs_checker.checks_from_runfs(SUBJECTS_DIR, process, subjid, vars_freesurfer["freesurfer_version"], vars_freesurfer["masks"]):
                             log.info('            some files were not created and recon-all-status has errors.')
                             fs_error = fs_err_helper.fs_find_error(subjid, SUBJECTS_DIR, NIMB_tmp)
@@ -156,7 +156,7 @@ def check_error(scheduler_jobs, process):
                                     solved = True
                                     db['PROCESSED']['error_'+process].remove(subjid)
                                     db['DO'][process].append(subjid)
-                                    log.info('        moving from error_'+process+' to DO '+process)
+                                    log.info('        moving from error_{} to DO {}'.format(process, process))
                                 elif solve == 'repeat_reg':
                                     if subjid in db['REGISTRATION']:
                                         solved = True
@@ -167,19 +167,19 @@ def check_error(scheduler_jobs, process):
                                                 db['REGISTRATION'][subjid]['anat'].pop('t2', None)
                                         db['PROCESSED']['error_'+process].remove(subjid)
                                         db['DO']["registration"].append(subjid)
-                                        log.info('              removing '+subjid+' from '+SUBJECTS_DIR)
+                                        log.info('              removing {} from {}'.format(subjid, SUBJECTS_DIR))
                                         system('rm -r '+path.join(SUBJECTS_DIR, subjid))
-                                        log.info('        moving from error_'+process+' to RUNNING registration')
+                                        log.info('        moving from error_{} to RUNNING registration'.format(process))
                                     else:
                                         new_name = 'error_noreg_'+subjid
-                                        log.info('            solved: '+solve+' but subjid is missing from db[REGISTRATION]')
+                                        log.info('            solved: {} but subjid is missing from db[REGISTRATION]'.format(solve))
                                 else:
                                     new_name = 'error_'+fs_error+'_'+subjid
                                     log.info('            not solved')
                             else:
                                 new_name = 'error_'+process+'_'+subjid
                             if not solved:
-                                log.info('            Excluding '+subjid+' from pipeline')
+                                log.info('            Excluding {} from pipeline'.format(subjid))
                                 _id, _ = cdb.get_id_long(subjid, db['LONG_DIRS'], vars_freesurfer["base_name"], vars_freesurfer["long_name"])
                                 if _id != 'none':
                                     try:
@@ -193,19 +193,19 @@ def check_error(scheduler_jobs, process):
                                         else:
                                             log.info('        missing from db[REGISTRATION]')
                                     except Exception as e:
-                                        log.info('        ERROR, id not found in LONG_DIRS; '+str(e))
+                                        log.info('        ERROR, id not found in LONG_DIRS; {}'.format(str(e)))
                                 else:
-                                    log.info('        ERROR, '+subjid+' is absent from LONG_DIRS')
+                                    log.info('        ERROR, {} is absent from LONG_DIRS'.format(subjid))
                                 move_processed_subjects(subjid, 'error_'+process, new_name)
                     else:
-                            log.info('            all files were created for process: '+process)
+                            log.info('            all files were created for process: {}'.format(process))
                             db['PROCESSED']['error_'+process].remove(subjid)
                             db['RUNNING'][process].append(subjid)
-                            log.info('        moving from error_'+process+' to RUNNING '+process)
+                            log.info('        moving from error_{} to RUNNING {}'.format(process, process))
                 else:
                     if subjid in db["ERROR_QUEUE"]:
                         db['RUNNING_JOBS'], status = Get_status_for_subjid_in_queue(db['RUNNING_JOBS'], subjid, scheduler_jobs)
-                        log.info('     waiting until: '+db['ERROR_QUEUE'][subjid])
+                        log.info('     waiting until: {}'.format(db['ERROR_QUEUE'][subjid]))
                         if status != 'none' and subjid in db['RUNNING_JOBS']:
                             log.info('     status is: {}, error_{}-> RUNNING {}'.format(status, process, process))
                             db['ERROR_QUEUE'].pop(subjid, None)

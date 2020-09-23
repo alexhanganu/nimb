@@ -48,3 +48,12 @@ class Logistic_Regression():
         plt.savefig(path.join(path_results, 'Log_ROC.png'))
 #        plt.show()
         print('Logistic Regression DONE')
+
+
+'''
+logistic regression:
+    https://scikit-learn.org/stable/auto_examples/linear_model/plot_sgd_comparison.html
+    https://scikit-learn.org/stable/auto_examples/linear_model/plot_iris_logistic.html
+    https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html
+
+'''

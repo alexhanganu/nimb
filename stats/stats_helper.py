@@ -41,7 +41,7 @@ class RUN_stats():
         self.STEP_Predict_RF_SKF     = False
         self.STEP_Predict_RF_LOO     = False
         self.STEP_get_param_based_db = False
-        
+
     def run_stats(self):
          for group in ['all',]:#+self.groups: #'all' stands for all groups
             df_X, y_labeled, X_scaled, df_clin_group = self.get_X_data_per_group_all_groups(group)
@@ -193,3 +193,6 @@ class RUN_stats():
         df_with_features = db_processing.get_df_from_df(df_X, usecols = features)
         return df_with_features, features, features_rfe_and_rank_df
 
+'''2DO
+    zipf's law https://getpocket.com/explore/item/mathematical-model-reveals-the-patterns-of-how-innovations-arise
+'''

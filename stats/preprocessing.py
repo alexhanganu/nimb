@@ -82,3 +82,30 @@ def label_y(df, target):
 
     return y_labeled
 
+def Z_Scores_create():
+    #Alternatively use the scikit feature to create z-values
+    #http://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.StandardScaler.html
+    #sklearn.preprocessing.StandardScaler.fit_transform
+    #dfz_sk = pd.read_excel(path+'tmp.xlsx', sheetname='Sheet1')
+    #from sklearn import preprocessing
+
+    #scaler= preprocessing.StandardScaler()
+
+    #dfz_prep = pd.DataFrame(scaler.fit_transform(dfz_sk.T), columns=dfz_sk.columns, index=dfz_sk.index)
+    dfzvalues = df_all_data.copy(deep=True) #code from Jonathan Eunice, stockoverflow
+    columns_2_drop = ['subject','Age','group','Duration_of_Disease','Edu_years_completed']
+    df_with_nonchanged_data = dfzvalues[columns_2_drop]
+    dfzvalues.drop(columns=columns_2_drop, inplace=True)
+    writer = pd.ExcelWriter(PATH_to_save_results+'materials_all_data_zvalues.xlsx', engine='xlsxwriter')
+
+    for col in dfzvalues.select_dtypes([np.number]):
+        col_mean = dfzvalues[col].mean()
+        col_std = dfzvalues[col].std()
+        dfzvalues[col] = dfzvalues[col].apply(lambda x: (x-col_mean) / col_std)
+
+    frame_final = (df_with_nonchanged_data, dfzvalues)
+    dfzvalues = pd.concat(frame_final,axis=1)
+    dfzvalues.to_excel(writer)
+    writer.save()
+
+
