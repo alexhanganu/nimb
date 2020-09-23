@@ -2,20 +2,19 @@ from os import path, environ, system
 import time
 import subprocess
 import logging
+from distribution.logger import Log
 
 environ['TZ'] = 'US/Eastern'
 time.tzset()
-
-logger = logging.getLogger(__name__)
-logging.basicConfig(format='%(asctime)s %(module)s %(levelname)s: %(message)s')
-logger.setLevel(logging.DEBUG)
-
 
 
 class Submit_task():
 
     def __init__(self, vars_local, cmd, name, task, walltime, activate_freesurfer, cd_cmd):
         self.NIMB_tmp = vars_local["NIMB_PATHS"]['NIMB_tmp']
+        Log(vars_local['NIMB_PATHS']['NIMB_tmp'])
+        log = logging.getLogger(__name__)
+
         self.vars_local = vars_local
         self.activate_freesurfer = activate_freesurfer
         self.cd_cmd = cd_cmd
