@@ -396,7 +396,7 @@ def Count_TimeSleep():
 
 def run(varslocal):
 
-    global vars_local, vars_freesurfer, vars_processing ,NIMB_HOME, NIMB_tmp, SUBJECTS_DIR, max_walltime, process_order, log, db
+    global vars_local, vars_freesurfer, vars_processing, vars_nimb, NIMB_HOME, NIMB_tmp, SUBJECTS_DIR, max_walltime, process_order, log, db
     vars_local       = varslocal
     vars_freesurfer  = vars_local["FREESURFER"]
     vars_processing  = vars_local["PROCESSING"]
