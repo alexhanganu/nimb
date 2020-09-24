@@ -2,7 +2,7 @@ from os import path, environ, system
 import time
 import subprocess
 import logging
-from distribution.logger import Log
+log = logging.getLogger(__name__)
 
 environ['TZ'] = 'US/Eastern'
 time.tzset()
@@ -12,9 +12,6 @@ class Submit_task():
 
     def __init__(self, vars_local, cmd, name, task, walltime, activate_freesurfer, cd_cmd):
         self.NIMB_tmp = vars_local["NIMB_PATHS"]['NIMB_tmp']
-        Log(vars_local['NIMB_PATHS']['NIMB_tmp'])
-        self.log = logging.getLogger(__name__)
-
         self.vars_local = vars_local
         self.activate_freesurfer = activate_freesurfer
         self.cd_cmd = cd_cmd
@@ -55,7 +52,7 @@ class Submit_task():
 
     def submit_2scheduler(self, sh_file):
         if self.vars_local["PROCESSING"]["SUBMIT"] == 1:
-            self.log.info('        submitting {}'.format(sh_file))
+            log.info('        submitting {}'.format(sh_file))
             time.sleep(1)
             try:
                 resp = subprocess.run(['sbatch',path.join(self.NIMB_tmp,'usedpbs',sh_file)], stdout=subprocess.PIPE).stdout.decode('utf-8')

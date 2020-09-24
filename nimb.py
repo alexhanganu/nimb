@@ -10,6 +10,7 @@ from setup.get_vars import Get_Vars, SetProject
 from classification import classify_bids
 from distribution.distribution_helper import DistributionHelper
 from distribution.utilities import ErrorMessages
+from distribution.logger import Log
 
 __version__ = 'v1'
 
@@ -33,6 +34,8 @@ class NIMB(object):
         self.locations   = all_vars.location_vars
         self.stats_vars  = all_vars.stats_vars
         self.vars_local  = self.locations['local']
+        Log(self.vars_local['NIMB_PATHS']['NIMB_tmp'])
+        self.logger = logging.getLogger(__name__)
 
         self.distribution = DistributionHelper(all_vars, self.projects, self.project)
 
@@ -43,7 +46,7 @@ class NIMB(object):
             self.distribution.ready()
 
         if self.process == 'classify':
-            print('checking if ready to classify')
+            self.logger.info('checking if ready to classify')
             if not self.distribution.classify_ready():
                 ErrorMessages.error_classify()
                 sys.exit()
@@ -60,7 +63,7 @@ class NIMB(object):
 
         if self.process == 'freesurfer':
             if not self.distribution.fs_ready():
-                print("FreeSurfer is not ready or freesurfer_install is set to 0. Please check the configuration files.")
+                self.logger.info("FreeSurfer is not ready or freesurfer_install is set to 0. Please check the configuration files.")
                 sys.exit()
             else:
                 from processing import schedule_helper
@@ -70,11 +73,11 @@ class NIMB(object):
 
         if self.process == 'fs-get-stats':
             if not self.distribution.nimb_stats_ready():
-                print("NIMB is not ready to extract the FreeSurfer statistics per user. Please check the configuration files.")
+                self.logger.info("NIMB is not ready to extract the FreeSurfer statistics per user. Please check the configuration files.")
                 sys.exit()
             else:
                 PROCESSED_FS_DIR = self.distribution.fs_stats(self.project)
-                print(PROCESSED_FS_DIR)
+                self.logger.info(PROCESSED_FS_DIR)
                 from stats import fs_stats2table
 
                 fs_stats2table.chk_if_subjects_ready(self.stats_vars["STATS_HOME"], PROCESSED_FS_DIR)
@@ -86,10 +89,10 @@ class NIMB(object):
             if self.distribution.fs_ready():
                 self.distribution.fs_glm()
                 from processing import schedule_helper
-                print('Please check that all required variables for the GLM analysis are defined in the var.py file')
-                print('before running the script, remember to source $FREESURFER_HOME')
-                print('check if fsaverage is present in SUBJECTS_DIR')
-                print('each subject must include at least the folders: surf and label')
+                self.logger.info('Please check that all required variables for the GLM analysis are defined in the var.py file')
+                self.logger.info('before running the script, remember to source $FREESURFER_HOME')
+                self.logger.info('check if fsaverage is present in SUBJECTS_DIR')
+                self.logger.info('each subject must include at least the folders: surf and label')
                 schedule_helper.Submit_task(self.vars_local, self.vars_local['NIMB_PATHS']["miniconda_python_run"]+' fs_glm_run_glm.py -project '+self.project,
                                                'fs_glm','run_glm', self.vars_local['PROCESSING']["batch_walltime"],
                                                True, 'cd '+path.join(self.vars_local["NIMB_PATHS"]["NIMB_HOME"], 'processing', 'freesurfer'))
@@ -98,14 +101,14 @@ class NIMB(object):
         if self.process == 'fs-glm-image':
             if self.distribution.fs_ready():
                 from processing import schedule_helper
-                print('before running the script, remember to source $FREESURFER_HOME')
+                self.logger.info('before running the script, remember to source $FREESURFER_HOME')
                 schedule_helper.Submit_task(self.vars_local, self.vars_local['NIMB_PATHS']["miniconda_python_run"]+' fs_glm_extract_images.py -project '+self.project,
                                                'fs_glm','extract_images', self.vars_local['PROCESSING']["batch_walltime"],
                                                True, 'cd '+path.join(self.vars_local["NIMB_PATHS"]["NIMB_HOME"], 'processing', 'freesurfer'))
         if self.process == 'run-stats':
             self.stats_vars = SetProject(self.vars_local['NIMB_PATHS']['NIMB_tmp'], self.stats_vars, self.project).stats
             if not self.distribution.run_stats_ready():
-                print("NIMB is not ready to run the stats. Please check the configuration files.")
+                self.logger.info("NIMB is not ready to run the stats. Please check the configuration files.")
                 sys.exit()
             else:
                 from stats import stats_helper
@@ -113,7 +116,7 @@ class NIMB(object):
         return 1
 
     def check_new(self):
-        print('checking new')
+        self.logger.info('checking for new subject to be processed')
         self.distribution.download_processed_subject(local_destination, remote_path, remote_host, remote_username, remote_password)
         return 1
 
