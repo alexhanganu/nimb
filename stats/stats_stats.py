@@ -1,5 +1,7 @@
 '''
-ttest analysis
+calculating the T-test for the means of two independent samples of scores (ttest_ind)
+kurtosis for the column with Fisher definition, normal ==>0
+skew: for normally distributed data, the skewness should be about zero. If >0, means more weight in the right tail of the distribution.
 '''
 
 from stats import db_processing
@@ -32,7 +34,14 @@ class ttest_do():
             if ttest_eq_pop_var[1] < p_thresh:
                 meas, struct = get_structure_measurement(col, self.ls_meas, self.ls_struct)
                 #print('{:<15} {}'.format(meas, struct))
-                res[col] = {'ttest':ttest_eq_pop_var[1],'welch':ttest_welch[1]}
+                res[col] = {'{}, mean'.format(self.groups[0]): stats.tmean(group1),
+                            '{}, std'.format(self.groups[1]): stats.tstd(group2),
+                            '{}, mean'.format(self.groups[1]): stats.tmean(group2),
+                            '{}, std'.format(self.groups[1]): stats.tstd(group2),
+                            'ttest':ttest_eq_pop_var[1],
+                            'welch':ttest_welch[1],
+                            'kurtosis':stats.kurtosis(self.df[self.group_col]),
+                            'skewness':stats.skew(self.df[self.group_col])}
                 res_4df['features'].append(struct+' ('+meas+')')
                 res_4df['ttest'].append(ttest_eq_pop_var[1])
                 res_4df['welch'].append(ttest_welch[1])
