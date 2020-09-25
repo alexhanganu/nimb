@@ -6,6 +6,7 @@
 import argparse
 from os import path
 import sys
+import logging
 from setup.get_vars import Get_Vars, SetProject
 from classification import classify_bids
 from distribution.distribution_helper import DistributionHelper
