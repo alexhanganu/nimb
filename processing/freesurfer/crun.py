@@ -480,8 +480,8 @@ if __name__ == "__main__":
     vars_local = getvars.location_vars['local']
 
     from processing.schedule_helper import Submit_task, get_jobs_status
-    from distribution.logger import Log
-    Log(vars_local['NIMB_PATHS']['NIMB_tmp'])
+#    from distribution.logger import Log
+#    Log(vars_local['NIMB_PATHS']['NIMB_tmp'])
 
     run(vars_local)
 

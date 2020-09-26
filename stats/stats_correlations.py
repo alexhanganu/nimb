@@ -1,5 +1,51 @@
-'''I. CORRELATION for each group'''
+'''
+script will run correlations for the provided dataframe
+per group
+'''
 
+from scipy import stats
+
+
+class Correlations_Run():
+    def __init__(self, df):
+        self.df = df
+        
+
+    def check_correl_sig(self, x, y):
+        res = {}
+        cor = stats.stats.pearsonr(x,y)
+        if cor[1] <0.05:
+            if cor[0] > 0:
+                cor_type = 'pos'
+            else:
+                cor_type = 'neg'
+            res['correlation'] = cor_type
+        res['r'] = cor[0]
+        res['p'] = cor[1]
+        return res
+
+    def update_dataframe(self, df, res_correlate, col_x, measurement, structure):
+        ls = df['structure'].tolist()
+        if structure in ls:
+            df_row = ls.index(structure)
+            #df.at[df_row, measurement] = measurement
+            #df.at[df_row, 'cor_'+measurement] = res_correlate['correlation']
+            #df.at[df_row, 'r_'+measurement] = str(res_correlate['r'])
+            df.at[df_row, measurement+'_p'] = str(res_correlate['p'])
+        else:
+            if len(df.iloc[0]['Clinical_Variable']) == 1:
+                df_row = 0
+            else:
+                df_row = len(ls)+1
+            df.at[df_row, 'Clinical_Variable'] = col_x
+            df.at[df_row, 'structure'] = structure
+            #df.at[df_row, measurement] = measurement
+            #df.at[df_row, 'cor_'+measurement] = res_correlate['correlation']
+            #df.at[df_row, 'r_'+measurement] = str(res_correlate['r'])
+            df.at[df_row, measurement+'_p'] = str(res_correlate['p'])
+        return df
+    
+        
 def make_correlations_per_group(df, file, group, last_value_2_correlate, PATH2save_res, cor_methods, cor_level_chosen):
     '''creating files with descriptions and correlations of each sheet (groups, df, group_col, GLM_dir)'''
 
@@ -48,42 +94,7 @@ def make_correlations_per_group(df, file, group, last_value_2_correlate, PATH2sa
     # mkstatisticsfplots(GLM_dir+'results/plots_correlations_subcort_vol/', groups_dataf, df_clin, self.id_col, group_col)
 
 
-'''II: CORRELATIONS: ASSESS THE PRESENCE OF CORRELATION between COL and PARAMETER'''
-def RUN_Correlate(x,y):
-    res = {}
-    cor = stats.stats.pearsonr(x,y)
-    if cor[1] <0.05:
-        if cor[0] > 0:
-            cor_type = 'pos'
-        else:
-            cor_type = 'neg'
-        res['correlation'] = cor_type
-    res['r'] = cor[0]
-    res['p'] = cor[1]
-    return res
 
-
-
-def update_dataframe(df,res_correlate,col_x,measurement, structure):
-    ls = df['structure'].tolist()
-    if structure in ls:
-        df_row = ls.index(structure)
-        #df.at[df_row, measurement] = measurement
-        #df.at[df_row, 'cor_'+measurement] = res_correlate['correlation']
-        #df.at[df_row, 'r_'+measurement] = str(res_correlate['r'])
-        df.at[df_row, measurement+'_p'] = str(res_correlate['p'])
-    else:
-        if len(df.iloc[0]['Clinical_Variable']) == 1:
-            df_row = 0
-        else:
-            df_row = len(ls)+1
-        df.at[df_row, 'Clinical_Variable'] = col_x
-        df.at[df_row, 'structure'] = structure
-        #df.at[df_row, measurement] = measurement
-        #df.at[df_row, 'cor_'+measurement] = res_correlate['correlation']
-        #df.at[df_row, 'r_'+measurement] = str(res_correlate['r'])
-        df.at[df_row, measurement+'_p'] = str(res_correlate['p'])
-    return df
 
 def RUN_CORRELATIONS_with_stats_stats_pearsonr():
     groups = _GET_Groups(study)
