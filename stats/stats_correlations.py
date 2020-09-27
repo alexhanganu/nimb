@@ -9,7 +9,57 @@ from scipy import stats
 class Correlations_Run():
     def __init__(self, df):
         self.df = df
-        
+        self.lvl_thresh = {'STRONG': {'minim':0.7,'maxim':1},
+                           'MODERATE': {'minim':0.5,'maxim':0.7},
+                           'WEAK': {'minim':0.3, 'maxim':0.5}
+
+
+    def make_correlations_per_group(self, df, file, group, last_value_2_correlate, PATH2save_res, cor_methods, cor_level_chosen):
+        '''creating files with descriptions and correlations of each sheet (groups, df, group_col, GLM_dir)'''
+
+        print('writing correlation sheet, group: ',group)
+        cor_methods_2_analyse = []
+        frame = [{'Correlation':'0', 'Region1':'0', 'Region2':'0', 'Value':'0'}]
+        results_df = pd.DataFrame(frame)
+        for cor_method_chosen in cor_methods:
+            cor_methods_2_analyse.append(cor_method_chosen)
+
+
+        for cor in cor_methods_2_analyse:
+            writer = pd.ExcelWriter(PATH2save_res+'cor_'+file+'_'+group+'_'+cor+'.xlsx', engine='xlsxwriter')
+            df_cor = df.corr(method=cor)
+            df_cor.to_excel(writer, 'correlation')
+            df_cor05 = df.corr(method=cor)>0.5
+            df_cor05.to_excel(writer, 'correlation_r07')
+            df_cor07 = df.corr(method=cor)>0.7
+            df_cor07.to_excel(writer, 'correlation_r08')
+            writer.save()
+            # df_cor.to_csv(PATH2save_res+'cor_'+file+'_'+group+'_'+cor+'.csv', encoding='utf-8', index=True)
+            nr_row_2_start = 0
+            df_row = 0
+            for cor_level in cor_level_chosen:
+                cor_thresholds = self.lvl_thresh[cor_level]
+                for nr_col in range(0, df_cor.columns.tolist().index(last_value_2_correlate)+1):
+                    for nr_row in range(nr_row_2_start, len(df_cor.iloc[nr_col])):
+                        if df_cor.iloc[nr_col, nr_row] > cor_thresholds['minim'] and df_cor.iloc[nr_col, nr_row]< cor_thresholds[>
+                            cor_type = cor_level+' POSITIVE'
+                        elif df_cor.iloc[nr_col, nr_row] < -cor_thresholds['minim'] and df_cor.iloc[nr_col, nr_row]> -cor_thresho>
+                            cor_type = cor_level+' NEGATIVE '
+                        else:
+                            cor_type = 0
+                        if cor_type != 0:
+                            results_df.at[df_row, 'Correlation'] = cor_type
+                            results_df.at[df_row, 'Region1'] = df_cor.columns[nr_col]
+                            results_df.at[df_row, 'Region2'] = df_cor.index[nr_row]
+                            results_df.at[df_row, 'Value'] = str(df_cor.iloc[nr_col, nr_row])
+                            df_row += 1
+                    nr_row_2_start += 1
+                results_df = results_df.sort_values(by=['Region1'])#or 'Correlation'
+                print('saving: ','cor_res_'+file+'_'+group+'_'+cor+'_'+cor_level+'.csv')
+                results_df.to_csv(PATH2save_res+'cor_res_'+file+'_'+group+'_'+cor+'_'+cor_level+'.csv', encoding='utf-8', index=F>
+        print('FINISHED creating correlation file for group:', group)
+        # mkstatisticsfplots(GLM_dir+'results/plots_correlations_subcort_vol/', groups_dataf, df_clin, self.id_col, group_col)
+
 
     def check_correl_sig(self, x, y):
         res = {}
@@ -44,55 +94,6 @@ class Correlations_Run():
             #df.at[df_row, 'r_'+measurement] = str(res_correlate['r'])
             df.at[df_row, measurement+'_p'] = str(res_correlate['p'])
         return df
-    
-        
-def make_correlations_per_group(df, file, group, last_value_2_correlate, PATH2save_res, cor_methods, cor_level_chosen):
-    '''creating files with descriptions and correlations of each sheet (groups, df, group_col, GLM_dir)'''
-
-    print('writing correlation sheet, group: ',group)
-    cor_levels_and_thresholds = {'STRONG': {'minim':0.7,'maxim':1}, 'MODERATE': {'minim':0.5,'maxim':0.7}, 'WEAK': {'minim':0>
-    cor_methods_2_analyse = []
-    frame = [{'Correlation':'0', 'Region1':'0', 'Region2':'0', 'Value':'0'}]
-    results_df = pd.DataFrame(frame)
-    for cor_method_chosen in cor_methods:
-        cor_methods_2_analyse.append(cor_method_chosen)
-
-
-    for cor in cor_methods_2_analyse:
-        writer = pd.ExcelWriter(PATH2save_res+'cor_'+file+'_'+group+'_'+cor+'.xlsx', engine='xlsxwriter')
-        df_cor = df.corr(method=cor)
-        df_cor.to_excel(writer, 'correlation')
-        df_cor05 = df.corr(method=cor)>0.5
-        df_cor05.to_excel(writer, 'correlation_r07')
-        df_cor07 = df.corr(method=cor)>0.7
-        df_cor07.to_excel(writer, 'correlation_r08')
-        writer.save()
-        # df_cor.to_csv(PATH2save_res+'cor_'+file+'_'+group+'_'+cor+'.csv', encoding='utf-8', index=True)
-        nr_row_2_start = 0
-        df_row = 0
-        for cor_level in cor_level_chosen:
-            cor_thresholds = cor_levels_and_thresholds[cor_level]
-            for nr_col in range(0, df_cor.columns.tolist().index(last_value_2_correlate)+1):
-                for nr_row in range(nr_row_2_start, len(df_cor.iloc[nr_col])):
-                    if df_cor.iloc[nr_col, nr_row] > cor_thresholds['minim'] and df_cor.iloc[nr_col, nr_row]< cor_thresholds[>
-                        cor_type = cor_level+' POSITIVE'
-                    elif df_cor.iloc[nr_col, nr_row] < -cor_thresholds['minim'] and df_cor.iloc[nr_col, nr_row]> -cor_thresho>
-                        cor_type = cor_level+' NEGATIVE '
-                    else:
-                        cor_type = 0
-                    if cor_type != 0:
-                        results_df.at[df_row, 'Correlation'] = cor_type
-                        results_df.at[df_row, 'Region1'] = df_cor.columns[nr_col]
-                        results_df.at[df_row, 'Region2'] = df_cor.index[nr_row]
-                        results_df.at[df_row, 'Value'] = str(df_cor.iloc[nr_col, nr_row])
-                        df_row += 1
-                nr_row_2_start += 1
-            results_df = results_df.sort_values(by=['Region1'])#or 'Correlation'
-            print('saving: ','cor_res_'+file+'_'+group+'_'+cor+'_'+cor_level+'.csv')
-            results_df.to_csv(PATH2save_res+'cor_res_'+file+'_'+group+'_'+cor+'_'+cor_level+'.csv', encoding='utf-8', index=F>
-    print('FINISHED creating correlation file for group:', group)
-    # mkstatisticsfplots(GLM_dir+'results/plots_correlations_subcort_vol/', groups_dataf, df_clin, self.id_col, group_col)
-
 
 
 
