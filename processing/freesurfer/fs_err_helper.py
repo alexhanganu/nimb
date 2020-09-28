@@ -125,6 +125,10 @@ def fs_find_error(subjid, SUBJECTS_DIR, NIMB_tmp):
                     log.info('        ERROR: orig bad registration, probably due to multiple -i entries, rerun with less entries')
                     error = 'errorigmgz'
                     break
+                elif 'error: ERROR: MRISread: file ../surf/lh.white has many more faces than vertices!' in line:
+                    log.info('        ERROR: MRISread: file surf/lh.white has many more faces than vertices')
+                    error = 'errMRISread'
+                    break
                 elif 'error: MRISreadCurvature:' in line:
                     log.info('                    ERROR: MRISreadCurvature')
                     error = 'errCurvature'
