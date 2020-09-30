@@ -57,6 +57,82 @@ class DistributionCheckNew(DistributionHelper):
                 to_be_processed = self.get_list_subject_to_be_processed_remote_version(source_fs, process_fs,remote_id)
         return to_be_processed
 
+
+    # @staticmethod
+    def is_all_subject_processed(self, SOURCE_SUBJECTS_DIR, PROCESSED_FS_DIR):
+        """
+        must be absolute path
+        :param SOURCE_SUBJECTS_DIR:
+        :param PROCESSED_FS_DIR:
+        :return:
+        """
+        un_process_sj = ListSubjectHelper.get_to_be_processed_subject_local(SOURCE_SUBJECTS_DIR, PROCESSED_FS_DIR)
+        if len(un_process_sj) > 0:
+            return True
+        return False
+
+    # @staticmethod
+    def get_list_subject_to_be_processed_local_version(self, SOURCE_SUBJECTS_DIR, PROCESSED_FS_DIR):
+        """
+        both SOURCE_SUBJECTS_DIR and PROCESSED_FS_DIR is inside a single computer (i.e., local pc)
+
+        1. get the list of un-processed subject
+        2. get the current available space on hard-disk of user
+        2. calculate the list of
+		initial script in database -> create_lsmiss
+        :param SOURCE_SUBJECTS_DIR:
+        :return:
+        """
+        # get the list of unprocessed subjects
+        un_process_sj = ListSubjectHelper.get_to_be_processed_subject_local(SOURCE_SUBJECTS_DIR, PROCESSED_FS_DIR)
+        un_process_sj = [os.path.join(SOURCE_SUBJECTS_DIR,file) for file in un_process_sj ]
+        # based on availabe space
+        to_be_process_subject = DiskspaceUtility.get_subject_to_be_process_with_free_space(un_process_sj)
+        #
+    @staticmethod
+    def helper(ls_output):
+        """
+        split the outputs of 'ls' to get all file names
+        :param ls_output:
+        :return:
+        """
+        return ls_output.split("\n")[0:-1]
+    # @staticmethod
+    def get_list_subject_to_be_processed_remote_version(self, SOURCE_SUBJECTS_DIR, PROCESSED_FS_DIR,
+                                                        remote):
+        """
+        use when SOURCE_SUBJECTS_DIR, PROCESSED_FS_DIR, are at two computers
+        1. connect to the remote host
+        2. get local process subjects
+        3. get remote processed subjects
+        4. get un-processs subjects from local
+        5. get available space on remote computer
+        6. get to-be-process subjects
+        7. (other functions) send those subjects to the remote server
+        :param SOURCE_SUBJECTS_DIR: MUST BE FULL PATHS
+        :param PROCESSED_FS_DIR:
+        :return: full path of subjects that is not process yet
+        """
+        ssh_session = SSHHelper.getSSHSession(remote)
+        (zip_out, err) = runCommandOverSSH(ssh_session, f" cd {PROCESSED_FS_DIR}; ls *.zip") #
+        (gz_out, err) = runCommandOverSSH(ssh_session, f"cd {PROCESSED_FS_DIR}; ls *.gz")
+        # at remote
+        all_processed_file_remote = DistributionHelper.helper(gz_out) + DistributionHelper.helper(zip_out) # only file name, no path
+        # at local
+        all_subjects_at_local = ListSubjectHelper.get_all_subjects(SOURCE_SUBJECTS_DIR) # full path
+        all_subjects_at_local_short_name = [short_name.split("/")[-1] for short_name in all_subjects_at_local ]
+        # get free space remotely
+        free_space = DiskspaceUtility.get_free_space_remote(ssh_session)
+        to_be_process_subject = set(all_subjects_at_local_short_name) - set(all_processed_file_remote) # not consider space yet
+        # consider the space available the remote server
+        free_space = min(free_space, 10*1024) # min of 'free space' and 10GB
+        to_be_process_subject = DiskspaceUtility.get_subject_upto_size(free_space, to_be_process_subject)
+
+        print("Remote server has {0}MB free, it can stored {1} subjects".format(free_space, len(to_be_process_subject)))
+        ssh_session.close()
+        return [os.path.join(SOURCE_SUBJECTS_DIR,subject) for subject in to_be_process_subject] # full path
+
+
 if __name__ == "__main__":
     """
 
@@ -103,3 +179,109 @@ if __name__ == "__main__":
             - after each 2 hours check the local/remote NIMB_PROCESSED_FS and NIMB_PROCESSED_FS_ERROR folders. If not empty: mv (or copy/rm) to the path provided in the ~/nimb/projects.json → project → local or remote $PROCESSED_FS_DIR folder
             - if SOURCE_BIDS_DIR is provided: moves the processed subjects to corresponding SOURCE_BIDS_DIR/subject/session/processed_fs folder
 """
+
+
+
+'''
+def _get_list_processed_subjects(DIR):
+    MainFolder = _get_folder('Main')
+    ls = []
+    if path.isfile(MainFolder+'logs/processed_subjects_'+DIR+'.txt'):
+        with open(MainFolder+'logs/processed_subjects_'+DIR+'.txt', 'r') as f:
+            for line in f:
+                ls.append(line.strip('\n'))
+    else:
+        print(MainFolder+'logs/processed_subjects_'+DIR+'.txt is not SETUP yet')
+    return ls
+
+def _update_list_processed_subjects(DIR, dir2read):
+    Processed_Subjects = {}
+    Processed_Subjects[DIR] = []
+    MainFolder = _get_folder('Main')
+    if path.isfile(MainFolder+'logs/processed_subjects_'+DIR+'.txt'):
+        ls = []
+        with open(MainFolder+'logs/processed_subjects_'+DIR+'.txt', 'r') as f:
+                for line in f:
+                    ls.append(line.strip('\n'))
+        Processed_Subjects[DIR] = ls[1:]
+    Processed_Subjects[DIR].append(dir2read)
+    open(MainFolder+'logs/processed_subjects_'+DIR+'.txt','w').close()
+    with open(MainFolder+'logs/processed_subjects_'+DIR+'.txt','a') as f:
+        f.write(DIR+'\n')
+        for subject in Processed_Subjects[DIR]:
+            f.write(subject+'\n')
+
+
+
+def create_lsmiss(lsmiss):
+    MainFolder = _get_folder('Main')
+    for DIR in lsmiss:
+        if path.isfile(MainFolder+'logs/miss_'+DIR+'.txt'):
+            ls = []
+            with open(MainFolder+'logs/miss_'+DIR+'.txt','r') as f:
+                for line in f:
+                    ls.append(line.strip('\n'))
+            for value in lsmiss[DIR]:
+                if value in ls[1:]:
+                    lsmiss[DIR].remove(value)
+            for value in ls[1:]:
+                if value not in lsmiss[DIR]:
+                    lsmiss[DIR].append(value)
+            lsmiss[DIR] = sorted(lsmiss[DIR])
+        open(MainFolder+'logs/miss_'+DIR+'.txt','w').close()
+        with open(MainFolder+'logs/miss_'+DIR+'.txt','a') as f:
+            f.write(DIR+'\n')
+            for subject in lsmiss[DIR]:
+                f.write(subject+'\n')
+
+
+def _get_lsmiss():
+    MainFolder = _get_folder('Main')
+    lsmiss = {}
+    for file in listdir(MainFolder+'logs/'):
+        if 'miss_' in file:
+            ls = []
+            with open(MainFolder+'logs/'+file, 'r') as f:
+                for line in f:
+                    ls.append(line.strip('\n'))
+            lsmiss[ls[0]] = ls[1:]
+    print('lsmiss from get_lsmiss is: ',lsmiss)
+    return lsmiss
+
+def _update_lsmiss(DIR, dir2read):
+    MainFolder = _get_folder('Main')
+    lsmiss = {}
+    if path.isfile(MainFolder+'logs/miss_'+DIR+'.txt'):
+        ls = []
+        with open(MainFolder+'logs/miss_'+DIR+'.txt', 'r') as f:
+            for line in f:
+                ls.append(line.strip('\n'))
+        lsmiss[ls[0]] = ls[1:]
+        lsmiss[DIR].remove(dir2read)
+        if len(lsmiss[DIR])>0:
+            open(MainFolder+'logs/miss_'+DIR+'.txt','w').close()
+            with open(MainFolder+'logs/miss_'+DIR+'.txt','a') as f:
+                f.write(DIR+'\n')
+                for subject in lsmiss[DIR]:
+                    f.write(subject+'\n')
+        else:
+            remove(MainFolder+'logs/miss_'+DIR+'.txt')
+    else:
+        print(MainFolder+'logs/miss_'+DIR+'.txt'+' is not a file')
+
+
+def update_ls_subj2fs(SUBJECT_ID):
+    #subj2fs file is the list of subjects that need to undergo the FS pipeline processing?
+    newlssubj = []
+    MainFolder = _get_folder('Main')
+    if path.isfile(MainFolder+'logs/subj2fs'):
+        lssubj = [line.rstrip('\n') for line in open(MainFolder+'logs/subj2fs')]
+        for subjid in lssubj:
+            if subjid not in newlssubj:
+                newlssubj.append(subjid)
+    newlssubj.append(SUBJECT_ID)
+    open(MainFolder+'logs/subj2fs','w').close()
+    with open(MainFolder+'logs/subj2fs','a') as f:
+        for subj in newlssubj:
+            f.write(subj+'\n')
+'''

@@ -60,7 +60,8 @@ class NIMB(object):
                                      self.vars_local['FREESURFER']['flair_t2_add'])
 
         if self.process == 'check-new':
-            self.check_new()
+            self.logger.info('checking for new subject to be processed')
+            # self.distribution.download_processed_subject(local_destination, remote_path, remote_host, remote_username, remote_password)
 
         if self.process == 'freesurfer':
             if not self.distribution.fs_ready():
@@ -114,11 +115,6 @@ class NIMB(object):
             else:
                 from stats import stats_helper
                 stats_helper.RUN_stats(self.stats_vars, self.projects[self.project]).run_stats()
-        return 1
-
-    def check_new(self):
-        self.logger.info('checking for new subject to be processed')
-        self.distribution.download_processed_subject(local_destination, remote_path, remote_host, remote_username, remote_password)
         return 1
 
 
