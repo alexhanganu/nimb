@@ -1,13 +1,33 @@
-from .distribution_helper import DistributionHelper
 import os
 
-from .utilities import get_username_password
+
+class DistributionCheckNew():
+
+    def __init__(self, project_vars):
+#        super().__init__(all_vars=all_vars, projects=projects, project=project)
+        self.project_vars = project_vars
+        self.is_all_subject_processed()
 
 
-class DistributionCheckNew(DistributionHelper):
+    def is_all_subject_processed(self):
+        """
+        must be absolute path
+        :param SOURCE_SUBJECTS_DIR:
+        :param PROCESSED_FS_DIR:
+        :return:
+        """
+        list_subjects = self._get_list_processed_subjects('SOURCE_SUBJECTS_DIR')
+        list_processed = self._get_list_processed_subjects('PROCESSED_FS_DIR')
 
-    def __init__(self, all_vars, projects, project):
-        super().__init__(all_vars=all_vars, projects=projects, project=project)
+        print(list_subjects)
+        print(list_processed)
+
+        un_process_sj = ListSubjectHelper.get_to_be_processed_subject_local(SOURCE_SUBJECTS_DIR, PROCESSED_FS_DIR)
+        if len(un_process_sj) > 0:
+            return True
+        return False
+
+
     def ready(self):
         self.check_projects(self.project_name)
         # if self.project_name:
@@ -58,18 +78,21 @@ class DistributionCheckNew(DistributionHelper):
         return to_be_processed
 
 
-    # @staticmethod
-    def is_all_subject_processed(self, SOURCE_SUBJECTS_DIR, PROCESSED_FS_DIR):
-        """
-        must be absolute path
-        :param SOURCE_SUBJECTS_DIR:
-        :param PROCESSED_FS_DIR:
-        :return:
-        """
-        un_process_sj = ListSubjectHelper.get_to_be_processed_subject_local(SOURCE_SUBJECTS_DIR, PROCESSED_FS_DIR)
-        if len(un_process_sj) > 0:
-            return True
-        return False
+
+    def _get_list_processed_subjects(self, DIR):
+        if self.project_vars[DIR][0] == 'local':
+            path = self.project_vars[DIR][1]
+        print(path)
+
+        # MainFolder = _get_folder('Main')
+        # ls = []
+        # if path.isfile(MainFolder+'logs/processed_subjects_'+DIR+'.txt'):
+        #     with open(MainFolder+'logs/processed_subjects_'+DIR+'.txt', 'r') as f:
+        #         for line in f:
+        #             ls.append(line.strip('\n'))
+        # else:
+        #     print(MainFolder+'logs/processed_subjects_'+DIR+'.txt is not SETUP yet')
+        # return ls
 
     # @staticmethod
     def get_list_subject_to_be_processed_local_version(self, SOURCE_SUBJECTS_DIR, PROCESSED_FS_DIR):
@@ -183,16 +206,7 @@ if __name__ == "__main__":
 
 
 '''
-def _get_list_processed_subjects(DIR):
-    MainFolder = _get_folder('Main')
-    ls = []
-    if path.isfile(MainFolder+'logs/processed_subjects_'+DIR+'.txt'):
-        with open(MainFolder+'logs/processed_subjects_'+DIR+'.txt', 'r') as f:
-            for line in f:
-                ls.append(line.strip('\n'))
-    else:
-        print(MainFolder+'logs/processed_subjects_'+DIR+'.txt is not SETUP yet')
-    return ls
+
 
 def _update_list_processed_subjects(DIR, dir2read):
     Processed_Subjects = {}

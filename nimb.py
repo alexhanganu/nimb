@@ -35,7 +35,7 @@ class NIMB(object):
         self.locations   = all_vars.location_vars
         self.stats_vars  = all_vars.stats_vars
         self.vars_local  = self.locations['local']
-        Log(self.vars_local['NIMB_PATHS']['NIMB_tmp'])
+        #Log(self.vars_local['NIMB_PATHS']['NIMB_tmp'])
         self.logger = logging.getLogger(__name__)
 
         self.distribution = DistributionHelper(all_vars, self.projects, self.project)
@@ -61,7 +61,8 @@ class NIMB(object):
 
         if self.process == 'check-new':
             self.logger.info('checking for new subject to be processed')
-            # self.distribution.download_processed_subject(local_destination, remote_path, remote_host, remote_username, remote_password)
+            from distribution.distribution_check_new import DistributionCheckNew
+            DistributionCheckNew(self.projects[self.project])
 
         if self.process == 'freesurfer':
             if not self.distribution.fs_ready():
