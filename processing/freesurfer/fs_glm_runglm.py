@@ -13,19 +13,6 @@ try:
 except ImportError as e:
     sys.exit(e)
 
-def _GET_Groups(df, id_col, group_col):
-        groups = []
-        subjects_per_group = {}
-        for val in df[group_col]:
-            if val not in groups:
-                groups.append(val)
-        for group in groups:
-            subjects_per_group[group] = []
-            for row in df.index.tolist():
-                if df.at[row, group_col] == group:
-                        subjects_per_group[group].append(df.at[row, id_col])
-        return groups, subjects_per_group
-
 
 class PrepareForGLM():
 
@@ -45,17 +32,17 @@ class PrepareForGLM():
         print(self.PATHfsgd)
 
         df_groups_clin = self.get_df_for_variables(GLM_file_group, variables)
-        if not self.check_ready4glm(df_groups_clin[self.id_col].tolist(), vars_fs):
-            sys.exit()
+        self.ids = self.get_ids_ready4glm(df_groups_clin[self.id_col].tolist(), vars_fs)
         d_init = df_groups_clin.to_dict()
         self.d_subjid = {}
         ls_all_vars = [key for key in d_init if key != self.id_col]
         self.ls_groups = []
         for rownr in d_init[self.id_col]:
             id = d_init[self.id_col][rownr]
-            self.d_subjid[id] = {}
-            for key in ls_all_vars:
-                self.d_subjid[id][key] = d_init[key][rownr]
+            if id in self.ids:
+                self.d_subjid[id] = {}
+                for key in ls_all_vars:
+                    self.d_subjid[id][key] = d_init[key][rownr]
         for id in self.d_subjid:
             if self.d_subjid[id][self.group_col] not in self.ls_groups:
                 self.ls_groups.append(self.d_subjid[id][self.group_col])
@@ -113,7 +100,7 @@ class PrepareForGLM():
             df.drop(columns=cols2drop, inplace=True)
         return df
 
-    def check_ready4glm(self, ids, vars_fs):
+    def get_ids_ready4glm(self, ids, vars_fs):
 
         def add_to_miss(miss, _id, file):
             if _id not in miss:
@@ -121,7 +108,6 @@ class PrepareForGLM():
             miss[_id].append(file)
             return miss
 
-        res = True
         miss = {}
         for _id in ids:
             if path.exists(path.join(vars_fs["FS_SUBJECTS_DIR"], _id)):
@@ -135,11 +121,17 @@ class PrepareForGLM():
                 miss = add_to_miss(miss, _id, 'none')
         if miss.keys():
             print('some subjects or files are missing: {}'.format(miss))
-            res = False
-        return res
+        return [i for i in ids if i not in miss.keys()]
 
-    def make_subjects_per_group(self, df_groups_clin):
-        _, subjects_per_group = _GET_Groups(df_groups_clin, self.id_col, self.group_col)
+    def make_subjects_per_group(self, df):
+        subjects_per_group = dict()
+        for group in self.ls_groups:
+            subjects_per_group[group] = []
+            for row in df.index.tolist():
+                if df.at[row, self.group_col] == group and df.at[row, self.id_col] in self.ids:
+                    subjects_per_group[group].append(df.at[row, self.id_col])
+        print(subjects_per_group)
+
         file = 'subjects_per_group.json'
         with open(path.join(self.PATH_GLM_dir, file), 'w') as f:
             json.dump(subjects_per_group, f, indent=4)
@@ -425,12 +417,13 @@ if __name__ == "__main__":
     import subprocess
     from distribution.logger import Log
     from setup.get_vars import Get_Vars, SetProject
-    getvars = Get_Vars()
-    vars_local = getvars.location_vars['local']
-    projects = getvars.projects
-    params = get_parameters(projects['PROJECTS'])
+    getvars      = Get_Vars()
+    vars_local   = getvars.location_vars['local']
+    projects     = getvars.projects
+    params       = get_parameters(projects['PROJECTS'])
     vars_project = getvars.projects[params.project]
-    SetProject(vars_local['NIMB_PATHS']['NIMB_tmp'], vars_local['STATS_PATHS'], params.project)
+    stats_vars   = getvars.stats_vars
+    SetProject(vars_local['NIMB_PATHS']['NIMB_tmp'], stats_vars, params.project)
     fs_start_cmd = initiate_fs_from_sh(vars_local)
 
     try:
