@@ -401,8 +401,8 @@ def initiate_fs_from_sh(vars_local):
     sh_file = path.join(vars_local["NIMB_PATHS"]["NIMB_tmp"], 'source_fs.sh')
     with open(sh_file, 'w') as f:
         f.write(vars_local["FREESURFER"]["export_FreeSurfer_cmd"]+'\n')
-        f.write(vars_local["FREESURFER"]["source_FreeSurfer_cmd"]+'\n')
         f.write("export SUBJECTS_DIR="+vars_local["FREESURFER"]["FS_SUBJECTS_DIR"]+'\n')
+        f.write(vars_local["FREESURFER"]["source_FreeSurfer_cmd"]+'\n')
     system("chmod +x {}".format(sh_file))
     return ("source {}".format(sh_file))
 
@@ -426,6 +426,7 @@ if __name__ == "__main__":
     SetProject(vars_local['NIMB_PATHS']['NIMB_tmp'], stats_vars, params.project)
     fs_start_cmd = initiate_fs_from_sh(vars_local)
 
+    print('please initiate freesurfer using the command: \n    {}'.format(fs_start_cmd))
     try:
         subprocess.run(['mri_info'], stdout=subprocess.PIPE).stdout.decode('utf-8')
     except Exception as e:
@@ -441,6 +442,7 @@ if __name__ == "__main__":
                   vars_local["FREESURFER"])
 
     print('\nSTEP 2 of 2: performing GLM analysis')
+    print(vars_local["FREESURFER"]["FS_SUBJECTS_DIR"])
     PerformGLM(vars_local["STATS_PATHS"]["FS_GLM_dir"],
                             vars_local["FREESURFER"]["FREESURFER_HOME"],
                             vars_local["FREESURFER"]["FS_SUBJECTS_DIR"],
