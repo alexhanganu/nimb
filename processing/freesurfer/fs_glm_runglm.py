@@ -344,11 +344,13 @@ class PerformGLM():
                 system('mri_glmfit-sim --glmdir '+path.join(glmdir,contrast_name)+' --cache '+str(cache)+' '+direction+' --cwp 0.05 --2spaces')
 
     def check_maxvox(self, glmdir, contrast_name):
-        val = [i.strip() for i in open(path.join(glmdir,contrast_name,'maxvox.dat')).readlines()][0].split()[0]
-        if float(val) > 3.0 or float(val) < -3.0:
-            return True
-        else:
-            return False
+        res = False
+        maxvox = path.join(glmdir, contrast_name, 'maxvox.dat')
+        if path.exists(maxvox):
+            val = [i.strip() for i in open(maxvox).readlines()][0].split()[0]
+            if float(val) > 3.0 or float(val) < -3.0:
+                res = True
+        return res
 
     def check_mcz_summary(self, file):
         if len(linecache.getline(file, 42).strip('\n')) > 0:
