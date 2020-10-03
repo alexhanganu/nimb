@@ -20,7 +20,7 @@ def setup_miniconda(NIMB_HOME = "~/nimb"):
         remove('miniconda3.sh')
         cmd = 'export PATH=~..' + path.join(NIMB_HOME, 'miniconda3') + '/bin:$PATH >> $HOME/.bashrc'
         system('echo "' + cmd + '"')
-        system('/miniconda3/bin/conda init')
+        system('./miniconda3/bin/conda init')
         system('./miniconda3/bin/conda config --set report_errors false')
         system('./miniconda3/bin/conda install -y dcm2niix')
         system('./miniconda3/bin/conda install -y dcm2bids')
@@ -38,6 +38,7 @@ def setup_miniconda(NIMB_HOME = "~/nimb"):
         system('./miniconda3/bin/conda install -y xlsxwriter')
         system('./miniconda3/bin/conda install -y xlrd')
         system('./miniconda3/bin/conda install -y -c conda-forge nipy')
+        system('./miniconda3/bin/conda install -y -c conda-forge PyInquirer')
         # must activate the conda environment before using by sourcing the bash profile. Otherwise, does not work
         system("source $HOME/.bashrc")
     print(

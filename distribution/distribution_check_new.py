@@ -6,27 +6,35 @@ class DistributionCheckNew():
     def __init__(self, project_vars):
 #        super().__init__(all_vars=all_vars, projects=projects, project=project)
         self.project_vars = project_vars
-        self.is_all_subject_processed()
+        unprocessed = self.is_all_subject_processed()
+        print(len(unprocessed))
+        if unprocessed:
+            print('there are subjects to be processed')
 
 
     def is_all_subject_processed(self):
         """
+        1. get the list of un-processed subject
         must be absolute path
         :param SOURCE_SUBJECTS_DIR:
         :param PROCESSED_FS_DIR:
         :return:
         """
+        print('SOURCE_SUBJECTS_DIR is: {}, \n PROCESSED_FS_DIR is: {}'.format(self.project_vars['SOURCE_SUBJECTS_DIR'], self.project_vars['PROCESSED_FS_DIR']))
         list_subjects = self._get_list_processed_subjects('SOURCE_SUBJECTS_DIR')
         list_processed = self._get_list_processed_subjects('PROCESSED_FS_DIR')
+        print('there are {} subjects in source, and {} in processed'.format(len(list_subjects), len(list_processed)))
+        return [i.strip('.zip') for i in list_subjects if i.strip('.zip') not in list_processed]
 
-        print(list_subjects)
-        print(list_processed)
-
-        un_process_sj = ListSubjectHelper.get_to_be_processed_subject_local(SOURCE_SUBJECTS_DIR, PROCESSED_FS_DIR)
-        if len(un_process_sj) > 0:
-            return True
-        return False
-
+    def _get_list_processed_subjects(self, DIR):
+        ls_dir = []
+        if self.project_vars[DIR][0] == 'local':
+            path_dir = self.project_vars[DIR][1]
+            if os.path.exists(path_dir):
+                ls_dir = os.listdir(path_dir)
+        else:
+            from distribution.SSHHelper import runCommandOverSSH
+            return runCommandOverSSH(self.project_vars[DIR][0], 'ls {}'.format(self.project_vars[DIR][1]))
 
     def ready(self):
         self.check_projects(self.project_name)
@@ -79,36 +87,15 @@ class DistributionCheckNew():
 
 
 
-    def _get_list_processed_subjects(self, DIR):
-        if self.project_vars[DIR][0] == 'local':
-            path = self.project_vars[DIR][1]
-        print(path)
-
-        # MainFolder = _get_folder('Main')
-        # ls = []
-        # if path.isfile(MainFolder+'logs/processed_subjects_'+DIR+'.txt'):
-        #     with open(MainFolder+'logs/processed_subjects_'+DIR+'.txt', 'r') as f:
-        #         for line in f:
-        #             ls.append(line.strip('\n'))
-        # else:
-        #     print(MainFolder+'logs/processed_subjects_'+DIR+'.txt is not SETUP yet')
-        # return ls
-
     # @staticmethod
-    def get_list_subject_to_be_processed_local_version(self, SOURCE_SUBJECTS_DIR, PROCESSED_FS_DIR):
+    def get_available_space(self, SOURCE_SUBJECTS_DIR, PROCESSED_FS_DIR):
         """
-        both SOURCE_SUBJECTS_DIR and PROCESSED_FS_DIR is inside a single computer (i.e., local pc)
-
-        1. get the list of un-processed subject
-        2. get the current available space on hard-disk of user
+        1. get the current available space on hard-disk of user                                                                                                            
         2. calculate the list of
-		initial script in database -> create_lsmiss
+                initial script in database -> create_lsmiss  
         :param SOURCE_SUBJECTS_DIR:
         :return:
         """
-        # get the list of unprocessed subjects
-        un_process_sj = ListSubjectHelper.get_to_be_processed_subject_local(SOURCE_SUBJECTS_DIR, PROCESSED_FS_DIR)
-        un_process_sj = [os.path.join(SOURCE_SUBJECTS_DIR,file) for file in un_process_sj ]
         # based on availabe space
         to_be_process_subject = DiskspaceUtility.get_subject_to_be_process_with_free_space(un_process_sj)
         #

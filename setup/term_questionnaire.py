@@ -8,12 +8,13 @@ q_input ={
         'type': 'input',
         'name': 'entry',
         'message': 'Please provide:'}
-
+import sys
 try:
     from PyInquirer import prompt
 except ImportError:
     import argparse
     print('please install PyInquirer: pip3 install PyInquirer')
+    sys.exit(0)
 
 # type = 'inputs' for adding string to dictionary keys
 # type = 'paths' for adding paths to dictionary keys

@@ -58,12 +58,13 @@ def getSSHSession(remote):
     return sshSession
 
 
-def runCommandOverSSH(sshSession, command):
+def runCommandOverSSH(remote, command):
     """
-    :param sshSession: paramiko sshsession
+    :param remote: name of the remote computer
     :param command: the command to run
     :return: tuple(output of command, error) or None if error
     """
+    sshSession = getSSHSession(remote)
     assert type(sshSession) is paramiko.client.SSHClient, \
         "'sshSession' is type %s" % type(sshSession)
     # assert type(command) in (str, unicode), "'command' is type %s" % type(command)
@@ -94,7 +95,7 @@ def runCommandOverSSH(sshSession, command):
         out = ''.join(out) # Convert to single string
         if out:
             logger.debug("%s\n" % out)
-
+        print(out, err)
         return (out, err)
 
 
