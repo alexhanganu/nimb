@@ -159,10 +159,6 @@ class DistributionHelper():
         print('perform statistical analysis')
 
 
-    def fs_glm(self):
-
-        print('start freesurfer GLM')
-
     def run_stats_ready(self):
         """will check if xlsx file for project is provided
            if all variables are provided

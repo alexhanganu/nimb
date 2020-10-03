@@ -35,19 +35,18 @@ class PrepareForGLM():
         self.ids = self.get_ids_ready4glm(df_groups_clin[self.id_col].tolist(), vars_fs)
         d_init = df_groups_clin.to_dict()
         self.d_subjid = {}
-        ls_all_vars = [key for key in d_init if key != self.id_col]
+        self.ls_vars_stats = [key for key in d_init if key != self.id_col]
         self.ls_groups = []
         for rownr in d_init[self.id_col]:
             id = d_init[self.id_col][rownr]
             if id in self.ids:
                 self.d_subjid[id] = {}
-                for key in ls_all_vars:
-                    self.d_subjid[id][key] = d_init[key][rownr]
+                for var in self.ls_vars_stats:
+                    self.d_subjid[id][var] = d_init[var][rownr]
+        self.ls_vars_stats.remove(self.group_col)
         for id in self.d_subjid:
             if self.d_subjid[id][self.group_col] not in self.ls_groups:
                 self.ls_groups.append(self.d_subjid[id][self.group_col])
-        self.ls_vars_stats = ls_all_vars
-        self.ls_vars_stats.remove(self.group_col)
 
         self.contrasts = {'g1v1':{'slope.mtx':['0 1','t-test with the slope>0 being positive; is the slope equal to 0? does the correlation between thickness and variable differ from zero ?',],},
             'g2v0':{'group.diff.mtx':['1 -1','t-test with Group1>Group2 being positive; is there a difference between the group intercepts? Is there a difference between groups?',],},
@@ -110,7 +109,7 @@ class PrepareForGLM():
 
         miss = {}
         for _id in ids:
-            if path.exists(path.join(vars_fs["FS_SUBJECTS_DIR"], _id)):
+            if path.exists(path.join(vars_fs["FS_SUBJECTS_DIR"], _id, 'surf')) and path.exists(path.join(vars_fs["FS_SUBJECTS_DIR"], _id, 'label')):
                 for hemi in ['lh','rh']:
                     for meas in vars_fs["GLM_measurements"]:
                         for thresh in vars_fs["GLM_thresholds"]:
