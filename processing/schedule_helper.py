@@ -24,7 +24,7 @@ class Submit_task():
             sh_file = self.make_submit_file(cmd, name, task, walltime)
             self.submit_2scheduler(sh_file)
         elif processing_env == 'tmux':
-            submit_2tmux(cmd, name)
+            self.submit_2tmux(cmd, name)
         else:
             print('ERROR: processing environment not provided or incorrect')
 
@@ -62,18 +62,18 @@ class Submit_task():
         else:
                 print('        SUBMITTING is stopped')
 
-    def submit_2tmux(cmd, subjid):
+    def submit_2tmux(self, cmd, subjid):
         if self.vars_local["PROCESSING"]["SUBMIT"] == 1:
             self.job_id = 'tmux_'+str(subjid)
             print('        submitting to tmux session: {}'.format(self.job_id))
             system('tmux new -d -s {}'.format(self.job_id))
             if self.activate_freesurfer:
-                system('tmux send-keys -t {0} {1} ENTER'.format(str(self.job_id), self.vars_local["FREESURFER"]["export_FreeSurfer_cmd"]))
-                system('tmux send-keys -t {0} {1} ENTER'.format(str(self.job_id), self.vars_local["FREESURFER"]["source_FreeSurfer_cmd"]))
-                system('tmux send-keys -t {0} export SUBJECTS_DIR={1} ENTER'.format(str(self.job_id), self.vars_local["FREESURFER"]["FS_SUBJECTS_DIR"]))
-            if self.cd_cmd:
-                system('tmux send-keys -t {0} {1} ENTER'.format(str(self.job_id), self.cd_cmd))
-            system('tmux send-keys -t {0} {1} ENTER'.format(str(self.job_id),cmd))
+                system("tmux send-keys -t \'{} {}\' ENTER".format(str(self.job_id), self.vars_local["FREESURFER"]["export_FreeSurfer_cmd"]))
+#                system('tmux send-keys -t {} {} ENTER'.format(str(self.job_id), self.vars_local["FREESURFER"]["source_FreeSurfer_cmd"]))
+#                system('tmux send-keys -t {} export SUBJECTS_DIR={1} ENTER'.format(str(self.job_id), self.vars_local["FREESURFER"]["FS_SUBJECTS_DIR"]))
+#            if self.cd_cmd:
+#                system('tmux send-keys -t {} {} ENTER'.format(str(self.job_id), self.cd_cmd))
+#            system('tmux send-keys -t {} {} ENTER'.format(str(self.job_id), cmd))
         else:
             print('        SUBMITTING is stopped')
 

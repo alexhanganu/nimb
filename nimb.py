@@ -94,7 +94,6 @@ class NIMB(object):
                 from processing import schedule_helper
                 self.logger.info('Please check that all required variables for the GLM analysis are defined in the var.py file')
                 self.logger.info('before running the script, remember to source $FREESURFER_HOME')
-                self.logger.info('check if fsaverage is present in SUBJECTS_DIR')
                 self.logger.info('each subject must include at least the folders: surf and label')
                 schedule_helper.Submit_task(self.vars_local, self.vars_local['NIMB_PATHS']["miniconda_python_run"]+' fs_glm_run_glm.py -project '+self.project,
                                                'fs_glm','run_glm', self.vars_local['PROCESSING']["batch_walltime"],
