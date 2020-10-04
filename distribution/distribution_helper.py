@@ -59,7 +59,6 @@ class DistributionHelper():
         """
         # check path exisits and create path if needed
         for key in dict:
-            print(type(dict[key]))
             if type(dict[key]) != int and len(dict[key]) < 1:
                 logger.fatal(f"{key} is missing")
                 return False
