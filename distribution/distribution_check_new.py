@@ -7,9 +7,8 @@ class DistributionCheckNew():
 #        super().__init__(all_vars=all_vars, projects=projects, project=project)
         self.project_vars = project_vars
         unprocessed = self.is_all_subject_processed()
-        print(len(unprocessed))
         if unprocessed:
-            print('there are subjects to be processed')
+            print('there are {} subjects to be processed'.format(len(unprocessed)))
 
 
     def is_all_subject_processed(self):
@@ -149,23 +148,16 @@ if __name__ == "__main__":
 
     """
     # this is to verify verify:
-    # {“ppmi”: “SOURCE_SUBJECTS_DIR” : [elm, ‘/home_je/hanganua/database/loni_ppmi/source/mri];
-    # “PROCESSED_FS_DIR” : [elm, ‘home_je/hanganua/database/loni_ppmi/processed_fs]}
-    # cannot connect to ELM, time-out or wrong pass??
+    # {“adni”: “SOURCE_SUBJECTS_DIR” : ['beluga', '/home/$USER/projects/def-hanganua/databases/loni_adni/source/mri'];
+    # “PROCESSED_FS_DIR” : ['beluga', 'home/$USER/projects/def-hanganua/databases/loni_adni/processed_fs7']}
     # distribution = DistributionCheckNew()
     pass
 
 """
     - process CHECK_NEW
-        - if project is provided by user: check per project
-        - else: check for all projects
-
+        - check for provided project, if provided, else - for all projects
         - per projects: check if ~/nimb/projects.json → project → SOURCE_MR is provided.  ==> start
-        - If yes: check that all subjects were processed.
-        - If not: get the list of subjects in SOURCE_SUBJECTS_DIR (archived zip or .gz) that didn’t undergo the FreeSurfer (missing in $PROCESSED_FS_DIR), 
-        get_list_subject_to_be_processed_remote() 
-        (verify: {“ppmi”: “SOURCE_SUBJECTS_DIR” : [elm, ‘/home_je/hanganua/database/loni_ppmi/source/mri]; “PROCESSED_FS_DIR” : [elm, ‘home_je/hanganua/database/loni_ppmi/processed_fs]})
-        - create distrib-DATABASE (track files) ~/nimb/distribution.json:
+        - create distrib-DATABASE (track files) ~/nimb/projects_status.json:
             - ACTION = notprocessed, copied2process
             - LOCATION = local, remote_name1, remote_name2, remote_name_n
             - add unprocessed subjects to distrib-DATABASE → ACTION=notprocessed
