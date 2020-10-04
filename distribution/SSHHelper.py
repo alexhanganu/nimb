@@ -93,19 +93,10 @@ def runCommandOverSSH(remote, command):
 
         out = stdout.readlines()
         out = ''.join(out) # Convert to single string
-        if out:
-            logger.debug("%s\n" % out)
-        print(out, err)
-        return (out, err)
+#        if out:
+#            logger.debug("%s\n" % out)
+        return (out)
 
-def get_remote_list(remote):
-    sshSession = getSSHSession(remote)
-    try:
-        ftp = sshSession.open_sftp()
-        return ftp.listdir()
-    except Exception as e:
-        print(e)
-        return []
 
 def read_json(json_file_name):
     """
