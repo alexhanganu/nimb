@@ -33,8 +33,8 @@ class DistributionCheckNew():
             if os.path.exists(path_dir):
                 ls_dir = os.listdir(path_dir)
         else:
-            from distribution.SSHHelper import runCommandOverSSH
-            return runCommandOverSSH(self.project_vars[DIR][0], 'ls {}'.format(self.project_vars[DIR][1]))
+            from distribution.SSHHelper import get_remote_list #runCommandOverSSH
+            return get_remote_list(self.project_vars[DIR][0]) #runCommandOverSSH(self.project_vars[DIR][0], 'ls {}'.format(self.project_vars[DIR][1]))
 
     def ready(self):
         self.check_projects(self.project_name)

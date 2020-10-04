@@ -36,7 +36,6 @@ def _set_Table_Data(Table, data_requested, _id):
             if data_requested[_id][key] != Table_Data[_id][key]:
                 conn.execute('''UPDATE {0} SET {1} = "{2}" WHERE id = "{3}" '''.format(Table, key, data_requested[_id][key], _id))
     else:
-        print(Table, data_requested, _id)
         data = [_id]
         for key in data_requested[_id]:
             data.append(data_requested[_id][key])

@@ -41,7 +41,7 @@ def getSSHSession(remote):
     password = credentials['password']
 
     # Set up SSH
-    logger.debug((username, password,targetIP))
+    logger.debug((username, targetIP))
     sshSession = paramiko.SSHClient()
     sshSession.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
@@ -98,6 +98,14 @@ def runCommandOverSSH(remote, command):
         print(out, err)
         return (out, err)
 
+def get_remote_list(remote):
+    sshSession = getSSHSession(remote)
+    try:
+        ftp = sshSession.open_sftp()
+        return ftp.listdir()
+    except Exception as e:
+        print(e)
+        return []
 
 def read_json(json_file_name):
     """

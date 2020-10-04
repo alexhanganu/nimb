@@ -8,7 +8,6 @@ class term_setup():
     def __init__(self, remote):
         self.remote = remote
         self.cluster = database._get_Table_Data('remotes', remote)
-        print(self.cluster)
         if 'default' in self.cluster:
             self.credentials = self.setupcredentials()
         else:
