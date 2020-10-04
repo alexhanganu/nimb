@@ -1,5 +1,4 @@
 {
-"PROJECTS" : ["project1", "project2"],
 "project1" : {
     "SOURCE_SUBJECTS_DIR"    : ["local","/home/username/database/source/mri"],
     "SOURCE_BIDS_DIR"        : ["",""],

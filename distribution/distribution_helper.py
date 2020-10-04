@@ -229,22 +229,13 @@ class DistributionHelper():
                     self.setting_up_remote_linux_with_freesurfer(host_name=host_name)
 
         # continue working from below
-        print("get list of un-process subject. to be send to the server")
         # must set SOURCE_SUBJECTS_DIR, PROCESSED_FS_DIR before calling: get from project
         # project name get from where?
 
         machine_PROCESSED_FS_DIR, PROCESSED_FS_DIR = self.get_PROCESSED_FS_DIR()
         machine_SOURCE_SUBJECTS_DIR, SOURCE_SUBJECTS_DIR = self.get_SOURCE_SUBJECTS_DIR()
 
-        # DistributionHelper.get_list_subject_to_be_processed_remote_version(SOURCE_SUBJECTS_DIR, PROCESSED_FS_DIR)
-        # DistributionHelper.get_list_subject_to_be_processed_remote_version(remote_host=host_name,PROCESSED_FS_DIR=)
-        # how this part work?
-        # status.set('Copying data to cluster ')
-        logger.debug('Copying data to cluster ')
-        #  copy subjects to cluster
         self.run_copy_subject_to_cluster(Project)
-        # status.set('Cluster analysis started')
-        # status.set("Cluster analysing running....")
         logger.debug('Cluster analysis started')
         logger.debug("Cluster analysing running....")
         self.run_processing_on_cluster_2()
