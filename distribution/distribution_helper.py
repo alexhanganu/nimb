@@ -30,6 +30,55 @@ class DistributionHelper():
         self.setup_folder = "../setup"
         self.git_repo = "https://github.com/alexhanganu/nimb"
 
+    def check_new(self):
+        from distribution.distribution_check_new import DistributionCheckNew
+        unprocessed = DistributionCheckNew(self.projects[self.project_name]).unprocessed
+        if unprocessed:
+            print('there are {} subjects to be processed'.format(len(unprocessed)))
+            
+        """
+        - check for provided project, if provided, else - for all projects
+        - per projects: check if ~/nimb/projects.json → project → SOURCE_MR is provided.  ==> start
+        - create distrib-DATABASE (track files) ~/nimb/projects_status.json:
+            - ACTION = notprocessed, copied2process
+            - LOCATION = local, remote_name1, remote_name2, remote_name_n
+            - add unprocessed subjects to distrib-DATABASE → ACTION=notprocessed
+        - compute the number of subjects to be processed, volume of each subject, add volume of processed data.
+        - compute available disk space on the local or remote (where freesurfer_install ==1) for the folder FS_SUBJECTS_DIR and NIMB_PROCESSED_FS ==> get_free_space_remote
+        - populating rule: 
+            - continue populating until the volume of subjects + volume of estimated processed subjects (900Mb per subject) is less then 75% of the available disk space
+        - if freesurfer_install ==1 on local:
+            - populate local.json → NIMB_PATHS → NIMB_NEW_SUBJECTS based on populating rule
+        - if freesurfer_install ==1 on remote: NOW: notes: the first remote machine in projects.json that has fs_install==1 is selected, the rest is ignored
+            - if content of subject to be processed, in SOURCE_SUBJECTS_DIR is NOT archived:
+                - archive and copy to local/remote.json → Nimb_PATHS → NIMB_NEW_SUBECTS.
+            - If there are more than one computer and all where checked and are ready to perform freesurfer:
+                - send archived subjects to each of them in equal amount
+            - once copied to the NIMB_NEW_SUBJECTS:
+                - unarchive + rm the archive + compute the volume of the unarchived subject folder
+                - add subject to distrib-DATABSE → LOCATION → remote_name
+                - move subject in distrib-DATABASE → ACTION notprocessed → copied2process
+            - after all subjects are copied to the NIMB_NEW_SUBJECTS folder: initiate the classifier on the local/remote computer with keys: cd $NIMB_HOME && python nimb.py -process classify
+            - wait for the answer; If True and new_subjects.json file was created:
+            - start the -process freesurfer
+            - after each 2 hours check the local/remote NIMB_PROCESSED_FS and NIMB_PROCESSED_FS_ERROR folders. If not empty: mv (or copy/rm) to the path provided in the ~/nimb/projects.json → project → local or remote $PROCESSED_FS_DIR folder
+            - if SOURCE_BIDS_DIR is provided: moves the processed subjects to corresponding SOURCE_BIDS_DIR/subject/session/processed_fs folder"""
+
+    # @staticmethod
+    def get_available_space(self, SOURCE_SUBJECTS_DIR, PROCESSED_FS_DIR):
+        """
+        1. get the current available space on hard-disk of user                                                                                                            
+        2. calculate the list of
+                initial script in database -> create_lsmiss  
+        :param SOURCE_SUBJECTS_DIR:
+        :return:
+        """
+        # based on availabe space
+        to_be_process_subject = DiskspaceUtility.get_subject_to_be_process_with_free_space(un_process_sj)
+        #
+
+
+
     def get_stats_dir(self):
         """will return the folder with unzipped stats folder for each subject"""
         PROCESSED_FS_DIR = self.projects[self.project_name]["PROCESSED_FS_DIR"]
@@ -59,22 +108,6 @@ class DistributionHelper():
             print("There is no path for project: "+project+" defined. Please check the file: {}".format(path.join(self.credentials_home, "projects.json")))
             return ""
         return self.projects[project][var_name]
-
-    def get_PROCESSED_FS_DIR(self):
-        """
-
-        :return: like ["local","/home/username/database/source/mri"],
-        """
-        machine, path =  self.projects[self.project_name]['PROCESSED_FS_DIR']
-        return machine, path
-
-    def get_SOURCE_SUBJECTS_DIR(self):
-        """
-
-        :return: machine and path in that machine like ["local","/home/username/database/source/mri"],
-        """
-        machine, path =  self.projects[self.project_name]['SOURCE_SUBJECTS_DIR']
-        return machine, path
 
 
     def run(self, Project):
@@ -253,9 +286,7 @@ class DistributionHelper():
             # 1. get all the subject file path, using exisit helper method
             PROCESSED_FS_DIR = DistributionHelper.get_PROCESSED_FS_DIR(f"../setup/{cluster_name}.json")
             SOURCE_SUBJECTS_DIR = DistributionHelper.get_SOURCE_SUBJECTS_DIR(f"../setup/{cluster_name}.json")
-            subjects_to_send = DistributionHelper.get_list_subject_to_be_processed_remote_version(SOURCE_SUBJECTS_DIR=SOURCE_SUBJECTS_DIR,
-                                                                                                  PROCESSED_FS_DIR=PROCESSED_FS_DIR,
-                                                                                                  remote = cluster_name)
+            subjects_to_send = DistributionHelper.get_list_subject_to_be_processed_remote_version(SOURCE_SUBJECTS_DIR=SOURCE_SUBJECTS_DIR, PROCESSED_FS_DIR=PROCESSED_FS_DIR, remote = cluster_name)
 
             ssh_session = SSHHelper.getSSHSession(remote=cluster_name)
             # call upload_multiple_files_to_cluster for them
@@ -333,119 +364,75 @@ if __name__ == "__main__":
 
 
 
-    # def ready(self): #ALL READY MOVED TO DISTRIBUTION_READY
-        # """
-        # verify if NIMB is ready to be used
-        # :return: bool
-        # """
-        # ready = True
-        # self.verify_paths()
-        # self.is_setup_vars(self.locations['local']['NIMB_PATHS'])
-        # self.is_setup_vars(self.locations['local']['PROCESSING'])
-        # if self.classify_ready():
-            # print("NIMB ready to perform classification")
-        # else:
-            # ErrorMessages.error_classify()
-            # ready = False
-        # if self.fs_ready():
-            # print("NIMB ready to perform FreeSurfer processing")
-        # else:
-            # ErrorMessages.error_fsready()
-            # ready = False
-        # return ready
 
-    # def is_setup_vars(self, dict):
-        # """
-        # check if variables are defined in json
-        # :param config_file: path to configuration json file
-        # :return: True if there is no error, otherwise, return False
-        # """
-        # for key in dict:
-            # if type(dict[key]) != int and len(dict[key]) < 1:
-                # logger.fatal(f"{key} is missing")
-                # return False
-        # return True
+'''
+def _update_list_processed_subjects(DIR, dir2read):
+    Processed_Subjects = {}
+    Processed_Subjects[DIR] = []
+    MainFolder = _get_folder('Main')
+    if path.isfile(MainFolder+'logs/processed_subjects_'+DIR+'.txt'):
+        ls = []
+        with open(MainFolder+'logs/processed_subjects_'+DIR+'.txt', 'r') as f:
+                for line in f:
+                    ls.append(line.strip('\n'))
+        Processed_Subjects[DIR] = ls[1:]
+    Processed_Subjects[DIR].append(dir2read)
+    open(MainFolder+'logs/processed_subjects_'+DIR+'.txt','w').close()
+    with open(MainFolder+'logs/processed_subjects_'+DIR+'.txt','a') as f:
+        f.write(DIR+'\n')
+        for subject in Processed_Subjects[DIR]:
+            f.write(subject+'\n')
 
-    # def verify_paths(self):
-        # # to verify paths and if not present - create them or return error
-        # if path.exists(self.locations['local']['NIMB_PATHS']['NIMB_HOME']):
-            # for p in (     self.NIMB_tmp,
-                 # path.join(self.NIMB_tmp, 'mriparams'),
-                 # path.join(self.NIMB_tmp, 'usedpbs'),
-                           # self.locations['local']['NIMB_PATHS']['NIMB_NEW_SUBJECTS'],
-                           # self.locations['local']['NIMB_PATHS']['NIMB_PROCESSED_FS'],
-                           # self.locations['local']['NIMB_PATHS']['NIMB_PROCESSED_FS_error']):
-                # if not path.exists(p):
-                    # print('creating path ',p)
-                    # makedir_ifnot_exist(p)
 
-    # def classify_ready(self):
-        # ready = True
-        # for p in (self.locations['local']['NIMB_PATHS']['NIMB_NEW_SUBJECTS'],
-                  # self.NIMB_HOME,self.NIMB_tmp):
-            # if not path.exists(p):
-                # try:
-                    # # if path start with ~
-                    # makedir_ifnot_exist(p)
-                # except Exception as e:
-                    # print(e)
-            # if not path.exists(p):
-                # ready = False
-                # break
-        # return ready
 
-    # def fs_ready(self):
-        # if self.locations['local']['FREESURFER']['FreeSurfer_install'] == 1:
-            # if len(self.locations['local']['FREESURFER']['FREESURFER_HOME']) < 1:
-                # logger.fatal("FREESURFER_HOME is missing.")
-                # return False
-            # if not path.exists(self.locations['local']['FREESURFER']['FS_SUBJECTS_DIR']):
-                    # print('creating path ', self.locations['local']['FREESURFER']['FS_SUBJECTS_DIR'])
-                    # makedir_ifnot_exist(self.locations['local']['FREESURFER']['FS_SUBJECTS_DIR'])
-            # if self.check_freesurfer_ready():
-                # return self.fs_chk_fsaverage_ready()
-        # else:
-            # return False
 
-    # def fs_chk_fsaverage_ready(self):
-        # self.fs_fsaverage_copy()
-        # if not path.exists(path.join(self.locations['local']['FREESURFER']['FS_SUBJECTS_DIR'],'fsaverage', 'xhemi')):
-            # print('fsaverage or fsaverage/xhemi is missing from SUBJECTS_DIR: {}'.format(self.locations['local']['FREESURFER']['FS_SUBJECTS_DIR']))
-            # return False
-        # else:
-            # return True
+def _get_lsmiss():
+    MainFolder = _get_folder('Main')
+    lsmiss = {}
+    for file in listdir(MainFolder+'logs/'):
+        if 'miss_' in file:
+            ls = []
+            with open(MainFolder+'logs/'+file, 'r') as f:
+                for line in f:
+                    ls.append(line.strip('\n'))
+            lsmiss[ls[0]] = ls[1:]
+    print('lsmiss from get_lsmiss is: ',lsmiss)
+    return lsmiss
 
-    # def fs_fsaverage_copy(self):
-        # if not path.exists(path.join(self.locations['local']['FREESURFER']['FS_SUBJECTS_DIR'],'fsaverage', 'xhemi')):
-            # fsaverage_path = path.join(self.locations['local']['FREESURFER']['FREESURFER_HOME'], "subjects", "fsaverage")
-            # shutil.copytree(fsaverage_path, path.join(self.vars['local']['FREESURFER']['FS_SUBJECTS_DIR'], 'fsaverage'))
+def _update_lsmiss(DIR, dir2read):
+    MainFolder = _get_folder('Main')
+    lsmiss = {}
+    if path.isfile(MainFolder+'logs/miss_'+DIR+'.txt'):
+        ls = []
+        with open(MainFolder+'logs/miss_'+DIR+'.txt', 'r') as f:
+            for line in f:
+                ls.append(line.strip('\n'))
+        lsmiss[ls[0]] = ls[1:]
+        lsmiss[DIR].remove(dir2read)
+        if len(lsmiss[DIR])>0:
+            open(MainFolder+'logs/miss_'+DIR+'.txt','w').close()
+            with open(MainFolder+'logs/miss_'+DIR+'.txt','a') as f:
+                f.write(DIR+'\n')
+                for subject in lsmiss[DIR]:
+                    f.write(subject+'\n')
+        else:
+            remove(MainFolder+'logs/miss_'+DIR+'.txt')
+    else:
+        print(MainFolder+'logs/miss_'+DIR+'.txt'+' is not a file')
 
-    # def check_freesurfer_ready(self):
-        # """
-        # check and install freesurfer
-        # :return:
-        # """
-        # ready = False
-        # if not path.exists(path.join(self.locations['local']['FREESURFER']['FREESURFER_HOME'], "MCRv84")):
-            # print('FreeSurfer must be installed')
-            # from .setup_freesurfer import SETUP_FREESURFER
-            # SETUP_FREESURFER(self.locations, self.installers)
-            # ready = True
-        # else:
-            # print('start freesurfer processing')
-            # ready =  True
-        # return ready
-        
-        
-    # def check_stats_ready(self):
-        # """will check if xlsx file for project is provided
-           # if all variables are provided
-           # if all paths for stats are created
-           # if NIMB is ready to perform statistical analysis"""
-        # ready = False
-        # file = self.projects[self.project_name]["GLM_file_group"]
-        # if self.projects[self.project_name]["materials_DIR"][0] == 'local' and path.exists(path.join(self.projects[self.project_name]["materials_DIR"][1], file)):
-            # ready = True
-        # else:
-            # print("data file is missing or not located on a local folder. Check file {}".format(path.join(self.credentials_home, 'projects.json', self.project_name)))
-        # return ready
+
+def update_ls_subj2fs(SUBJECT_ID):
+    #subj2fs file is the list of subjects that need to undergo the FS pipeline processing?
+    newlssubj = []
+    MainFolder = _get_folder('Main')
+    if path.isfile(MainFolder+'logs/subj2fs'):
+        lssubj = [line.rstrip('\n') for line in open(MainFolder+'logs/subj2fs')]
+        for subjid in lssubj:
+            if subjid not in newlssubj:
+                newlssubj.append(subjid)
+    newlssubj.append(SUBJECT_ID)
+    open(MainFolder+'logs/subj2fs','w').close()
+    with open(MainFolder+'logs/subj2fs','a') as f:
+        for subj in newlssubj:
+            f.write(subj+'\n')
+'''

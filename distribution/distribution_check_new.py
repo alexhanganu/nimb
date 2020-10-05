@@ -4,11 +4,8 @@ import os
 class DistributionCheckNew():
 
     def __init__(self, project_vars):
-#        super().__init__(all_vars=all_vars, projects=projects, project=project)
         self.project_vars = project_vars
-        unprocessed = self.is_all_subject_processed()
-        if unprocessed:
-            print('there are {} subjects to be processed'.format(len(unprocessed)))
+        self.unprocessed = self.is_all_subject_processed()
 
 
     def is_all_subject_processed(self):
@@ -36,17 +33,6 @@ class DistributionCheckNew():
             return runCommandOverSSH(self.project_vars[DIR][0],
                                      'ls {}'.format(self.project_vars[DIR][1])).split('\n') 
 
-    def ready(self):
-        self.check_projects(self.project_name)
-        # if self.project_name:
-        #     # check that project
-        #     self.check_projects(self.project_name)
-        #
-        # else: # check all project
-        #     # get all project names
-        #     for prj in self.projects['PROJECTS']:
-        #
-        #         pass
 
     def check_projects(self, project_name=None):
         """
@@ -87,18 +73,6 @@ class DistributionCheckNew():
 
 
 
-    # @staticmethod
-    def get_available_space(self, SOURCE_SUBJECTS_DIR, PROCESSED_FS_DIR):
-        """
-        1. get the current available space on hard-disk of user                                                                                                            
-        2. calculate the list of
-                initial script in database -> create_lsmiss  
-        :param SOURCE_SUBJECTS_DIR:
-        :return:
-        """
-        # based on availabe space
-        to_be_process_subject = DiskspaceUtility.get_subject_to_be_process_with_free_space(un_process_sj)
-        #
     @staticmethod
     def helper(ls_output):
         """
@@ -143,70 +117,6 @@ class DistributionCheckNew():
         return [os.path.join(SOURCE_SUBJECTS_DIR,subject) for subject in to_be_process_subject] # full path
 
 
-if __name__ == "__main__":
-    """
-
-    """
-    # this is to verify verify:
-    # {“adni”: “SOURCE_SUBJECTS_DIR” : ['beluga', '/home/$USER/projects/def-hanganua/databases/loni_adni/source/mri'];
-    # “PROCESSED_FS_DIR” : ['beluga', 'home/$USER/projects/def-hanganua/databases/loni_adni/processed_fs7']}
-    # distribution = DistributionCheckNew()
-    pass
-
-"""
-    - process CHECK_NEW
-        - check for provided project, if provided, else - for all projects
-        - per projects: check if ~/nimb/projects.json → project → SOURCE_MR is provided.  ==> start
-        - create distrib-DATABASE (track files) ~/nimb/projects_status.json:
-            - ACTION = notprocessed, copied2process
-            - LOCATION = local, remote_name1, remote_name2, remote_name_n
-            - add unprocessed subjects to distrib-DATABASE → ACTION=notprocessed
-        - compute the number of subjects to be processed, volume of each subject, add volume of processed data.
-        - compute available disk space on the local or remote (where freesurfer_install ==1) for the folder FS_SUBJECTS_DIR and NIMB_PROCESSED_FS ==> get_free_space_remote
-        - populating rule: 
-            - continue populating until the volume of subjects + volume of estimated processed subjects (900Mb per subject) is less then 75% of the available disk space
-        - if freesurfer_install ==1 on local:
-            - populate local.json → NIMB_PATHS → NIMB_NEW_SUBJECTS based on populating rule
-        - if freesurfer_install ==1 on remote: NOW: notes: the first remote machine in projects.json that has fs_install==1 is selected, the rest is ignored
-            - if content of subject to be processed, in SOURCE_SUBJECTS_DIR is NOT archived:
-                - archive and copy to local/remote.json → Nimb_PATHS → NIMB_NEW_SUBECTS.
-            - If there are more than one computer and all where checked and are ready to perform freesurfer:
-                - send archived subjects to each of them in equal amount
-            - once copied to the NIMB_NEW_SUBJECTS:
-                - unarchive + rm the archive + compute the volume of the unarchived subject folder
-                - add subject to distrib-DATABSE → LOCATION → remote_name
-                - move subject in distrib-DATABASE → ACTION notprocessed → copied2process
-            - after all subjects are copied to the NIMB_NEW_SUBJECTS folder: initiate the classifier on the local/remote computer with keys: cd $NIMB_HOME && python nimb.py -process classify
-            - wait for the answer; If True and new_subjects.json file was created:
-            - start the -process freesurfer
-            - after each 2 hours check the local/remote NIMB_PROCESSED_FS and NIMB_PROCESSED_FS_ERROR folders. If not empty: mv (or copy/rm) to the path provided in the ~/nimb/projects.json → project → local or remote $PROCESSED_FS_DIR folder
-            - if SOURCE_BIDS_DIR is provided: moves the processed subjects to corresponding SOURCE_BIDS_DIR/subject/session/processed_fs folder
-"""
-
-
-
-'''
-
-
-def _update_list_processed_subjects(DIR, dir2read):
-    Processed_Subjects = {}
-    Processed_Subjects[DIR] = []
-    MainFolder = _get_folder('Main')
-    if path.isfile(MainFolder+'logs/processed_subjects_'+DIR+'.txt'):
-        ls = []
-        with open(MainFolder+'logs/processed_subjects_'+DIR+'.txt', 'r') as f:
-                for line in f:
-                    ls.append(line.strip('\n'))
-        Processed_Subjects[DIR] = ls[1:]
-    Processed_Subjects[DIR].append(dir2read)
-    open(MainFolder+'logs/processed_subjects_'+DIR+'.txt','w').close()
-    with open(MainFolder+'logs/processed_subjects_'+DIR+'.txt','a') as f:
-        f.write(DIR+'\n')
-        for subject in Processed_Subjects[DIR]:
-            f.write(subject+'\n')
-
-
-
 def create_lsmiss(lsmiss):
     MainFolder = _get_folder('Main')
     for DIR in lsmiss:
@@ -229,53 +139,12 @@ def create_lsmiss(lsmiss):
                 f.write(subject+'\n')
 
 
-def _get_lsmiss():
-    MainFolder = _get_folder('Main')
-    lsmiss = {}
-    for file in listdir(MainFolder+'logs/'):
-        if 'miss_' in file:
-            ls = []
-            with open(MainFolder+'logs/'+file, 'r') as f:
-                for line in f:
-                    ls.append(line.strip('\n'))
-            lsmiss[ls[0]] = ls[1:]
-    print('lsmiss from get_lsmiss is: ',lsmiss)
-    return lsmiss
+if __name__ == "__main__":
+    """
 
-def _update_lsmiss(DIR, dir2read):
-    MainFolder = _get_folder('Main')
-    lsmiss = {}
-    if path.isfile(MainFolder+'logs/miss_'+DIR+'.txt'):
-        ls = []
-        with open(MainFolder+'logs/miss_'+DIR+'.txt', 'r') as f:
-            for line in f:
-                ls.append(line.strip('\n'))
-        lsmiss[ls[0]] = ls[1:]
-        lsmiss[DIR].remove(dir2read)
-        if len(lsmiss[DIR])>0:
-            open(MainFolder+'logs/miss_'+DIR+'.txt','w').close()
-            with open(MainFolder+'logs/miss_'+DIR+'.txt','a') as f:
-                f.write(DIR+'\n')
-                for subject in lsmiss[DIR]:
-                    f.write(subject+'\n')
-        else:
-            remove(MainFolder+'logs/miss_'+DIR+'.txt')
-    else:
-        print(MainFolder+'logs/miss_'+DIR+'.txt'+' is not a file')
-
-
-def update_ls_subj2fs(SUBJECT_ID):
-    #subj2fs file is the list of subjects that need to undergo the FS pipeline processing?
-    newlssubj = []
-    MainFolder = _get_folder('Main')
-    if path.isfile(MainFolder+'logs/subj2fs'):
-        lssubj = [line.rstrip('\n') for line in open(MainFolder+'logs/subj2fs')]
-        for subjid in lssubj:
-            if subjid not in newlssubj:
-                newlssubj.append(subjid)
-    newlssubj.append(SUBJECT_ID)
-    open(MainFolder+'logs/subj2fs','w').close()
-    with open(MainFolder+'logs/subj2fs','a') as f:
-        for subj in newlssubj:
-            f.write(subj+'\n')
-'''
+    """
+    # this is to verify verify:
+    # {“adni”: “SOURCE_SUBJECTS_DIR” : ['beluga', '/home/$USER/projects/def-hanganua/databases/loni_adni/source/mri'];
+    # “PROCESSED_FS_DIR” : ['beluga', 'home/$USER/projects/def-hanganua/databases/loni_adni/processed_fs7']}
+    # distribution = DistributionCheckNew()
+    pass

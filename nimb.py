@@ -63,8 +63,7 @@ class NIMB(object):
 
         if self.process == 'check-new':
             self.logger.info('checking for new subject to be processed')
-            from distribution.distribution_check_new import DistributionCheckNew
-            DistributionCheckNew(self.projects[self.project])
+            self.distribution.check_new()
 
         if self.process == 'freesurfer':
             if not self.distribution.fs_ready():
