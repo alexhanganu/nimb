@@ -11,7 +11,10 @@ import time
 import logging
 
 os.environ['TZ'] = 'US/Eastern'
-time.tzset()
+if sys.platform == 'win32':
+    pass
+else:
+    time.tzset()
 
 
 class Log():

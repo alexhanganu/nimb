@@ -60,7 +60,7 @@ class Get_Vars():
 
     def get_default_vars(self, projects):
         d_all_vars = self.get_vars(projects, path.dirname(path.abspath(__file__)))
-        d_all_vars['local'] = self.setup_default_local_nimb(d_all_vars['local'], projects['PROJECTS'][0])
+        d_all_vars['local'] = self.setup_default_local_nimb(d_all_vars['local'])
         self.save_json('local.json', d_all_vars['local'], self.credentials_home)
         print('PROJECTS AND VARIABLES ARE NOT DEFINED. check: '+self.credentials_home)
         return d_all_vars
@@ -86,7 +86,7 @@ class Get_Vars():
         with open(path.join(dst, file), 'w') as jf:
             json.dump(data, jf, indent=4)
 
-    def setup_default_local_nimb(self, data, project):
+    def setup_default_local_nimb(self, data):
         NIMB_HOME = path.abspath(path.join(path.dirname(__file__), '..'))
         print('NIMB_HOME is: ',NIMB_HOME)
         data['NIMB_PATHS']['NIMB_HOME']               = NIMB_HOME
@@ -99,6 +99,5 @@ class Get_Vars():
         data['FREESURFER']['FREESURFER_HOME']         = path.join(NIMB_HOME, '..', 'freesurfer')
         data['FREESURFER']['FS_SUBJECTS_DIR']         = path.join(NIMB_HOME, '..', 'freesurfer', 'subjects')
         data['FREESURFER']['export_FreeSurfer_cmd']   = "export FREESURFER_HOME="+path.join(NIMB_HOME, '..', 'freesurfer')
-        data['STATS_PATHS'] = SetProject(NIMB_HOME, data['STATS_PATHS'], project).STATS_PATHS
         return data
 

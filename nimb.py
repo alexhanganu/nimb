@@ -10,6 +10,7 @@ import logging
 from setup.get_vars import Get_Vars, SetProject
 from classification import classify_bids
 from distribution.distribution_helper import DistributionHelper
+from distribution.distribution_ready import DistributionReady
 from distribution.utilities import ErrorMessages
 from distribution.logger import Log
 
@@ -32,6 +33,7 @@ class NIMB(object):
         self.process     = process
         self.project     = project
         self.projects    = projects
+        self.all_vars    = all_vars
         self.locations   = all_vars.location_vars
         self.stats_vars  = all_vars.stats_vars
         self.vars_local  = self.locations['local']
@@ -44,7 +46,8 @@ class NIMB(object):
         """Run nimb"""
 
         if self.process == 'ready':
-            self.distribution.ready()
+            DistributionReady(self.all_vars, self.projects, self.project).check_ready()
+            # self.distribution.ready()
 
         if self.process == 'classify':
             self.logger.info('checking if ready to classify')
@@ -75,21 +78,21 @@ class NIMB(object):
                                                False, 'cd '+path.join(self.vars_local["NIMB_PATHS"]["NIMB_HOME"], 'processing', 'freesurfer'))
 
         if self.process == 'fs-get-stats':
-            if not self.distribution.nimb_stats_ready():
+            # if not self.distribution.nimb_stats_ready():
+            if not DistributionReady(self.all_vars, self.projects, self.project).nimb_stats_ready()
                 self.logger.info("NIMB is not ready to extract the FreeSurfer statistics per user. Please check the configuration files.")
                 sys.exit()
             else:
-                PROCESSED_FS_DIR = self.distribution.fs_stats(self.project)
+                PROCESSED_FS_DIR = self.distribution.get_stats_dir()
                 self.logger.info(PROCESSED_FS_DIR)
                 from stats import fs_stats2table
-
                 fs_stats2table.chk_if_subjects_ready(self.stats_vars["STATS_HOME"], PROCESSED_FS_DIR)
                 fs_stats2table.stats2table_v7(
                                    self.stats_vars["STATS_HOME"],
                                    PROCESSED_FS_DIR, data_only_volumes=False)
 
         if self.process == 'fs-glm':
-            if self.distribution.fs_ready():
+            if DistributionReady(self.all_vars, self.projects, self.project).fs_ready():
                 from processing import schedule_helper
                 self.logger.info('Please check that all required variables for the GLM analysis are defined in the var.py file')
                 schedule_helper.Submit_task(self.vars_local, self.vars_local['NIMB_PATHS']["miniconda_python_run"]+' fs_glm_runglm.py -project '+self.project,
@@ -98,7 +101,7 @@ class NIMB(object):
 
 
         if self.process == 'fs-glm-image':
-            if self.distribution.fs_ready():
+            if DistributionReady(self.all_vars, self.projects, self.project)..fs_ready():
                 from processing import schedule_helper
                 self.logger.info('before running the script, remember to source $FREESURFER_HOME')
                 schedule_helper.Submit_task(self.vars_local, self.vars_local['NIMB_PATHS']["miniconda_python_run"]+' fs_glm_extract_images.py -project '+self.project,
@@ -106,7 +109,7 @@ class NIMB(object):
                                                True, 'cd '+path.join(self.vars_local["NIMB_PATHS"]["NIMB_HOME"], 'processing', 'freesurfer'))
         if self.process == 'run-stats':
             self.stats_vars = SetProject(self.vars_local['NIMB_PATHS']['NIMB_tmp'], self.stats_vars, self.project).stats
-            if not self.distribution.run_stats_ready():
+            if not DistributionReady(self.all_vars, self.projects, self.project).check_stats_ready():
                 self.logger.info("NIMB is not ready to run the stats. Please check the configuration files.")
                 sys.exit()
             else:
