@@ -32,7 +32,7 @@ class DistributionHelper():
 
     def check_new(self):
         from distribution.distribution_check_new import DistributionCheckNew
-        unprocessed = DistributionCheckNew(self.projects[self.project_name]).unprocessed
+        unprocessed = DistributionCheckNew(self.projects[self.project_name], self.NIMB_tmp).unprocessed
         if unprocessed:
             print('there are {} subjects to be processed'.format(len(unprocessed)))
             

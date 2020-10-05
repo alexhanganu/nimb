@@ -3,9 +3,10 @@ import os
 
 class DistributionCheckNew():
 
-    def __init__(self, project_vars):
+    def __init__(self, project_vars, NIMB_tmp):
         self.project_vars = project_vars
-        self.unprocessed = self.is_all_subject_processed()
+        self.NIMB_tmp     = NIMB_tmp
+        self.unprocessed  = self.is_all_subject_processed()
 
 
     def is_all_subject_processed(self):
@@ -17,22 +18,43 @@ class DistributionCheckNew():
         :return:
         """
         print('SOURCE_SUBJECTS_DIR is: {}, \n PROCESSED_FS_DIR is: {}'.format(self.project_vars['SOURCE_SUBJECTS_DIR'], self.project_vars['PROCESSED_FS_DIR']))
-        list_subjects = self._get_list_processed_subjects('SOURCE_SUBJECTS_DIR')
-        list_processed = self._get_list_processed_subjects('PROCESSED_FS_DIR')
+        ls_subj_bids = self._get_ls_subjects('SOURCE_BIDS_DIR')
+        if not ls_subj_bids:
+            list_subjects = self._get_source_subj()
+        list_processed = self._get_ls_subjects('PROCESSED_FS_DIR')
         print('there are {} subjects in source, and {} in processed'.format(len(list_subjects), len(list_processed)))
         return [i.strip('.zip') for i in list_subjects if i.strip('.zip') not in list_processed]
 
-    def _get_list_processed_subjects(self, DIR):
-        ls_dir = []
+    def _get_ls_subjects(self, DIR):
         if self.project_vars[DIR][0] == 'local':
             path_dir = self.project_vars[DIR][1]
             if os.path.exists(path_dir):
-                ls_dir = os.listdir(path_dir)
+                return os.listdir(path_dir)
+            else:
+                return dict()
         else:
             from distribution.SSHHelper import runCommandOverSSH
             return runCommandOverSSH(self.project_vars[DIR][0],
                                      'ls {}'.format(self.project_vars[DIR][1])).split('\n') 
 
+    def _get_source_subj(self):
+        DIR = 'SOURCE_SUBJECTS_DIR'
+        file_nimb_subj = 'nimb_subjects.json'
+        if self.project_vars[DIR][0] == 'local':
+            path_dir = self.project_vars[DIR][1]
+            if os.path.exists(path_dir):
+                return [i for i in self.read_json_f(os.path.join(path_dir, file_nimb_subj)).keys()]
+            else:
+                from distribution.SSHHelper import download_files_from_server
+                download_files_from_server(self.project_vars[DIR][0],
+                                            os.path.join(self.project_vars[DIR][1],file_nimb_subj),
+                                            self.NIMB_tmp):                
+                return [i for i in self.read_json_f(os.path.join(self.NIMB_tmp, file_nimb_subj)).keys()]
+
+    def read_json_f(self, f):
+        import json
+        open(f, 'r') as f:
+            return json.load(f)
 
     def check_projects(self, project_name=None):
         """

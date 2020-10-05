@@ -97,6 +97,18 @@ def runCommandOverSSH(remote, command):
 #            logger.debug("%s\n" % out)
         return (out)
 
+def download_files_from_server(remote, remote_folder, local_folder):
+    """
+    download files from server
+    :param remote_folder:
+    :type remote_folder:
+    :param local_folder:
+    :type local_folder:
+    """
+    sshSession = getSSHSession(remote)
+    scp = SCPClient(ssh_session.get_transport(), progress=__progress)
+    scp.get(remote_folder, local_folder, recursive=True)
+
 
 def read_json(json_file_name):
     """
@@ -398,20 +410,6 @@ def get_size_on_remote(ssh_session, path_toget_size):
     #             yield x
 
     # ftp_client.get(remote_folder,local_folder)
-
-
-def download_files_from_server(ssh_session, local_folder, remote_folder):
-    """
-    download files from server
-    :param local_folder:
-    :type local_folder:
-    :param remote_folder:
-    :type remote_folder:
-    """
-    # ssh_session = getSSHSession(host_name, user_name, user_password)
-    scp = SCPClient(ssh_session.get_transport(), progress=__progress)
-    scp.get(remote_folder, local_folder, recursive=True)
-
 
 
 def copy_subjects_to_cluster(subjects_json_file_path, cluster_subject_folder, a_folder):
