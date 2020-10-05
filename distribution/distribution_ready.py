@@ -10,7 +10,6 @@
 """
 import os, sys
 import shutil
-from .distribution_helper import DistributionHelper
 from setup.get_vars import Get_Vars
 from distribution.utilities import is_writable_directory, is_conda_module_installed, is_ENV_defined
 from distribution.setup_miniconda import setup_miniconda, is_miniconda_installed
@@ -19,14 +18,14 @@ from distribution.utilities import ErrorMessages, makedir_ifnot_exist
 
 
 
-class DistributionReady(DistributionHelper):
+class DistributionReady():
     """
     This file sole for the READY command.
     """
     local_json = "~/nimb/local.json"
-    module_list = ["dcm2niix", "dcm2bids", "pandas", "numpy", "xlrd", "xlsxwriter", "paramiko", "dipy"]
+    module_list = ["pandas", "numpy", "xlrd", "xlsxwriter", "paramiko", "dcm2niix", "dcm2bids", "dipy"]
+    #modules = open('requirements.txt').readlines()
     def __init__(self, all_vars, projects, project):
-        super().__init__(all_vars=all_vars, projects=projects, project=project)
         
         self.credentials_home = all_vars.credentials_home # NIMB_HOME/credentials_paths.py
         self.installers       = all_vars.installers # NIMB_HOME/setup/installers.json

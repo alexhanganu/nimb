@@ -47,7 +47,6 @@ class NIMB(object):
 
         if self.process == 'ready':
             DistributionReady(self.all_vars, self.projects, self.project).check_ready()
-            # self.distribution.ready()
 
         if self.process == 'classify':
             self.logger.info('checking if ready to classify')
@@ -78,7 +77,6 @@ class NIMB(object):
                                                False, 'cd '+path.join(self.vars_local["NIMB_PATHS"]["NIMB_HOME"], 'processing', 'freesurfer'))
 
         if self.process == 'fs-get-stats':
-            # if not self.distribution.nimb_stats_ready():
             if not DistributionReady(self.all_vars, self.projects, self.project).nimb_stats_ready()
                 self.logger.info("NIMB is not ready to extract the FreeSurfer statistics per user. Please check the configuration files.")
                 sys.exit()

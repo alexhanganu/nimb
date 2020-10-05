@@ -30,110 +30,6 @@ class DistributionHelper():
         self.setup_folder = "../setup"
         self.git_repo = "https://github.com/alexhanganu/nimb"
 
-    # def ready(self): #ALL READY MOVED TO DISTRIBUTION_READY
-        # """
-        # verify if NIMB is ready to be used
-        # :return: bool
-        # """
-        # ready = True
-        # self.verify_paths()
-        # self.is_setup_vars(self.locations['local']['NIMB_PATHS'])
-        # self.is_setup_vars(self.locations['local']['PROCESSING'])
-        # if self.classify_ready():
-            # print("NIMB ready to perform classification")
-        # else:
-            # ErrorMessages.error_classify()
-            # ready = False
-        # if self.fs_ready():
-            # print("NIMB ready to perform FreeSurfer processing")
-        # else:
-            # ErrorMessages.error_fsready()
-            # ready = False
-        # return ready
-
-    # def is_setup_vars(self, dict):
-        # """
-        # check if variables are defined in json
-        # :param config_file: path to configuration json file
-        # :return: True if there is no error, otherwise, return False
-        # """
-        # for key in dict:
-            # if type(dict[key]) != int and len(dict[key]) < 1:
-                # logger.fatal(f"{key} is missing")
-                # return False
-        # return True
-
-    # def verify_paths(self):
-        # # to verify paths and if not present - create them or return error
-        # if path.exists(self.locations['local']['NIMB_PATHS']['NIMB_HOME']):
-            # for p in (     self.NIMB_tmp,
-                 # path.join(self.NIMB_tmp, 'mriparams'),
-                 # path.join(self.NIMB_tmp, 'usedpbs'),
-                           # self.locations['local']['NIMB_PATHS']['NIMB_NEW_SUBJECTS'],
-                           # self.locations['local']['NIMB_PATHS']['NIMB_PROCESSED_FS'],
-                           # self.locations['local']['NIMB_PATHS']['NIMB_PROCESSED_FS_error']):
-                # if not path.exists(p):
-                    # print('creating path ',p)
-                    # makedir_ifnot_exist(p)
-
-    # def classify_ready(self):
-        # ready = True
-        # for p in (self.locations['local']['NIMB_PATHS']['NIMB_NEW_SUBJECTS'],
-                  # self.NIMB_HOME,self.NIMB_tmp):
-            # if not path.exists(p):
-                # try:
-                    # # if path start with ~
-                    # makedir_ifnot_exist(p)
-                # except Exception as e:
-                    # print(e)
-            # if not path.exists(p):
-                # ready = False
-                # break
-        # return ready
-
-    # def fs_ready(self):
-        # if self.locations['local']['FREESURFER']['FreeSurfer_install'] == 1:
-            # if len(self.locations['local']['FREESURFER']['FREESURFER_HOME']) < 1:
-                # logger.fatal("FREESURFER_HOME is missing.")
-                # return False
-            # if not path.exists(self.locations['local']['FREESURFER']['FS_SUBJECTS_DIR']):
-                    # print('creating path ', self.locations['local']['FREESURFER']['FS_SUBJECTS_DIR'])
-                    # makedir_ifnot_exist(self.locations['local']['FREESURFER']['FS_SUBJECTS_DIR'])
-            # if self.check_freesurfer_ready():
-                # return self.fs_chk_fsaverage_ready()
-        # else:
-            # return False
-
-    # def fs_chk_fsaverage_ready(self):
-        # self.fs_fsaverage_copy()
-        # if not path.exists(path.join(self.locations['local']['FREESURFER']['FS_SUBJECTS_DIR'],'fsaverage', 'xhemi')):
-            # print('fsaverage or fsaverage/xhemi is missing from SUBJECTS_DIR: {}'.format(self.locations['local']['FREESURFER']['FS_SUBJECTS_DIR']))
-            # return False
-        # else:
-            # return True
-
-    # def fs_fsaverage_copy(self):
-        # if not path.exists(path.join(self.locations['local']['FREESURFER']['FS_SUBJECTS_DIR'],'fsaverage', 'xhemi')):
-            # fsaverage_path = path.join(self.locations['local']['FREESURFER']['FREESURFER_HOME'], "subjects", "fsaverage")
-            # shutil.copytree(fsaverage_path, path.join(self.vars['local']['FREESURFER']['FS_SUBJECTS_DIR'], 'fsaverage'))
-
-    # def check_freesurfer_ready(self):
-        # """
-        # check and install freesurfer
-        # :return:
-        # """
-        # ready = False
-        # if not path.exists(path.join(self.locations['local']['FREESURFER']['FREESURFER_HOME'], "MCRv84")):
-            # print('FreeSurfer must be installed')
-            # from .setup_freesurfer import SETUP_FREESURFER
-            # SETUP_FREESURFER(self.locations, self.installers)
-            # ready = True
-        # else:
-            # print('start freesurfer processing')
-            # ready =  True
-        # return ready
-
-
     def get_stats_dir(self):
         """will return the folder with unzipped stats folder for each subject"""
         PROCESSED_FS_DIR = self.projects[self.project_name]["PROCESSED_FS_DIR"]
@@ -149,20 +45,6 @@ class DistributionHelper():
         else:
             return PROCESSED_FS_DIR
         print('perform statistical analysis')
-
-
-    # def check_stats_ready(self):
-        # """will check if xlsx file for project is provided
-           # if all variables are provided
-           # if all paths for stats are created
-           # if NIMB is ready to perform statistical analysis"""
-        # ready = False
-        # file = self.projects[self.project_name]["GLM_file_group"]
-        # if self.projects[self.project_name]["materials_DIR"][0] == 'local' and path.exists(path.join(self.projects[self.project_name]["materials_DIR"][1], file)):
-            # ready = True
-        # else:
-            # print("data file is missing or not located on a local folder. Check file {}".format(path.join(self.credentials_home, 'projects.json', self.project_name)))
-        # return ready
 
 
     def get_project_vars(self, var_name, project):
@@ -449,3 +331,121 @@ if __name__ == "__main__":
     if d.is_setup_vars_folders(is_freesurfer_nim=True, is_nimb_fs_stats=True, is_nimb_classification=False): # True
         pass
 
+
+
+    # def ready(self): #ALL READY MOVED TO DISTRIBUTION_READY
+        # """
+        # verify if NIMB is ready to be used
+        # :return: bool
+        # """
+        # ready = True
+        # self.verify_paths()
+        # self.is_setup_vars(self.locations['local']['NIMB_PATHS'])
+        # self.is_setup_vars(self.locations['local']['PROCESSING'])
+        # if self.classify_ready():
+            # print("NIMB ready to perform classification")
+        # else:
+            # ErrorMessages.error_classify()
+            # ready = False
+        # if self.fs_ready():
+            # print("NIMB ready to perform FreeSurfer processing")
+        # else:
+            # ErrorMessages.error_fsready()
+            # ready = False
+        # return ready
+
+    # def is_setup_vars(self, dict):
+        # """
+        # check if variables are defined in json
+        # :param config_file: path to configuration json file
+        # :return: True if there is no error, otherwise, return False
+        # """
+        # for key in dict:
+            # if type(dict[key]) != int and len(dict[key]) < 1:
+                # logger.fatal(f"{key} is missing")
+                # return False
+        # return True
+
+    # def verify_paths(self):
+        # # to verify paths and if not present - create them or return error
+        # if path.exists(self.locations['local']['NIMB_PATHS']['NIMB_HOME']):
+            # for p in (     self.NIMB_tmp,
+                 # path.join(self.NIMB_tmp, 'mriparams'),
+                 # path.join(self.NIMB_tmp, 'usedpbs'),
+                           # self.locations['local']['NIMB_PATHS']['NIMB_NEW_SUBJECTS'],
+                           # self.locations['local']['NIMB_PATHS']['NIMB_PROCESSED_FS'],
+                           # self.locations['local']['NIMB_PATHS']['NIMB_PROCESSED_FS_error']):
+                # if not path.exists(p):
+                    # print('creating path ',p)
+                    # makedir_ifnot_exist(p)
+
+    # def classify_ready(self):
+        # ready = True
+        # for p in (self.locations['local']['NIMB_PATHS']['NIMB_NEW_SUBJECTS'],
+                  # self.NIMB_HOME,self.NIMB_tmp):
+            # if not path.exists(p):
+                # try:
+                    # # if path start with ~
+                    # makedir_ifnot_exist(p)
+                # except Exception as e:
+                    # print(e)
+            # if not path.exists(p):
+                # ready = False
+                # break
+        # return ready
+
+    # def fs_ready(self):
+        # if self.locations['local']['FREESURFER']['FreeSurfer_install'] == 1:
+            # if len(self.locations['local']['FREESURFER']['FREESURFER_HOME']) < 1:
+                # logger.fatal("FREESURFER_HOME is missing.")
+                # return False
+            # if not path.exists(self.locations['local']['FREESURFER']['FS_SUBJECTS_DIR']):
+                    # print('creating path ', self.locations['local']['FREESURFER']['FS_SUBJECTS_DIR'])
+                    # makedir_ifnot_exist(self.locations['local']['FREESURFER']['FS_SUBJECTS_DIR'])
+            # if self.check_freesurfer_ready():
+                # return self.fs_chk_fsaverage_ready()
+        # else:
+            # return False
+
+    # def fs_chk_fsaverage_ready(self):
+        # self.fs_fsaverage_copy()
+        # if not path.exists(path.join(self.locations['local']['FREESURFER']['FS_SUBJECTS_DIR'],'fsaverage', 'xhemi')):
+            # print('fsaverage or fsaverage/xhemi is missing from SUBJECTS_DIR: {}'.format(self.locations['local']['FREESURFER']['FS_SUBJECTS_DIR']))
+            # return False
+        # else:
+            # return True
+
+    # def fs_fsaverage_copy(self):
+        # if not path.exists(path.join(self.locations['local']['FREESURFER']['FS_SUBJECTS_DIR'],'fsaverage', 'xhemi')):
+            # fsaverage_path = path.join(self.locations['local']['FREESURFER']['FREESURFER_HOME'], "subjects", "fsaverage")
+            # shutil.copytree(fsaverage_path, path.join(self.vars['local']['FREESURFER']['FS_SUBJECTS_DIR'], 'fsaverage'))
+
+    # def check_freesurfer_ready(self):
+        # """
+        # check and install freesurfer
+        # :return:
+        # """
+        # ready = False
+        # if not path.exists(path.join(self.locations['local']['FREESURFER']['FREESURFER_HOME'], "MCRv84")):
+            # print('FreeSurfer must be installed')
+            # from .setup_freesurfer import SETUP_FREESURFER
+            # SETUP_FREESURFER(self.locations, self.installers)
+            # ready = True
+        # else:
+            # print('start freesurfer processing')
+            # ready =  True
+        # return ready
+        
+        
+    # def check_stats_ready(self):
+        # """will check if xlsx file for project is provided
+           # if all variables are provided
+           # if all paths for stats are created
+           # if NIMB is ready to perform statistical analysis"""
+        # ready = False
+        # file = self.projects[self.project_name]["GLM_file_group"]
+        # if self.projects[self.project_name]["materials_DIR"][0] == 'local' and path.exists(path.join(self.projects[self.project_name]["materials_DIR"][1], file)):
+            # ready = True
+        # else:
+            # print("data file is missing or not located on a local folder. Check file {}".format(path.join(self.credentials_home, 'projects.json', self.project_name)))
+        # return ready
