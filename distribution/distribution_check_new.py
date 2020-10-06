@@ -46,10 +46,14 @@ class DistributionCheckNew():
                 return [i for i in self.read_json_f(os.path.join(path_dir, file_nimb_subj)).keys()]
             else:
                 from distribution.SSHHelper import download_files_from_server
-                download_files_from_server(self.project_vars[DIR][0],
+                try:
+                    download_files_from_server(self.project_vars[DIR][0],
                                             os.path.join(self.project_vars[DIR][1],file_nimb_subj),
                                             self.NIMB_tmp):                
-                return [i for i in self.read_json_f(os.path.join(self.NIMB_tmp, file_nimb_subj)).keys()]
+                    return [i for i in self.read_json_f(os.path.join(self.NIMB_tmp, file_nimb_subj)).keys()]
+                except Exception as e:
+                    print(e)
+                    return []
 
     def read_json_f(self, f):
         import json
