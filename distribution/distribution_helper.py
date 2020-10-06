@@ -207,24 +207,6 @@ class DistributionHelper():
         SSHHelper.copy_subjects_to_cluster(mri_path, subjects_folder, a_folder)
 
 
-    def setting_up_local_computer(self):
-        if platform.startswith('linux'):
-            print("Currently only support setting up on Ubuntu-based system")
-            # do the job here
-            self.setting_up_local_linux_with_freesurfer()
-        elif platform in ["win32"]:
-            print("The system is not fully supported in Windows OS. The application quits now .")
-            exit()
-        else: # like freebsd,
-            print("This platform is not supported")
-            exit()
-    def setting_up_local_linux_with_freesurfer(self):
-        """
-        install miniconda and require library
-        :return:
-        """
-        setup_miniconda(self.NIMB_HOME)
-
     def setting_up_remote_linux_with_freesurfer(self, host_name):
         # go the remote server by ssh, enter the $HOME (~) folder
         # execute following commands
@@ -352,13 +334,6 @@ class DistributionHelper():
         ssh_session.close()
 
 
-    def StopAllActiveTasks():
-        from distribution.SSHHelper import delete_all_running_tasks_on_cluster
-        clusters = database._get_Table_Data('Clusters', 'all')
-        delete_all_running_tasks_on_cluster(
-            clusters[0][1], clusters[0][2], clusters[0][5], clusters[0][3])
-
-
 # if __name__ == "__main__":
     # distribution = DistributionHelper(projects,
                                                # locations,
@@ -380,78 +355,3 @@ if __name__ == "__main__":
     d = DistributionHelper()
     if d.is_setup_vars_folders(is_freesurfer_nim=True, is_nimb_fs_stats=True, is_nimb_classification=False): # True
         pass
-
-
-
-
-'''
-def _update_list_processed_subjects(DIR, dir2read):
-    Processed_Subjects = {}
-    Processed_Subjects[DIR] = []
-    MainFolder = _get_folder('Main')
-    if path.isfile(MainFolder+'logs/processed_subjects_'+DIR+'.txt'):
-        ls = []
-        with open(MainFolder+'logs/processed_subjects_'+DIR+'.txt', 'r') as f:
-                for line in f:
-                    ls.append(line.strip('\n'))
-        Processed_Subjects[DIR] = ls[1:]
-    Processed_Subjects[DIR].append(dir2read)
-    open(MainFolder+'logs/processed_subjects_'+DIR+'.txt','w').close()
-    with open(MainFolder+'logs/processed_subjects_'+DIR+'.txt','a') as f:
-        f.write(DIR+'\n')
-        for subject in Processed_Subjects[DIR]:
-            f.write(subject+'\n')
-
-
-
-
-def _get_lsmiss():
-    MainFolder = _get_folder('Main')
-    lsmiss = {}
-    for file in listdir(MainFolder+'logs/'):
-        if 'miss_' in file:
-            ls = []
-            with open(MainFolder+'logs/'+file, 'r') as f:
-                for line in f:
-                    ls.append(line.strip('\n'))
-            lsmiss[ls[0]] = ls[1:]
-    print('lsmiss from get_lsmiss is: ',lsmiss)
-    return lsmiss
-
-def _update_lsmiss(DIR, dir2read):
-    MainFolder = _get_folder('Main')
-    lsmiss = {}
-    if path.isfile(MainFolder+'logs/miss_'+DIR+'.txt'):
-        ls = []
-        with open(MainFolder+'logs/miss_'+DIR+'.txt', 'r') as f:
-            for line in f:
-                ls.append(line.strip('\n'))
-        lsmiss[ls[0]] = ls[1:]
-        lsmiss[DIR].remove(dir2read)
-        if len(lsmiss[DIR])>0:
-            open(MainFolder+'logs/miss_'+DIR+'.txt','w').close()
-            with open(MainFolder+'logs/miss_'+DIR+'.txt','a') as f:
-                f.write(DIR+'\n')
-                for subject in lsmiss[DIR]:
-                    f.write(subject+'\n')
-        else:
-            remove(MainFolder+'logs/miss_'+DIR+'.txt')
-    else:
-        print(MainFolder+'logs/miss_'+DIR+'.txt'+' is not a file')
-
-
-def update_ls_subj2fs(SUBJECT_ID):
-    #subj2fs file is the list of subjects that need to undergo the FS pipeline processing?
-    newlssubj = []
-    MainFolder = _get_folder('Main')
-    if path.isfile(MainFolder+'logs/subj2fs'):
-        lssubj = [line.rstrip('\n') for line in open(MainFolder+'logs/subj2fs')]
-        for subjid in lssubj:
-            if subjid not in newlssubj:
-                newlssubj.append(subjid)
-    newlssubj.append(SUBJECT_ID)
-    open(MainFolder+'logs/subj2fs','w').close()
-    with open(MainFolder+'logs/subj2fs','a') as f:
-        for subj in newlssubj:
-            f.write(subj+'\n')
-'''

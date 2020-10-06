@@ -81,6 +81,25 @@ class DistributionReady():
             # logger.fatal("$FREESURFER_HOME is not defined")
             # return False
 
+    def setting_up_local_computer(self):
+        if platform.startswith('linux'):
+            print("Currently only support setting up on Ubuntu-based system")
+            # do the job here
+            self.setting_up_local_linux_with_freesurfer()
+        elif platform in ["win32"]:
+            print("The system is not fully supported in Windows OS. The application quits now .")
+            exit()
+        else: # like freebsd,
+            print("This platform is not supported")
+            exit()
+
+    def setting_up_local_linux_with_freesurfer(self):
+        """
+        install miniconda and require library
+        :return:
+        """
+        setup_miniconda(self.NIMB_HOME)
+        
     def get_user_paths_from_terminal(self):
         """
         using terminal to ask for user inputs of variable.
