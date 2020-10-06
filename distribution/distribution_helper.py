@@ -62,7 +62,26 @@ class DistributionHelper():
             - wait for the answer; If True and new_subjects.json file was created:
             - start the -process freesurfer
             - after each 2 hours check the local/remote NIMB_PROCESSED_FS and NIMB_PROCESSED_FS_ERROR folders. If not empty: mv (or copy/rm) to the path provided in the ~/nimb/projects.json → project → local or remote $PROCESSED_FS_DIR folder
-            - if SOURCE_BIDS_DIR is provided: moves the processed subjects to corresponding SOURCE_BIDS_DIR/subject/session/processed_fs folder"""
+            - if SOURCE_BIDS_DIR is provided: moves the processed subjects to corresponding SOURCE_BIDS_DIR/subject/session/processed_fs folder
+            
+                    5. get available space on remote computer
+        6. get to-be-process subjects
+        7. (other functions) send those subjects to the remote server
+        :param SOURCE_SUBJECTS_DIR: MUST BE FULL PATHS
+        :param PROCESSED_FS_DIR:
+        :return: full path of subjects that is not process yet
+        """
+
+        # # get free space remotely
+        # free_space = DiskspaceUtility.get_free_space_remote(ssh_session)
+        # to_be_process_subject = set(all_subjects_at_local_short_name) - set(all_processed_file_remote) # not consider space yet
+        # # consider the space available the remote server
+        # free_space = min(free_space, 10*1024) # min of 'free space' and 10GB
+        # to_be_process_subject = DiskspaceUtility.get_subject_upto_size(free_space, to_be_process_subject)
+
+        # print("Remote server has {0}MB free, it can stored {1} subjects".format(free_space, len(to_be_process_subject)))
+        # ssh_session.close()
+        # return [os.path.join(SOURCE_SUBJECTS_DIR,subject) for subject in to_be_process_subject] # full path
 
     # @staticmethod
     def get_available_space(self, SOURCE_SUBJECTS_DIR, PROCESSED_FS_DIR):
