@@ -46,6 +46,7 @@ class DistributionReady():
         self.verify_paths()
         self.is_setup_vars(self.locations['local']['NIMB_PATHS'])
         self.is_setup_vars(self.locations['local']['PROCESSING'])
+        # self.get_user_paths_from_terminal()  # to do, which ones are get from user?
         if self.classify_ready():
             print("NIMB ready to perform classification")
         else:
@@ -57,8 +58,6 @@ class DistributionReady():
             ErrorMessages.error_fsready()
             ready = False
 
-
-        # self.get_user_paths_from_terminal()  # to do, which ones are get from user?
         # if not is_miniconda_installed():
             # # if has permission to install
             # mini_conda_path = self.locations['local']['NIMB_PATHS']['miniconda_home']
@@ -81,6 +80,17 @@ class DistributionReady():
             # logger.fatal("$FREESURFER_HOME is not defined")
             # return False
 
+    def get_user_paths_from_terminal(self):
+        """
+        using terminal to ask for user inputs of variable.
+        which one? need discuss.
+        :return:
+        """
+        # 1. get the inputs
+        # 2. set the variable from inputs
+        # 3. modify other variables
+        pass
+
     def setting_up_local_computer(self):
         if platform.startswith('linux'):
             print("Currently only support setting up on Ubuntu-based system")
@@ -100,16 +110,6 @@ class DistributionReady():
         """
         setup_miniconda(self.NIMB_HOME)
         
-    def get_user_paths_from_terminal(self):
-        """
-        using terminal to ask for user inputs of variable.
-        which one? need discuss.
-        :return:
-        """
-        # 1. get the inputs
-        # 2. set the variable from inputs
-        # 3. modify other variables
-        pass
 
     def verify_paths(self):
         # to verify paths and if not present - create them or return error
