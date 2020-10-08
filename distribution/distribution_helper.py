@@ -37,25 +37,25 @@ class DistributionHelper():
             print('there are {} subjects to be processed'.format(len(unprocessed)))
             
         """
-        - check for provided project, if provided, else - for all projects
-        - per projects: check if ~/nimb/projects.json → project → SOURCE_MR is provided.  ==> start
-        - create distrib-DATABASE (track files) ~/nimb/projects_status.json:
-            - ACTION = notprocessed, copied2process
-            - LOCATION = local, remote_name1, remote_name2, remote_name_n
-            - add unprocessed subjects to distrib-DATABASE → ACTION=notprocessed
+        - if freesurfer_install ==1 on local or remote:
+        - tell user the (1) number of machines that are ready to perform the processing (local + remote). Ask if user wants to include only one machine or all of them. If answer is at least one:
         - compute the number of subjects to be processed, volume of each subject, add volume of processed data.
-        - compute available disk space on the local or remote (where freesurfer_install ==1) for the folder FS_SUBJECTS_DIR and NIMB_PROCESSED_FS ==> get_free_space_remote
+        - compute available disk space on the local and/or remote (where freesurfer_install ==1) for the folder FS_SUBJECTS_DIR and NIMB_PROCESSED_FS ==> get_free_space_remote
+        - tell user the (1) number of subjects te be processed, (2) estimated volumes and (3) estimated time the processing will take plase; ask user if accept to start processing the subjects; if yes:
+        - create distrib-DATABASE (track files) ~/nimb/project-name_status.json:
+            - ACTION = notprocessed:[], copied2process:[]
+            - LOCATION = local:[], remote_name1:[], remote_name_n:[]
+            add each subjects to:
+            - distrib-DATABASE[ACTION][notprocessed].append(subject)
+            - distrib-DATABASE[LOCATION][local/remote_name].append(subject)
         - populating rule: 
             - continue populating until the volume of subjects + volume of estimated processed subjects (900Mb per subject) is less then 75% of the available disk space
-        - if freesurfer_install ==1 on local:
             - populate local.json → NIMB_PATHS → NIMB_NEW_SUBJECTS based on populating rule
-        - if freesurfer_install ==1 on remote: NOW: notes: the first remote machine in projects.json that has fs_install==1 is selected, the rest is ignored
             - if content of subject to be processed, in SOURCE_SUBJECTS_DIR is NOT archived:
                 - archive and copy to local/remote.json → Nimb_PATHS → NIMB_NEW_SUBECTS.
-            - If there are more than one computer and all where checked and are ready to perform freesurfer:
-                - send archived subjects to each of them in equal amount
+            - If there are more than one computer ready to perform freesurfer:
+                - send archived subjects to each of them based on the estimated time required to process one subject and choose the methods that would deliver the lowest estimated time to process.
             - once copied to the NIMB_NEW_SUBJECTS:
-                - unarchive + rm the archive + compute the volume of the unarchived subject folder
                 - add subject to distrib-DATABSE → LOCATION → remote_name
                 - move subject in distrib-DATABASE → ACTION notprocessed → copied2process
             - after all subjects are copied to the NIMB_NEW_SUBJECTS folder: initiate the classifier on the local/remote computer with keys: cd $NIMB_HOME && python nimb.py -process classify
@@ -64,9 +64,6 @@ class DistributionHelper():
             - after each 2 hours check the local/remote NIMB_PROCESSED_FS and NIMB_PROCESSED_FS_ERROR folders. If not empty: mv (or copy/rm) to the path provided in the ~/nimb/projects.json → project → local or remote $PROCESSED_FS_DIR folder
             - if SOURCE_BIDS_DIR is provided: moves the processed subjects to corresponding SOURCE_BIDS_DIR/subject/session/processed_fs folder
             
-                    5. get available space on remote computer
-        6. get to-be-process subjects
-        7. (other functions) send those subjects to the remote server
         :param SOURCE_SUBJECTS_DIR: MUST BE FULL PATHS
         :param PROCESSED_FS_DIR:
         :return: full path of subjects that is not process yet

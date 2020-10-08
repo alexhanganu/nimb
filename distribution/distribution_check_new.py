@@ -15,6 +15,8 @@ class DistributionCheckNew():
         :param project_name: None or user input project
         :return:
         """
+        # check if ~/nimb/projects.json → project → SOURCE_MR is provided; if not: ask user
+
         if project_name:
             self.check_single_project(project_name=project_name)
         else: # check all project
@@ -24,11 +26,12 @@ class DistributionCheckNew():
 
     def is_all_subject_processed(self):
         """
-        1. get the list of un-processed subject
+        get the list of un-processed subject
         must be absolute path
         :param SOURCE_SUBJECTS_DIR:
         :param PROCESSED_FS_DIR:
-        :return:
+        :param project_name: name of the project, cannot be None
+        :return: a list of subject to be processed
         """
         print('SOURCE_SUBJECTS_DIR is: {}, \n PROCESSED_FS_DIR is: {}'.format(self.project_vars['SOURCE_SUBJECTS_DIR'], self.project_vars['PROCESSED_FS_DIR']))
         ls_subj_bids = self._get_ls_subjects('SOURCE_BIDS_DIR')
@@ -37,6 +40,21 @@ class DistributionCheckNew():
         list_processed = self._get_ls_subjects('PROCESSED_FS_DIR')
         print('there are {} subjects in source, and {} in processed'.format(len(list_subjects), len(list_processed)))
         return [i.strip('.zip') for i in list_subjects if i.strip('.zip') not in list_processed]
+        
+            # # self.is_all_subject_processed(self.get_SOURCE_SUBJECTS_DIR()) == modify it
+            # # local version
+            # machine, source_fs = self.get_SOURCE_SUBJECTS_DIR()
+            # _, process_fs = self.get_PROCESSED_FS_DIR()
+            # to_be_processed = []
+            # if machine == "local":
+                # if not self.is_all_subject_processed(source_fs, process_fs): # test this function
+                    # #get the list of subjects in SOURCE_SUBJECTS_DIR
+                    # to_be_processed = self.get_list_subject_to_be_processed_local_version(source_fs,process_fs)
+
+            # else:# remote version: source is at remote
+                # # go to the remote server to check
+                # host = self.projects['LOCATION'][machine]
+                # to_be_processed = self.get_list_subject_to_be_processed_remote_version(source_fs, process_fs,remote_id)
 
     def _get_ls_subjects(self, DIR):
         if self.project_vars[DIR][0] == 'local':
@@ -104,26 +122,3 @@ if __name__ == "__main__":
 
 
 
-    # def check_single_project(self, project_name):
-        # """
-        # return the list of subjects to be processed, works on both local and remote computer
-        # :param project_name: name of the project, cannot be None
-        # :return: a list of subject to be processed
-        # """
-        # if project_name and os.path.isdir(self.projects[self.project_name]['SOURCE_SUBJECTS_DIR']): # if there is project input by user
-            # # check if all subject is project: call
-            # # self.is_all_subject_processed(self.get_SOURCE_SUBJECTS_DIR()) == modify it
-            # # local version
-            # machine, source_fs = self.get_SOURCE_SUBJECTS_DIR()
-            # _, process_fs = self.get_PROCESSED_FS_DIR()
-            # to_be_processed = []
-            # if machine == "local":
-                # if not self.is_all_subject_processed(source_fs, process_fs): # test this function
-                    # #get the list of subjects in SOURCE_SUBJECTS_DIR
-                    # to_be_processed = self.get_list_subject_to_be_processed_local_version(source_fs,process_fs)
-
-            # else:# remote version: source is at remote
-                # # go to the remote server to check
-                # host = self.projects['LOCATION'][machine]
-                # to_be_processed = self.get_list_subject_to_be_processed_remote_version(source_fs, process_fs,remote_id)
-        # return to_be_processed
