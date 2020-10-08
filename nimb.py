@@ -76,7 +76,7 @@ class NIMB(object):
                                                False, 'cd '+path.join(self.vars_local["NIMB_PATHS"]["NIMB_HOME"], 'processing', 'freesurfer'))
 
         if self.process == 'fs-get-stats':
-            if not DistributionReady(self.all_vars, self.projects, self.project).nimb_stats_ready()
+            if not DistributionReady(self.all_vars, self.projects, self.project).nimb_stats_ready():
                 self.logger.info("NIMB is not ready to extract the FreeSurfer statistics per user. Please check the configuration files.")
                 sys.exit()
             else:
@@ -98,7 +98,7 @@ class NIMB(object):
 
 
         if self.process == 'fs-glm-image':
-            if DistributionReady(self.all_vars, self.projects, self.project)..fs_ready():
+            if DistributionReady(self.all_vars, self.projects, self.project).fs_ready():
                 from processing import schedule_helper
                 self.logger.info('before running the script, remember to source $FREESURFER_HOME')
                 schedule_helper.Submit_task(self.vars_local, self.vars_local['NIMB_PATHS']["miniconda_python_run"]+' fs_glm_extract_images.py -project '+self.project,

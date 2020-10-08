@@ -17,7 +17,7 @@ except ImportError:
 import json
 from pathlib import Path
 
-from setup import database, guitk_setup
+from setup import guitk_setup
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(format='%(asctime)s %(module)s %(levelname)s: %(message)s')
@@ -422,28 +422,6 @@ def copy_subjects_to_cluster(subjects_json_file_path, cluster_subject_folder, a_
     '''
     SSHHelper.upload_all_subjects(subjects_json_file_path, cluster_subject_folder, a_folder)
 
-
-
-# kp for testing
-def test():
-    """tes the function"""
-    clusters = database._get_credentials('all')
-    ssh_session = getSSHSession(host_name, user_name, user_password)
-    print("ls; cd " + project_folder + "; ls")
-    (out, err) = runCommandOverSSH(ssh_session, "ls; cd " + project_folder + "; ls" )
-    print(out, err)
-    print("finish")
-
-def test2():
-    """tes the function"""
-    clusters = database._get_credentials('all')
-    host_name = "beluga.calculquebec.ca"
-    ssh_session = getSSHSession(host_name, user_name, user_password)
-    (zip_out, err) = runCommandOverSSH(ssh_session, "ls  ~/projects/def-hanganua/adni/source/mri/*.zip" )
-    #(gz_out, err) = runCommandOverSSH(ssh_session, "ls  ~/projects/def-hanganua/adni/source/mri/*.gz")
-
-    print("finish")
-    ssh_session.close()
 
 if __name__ == "__main__":
     if True:

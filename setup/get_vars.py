@@ -101,3 +101,18 @@ class Get_Vars():
         data['FREESURFER']['export_FreeSurfer_cmd']   = "export FREESURFER_HOME="+path.join(NIMB_HOME, '..', 'freesurfer')
         return data
 
+class SetLocation():
+
+    def __init__(self, location):
+        self.stats = self.set_projec, location)
+
+    def set_project(self, location):
+        print('still working on this script')
+        # for key in stats['STATS_PATHS']:
+            # if project not in stats['STATS_PATHS'][key]:
+                    # if key != "STATS_HOME":
+                        # new_ending = '/'.join(stats['STATS_PATHS'][key].replace(sep, '/').split('/')[-2:])
+                    # else:
+                        # new_ending = '/'.join(stats['STATS_PATHS'][key].replace(sep, '/').split('/')[-1:])
+                    # stats['STATS_PATHS'][key] = path.join(NIMB_tmp, project, new_ending).replace(sep, '/')
+        return 'ok'#stats

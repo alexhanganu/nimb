@@ -3,6 +3,7 @@ from os import system, path, listdir, environ, remove
 from distribution.utilities import ErrorMessages, makedir_ifnot_exist
 from distribution.setup_miniconda import setup_miniconda
 from distribution.setup_freesurfer import SETUP_FREESURFER
+from setup import guitk_setup
 
 from distribution.check_disk_space import *
 from distribution import SSHHelper
@@ -31,14 +32,19 @@ class DistributionHelper():
         self.git_repo = "https://github.com/alexhanganu/nimb"
 
     def check_new(self):
-        from distribution.distribution_check_new import DistributionCheckNew
-        unprocessed = DistributionCheckNew(self.projects[self.project_name], self.NIMB_tmp).unprocessed
+        # from distribution.distribution_check_new import DistributionCheckNew
+        # unprocessed = DistributionCheckNew(self.projects[self.project_name], self.NIMB_tmp).unprocessed
+        unprocessed = ['adni_test1','adni_test2']
         if unprocessed:
             print('there are {} subjects to be processed'.format(len(unprocessed)))
-            
+            analysis = 'freesurfer'
+            locations = self.get_processing_location(analysis)
+            # tell user the number of machines  ready to perform the analysis (local + remote)
+            print('there are {} locations ready to perform the {} analysis'.format(len(locations), analysis))
+            # Ask if user wants to include only one machine or all of them
+            self.get_userdefined_location(locations)
         """
-        - if freesurfer_install ==1 on local or remote:
-        - tell user the (1) number of machines that are ready to perform the processing (local + remote). Ask if user wants to include only one machine or all of them. If answer is at least one:
+        If user at least one machine for analysis:
         - compute the number of subjects to be processed, volume of each subject, add volume of processed data.
         - compute available disk space on the local and/or remote (where freesurfer_install ==1) for the folder FS_SUBJECTS_DIR and NIMB_PROCESSED_FS ==> get_free_space_remote
         - tell user the (1) number of subjects te be processed, (2) estimated volumes and (3) estimated time the processing will take plase; ask user if accept to start processing the subjects; if yes:
@@ -79,6 +85,36 @@ class DistributionHelper():
         # print("Remote server has {0}MB free, it can stored {1} subjects".format(free_space, len(to_be_process_subject)))
         # ssh_session.close()
         # return [os.path.join(SOURCE_SUBJECTS_DIR,subject) for subject in to_be_process_subject] # full path
+
+    def get_processing_location(self, app):
+        """
+        if freesurfer_install ==1 on local or remote
+        :param app as for freesurfer, nilearn, dipy
+        :return locations as list
+        """
+        loc = list()
+        if app == 'freesurfer':
+            for location in self.locations:
+                print(location)
+                if self.locations[location]["FREESURFER"]["FreeSurfer_install"] == 1:
+                    loc.append(location)
+        return loc
+
+    def get_userdefined_location(self, locations):
+        """
+        if len(locations) == 0:
+            user is asked to provide a new machine
+        else, user is asked to chose the machine or all machines to 
+        be used for the processing
+        :param locations ready to perform analysis
+        :return locations chosen by the user
+        """
+        from setup.term_questionnaire import PyInqQuest
+        chosen_loc = list()
+        if len(locations) == 0:
+                loc = guitk_setup.term_setup('none').credentials
+                chosen_loc.append(loc)
+        return chosen_loc
 
     # @staticmethod
     def get_available_space(self, SOURCE_SUBJECTS_DIR, PROCESSED_FS_DIR):

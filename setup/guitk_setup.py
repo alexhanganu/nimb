@@ -15,9 +15,8 @@ class term_setup():
                
     def setupcredentials(self):
         from setup.term_questionnaire import PyInqQuest
-        print('credentials are missing, please provide credentials for {}:'.format(self.remote))
         self.change2false()
-        remote_new = PyInqQuest(self.cluster[self.remote]).answered
+        self.remote, remote_new = PyInqQuest(self.cluster[self.remote]).answered
         database._set_Table_Data('remotes', {self.remote: remote_new}, self.remote)
         return remote_new
 
