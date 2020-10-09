@@ -41,7 +41,7 @@ def _set_Table_Data(Table, data_requested, _id):
             data.append(data_requested[_id][key])
         question_marks = ", ".join(["?"] * len(data))
         conn.execute('''INSERT INTO {0} VALUES ({1})'''.format(Table, question_marks), data)
-        _set_Location_json(Table, _id)
+        _set_Location_json(Table, data_requested, _id)
     conn.commit()
     conn.close()
 
@@ -77,8 +77,7 @@ def _delete_Table_Data(Table, _id):
     conn.commit()
     conn.close()
 
-def _set_Location_json(Table, _id):
+def _set_Location_json(Table, data_requested, _id):
     if Table == 'remotes':
-        print('setting up json for remote:',_id,'this script is not ready')
         from setup.get_vars import SetLocation
-        SetLocation(_id)
+        SetLocation(data_requested, _id)

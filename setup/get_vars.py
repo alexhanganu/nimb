@@ -103,16 +103,25 @@ class Get_Vars():
 
 class SetLocation():
 
-    def __init__(self, location):
-        self.stats = self.set_projec, location)
+    def __init__(self, data_requested, location):
+        self.credentials_home = _get_credentials_home()
+        self.username = data_requested[location]['username']
+        print(self.username)
+        self.set_project(location)
 
     def set_project(self, location):
-        print('still working on this script')
-        # for key in stats['STATS_PATHS']:
-            # if project not in stats['STATS_PATHS'][key]:
-                    # if key != "STATS_HOME":
-                        # new_ending = '/'.join(stats['STATS_PATHS'][key].replace(sep, '/').split('/')[-2:])
-                    # else:
-                        # new_ending = '/'.join(stats['STATS_PATHS'][key].replace(sep, '/').split('/')[-1:])
-                    # stats['STATS_PATHS'][key] = path.join(NIMB_tmp, project, new_ending).replace(sep, '/')
-        return 'ok'#stats
+        if path.exists(path.join(self.credentials_home, 'projects.json')):
+            projects = self.read_file(path.join(self.credentials_home, 'projects.json'))
+            projects['LOCATION'].append(location)
+            self.save_json('projects.json', projects, self.credentials_home)
+            new_loc = self.read_file(path.join(self.credentials_home, 'remote1.json'))
+            new_loc['USER']['user']= self.username
+            self.save_json(location+'.json', new_loc, self.credentials_home)
+
+    def read_file(self, file):
+        with open(file) as jf:
+            return json.load(jf)
+
+    def save_json(self, file, data, dst):
+        with open(path.join(dst, file), 'w') as jf:
+            json.dump(data, jf, indent=4)
