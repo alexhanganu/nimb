@@ -43,9 +43,9 @@ class DistributionHelper():
             print('there are {} locations ready to perform the {} analysis'.format(len(locations), analysis))
             # Ask if user wants to include only one machine or all of them
             self.get_userdefined_location(locations)
+            # self.get_subject_data(unprocessed)
         """
         If user at least one machine for analysis:
-        - compute the number of subjects to be processed, volume of each subject, add volume of processed data.
         - compute available disk space on the local and/or remote (where freesurfer_install ==1) for the folder FS_SUBJECTS_DIR and NIMB_PROCESSED_FS ==> get_free_space_remote
         - tell user the (1) number of subjects te be processed, (2) estimated volumes and (3) estimated time the processing will take plase; ask user if accept to start processing the subjects; if yes:
         - create distrib-DATABASE (track files) ~/nimb/project-name_status.json:
@@ -103,6 +103,7 @@ class DistributionHelper():
     def get_userdefined_location(self, locations):
         """
         if len(locations) == 0:
+            user is asked to change freesurfer_install to 1 for any location or
             user is asked to provide a new machine
         else, user is asked to chose the machine or all machines to 
         be used for the processing
@@ -115,6 +116,17 @@ class DistributionHelper():
                 loc = guitk_setup.term_setup('none').credentials
                 chosen_loc.append(loc)
         return chosen_loc
+
+    def get_subject_data(self, unprocessed):
+        """
+        it is expected that 
+        for each subject to be processed (in unprocessed):
+        compute volume of data (T1s, Flairs, rsfMRIs, DWIs
+        :param number of subjects to be processed, from SOURCE_SUBJECTS_DIR:
+        :return: dict {subject: {app: volume_data_of_subj, expected_volume: volume_nr}}
+        """
+        return pass
+    
 
     # @staticmethod
     def get_available_space(self, SOURCE_SUBJECTS_DIR, PROCESSED_FS_DIR):
