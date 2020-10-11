@@ -45,10 +45,9 @@ class DistributionHelper():
             if self.get_userdefined_location(): # If user chooses at least one machine for analysis:
                 print(self.locations_4process)
                 # self.get_subject_data(unprocessed)
-                # self.get_available_space()
+                # self.get_available_space() #- compute available disk space on the local and/or remote (where freesurfer_install ==1) for the folder FS_SUBJECTS_DIR and NIMB_PROCESSED_FS ==> get_free_space_remote
                 
         """
-        - compute available disk space on the local and/or remote (where freesurfer_install ==1) for the folder FS_SUBJECTS_DIR and NIMB_PROCESSED_FS ==> get_free_space_remote
         - tell user the (1) number of subjects te be processed, (2) estimated volumes and (3) estimated time the processing will take plase; ask user if accept to start processing the subjects; if yes:
         - create distrib-DATABASE (track files) ~/nimb/project-name_status.json:
             - ACTION = notprocessed:[], copied2process:[]
