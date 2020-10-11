@@ -38,14 +38,16 @@ class DistributionHelper():
         if unprocessed:
             print('there are {} subjects to be processed'.format(len(unprocessed)))
             analysis = 'freesurfer'
-            locations = self.get_processing_location(analysis)
+            self.locations_4process = self.get_processing_location(analysis)
             # tell user the number of machines  ready to perform the analysis (local + remote)
-            print('there are {} locations ready to perform the {} analysis'.format(len(locations), analysis))
+            print('there are {} locations ready to perform the {} analysis'.format(len(self.locations_4process), analysis))
             # Ask if user wants to include only one machine or all of them
-            self.get_userdefined_location(locations)
-            # self.get_subject_data(unprocessed)
+            if self.get_userdefined_location(): # If user chooses at least one machine for analysis:
+                print(self.locations_4process)
+                # self.get_subject_data(unprocessed)
+                # self.get_available_space()
+                
         """
-        If user at least one machine for analysis:
         - compute available disk space on the local and/or remote (where freesurfer_install ==1) for the folder FS_SUBJECTS_DIR and NIMB_PROCESSED_FS ==> get_free_space_remote
         - tell user the (1) number of subjects te be processed, (2) estimated volumes and (3) estimated time the processing will take plase; ask user if accept to start processing the subjects; if yes:
         - create distrib-DATABASE (track files) ~/nimb/project-name_status.json:
@@ -100,7 +102,7 @@ class DistributionHelper():
                     loc.append(location)
         return loc
 
-    def get_userdefined_location(self, locations):
+    def get_userdefined_location(self):
         """
         if len(locations) == 0:
             user is asked to change freesurfer_install to 1 for any location or
@@ -112,10 +114,17 @@ class DistributionHelper():
         """
         from setup.term_questionnaire import PyInqQuest
         chosen_loc = list()
-        if len(locations) == 0:
+        if len(self.locations_4process) == 0:
                 loc = guitk_setup.term_setup('none').credentials
                 chosen_loc.append(loc)
-        return chosen_loc
+        else:
+            pass
+            # if multiple locations have freesurfer_install=1: ask user to define which location to choose for processing
+            # else ask to change freesurfer_install to 1
+        if len(self.locations_4process) > 1:
+            return True
+        else:
+            return False
 
     def get_subject_data(self, unprocessed):
         """
@@ -129,15 +138,14 @@ class DistributionHelper():
     
 
     # @staticmethod
-    def get_available_space(self, SOURCE_SUBJECTS_DIR, PROCESSED_FS_DIR):
+    def get_available_space(self):
         """
-        1. get the current available space on hard-disk of user                                                                                                            
-        2. calculate the list of
-                initial script in database -> create_lsmiss  
-        :param SOURCE_SUBJECTS_DIR:
-        :return:
+        1. get the available space on each remote chosen by the user to perform the processing
+        :param self.locations_4process:
+        :return: dict volume for each location in the NEW_SUBJECTS dir
         """
         # based on availabe space
+        print(self.locations_4process)
         to_be_process_subject = DiskspaceUtility.get_subject_to_be_process_with_free_space(un_process_sj)
         #
 
