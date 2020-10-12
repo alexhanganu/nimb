@@ -32,6 +32,10 @@ class DistributionHelper():
         self.git_repo = "https://github.com/alexhanganu/nimb"
 
     def check_new(self):
+        """
+        check for missing subjects
+        if user approves, initiats the processing on local/ remote
+        """
         # from distribution.distribution_check_new import DistributionCheckNew
         # unprocessed = DistributionCheckNew(self.projects[self.project_name], self.NIMB_tmp).unprocessed
         unprocessed = ['adni_test1','adni_test2']
@@ -46,46 +50,9 @@ class DistributionHelper():
                 print(self.locations_4process)
                 # self.get_subject_data(unprocessed)
                 # self.get_available_space() #- compute available disk space on the local and/or remote (where freesurfer_install ==1) for the folder FS_SUBJECTS_DIR and NIMB_PROCESSED_FS ==> get_free_space_remote
-                
-        """
-        - tell user the (1) number of subjects te be processed, (2) estimated volumes and (3) estimated time the processing will take plase; ask user if accept to start processing the subjects; if yes:
-        - create distrib-DATABASE (track files) ~/nimb/project-name_status.json:
-            - ACTION = notprocessed:[], copied2process:[]
-            - LOCATION = local:[], remote_name1:[], remote_name_n:[]
-            add each subjects to:
-            - distrib-DATABASE[ACTION][notprocessed].append(subject)
-            - distrib-DATABASE[LOCATION][local/remote_name].append(subject)
-        - populating rule: 
-            - continue populating until the volume of subjects + volume of estimated processed subjects (900Mb per subject) is less then 75% of the available disk space
-            - populate local.json → NIMB_PATHS → NIMB_NEW_SUBJECTS based on populating rule
-            - if content of subject to be processed, in SOURCE_SUBJECTS_DIR is NOT archived:
-                - archive and copy to local/remote.json → Nimb_PATHS → NIMB_NEW_SUBECTS.
-            - If there are more than one computer ready to perform freesurfer:
-                - send archived subjects to each of them based on the estimated time required to process one subject and choose the methods that would deliver the lowest estimated time to process.
-            - once copied to the NIMB_NEW_SUBJECTS:
-                - add subject to distrib-DATABSE → LOCATION → remote_name
-                - move subject in distrib-DATABASE → ACTION notprocessed → copied2process
-            - after all subjects are copied to the NIMB_NEW_SUBJECTS folder: initiate the classifier on the local/remote computer with keys: cd $NIMB_HOME && python nimb.py -process classify
-            - wait for the answer; If True and new_subjects.json file was created:
-            - start the -process freesurfer
-            - after each 2 hours check the local/remote NIMB_PROCESSED_FS and NIMB_PROCESSED_FS_ERROR folders. If not empty: mv (or copy/rm) to the path provided in the ~/nimb/projects.json → project → local or remote $PROCESSED_FS_DIR folder
-            - if SOURCE_BIDS_DIR is provided: moves the processed subjects to corresponding SOURCE_BIDS_DIR/subject/session/processed_fs folder
-            
-        :param SOURCE_SUBJECTS_DIR: MUST BE FULL PATHS
-        :param PROCESSED_FS_DIR:
-        :return: full path of subjects that is not process yet
-        """
-
-        # # get free space remotely
-        # free_space = DiskspaceUtility.get_free_space_remote(ssh_session)
-        # to_be_process_subject = set(all_subjects_at_local_short_name) - set(all_processed_file_remote) # not consider space yet
-        # # consider the space available the remote server
-        # free_space = min(free_space, 10*1024) # min of 'free space' and 10GB
-        # to_be_process_subject = DiskspaceUtility.get_subject_upto_size(free_space, to_be_process_subject)
-
-        # print("Remote server has {0}MB free, it can stored {1} subjects".format(free_space, len(to_be_process_subject)))
-        # ssh_session.close()
-        # return [os.path.join(SOURCE_SUBJECTS_DIR,subject) for subject in to_be_process_subject] # full path
+                if self.get_user_confirmation():
+                    self.make_processing_database()
+                    self.run_processing()
 
     def get_processing_location(self, app):
         """
@@ -145,11 +112,57 @@ class DistributionHelper():
         """
         # based on availabe space
         print(self.locations_4process)
+        # free_space = DiskspaceUtility.get_free_space_remote(ssh_session)
+        # # consider the space available the remote server
+        # free_space = min(free_space, 10*1024) # min of 'free space' and 10GB
         to_be_process_subject = DiskspaceUtility.get_subject_to_be_process_with_free_space(un_process_sj)
         #
 
+    def get_user_confirmation(self):
+        """
+        tell user:
+        * number of subjects te be processed
+        * estimated volumes
+        * estimated time the processing will take plase
+        * ask user if accept to start processing the subjects
+        """
+        continue_processing = False
+        # print("Remote server has {0}MB free, it can stored {1} subjects".format(free_space, len(to_be_process_subject)))
+        return continue_processing
+    
+    def make_processing_database(self):
+        """
+                - create distrib-DATABASE (track files) ~/nimb/project-name_status.json:
+            - ACTION = notprocessed:[], copied2process:[]
+            - LOCATION = local:[], remote_name1:[], remote_name_n:[]
+            add each subjects to:
+            - distrib-DATABASE[ACTION][notprocessed].append(subject)
+            - distrib-DATABASE[LOCATION][local/remote_name].append(subject)
+        - populating rule: 
+            - continue populating until the volume of subjects + volume of estimated processed subjects (900Mb per subject) is less then 75% of the available disk space
+            - populate local.json → NIMB_PATHS → NIMB_NEW_SUBJECTS based on populating rule
+            - If there are more than one computer ready to perform freesurfer:
+                - send archived subjects to each of them based on the estimated time required to process one subject and choose the methods that would deliver the lowest estimated time to process.
+            - once copied to the NIMB_NEW_SUBJECTS:
+                - add subject to distrib-DATABSE → LOCATION → remote_name
+                - move subject in distrib-DATABASE → ACTION notprocessed → copied2process
+        """
+        # to_be_process_subject = DiskspaceUtility.get_subject_upto_size(free_space, to_be_process_subject)
+        # return [os.path.join(SOURCE_SUBJECTS_DIR,subject) for subject in to_be_process_subject] # full path
+        pass
 
+    def run_processing(self):
+        """
+                    - after all subjects are copied to the NIMB_NEW_SUBJECTS folder: initiate the classifier on the local/remote computer with keys: cd $NIMB_HOME && python nimb.py -process classify
+            - wait for the answer; If True and new_subjects.json file was created:
+            - start the -process freesurfer
+            - after each 2 hours check the local/remote NIMB_PROCESSED_FS and NIMB_PROCESSED_FS_ERROR folders. If not empty: mv (or copy/rm) to the path provided in the ~/nimb/projects.json → project → local or remote $PROCESSED_FS_DIR folder
+            - if SOURCE_BIDS_DIR is provided: moves the processed subjects to corresponding SOURCE_BIDS_DIR/subject/session/processed_fs folder
 
+        """
+        pass
+
+    
     def get_stats_dir(self):
         """will return the folder with unzipped stats folder for each subject"""
         PROCESSED_FS_DIR = self.projects[self.project_name]["PROCESSED_FS_DIR"]
@@ -246,7 +259,8 @@ class DistributionHelper():
         :return: None
         '''
         # todo: how to get the active cluster for this project
-
+        # if content of subject to be processed, in SOURCE_SUBJECTS_DIR is NOT archived:
+        #     - archive and copy to local/remote.json → Nimb_PATHS → NIMB_NEW_SUBECTS.
         clusters = database._get_Table_Data('Clusters', 'all')
         cname = [*clusters.keys()][0]
         project_folder = clusters[cname]['HOME']
