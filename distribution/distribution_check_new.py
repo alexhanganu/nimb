@@ -120,5 +120,3 @@ if __name__ == "__main__":
     # distribution = DistributionCheckNew()
     pass
 
-
-
