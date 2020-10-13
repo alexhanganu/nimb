@@ -1,0 +1,28 @@
+{
+"STATS_PATHS": {
+       "STATS_HOME"             : "~/nimb_tmp/projects/stats",
+       "FS_GLM_dir"             : "~/nimb_tmp/projects/stats/fs_glm",
+       "features"               : "~/nimb_tmp/projects/stats/features",
+       "anova"                  : "~/nimb_tmp/projects/stats/anova",
+       "simp_lin_reg_dir"       : "~/nimb_tmp/projects/stats/simple_lin_regression",
+       "laterality_dir"         : "~/nimb_tmp/projects/stats/laterality",
+       "predict_dir"            : "~/nimb_tmp/projects/stats/predict",
+       "logistic_regression_dir": "~/nimb_tmp/projects/stats/logistic_regression",
+       "linreg_moderation_dir"  : "~/nimb_tmp/projects/stats/linreg_moderation"
+   },
+"STATS_PARAMS": {
+       "file_name_corrected"    : "eTIVNaNOutcor",
+       "prediction_vars"        : {"target" : "group", "pca_threshold":0.5, "skf_NUM_ITER": 150, "NUM_ITER": 10, "nr_threads" : 15},
+
+       "cor_methods"            : ["pearson","spearman","kendall"],
+       "cor_level_chosen"       : ["STRONG","MODERATE","WEAK"]
+   },
+"EXPLANATION": {
+       "GLM_dir"            : "path to the folder were the glm analysis will be made",
+       "GLM_measurements"   : "cortical parameters that will be used for FreeSurfer GLM analysis: thickness,area,volume,curv",
+       "GLM_thresholds"     : "threshold levels for smoothing in mm, used for FreeSurfer GLM analysis: 5,10,15,20,25",
+       "GLM_MCz_cache"      : "level of FreeSurfer GLM MCZ simulation threshold 13 equals to p:0.05",
+       "freesurfer_version" : "default is 7 (for 7.1.1) but pipeline should also work with versions 6 and 5",
+       "freesurfer_license" : "license of freesurfer"
+   }
+}

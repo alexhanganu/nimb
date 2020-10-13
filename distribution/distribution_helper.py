@@ -100,8 +100,9 @@ class DistributionHelper():
         :param number of subjects to be processed, from SOURCE_SUBJECTS_DIR:
         :return: dict {subject: {app: volume_data_of_subj, expected_volume: volume_nr}}
         """
-        return pass
-    
+        res = True
+        return res
+
 
     # @staticmethod
     def get_available_space(self):
