@@ -26,12 +26,13 @@ class Get_Vars():
     def __init__(self):
 
         self.credentials_home = _get_credentials_home()
-        print("credentials are located at: "+self.credentials_home)
+        print("credentials are located at: {}".format(self.credentials_home))
         if path.exists(path.join(self.credentials_home, 'projects.json')):
             self.projects   = self.read_file(path.join(self.credentials_home, 'projects.json'))
             self.location_vars = self.get_vars(self.projects, self.credentials_home)
             self.stats_vars = self.read_file(path.join(self.credentials_home, 'stats.json'))
         else:
+            self.define_credentials()
             shutil.copy(path.join(path.dirname(path.abspath(__file__)), 'projects.json'), path.join(self.credentials_home, 'projects.json'))
             shutil.copy(path.join(path.dirname(path.abspath(__file__)), 'local.json'), path.join(self.credentials_home, 'local.json'))
             shutil.copy(path.join(path.dirname(path.abspath(__file__)), 'remote1.json'), path.join(self.credentials_home, 'remote1.json'))
@@ -42,7 +43,20 @@ class Get_Vars():
         print('local user is: '+self.location_vars['local']['USER']['user'])
         self.installers = self.read_file(path.join(path.dirname(path.abspath(__file__)), 'installers.json'))
 
-
+    def define_credentials(self):
+        print('current credentials are: {}'.format())
+        # from setup import guitk_setup
+        # credentials = guitk_setup.term_setup(remote).credentials
+        if 'n' in input('do you want to keep this path for the credentials? (y/n)'):
+            new_credentials = input('please provide a new path: ')
+            while not path.exists(new_credentials):
+                new_credentials = input('path does not exist. Please provide a new path: ')
+            self.credentials_home = new_credentials
+        with open(path.join(path.dirname(path.abspath(__file__)), '../credentials_path.py'), 'w') as f:
+            f.write('credentials_home=\"'+self.credentials_home+'\"')
+        with open(path.join(path.dirname(path.abspath(__file__)), '../credentials_path.json'), 'w') as f:
+            json.dump(self.credentials_home, f)
+    
     def read_file(self, file):
         with open(file) as jf:
             return json.load(jf)
