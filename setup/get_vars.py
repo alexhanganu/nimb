@@ -61,7 +61,6 @@ class Get_Vars():
         with open(file) as jf:
             return json.load(jf)
 
-
     def get_vars(self, projects, path_files):
         d_all_vars = dict()
         for location in projects['LOCATION']:
