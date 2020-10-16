@@ -1,15 +1,12 @@
 #!/bin/python
-# Kim Phuong Pham 20200628;  Alexandru Hanganu 20200107
-
-
+# Kim Phuong Pham 20200628;  Alexandru Hanganu 20201015
 '''
-1) read the folder with subjects SUBJECTS_DIR_RAW
+1) read the folder with subjects
 3) extract paths for the anat MRIs
 4) classify according to BIDS classification
-5) create the BIDS json file that will be used by NIMB on the cluster
+5) create the BIDS json file that will be used by NIMB for processing
 6)
 '''
-
 
 from os import path, listdir, getenv, walk
 from collections import defaultdict
@@ -17,6 +14,59 @@ from sys import platform
 
 import datetime as dt
 import time, json
+
+"""
+class MakeBIDS_subj2process():
+    def __init__(self, DIR_SUBJECTS,
+                NIMB_HOME, NIMB_tmp,
+                multiple_T1_entries = False,
+                flair_t2_add = False):
+        self.NIMB_HOME = NIMB_HOME
+        self.NIMB_tmp  = NIMB_tmp
+        self.d_subjects = dict()
+        print("classification of new subjects is running ...")
+
+    def run(self):
+        for subject in listdir(DIR_SUBJECTS):
+            if '.zip' in subject:
+                content = chk_if_ziparchive(subject)
+                print(content)
+            self.d_subjects[subject] = {}
+            ls_MR_paths = self.exclude_MR_types(self.get_paths2dcm_files(path.join(DIR_SUBJECTS,subject)))
+            #print("ls_MR_paths: ", ls_MR_paths)
+    
+    
+    def chk_if_ziparchive(self):
+        from distribution.manage_archive import ZipArchiveManagement
+        return ZipArchiveManagement(file).zip_file_content()
+
+    def get_paths2dcm_files(self, path_root):
+        ls_paths = list()
+        for root, dirs, files in walk(path_root):
+            for file in files:
+                if '.dcm' in file:
+                    dir_path = root.replace('\\','/')
+                    dir_src = dir_path+'/'+sorted(listdir(dir_path))[0]
+                    ls_paths.append(dir_src)
+                    break
+                if '.nii' in file:
+                    dir_src = root.replace('\\','/')+'/'+file
+                    ls_paths.append(dir_src)
+                    break
+        return ls_paths
+        
+    def exclude_MR_types(self, ls):
+        exclude_MR_types = ['calibration','localizer','loc','moco','perfusion','tse',
+                            'survey','scout','hippo','cbf','isotropic','fractional',
+                            'pasl','multi_reset','dual_echo','gre','average_dc',]
+        ls_iter = ls.copy()
+        for mr_path in ls_iter:
+            for ex_type in exclude_MR_types:
+                if ex_type.lower() in mr_path.lower():
+                    ls.remove(mr_path)
+                    break
+        return ls
+"""    
 
 
 def chk_if_archive(file):
