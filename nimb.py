@@ -51,8 +51,9 @@ class NIMB(object):
                 sys.exit()
             else:
                 from classification import classify_bids
+                SUBJ_2Classify = DistributionHelper(all_vars, self.projects, self.project).get_subj_2classify()
                 return classify_bids.get_dict_MR_files2process(
-                                     self.vars_local['NIMB_PATHS']['NIMB_NEW_SUBJECTS'],
+                                     SUBJ_2Classify,
                                      self.vars_local['NIMB_PATHS']['NIMB_tmp'],
                                      self.vars_local['FREESURFER']['multiple_T1_entries'],
                                      self.vars_local['FREESURFER']['flair_t2_add'])
