@@ -1,1 +1,1 @@
-credentials_home="/home/ssp/nimb"
+credentials_home="~/nimb"
