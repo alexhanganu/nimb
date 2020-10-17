@@ -186,7 +186,7 @@ class DistributionHelper():
         elif self.projects[self.project_name]['SOURCE_SUBJECTS_DIR'][0] == 'local':
             SUBJ_2Classify = self.projects[self.project_name]['SOURCE_SUBJECTS_DIR'][1]
         logger.info('Folder with Subject to classify is: {}'.format(SUBJ_2Classify))
-        retun SUBJ_2Classify
+        return SUBJ_2Classify
 
     def get_project_vars(self, var_name, project):
         """
