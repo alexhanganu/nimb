@@ -120,6 +120,15 @@ class MakeBIDS_subj2process():
                     break
         return ls
 
+
+
+    def validate_if_date(self, date_text):
+        try:
+            date = dt.datetime.strptime(date_text, '%Y-%m-%d_%H_%M_%S.%f')
+            return True
+        except ValueError:
+            return False
+
     def get_ls_sessions(self, ls):
         # add types
         mr_types = {'t1': ['t1', 'spgr', 'rage', ],
@@ -134,7 +143,7 @@ class MakeBIDS_subj2process():
         for mr_path in ls:
             # add date to sessions
             for date in mr_path.split('/')[2:]:
-                if validate_if_date(date):
+                if self.validate_if_date(date):
                     if date not in ls_sessions:
                         ls_sessions.append(date)
                     break
@@ -180,13 +189,33 @@ class MakeBIDS_subj2process():
         return d_ses_paths
 
 
+    def get_MR_types(self, mr_path):
+        mr_types = {'t1':['t1','spgr','rage',],
+                    'flair':['flair',],
+                    't2':['t2',],
+                    'dwi':('hardi','dti','diffus',),
+                    'rsfmri':['resting_state_fmri','rsfmri',],
+                    'fieldmap':['field_map','field_mapping','fieldmap',]}
+        mr_found = False
+        for mr_type in mr_types:
+            for mr_name in mr_types[mr_type]:
+                if mr_name.lower() in mr_path.lower():
+                    mr_found = True
+                    res = mr_type
+                    break
+            if mr_found:
+                break
+        if mr_found:
+            return res
+        else:
+            return 'none'
 
     def classify_by_MR_types(self, dict_sessions_paths):
         d_ses_MR_types = {}
         for ses in dict_sessions_paths:
             d_ses_MR_types[ses] = {}
             for mr_path in dict_sessions_paths[ses]:
-                mr_type = get_MR_types(mr_path)
+                mr_type = self.get_MR_types(mr_path)
                 if mr_type != 'none':
                     if mr_type not in d_ses_MR_types[ses]:
                         d_ses_MR_types[ses][mr_type] = list()
