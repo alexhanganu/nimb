@@ -180,7 +180,7 @@ class DistributionHelper():
         print('perform statistical analysis')
 
     def get_subj_2classify(self):
-        SUBJ_2Classify = self.self.locations["local"]['NIMB_PATHS']['NIMB_NEW_SUBJECTS']
+        SUBJ_2Classify = self.locations["local"]['NIMB_PATHS']['NIMB_NEW_SUBJECTS']
         if self.projects[self.project_name]['SOURCE_BIDS_DIR'][0] == 'local':
             SUBJ_2Classify = self.projects[self.project_name]['SOURCE_BIDS_DIR'][1]
         elif self.projects[self.project_name]['SOURCE_SUBJECTS_DIR'][0] == 'local':
