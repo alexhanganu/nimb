@@ -10,8 +10,8 @@ from distribution import SSHHelper
 import logging
 
 # -- for logging, instead of using print --
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+# logger = logging.getLogger(__name__)
+# logger.setLevel(logging.DEBUG)
 # --
 
 class DistributionHelper():
@@ -209,7 +209,7 @@ class DistributionHelper():
             # install freesurfer locally
             setup = SETUP_FREESURFER(self.locations,installers=self.installers)
         else:
-            logger.debug("Setting up the remote server")
+            # logger.debug("Setting up the remote server")
             # --get the name and the address of remote server
             for machine_name, machine_config in self.locations.items():
                 if machine_name == 'local': # skip
@@ -227,8 +227,8 @@ class DistributionHelper():
         machine_SOURCE_SUBJECTS_DIR, SOURCE_SUBJECTS_DIR = self.get_SOURCE_SUBJECTS_DIR()
 
         self.run_copy_subject_to_cluster(Project)
-        logger.debug('Cluster analysis started')
-        logger.debug("Cluster analysing running....")
+        # logger.debug('Cluster analysis started')
+        # logger.debug("Cluster analysing running....")
         self.run_processing_on_cluster_2()
 
 

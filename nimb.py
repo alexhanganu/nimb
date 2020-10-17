@@ -50,7 +50,7 @@ class NIMB(object):
 
         if self.process == 'classify':
             self.logger.info('checking if ready to classify')
-            if not self.distribution.classify_ready():
+            if not DistributionReady(self.all_vars, self.projects, self.project).classify_ready():
                 ErrorMessages.error_classify()
                 sys.exit()
             else:
@@ -66,7 +66,7 @@ class NIMB(object):
             self.distribution.check_new()
 
         if self.process == 'freesurfer':
-            if not self.distribution.fs_ready():
+            if not DistributionReady(self.all_vars, self.projects, self.project).fs_ready():
                 self.logger.info("FreeSurfer is not ready or freesurfer_install is set to 0. Please check the configuration files.")
                 sys.exit()
             else:
