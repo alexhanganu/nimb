@@ -1,1 +1,1 @@
-credentials_home = "~/nimb"
+credentials_home="~/nimb"

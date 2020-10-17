@@ -1,10 +1,7 @@
 """
 this module contains common commands that use freqently
 """
-try:
-    from distribution.distribution_helper import logger
-except Exception as e:
-    print(e)
+
 import subprocess
 import os, logging
 from setup import database

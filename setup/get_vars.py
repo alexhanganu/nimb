@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from os import path, system, sep
+from os import path, system, sep, makedirs
 import shutil
 import json
 from .get_username import _get_username
@@ -44,17 +44,19 @@ class Get_Vars():
         self.installers = self.read_file(path.join(path.dirname(path.abspath(__file__)), 'installers.json'))
 
     def define_credentials(self):
-        print('current credentials are: {}'.format())
+        print('current credentials are: {}'.format(self.credentials_home))
         # from setup import guitk_setup
         # credentials = guitk_setup.term_setup(remote).credentials
         if 'n' in input('do you want to keep this path for the credentials? (y/n)'):
-            new_credentials = input('please provide a new path: ')
+            new_credentials = input('please provide a new path where the folder nimb with credentials will be installed: ')
             while not path.exists(new_credentials):
-                new_credentials = input('path does not exist. Please provide a new path: ')
-            self.credentials_home = new_credentials
+                new_credentials = input('path does not exist. Please provide a new path where folder nimb with credentials will be installed: ')
+            self.credentials_home = path.join(new_credentials, 'nimb')
+            if not path.exists(self.credentials_home):
+                makedirs(self.credentials_home)
         with open(path.join(path.dirname(path.abspath(__file__)), '../credentials_path.py'), 'w') as f:
             f.write('credentials_home=\"'+self.credentials_home+'\"')
-        with open(path.join(path.dirname(path.abspath(__file__)), '../credentials_path.json'), 'w') as f:
+        with open(path.join(path.dirname(path.abspath(__file__)), '../credentials_path'), 'w') as f:
             json.dump(self.credentials_home, f)
     
     def read_file(self, file):

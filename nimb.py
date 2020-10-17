@@ -7,9 +7,7 @@ import argparse
 from os import path
 import sys
 import logging
-from setup.get_vars import Get_Vars, SetProject
-from classification import classify_bids
-from distribution.distribution_helper import DistributionHelper
+from setup.get_vars import Get_Vars
 from distribution.distribution_ready import DistributionReady
 from distribution.utilities import ErrorMessages
 from distribution.logger import Log
@@ -40,8 +38,6 @@ class NIMB(object):
         #Log(self.vars_local['NIMB_PATHS']['NIMB_tmp'])
         self.logger = logging.getLogger(__name__)
 
-        self.distribution = DistributionHelper(all_vars, self.projects, self.project)
-
     def run(self):
         """Run nimb"""
 
@@ -54,6 +50,7 @@ class NIMB(object):
                 ErrorMessages.error_classify()
                 sys.exit()
             else:
+                from classification import classify_bids
                 return classify_bids.get_dict_MR_files2process(
                                      self.vars_local['NIMB_PATHS']['NIMB_NEW_SUBJECTS'],
                                      self.vars_local['NIMB_PATHS']['NIMB_HOME'],
@@ -63,7 +60,7 @@ class NIMB(object):
 
         if self.process == 'check-new':
             self.logger.info('checking for new subject to be processed')
-            self.distribution.check_new()
+            DistributionHelper(all_vars, self.projects, self.project).check_new()
 
         if self.process == 'freesurfer':
             if not DistributionReady(self.all_vars, self.projects, self.project).fs_ready():
@@ -80,7 +77,7 @@ class NIMB(object):
                 self.logger.info("NIMB is not ready to extract the FreeSurfer statistics per user. Please check the configuration files.")
                 sys.exit()
             else:
-                PROCESSED_FS_DIR = self.distribution.get_stats_dir()
+                PROCESSED_FS_DIR = DistributionHelper(all_vars, self.projects, self.project).get_stats_dir()
                 self.logger.info(PROCESSED_FS_DIR)
                 from stats import fs_stats2table
                 fs_stats2table.chk_if_subjects_ready(self.stats_vars["STATS_HOME"], PROCESSED_FS_DIR)
@@ -105,6 +102,7 @@ class NIMB(object):
                                                'fs_glm','extract_images', self.vars_local['PROCESSING']["batch_walltime"],
                                                True, 'cd '+path.join(self.vars_local["NIMB_PATHS"]["NIMB_HOME"], 'processing', 'freesurfer'))
         if self.process == 'run-stats':
+            from setup.get_vars import SetProject
             self.stats_vars = SetProject(self.vars_local['NIMB_PATHS']['NIMB_tmp'], self.stats_vars, self.project).stats
             if not DistributionReady(self.all_vars, self.projects, self.project).check_stats_ready():
                 self.logger.info("NIMB is not ready to run the stats. Please check the configuration files.")
