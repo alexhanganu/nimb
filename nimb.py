@@ -8,6 +8,7 @@ from os import path
 import sys
 import logging
 from setup.get_vars import Get_Vars
+from distribution.distribution_helper import DistributionHelper
 from distribution.distribution_ready import DistributionReady
 from distribution.utilities import ErrorMessages
 from distribution.logger import Log
