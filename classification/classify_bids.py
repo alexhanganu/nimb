@@ -15,32 +15,57 @@ from sys import platform
 import datetime as dt
 import time, json
 
-"""
+
 class MakeBIDS_subj2process():
     def __init__(self, DIR_SUBJECTS,
                 NIMB_HOME, NIMB_tmp,
                 multiple_T1_entries = False,
                 flair_t2_add = False):
+        self.DIR_SUBJECTS = DIR_SUBJECTS
         self.NIMB_HOME = NIMB_HOME
         self.NIMB_tmp  = NIMB_tmp
         self.d_subjects = dict()
         print("classification of new subjects is running ...")
 
     def run(self):
-        for subject in listdir(DIR_SUBJECTS):
-            if '.zip' in subject:
-                content = chk_if_ziparchive(subject)
-                print(content)
+        for subject in listdir(self.DIR_SUBJECTS)[-18:-17]:
+            print(subject)
             self.d_subjects[subject] = {}
-            ls_MR_paths = self.exclude_MR_types(self.get_paths2dcm_files(path.join(DIR_SUBJECTS,subject)))
-            #print("ls_MR_paths: ", ls_MR_paths)
-    
-    
-    def chk_if_ziparchive(self):
-        from distribution.manage_archive import ZipArchiveManagement
-        return ZipArchiveManagement(file).zip_file_content()
+            path_2mris = self._get_MR_paths(path.join(self.DIR_SUBJECTS, subject))
+            ls_MR_paths = self.exclude_MR_types(path_2mris)
+            print("ls_MR_paths: ", ls_MR_paths)
 
-    def get_paths2dcm_files(self, path_root):
+    def _get_MR_paths(self, path2subj):
+        if '.zip' in path2subj:
+            content = self.chk_if_ziparchive(path2subj)
+            path_2mris = self.get_paths2dcm_files_from_ls(content)
+        elif path.isdir(path2subj):
+            path_2mris = self.get_paths2dcm_files_from_DIR(path2subj)
+        else:
+            print(subject,' not a dir and not a .zip file')
+            path_2mris = []
+        return path_2mris
+    
+    
+    def chk_if_ziparchive(self, file):
+        from distribution.manage_archive import ZipArchiveManagement
+        unzip = ZipArchiveManagement(file)
+        if unzip.chk_if_zipfile():
+            return unzip.zip_file_content()
+        else:
+            return []
+
+    def get_paths2dcm_files_from_ls(self, ls_content):
+        ls_paths = list()
+        for val in ls_content:
+            if 'dcm' in val or '.nii' in val:
+                path_mri = path.dirname(val)
+                if path_mri not in ls_paths:
+                    ls_paths.append(path_mri)
+        return ls_paths
+
+
+    def get_paths2dcm_files_from_DIR(self, path_root):
         ls_paths = list()
         for root, dirs, files in walk(path_root):
             for file in files:
@@ -66,12 +91,8 @@ class MakeBIDS_subj2process():
                     ls.remove(mr_path)
                     break
         return ls
-"""    
+    
 
-
-def chk_if_archive(file):
-	from distribution.manage_archive import ZipArchiveManagement
-	return ZipArchiveManagement(file).zip_file_content()
 
 
 def get_paths2dcm_files(path_root):
@@ -316,4 +337,3 @@ def get_dict_MR_files2process(DIR_SUBJECTS, NIMB_HOME, NIMB_tmp, multiple_T1_ent
         return True
     else:
         return False
-

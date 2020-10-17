@@ -80,22 +80,32 @@ class DistributionCheckNew():
         file_nimb_subj = 'nimb_subjects.json'
         if self.project_vars[DIR][0] == 'local':
             path_dir = self.project_vars[DIR][1]
-            if os.path.exists(path_dir):
+            if os.path.exists(os.path.join(path_dir, file_nimb_subj)):
                 return [i for i in self.read_json_f(os.path.join(path_dir, file_nimb_subj)).keys()]
             else:
+                self.initiate_classify(self.project_vars[DIR][1])
+        else:
                 from distribution.SSHHelper import download_files_from_server
                 try:
                     download_files_from_server(self.project_vars[DIR][0],
                                             os.path.join(self.project_vars[DIR][1],file_nimb_subj),
-                                            self.NIMB_tmp):                
+                                            self.NIMB_tmp)
                     return [i for i in self.read_json_f(os.path.join(self.NIMB_tmp, file_nimb_subj)).keys()]
                 except Exception as e:
                     print(e)
                     return []
 
+    def initiate_classify(self, SOURCE_SUBJECTS_DIR):
+        from classification.classify_bids import MakeBIDS_subj2process
+        NIMB_HOME    = "/home/hanganua/projects/def-hanganua/nimb"
+        MakeBIDS_subj2process(SOURCE_SUBJECTS_DIR,
+                NIMB_HOME, self.NIMB_tmp,
+                multiple_T1_entries = False,
+                flair_t2_add = False).run()
+
     def read_json_f(self, f):
         import json
-        open(f, 'r') as f:
+        with open(f, 'r') as f:
             return json.load(f)
 
 
@@ -110,7 +120,7 @@ class DistributionCheckNew():
 
 
 
-if __name__ == "__main__":
+#if __name__ == "__main__":
     """
 
     """
@@ -118,5 +128,5 @@ if __name__ == "__main__":
     # {“adni”: “SOURCE_SUBJECTS_DIR” : ['beluga', '/home/$USER/projects/def-hanganua/databases/loni_adni/source/mri'];
     # “PROCESSED_FS_DIR” : ['beluga', 'home/$USER/projects/def-hanganua/databases/loni_adni/processed_fs7']}
     # distribution = DistributionCheckNew()
-    pass
+#    pass
 

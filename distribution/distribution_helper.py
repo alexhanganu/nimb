@@ -36,23 +36,23 @@ class DistributionHelper():
         check for missing subjects
         if user approves, initiats the processing on local/ remote
         """
-        # from distribution.distribution_check_new import DistributionCheckNew
-        # unprocessed = DistributionCheckNew(self.projects[self.project_name], self.NIMB_tmp).unprocessed
-        unprocessed = ['adni_test1','adni_test2']
-        if unprocessed:
-            print('there are {} subjects to be processed'.format(len(unprocessed)))
-            analysis = 'freesurfer'
-            self.locations_4process = self.get_processing_location(analysis)
+        from distribution.distribution_check_new import DistributionCheckNew
+        unprocessed = DistributionCheckNew(self.projects[self.project_name], self.NIMB_tmp).unprocessed
+#        unprocessed = ['adni_test1','adni_test2']
+#        if unprocessed:
+#            print('there are {} subjects to be processed'.format(len(unprocessed)))
+#            analysis = 'freesurfer'
+#            self.locations_4process = self.get_processing_location(analysis)
             # tell user the number of machines  ready to perform the analysis (local + remote)
-            print('there are {} locations ready to perform the {} analysis'.format(len(self.locations_4process), analysis))
+#            print('there are {} locations ready to perform the {} analysis'.format(len(self.locations_4process), analysis))
             # Ask if user wants to include only one machine or all of them
-            if self.get_userdefined_location(): # If user chooses at least one machine for analysis:
-                print(self.locations_4process)
+#            if self.get_userdefined_location(): # If user chooses at least one machine for analysis:
+#                print(self.locations_4process)
                 # self.get_subject_data(unprocessed)
                 # self.get_available_space() #- compute available disk space on the local and/or remote (where freesurfer_install ==1) for the folder FS_SUBJECTS_DIR and NIMB_PROCESSED_FS ==> get_free_space_remote
-                if self.get_user_confirmation():
-                    self.make_processing_database()
-                    self.run_processing()
+#                if self.get_user_confirmation():
+#                    self.make_processing_database()
+#                    self.run_processing()
 
     def get_processing_location(self, app):
         """
