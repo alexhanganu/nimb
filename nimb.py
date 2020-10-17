@@ -53,7 +53,6 @@ class NIMB(object):
                 from classification import classify_bids
                 return classify_bids.get_dict_MR_files2process(
                                      self.vars_local['NIMB_PATHS']['NIMB_NEW_SUBJECTS'],
-                                     self.vars_local['NIMB_PATHS']['NIMB_HOME'],
                                      self.vars_local['NIMB_PATHS']['NIMB_tmp'],
                                      self.vars_local['FREESURFER']['multiple_T1_entries'],
                                      self.vars_local['FREESURFER']['flair_t2_add'])

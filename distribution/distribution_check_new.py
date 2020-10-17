@@ -97,9 +97,8 @@ class DistributionCheckNew():
 
     def initiate_classify(self, SOURCE_SUBJECTS_DIR):
         from classification.classify_bids import MakeBIDS_subj2process
-        NIMB_HOME    = "/home/hanganua/projects/def-hanganua/nimb"
         MakeBIDS_subj2process(SOURCE_SUBJECTS_DIR,
-                NIMB_HOME, self.NIMB_tmp,
+                self.NIMB_tmp,
                 multiple_T1_entries = False,
                 flair_t2_add = False).run()
 

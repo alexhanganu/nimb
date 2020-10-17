@@ -2,6 +2,7 @@
 # 2020.08.13
 
 from os import path, remove, system, chdir
+from pathlib import Path
 import logging
 
 def verify_vox_size_values(vox_size):
@@ -19,10 +20,10 @@ def verify_vox_size_values(vox_size):
     return vox
 
 
-def get_MR_file_params(subjid, nimb_dir, NIMB_tmp, file):
+def get_MR_file_params(subjid, NIMB_tmp, file):
 	tmp_f = path.join(NIMB_tmp, 'tmp_mriinfo')
 	vox_size = 'none'
-	chdir(path.join(nimb_dir, 'classification'))
+	chdir(Path(__file__).resolve().parent)
 	system('./mri_info '+file+' >> '+tmp_f)
 	if path.isfile(tmp_f):
 		lines = list(open(tmp_f, 'r'))
@@ -68,11 +69,11 @@ def get_MR_file_params(subjid, nimb_dir, NIMB_tmp, file):
 	return vox_size
 
 
-def keep_files_similar_params(subjid, nimb_dir, NIMB_tmp, t1_ls_f, flair_ls_f, t2_ls_f):
+def keep_files_similar_params(subjid, NIMB_tmp, t1_ls_f, flair_ls_f, t2_ls_f):
     grouped_by_voxsize = {}
     for file in t1_ls_f:
         # log.info(NIMB_tmp, '        reading MR data for T1 file: '+file)
-        vox_size = get_MR_file_params(subjid, nimb_dir, NIMB_tmp, file)
+        vox_size = get_MR_file_params(subjid, NIMB_tmp, file)
         if vox_size:
             if verify_vox_size_values(vox_size):
                 if str(vox_size) not in grouped_by_voxsize:
@@ -94,7 +95,7 @@ def keep_files_similar_params(subjid, nimb_dir, NIMB_tmp, t1_ls_f, flair_ls_f, t
         if flair_ls_f != 'none':
             for file in flair_ls_f:
                 # log.info(NIMB_tmp, '        reading MR data for FLAIR file: '+file)
-                vox_size = get_MR_file_params(subjid, nimb_dir, NIMB_tmp, file)
+                vox_size = get_MR_file_params(subjid, NIMB_tmp, file)
                 if str(vox_size) == str(vox_size_used):
                     if 'flair' not in grouped_by_size[str(vox_size)]:
                         grouped_by_voxsize[str(vox_size)]['flair'] = [file]
@@ -104,7 +105,7 @@ def keep_files_similar_params(subjid, nimb_dir, NIMB_tmp, t1_ls_f, flair_ls_f, t
         if t2_ls_f != 'none':
             for file in t2_ls_f:
                 # log.info(NIMB_tmp, '        reading MR data for T2 file: '+file)
-                vox_size = get_MR_file_params(subjid, nimb_dir, NIMB_tmp, file)
+                vox_size = get_MR_file_params(subjid, NIMB_tmp, file)
                 if str(vox_size) == vox_size_used:
                     if 'flair' not in grouped_by_voxsize[str(vox_size)]:
                         if 't2' not in grouped_by_voxsize[str(vox_size)]:
@@ -116,7 +117,7 @@ def keep_files_similar_params(subjid, nimb_dir, NIMB_tmp, t1_ls_f, flair_ls_f, t
     return t1_ls_f, flair_ls_f, t2_ls_f
 
 
-def verify_MRIs_for_similarity(d_subjects, nimb_dir, NIMB_tmp, flair_t2_add):
+def verify_MRIs_for_similarity(d_subjects, NIMB_tmp, flair_t2_add):
         # log.info(NIMB_tmp, '    '+subjid+' reading registration files')
         for subject in d_subjects:
             for session in d_subjects[subject]:
@@ -131,7 +132,7 @@ def verify_MRIs_for_similarity(d_subjects, nimb_dir, NIMB_tmp, flair_t2_add):
                     if d_subjects[subject][session]['anat']['t2'] and flair_ls_f == 'none':
                         t2_ls_f = d_subjects[subject][session]['anat']['t2']
                 # log.info(NIMB_tmp, '        from db[\'REGISTRATION\']')
-                t1_ls_f, flair_ls_f, t2_ls_f = keep_files_similar_params(subjid, nimb_dir, NIMB_tmp, t1_ls_f, flair_ls_f, t2_ls_f)
+                t1_ls_f, flair_ls_f, t2_ls_f = keep_files_similar_params(subjid, NIMB_tmp, t1_ls_f, flair_ls_f, t2_ls_f)
                 d_subjects[subject][session]['anat']['t1'] = t1_ls_f
                 d_subjects[subject][session]['anat']['flair'] = flair_ls_f
                 d_subjects[subject][session]['anat']['t2'] = t2_ls_f

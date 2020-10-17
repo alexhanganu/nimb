@@ -23,11 +23,10 @@ import time, json
 
 class MakeBIDS_subj2process():
     def __init__(self, DIR_SUBJECTS,
-                NIMB_HOME, NIMB_tmp,
+                NIMB_tmp,
                 multiple_T1_entries = False,
                 flair_t2_add = False):
         self.DIR_SUBJECTS = DIR_SUBJECTS
-        self.NIMB_HOME = NIMB_HOME
         self.NIMB_tmp  = NIMB_tmp
         self.d_subjects = dict()
         print("classification of new subjects is running ...")
@@ -52,7 +51,7 @@ class MakeBIDS_subj2process():
         print("classification of new subjects is complete")
         if multiple_T1_entries == 1:
             from get_mr_params import verify_MRIs_for_similarity
-            d_subjects = verify_MRIs_for_similarity(d_subjects, NIMB_HOME, NIMB_tmp, flair_t2_add)
+            d_subjects = verify_MRIs_for_similarity(d_subjects, NIMB_tmp, flair_t2_add)
         else:
             d_subjects = self.keep_only1_T1(d_subjects)
 
@@ -470,7 +469,7 @@ def save_json(NIMB_tmp, file, dictionary):
         json.dump(dictionary, f, indent=4)
 
 
-def get_dict_MR_files2process(DIR_SUBJECTS, NIMB_HOME, NIMB_tmp, multiple_T1_entries, flair_t2_add):
+def get_dict_MR_files2process(DIR_SUBJECTS, NIMB_tmp, multiple_T1_entries, flair_t2_add):
     """
     # only search for 2 numbers
     :return:
@@ -496,7 +495,7 @@ def get_dict_MR_files2process(DIR_SUBJECTS, NIMB_HOME, NIMB_tmp, multiple_T1_ent
     print("classification of new subjects is complete")
     if multiple_T1_entries == 1:
         from get_mr_params import verify_MRIs_for_similarity
-        d_subjects = verify_MRIs_for_similarity(d_subjects, NIMB_HOME, NIMB_tmp, flair_t2_add)
+        d_subjects = verify_MRIs_for_similarity(d_subjects, NIMB_tmp, flair_t2_add)
     else:
         d_subjects = keep_only1_T1(d_subjects)
 
