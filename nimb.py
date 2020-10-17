@@ -35,7 +35,7 @@ class NIMB(object):
         self.locations   = all_vars.location_vars
         self.stats_vars  = all_vars.stats_vars
         self.vars_local  = self.locations['local']
-        #Log(self.vars_local['NIMB_PATHS']['NIMB_tmp'])
+        Log(self.vars_local['NIMB_PATHS']['NIMB_tmp'])
         self.logger = logging.getLogger(__name__)
 
     def run(self):
