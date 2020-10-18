@@ -43,9 +43,9 @@ class get_cmd():
 
     def registration(self, _id):
         t1_ls_f, flair_ls_f, t2_ls_f = cdb.get_registration_files(_id, db, NIMB_HOME, NIMB_tmp, vars_freesurfer["flair_t2_add"])
-        flair_cmd = '{}'.format(''.join([' -FLAIR '+i for i in flair_f])) if flair_f != 'none' else ''
-        t2_cmd = '{}'.format(''.join([' -T2 '+i for i in t2_f])) if t2_f != 'none' else ''
-        return "recon-all{}".format(''.join([' -i '+i for i in t1_f]))+flair_cmd+t2_cmd+' -s '+_id
+        flair_cmd = '{}'.format(''.join([' -FLAIR '+i for i in flair_ls_f])) if flair_ls_f != 'none' else ''
+        t2_cmd = '{}'.format(''.join([' -T2 '+i for i in t2_ls_f])) if t2_ls_f != 'none' else ''
+        return "recon-all{}".format(''.join([' -i '+i for i in t1_ls_f]))+flair_cmd+t2_cmd+' -s '+_id
 
 
 def Get_walltime(process):

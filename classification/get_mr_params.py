@@ -24,7 +24,10 @@ def get_MR_file_params(subjid, NIMB_tmp, file):
 	tmp_f = path.join(NIMB_tmp, 'tmp_mriinfo')
 	vox_size = 'none'
 	chdir(Path(__file__).resolve().parent)
-	system('./mri_info '+file+' >> '+tmp_f)
+    try:
+    	system('./mri_info '+file+' >> '+tmp_f)
+    except Exception as e:
+        print(e)
 	if path.isfile(tmp_f):
 		lines = list(open(tmp_f, 'r'))
 		file_mrparams = path.join(NIMB_tmp, 'mriparams', subjid+'_mrparams')
@@ -125,10 +128,10 @@ def verify_MRIs_for_similarity(d_subjects, NIMB_tmp, flair_t2_add):
                 t1_ls_f = d_subjects[subject][session]['anat']['t1']
                 flair_ls_f = 'none'
                 t2_ls_f = 'none'
-                if 'flair' in d_subjects[subject][session]['anat'] and flair_t2_add:
+                if 'flair' in d_subjects[subject][session]['anat'] and flair_t2_add == 1:
                     if d_subjects[subject][session]['anat']['flair']:
                         flair_ls_f = d_subjects[subject][session]['anat']['flair']
-                if 't2' in d_subjects[subject][session]['anat'] and flair_t2_add:
+                if 't2' in d_subjects[subject][session]['anat'] and flair_t2_add == 1:
                     if d_subjects[subject][session]['anat']['t2'] and flair_ls_f == 'none':
                         t2_ls_f = d_subjects[subject][session]['anat']['t2']
                 # log.info(NIMB_tmp, '        from db[\'REGISTRATION\']')

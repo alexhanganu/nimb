@@ -28,12 +28,26 @@ class MakeBIDS_subj2process():
                 flair_t2_add = False):
         self.DIR_SUBJECTS = DIR_SUBJECTS
         self.NIMB_tmp  = NIMB_tmp
+        self.multiple_T1_entries  = multiple_T1_entries
+        self.flair_t2_add  = flair_t2_add
+        self.mr_types_2exclude = ['calibration','localizer','loc','moco','perfusion','tse',
+                                'survey','scout','hippo','cbf','isotropic','fractional',
+                                'pasl','multi_reset','dual_echo','gre','average_dc',]
+        self.mr_types = {'flair'  :['flair',],
+                        'dwi'     :['hardi','dti','diffus',],
+                        'rsfmri'  :['resting_state_fmri','rsfmri',],
+                        'fieldmap':['field_map','field_mapping','fieldmap',],
+                        't1'      :['t1','spgr','rage',],
+                        't2'      :['t2',],}
+        self.BIDS_groups = {'anat':['t1','flair','t2'],
+                            'dwi':['dwi','bval','bvec'],
+                            'func':['rsfmri','fieldmap',]}
         self.d_subjects = dict()
         print("classification of new subjects is running ...")
 
     def run(self):
-        for subject in listdir(self.DIR_SUBJECTS)[-18:-17]:
-            print(subject)
+        for subject in listdir(self.DIR_SUBJECTS):#[-18:-17]:
+#            print(subject)
             self.d_subjects[subject] = {}
             path_2mris = self._get_MR_paths(path.join(self.DIR_SUBJECTS, subject))
             ls_MR_paths = self.exclude_MR_types(path_2mris)
@@ -46,18 +60,18 @@ class MakeBIDS_subj2process():
             d_ses_MR_types = self.classify_by_MR_types(dict_sessions_paths)
             d_BIDS_structure = self.make_BIDS_structure(d_ses_MR_types)
 #            print(d_BIDS_structure)
-            d_subjects[subject] = d_BIDS_structure
-            self.save_json(DIR_SUBJECTS, "all_subjects", d_subjects)
+            self.d_subjects[subject] = d_BIDS_structure
+            self.save_json(self.DIR_SUBJECTS, "all_subjects", self.d_subjects)
         print("classification of new subjects is complete")
-        if multiple_T1_entries == 1:
-            from get_mr_params import verify_MRIs_for_similarity
-            d_subjects = verify_MRIs_for_similarity(d_subjects, NIMB_tmp, flair_t2_add)
+        if self.multiple_T1_entries == 1:
+            from classification.get_mr_params import verify_MRIs_for_similarity
+            self.d_subjects = verify_MRIs_for_similarity(self.d_subjects, self.NIMB_tmp, self.flair_t2_add)
         else:
-            d_subjects = self.keep_only1_T1(d_subjects)
+            self.d_subjects = self.keep_only1_T1(self.d_subjects)
 
-        f_new_subjects = path.join(NIMB_tmp,'new_subjects.json')
-        self.save_json(NIMB_tmp, f_new_subjects, d_subjects)
-        if path.exists(path.join(NIMB_tmp, f_new_subjects)):
+        f_new_subjects = path.join(self.NIMB_tmp,'new_subjects.json')
+        self.save_json(self.NIMB_tmp, f_new_subjects, self.d_subjects)
+        if path.exists(path.join(self.NIMB_tmp, f_new_subjects)):
             return True
         else:
             return False
@@ -70,7 +84,7 @@ class MakeBIDS_subj2process():
         elif path.isdir(path2subj):
             path_2mris = self.get_paths2dcm_files_from_DIR(path2subj)
         else:
-            print(subject,' not a dir and not a .zip file')
+            print(path2subj,' not a dir and not a .zip file')
             path_2mris = []
         return path_2mris
     
@@ -109,12 +123,9 @@ class MakeBIDS_subj2process():
         return ls_paths
         
     def exclude_MR_types(self, ls):
-        exclude_MR_types = ['calibration','localizer','loc','moco','perfusion','tse',
-                            'survey','scout','hippo','cbf','isotropic','fractional',
-                            'pasl','multi_reset','dual_echo','gre','average_dc',]
         ls_iter = ls.copy()
         for mr_path in ls_iter:
-            for ex_type in exclude_MR_types:
+            for ex_type in self.mr_types_2exclude:
                 if ex_type.lower() in mr_path.lower():
                     ls.remove(mr_path)
                     break
@@ -131,12 +142,6 @@ class MakeBIDS_subj2process():
 
     def get_ls_sessions(self, ls):
         # add types
-        mr_types = {'t1': ['t1', 'spgr', 'rage', ],
-                    'flair': ['flair', ],
-                    't2': ['t2', ],
-                    'dwi': ('hardi', 'dti', 'diffus',),
-                    'rsfmri': ['resting_state_fmri', 'rsfmri', ],
-                    'fieldmap': ['field_map', 'field_mapping', 'fieldmap', ]}
         d_paths = defaultdict(list)
         ls_sessions = list()
 
@@ -148,7 +153,7 @@ class MakeBIDS_subj2process():
                         ls_sessions.append(date)
                     break
             # add paths by date and type
-            for mr_name_ls in mr_types.values():
+            for mr_name_ls in self.mr_types.values():
                 for mr_name in mr_name_ls:
                     if mr_name.lower() in mr_path.lower():
                         d_paths[date].append(mr_path)
@@ -182,23 +187,23 @@ class MakeBIDS_subj2process():
 
         for ses in d_sessions:
             d_ses_paths[ses] = list()
-            for date in d_sessions[ses]:
-                for path in d_paths[date]:
-                    if path not in d_ses_paths[ses]:
-                        d_ses_paths[ses].append(path)
+            if d_sessions[ses]:
+                for date in d_sessions[ses]:
+                    for path in d_paths[date]:
+                        if path not in d_ses_paths[ses]:
+                            d_ses_paths[ses].append(path)
+            else:
+                for key in d_paths:
+                    for path in d_paths[key]:
+                        if path not in d_ses_paths[ses]:
+                            d_ses_paths[ses].append(path)
         return d_ses_paths
 
 
     def get_MR_types(self, mr_path):
-        mr_types = {'t1':['t1','spgr','rage',],
-                    'flair':['flair',],
-                    't2':['t2',],
-                    'dwi':('hardi','dti','diffus',),
-                    'rsfmri':['resting_state_fmri','rsfmri',],
-                    'fieldmap':['field_map','field_mapping','fieldmap',]}
         mr_found = False
-        for mr_type in mr_types:
-            for mr_name in mr_types[mr_type]:
+        for mr_type in self.mr_types:
+            for mr_name in self.mr_types[mr_type]:
                 if mr_name.lower() in mr_path.lower():
                     mr_found = True
                     res = mr_type
@@ -259,13 +264,12 @@ class MakeBIDS_subj2process():
 
 
     def make_BIDS_structure(self, d_ses_MR_types):
-        BIDS_groups = {'anat':['t1','flair','t2'],'dwi':['dwi','bval','bvec'],'func':['rsfmri','fieldmap',]}
         d_BIDS_structure = {}
         for ses in d_ses_MR_types:
             d_BIDS_structure[ses] = {}
             for key in d_ses_MR_types[ses]:
-                for group in BIDS_groups:
-                    if key in BIDS_groups[group]:
+                for group in self.BIDS_groups:
+                    if key in self.BIDS_groups[group]:
                         if group not in d_BIDS_structure[ses]:
                             d_BIDS_structure[ses][group] = {}
                         d_BIDS_structure[ses][group][key] = d_ses_MR_types[ses][key]
