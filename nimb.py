@@ -45,23 +45,29 @@ class NIMB(object):
         if self.process == 'ready':
             DistributionReady(self.all_vars, self.projects, self.project).check_ready()
 
+        if self.process == 'check-new':
+            self.logger.info('checking for new subject to be processed')
+            DistributionHelper(self.all_vars, self.projects, self.project).check_new()
+
         if self.process == 'classify':
             self.logger.info('checking if ready to classify')
             if not DistributionReady(self.all_vars, self.projects, self.project).classify_ready():
                 ErrorMessages.error_classify()
                 sys.exit()
             else:
-                from classification import classify_bids
                 SUBJ_2Classify = DistributionHelper(self.all_vars, self.projects, self.project).get_subj_2classify()
-                return classify_bids.get_dict_MR_files2process(
-                                     SUBJ_2Classify,
+                from classification.classify_bids import MakeBIDS_subj2process
+                return MakeBIDS_subj2process(SUBJ_2Classify,
                                      self.vars_local['NIMB_PATHS']['NIMB_tmp'],
                                      self.vars_local['FREESURFER']['multiple_T1_entries'],
-                                     self.vars_local['FREESURFER']['flair_t2_add'])
+                                     self.vars_local['FREESURFER']['flair_t2_add']).run()
+#                from classification import classify_bids
+#                return classify_bids.get_dict_MR_files2process(
+#                                     SUBJ_2Classify,
+#                                     self.vars_local['NIMB_PATHS']['NIMB_tmp'],
+#                                     self.vars_local['FREESURFER']['multiple_T1_entries'],
+#                                     self.vars_local['FREESURFER']['flair_t2_add'])
 
-        if self.process == 'check-new':
-            self.logger.info('checking for new subject to be processed')
-            DistributionHelper(self.all_vars, self.projects, self.project).check_new()
 
         if self.process == 'freesurfer':
             if not DistributionReady(self.all_vars, self.projects, self.project).fs_ready():
