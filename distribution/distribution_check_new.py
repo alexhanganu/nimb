@@ -95,10 +95,12 @@ class DistributionCheckNew():
         # host = self.projects['LOCATION'][machine]
         # to_be_processed = self.get_list_subject_to_be_processed_remote_version(source_fs, process_fs,remote_id)
 
-    def _get_ls_subjects(self, DIR):
+    def _get_ls_subjects(self, DIR="SOURCE_SUBJECTS_DIR"):
         """
-        :param DIR:
-        :return:
+        get list of subjects in a folder
+        default will get all subjects in SOURCE_SUBJECTS_DIR
+        :param DIR: folder has subjects, default is SOURCE_SUBJECTS_DIR
+        :return: list of subject
         """
         logger.info("get all subjects in " + DIR)
         if self.project_vars[DIR][0] == 'local':
@@ -106,7 +108,7 @@ class DistributionCheckNew():
             if os.path.exists(path_dir):
                 return os.listdir(path_dir)
             else:
-                return dict()
+                return []
         else:  # if remote
             from distribution.SSHHelper import runCommandOverSSH
             return runCommandOverSSH(remote=self.project_vars[DIR][0], \
@@ -154,20 +156,18 @@ class DistributionCheckNew():
         return ls_output.split("\n")[0:-1]
 
 
-def test_function():
-    pass
+
+if __name__ == "__main__":
+
+    # {“adni”: “SOURCE_SUBJECTS_DIR” : ['beluga', '/home/$USER/projects/def-hanganua/databases/loni_adni/source/mri'];
+    # “PROCESSED_FS_DIR” : ["beluga", "home/$USER/projects/def-hanganua/databases/loni_adni/processed_fs7"]}
+    all_vars = Get_Vars()
+    projects = all_vars.projects
+    params = get_parameters([i for i in projects.keys() if 'EXPLANATION' not in i and 'LOCATION' not in i])
+    app = NIMB(params.process, "adni", projects, all_vars)
+    check_new = DistributionCheckNew(app.projects, app.project)
+    # a = check_new.is_all_subject_processed()
+    to_be_processed = check_new.get_all_un_processed_subjects()
 
 
-# if __name__ == "__main__":
-# note: beluga works again, before ssh is died everytime connect, why? maybe due to ip rotation blackkist?
-# this is to verify verify:
-# {“adni”: “SOURCE_SUBJECTS_DIR” : ['beluga', '/home/$USER/projects/def-hanganua/databases/loni_adni/source/mri'];
-# “PROCESSED_FS_DIR” : ["beluga", "home/$USER/projects/def-hanganua/databases/loni_adni/processed_fs7"]}
-all_vars = Get_Vars()
-projects = all_vars.projects
-params = get_parameters([i for i in projects.keys() if 'EXPLANATION' not in i and 'LOCATION' not in i])
-app = NIMB(params.process, "adni", projects, all_vars)
-check_new = DistributionCheckNew(app.projects, app.project)
-# a = check_new.is_all_subject_processed()
-to_be_processed = check_new.get_all_un_processed_subjects()
 
