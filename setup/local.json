@@ -10,8 +10,7 @@
     "NIMB_NEW_SUBJECTS"       : "~/nimb_tmp/new_subjects",
     "NIMB_PROCESSED_FS"       : "~/nimb_tmp/nimb_processed_fs",
     "NIMB_PROCESSED_FS_error" : "~/nimb_tmp/nimb_processed_fs_error",
-    "miniconda_home"          : "~/miniconda3",
-    "miniconda_python_run"    : "~/miniconda3/bin/python3.7"
+    "miniconda_home"          : "~/miniconda3"
               },
 "PROCESSING": {
        "SUBMIT": 1,
@@ -33,7 +32,7 @@
        "FS_SUBJECTS_DIR"       : "~/freesurfer/subjects",
        "export_FreeSurfer_cmd" : "export FREESURFER_HOME=~/freesurfer",
        "source_FreeSurfer_cmd" : "source $FREESURFER_HOME/SetUpFreeSurfer.sh",
-       "process_order"         : ["registration","autorecon1","autorecon2","autorecon3","qcache","brstem","hip","tha"],
+       "process_order"         : ["registration","autorecon1","autorecon2","autorecon3","brstem","hip","tha", "qcache"],
        "multiple_T1_entries"   : 0,
        "flair_t2_add"          : 0,
        "masks"                 : [],
@@ -51,7 +50,6 @@
        "users_list"           : "if the number of users on the remote computer are more than 1, can be: ['user1','user2']",
        "supervisor_account"   : "variable used on compute canada clusters to create the batches",
        "miniconda_home"       : "path to miniconda3 installation",
-       "miniconda_python_run" : "path to miniconda python, used for python-based libraries",
 
        "NIMB_HOME"               : "where the local/remote nimb folder is downloaded",
        "NIMB_tmp"                : "Default is NIMB_HOME/tmp path to a temporary folder where all temporary files will be saved. This folder needs to be put in a place that allows quick reading and writing and to delete the files; This folder can get very big. On compute canada it should be put on scratch",
@@ -69,7 +67,7 @@
        "max_walltime"           : "waltime maximal for the scheduler",
        "batch_walltime"         : "walltime maximal for the pipeline to reinitate itself; 3 hours is the duration that is used by the scheduler to quickly deploy the script",
        "python3_load_cmd"       : "command if python is used as module, can be: module load python/3.8.2",
-       "python3_run_cmd"        : "command used on the local or remote computer that is used to initiate python 3",
+       "python3_run_cmd"        : "command used on the local or remote computer that is used to initiate python 3; could be python or ~/miniconda3/bin/python3.7",
        "archive_processed"      : "define if processed data must be archived; 1= yes, 0=no",
 
        "FreeSurfer_install"    : "1 = install, 0 = no installation; define if the local/remote compute will be used to perform FreeSurfer analysis",
