@@ -9,6 +9,15 @@ import fs_definitions
 
 log = logging.getLogger(__name__)
 
+class FreeSurferChecker():
+    def __init__(self, vars_fs):
+        print('class running')
+        self.SUBJECTS_DIR = vars_fs['FS_SUBJECTS_DIR']
+        self.freesurfer_version = vars_fs['freesurfer_version']
+        self.masks = vars_fs['masks']
+        
+    def chkIsRunning(self, subjid):
+        print(subjid)
 
 def chkIsRunning(SUBJECTS_DIR, subjid):
 
@@ -109,7 +118,7 @@ def chk_if_qcache_done(SUBJECTS_DIR, subjid):
         return False
 # == up to here
 
-def check_qcache_files(subjid, vars_fs):
+def check_qcache_files(SUBJECTS_DIR, subjid, vars_fs):
 
         res = True
         miss = list()
@@ -117,7 +126,7 @@ def check_qcache_files(subjid, vars_fs):
             for meas in vars_fs["GLM_measurements"]:
                 for thresh in vars_fs["GLM_thresholds"]:
                     file = hemi+'.'+meas+'.fwhm'+str(thresh)+'.fsaverage.mgh'
-                    if not path.exists(path.join(vars_fs["FS_SUBJECTS_DIR"], subjid, 'surf', file)):
+                    if not path.exists(path.join(SUBJECTS_DIR, subjid, 'surf', file)):
                         miss.append(file)
         if miss:
             print('some subjects or files are missing: {}'.format(str(miss)))
