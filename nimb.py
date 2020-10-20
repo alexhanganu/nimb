@@ -68,6 +68,10 @@ class NIMB(object):
 #                                     self.vars_local['FREESURFER']['multiple_T1_entries'],
 #                                     self.vars_local['FREESURFER']['flair_t2_add'])
 
+        if self.process == 'classify_dcm2bids':
+            self.logger.info("initiating dcm2bids transformatio for project: {}".format(self.project))
+            from classification.dcm2bids_helper import DCM2BIDS_helper
+            return DCM2BIDS_helper(self.project).run()
 
         if self.process == 'freesurfer':
             if not DistributionReady(self.all_vars, self.projects, self.project).fs_ready():
@@ -135,7 +139,7 @@ def get_parameters(projects):
     parser.add_argument(
         "-process", required=False,
         default='ready',
-        choices = ['ready', 'check-new', 'freesurfer', 'classify', 'fs-get-stats', 'fs-glm', 'fs-glm-image', 'run-stats'],
+        choices = ['ready', 'check-new', 'freesurfer', 'classify', 'classify_dcm2bids', 'fs-get-stats', 'fs-glm', 'fs-glm-image', 'run-stats'],
         help="freesurfer (start FreeSurfer pipeline), classify (classify MRIs) fs-stats (extract freesurfer stats from subjid/stats/* to an excel file), fs-glm (perform freesurfer mri_glmfit GLM analsysis), stats-general (perform statistical analysis)",
     )
 

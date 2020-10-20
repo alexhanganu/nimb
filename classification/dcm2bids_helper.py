@@ -9,15 +9,16 @@ Alexandru Hanganu
 3) tries to create the config files and update the configurations
 """
 
-from os import path, listdir, getenv, walk
+from os import system
 
 class DCM2BIDS_helper():
     def __init__(self, SUBJ):
         self.SUBJ = SUBJ
         
-    def dcm2bids_run(self):
+    def run(self):
         #run dcm2bids:
-        system('dcm2bids -d {} -p {} -c {} -o {}'.format(DICOM_DIR, SUBJ_NAME, config_file, OUTPUT_DIR))
+#        system('dcm2bids -d {} -p {} -c {} -o {}'.format(DICOM_DIR, SUBJ_NAME, config_file, OUTPUT_DIR))
+        return True
 
     def chk_if_processed(self):
         return True
