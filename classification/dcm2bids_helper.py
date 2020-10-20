@@ -9,27 +9,40 @@ Alexandru Hanganu
 3) tries to create the config files and update the configurations
 """
 
-from os import system
+from os import path, system, makedirs, listdir
+import shutil
 
 class DCM2BIDS_helper():
     def __init__(self, proj_vars, project):
         self.proj_vars = proj_vars
         self.project   = project
-        
-    def run(self):
+        self.chk_dir()
+
+    def run(self, subjid = 'none'):
         #run dcm2bids:
         config_file = self.get_config_file()
+        print(config_file)
+        sub = self.get_sub()
+        print(sub)
 #        system('dcm2bids -d {} -p {} -c {} -o {}'.format(DICOM_DIR, SUBJ_NAME, config_file, OUTPUT_DIR))
         return True
 
+    def get_sub(self):
+        return listdir(self.proj_vars['SOURCE_SUBJECTS_DIR'])[0]
+
     def get_config_file(self):
-        config = 'json'
-        print(self.proj_vars)
-        return config
+        config_file = path.join(self.proj_vars['SOURCE_BIDS_DIR'],
+                             'dcm2bids_config_{}.json'.format(self.project))
+        if path.exists(config_file):
+            return config_file
+        else:
+            shutil.copy(path.join(path.dirname(path.abspath(__file__)), 'dcm2bids_config_default.json'),
+                        config_file)
+            return config_file
 
     def chk_if_processed(self):
         return True
-        
+
     def get_sidecar(self):
         sidecar = '.json'
         helper_dir = path.join(OUTPUT_DIR, 'tmp_dcm2bids', 'helper')
@@ -38,7 +51,7 @@ class DCM2BIDS_helper():
         content = open(path.join(helper_dir,
                        [i for i in listdir(path.join()) if '.json' in i][0]), 'r').readlines()        
         return sidecar
-        
+
     def create_config(self):
         # create an example of sidecar:
         # e.g., SeriesDescription parameter
@@ -49,6 +62,7 @@ class DCM2BIDS_helper():
         # https://github.com/bids-standard/bids-validator
         return True
 
-if __name__ == '__main__':
-    SUBJ = 'test'
-    DCM2BIDS_helper(SUBJ).dcm2bids_run()
+    def chk_dir(self):
+        if not path.exists(self.proj_vars['SOURCE_BIDS_DIR']):
+            makedirs(self.proj_vars['SOURCE_BIDS_DIR'])
+
