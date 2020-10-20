@@ -12,13 +12,20 @@ Alexandru Hanganu
 from os import system
 
 class DCM2BIDS_helper():
-    def __init__(self, SUBJ):
-        self.SUBJ = SUBJ
+    def __init__(self, proj_vars, project):
+        self.proj_vars = proj_vars
+        self.project   = project
         
     def run(self):
         #run dcm2bids:
+        config_file = self.get_config_file()
 #        system('dcm2bids -d {} -p {} -c {} -o {}'.format(DICOM_DIR, SUBJ_NAME, config_file, OUTPUT_DIR))
         return True
+
+    def get_config_file(self):
+        config = 'json'
+        print(self.proj_vars)
+        return config
 
     def chk_if_processed(self):
         return True

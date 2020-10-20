@@ -69,9 +69,9 @@ class NIMB(object):
 #                                     self.vars_local['FREESURFER']['flair_t2_add'])
 
         if self.process == 'classify_dcm2bids':
-            self.logger.info("initiating dcm2bids transformatio for project: {}".format(self.project))
+            self.logger.info("initiating dcm2bids transformation for project: {}".format(self.project))
             from classification.dcm2bids_helper import DCM2BIDS_helper
-            return DCM2BIDS_helper(self.project).run()
+            return DCM2BIDS_helper(self.projects[self.project], self.project).run()
 
         if self.process == 'freesurfer':
             if not DistributionReady(self.all_vars, self.projects, self.project).fs_ready():
