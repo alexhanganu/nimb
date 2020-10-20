@@ -9,6 +9,7 @@ from datetime import datetime, timedelta
 import logging
 import fs_checker, cdb, fs_err_helper, fs_definitions
 from pathlib import Path
+from fs_checker import FreeSurferChecker
 
 environ['TZ'] = 'US/Eastern'
 time.tzset()
@@ -396,7 +397,7 @@ def Count_TimeSleep():
 
 def run(varslocal):
 
-    global vars_local, vars_freesurfer, vars_processing, vars_nimb, NIMB_HOME, NIMB_tmp, SUBJECTS_DIR, max_walltime, process_order, log, db
+    global vars_local, vars_freesurfer, vars_processing, vars_nimb, NIMB_HOME, NIMB_tmp, SUBJECTS_DIR, max_walltime, process_order, log, db, chk
     vars_local       = varslocal
     vars_freesurfer  = vars_local["FREESURFER"]
     vars_processing  = vars_local["PROCESSING"]
@@ -408,6 +409,7 @@ def run(varslocal):
     SUBJECTS_DIR     = vars_freesurfer["FS_SUBJECTS_DIR"]
     process_order    = vars_freesurfer["process_order"]
 
+    chk = FreeSurferChecker(vars_freesurfer)
     log = logging.getLogger(__name__)
 
     t0 = time.time()

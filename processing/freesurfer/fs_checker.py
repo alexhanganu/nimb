@@ -1,6 +1,5 @@
 #!/bin/python
-# 2020.09.04
-
+# 2020.10.20
 
 from os import listdir, path, system, remove
 import shutil
@@ -15,12 +14,178 @@ class FreeSurferChecker():
         self.SUBJECTS_DIR = vars_fs['FS_SUBJECTS_DIR']
         self.freesurfer_version = vars_fs['freesurfer_version']
         self.masks = vars_fs['masks']
-        
-    def chkIsRunning(self, subjid):
-        print(subjid)
+        self.meas = vars_fs["GLM_measurements"]
+        self.thresh = vars_fs["GLM_thresholds"]
+
+    def IsRunning_chk(self, subjid):
+        try:
+            for file in fs_definitions.IsRunning_files:
+                if path.exists(path.join(self.SUBJECTS_DIR, subjid, 'scripts', file)):
+                    return True
+            else:
+                return False
+        except Exception as e:
+            print(e)
+            return True
+
+    def IsRunning_rm(self, subjid):
+        try:
+            IsRunning_f = [i for i in fs_definitions.IsRunning_files if path.exists(path.join(self.SUBJECTS_DIR, subjid, 'scripts', i))][0]
+            remove(path.join(self.SUBJECTS_DIR, subjid, 'scripts', IsRunning_f))
+        except Exception as e:
+            print(e)
+
+    def checks_from_runfs(self, process, subjid):
+        if process == 'registration':
+            return self.chksubjidinfs(subjid)
+        if process == 'recon-all':
+            return self.chk_if_recon_done(subjid)
+        if process == 'autorecon1':
+            return self.chk_if_autorecon_done(1, subjid)
+        if process == 'autorecon2':
+            return self.chk_if_autorecon_done(2, subjid)
+        if process == 'autorecon3':
+            return self.chk_if_autorecon_done(3, subjid)
+        if process == 'qcache':
+            return self.chk_if_qcache_done(subjid)
+        if process == 'brstem':
+            return self.chkbrstemf(subjid)
+        if process == 'hip':
+            return self.chkhipf(subjid,)
+        if process == 'tha':
+            return self.chkthaf(subjid)
+        if process == 'masks':
+            return self.chk_masks(subjid)
+
+    def chksubjidinfs(self, subjid):
+        if subjid in listdir(self.SUBJECTS_DIR):
+            return True
+        else:
+            return False
+
+    def chk_process_files(self, process):
+        files_missing = list()
+        for path_f in fs_definitions.files_created[process]:
+            if not path.exists(path.join(self.SUBJECTS_DIR, subjid, path_f)):
+                files_missing.append(path_f)
+        if files_missing:
+            log.info('    files are missing for {}: {}'.format(process, str(files_missing)))
+            return False
+        else:
+            return True
+
+    def chk_if_recon_done(self, subjid): # move to chk_process_files
+        if path.exists(path.join(self.SUBJECTS_DIR,subjid, 'mri', 'wmparc.mgz')):
+            return True
+        else:
+            return False
+    def chk_if_autorecon_done(self, lvl, subjid): # move to chk_process_files
+        for path_f in fs_definitions.f_autorecon[lvl]:
+                if not path.exists(path.join(self.SUBJECTS_DIR, subjid, path_f)):
+                    return False
+                    break
+                else:
+                    return True
+    def chk_if_qcache_done(self, subjid): # move to chk_process_files
+        if 'rh.w-g.pct.mgh.fsaverage.mgh' and 'lh.thickness.fwhm10.fsaverage.mgh' in listdir(path.join(self.SUBJECTS_DIR, subjid, 'surf')):
+            return True #self.check_qcache_files(subjid)
+        else:
+            return False
+    def check_qcache_files(self, subjid):
+            res = True
+            miss = list()
+            for hemi in ['lh','rh']:
+                for meas in self.meas:
+                    for thresh in self.thresh:
+                        file = hemi+'.'+meas+'.fwhm'+str(thresh)+'.fsaverage.mgh'
+                        if not path.exists(path.join(self.SUBJECTS_DIR, subjid, 'surf', file)):
+                            miss.append(file)
+            if miss:
+                print('some subjects or files are missing: {}'.format(str(miss)))
+                res = False
+            return res
+
+    def bs_hip_tha_chk_log_if_done(self, process, subjid):
+        log_file = path.join(self.SUBJECTS_DIR, subjid, 'scripts', fs_definitions.log_files[process][self.freesurfer_version])
+        if path.exists(log_file) and any('Everything done' in i for i in open(log_file, 'rt').readlines()):
+            return True
+        else:
+            return False
+
+    def bs_hip_tha_get_stats_file(self, process, subjid):
+        lsmri = listdir(path.join(self.SUBJECTS_DIR, subjid, 'mri'))
+        file_stats = path.join(self.SUBJECTS_DIR, subjid, 'mri', fs_definitions.bs_hip_tha_stats_file_inmri[process][self.freesurfer_version])
+        if path.exists(file_stats):
+            try:
+                shutil.copy(path.join(self.SUBJECTS_DIR, subjid, 'mri', file_stats),
+                            path.join(self.SUBJECTS_DIR, subjid, 'stats',
+                            fs_definitions.bs_hip_tha_stats_file_instats[process][self.freesurfer_version]))
+            except Exception as e:
+                print(e)
+            return file_stats
+        else:
+            return ''
+
+    def chkbrstemf(self, subjid):
+        if self.bs_hip_tha_chk_log_if_done('bs', subjid):
+            file_stats = self.bs_hip_tha_get_stats_file('bs', subjid)
+            if file_stats:
+                return True
+            else:
+                return False
+        else:
+            return False
+
+    def chkhipf(self, subjid):
+        if self.bs_hip_tha_chk_log_if_done('hip', subjid):
+            if path.exists(path.join(self.SUBJECTS_DIR, subjid, 'mri',
+                    fs_definitions.bs_hip_tha_stats_file_inmri['hipR'][self.freesurfer_version])):
+                for file in ['hipL', 'hipR', 'amyL', 'amyR']:
+                    file_stats = self.bs_hip_tha_get_stats_file(file, subjid)
+                return True
+            else:
+                return False
+        else:
+            return False
+
+    def chkthaf(self, subjid):
+        if self.bs_hip_tha_chk_log_if_done('tha', subjid):
+            file_stats = self.bs_hip_tha_get_stats_file('tha', subjid)
+            if file_stats:
+                return True
+            else:
+                return False
+        else:
+            return False
+
+    def chk_masks(self, subjid):
+        if path.isdir(path.join(self.SUBJECTS_DIR, subjid, 'masks')):
+            for structure in self.masks:
+                if not path.exists(path.join(self.SUBJECTS_DIR, subjid, 
+                                            'masks', '{}.nii'.format(structure))):
+                    return False
+                else:
+                    return True
+        else:
+            return False
+
+    def chk_if_all_done(self, subjid, process_order):
+            result = True
+            if not self.IsRunning_chk(self.SUBJECTS_DIR, subjid):
+                for process in process_order[1:]:
+                    if not self.checks_from_runfs(process, subjid):
+                        log.info('        {} is missing {}'.format(subjid, process))
+                        result = False
+                        break
+            else:
+                log.info('            IsRunning file present ')
+                result = False
+            return result
+
+
+
 
 def chkIsRunning(SUBJECTS_DIR, subjid):
-
     try:
         for file in fs_definitions.IsRunning_files:
             if path.exists(path.join(SUBJECTS_DIR,subjid,'scripts',file)):
@@ -84,19 +249,8 @@ def chksubjidinfs(SUBJECTS_DIR, subjid):
     else:
         return False
 
-def check_files(process):
-    files_missing = list()
-    for path_f in fs_definitions.files_created[process]:
-        if not path.exists(path.join(SUBJECTS_DIR, subjid, path_f)):
-            files_missing.append(path_f)
-    if files_missing:
-        log.info('    files are missing for {}: {}'.format(process, str(files_missing)))
-        return False
-    else:
-        return True
 
-
-# == move to check_files
+# == move to chk_process_files
 def chk_if_autorecon_done(SUBJECTS_DIR, lvl, subjid):
     for path_f in fs_definitions.f_autorecon[lvl]:
             if not path.exists(path.join(SUBJECTS_DIR, subjid, path_f)):
