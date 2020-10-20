@@ -473,8 +473,7 @@ if __name__ == "__main__":
     from pathlib import Path
     import sys
 
-    file = Path(__file__).resolve()
-    parent, top = file.parent, file.parents[2]
+    top = Path(__file__).resolve().parents[2]
     sys.path.append(str(top))
 
     from setup.get_vars import Get_Vars

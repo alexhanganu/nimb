@@ -11,11 +11,12 @@ log = logging.getLogger(__name__)
 class FreeSurferChecker():
     def __init__(self, vars_fs):
         print('class running')
-        self.SUBJECTS_DIR = vars_fs['FS_SUBJECTS_DIR']
+        self.SUBJECTS_DIR       = vars_fs['FS_SUBJECTS_DIR']
         self.freesurfer_version = vars_fs['freesurfer_version']
-        self.masks = vars_fs['masks']
-        self.meas = vars_fs["GLM_measurements"]
-        self.thresh = vars_fs["GLM_thresholds"]
+        self.process_order      = vars_fs['process_order']
+        self.masks              = vars_fs['masks']
+        self.meas               = vars_fs["GLM_measurements"]
+        self.thresh             = vars_fs["GLM_thresholds"]
 
     def IsRunning_chk(self, subjid):
         try:
@@ -88,11 +89,11 @@ class FreeSurferChecker():
                     return True
     def chk_if_qcache_done(self, subjid): # move to chk_process_files
         if 'rh.w-g.pct.mgh.fsaverage.mgh' and 'lh.thickness.fwhm10.fsaverage.mgh' in listdir(path.join(self.SUBJECTS_DIR, subjid, 'surf')):
-            return True #self.check_qcache_files(subjid)
+            self.check_qcache_files(subjid)
+            return True
         else:
             return False
     def check_qcache_files(self, subjid):
-            res = True
             miss = list()
             for hemi in ['lh','rh']:
                 for meas in self.meas:
@@ -100,10 +101,11 @@ class FreeSurferChecker():
                         file = hemi+'.'+meas+'.fwhm'+str(thresh)+'.fsaverage.mgh'
                         if not path.exists(path.join(self.SUBJECTS_DIR, subjid, 'surf', file)):
                             miss.append(file)
-            if miss:
-                print('some subjects or files are missing: {}'.format(str(miss)))
-                res = False
-            return res
+            if not miss:
+                return True
+            else:
+                log.info('    files are missing: {}'.format(str(miss)))
+                return False
 
     def bs_hip_tha_chk_log_if_done(self, process, subjid):
         log_file = path.join(self.SUBJECTS_DIR, subjid, 'scripts', fs_definitions.log_files[process][self.freesurfer_version])
@@ -169,10 +171,10 @@ class FreeSurferChecker():
         else:
             return False
 
-    def chk_if_all_done(self, subjid, process_order):
+    def chk_if_all_done(self, subjid):
             result = True
             if not self.IsRunning_chk(self.SUBJECTS_DIR, subjid):
-                for process in process_order[1:]:
+                for process in self.process_order[1:]:
                     if not self.checks_from_runfs(process, subjid):
                         log.info('        {} is missing {}'.format(subjid, process))
                         result = False
