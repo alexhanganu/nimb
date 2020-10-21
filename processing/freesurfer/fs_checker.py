@@ -10,7 +10,6 @@ log = logging.getLogger(__name__)
 
 class FreeSurferChecker():
     def __init__(self, vars_fs):
-        print('class running')
         self.SUBJECTS_DIR       = vars_fs['FS_SUBJECTS_DIR']
         self.freesurfer_version = vars_fs['freesurfer_version']
         self.process_order      = vars_fs['process_order']

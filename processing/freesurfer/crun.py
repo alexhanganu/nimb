@@ -91,15 +91,19 @@ def running(process, scheduler_jobs):
                 db['RUNNING_JOBS'].pop(subjid, None)
             if vars_freesurfer["base_name"] in subjid:
                 log.info('    reading {}, {} is long or base '.format(process, subjid))
-                if fs_checker.chkIsRunning(SUBJECTS_DIR, subjid) or not fs_checker.checks_from_runfs(SUBJECTS_DIR, 'recon', subjid, vars_freesurfer["freesurfer_version"], vars_freesurfer["masks"]):
+                chk
+                if chk.IsRunning_chk(subjid) or not chk.checks_from_runfs('recon', subjid):
+                # if fs_checker.chkIsRunning(SUBJECTS_DIR, subjid) or not fs_checker.checks_from_runfs(SUBJECTS_DIR, 'recon', subjid, vars_freesurfer["freesurfer_version"], vars_freesurfer["masks"]):
                         log.info('    {}, {} -> ERROR, IsRunning or not all files created'.format(subjid, process))
                         db['ERROR_QUEUE'][subjid] = str(format(datetime.now()+timedelta(hours=datetime.strptime(Get_walltime(process), '%H:%M:%S').hour), "%Y%m%d_%H%M"))
                         db['PROCESSED']['error_recon'].append(subjid)
             else:
-                if not fs_checker.chkIsRunning(SUBJECTS_DIR, subjid) and fs_checker.checks_from_runfs(SUBJECTS_DIR, process, subjid, vars_freesurfer["freesurfer_version"], vars_freesurfer["masks"]):
+                if not chk.IsRunning_chk(subjid) and chk.checks_from_runfs(process, subjid):
+                # if not fs_checker.chkIsRunning(SUBJECTS_DIR, subjid) and fs_checker.checks_from_runfs(SUBJECTS_DIR, process, subjid, vars_freesurfer["freesurfer_version"], vars_freesurfer["masks"]):
                     if process != process_order[-1]:
                         next_process = process_order[process_order.index(process)+1]
-                        if not fs_checker.checks_from_runfs(SUBJECTS_DIR, next_process, subjid, vars_freesurfer["freesurfer_version"], vars_freesurfer["masks"]):
+                        if not chk.checks_from_runfs(next_process, subjid):
+                        # if not fs_checker.checks_from_runfs(SUBJECTS_DIR, next_process, subjid, vars_freesurfer["freesurfer_version"], vars_freesurfer["masks"]):
                             db['DO'][next_process].append(subjid)
                             log.info('    {}, {} {} -> DO {}'.format(subjid, ACTION, process, next_process))
                         else:
@@ -143,11 +147,13 @@ def check_error(scheduler_jobs, process):
             for subjid in lserr:
                 log.info('    {}'.format(subjid))
                 if subjid not in db["ERROR_QUEUE"] and path.exists(path.join(SUBJECTS_DIR, subjid)): #path.exists was added due to moving the subjects too early; requires adjustment
-                    fs_checker.IsRunning_rm(SUBJECTS_DIR, subjid)
+                    chk.IsRunning_rm(subjid):
+                    # fs_checker.IsRunning_rm(SUBJECTS_DIR, subjid)
                     log.info('        checking the recon-all-status.log for error for: {}'.format(process))
                     fs_err_helper.chkreconf_if_without_error(NIMB_tmp, subjid, SUBJECTS_DIR)
                     log.info('        checking if all files were created for: {}'.format(process))
-                    if not fs_checker.checks_from_runfs(SUBJECTS_DIR, process, subjid, vars_freesurfer["freesurfer_version"], vars_freesurfer["masks"]):
+                    if not chk.checks_from_runfs(process, subjid):
+                    # if not fs_checker.checks_from_runfs(SUBJECTS_DIR, process, subjid, vars_freesurfer["freesurfer_version"], vars_freesurfer["masks"]):
                             log.info('            some files were not created and recon-all-status has errors.')
                             fs_error = fs_err_helper.fs_find_error(subjid, SUBJECTS_DIR, NIMB_tmp)
                             solved = False
@@ -212,7 +218,8 @@ def check_error(scheduler_jobs, process):
                             db['ERROR_QUEUE'].pop(subjid, None)
                             db['PROCESSED']['error_'+process].remove(subjid)
                             db['RUNNING'][process].append(subjid)
-                        elif not fs_checker.chkIsRunning(SUBJECTS_DIR, subjid) or db['ERROR_QUEUE'][subjid] < str(format(datetime.now(), "%Y%m%d_%H%M")):
+                        elif not chk.IsRunning_chk(subjid) or db['ERROR_QUEUE'][subjid] < str(format(datetime.now(), "%Y%m%d_%H%M")):
+                        # elif not fs_checker.chkIsRunning(SUBJECTS_DIR, subjid) or db['ERROR_QUEUE'][subjid] < str(format(datetime.now(), "%Y%m%d_%H%M")):
                             log.info('    removing from ERROR_QUEUE')
                             db['ERROR_QUEUE'].pop(subjid, None)
                     else:
@@ -229,14 +236,17 @@ def long_check_groups(_id):
     if vars_freesurfer["DO_LONG"] == 1 and len(LONG_TPS)>1:
         All_cross_ids_done = list()
         for ses in LONG_TPS:
-            if _id+ses in ls and fs_checker.checks_from_runfs(SUBJECTS_DIR, process_order[-1], _id+ses, vars_freesurfer["freesurfer_version"], vars_freesurfer["masks"]):
+            if _id+ses in ls and chk.checks_from_runfs(process_order[-1], _id+ses):
+            # if _id+ses in ls and fs_checker.checks_from_runfs(SUBJECTS_DIR, process_order[-1], _id+ses, vars_freesurfer["freesurfer_version"], vars_freesurfer["masks"]):
                 All_cross_ids_done.append(_id+ses)
 
         if len(All_cross_ids_done) == len(LONG_TPS):
             base_f = _id+vars_freesurfer["base_name"]
             if base_f in ls:
-                if base_f not in db['RUNNING']['recon'] and base_f not in db['PROCESSED']['error_recon'] and not fs_checker.chkIsRunning(SUBJECTS_DIR, base_f):
-                    if fs_checker.checks_from_runfs(SUBJECTS_DIR, 'recon', base_f, vars_freesurfer["freesurfer_version"], vars_freesurfer["masks"]):
+                if base_f not in db['RUNNING']['recon'] and base_f not in db['PROCESSED']['error_recon'] and not chk.IsRunning_chk(base_f):
+                # if base_f not in db['RUNNING']['recon'] and base_f not in db['PROCESSED']['error_recon'] and not fs_checker.chkIsRunning(SUBJECTS_DIR, base_f):
+                    if chk.checks_from_runfs('recon', base_f):
+                    # if fs_checker.checks_from_runfs(SUBJECTS_DIR, 'recon', base_f, vars_freesurfer["freesurfer_version"], vars_freesurfer["masks"]):
                         All_long_ids_done = list()
                         for ses in LONG_TPS:
                             long_f = _id+ses+'.long.'+_id+vars_freesurfer["base_name"]
@@ -245,8 +255,10 @@ def long_check_groups(_id):
                                 db['RUNNING_JOBS'][long_f] = job_id
                                 db['RUNNING']['recon'].append(long_f)
                                 db['LONG_DIRS'][_id].append(long_f)
-                            elif fs_checker.checks_from_runfs(SUBJECTS_DIR, 'registration',long_f, vars_freesurfer["freesurfer_version"], vars_freesurfer["masks"]):
-                                if fs_checker.checks_from_runfs(SUBJECTS_DIR, 'recon', long_f, vars_freesurfer["freesurfer_version"], vars_freesurfer["masks"]):
+                            elif chk.checks_from_runfs('registration', long_f):
+                            # elif fs_checker.checks_from_runfs(SUBJECTS_DIR, 'registration',long_f, vars_freesurfer["freesurfer_version"], vars_freesurfer["masks"]):
+                                if chk.checks_from_runfs('recon', long_f):
+                                # if fs_checker.checks_from_runfs(SUBJECTS_DIR, 'recon', long_f, vars_freesurfer["freesurfer_version"], vars_freesurfer["masks"]):
                                     All_long_ids_done.append(long_f)
                                 else:
                                     log.info(long_f+' moving to error_recon')
@@ -283,12 +295,15 @@ def long_check_groups(_id):
     else:
         for subjid in ls:
             if subjid not in db["RUNNING_JOBS"]:
-                if fs_checker.checks_from_runfs(SUBJECTS_DIR, 'registration', subjid, vars_freesurfer["freesurfer_version"], vars_freesurfer["masks"]):
-                   if fs_checker.checks_from_runfs(SUBJECTS_DIR, process_order[-1], subjid, vars_freesurfer["freesurfer_version"], vars_freesurfer["masks"]):
+                if chk.checks_from_runfs('registration', subjid):
+                # if fs_checker.checks_from_runfs(SUBJECTS_DIR, 'registration', subjid, vars_freesurfer["freesurfer_version"], vars_freesurfer["masks"]):
+                   if chk.checks_from_runfs(process_order[-1], subjid):
+                   # if fs_checker.checks_from_runfs(SUBJECTS_DIR, process_order[-1], subjid, vars_freesurfer["freesurfer_version"], vars_freesurfer["masks"]):
                         log.info('            last process done '+process_order[-1])
                         if subjid in db['RUNNING'][process_order[-1]]:
                             db['RUNNING'][process_order[-1]].remove(subjid)
-                        if fs_checker.chk_if_all_done(SUBJECTS_DIR, subjid, process_order, NIMB_tmp, vars_freesurfer["freesurfer_version"], vars_freesurfer["masks"]):
+                        if chk.chk_if_all_done(subjid):
+                        # if fs_checker.chk_if_all_done(SUBJECTS_DIR, subjid, process_order, NIMB_tmp, vars_freesurfer["freesurfer_version"], vars_freesurfer["masks"]):
                             log.info('            all processes done, moving to CP2LOCAL')
                             db['PROCESSED']['cp2local'].append(subjid)
                             db['LONG_DIRS'].pop(_id, None)
