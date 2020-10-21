@@ -43,12 +43,13 @@ class DCM2BIDS_helper():
             return config_file
 
     def chk_if_processed(self):
-        if [i for i in listdir(path.join(self.OUTPUT_DIR, 'tmp_dcm2bids', 'sub-{}'.format(self.SUBJ_NAME))) if '.nii.gz' in i]:
+        sub_SUBJDIR = path.join(self.OUTPUT_DIR, 'tmp_dcm2bids', 'sub-{}'.format(self.SUBJ_NAME))
+        if [i for i in listdir(sub_SUBJDIR) if '.nii.gz' in i]:
             self.repeat_updating += 1
             if self.repeat_updating < self.repeat_lim:
                 self.get_sidecar()
                 print('removing folder tmp_dcm2bids')
-                system('rm -r {}'.format(path.join(self.OUTPUT_DIR, 'tmp_dcm2bids')))
+                system('rm -r {}'.format(sub_SUBJDIR)
                 print('re-renning dcm2bids')
                 self.run(self.SUBJ_NAME)
 
