@@ -11,6 +11,7 @@ Alexandru Hanganu
 
 from os import path, system, makedirs, listdir
 import shutil
+import json
 
 class DCM2BIDS_helper():
     def __init__(self, proj_vars, project, repeat_lim = 1):
@@ -47,30 +48,27 @@ class DCM2BIDS_helper():
         if [i for i in listdir(self.sub_SUBJDIR) if '.nii.gz' in i]:
             if self.repeat_updating < self.repeat_lim:
                 self.get_sidecar()
-                print('removing folder tmp_dcm2bids')
-                system('rm -r {}'.format(self.sub_SUBJDIR))
+                print('removing folder tmp_dcm2bids/sub')
+                self.rm_dir(self.sub_SUBJDIR)
                 self.repeat_updating += 1
                 print('re-renning dcm2bids')
                 self.run(self.SUBJ_NAME)
+        else:
+            self.rm_dir(self.sub_SUBJDIR)
 
     def get_sidecar(self):
         sidecar = [i for i in listdir(self.sub_SUBJDIR) if '.json' in i][0]
         content = self.get_json_content(path.join(self.sub_SUBJDIR, sidecar))
-        data_Type, modality = self.classify_mri(content['SeriesDescription'])
-        self.update_config(content, data_Type, modality)
+        data_Type, modality, criterion = self.classify_mri()
+        self.update_config(content, data_Type, modality, criterion)
 
-    def update_config(self, content, data_Type, modality):
-        old_config = self.get_json_content(self.config_file)
-        read_key = [k for k in range(0,len(data['descriptions'])) if data['descriptions'][k]['dataType'] == data_Type and data['descriptions'][k]['modalityLabel'] == modality][0]
-        criterion = 'SeriesDescription'
-        key2populate = old_config['descriptions'][read_key]['criteria'][criterion]
-        if content[criterion] not in key2populate:
-            if len(key2populate) >1:
-                newkey = [key2populate, content[criterion]]
-            else:
-                newkey = [i for i in key2populate] + [content[criterion]]
-            old_config['descriptions'][read_key]['criteria'][criterion] = newkey
-        self.save_json(old_config, self.config_file)
+    def update_config(self, content, data_Type, modality, criterion):
+        new_des = {
+        ['dataType' : data_Type, 'modalityLabel' : modality,
+        'criteria':{criterion: content[criterion]}}
+        config = self.get_json_content(self.config_file)
+        config['descriptions'].append(new_des)
+        self.save_json(config, self.config_file)
 
     def run_helper(self):
         helper_dir = path.join(self.OUTPUT_DIR, 'tmp_dcm2bids', 'helper')
@@ -80,10 +78,11 @@ class DCM2BIDS_helper():
                       [i for i in listdir(path.join()) if '.json' in i][0]), 'r').readlines()
         return sidecar
 
-    def classify_mri(self, param):
+    def classify_mri(self):
+        criterion = 'SeriesDescription'
         type = 'anat'
         modality = 'T1w'
-        return type, modality
+        return type, modality, criterion
 
     def validate_bids(self):
         # https://github.com/bids-standard/bids-validator
@@ -94,7 +93,6 @@ class DCM2BIDS_helper():
             json.dump(data, f, indent = 4)
     
     def get_json_content(self, file):
-        import json
         with open(file, 'r') as f:
             return json.load(f)
 
@@ -105,6 +103,9 @@ class DCM2BIDS_helper():
         else:
             print('    path is invalid: {}'.format(DICOM_DIR))
             return 'PATH_IS_MISSING'
+
+    def rm_dir(self, DIR):
+        system('rm -r {}'.format(DIR))
 
     def chk_dir(self):
         OUTPUT_DIR = self.proj_vars['SOURCE_BIDS_DIR'][1]

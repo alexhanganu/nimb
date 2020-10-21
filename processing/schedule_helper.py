@@ -20,13 +20,16 @@ class Submit_task():
                                     cmd, name, task, walltime)
 
     def submit_4_processing(self, processing_env, cmd, name, task, walltime):
-        if processing_env == 'slurm':
-            sh_file = self.make_submit_file(cmd, name, task, walltime)
-            self.submit_2scheduler(sh_file)
-        elif processing_env == 'tmux':
-            self.submit_2tmux(cmd, name)
+        if self.vars_local["PROCESSING"]["SUBMIT"] == 1:
+            if processing_env == 'slurm':
+                sh_file = self.make_submit_file(cmd, name, task, walltime)
+                self.submit_2scheduler(sh_file)
+            elif processing_env == 'tmux':
+                self.submit_2tmux(cmd, name)
+            else:
+                log.info('ERROR: processing environment not provided or incorrect')
         else:
-            print('ERROR: processing environment not provided or incorrect')
+            log.info('        SUBMITTING is stopped')
 
     def get_submit_file_names(self, name, task):
         dt = time.strftime("%Y%m%d_%H%M",time.localtime(time.time()))
@@ -51,31 +54,25 @@ class Submit_task():
         return sh_file
 
     def submit_2scheduler(self, sh_file):
-        if self.vars_local["PROCESSING"]["SUBMIT"] == 1:
-            log.info('        submitting {}'.format(sh_file))
-            time.sleep(1)
-            try:
-                resp = subprocess.run(['sbatch',path.join(self.NIMB_tmp,'usedpbs',sh_file)], stdout=subprocess.PIPE).stdout.decode('utf-8')
-                self.job_id = list(filter(None, resp.split(' ')))[-1].strip('\n')
-            except Exception as e:
-                print(e)
-        else:
-                print('        SUBMITTING is stopped')
+        log.info('        submitting {}'.format(sh_file))
+        time.sleep(1)
+        try:
+            resp = subprocess.run(['sbatch',path.join(self.NIMB_tmp,'usedpbs',sh_file)], stdout=subprocess.PIPE).stdout.decode('utf-8')
+            self.job_id = list(filter(None, resp.split(' ')))[-1].strip('\n')
+        except Exception as e:
+            log.info(e)
 
     def submit_2tmux(self, cmd, subjid):
-        if self.vars_local["PROCESSING"]["SUBMIT"] == 1:
-            self.job_id = 'tmux_'+str(subjid)
-            print('        submitting to tmux session: {}'.format(self.job_id))
-            system('tmux new -d -s {}'.format(self.job_id))
-            if self.activate_freesurfer:
-                system("tmux send-keys -t '{}' '{}' ENTER".format(str(self.job_id), self.vars_local["FREESURFER"]["export_FreeSurfer_cmd"]))
-                system("tmux send-keys -t '{}' 'export SUBJECTS_DIR=' '{}' ENTER".format(str(self.job_id), self.vars_local["FREESURFER"]["FS_SUBJECTS_DIR"]))
-                system("tmux send-keys -t '{}' '{}' ENTER".format(str(self.job_id), self.vars_local["FREESURFER"]["source_FreeSurfer_cmd"]))
-            if self.cd_cmd:
-                system("tmux send-keys -t '{}' '{}' ENTER".format(str(self.job_id), self.cd_cmd))
-            system("tmux send-keys -t '{}' '{}' ENTER".format(str(self.job_id), cmd))
-        else:
-            print('        SUBMITTING is stopped')
+        self.job_id = 'tmux_'+str(subjid)
+        log.info('        submitting to tmux session: {}'.format(self.job_id))
+        system('tmux new -d -s {}'.format(self.job_id))
+        if self.activate_freesurfer:
+            system("tmux send-keys -t '{}' '{}' ENTER".format(str(self.job_id), self.vars_local["FREESURFER"]["export_FreeSurfer_cmd"]))
+            system("tmux send-keys -t '{}' 'export SUBJECTS_DIR=' '{}' ENTER".format(str(self.job_id), self.vars_local["FREESURFER"]["FS_SUBJECTS_DIR"]))
+            system("tmux send-keys -t '{}' '{}' ENTER".format(str(self.job_id), self.vars_local["FREESURFER"]["source_FreeSurfer_cmd"]))
+        if self.cd_cmd:
+            system("tmux send-keys -t '{}' '{}' ENTER".format(str(self.job_id), self.cd_cmd))
+        system("tmux send-keys -t '{}' '{}' ENTER".format(str(self.job_id), cmd))
 
 
 def kill_tmux_session(session):
