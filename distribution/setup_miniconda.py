@@ -9,14 +9,14 @@ from distribution.utilities import is_command_ran_sucessfully
 # can be improved by using a yml file
 
 # maybe we try to install all using requirements and check?
-system('pip install -r {}'.format(path.join(path.dirname(path.abspath(__file__)), '..', 'requirements.txt')))
+# system('pip install -r {}'.format(path.join(path.dirname(path.abspath(__file__)), '..', 'requirements.txt')))
 
 def setup_miniconda(miniconda_home):
     #if is_miniconda_installed():
        # system("conda install -y dcm2niix dcm2bids pandas numpy xlrd xlsxwriter paramiko dipy -c conda-forge -c default")
     #    return
     if not path.exists(miniconda_home):
-        chdir(path.join(miniconda_home, '..')
+        chdir(path.join(miniconda_home, '..'))
         # system('curl https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -o miniconda3.sh')
         is_command_ran_sucessfully('curl https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -o miniconda3.sh')
         system('chmod +x miniconda3.sh')

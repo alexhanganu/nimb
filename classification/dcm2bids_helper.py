@@ -27,6 +27,7 @@ class DCM2BIDS_helper():
         self.SUBJ_NAME = self.get_sub()
         print(self.SUBJ_NAME)
         system('dcm2bids -d {} -p {} -c {} -o {}'.format(self.DICOM_DIR, self.SUBJ_NAME, self.config_file, self.OUTPUT_DIR))
+        self.sub_SUBJDIR = path.join(self.OUTPUT_DIR, 'tmp_dcm2bids', 'sub-{}'.format(self.SUBJ_NAME))
         self.chk_if_processed()
 
     def get_sub(self):
@@ -43,19 +44,18 @@ class DCM2BIDS_helper():
             return config_file
 
     def chk_if_processed(self):
-        sub_SUBJDIR = path.join(self.OUTPUT_DIR, 'tmp_dcm2bids', 'sub-{}'.format(self.SUBJ_NAME))
-        if [i for i in listdir(sub_SUBJDIR) if '.nii.gz' in i]:
-            self.repeat_updating += 1
+        if [i for i in listdir(self.sub_SUBJDIR) if '.nii.gz' in i]:
             if self.repeat_updating < self.repeat_lim:
                 self.get_sidecar()
                 print('removing folder tmp_dcm2bids')
-                system('rm -r {}'.format(sub_SUBJDIR)
+                system('rm -r {}'.format(self.sub_SUBJDIR))
+                self.repeat_updating += 1
                 print('re-renning dcm2bids')
                 self.run(self.SUBJ_NAME)
 
     def get_sidecar(self):
-        sidecar = [i for i in listdir(path.join(self.OUTPUT_DIR, 'tmp_dcm2bids', 'sub-{}'.format(self.SUBJ_NAME))) if '.json' in i][0]
-        content = self.get_json_content(sidecar)
+        sidecar = [i for i in listdir(self.sub_SUBJDIR) if '.json' in i][0]
+        content = self.get_json_content(path.join(self.sub_SUBJDIR, sidecar))
         data_Type, modality = self.classify_mri(content['SeriesDescription'])
         self.update_config(content, data_Type, modality)
 
@@ -70,9 +70,7 @@ class DCM2BIDS_helper():
             else:
                 newkey = [i for i in key2populate] + [content[criterion]]
             old_config['descriptions'][read_key]['criteria'][criterion] = newkey
-        self.save_json(old_config, self.get_config_file())
-        self.config_file = old_config
-
+        self.save_json(old_config, self.config_file)
 
     def run_helper(self):
         helper_dir = path.join(self.OUTPUT_DIR, 'tmp_dcm2bids', 'helper')
