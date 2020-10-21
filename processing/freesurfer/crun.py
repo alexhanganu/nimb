@@ -147,7 +147,7 @@ def check_error(scheduler_jobs, process):
             for subjid in lserr:
                 log.info('    {}'.format(subjid))
                 if subjid not in db["ERROR_QUEUE"] and path.exists(path.join(SUBJECTS_DIR, subjid)): #path.exists was added due to moving the subjects too early; requires adjustment
-                    chk.IsRunning_rm(subjid):
+                    chk.IsRunning_rm(subjid)
                     # fs_checker.IsRunning_rm(SUBJECTS_DIR, subjid)
                     log.info('        checking the recon-all-status.log for error for: {}'.format(process))
                     fs_err_helper.chkreconf_if_without_error(NIMB_tmp, subjid, SUBJECTS_DIR)
@@ -492,8 +492,10 @@ if __name__ == "__main__":
     sys.path.append(str(top))
 
     from setup.get_vars import Get_Vars
+    from distribution.logger import Log
     getvars = Get_Vars()
     vars_local = getvars.location_vars['local']
+    Log(vars_local['NIMB_PATHS']['NIMB_tmp'])
 
     from processing.schedule_helper import Submit_task, get_jobs_status
 #    from distribution.logger import Log
