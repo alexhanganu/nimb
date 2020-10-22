@@ -178,6 +178,25 @@ class ListSubjectHelper:
         unprocessed_subject = set(all_subjects) - set(processed_sbuject)
         return list(unprocessed_subject)
 
+
+    def get_diskusage_report(cuser, cusers_list):
+        '''script to read the available space
+        on compute canada clusters
+        the command diskusage_report is used'''
+
+        def get_diskspace(diskusage, queue):
+
+            for line in queue[1:]:
+                    vals = list(filter(None,line.split(' ')))
+                    diskusage[vals[0]] = vals[4][:-5].strip('k')
+            return diskusage
+
+        diskusage = dict()
+        for cuser in cusers_list:
+            queue = list(filter(None,subprocess.run(['diskusage_report'], stdout=subprocess.PIPE).stdout.decode('utf-8').split('\n')))
+            diskusage = get_diskspace(diskusage, queue)
+        return diskusage
+
 if __name__ == "__main__":
     size = DiskspaceUtility.get_free_space("../v02003/utility")
     print(f"current size is {size} MB")

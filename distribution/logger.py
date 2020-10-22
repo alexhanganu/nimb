@@ -20,7 +20,8 @@ else:
 class Log():
 
     def __init__(self,
-                 output_dir):
+                 output_dir,
+                 freesurfer_version):
 
 
         self.output_dir = output_dir
@@ -33,7 +34,7 @@ class Log():
         self.logger.info("OS:version: %s", platform.platform())
         self.logger.info("python:version: %s", sys.version.replace("\n", ""))
 #        self.logger.info("nimb:version: %s", __version__)
-#        self.logger.info("freesurfer:version: %s", freesurfer_version)
+        self.logger.info("freesurfer:version: {}".format(freesurfer_version))
 
 
     def set_logger(self):

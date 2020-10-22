@@ -172,7 +172,7 @@ class FreeSurferChecker():
 
     def chk_if_all_done(self, subjid):
             result = True
-            if not self.IsRunning_chk(self.SUBJECTS_DIR, subjid):
+            if not self.IsRunning_chk(subjid):
                 for process in self.process_order[1:]:
                     if not self.checks_from_runfs(process, subjid):
                         log.info('        {} is missing {}'.format(subjid, process))

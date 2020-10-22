@@ -4,11 +4,13 @@
 print_all_subjects = False
 
 from os import path, system, chdir, environ
-import time, shutil
+from pathlib import Path
+import time
+import shutil
 from datetime import datetime, timedelta
 import logging
-import fs_checker, cdb, fs_err_helper, fs_definitions
-from pathlib import Path
+
+import cdb, fs_err_helper, fs_definitions, fs_checker
 from fs_checker import FreeSurferChecker
 
 environ['TZ'] = 'US/Eastern'
@@ -60,11 +62,13 @@ def Get_status_for_subjid_in_queue(running_jobs, subjid, scheduler_jobs):
     if subjid in running_jobs:
         job_id = str(running_jobs[subjid])
         if job_id in scheduler_jobs:
-           return running_jobs, scheduler_jobs[job_id][1]
+           status = scheduler_jobs[job_id][1]
         else:
-           return running_jobs, 'none'
+           status = 'none'
     else:
-        return try_to_infer_jobid(running_jobs, subjid, scheduler_jobs)
+        running_jobs, status = try_to_infer_jobid(running_jobs, subjid, scheduler_jobs)
+        job_id = '0'
+    return running_jobs, status, job_id
 
 def try_to_infer_jobid(running_jobs, subjid, scheduler_jobs):
     probable_jobids = [i for i in scheduler_jobs if scheduler_jobs[i][0] in subjid]
@@ -84,7 +88,7 @@ def running(process, scheduler_jobs):
     log.info('{} {}'.format(ACTION, process))
     lsr = db[ACTION][process].copy()
     for subjid in lsr:
-        db['RUNNING_JOBS'], status = Get_status_for_subjid_in_queue(db['RUNNING_JOBS'], subjid, scheduler_jobs)
+        db['RUNNING_JOBS'], status, job_id = Get_status_for_subjid_in_queue(db['RUNNING_JOBS'], subjid, scheduler_jobs)
         if status == 'none':
             db[ACTION][process].remove(subjid)
             if subjid in db['RUNNING_JOBS']:
@@ -106,6 +110,8 @@ def running(process, scheduler_jobs):
                         # if not fs_checker.checks_from_runfs(SUBJECTS_DIR, next_process, subjid, vars_freesurfer["freesurfer_version"], vars_freesurfer["masks"]):
                             db['DO'][next_process].append(subjid)
                             log.info('    {}, {} {} -> DO {}'.format(subjid, ACTION, process, next_process))
+                            if processing_env == 'tmux':
+                                schedule.kill_tmux_session(job_id)
                         else:
                             db[ACTION][next_process].append(subjid)
                             log.info('    {}, {} {} -> {} {}'.format(subjid, ACTION, process, ACTION, next_process))
@@ -128,7 +134,8 @@ def do(process):
     for subjid in lsd:
         if len_Running()<= vars_processing["max_nr_running_batches"]:
             db[ACTION][process].remove(subjid)
-            job_id = Submit_task(vars_local, get_cmd(process, subjid).cmd, subjid, process, Get_walltime(process), True, '').job_id
+            cmd = get_cmd(process, subjid).cmd
+            job_id = schedule.submit_4_processing(cmd, subjid, process, Get_walltime(process))
             db['RUNNING_JOBS'][subjid] = job_id
             db['RUNNING'][process].append(subjid)
             try:
@@ -211,7 +218,7 @@ def check_error(scheduler_jobs, process):
                             log.info('        moving from error_{} to RUNNING {}'.format(process, process))
                 else:
                     if subjid in db["ERROR_QUEUE"]:
-                        db['RUNNING_JOBS'], status = Get_status_for_subjid_in_queue(db['RUNNING_JOBS'], subjid, scheduler_jobs)
+                        db['RUNNING_JOBS'], status, job_id = Get_status_for_subjid_in_queue(db['RUNNING_JOBS'], subjid, scheduler_jobs)
                         log.info('     waiting until: {}'.format(db['ERROR_QUEUE'][subjid]))
                         if status != 'none' and subjid in db['RUNNING_JOBS']:
                             log.info('     status is: {}, error_{}-> RUNNING {}'.format(status, process, process))
@@ -251,7 +258,8 @@ def long_check_groups(_id):
                         for ses in LONG_TPS:
                             long_f = _id+ses+'.long.'+_id+vars_freesurfer["base_name"]
                             if long_f not in ls:
-                                job_id = Submit_task(vars_local, get_cmd('reclong', _id+ses, id_base = _id+vars_freesurfer["base_name"]).cmd, _id+ses, 'reclong', Get_walltime('reclong'), True, '').job_id
+                                cmd = get_cmd('reclong', _id+ses, id_base = _id+vars_freesurfer["base_name"]).cmd
+                                job_id = schedule.submit_4_processing(cmd, _id+ses, 'reclong', Get_walltime('reclong'))
                                 db['RUNNING_JOBS'][long_f] = job_id
                                 db['RUNNING']['recon'].append(long_f)
                                 db['LONG_DIRS'][_id].append(long_f)
@@ -288,7 +296,8 @@ def long_check_groups(_id):
                         db['ERROR_QUEUE'][subjid] = str(format(datetime.now()+timedelta(hours=datetime.strptime(Get_walltime(process), '%H:%M:%S').hour), "%Y%m%d_%H%M"))
                         db['PROCESSED']['error_recon'].append(base_f)
             else:
-                job_id = Submit_task(vars_local, get_cmd('recbase', base_f, ls_tps = All_cross_ids_done).cmd, base_f, 'recbase', Get_walltime('recbase'), True, '').job_id
+                cmd = get_cmd('recbase', base_f, ls_tps = All_cross_ids_done).cmd
+                job_id = schedule.submit_4_processing(cmd, base_f, 'recbase', Get_walltime('recbase'))
                 db['RUNNING_JOBS'][base_f] = job_id
                 db['LONG_DIRS'][_id].append(base_f)
                 db['RUNNING']['recon'].append(base_f)
@@ -357,7 +366,8 @@ def move_processed_subjects(subject, db_source, new_name):
 
 def loop_run():
     cdb.Update_DB(db, NIMB_tmp)
-    scheduler_jobs = get_jobs_status(vars_local["USER"]["user"])
+    # scheduler_jobs = get_jobs_status(vars_local["USER"]["user"])
+    scheduler_jobs = schedule.get_jobs_status(vars_local["USER"]["user"], db['RUNNING_JOBS'])
 
     for process in process_order[::-1]:
         if len(db['RUNNING'][process])>0:
@@ -371,11 +381,11 @@ def loop_run():
     log.info('CHECKING subjects')
     ls_long_dirs = list()
     for key in db['LONG_DIRS']:
-            ls_long_dirs.append(key)
+        ls_long_dirs.append(key)
 
     for _id in ls_long_dirs:
         if print_all_subjects:
-            log.info('    '+_id+': '+str(db['LONG_DIRS'][_id]))
+            log.info('    {}: '.format(_id, str(db['LONG_DIRS'][_id])))
         long_check_groups(_id)
 
 
@@ -412,11 +422,12 @@ def Count_TimeSleep():
 
 def run(varslocal):
 
-    global vars_local, vars_freesurfer, vars_processing, vars_nimb, NIMB_HOME, NIMB_tmp, SUBJECTS_DIR, max_walltime, process_order, log, db, chk
+    global db, schedule, log, chk, vars_local, vars_freesurfer, vars_processing, vars_nimb, NIMB_HOME, NIMB_tmp, SUBJECTS_DIR, max_walltime, process_order, processing_env
     vars_local       = varslocal
     vars_freesurfer  = vars_local["FREESURFER"]
     vars_processing  = vars_local["PROCESSING"]
     vars_nimb        = vars_local["NIMB_PATHS"]
+    processing_env   = vars_local["PROCESSING"]["processing_env"]
 
     NIMB_HOME        = vars_nimb["NIMB_HOME"]
     NIMB_tmp         = vars_nimb["NIMB_tmp"]
@@ -426,6 +437,8 @@ def run(varslocal):
 
     chk = FreeSurferChecker(vars_freesurfer)
     log = logging.getLogger(__name__)
+    schedule = Scheduler(vars_local)
+
 
     t0 = time.time()
     time_elapsed = 0
@@ -475,10 +488,10 @@ def run(varslocal):
         log.info('ALL TASKS FINISHED')
     else:
         log.info('Sending new batch to scheduler')
-        Submit_task(vars_local,
-                    vars_processing["python3_load_cmd"]+'\n'+vars_processing["python3_run_cmd"]+' crun.py',
-                    'nimb','run', vars_processing["batch_walltime"],
-                    False, 'cd '+path.join(NIMB_HOME, 'processing', 'freesurfer'))
+        cmd = '{}\n{} crun.py'.format(vars_processing["python3_load_cmd"], vars_processing["python3_run_cmd"])
+        schedule.submit_4_processing(cmd,'nimb','run', vars_processing["batch_walltime"],
+                            activate_fs = False,
+                            cd_cmd = 'cd {}'.format(path.dirname(path.abspath(__file__))))
 
 
 
@@ -495,11 +508,10 @@ if __name__ == "__main__":
     from distribution.logger import Log
     getvars = Get_Vars()
     vars_local = getvars.location_vars['local']
-    Log(vars_local['NIMB_PATHS']['NIMB_tmp'])
+    Log(vars_local['NIMB_PATHS']['NIMB_tmp'],
+        vars_local['FREESURFER']['freesurfer_version'])
 
-    from processing.schedule_helper import Submit_task, get_jobs_status
-#    from distribution.logger import Log
-#    Log(vars_local['NIMB_PATHS']['NIMB_tmp'])
+    from processing.schedule_helper import Scheduler, get_jobs_status
 
     run(vars_local)
 
