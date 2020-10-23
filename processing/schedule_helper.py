@@ -2,6 +2,9 @@ from os import path, environ, system
 import time
 import subprocess
 import logging
+from datetime import datetime, timedelta
+from processing.freesurfer import fs_definitions
+
 log = logging.getLogger(__name__)
 
 environ['TZ'] = 'US/Eastern'
@@ -13,15 +16,20 @@ class Scheduler():
         self.vars_local     = vars_local
         self.NIMB_tmp       = self.vars_local["NIMB_PATHS"]['NIMB_tmp']
         self.processing_env = self.vars_local["PROCESSING"]["processing_env"]
+        self.max_walltime       = self.vars_local['PROCESSING']["batch_walltime"]
 
-    def submit_4_processing(self, cmd, name, task, walltime, activate_fs = True, cd_cmd = ''):
+    def submit_4_processing(self, cmd, name, task,
+                            activate_fs = True, cd_cmd = '',
+                            python_load = False):
+        self.activate_fs = activate_fs
+        self.python_load = python_load
         self.job_id = '0'
         if self.vars_local["PROCESSING"]["SUBMIT"] == 1:
             if self.processing_env == 'slurm':
-                sh_file = self.make_submit_file(cmd, name, task, walltime, activate_fs, cd_cmd)
+                sh_file = self.make_submit_file(cmd, name, task, cd_cmd)
                 self.submit_2scheduler(sh_file)
             elif self.processing_env == 'tmux':
-                self.submit_2tmux(cmd, name, activate_fs, cd_cmd)
+                self.submit_2tmux(cmd, name, cd_cmd)
             else:
                 log.info('ERROR: processing environment not provided or incorrect')
         else:
@@ -34,19 +42,35 @@ class Scheduler():
         out_file = name+'_'+task+'_'+str(dt)+'.out'
         return sh_file, out_file
 
-    def make_submit_file(self, cmd, name, task, walltime, activate_fs, cd_cmd):
+    def Get_walltime(self, process):
+        walltime = self.max_walltime
+        if process in fs_definitions.suggested_times:
+            if fs_definitions.suggested_times[process] <= self.max_walltime:
+                walltime = fs_definitions.suggested_times[process]
+        return walltime
+
+    def get_time_end_of_walltime(self, process):
+        if process == 'now':
+            return str(format(datetime.now(), "%Y%m%d_%H%M"))
+        else:
+            nr_hours = datetime.strptime(self.Get_walltime(process), '%H:%M:%S').hour
+            return str(format(datetime.now()+timedelta(hours=nr_hours), "%Y%m%d_%H%M"))
+
+    def make_submit_file(self, cmd, name, task, cd_cmd):
         sh_file, out_file = self.get_submit_file_names(name, task)
         with open(path.join(self.NIMB_tmp, 'usedpbs', sh_file), 'w') as f:
             for line in self.vars_local['PROCESSING']["text4_scheduler"]:
                 f.write(line+'\n')
-            f.write(self.vars_local['PROCESSING']["batch_walltime_cmd"]+walltime+'\n')
+            f.write(self.vars_local['PROCESSING']["batch_walltime_cmd"]+self.Get_walltime(task)+'\n')
             f.write(self.vars_local['PROCESSING']["batch_output_cmd"]+path.join(self.NIMB_tmp,'usedpbs',out_file)+'\n')
-            if activate_fs:
+            if self.activate_fs:
                 f.write(self.vars_local['FREESURFER']["export_FreeSurfer_cmd"]+'\n')
                 f.write(self.vars_local['FREESURFER']["source_FreeSurfer_cmd"]+'\n')
                 f.write('export SUBJECTS_DIR='+self.vars_local['FREESURFER']["FS_SUBJECTS_DIR"]+'\n')
             if cd_cmd:
                 f.write(cd_cmd+'\n')
+            if self.python_load:
+                f.write(self.vars_local['PROCESSING']["python3_load_cmd"]+'\n')
             f.write(cmd+'\n')
         return sh_file
 
@@ -59,16 +83,19 @@ class Scheduler():
         except Exception as e:
             log.info(e)
 
-    def submit_2tmux(self, cmd, subjid, activate_fs, cd_cmd):
+    def submit_2tmux(self, cmd, subjid, cd_cmd):
         self.job_id = 'tmux_'+str(subjid)
         log.info('        submitting to tmux session: {}'.format(self.job_id))
         system('tmux new -d -s {}'.format(self.job_id))
-        if activate_fs:
+        if self.activate_fs:
             system("tmux send-keys -t '{}' '{}' ENTER".format(str(self.job_id), self.vars_local["FREESURFER"]["export_FreeSurfer_cmd"]))
             system("tmux send-keys -t '{}' 'export SUBJECTS_DIR=' '{}' ENTER".format(str(self.job_id), self.vars_local["FREESURFER"]["FS_SUBJECTS_DIR"]))
             system("tmux send-keys -t '{}' '{}' ENTER".format(str(self.job_id), self.vars_local["FREESURFER"]["source_FreeSurfer_cmd"]))
         if cd_cmd:
             system("tmux send-keys -t '{}' '{}' ENTER".format(str(self.job_id), cd_cmd))
+        if self.python_load:
+            system("tmux send-keys -t '{}' '{}' ENTER".format(str(self.job_id),
+                                                              self.vars_local['PROCESSING']["python3_load_cmd"])
         system("tmux send-keys -t '{}' '{}' ENTER".format(str(self.job_id), cmd))
 
     def kill_tmux_session(self, session):

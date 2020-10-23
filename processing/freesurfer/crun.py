@@ -7,10 +7,9 @@ from os import path, system, chdir, environ
 from pathlib import Path
 import time
 import shutil
-from datetime import datetime, timedelta
+# from datetime import datetime# , timedelta # 2RM
 import logging
-
-import cdb, fs_err_helper, fs_definitions, fs_checker
+import cdb, fs_err_helper, fs_checker #, fs_definitions  #2RM
 from fs_checker import FreeSurferChecker
 
 environ['TZ'] = 'US/Eastern'
@@ -51,11 +50,11 @@ class get_cmd():
         return "recon-all{}".format(''.join([' -i '+i for i in t1_ls_f]))+flair_cmd+t2_cmd+' -s '+_id
 
 
-def Get_walltime(process):
-    if fs_definitions.suggested_times[process] <= max_walltime:
-        return fs_definitions.suggested_times[process]
-    else:
-        return max_walltime
+# def Get_walltime(process):  #2RM
+    # if fs_definitions.suggested_times[process] <= max_walltime:
+        # return fs_definitions.suggested_times[process]
+    # else:
+        # return max_walltime
 
 
 def Get_status_for_subjid_in_queue(running_jobs, subjid, scheduler_jobs):
@@ -97,17 +96,17 @@ def running(process, scheduler_jobs):
                 log.info('    reading {}, {} is long or base '.format(process, subjid))
                 chk
                 if chk.IsRunning_chk(subjid) or not chk.checks_from_runfs('recon', subjid):
-                # if fs_checker.chkIsRunning(SUBJECTS_DIR, subjid) or not fs_checker.checks_from_runfs(SUBJECTS_DIR, 'recon', subjid, vars_freesurfer["freesurfer_version"], vars_freesurfer["masks"]):
+                # if fs_checker.chkIsRunning(SUBJECTS_DIR, subjid) or not fs_checker.checks_from_runfs(SUBJECTS_DIR, 'recon', subjid, vars_freesurfer["freesurfer_version"], vars_freesurfer["masks"]):  #2RM
                         log.info('    {}, {} -> ERROR, IsRunning or not all files created'.format(subjid, process))
-                        db['ERROR_QUEUE'][subjid] = str(format(datetime.now()+timedelta(hours=datetime.strptime(Get_walltime(process), '%H:%M:%S').hour), "%Y%m%d_%H%M"))
+                        db['ERROR_QUEUE'][subjid] = schedule.get_time_end_of_walltime(process) #str(format(datetime.now()+timedelta(hours=datetime.strptime(Get_walltime(process), '%H:%M:%S').hour), "%Y%m%d_%H%M"))  #2RM
                         db['PROCESSED']['error_recon'].append(subjid)
             else:
                 if not chk.IsRunning_chk(subjid) and chk.checks_from_runfs(process, subjid):
-                # if not fs_checker.chkIsRunning(SUBJECTS_DIR, subjid) and fs_checker.checks_from_runfs(SUBJECTS_DIR, process, subjid, vars_freesurfer["freesurfer_version"], vars_freesurfer["masks"]):
+                # if not fs_checker.chkIsRunning(SUBJECTS_DIR, subjid) and fs_checker.checks_from_runfs(SUBJECTS_DIR, process, subjid, vars_freesurfer["freesurfer_version"], vars_freesurfer["masks"]):  #2RM
                     if process != process_order[-1]:
                         next_process = process_order[process_order.index(process)+1]
                         if not chk.checks_from_runfs(next_process, subjid):
-                        # if not fs_checker.checks_from_runfs(SUBJECTS_DIR, next_process, subjid, vars_freesurfer["freesurfer_version"], vars_freesurfer["masks"]):
+                        # if not fs_checker.checks_from_runfs(SUBJECTS_DIR, next_process, subjid, vars_freesurfer["freesurfer_version"], vars_freesurfer["masks"]):  #2RM
                             db['DO'][next_process].append(subjid)
                             log.info('    {}, {} {} -> DO {}'.format(subjid, ACTION, process, next_process))
                             if processing_env == 'tmux':
@@ -119,7 +118,7 @@ def running(process, scheduler_jobs):
                         log.info('    {} processing DONE'.format(subjid))
                 else:
                     log.info('    {}, {} -> ERROR; IsRunning, status= {}'.format(subjid, process, status))
-                    db['ERROR_QUEUE'][subjid] = str(format(datetime.now()+timedelta(hours=datetime.strptime(Get_walltime(process), '%H:%M:%S').hour), "%Y%m%d_%H%M"))
+                    db['ERROR_QUEUE'][subjid] = schedule.get_time_end_of_walltime(process) #str(format(datetime.now()+timedelta(hours=datetime.strptime(Get_walltime(process), '%H:%M:%S').hour), "%Y%m%d_%H%M")) #2RM
                     db['PROCESSED']['error_'+process].append(subjid)
     db[ACTION][process].sort()
     cdb.Update_DB(db, NIMB_tmp)
@@ -135,7 +134,7 @@ def do(process):
         if len_Running()<= vars_processing["max_nr_running_batches"]:
             db[ACTION][process].remove(subjid)
             cmd = get_cmd(process, subjid).cmd
-            job_id = schedule.submit_4_processing(cmd, subjid, process, Get_walltime(process))
+            job_id = schedule.submit_4_processing(cmd, subjid, process)
             db['RUNNING_JOBS'][subjid] = job_id
             db['RUNNING'][process].append(subjid)
             try:
@@ -225,8 +224,8 @@ def check_error(scheduler_jobs, process):
                             db['ERROR_QUEUE'].pop(subjid, None)
                             db['PROCESSED']['error_'+process].remove(subjid)
                             db['RUNNING'][process].append(subjid)
-                        elif not chk.IsRunning_chk(subjid) or db['ERROR_QUEUE'][subjid] < str(format(datetime.now(), "%Y%m%d_%H%M")):
-                        # elif not fs_checker.chkIsRunning(SUBJECTS_DIR, subjid) or db['ERROR_QUEUE'][subjid] < str(format(datetime.now(), "%Y%m%d_%H%M")):
+                        elif not chk.IsRunning_chk(subjid) or db['ERROR_QUEUE'][subjid] < schedule.get_time_end_of_walltime('now') # str(format(datetime.now(), "%Y%m%d_%H%M")): #2RM
+                        # elif not fs_checker.chkIsRunning(SUBJECTS_DIR, subjid) or db['ERROR_QUEUE'][subjid] < str(format(datetime.now(), "%Y%m%d_%H%M")): #2RM
                             log.info('    removing from ERROR_QUEUE')
                             db['ERROR_QUEUE'].pop(subjid, None)
                     else:
@@ -244,37 +243,37 @@ def long_check_groups(_id):
         All_cross_ids_done = list()
         for ses in LONG_TPS:
             if _id+ses in ls and chk.checks_from_runfs(process_order[-1], _id+ses):
-            # if _id+ses in ls and fs_checker.checks_from_runfs(SUBJECTS_DIR, process_order[-1], _id+ses, vars_freesurfer["freesurfer_version"], vars_freesurfer["masks"]):
+            # if _id+ses in ls and fs_checker.checks_from_runfs(SUBJECTS_DIR, process_order[-1], _id+ses, vars_freesurfer["freesurfer_version"], vars_freesurfer["masks"]): #2RM
                 All_cross_ids_done.append(_id+ses)
 
         if len(All_cross_ids_done) == len(LONG_TPS):
             base_f = _id+vars_freesurfer["base_name"]
             if base_f in ls:
                 if base_f not in db['RUNNING']['recon'] and base_f not in db['PROCESSED']['error_recon'] and not chk.IsRunning_chk(base_f):
-                # if base_f not in db['RUNNING']['recon'] and base_f not in db['PROCESSED']['error_recon'] and not fs_checker.chkIsRunning(SUBJECTS_DIR, base_f):
+                # if base_f not in db['RUNNING']['recon'] and base_f not in db['PROCESSED']['error_recon'] and not fs_checker.chkIsRunning(SUBJECTS_DIR, base_f): #2RM
                     if chk.checks_from_runfs('recon', base_f):
-                    # if fs_checker.checks_from_runfs(SUBJECTS_DIR, 'recon', base_f, vars_freesurfer["freesurfer_version"], vars_freesurfer["masks"]):
+                    # if fs_checker.checks_from_runfs(SUBJECTS_DIR, 'recon', base_f, vars_freesurfer["freesurfer_version"], vars_freesurfer["masks"]): #2RM
                         All_long_ids_done = list()
                         for ses in LONG_TPS:
                             long_f = _id+ses+'.long.'+_id+vars_freesurfer["base_name"]
                             if long_f not in ls:
                                 cmd = get_cmd('reclong', _id+ses, id_base = _id+vars_freesurfer["base_name"]).cmd
-                                job_id = schedule.submit_4_processing(cmd, _id+ses, 'reclong', Get_walltime('reclong'))
+                                job_id = schedule.submit_4_processing(cmd, _id+ses, 'reclong')
                                 db['RUNNING_JOBS'][long_f] = job_id
                                 db['RUNNING']['recon'].append(long_f)
                                 db['LONG_DIRS'][_id].append(long_f)
                             elif chk.checks_from_runfs('registration', long_f):
-                            # elif fs_checker.checks_from_runfs(SUBJECTS_DIR, 'registration',long_f, vars_freesurfer["freesurfer_version"], vars_freesurfer["masks"]):
+                            # elif fs_checker.checks_from_runfs(SUBJECTS_DIR, 'registration',long_f, vars_freesurfer["freesurfer_version"], vars_freesurfer["masks"]): #2RM
                                 if chk.checks_from_runfs('recon', long_f):
-                                # if fs_checker.checks_from_runfs(SUBJECTS_DIR, 'recon', long_f, vars_freesurfer["freesurfer_version"], vars_freesurfer["masks"]):
+                                # if fs_checker.checks_from_runfs(SUBJECTS_DIR, 'recon', long_f, vars_freesurfer["freesurfer_version"], vars_freesurfer["masks"]): #2RM
                                     All_long_ids_done.append(long_f)
                                 else:
                                     log.info(long_f+' moving to error_recon')
-                                    db['ERROR_QUEUE'][subjid] = str(format(datetime.now()+timedelta(hours=datetime.strptime(Get_walltime(process), '%H:%M:%S').hour), "%Y%m%d_%H%M"))
+                                    db['ERROR_QUEUE'][subjid] = schedule.get_time_end_of_walltime(process) #str(format(datetime.now()+timedelta(hours=datetime.strptime(Get_walltime(process), '%H:%M:%S').hour), "%Y%m%d_%H%M")) #2RM
                                     db['PROCESSED']['error_recon'].append(long_f)
                             else:
                                 log.info(long_f+' moving to error_recon')
-                                db['ERROR_QUEUE'][subjid] = str(format(datetime.now()+timedelta(hours=datetime.strptime(Get_walltime(process), '%H:%M:%S').hour), "%Y%m%d_%H%M"))
+                                db['ERROR_QUEUE'][subjid] = schedule.get_time_end_of_walltime(process) #str(format(datetime.now()+timedelta(hours=datetime.strptime(Get_walltime(process), '%H:%M:%S').hour), "%Y%m%d_%H%M")) #2RM
                                 db['PROCESSED']['error_recon'].append(long_f)
 
                         if len(All_long_ids_done) == len(LONG_TPS):
@@ -293,11 +292,11 @@ def long_check_groups(_id):
                             log.info('        '+_id+' moved to cp2local')
                     else:
                         log.info(base_f+' moving to error_recon, step 8')
-                        db['ERROR_QUEUE'][subjid] = str(format(datetime.now()+timedelta(hours=datetime.strptime(Get_walltime(process), '%H:%M:%S').hour), "%Y%m%d_%H%M"))
+                        db['ERROR_QUEUE'][subjid] = schedule.get_time_end_of_walltime(process) #str(format(datetime.now()+timedelta(hours=datetime.strptime(Get_walltime(process), '%H:%M:%S').hour), "%Y%m%d_%H%M")) #2RM
                         db['PROCESSED']['error_recon'].append(base_f)
             else:
                 cmd = get_cmd('recbase', base_f, ls_tps = All_cross_ids_done).cmd
-                job_id = schedule.submit_4_processing(cmd, base_f, 'recbase', Get_walltime('recbase'))
+                job_id = schedule.submit_4_processing(cmd, base_f, 'recbase')
                 db['RUNNING_JOBS'][base_f] = job_id
                 db['LONG_DIRS'][_id].append(base_f)
                 db['RUNNING']['recon'].append(base_f)
@@ -305,14 +304,14 @@ def long_check_groups(_id):
         for subjid in ls:
             if subjid not in db["RUNNING_JOBS"]:
                 if chk.checks_from_runfs('registration', subjid):
-                # if fs_checker.checks_from_runfs(SUBJECTS_DIR, 'registration', subjid, vars_freesurfer["freesurfer_version"], vars_freesurfer["masks"]):
+                # if fs_checker.checks_from_runfs(SUBJECTS_DIR, 'registration', subjid, vars_freesurfer["freesurfer_version"], vars_freesurfer["masks"]): #2RM
                    if chk.checks_from_runfs(process_order[-1], subjid):
-                   # if fs_checker.checks_from_runfs(SUBJECTS_DIR, process_order[-1], subjid, vars_freesurfer["freesurfer_version"], vars_freesurfer["masks"]):
+                   # if fs_checker.checks_from_runfs(SUBJECTS_DIR, process_order[-1], subjid, vars_freesurfer["freesurfer_version"], vars_freesurfer["masks"]): #2RM
                         log.info('            last process done '+process_order[-1])
                         if subjid in db['RUNNING'][process_order[-1]]:
                             db['RUNNING'][process_order[-1]].remove(subjid)
                         if chk.chk_if_all_done(subjid):
-                        # if fs_checker.chk_if_all_done(SUBJECTS_DIR, subjid, process_order, NIMB_tmp, vars_freesurfer["freesurfer_version"], vars_freesurfer["masks"]):
+                        # if fs_checker.chk_if_all_done(SUBJECTS_DIR, subjid, process_order, NIMB_tmp, vars_freesurfer["freesurfer_version"], vars_freesurfer["masks"]): #2RM
                             log.info('            all processes done, moving to CP2LOCAL')
                             db['PROCESSED']['cp2local'].append(subjid)
                             db['LONG_DIRS'].pop(_id, None)
@@ -366,7 +365,7 @@ def move_processed_subjects(subject, db_source, new_name):
 
 def loop_run():
     cdb.Update_DB(db, NIMB_tmp)
-    # scheduler_jobs = get_jobs_status(vars_local["USER"]["user"])
+    # scheduler_jobs = get_jobs_status(vars_local["USER"]["user"]) #2RM
     scheduler_jobs = schedule.get_jobs_status(vars_local["USER"]["user"], db['RUNNING_JOBS'])
 
     for process in process_order[::-1]:
@@ -488,10 +487,11 @@ def run(varslocal):
         log.info('ALL TASKS FINISHED')
     else:
         log.info('Sending new batch to scheduler')
-        cmd = '{}\n{} crun.py'.format(vars_processing["python3_load_cmd"], vars_processing["python3_run_cmd"])
-        schedule.submit_4_processing(cmd,'nimb','run', vars_processing["batch_walltime"],
-                            activate_fs = False,
-                            cd_cmd = 'cd {}'.format(path.dirname(path.abspath(__file__))))
+        cmd = '{} crun.py'.format(vars_processing["python3_run_cmd"])
+        cd_cmd = 'cd {}'.format(path.dirname(path.abspath(__file__)))
+        schedule.submit_4_processing(cmd,'nimb','run',
+                                    activate_fs = False,
+                                    cd_cmd, python_load = True)
 
 
 
