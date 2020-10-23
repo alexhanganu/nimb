@@ -155,7 +155,10 @@ class DistributionCheckNew():
         """
         return ls_output.split("\n")[0:-1]
 
-
+    def process_data_local(self):
+        pass
+    def process_data_remote(self):
+        pass
 
 if __name__ == "__main__":
 
