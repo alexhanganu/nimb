@@ -18,8 +18,8 @@ class Scheduler():
         self.processing_env = self.vars_local["PROCESSING"]["processing_env"]
         self.max_walltime       = self.vars_local['PROCESSING']["batch_walltime"]
 
-    def submit_4_processing(self, cmd, name, task,
-                            activate_fs = True, cd_cmd = '',
+    def submit_4_processing(self, cmd, name, task, cd_cmd = '',
+                            activate_fs = True,
                             python_load = False):
         self.activate_fs = activate_fs
         self.python_load = python_load

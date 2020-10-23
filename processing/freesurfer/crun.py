@@ -489,9 +489,9 @@ def run(varslocal):
         log.info('Sending new batch to scheduler')
         cmd = '{} crun.py'.format(vars_processing["python3_run_cmd"])
         cd_cmd = 'cd {}'.format(path.dirname(path.abspath(__file__)))
-        schedule.submit_4_processing(cmd,'nimb','run',
+        schedule.submit_4_processing(cmd,'nimb','run', cd_cmd,
                                     activate_fs = False,
-                                    cd_cmd, python_load = True)
+                                    python_load = True)
 
 
 

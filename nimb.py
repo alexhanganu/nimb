@@ -78,8 +78,8 @@ class NIMB(object):
             else:
                 cmd = '{} crun.py'.format(self.vars_local['PROCESSING']["python3_run_cmd"])
                 cd_cmd = 'cd '+path.join(path.dirname(path.abspath(__file__)), 'processing', 'freesurfer')
-                self.schedule.submit_4_processing(cmd, 'nimb','run', 
-                                                activate_fs = False, cd_cmd,
+                self.schedule.submit_4_processing(cmd, 'nimb','run', cd_cmd,
+                                                activate_fs = False,
                                                 python_load = True)
 
         if self.process == 'fs-get-stats':
