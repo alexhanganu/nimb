@@ -10,6 +10,8 @@ import time
 
 import logging
 
+from setup.version import __version__
+
 os.environ['TZ'] = 'US/Eastern'
 if sys.platform == 'win32':
     pass
@@ -20,7 +22,8 @@ else:
 class Log():
 
     def __init__(self,
-                 output_dir):
+                 output_dir,
+                 freesurfer_version):
 
 
         self.output_dir = output_dir
@@ -32,8 +35,8 @@ class Log():
         self.logger.info("--- nimb start ---")
         self.logger.info("OS:version: %s", platform.platform())
         self.logger.info("python:version: %s", sys.version.replace("\n", ""))
-#        self.logger.info("nimb:version: %s", __version__)
-#        self.logger.info("freesurfer:version: %s", freesurfer_version)
+        self.logger.info("nimb:version: %s", __version__)
+        self.logger.info("freesurfer:version: {}".format(freesurfer_version))
 
 
     def set_logger(self):
@@ -52,7 +55,9 @@ class Log():
 
 def setup_logging(logLevel, logFile=None):
     """ Setup logging configuration"""
-    logging.basicConfig()
+#    logging.basicConfig()
+#    logging.basicConfig(format='%(asctime)s %(module)s %(levelname)s: %(message)s')
+    logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s')
     logger = logging.getLogger()
 
     # Check level
@@ -64,7 +69,6 @@ def setup_logging(logLevel, logFile=None):
     # Set FileHandler
     if logFile:
         formatter = logging.Formatter(logging.BASIC_FORMAT)
-        # logging.basicConfig(format='%(asctime)s %(module)s %(levelname)s: %(message)s')
         handler = logging.FileHandler(logFile)
         handler.setFormatter(formatter)
         handler.setLevel("DEBUG")

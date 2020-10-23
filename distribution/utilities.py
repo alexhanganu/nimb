@@ -42,13 +42,6 @@ def is_ENV_defined(environment_var):
     command = f'if [[ -v {environment_var} ]] ;then echo "YES"; else echo "NO"; fi'
     return is_command_return_okay(command)
 
-def is_conda_module_installed(module_name):
-    command = f"conda list | grep {module_name}"
-    out = subprocess.getoutput(command)
-    # print(command, out)
-    if len(out) < 1:
-        return False
-    return True
 
 def is_writable_directory(folder_path):
     command = f'if [ -w "{folder_path}" ]; then echo "YES"; else echo "NO"; fi'

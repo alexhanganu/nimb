@@ -15,7 +15,7 @@ def Get_DB(NIMB_HOME, NIMB_tmp, process_order):
     dbjson = dict()
     db_json_file = path.join(NIMB_tmp, 'db.json')
 
-    print("NIMB_tmp is:" + NIMB_tmp)
+    log.info("Database file db.json located at: {}".format(NIMB_tmp))
     if path.isfile(db_json_file):
         with open(db_json_file) as db_json_open:
             db = json.load(db_json_open)
