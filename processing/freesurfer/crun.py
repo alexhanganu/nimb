@@ -1,8 +1,6 @@
 #!/bin/python
 # 2020.09.10
 
-print_all_subjects = False
-
 from os import path, system, chdir, environ
 from pathlib import Path
 import time
@@ -72,7 +70,7 @@ def Get_status_for_subjid_in_queue(running_jobs, subjid, scheduler_jobs):
 def try_to_infer_jobid(running_jobs, subjid, scheduler_jobs):
     probable_jobids = [i for i in scheduler_jobs if scheduler_jobs[i][0] in subjid]
     if probable_jobids:
-        print('            job_id for subject {} inferred, probable jobids: {}'.format(subjid, str(probable_jobids[0])))
+        log.info('            job_id for subject {} inferred, probable jobids: {}'.format(subjid, str(probable_jobids[0])))
         if len(probable_jobids)>1:
             running_jobs[subjid] = 0
         else:
@@ -224,7 +222,7 @@ def check_error(scheduler_jobs, process):
                             db['ERROR_QUEUE'].pop(subjid, None)
                             db['PROCESSED']['error_'+process].remove(subjid)
                             db['RUNNING'][process].append(subjid)
-                        elif not chk.IsRunning_chk(subjid) or db['ERROR_QUEUE'][subjid] < schedule.get_time_end_of_walltime('now') # str(format(datetime.now(), "%Y%m%d_%H%M")): #2RM
+                        elif not chk.IsRunning_chk(subjid) or db['ERROR_QUEUE'][subjid] < schedule.get_time_end_of_walltime('now'): # str(format(datetime.now(), "%Y%m%d_%H%M")): #2RM
                         # elif not fs_checker.chkIsRunning(SUBJECTS_DIR, subjid) or db['ERROR_QUEUE'][subjid] < str(format(datetime.now(), "%Y%m%d_%H%M")): #2RM
                             log.info('    removing from ERROR_QUEUE')
                             db['ERROR_QUEUE'].pop(subjid, None)
@@ -383,8 +381,6 @@ def loop_run():
         ls_long_dirs.append(key)
 
     for _id in ls_long_dirs:
-        if print_all_subjects:
-            log.info('    {}: '.format(_id, str(db['LONG_DIRS'][_id])))
         long_check_groups(_id)
 
 
