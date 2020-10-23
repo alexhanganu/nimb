@@ -95,7 +95,7 @@ class Scheduler():
             system("tmux send-keys -t '{}' '{}' ENTER".format(str(self.job_id), cd_cmd))
         if self.python_load:
             system("tmux send-keys -t '{}' '{}' ENTER".format(str(self.job_id),
-                                                              self.vars_local['PROCESSING']["python3_load_cmd"])
+                                                              self.vars_local['PROCESSING']["python3_load_cmd"]))
         system("tmux send-keys -t '{}' '{}' ENTER".format(str(self.job_id), cmd))
 
     def kill_tmux_session(self, session):
