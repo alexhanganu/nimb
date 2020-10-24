@@ -16,6 +16,7 @@ class FreeSurferChecker():
         self.masks              = vars_fs['masks']
         self.meas               = vars_fs["GLM_measurements"]
         self.thresh             = vars_fs["GLM_thresholds"]
+        self.file               = fs_definitions.FilePerFSVersion(vars_fs['freesurfer_version'])
 
     def IsRunning_chk(self, subjid):
         try:
@@ -107,14 +108,15 @@ class FreeSurferChecker():
                 return False
 
     def bs_hip_tha_chk_log_if_done(self, process, subjid):
+        # log_file = path.join(self.SUBJECTS_DIR, subjid, self.file.log_f[process]) #must be check if this works
         log_file = path.join(self.SUBJECTS_DIR, subjid, 'scripts', fs_definitions.log_files[process][self.freesurfer_version])
         if path.exists(log_file) and any('Everything done' in i for i in open(log_file, 'rt').readlines()):
             return True
         else:
             return False
 
-    def bs_hip_tha_get_stats_file(self, process, subjid):
-        lsmri = listdir(path.join(self.SUBJECTS_DIR, subjid, 'mri'))
+    def bs_hip_tha_get_stats_file(sefile_statslf, process, subjid):
+        # file_stats = path.join(self.SUBJECTS_DIR, subjid, 'mri', self.file.stats_f(process, 'mri', hemi)) #must be check if this works
         file_stats = path.join(self.SUBJECTS_DIR, subjid, 'mri', fs_definitions.bs_hip_tha_stats_file_inmri[process][self.freesurfer_version])
         if path.exists(file_stats):
             try:
@@ -123,12 +125,14 @@ class FreeSurferChecker():
                             fs_definitions.bs_hip_tha_stats_file_instats[process][self.freesurfer_version]))
             except Exception as e:
                 print(e)
-            return file_stats
+            return 
         else:
             return ''
 
     def chkbrstemf(self, subjid):
         if self.bs_hip_tha_chk_log_if_done('bs', subjid):
+            # file_stats = path.join(self.SUBJECTS_DIR, subjid, self.file.stats_f('bs', 'stats'))
+            # self.bs_hip_tha_get_stats_file('bs', subjid) #must be check if this works
             file_stats = self.bs_hip_tha_get_stats_file('bs', subjid)
             if file_stats:
                 return True

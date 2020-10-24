@@ -1,5 +1,6 @@
 #!/bin/python
 # 2020.09.04
+from os import path
 
 suggested_times = {
         'registration':'01:00:00',
@@ -21,6 +22,43 @@ IsRunning_files = ['IsRunning.lh+rh', 'IsRunningBSsubst', 'IsRunningHPsubT1.lh+r
 f_autorecon = {1:['mri/nu.mgz','mri/orig.mgz','mri/brainmask.mgz',],
                 2:['stats/lh.curv.stats','stats/rh.curv.stats',],
                 3:['stats/aseg.stats','stats/wmparc.stats',]}
+
+class FilePerFSVersion:
+    def __init__(self, freesurfer_version):
+        self.freesurfer_version = freesurfer_version
+        self.processes = ['bs', 'hip', 'amy', 'tha']
+        self.log = {'bs': {'7':'brainstem-substructures-T1.log', '6':'brainstem-structures.log'},
+                    'hip':{'7':'hippocampal-subfields-T1.log', '6':'hippocampal-subfields-T1.log'},
+                    'tha':{'7':'thalamic-nuclei-mainFreeSurferT1.log', '6':''}
+                }
+        self.stats_files = {
+            'stats': {
+                'bs': {'7':'brainstem.v12.stats', '6':'brainstem.v10.stats',},
+                'hip':{'7':'hipposubfields.T1.v21.stats', '6':'hipposubfields.T1.v10.stats',},
+                'amy':{'7':'amygdalar-nuclei.T1.v21.stats', '6':'',},
+                'tha':{'7':'thalamic-nuclei.v12.T1.stats', '6':'',}
+                },
+            'mri': {
+                'bs': {'7':'brainstemSsVolumes.v12.txt', '6':'brainstemSsVolumes.v10',},
+                'hip':{'7':'hippoSfVolumes-T1.v21.txt', '6':'hippoSfVolumes-T1.v10.txt',},
+                'amy':{'7':'amygNucVolumes-T1.v21.txt', '6':'',},
+                'tha':{'7':'ThalamicNuclei.v12.T1.volumes.txt', '6':'',}
+                }
+            }
+        self.hemi = {'L':'lh.', 'R':'rh.', 'LR':''}
+
+    def fs_ver(self):
+        if len(str(self.freesurfer_version)) > 1:
+            return str(self.freesurfer_version[0])
+        else:
+            return str(self.freesurfer_version)
+    
+    def log_f(self, process):
+        return path.join('scripts', self.log[process][self.fs_ver()])
+        
+    def stats_f(self, process, dir, hemi='LR'):
+        file = '{}{}'.format(self.hemi[hemi], self.stats_files[dir][process][self.fs_ver()])
+        return path.join(dir, file)
 
 # must check for all files: https://surfer.nmr.mgh.harvard.edu/fswiki/ReconAllDevTable
 files_created = {
