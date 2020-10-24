@@ -10,7 +10,8 @@
     "NIMB_NEW_SUBJECTS"       : "~/nimb_tmp/new_subjects",
     "NIMB_PROCESSED_FS"       : "~/nimb_tmp/nimb_processed_fs",
     "NIMB_PROCESSED_FS_error" : "~/nimb_tmp/nimb_processed_fs_error",
-    "miniconda_home"          : "~/miniconda3"
+    "miniconda_home"          : "~/miniconda3",
+    "time_format"             : "%Y%m%d_%H%M"
               },
 "PROCESSING": {
        "SUBMIT": 1,
@@ -22,6 +23,7 @@
        "submit_cmd"             : "sbatch",
        "max_walltime"           : "23:59:59",
        "batch_walltime"         : "12:00:00",
+       "walltime_format"        : "%H:%M:%S",
        "python3_load_cmd"       : "module load python/3.8.2",
        "python3_run_cmd"        : "python",
        "archive_processed"      : 1

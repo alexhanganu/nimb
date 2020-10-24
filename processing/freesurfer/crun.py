@@ -418,26 +418,25 @@ def Count_TimeSleep():
 def run(varslocal):
 
     global db, schedule, log, chk, vars_local, vars_freesurfer, vars_processing, vars_nimb, NIMB_HOME, NIMB_tmp, SUBJECTS_DIR, max_walltime, process_order, processing_env
-    vars_local       = varslocal
-    vars_freesurfer  = vars_local["FREESURFER"]
-    vars_processing  = vars_local["PROCESSING"]
-    vars_nimb        = vars_local["NIMB_PATHS"]
-    processing_env   = vars_local["PROCESSING"]["processing_env"]
+    vars_local      = varslocal
+    vars_freesurfer = vars_local["FREESURFER"]
+    vars_processing = vars_local["PROCESSING"]
+    vars_nimb       = vars_local["NIMB_PATHS"]
+    processing_env  = vars_local["PROCESSING"]["processing_env"]
 
-    NIMB_HOME        = vars_nimb["NIMB_HOME"]
-    NIMB_tmp         = vars_nimb["NIMB_tmp"]
-    max_walltime     = vars_processing["max_walltime"]
-    SUBJECTS_DIR     = vars_freesurfer["FS_SUBJECTS_DIR"]
-    process_order    = vars_freesurfer["process_order"]
+    NIMB_HOME       = vars_nimb["NIMB_HOME"]
+    NIMB_tmp        = vars_nimb["NIMB_tmp"]
+    max_walltime    = vars_processing["max_walltime"]
+    SUBJECTS_DIR    = vars_freesurfer["FS_SUBJECTS_DIR"]
+    process_order   = vars_freesurfer["process_order"]
 
-    chk = FreeSurferChecker(vars_freesurfer)
-    log = logging.getLogger(__name__)
-    schedule = Scheduler(vars_local)
+    log             = logging.getLogger(__name__)
+    chk             = FreeSurferChecker(vars_freesurfer)
+    schedule        = Scheduler(vars_local)
 
-
-    t0 = time.time()
+    t0           = time.time()
     time_elapsed = 0
-    count_run = 0
+    count_run    = 0
 
     log.info('pipeline started')
     cdb.Update_running(NIMB_tmp, 1)

@@ -16,7 +16,8 @@ class Scheduler():
         self.vars_local     = vars_local
         self.NIMB_tmp       = self.vars_local["NIMB_PATHS"]['NIMB_tmp']
         self.processing_env = self.vars_local["PROCESSING"]["processing_env"]
-        self.max_walltime       = self.vars_local['PROCESSING']["batch_walltime"]
+        self.max_walltime   = self.vars_local['PROCESSING']["batch_walltime"]
+        self.time_format    = self.vars_local['NIMB_PATHS']["time_format"]
 
     def submit_4_processing(self, cmd, name, task, cd_cmd = '',
                             activate_fs = True,
@@ -53,7 +54,8 @@ class Scheduler():
         if process == 'now':
             return str(format(datetime.now(), "%Y%m%d_%H%M"))
         else:
-            nr_hours = datetime.strptime(self.Get_walltime(process), '%H:%M:%S').hour
+#            nr_hours = datetime.strptime(self.Get_walltime(process), '%H:%M:%S').hour
+            nr_hours = datetime.strptime(self.Get_walltime(process), self.vars_local['PROCESSING']["walltime_format"]).hour
             return str(format(datetime.now()+timedelta(hours=nr_hours), "%Y%m%d_%H%M"))
 
     def make_submit_file(self, cmd, name, task, cd_cmd):
