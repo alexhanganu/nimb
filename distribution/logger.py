@@ -55,7 +55,6 @@ class Log():
 
 def setup_logging(logLevel, logFile=None):
     """ Setup logging configuration"""
-#    logging.basicConfig()
 #    logging.basicConfig(format='%(asctime)s %(module)s %(levelname)s: %(message)s')
     logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s')
     logger = logging.getLogger()

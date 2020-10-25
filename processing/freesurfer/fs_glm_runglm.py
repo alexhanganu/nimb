@@ -325,18 +325,18 @@ class PerformGLM():
     def run_mri_surfcluster(self, glmdir, contrast_name, hemi, contrast_type, analysis_name, meas, cache, explanation):
         sim_direction = ['pos', 'neg',]
         contrastdir = path.join(glmdir,contrast_name)
-        fwhm = {'thickness': {'lh': '15','rh': '15'},'area': {'lh': '24','rh': '25'},'volume': {'lh': '16','rh': '16'},}
-        measure_abbreviation = {'thickness':'th','area':'ar','volume':'vol'} # needs to be checked, it is possible that only .th is used
+        GLM_sim_fwhm4csd = {'thickness': {'lh': '15','rh': '15'},'area': {'lh': '24','rh': '25'},'volume': {'lh': '16','rh': '16'},}
+        GLM_measurements = {'thickness':'th','area':'ar','volume':'vol'}
         for direction in sim_direction:
             sig_f = path.join(contrastdir,'sig.mgh')
-            cwsig_mc_f = path.join(contrastdir,'mc-z.'+direction+'.'+measure_abbreviation[meas]+str(cache)+'.sig.cluster.mgh')
-            vwsig_mc_f = path.join(contrastdir,'mc-z.'+direction+'.'+measure_abbreviation[meas]+str(cache)+'.sig.vertex.mgh')
-            sum_mc_f = path.join(contrastdir,'mc-z.'+direction+'.'+measure_abbreviation[meas]+str(cache)+'.sig.cluster.summary')
-            ocn_mc_f = path.join(contrastdir,'mc-z.'+direction+'.'+measure_abbreviation[meas]+str(cache)+'.sig.ocn.mgh')
-            oannot_mc_f = path.join(contrastdir,'mc-z.'+direction+'.'+measure_abbreviation[meas]+str(cache)+'.sig.ocn.annot')
-            csdpdf_mc_f = path.join(contrastdir,'mc-z.'+direction+'.'+measure_abbreviation[meas]+str(cache)+'.pdf.dat')
+            cwsig_mc_f = path.join(contrastdir,'mc-z.'+direction+'.'+GLM_measurements[meas]+str(cache)+'.sig.cluster.mgh')
+            vwsig_mc_f = path.join(contrastdir,'mc-z.'+direction+'.'+GLM_measurements[meas]+str(cache)+'.sig.vertex.mgh')
+            sum_mc_f = path.join(contrastdir,'mc-z.'+direction+'.'+GLM_measurements[meas]+str(cache)+'.sig.cluster.summary')
+            ocn_mc_f = path.join(contrastdir,'mc-z.'+direction+'.'+GLM_measurements[meas]+str(cache)+'.sig.ocn.mgh')
+            oannot_mc_f = path.join(contrastdir,'mc-z.'+direction+'.'+GLM_measurements[meas]+str(cache)+'.sig.ocn.annot')
+            csdpdf_mc_f = path.join(contrastdir,'mc-z.'+direction+'.'+GLM_measurements[meas]+str(cache)+'.pdf.dat')
             if meas != 'curv':
-                csd_mc_f = path.join(self.FREESURFER_HOME,'average','mult-comp-cor','fsaverage',hemi,'cortex','fwhm'+fwhm[meas][hemi],direction,'th'+str(cache),'mc-z.csd')
+                csd_mc_f = path.join(self.FREESURFER_HOME,'average','mult-comp-cor','fsaverage',hemi,'cortex','fwhm'+GLM_sim_fwhm4csd[meas][hemi],direction,'th'+str(cache),'mc-z.csd')
                 system('mri_surfcluster --in '+sig_f+' --csd '+csd_mc_f+' --mask '+path.join(glmdir,'mask.mgh')+' --cwsig '+cwsig_mc_f+' --vwsig '+vwsig_mc_f+' --sum '+sum_mc_f+' --ocn '+ocn_mc_f+' --oannot '+oannot_mc_f+' --csdpdf '+csdpdf_mc_f+' --annot aparc --cwpvalthresh 0.05 --surf white')                                        
                 if self.check_mcz_summary(sum_mc_f):
                     self.cluster_stats_to_file(analysis_name, sum_mc_f, contrast_name.replace(contrast_type+'_',''), direction, explanation)
