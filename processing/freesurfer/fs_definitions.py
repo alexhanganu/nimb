@@ -1,6 +1,13 @@
 #!/bin/python
 # 2020.09.04
 from os import path
+processes_recon = ["autorecon1","autorecon2","autorecon3"]
+processes_subcort = ["brstem","hip","tha"]
+
+process_order = ["registration","autorecon1","autorecon2","autorecon3","brstem","hip","tha", "qcache"]
+GLM_measurements = {'thickness':'th','area':'ar','volume':'vol'}
+GLM_sim_fwhm4csd = {'thickness': {'lh': '15','rh': '15'},'area': {'lh': '24','rh': '25'},'volume': {'lh': '16','rh': '16'},}
+GLM_sim_directions = ['pos', 'neg']
 
 suggested_times = {
         'registration':'01:00:00',

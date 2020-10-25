@@ -5,9 +5,8 @@ from os import path, system, chdir, environ
 from pathlib import Path
 import time
 import shutil
-# from datetime import datetime# , timedelta # 2RM
 import logging
-import cdb, fs_err_helper, fs_checker #, fs_definitions  #2RM
+import cdb, fs_err_helper, fs_checker
 from fs_checker import FreeSurferChecker
 
 environ['TZ'] = 'US/Eastern'
