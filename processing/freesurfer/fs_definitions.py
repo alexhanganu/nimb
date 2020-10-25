@@ -23,6 +23,8 @@ f_autorecon = {1:['mri/nu.mgz','mri/orig.mgz','mri/brainmask.mgz',],
                 2:['stats/lh.curv.stats','stats/rh.curv.stats',],
                 3:['stats/aseg.stats','stats/wmparc.stats',]}
 
+hemi = ['lh','rh']
+
 class FilePerFSVersion:
     def __init__(self, freesurfer_version):
         self.freesurfer_version = freesurfer_version
@@ -45,7 +47,7 @@ class FilePerFSVersion:
                 'tha':{'7':'ThalamicNuclei.v12.T1.volumes.txt', '6':'',}
                 }
             }
-        self.hemi = {'L':'lh.', 'R':'rh.', 'LR':''}
+        self.hemi = {'rh':'lh.', 'rh':'rh.', 'lhrh':''}
 
     def fs_ver(self):
         if len(str(self.freesurfer_version)) > 1:
@@ -56,7 +58,7 @@ class FilePerFSVersion:
     def log_f(self, process):
         return path.join('scripts', self.log[process][self.fs_ver()])
         
-    def stats_f(self, process, dir, hemi='LR'):
+    def stats_f(self, process, dir, hemi='lhrh'):
         file = '{}{}'.format(self.hemi[hemi], self.stats_files[dir][process][self.fs_ver()])
         return path.join(dir, file)
 

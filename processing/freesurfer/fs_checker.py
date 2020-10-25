@@ -95,7 +95,7 @@ class FreeSurferChecker():
             return False
     def check_qcache_files(self, subjid):
             miss = list()
-            for hemi in ['lh','rh']:
+            for hemi in fs_definitions.hemi:
                 for meas in self.meas:
                     for thresh in self.thresh:
                         file = hemi+'.'+meas+'.fwhm'+str(thresh)+'.fsaverage.mgh'
@@ -107,34 +107,28 @@ class FreeSurferChecker():
                 log.info('    files are missing: {}'.format(str(miss)))
                 return False
 
-    def bs_hip_tha_chk_log_if_done(self, process, subjid):
-        # log_file = path.join(self.SUBJECTS_DIR, subjid, self.file.log_f[process]) #must be check if this works
+    def log_chk(self, process, subjid):
         log_file = path.join(self.SUBJECTS_DIR, subjid, 'scripts', fs_definitions.log_files[process][self.freesurfer_version])
         if path.exists(log_file) and any('Everything done' in i for i in open(log_file, 'rt').readlines()):
             return True
         else:
             return False
 
-    def bs_hip_tha_get_stats_file(sefile_statslf, process, subjid):
-        # file_stats = path.join(self.SUBJECTS_DIR, subjid, 'mri', self.file.stats_f(process, 'mri', hemi)) #must be check if this works
-        file_stats = path.join(self.SUBJECTS_DIR, subjid, 'mri', fs_definitions.bs_hip_tha_stats_file_inmri[process][self.freesurfer_version])
-        if path.exists(file_stats):
+    def stats_f_cp_from_mri(self, src, dst):
+        if path.exists(src):
             try:
-                shutil.copy(path.join(self.SUBJECTS_DIR, subjid, 'mri', file_stats),
-                            path.join(self.SUBJECTS_DIR, subjid, 'stats',
-                            fs_definitions.bs_hip_tha_stats_file_instats[process][self.freesurfer_version]))
+                shutil.copy(src,dst)
+                return True
             except Exception as e:
                 print(e)
-            return 
+                return False
         else:
-            return ''
+            return False
 
     def chkbrstemf(self, subjid):
-        if self.bs_hip_tha_chk_log_if_done('bs', subjid):
-            # file_stats = path.join(self.SUBJECTS_DIR, subjid, self.file.stats_f('bs', 'stats'))
-            # self.bs_hip_tha_get_stats_file('bs', subjid) #must be check if this works
-            file_stats = self.bs_hip_tha_get_stats_file('bs', subjid)
-            if file_stats:
+        if self.log_chk('bs', subjid):
+            self.stats_f_cp_from_mri(path.join(self.SUBJECTS_DIR, subjid, self.file.stats_f('bs', 'mri')), path.join(self.SUBJECTS_DIR, subjid, self.file.stats_f('bs', 'stats')))
+            if path.join(self.SUBJECTS_DIR, subjid, self.file.stats_f('bs', 'stats')):
                 return True
             else:
                 return False
@@ -142,21 +136,26 @@ class FreeSurferChecker():
             return False
 
     def chkhipf(self, subjid):
-        if self.bs_hip_tha_chk_log_if_done('hip', subjid):
-            if path.exists(path.join(self.SUBJECTS_DIR, subjid, 'mri',
-                    fs_definitions.bs_hip_tha_stats_file_inmri['hipR'][self.freesurfer_version])):
-                for file in ['hipL', 'hipR', 'amyL', 'amyR']:
-                    file_stats = self.bs_hip_tha_get_stats_file(file, subjid)
-                return True
-            else:
-                return False
+        res = True
+        if self.log_chk('hip', subjid):
+            for hemi in fs_definitions.hemi:
+                for process in ['hip','amy']:
+                    stats_f_inmri = path.join(self.SUBJECTS_DIR, subjid, self.file.stats_f(process, 'mri', hemi))
+                    stats_f_instats = path.join(self.SUBJECTS_DIR, subjid, self.file.stats_f(process, 'stats', hemi))
+                    self.stats_f_cp_from_mri(stats_f_inmri, stats_f_instats)
+            for hemi in fs_definitions.hemi:
+                for process in ['hip','amy']:
+                    if not path.exists(self.SUBJECTS_DIR, subjid, self.file.stats_f(process, 'stats', hemi))
+                        res = False
+                        break
         else:
-            return False
+            res = False
+        return res
 
     def chkthaf(self, subjid):
-        if self.bs_hip_tha_chk_log_if_done('tha', subjid):
-            file_stats = self.bs_hip_tha_get_stats_file('tha', subjid)
-            if file_stats:
+        if self.log_chk('tha', subjid):
+            self.stats_f_cp_from_mri(path.join(self.SUBJECTS_DIR, subjid, self.file.stats_f('tha', 'mri')), path.join(self.SUBJECTS_DIR, subjid, self.file.stats_f('tha', 'stats')))            
+            if path.join(self.SUBJECTS_DIR, subjid, self.file.stats_f('tha', 'stats')):
                 return True
             else:
                 return False
@@ -189,7 +188,8 @@ class FreeSurferChecker():
 
 
 
-
+"""
+2RM
 def chkIsRunning(SUBJECTS_DIR, subjid):
     try:
         for file in fs_definitions.IsRunning_files:
@@ -372,3 +372,4 @@ def chk_if_all_done(SUBJECTS_DIR, subjid, process_order, NIMB_tmp, freesurfer_ve
             log.info('            IsRunning file present ')
             result = False
         return result
+"""
