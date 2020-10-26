@@ -108,7 +108,7 @@ class FreeSurferChecker():
                 return False
 
     def log_chk(self, process, subjid):
-        log_file = path.join(self.SUBJECTS_DIR, subjid, 'scripts', fs_definitions.log_files[process][self.freesurfer_version])
+        log_file = path.join(self.SUBJECTS_DIR, subjid, self.file.log_f(process))
         if path.exists(log_file) and any('Everything done' in i for i in open(log_file, 'rt').readlines()):
             return True
         else:
