@@ -42,18 +42,6 @@ def Update_DB(db, NIMB_tmp):
         json.dump(db, jf, indent=4)
 
 
-def Update_running(NIMB_tmp, cmd):
-    file = path.join(NIMB_tmp, 'running_')
-    if cmd == 1:
-        if path.isfile(file+'0'):
-            rename(file+'0', file+'1')
-        else:
-            open(file+'1', 'w').close()
-    else:
-        if path.isfile(file+'1'):
-            rename(file+'1', file+'0')
-
-
 def get_ls_subjids_in_long_dirs(db):
     lsall = []
     for _id in db['LONG_DIRS']:
@@ -68,18 +56,10 @@ def get_ls_subjids_in_long_dirs(db):
     return lsall
 
 
-def check_that_all_files_are_accessible(ls):
-	for file in ls:
-		if not path.exists(file):
-			ls.remove(file)
-	return ls
-
-
-def Update_DB_new_subjects_and_SUBJECTS_DIR(NIMB_tmp, SUBJECTS_DIR, db, process_order, base_name, long_name, freesurfer_version, masks):
-
-    db = chk_subj_in_SUBJECTS_DIR(SUBJECTS_DIR, NIMB_tmp, db, process_order, base_name, long_name, freesurfer_version, masks)
-    db = chk_subjects2fs_file(SUBJECTS_DIR, NIMB_tmp, db, base_name, long_name, freesurfer_version, masks)
-    db = chk_new_subjects_json_file(SUBJECTS_DIR, NIMB_tmp, db, freesurfer_version, masks)
+def Update_DB_new_subjects_and_SUBJECTS_DIR(NIMB_tmp, db, vars_freesurfer):
+    db = chk_subj_in_SUBJECTS_DIR(NIMB_tmp, db, vars_freesurfer)
+    db = chk_subjects2fs_file(NIMB_tmp, db, vars_freesurfer)
+    db = chk_new_subjects_json_file(NIMB_tmp, db, vars_freesurfer)
     return db
 
 
@@ -99,11 +79,15 @@ def add_subjid_2_DB(NIMB_tmp, subjid, _id, ses, db, ls_SUBJECTS_in_long_dirs_pro
 
 
 
-def chk_subjects2fs_file(SUBJECTS_DIR, NIMB_tmp, db, base_name, long_name, freesurfer_version, masks):
+def chk_subjects2fs_file(NIMB_tmp, db, vars_freesurfer):
     log.info('    NEW_SUBJECTS_DIR checking ...')
 
+    base_name =vars_freesurfer["base_name"], 
+    long_name = vars_freesurfer["long_name"],
+
     ls_SUBJECTS_in_long_dirs_processed = get_ls_subjids_in_long_dirs(db)
-    from fs_checker import checks_from_runfs
+    from fs_checker import FreeSurferChecker
+    chk = FreeSurferChecker(vars_freesurfer)
 
     f_subj2fs = path.join(NIMB_tmp, 'subjects2fs')
     if path.isfile(f_subj2fs):
@@ -111,14 +95,13 @@ def chk_subjects2fs_file(SUBJECTS_DIR, NIMB_tmp, db, base_name, long_name, frees
         for subjid in ls_subj2fs:
             log.info('    adding '+subjid+' to database')
             _id, ses = get_id_long(subjid, db['LONG_DIRS'], base_name, long_name)
-            if not checks_from_runfs(SUBJECTS_DIR, 'registration',_id, freesurfer_version, masks):
+            if not chk.checks_from_runfs('registration', _id):
                 db = add_subjid_2_DB(NIMB_tmp, subjid, _id, ses, db, ls_SUBJECTS_in_long_dirs_processed)
         log.info('new subjects were added from the subjects folder')
     return db
 
 
-
-def chk_new_subjects_json_file(SUBJECTS_DIR, NIMB_tmp, db, freesurfer_version, masks):
+def chk_new_subjects_json_file(NIMB_tmp, db, vars_freesurfer):
 
     def ls_from_subj2fs(NIMB_tmp, f_subj2fs):
         ls_subjids = list()
@@ -134,7 +117,8 @@ def chk_new_subjects_json_file(SUBJECTS_DIR, NIMB_tmp, db, freesurfer_version, m
     log.info('    new_subjects.json checking ...')
 
     ls_SUBJECTS_in_long_dirs_processed = get_ls_subjids_in_long_dirs(db)
-    from fs_checker import checks_from_runfs
+    from fs_checker import FreeSurferChecker
+    chk = FreeSurferChecker(vars_freesurfer)
 
     f_new_subjects = path.join(NIMB_tmp,"new_subjects.json")
     if path.isfile(f_new_subjects):
@@ -142,7 +126,7 @@ def chk_new_subjects_json_file(SUBJECTS_DIR, NIMB_tmp, db, freesurfer_version, m
         with open(f_new_subjects) as jfile:
             data = json.load(jfile)
         for _id in data:
-            if not checks_from_runfs(SUBJECTS_DIR, 'registration',_id, freesurfer_version, masks):
+            if not chk.checks_from_runfs('registration', _id):
                 for ses in data[_id]:
                     if 'anat' in data[_id][ses]:
                         if 't1' in data[_id][ses]['anat']:
@@ -175,7 +159,6 @@ def get_registration_files(subjid, db, nimb_dir, NIMB_tmp, flair_t2_add):
         return t1_ls_f, flair_ls_f, t2_ls_f
 
 
-
 def get_id_long(subjid, LONG_DIRS, base_name, long_name):
         _id = 'none'
         for key in LONG_DIRS:
@@ -195,11 +178,16 @@ def get_id_long(subjid, LONG_DIRS, base_name, long_name):
         return _id, longitud
 
 
-
-def chk_subj_in_SUBJECTS_DIR(SUBJECTS_DIR, NIMB_tmp, db, process_order, base_name, long_name, freesurfer_version, masks):
+def chk_subj_in_SUBJECTS_DIR(NIMB_tmp, db, vars_freesurfer):
     log.info('    SUBJECTS_DIR checking ...')
 
-    from fs_checker import chkIsRunning, checks_from_runfs
+    base_name          =vars_freesurfer["base_name"], 
+    long_name          = vars_freesurfer["long_name"],
+    SUBJECTS_DIR       = vars_freesurfer["FS_SUBJECTS_DIR"]
+    process_order      = vars_freesurfer["process_order"]
+
+    from fs_checker import FreeSurferChecker
+    chk = FreeSurferChecker(vars_freesurfer)
 
     def chk_if_exclude(subjid):
         exclude = False
@@ -219,10 +207,10 @@ def chk_subj_in_SUBJECTS_DIR(SUBJECTS_DIR, NIMB_tmp, db, process_order, base_nam
                         ls_subj_running.append(subjid)
         return ls_subj_running
 
-    def add_new_subjid_to_db(subjid, process_order, NIMB_tmp, freesurfer_version, masks):
-        if not chkIsRunning(SUBJECTS_DIR, subjid):
+    def add_new_subjid_to_db(subjid, chk, process_order):
+        if not chk.IsRunning_chk(subjid):
             for process in process_order[1:]:
-                if not checks_from_runfs(SUBJECTS_DIR, process, subjid, freesurfer_version, masks):
+                if not chk.checks_from_runfs(process, subjid):
                     log.info('        '+subjid+' sent for DO '+process)
                     db['DO'][process].append(subjid)
                     break
@@ -258,5 +246,12 @@ def chk_subj_in_SUBJECTS_DIR(SUBJECTS_DIR, NIMB_tmp, db, process_order, base_nam
                     db['LONG_TPS'][_id].append(longitud)
             if base_name not in subjid:
                 if subjid not in ls_SUBJECTS_running:
-                    add_new_subjid_to_db(subjid, process_order, NIMB_tmp, freesurfer_version, masks)
+                    add_new_subjid_to_db(subjid, chk, process_order)
     return db
+
+
+def check_that_all_files_are_accessible(ls):
+    for file in ls:
+        if not path.exists(file):
+            ls.remove(file)
+    return ls
