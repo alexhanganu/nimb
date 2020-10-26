@@ -54,7 +54,7 @@ class FilePerFSVersion:
                 'tha':{'7':'ThalamicNuclei.v12.T1.volumes.txt', '6':'',}
                 }
             }
-        self.hemi = {'rh':'lh.', 'rh':'rh.', 'lhrh':''}
+        self.hemi = {'lh':'lh.', 'rh':'rh.', 'lhrh':''}
 
     def fs_ver(self):
         if len(str(self.freesurfer_version)) > 1:
