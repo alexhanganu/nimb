@@ -33,9 +33,9 @@ class Log():
         self.set_logger()
 
         self.logger.info("--- nimb start ---")
-        self.logger.info("OS:version: %s", platform.platform())
-        self.logger.info("python:version: %s", sys.version.replace("\n", ""))
-        self.logger.info("nimb:version: %s", __version__)
+        self.logger.info("OS:version: {}".format(platform.platform()))
+        self.logger.info("python:version: {}".format(sys.version.replace("\n", "")))
+        self.logger.info("nimb:version: {}".format(__version__))
         self.logger.info("freesurfer:version: {}".format(freesurfer_version))
 
 

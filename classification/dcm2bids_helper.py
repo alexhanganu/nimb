@@ -14,6 +14,15 @@ import shutil
 import json
 
 class DCM2BIDS_helper():
+	"""
+	goal: use UNFMontreal/dcm2bids to convert .dcm files to BIDS .nii.gz
+	args: DIR with the subjects with .dcm files that need to be converted; currently must be unacrhived
+	args: OUTPUT_DIR - DIR where the BIDS structure will be created
+	algo: (1) convert (run()), (2) check if any unconverted (chk_if_processed()),
+		  (3) if not converted, try to create the config file (get_sidecar(), update_config())
+		  (4) redo run() up to repeat_lim
+	"""
+
     def __init__(self, proj_vars, project, repeat_lim = 1):
         self.proj_vars  = proj_vars
         self.project    = project
@@ -63,12 +72,19 @@ class DCM2BIDS_helper():
         self.update_config(content, data_Type, modality, criterion)
 
     def update_config(self, content, data_Type, modality, criterion):
-        new_des = {
-        ['dataType' : data_Type, 'modalityLabel' : modality,
-        'criteria':{criterion: content[criterion]}}
-        config = self.get_json_content(self.config_file)
-        config['descriptions'].append(new_des)
-        self.save_json(config, self.config_file)
+    	if self.chk_if_in_config(data_Type, modality, criterion):
+	        new_des = {
+	        	['dataType' : data_Type, 'modalityLabel' : modality,
+	        	'criteria':{criterion: content[criterion]}}
+	        config = self.get_json_content(self.config_file)
+	        config['descriptions'].append(new_des)
+	        self.save_json(config, self.config_file)
+	    else:
+	    	print('criterion {} present in config file'.format(criterion))
+
+	def chk_if_in_config(self, data_Type, modality, criterion):
+		
+		return False
 
     def run_helper(self):
         helper_dir = path.join(self.OUTPUT_DIR, 'tmp_dcm2bids', 'helper')
