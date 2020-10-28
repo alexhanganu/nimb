@@ -492,7 +492,7 @@ def run(varslocal):
     else:
         log.info('Sending new batch to scheduler')
         cmd = '{} crun.py'.format(vars_processing["python3_run_cmd"])
-        cd_cmd = 'cd {}'.format(path.dirname(path.abspath(__file__)))
+        cd_cmd = 'cd {}'.format(NIMB_HOME, 'processing', 'freesurfer')
         schedule.submit_4_processing(cmd,'nimb','run', cd_cmd,
                                     activate_fs = False,
                                     python_load = True)
