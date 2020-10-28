@@ -14,9 +14,19 @@ import shutil
 import json
 
 class DCM2BIDS_helper():
+    """
+    goal: use UNFMontreal/dcm2bids to convert .dcm files to BIDS .nii.gz
+    args: DIR with the subjects with .dcm files that need to be converted; currently must be unacrhived
+    args: OUTPUT_DIR - DIR where the BIDS structure will be created
+    algo: (1) convert (run()), (2) check if any unconverted (chk_if_processed()),
+          (3) if not converted, try to create the config file (get_sidecar(), update_config())
+          (4) redo run() up to repeat_lim
+    """
+
     def __init__(self, proj_vars, project, repeat_lim = 1):
         self.proj_vars  = proj_vars
         self.project    = project
+        self.run        = 1
         self.repeat_lim = repeat_lim
         self.repeat_updating = 0
         self.DICOM_DIR  = self.get_SUBJ_DIR()
@@ -24,12 +34,13 @@ class DCM2BIDS_helper():
 
     def run(self, subjid = 'none'):
         #run dcm2bids:
-        self.config_file = self.get_config_file()
-        self.SUBJ_NAME = self.get_sub()
-        print(self.SUBJ_NAME)
-        system('dcm2bids -d {} -p {} -c {} -o {}'.format(self.DICOM_DIR, self.SUBJ_NAME, self.config_file, self.OUTPUT_DIR))
-        self.sub_SUBJDIR = path.join(self.OUTPUT_DIR, 'tmp_dcm2bids', 'sub-{}'.format(self.SUBJ_NAME))
-        self.chk_if_processed()
+        if self.run == '1':
+            self.config_file = self.get_config_file()
+            self.SUBJ_NAME = self.get_sub()
+            print(self.SUBJ_NAME)
+            system('dcm2bids -d {} -p {} -c {} -o {}'.format(self.DICOM_DIR, self.SUBJ_NAME, self.config_file, self.OUTPUT_DIR))
+            self.sub_SUBJDIR = path.join(self.OUTPUT_DIR, 'tmp_dcm2bids', 'sub-{}'.format(self.SUBJ_NAME))
+            self.chk_if_processed()
 
     def get_sub(self):
         return listdir(self.DICOM_DIR)[0]
@@ -58,23 +69,36 @@ class DCM2BIDS_helper():
 
     def get_sidecar(self):
         sidecar = [i for i in listdir(self.sub_SUBJDIR) if '.json' in i][0]
-        content = self.get_json_content(path.join(self.sub_SUBJDIR, sidecar))
+        self.sidecar_content = self.get_json_content(path.join(self.sub_SUBJDIR, sidecar))
         data_Type, modality, criterion = self.classify_mri()
-        self.update_config(content, data_Type, modality, criterion)
+        self.update_config(data_Type, modality, criterion)
 
-    def update_config(self, content, data_Type, modality, criterion):
-        new_des = {
-        ['dataType' : data_Type, 'modalityLabel' : modality,
-        'criteria':{criterion: content[criterion]}}
-        config = self.get_json_content(self.config_file)
-        config['descriptions'].append(new_des)
-        self.save_json(config, self.config_file)
+    def update_config(self, data_Type, modality, criterion):
+        self.config = self.get_json_content(self.config_file)
+        if self.chk_if_in_config(data_Type, modality, criterion):
+            new_des = {
+               ['dataType' : data_Type, 'modalityLabel' : modality,
+               'criteria':{criterion: self.sidecar_content[criterion]}}
+            self.config['descriptions'].append(new_des)
+            self.save_json(self.config, self.config_file)
+        else:
+           print('criterion {} present in config file'.format(criterion))
+
+    def chk_if_in_config(self, data_Type, modality, criterion):
+        for des in self.config['descriptions']:
+            if data_Type in self.config['descriptions'][des]['data_Type'] and
+                modality in self.config['descriptions'][des]['modalityLabel'] and 
+                self.sidecar_content[criterion] in self.config['descriptions'][des]['criteria'][criterion]:
+                return True
+            else:
+                self.run == '0'
+                return False
 
     def run_helper(self):
         helper_dir = path.join(self.OUTPUT_DIR, 'tmp_dcm2bids', 'helper')
         system('dcm2bids_helper -d {} -o {}'.format(self.DICOM_DIR, self.OUTPUT_DIR))
         # read the .json file and add parameters in the config file
-        content = open(path.join(helper_dir,
+        self.sidecar_content = open(path.join(helper_dir,
                       [i for i in listdir(path.join()) if '.json' in i][0]), 'r').readlines()
         return sidecar
 

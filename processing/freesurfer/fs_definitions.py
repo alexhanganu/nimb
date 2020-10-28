@@ -54,7 +54,7 @@ class FilePerFSVersion:
                 'tha':{'7':'ThalamicNuclei.v12.T1.volumes.txt', '6':'',}
                 }
             }
-        self.hemi = {'rh':'lh.', 'rh':'rh.', 'lhrh':''}
+        self.hemi = {'lh':'lh.', 'rh':'rh.', 'lhrh':''}
 
     def fs_ver(self):
         if len(str(self.freesurfer_version)) > 1:
@@ -78,49 +78,6 @@ files_created = {
     'qcache'    : ['surf/rh.w-g.pct.mgh.fsaverage.mgh', 'surf/lh.thickness.fwhm10.fsaverage.mgh']
 }
 
-log_files = {
-    'bs':{
-        7:'brainstem-substructures-T1.log', 6:'brainstem-structures.log',
-          },
-    'hip':{
-        7:'hippocampal-subfields-T1.log', 6:'hippocampal-subfields-T1.log',
-          },
-    'tha':{
-        7:'thalamic-nuclei-mainFreeSurferT1.log', 6:'',
-          },
-}
-
-
-bs_hip_tha_stats_file_inmri = {
-    'bs':{
-        7:'brainstemSsVolumes.v12.txt', 6:'brainstemSsVolumes.v10',},
-    'hipL':{
-        7:'lh.hippoSfVolumes-T1.v21.txt', 6:'lh.hippoSfVolumes-T1.v10.txt',},
-    'hipR':{
-        7:'rh.hippoSfVolumes-T1.v21.txt', 6:'rh.hippoSfVolumes-T1.v10.txt',},
-    'amyL':{
-        7:'lh.amygNucVolumes-T1.v21.txt', 6:'',},
-    'amyR':{
-        7:'rh.amygNucVolumes-T1.v21.txt', 6:'',},
-    'tha':{
-        7:'ThalamicNuclei.v12.T1.volumes.txt', 6:'',},
-                         }
-
-bs_hip_tha_stats_file_instats = {
-    'bs':{
-        7:'brainstem.v12.stats', 6:'brainstem.v10.stats',},
-    'hipL':{
-        7:'lh.hipposubfields.T1.v21.stats', 6:'lh.hipposubfields.T1.v10.stats',},
-    'hipR':{
-        7:'rh.hipposubfields.T1.v21.stats', 6:'rh.hipposubfields.T1.v10.stats',},
-    'amyL':{
-        7:'lh.amygdalar-nuclei.T1.v21.stats', 6:'',},
-    'amyR':{
-        7:'rh.amygdalar-nuclei.T1.v21.stats', 6:'',},
-    'tha':{
-        7:'thalamic-nuclei.v12.T1.stats', 6:'',},
-                       }
-
 fs_structure_codes = {'left_hippocampus':17,'right_hippocampus':53,
                     'left_thalamus':10,'right_thalamus':49,'left_caudate':11,'right_caudate':50,
                     'left_putamen':12,'right_putamen':51,'left_pallidum':13,'right_pallidum':52,
@@ -132,4 +89,3 @@ fs_structure_codes = {'left_hippocampus':17,'right_hippocampus':53,
                     'left_amygdala_subiculum':557,'right_amygdala_subiculum':507,
                     'left_amygdala_presubiculum':554,'right_amygdala_presubiculum':504,
                     }
-

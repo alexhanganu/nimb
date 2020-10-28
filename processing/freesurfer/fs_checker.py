@@ -108,7 +108,7 @@ class FreeSurferChecker():
                 return False
 
     def log_chk(self, process, subjid):
-        log_file = path.join(self.SUBJECTS_DIR, subjid, 'scripts', fs_definitions.log_files[process][self.freesurfer_version])
+        log_file = path.join(self.SUBJECTS_DIR, subjid, self.file.log_f(process))
         if path.exists(log_file) and any('Everything done' in i for i in open(log_file, 'rt').readlines()):
             return True
         else:
@@ -145,7 +145,7 @@ class FreeSurferChecker():
                     self.stats_f_cp_from_mri(stats_f_inmri, stats_f_instats)
             for hemi in fs_definitions.hemi:
                 for process in ['hip','amy']:
-                    if not path.exists(self.SUBJECTS_DIR, subjid, self.file.stats_f(process, 'stats', hemi)):
+                    if not path.exists(path.join(self.SUBJECTS_DIR, subjid, self.file.stats_f(process, 'stats', hemi))):
                         res = False
                         break
         else:

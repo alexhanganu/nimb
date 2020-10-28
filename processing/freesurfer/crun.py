@@ -413,6 +413,16 @@ def Count_TimeSleep():
         time2sleep = 1800 # 30 minutes
     return time2sleep
 
+def Update_running(NIMB_tmp, cmd):
+    file = path.join(NIMB_tmp, 'running_')
+    if cmd == 1:
+        if path.isfile(file+'0'):
+            rename(file+'0', file+'1')
+        else:
+            open(file+'1', 'w').close()
+    else:
+        if path.isfile(file+'1'):
+            rename(file+'1', file+'0')
 
 def run(varslocal):
 
@@ -438,13 +448,13 @@ def run(varslocal):
     count_run    = 0
 
     log.info('pipeline started')
-    cdb.Update_running(NIMB_tmp, 1)
+    Update_running(NIMB_tmp, 1)
 
     log.info('reading database')
     db = cdb.Get_DB(NIMB_HOME, NIMB_tmp, process_order)
 
     log.info('NEW SUBJECTS searching:')
-    db = cdb.Update_DB_new_subjects_and_SUBJECTS_DIR(NIMB_tmp, SUBJECTS_DIR,db, process_order, vars_freesurfer["base_name"], vars_freesurfer["long_name"], vars_freesurfer["freesurfer_version"], vars_freesurfer["masks"])
+    db = cdb.Update_DB_new_subjects_and_SUBJECTS_DIR(NIMB_tmp, db, vars_freesurfer)
     cdb.Update_DB(db, NIMB_tmp)
     active_subjects = check_active_tasks(db)
 
@@ -459,7 +469,7 @@ def run(varslocal):
         log.info('elapsed time: '+time.strftime("%H:%M",time.gmtime(time_elapsed))+' max walltime: '+vars_processing["batch_walltime"][:-6])
         if count_run % 5 == 0:
             log.info('NEW SUBJECTS searching:')
-            db = cdb.Update_DB_new_subjects_and_SUBJECTS_DIR(NIMB_tmp, SUBJECTS_DIR, db, process_order, vars_freesurfer["base_name"], vars_freesurfer["long_name"], vars_freesurfer["freesurfer_version"], vars_freesurfer["masks"])
+            db = cdb.Update_DB_new_subjects_and_SUBJECTS_DIR(NIMB_tmp, db, vars_freesurfer)
             cdb.Update_DB(db, NIMB_tmp)
         loop_run()
 
@@ -477,7 +487,7 @@ def run(varslocal):
         active_subjects = check_active_tasks(db)
 
     if active_subjects == 0:
-        cdb.Update_running(NIMB_tmp, 0)
+        Update_running(NIMB_tmp, 0)
         log.info('ALL TASKS FINISHED')
     else:
         log.info('Sending new batch to scheduler')
