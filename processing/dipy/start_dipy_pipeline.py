@@ -23,6 +23,7 @@ from dipy.tracking.local_tracking import LocalTracking
 from dipy.tracking.stopping_criterion import BinaryStoppingCriterion
 from dipy.tracking.streamline import Streamlines
 
+
 class SampleConnDipy:
     def __init__(self):
         hardi_fname, hardi_bval_fname, hardi_bvec_fname = get_fnames('stanford_hardi')
