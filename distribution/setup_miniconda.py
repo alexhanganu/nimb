@@ -1,60 +1,95 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # coding: utf-8
 # 2020.08.13
 
+import sys
 
-from os import path, chdir, system, remove
+print(sys.version)
+from os import path, chdir, system, remove, makedirs
 import subprocess
-from distribution.utilities import is_command_ran_sucessfully
-# can be improved by using a yml file
+from os.path import expanduser
 
-# maybe we try to install all using requirements and check?
-# system('pip install -r {}'.format(path.join(path.dirname(path.abspath(__file__)), '..', 'requirements.txt')))
+
+def is_command_ran_sucessfully(command):
+    command = """
+        {0} > /dev/null
+        if [ $? -eq 0 ]; then
+            echo "YES"
+        else
+            echo "NO"
+        fi
+        """.format(command)
+    print(command)
+    result =  is_command_return_okay(command)
+    if result is False:
+        print("ERROR: {0} is fail".format(command))
+    return result
+def is_command_return_okay(command):
+    out = subprocess.getoutput(command)
+    print(out)
+    if out.strip() == "YES":
+        print("yessss")
+        return True
+    return False
 
 def setup_miniconda(miniconda_home):
-    #if is_miniconda_installed():
-       # system("conda install -y dcm2niix dcm2bids pandas numpy xlrd xlsxwriter paramiko dipy -c conda-forge -c default")
-    #    return
+    """
+    :param miniconda_home: it is the prefix of miniconda, for example /users/test/demo, it then
+    creates the miniconda3 folder like this   /users/test/demo/miniconda3
+    :return:
+    """
+    # if any system() return non-zero number, quit the application and raise error?
+    miniconda_home = expanduser(miniconda_home)
     if not path.exists(miniconda_home):
-        chdir(path.join(miniconda_home, '..'))
-        # system('curl https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -o miniconda3.sh')
-        is_command_ran_sucessfully('curl https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -o miniconda3.sh')
-        system('chmod +x miniconda3.sh')
-        system('./miniconda3.sh -b -p ' + path.join(miniconda_home))
-        remove('miniconda3.sh')
-        cmd = 'export PATH=~..' + path.join(miniconda_home) + '/bin:$PATH >> $HOME/.bashrc'
-        system('echo "' + cmd + '"')
-        system('./miniconda3/bin/conda init')
-        system('./miniconda3/bin/conda update -y conda')
-        system('./miniconda3/bin/conda config --set report_errors false')
-        system('./miniconda3/bin/conda install -y -c conda-forge dcm2niix')
-        system('./miniconda3/bin/conda install -y -c conda-forge dipy')
-        system('./miniconda3/bin/conda install -y -c conda-forge nilearn')
-        system('./miniconda3/bin/conda install -y -c conda-forge nipype')
-        system('./miniconda3/bin/conda install -y glob')
-        system('./miniconda3/bin/conda install -y shutil')
-        system('./miniconda3/bin/conda install -y pandas')
-        system('./miniconda3/bin/conda install -y numpy')
-        system('./miniconda3/bin/conda install -y scipy')
-        system('./miniconda3/bin/conda install -y xlrd')
-        system('./miniconda3/bin/conda install -y paramiko')
-        system('./miniconda3/bin/conda install -y openpyxl')
-        system('./miniconda3/bin/conda install -y xlsxwriter')
-        system('./miniconda3/bin/conda install -y xlrd')
-        system('./miniconda3/bin/conda install -y -c conda-forge nipy')
-        system('./miniconda3/bin/conda install -y -c conda-forge PyInquirer')
-        # must activate the conda environment before using by sourcing the bash profile. Otherwise, does not work
-        system("source $HOME/.bashrc")
+        makedirs(miniconda_home)
+
+    chdir(path.join(miniconda_home, '..'))
+    is_command_ran_sucessfully(
+        'curl https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -o miniconda3.sh')
+    system('chmod +x miniconda3.sh')
+    system('./miniconda3.sh -b -p ' + path.join(miniconda_home,"miniconda3"))
+    # remove('miniconda3.sh')
+    cmd = 'export PATH=' + path.join(miniconda_home,'miniconda3') + '/bin:$PATH >> $HOME/.bashrc'
+    cmd = """echo  'export PATH="{0}/bin:$PATH"' >> $HOME/.bashrc""".format(path.join(miniconda_home,'miniconda3'))
+    print(cmd)
+    print("*"*10)
+    system(cmd)
+    # make sure install python 3.7
+    conda_bin = path.join(miniconda_home,'miniconda3/bin/conda')
+    system(f'{conda_bin} install -y python=3.7')
+    system(f'{conda_bin} init')
+    system(f'{conda_bin} update -y conda')
+    system(f'{conda_bin} config --set report_errors false')
+    system(f'{conda_bin} install -y -c conda-forge dcm2niix')
+    system(f'{conda_bin} install -y -c conda-forge dipy')
+    system(f'{conda_bin} install -y -c conda-forge nilearn')
+    system(f'{conda_bin} install -y -c conda-forge nipype')
+    system(f'{conda_bin} install -y glob')
+    system(f'{conda_bin} install -y shutil')
+    system(f'{conda_bin} install -y pandas')
+    system(f'{conda_bin} install -y numpy')
+    system(f'{conda_bin} install -y scipy')
+    system(f'{conda_bin} install -y xlrd')
+    system(f'{conda_bin} install -y paramiko')
+    system(f'{conda_bin} install -y openpyxl')
+    system(f'{conda_bin} install -y xlsxwriter')
+    system(f'{conda_bin} install -y xlrd')
+    system(f'{conda_bin} install -y -c conda-forge nipy')
+    system(f'{conda_bin} install -y -c conda-forge PyInquirer')
+    # must activate the conda environment before using by sourcing the bash profile. Otherwise, does not work
+    system("source $HOME/.bashrc")
     try:
-            system('./miniconda3/bin/conda install -y -c conda-forge dcm2bids')
+        system(f'{conda_bin} install -y -c conda-forge dcm2bids')
     except Exception as e:
         print(e)
     print(
         'FINISHED Installing miniconda3 with dcm2niix, dcm2bids, pandas, numpy, xlrd, xlsxwriter, paramiko, dipy')
     # return True
 
+
 def check_that_modules_are_installed():
     print('checking that modules are installed')
+
 
 def is_miniconda_installed():
     """
@@ -65,21 +100,23 @@ def is_miniconda_installed():
         - True: miniconda is installed
         - False otherwise
     """
-    command = "source $HOME/.bashrc > dev/null; command -v conda" # check if conand exisit in the path
+    command = "source $HOME/.bashrc > dev/null; command -v conda"  # check if conand exisit in the path
     out = subprocess.getoutput(command)
     # print(command, out)
     if len(out) < 1:
         return False
     return True
+
 
 def is_conda_module_installed(module_name):
-    command = f"conda list | grep {module_name}"
+    command = "conda list | grep {0}".format(module_name)
     out = subprocess.getoutput(command)
     # print(command, out)
     if len(out) < 1:
         return False
     return True
 
+
 if __name__ == "__main__":
-    miniconda_home = NIMB_HOME = "~/nimb" 
+    miniconda_home = NIMB_HOME = "~/tmp1"
     setup_miniconda(miniconda_home)
