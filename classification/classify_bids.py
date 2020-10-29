@@ -20,7 +20,7 @@ from sys import platform
 import datetime as dt
 import time, json
 
-from classify_definitions import mr_types, BIDS_groups, mr_types_2exclude
+from classify_definitions import mr_modalities, BIDS_types, mr_types_2exclude
 
 class MakeBIDS_subj2process():
     def __init__(self, DIR_SUBJECTS,
@@ -137,7 +137,7 @@ class MakeBIDS_subj2process():
                         ls_sessions.append(date)
                     break
             # add paths by date and type
-            for mr_name_ls in mr_types.values():
+            for mr_name_ls in mr_modalities.values():
                 for mr_name in mr_name_ls:
                     if mr_name.lower() in mr_path.lower():
                         d_paths[date].append(mr_path)
@@ -183,8 +183,8 @@ class MakeBIDS_subj2process():
 
     def get_MR_types(self, mr_path):
         mr_found = False
-        for mr_type in mr_types:
-            for mr_name in mr_types[mr_type]:
+        for mr_type in mr_modalities:
+            for mr_name in mr_modalities[mr_type]:
                 if mr_name.lower() in mr_path.lower():
                     mr_found = True
                     res = mr_type
@@ -248,8 +248,8 @@ class MakeBIDS_subj2process():
         for ses in d_ses_MR_types:
             d_BIDS_structure[ses] = {}
             for key in d_ses_MR_types[ses]:
-                for group in BIDS_groups:
-                    if key in BIDS_groups[group]:
+                for group in BIDS_types:
+                    if key in BIDS_types[group]:
                         if group not in d_BIDS_structure[ses]:
                             d_BIDS_structure[ses][group] = {}
                         d_BIDS_structure[ses][group][key] = d_ses_MR_types[ses][key]
@@ -318,7 +318,7 @@ def validate_if_date(date_text):
 
 def get_ls_sessions(ls):
 	# add types
-	mr_types = {'t1': ['t1', 'spgr', 'rage', ],
+	mr_modalities = {'t1': ['t1', 'spgr', 'rage', ],
 				'flair': ['flair', ],
 				't2': ['t2', ],
 				'dwi': ('hardi', 'dti', 'diffus',),
@@ -335,7 +335,7 @@ def get_ls_sessions(ls):
 		 			ls_sessions.append(date)
 				break
 		# add paths by date and type
-		for mr_name_ls in mr_types.values():
+		for mr_name_ls in mr_modalities.values():
 			for mr_name in mr_name_ls:
 				if mr_name.lower() in mr_path.lower():
 					d_paths[date].append(mr_path)
@@ -378,15 +378,15 @@ def make_dict_sessions_with_paths(d_paths, d_sessions):
 
 
 def get_MR_types(mr_path):
-	mr_types = {'t1':['t1','spgr','rage',],
+	mr_modalities = {'t1':['t1','spgr','rage',],
 				'flair':['flair',],
 				't2':['t2',],
 				'dwi':('hardi','dti','diffus',),
 				'rsfmri':['resting_state_fmri','rsfmri',],
 				'fieldmap':['field_map','field_mapping','fieldmap',]}
 	mr_found = False
-	for mr_type in mr_types:
-		for mr_name in mr_types[mr_type]:
+	for mr_type in mr_modalities:
+		for mr_name in mr_modalities[mr_type]:
 			if mr_name.lower() in mr_path.lower():
 				mr_found = True
 				res = mr_type
@@ -449,13 +449,13 @@ def subj_no_t1(ls_all_raw_subjects):
 
 
 def make_BIDS_structure(d_ses_MR_types):
-	BIDS_groups = {'anat':['t1','flair','t2'],'dwi':['dwi','bval','bvec'],'func':['rsfmri','fieldmap',]}
+	BIDS_types = {'anat':['t1','flair','t2'],'dwi':['dwi','bval','bvec'],'func':['rsfmri','fieldmap',]}
 	d_BIDS_structure = {}
 	for ses in d_ses_MR_types:
 		d_BIDS_structure[ses] = {}
 		for key in d_ses_MR_types[ses]:
-			for group in BIDS_groups:
-				if key in BIDS_groups[group]:
+			for group in BIDS_types:
+				if key in BIDS_types[group]:
 					if group not in d_BIDS_structure[ses]:
 						d_BIDS_structure[ses][group] = {}
 					d_BIDS_structure[ses][group][key] = d_ses_MR_types[ses][key]
