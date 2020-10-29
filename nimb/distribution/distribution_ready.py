@@ -17,7 +17,6 @@ from distribution.distribution_helper import logger
 from distribution.utilities import ErrorMessages, makedir_ifnot_exist
 
 
-
 class DistributionReady():
     """
     This file sole for the READY command.

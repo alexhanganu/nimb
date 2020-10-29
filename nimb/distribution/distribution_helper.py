@@ -3,7 +3,11 @@ from os import system, path, listdir, environ, remove
 from distribution.utilities import ErrorMessages, makedir_ifnot_exist
 from distribution.setup_miniconda import setup_miniconda
 from distribution.setup_freesurfer import SETUP_FREESURFER
-from setup import guitk_setup
+from setup import interminal_setup
+try:
+    from setup import guitk_setup
+except ImportError:
+    gui_setup = 'term'
 
 from distribution.check_disk_space import *
 from distribution import SSHHelper
@@ -81,7 +85,7 @@ class DistributionHelper():
         from setup.term_questionnaire import PyInqQuest
         chosen_loc = list()
         if len(self.locations_4process) == 0:
-                loc = guitk_setup.term_setup('none').credentials
+                loc = interminal_setup.term_setup('none').credentials
                 chosen_loc.append(loc)
         else:
             pass

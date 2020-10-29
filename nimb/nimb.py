@@ -154,6 +154,7 @@ def get_parameters(projects):
 def main():
 
     all_vars = Get_Vars()
+    # print(all_vars.location_vars)
     projects = all_vars.projects
     params = get_parameters([i for i in projects.keys() if 'EXPLANATION' not in i and 'LOCATION' not in i])
     app = NIMB(params.process, params.project, projects, all_vars)

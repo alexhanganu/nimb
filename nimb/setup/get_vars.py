@@ -5,6 +5,7 @@ import shutil
 import json
 from .get_username import _get_username
 from .get_credentials_home import _get_credentials_home
+from .interminal_setup import get_userdefined_paths
 
 class SetProject():
 
@@ -43,20 +44,12 @@ class Get_Vars():
         print('local user is: '+self.location_vars['local']['USER']['user'])
         self.installers = self.read_file(path.join(path.dirname(path.abspath(__file__)), 'installers.json'))
 
+
     def define_credentials(self):
-        print('current credentials are: {}'.format(self.credentials_home))
-        # from setup import guitk_setup
-        # credentials = guitk_setup.term_setup(remote).credentials
-        if 'n' in input('do you want to keep this path for the credentials? (y/n)'):
-            new_credentials = input('please provide a new path where the folder nimb with credentials will be installed: ')
-            while not path.exists(new_credentials):
-                new_credentials = input('path does not exist. Please provide a new path where folder nimb with credentials will be installed: ')
-            self.credentials_home = path.join(new_credentials, 'nimb')
-            if not path.exists(self.credentials_home):
-                makedirs(self.credentials_home)
-        with open(path.join(path.dirname(path.abspath(__file__)), '../credentials_path.py'), 'w') as f:
+        self.credentials_home = get_userdefined_paths('credentials', self.credentials_home, 'nimb')
+        with open(path.join(path.dirname(path.abspath(__file__)), 'credentials_path.py'), 'w') as f:
             f.write('credentials_home=\"'+self.credentials_home+'\"')
-        with open(path.join(path.dirname(path.abspath(__file__)), '../credentials_path'), 'w') as f:
+        with open(path.join(path.dirname(path.abspath(__file__)), 'credentials_path'), 'w') as f:
             json.dump(self.credentials_home, f)
     
     def read_file(self, file):
@@ -103,17 +96,20 @@ class Get_Vars():
 
     def setup_default_local_nimb(self, data):
         NIMB_HOME = path.abspath(path.join(path.dirname(__file__), '..'))
-        print('NIMB_HOME is: ',NIMB_HOME)
+        print('NIMB_HOME is: ', NIMB_HOME)
         data['NIMB_PATHS']['NIMB_HOME']               = NIMB_HOME
-        data['NIMB_PATHS']['NIMB_tmp']                = path.join(NIMB_HOME, '..', 'nimb_tmp')
-        data['NIMB_PATHS']['NIMB_NEW_SUBJECTS']       = path.join(NIMB_HOME, '..', 'nimb_tmp', 'nimb_new_subjects')
-        data['NIMB_PATHS']['NIMB_PROCESSED_FS']       = path.join(NIMB_HOME, '..', 'nimb_tmp', 'nimb_processed_fs')
-        data['NIMB_PATHS']['NIMB_PROCESSED_FS_error'] = path.join(NIMB_HOME, '..', 'nimb_tmp', 'nimb_processed_fs_error')
-        data['NIMB_PATHS']['miniconda_home']          = path.join(NIMB_HOME, '..', 'miniconda3')
-        data['NIMB_PATHS']['miniconda_python_run']    = path.join(NIMB_HOME, '..', 'miniconda3','bin','python3.7').replace(path.expanduser("~"),"~")
-        data['FREESURFER']['FREESURFER_HOME']         = path.join(NIMB_HOME, '..', 'freesurfer')
-        data['FREESURFER']['FS_SUBJECTS_DIR']         = path.join(NIMB_HOME, '..', 'freesurfer', 'subjects')
-        data['FREESURFER']['export_FreeSurfer_cmd']   = "export FREESURFER_HOME="+path.join(NIMB_HOME, '..', 'freesurfer')
+        new_NIMB_tmp = get_userdefined_paths('NIMB temporary folder nimb_tmp', path.join(NIMB_HOME, '../..', 'nimb_tmp'), 'nimb_tmp')
+        data['NIMB_PATHS']['NIMB_tmp']                = new_NIMB_tmp
+        data['NIMB_PATHS']['NIMB_NEW_SUBJECTS']       = path.join(new_NIMB_tmp, 'nimb_new_subjects')
+        data['NIMB_PATHS']['NIMB_PROCESSED_FS']       = path.join(new_NIMB_tmp, 'nimb_processed_fs')
+        data['NIMB_PATHS']['NIMB_PROCESSED_FS_error'] = path.join(new_NIMB_tmp, 'nimb_processed_fs_error')
+        new_miniconda_path = get_userdefined_paths('miniconda3 folder', path.join(NIMB_HOME, '../..', 'miniconda3'), 'miniconda3')
+        data['NIMB_PATHS']['miniconda_home']          = new_miniconda_path
+        data['NIMB_PATHS']['miniconda_python_run']    = path.join(new_miniconda_path,'bin','python3.7').replace(path.expanduser("~"),"~")
+        new_freesurfer_path = get_userdefined_paths('FreeSurfer folder', path.join(NIMB_HOME, '../..', 'freesurfer'), 'freesurfer')
+        data['FREESURFER']['FREESURFER_HOME']         = new_freesurfer_path
+        data['FREESURFER']['FS_SUBJECTS_DIR']         = path.join(new_freesurfer_path, 'subjects')
+        data['FREESURFER']['export_FreeSurfer_cmd']   = "export FREESURFER_HOME="+new_freesurfer_path
         return data
 
 class SetLocation():
