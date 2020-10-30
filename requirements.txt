@@ -14,3 +14,4 @@ statsmodels==0.11.0
 dipy==1.2.0
 xlswriter==1.3.6
 nilearn==1.15.0
+submitit==1.1.3
