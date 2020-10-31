@@ -3,7 +3,7 @@ NeuroImaging My Brain = NIMB (Pipeline for Automated Structural, Funcitonal rest
 cd nimb/nimb
 
 Processes:
-Module *CLASSIFIER*: ("$NIMB_HOME/classification"; currently works only on the computer that has the processing app installed)
+* Module *CLASSIFIER*: ("$NIMB_HOME/classification"; currently works only on the computer that has the processing app installed)
     * cmd: python nimb.py -process classify
     * takes the content of the $NIMB_tmp/new_subjects or any other user-defined folder
     * verifies the voxel parameters of all T1 and (using FreeSurfer's mri_info):
