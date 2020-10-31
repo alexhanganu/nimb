@@ -1,16 +1,68 @@
-NeuroImaging My Brain = NIMB (Pipeline for Structural MRI analysis wih FreeSurfer)
+NeuroImaging My Brain = NIMB (Pipeline for Automated Structural, Funcitonal resting state and Diffusion MRI analysis wih FreeSurfer, Nilear and Dipy)
 
-* Module *GUI* (exe.py) or file 'variables.py':
-    * takes the variables and files provided by the user
-    * sends the variables to sqlite database; 
+cd nimb/nimb
+
+Processes:
+Module *CLASSIFIER*: ("$NIMB_HOME/classification"; currently works only on the computer that has the processing app installed)
+    * cmd: python nimb.py -process classify
+    * takes the content of the $NIMB_tmp/new_subjects or any other user-defined folder
+    * verifies the voxel parameters of all T1 and (using FreeSurfer's mri_info):
+        ** classifies the T1 images based on sessions
+        ** keeps in the same session only the T1 with the same voxel parameters
+    * if there are T1 images:
+        ** searches for Flair images and if present and if Flair images have the same voxel parameters as T1, adds them for the analysis
+        ** if there are no Flair images:
+            *** searches for T2 images; if present and T2 have the same voxel parameters as T1, adds them for the analysis
+        ** searches for DWI images and if present adds them for the analysis
+        ** searches for rsfMRI images and if present adds them for the analysis
+    * if the user defined a SOURCE_BIDS_DIR folder:
+        * cmd: python nimb.py -process classify_dcm2bids
+        ** uses the github.com/UNFMontreal/dcm2bids app to convert the subjects from the SOURCE_SUBJECTS_DIR folder into .nii.gz format ($NIMB_HOME/classification/dcm2bids_helper.py)
+        ** classifies the MR files into BIDS format
+    * saves the dictionary as $NIMB_HOME/tmp/new_subjects.json
+
+
+* Module *PROCESSING* : (works on the computer that has the processing app installed) (folder "$NIMB_HOME/processing")
+    * reads the $NIMB_tmp/new_subjects.json file:
+        * if analysis is performed with slurm scheduler:
+            ** creates the corresponding batches (#NIMB_HOME/processing/schedule_helper.py)
+            ** sends the batches to the scheduler
+            ** verifies that the analysis is done by the scheduler
+        * if analysis is performed in a tmux environement:
+            ** sends the processing commands to the tmux environement
+            ** verifies that the analysis is done in tmux
+    sub-MODULE 'freesurfer-processing':
+        * cmd: python nimb.py -process freesurfer
+        * uses $NIMB_tmp/new_subjects.json file to access subject name, session and corresponding .dcm files
+        * registers all subjects with at least 1 T1, 1 T1 and at least 1 Flair, 1 T1 and at leat 1 T2 in the FS_SUBJECTS_DIR
+        * runs the FreeSurfer steps: autorecon1, autorecon2, autorecon3, brainstem, hippocampus, thalamus, qcache
+        * if user requested extraction of masks:
+            ** extracts the masks for the corresponding subcortical structures and puts them in the processed_folder/masks
+        * once the processing is done, moves the processed subjects to the $PROCESSED_NIMB/processed_fs folder
+    sub-MODULE 'nilearn-processing':
+        * uses $NIMB_tmp/new_subjects.json file to access subject name, session and corresponding .dcm files
+        * uses rsfMRI data, applies nilearn pipeline to extract Desikan-based ROI Fisher's connectivity values
+    sub-MODULE 'dipy-processing':(NOT READY, requires more adjustments)
+        * uses $NIMB_tmp/new_subjects.json file to access subject name, session and corresponding .dcm files
+        * uses DWI data, applies dipy pipeline to extract Straford-based ROI track connecvity values.
+    * if user wants the data archived:
+        ** archives with zip the each subject in the $PROCESSED_NIMB/processed_fs folder
+
+
+* Module *GUI* (nimb.py, exe.pyw): ((NOT READY, requires more adjustments)
+    * takes the variables and files provided by the user ($NIMB_HOME/setup/credentials_path/nimb/local.json; ../projects/json)
+    * stores the credentials for remote connections to the sqlite database ($NIMB_HOME/setup/credentials_path/nimb/db);
     * initiates the *DISTRIBUTION* module (in the GUI or the terminal command: "nimb process")
     * if a file is provided that has the groups and the names of the subjects:
         ** initiates the *STATS* module
 
-* Module *DISTRIBUTION* : (works on the local computer as GUI or terminal or on the remote computer in the terminal) (folder "$NIMB_HOME/distribution")
+
+* Module *DISTRIBUTION* : (works on the local computer as GUI or terminal or on the remote computer in the terminal) (folder "$NIMB_HOME/distribution") (NOT READY, requires more adjustments)
     * checks that all folders and variables are defined
     * checks if with the processing app is installed on the local or remote computer
-        ** if not -> installs with the processing app and miniconda3 with pandas, paramiko, numpy, xlrd
+        ** if not -> tries to install the requirements with pip or miniconda3
+        ** installs processing app
+    * cmd: python nimb.py -process check-new
     * if there are subjects in the SOURCE_SUBJECTS_DIR folder (archived zip or .gz):
         ** verifies if all subjects have the processed data, located in the $PROCESSED_FS_DIR
             ** if not:
@@ -30,43 +82,6 @@ NeuroImaging My Brain = NIMB (Pipeline for Structural MRI analysis wih FreeSurfe
                     **** moves the subjects to the local or remote $PROCESSED_FS_DIR folder
                     **** if SOURCE_BIDS_DIR is provided:
                         **** moves the processed subjects to corresponding SOURCE_BIDS_DIR/subject/session/processed_fs folder
-
-
-* Module *CLASSIFIER* : (works on the computer that has the processing app installed)(folder "$NIMB_HOME/classifier")
-    * takes the content of the $NIMB_HOME/new_subjects or $NIMB_RHOME/new_subjects folder
-    * verifies the voxel parameters of all T1 and:
-        ** classifies the T1 images based on sessions
-        ** keeps in the same session only the T1 with the same voxel parameters
-    * if there are T1 images:
-        ** searches for Flair images and if present and if Flair images have the same voxel parameters as T1, adds them for the analysis
-        ** if there are no Flair images:
-            *** searches for T2 images; if present and T2 have the same voxel parameters as T1, adds them for the analysis
-        ** searches for DWI images and if present adds them for the analysis
-        ** searches for rsfMRI images and if present adds them for the analysis
-    * if the user defined a SOURCE_BIDS_DIR folder:
-        ** uses the dcm2bids app to convert the subjects from the SOURCE_SUBexJECTS_DIR folder into .nii.gz format
-        ** classifies the MR files into BIDS format
-    * saves the dictionary as $NIMB_HOME/tmp/new_subjects.json or $NIMB_RHOME/tmp/new_subjects.json file
-
-
-* Module *PROCESSING* : (works on the computer that has the processing app installed) (folder "$NIMB_HOME/processing")
-    * reads the $NIMB_HOME/tmp/new_subjects.json file, registers the subjects and the paths to their corresponding MR files
-    sub-MODULE "environement":
-        * if analysis is performed with the slurm or moab scheduler:
-            ** creates the corresponding batches
-            ** sends the batches to the scheduler
-            ** verifies that the analysis is done by the scheduler
-        * if analysis is performed in the tmux environement:
-            ** sends the processing commands to the tmux environement
-            ** verifies that the analysis is done in tmux
-    sub-MODULE 'freesurfer-processing':
-        * registers all subjects with at least 1 T1, 1 T1 and at least 1 Flair, 1 T1 and at leat 1 T2 in the FS_SUBJECTS_DIR
-        * runs the FreeSurfer steps: autorecon1, autorecon2, autorecon3, qcache, brainstem, hippocampus, thalamus
-        * if user requested extraction of masks:
-            ** extracts the masks for the corresponding subcortical structures and puts them in the processed_folder/masks
-        * once the processing is done, moves the processed subjects to the $PROCESSED_NIMB/processed_fs folder
-    * if user wants the data archived:
-        ** archives with zip the each subject in the $PROCESSED_NIMB/processed_fs folder
 
 
 * Module *STATS* : (works on the local computer as GUI or terminal or on the remote computer in the terminal) (folder "$NIMB_HOME/stats") (cmd: nimb stats)
@@ -148,3 +163,4 @@ freesurfer_version = '7' # default is 7 (for 7.1.0) but pipeline should also wor
 process_order = ['registration','autorecon1','autorecon2','autorecon3','qcache','brstem','hip','tha'] #list of processing steps in FreeSurfer. For FreeSurfer version lower thatn 7, "tha" must be remove; Instead of autorecon1, autorecon2 and autorecon3, the commmand "recon" can be used (which will use the command 'recon-all' for freesurfer processing), but it will take more time for processing and this can be limited by the scheduler
 
 
+works on ADNI, PPMI, NACC, CIMAQ, CaPRI data. For individual data requires adjustments for the creation of the new_subjects.json file
