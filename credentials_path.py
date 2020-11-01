@@ -1,1 +1,0 @@
-credentials_home="~/nimb"

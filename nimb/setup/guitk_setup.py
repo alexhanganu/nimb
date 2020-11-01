@@ -4,28 +4,6 @@ import threading
 from tkinter import Tk, Frame, ttk, Entry, Label, StringVar, filedialog, simpledialog
 from setup import database
 
-class term_setup():
-    def __init__(self, remote):
-        self.remote = remote
-        self.cluster = database._get_Table_Data('remotes', remote)
-        if 'default' in self.cluster:
-            self.credentials = self.setupcredentials()
-        else:
-            self.credentials = self.cluster[self.remote]
-               
-    def setupcredentials(self):
-        from setup.term_questionnaire import PyInqQuest
-        self.change2false()
-        self.remote, remote_new = PyInqQuest(self.cluster[self.remote]).answered
-        database._set_Table_Data('remotes', {self.remote: remote_new}, self.remote)
-        return remote_new
-
-    def change2false(self):
-        self.cluster[self.remote] = self.cluster['default']
-        self.cluster.pop('default', None)
-        for key in self.cluster[self.remote]:
-            self.cluster[self.remote][key] = False
-
 
 class setupcredentials():
     def __init__(self):

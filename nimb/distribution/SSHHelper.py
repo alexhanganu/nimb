@@ -17,7 +17,11 @@ except ImportError:
 import json
 from pathlib import Path
 
-from setup import guitk_setup
+from setup import interminal_setup
+try:
+    from setup import guitk_setup
+except ImportError:
+    gui_setup = 'term'
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(format='%(asctime)s %(module)s %(levelname)s: %(message)s')
@@ -35,7 +39,7 @@ def getSSHSession(remote):
     :param password: password to login
     :return: a paramiko sshsession object
     """
-    credentials = guitk_setup.term_setup(remote).credentials
+    credentials = interminal_setup.term_setup(remote).credentials
     username = credentials['username']
     targetIP = credentials['host']
     password = credentials['password']

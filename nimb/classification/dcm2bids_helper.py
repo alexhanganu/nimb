@@ -13,6 +13,8 @@ from os import path, system, makedirs, listdir
 import shutil
 import json
 
+from classify_definitions import BIDS_types, mr_modalities
+
 class DCM2BIDS_helper():
     """
     goal: use UNFMontreal/dcm2bids to convert .dcm files to BIDS .nii.gz
@@ -103,6 +105,7 @@ class DCM2BIDS_helper():
         return sidecar
 
     def classify_mri(self):
+        # BIDS_types
         criterion = 'SeriesDescription'
         type = 'anat'
         modality = 'T1w'
