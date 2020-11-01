@@ -15,7 +15,7 @@ from distribution.utilities import is_writable_directory, is_ENV_defined
 from distribution.setup_miniconda import setup_miniconda, is_miniconda_installed, is_conda_module_installed
 from distribution.distribution_helper import logger
 from distribution.utilities import ErrorMessages, makedir_ifnot_exist
-
+from sys import platform
 
 
 class DistributionReady():
