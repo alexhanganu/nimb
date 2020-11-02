@@ -128,6 +128,10 @@ def get_parameters(projects):
 
 
 def initiate_fs_from_sh(vars_local):
+    """
+    FreeSurfer needs to be initiated with source and export
+    this functions tries to automate this
+    """
     sh_file = path.join(vars_local["NIMB_PATHS"]["NIMB_tmp"], 'source_fs.sh')
     with open(sh_file, 'w') as f:
         f.write(vars_local["FREESURFER"]["export_FreeSurfer_cmd"]+'\n')

@@ -43,6 +43,8 @@ Processes:
         * extracts subjects-based from stats folder and puts all in one excel file
     * cmd: python nimb.py -process fs-glm (alternatively: cd $NIMB_HOME/processing/freesurfer python fs_glm_runglm.py):
         * performs FreeSurfer GLM using mri_glmfit, for all contrasts and for infinite number of variables; requires that $NIMB_HOME/example/example_table.csv file is provided with variables for the glm and groups. Variables are defined in ($NIMB_HOME/setup/credentials_path/nimb/local.json; ../projects/json)
+    * cmd: python nimb.py -process fs-get-masks -project PROJECTS_NAME
+        * extracts masks for subjects-that were already processed with FS, puts the masks in SUBJECTS_DIR/SUBJECT/masks (alternatively: cd $NIMB_HOME/processing/freesurfer; python run_masks.py)
     * cmd: python nimb.py -process fs-gl-image (alternatively: cd $NIMB_HOME/processing/freesurfer python fs_glm_extract_images.py):
         * if FreeSurfer glm is performed, extracts and saves FDR corrected images + MonteCarlo corrected images; Must be run in an environment that allows screen export. Uses freeview. Tested in linux. Not tested on Windows WSL, but provided screen is exported - should work.
     sub-MODULE 'nilearn-processing':

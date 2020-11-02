@@ -109,6 +109,12 @@ class NIMB(object):
                 cmd = '{} fs_glm_extract_images.py -project {}'.format(self.vars_local['PROCESSING']["python3_run_cmd"], self.project)
                 cd_cmd = 'cd '+path.join(self.NIMB_HOME, 'processing', 'freesurfer')
                 self.schedule.submit_4_processing(cmd, 'fs_glm','extract_images', cd_cmd)
+        if self.process == 'fs-get-masks':
+            if DistributionReady(self.all_vars, self.projects, self.project).fs_ready():
+                self.logger.info('running mask extraction')
+                cmd = '{} run_masks.py -project {}'.format(self.vars_local['PROCESSING']["python3_run_cmd"], self.project)
+                cd_cmd = 'cd '+path.join(self.NIMB_HOME, 'processing', 'freesurfer')
+                self.schedule.submit_4_processing(cmd, 'fs','run_masks', cd_cmd)
         if self.process == 'run-stats':
             from setup.get_vars import SetProject
             self.stats_vars = SetProject(self.NIMB_tmp, self.stats_vars, self.project).stats
@@ -136,7 +142,7 @@ def get_parameters(projects):
     parser.add_argument(
         "-process", required=False,
         default='ready',
-        choices = ['ready', 'check-new', 'freesurfer', 'classify', 'classify_dcm2bids', 'fs-get-stats', 'fs-glm', 'fs-glm-image', 'run-stats'],
+        choices = ['ready', 'check-new', 'freesurfer', 'classify', 'classify_dcm2bids', 'fs-get-stats', 'fs-get-masks', 'fs-glm', 'fs-glm-image', 'run-stats'],
         help="freesurfer (start FreeSurfer pipeline), classify (classify MRIs) fs-stats (extract freesurfer stats from subjid/stats/* to an excel file), fs-glm (perform freesurfer mri_glmfit GLM analsysis), stats-general (perform statistical analysis)",
     )
 
