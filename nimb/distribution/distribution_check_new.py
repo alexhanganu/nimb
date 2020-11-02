@@ -1,7 +1,7 @@
 import os
-from nimb.distribution.distribution_helper import DistributionHelper
-from nimb.setup.get_vars import Get_Vars
-from nimb.nimb import get_parameters, NIMB
+from distribution.distribution_helper import DistributionHelper
+from setup.get_vars import Get_Vars
+from nimb import get_parameters, NIMB
 import logging
 logger = logging.getLogger(__name__)
 logging.basicConfig(format='%(asctime)s %(module)s %(levelname)s: %(message)s')
@@ -110,7 +110,7 @@ class DistributionCheckNew():
             else:
                 return []
         else:  # if remote
-            from nimb.distribution.SSHHelper import runCommandOverSSH
+            from distribution.SSHHelper import runCommandOverSSH
             return runCommandOverSSH(remote=self.project_vars[DIR][0], \
                                      command='ls {}'.format(self.project_vars[DIR][1])).split('\n')
 
@@ -124,7 +124,7 @@ class DistributionCheckNew():
             else:
                 self.initiate_classify(self.project_vars[DIR][1])
         else:
-            from nimb.distribution.SSHHelper import download_files_from_server
+            from distribution.SSHHelper import download_files_from_server
             try:
                 download_files_from_server(self.project_vars[DIR][0],
                                            os.path.join(self.project_vars[DIR][1], file_nimb_subj),
@@ -135,7 +135,7 @@ class DistributionCheckNew():
                 return []
 
     def initiate_classify(self, SOURCE_SUBJECTS_DIR):
-        from nimb.classification.classify_bids import MakeBIDS_subj2process
+        from classification.classify_bids import MakeBIDS_subj2process
         MakeBIDS_subj2process(SOURCE_SUBJECTS_DIR,
                               self.NIMB_tmp,
                               multiple_T1_entries=False,
