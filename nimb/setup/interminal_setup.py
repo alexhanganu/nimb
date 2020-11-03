@@ -1,7 +1,7 @@
 #20200915
 
 from setup import database
-from os import path
+from os import path, makedirs
 
 class term_setup():
     def __init__(self, remote):
