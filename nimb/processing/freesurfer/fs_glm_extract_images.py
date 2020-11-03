@@ -21,9 +21,9 @@ except ImportError as e:
 
 class SaveGLMimages():
 
-    def __init__(self, vars_local):
+    def __init__(self, vars_local, stats_vars):
         self.cache = vars_local["FREESURFER"]["GLM_MCz_cache"]
-        self.PATHglm = vars_local["STATS_PATHS"]["FS_GLM_dir"]
+        self.PATHglm = stats_vars["STATS_PATHS"]["FS_GLM_dir"]
         self.PATHglm_glm = path.join(self.PATHglm,'glm/')
 
         hemispheres = ['lh','rh']
@@ -44,7 +44,7 @@ class SaveGLMimages():
                                 contrast_name = contrast.replace('.mtx','')
                                 contrastdir = path.join(glmdir, contrast_name)
                                 if self.check_maxvox(glmdir, contrast_name):
-                                    self.make_images_results_fdr(hemi, glmdir, contrast_name, 'sig.mgh', 3.0)
+                                    self.make_images_results_fdr(hemi, glmdir, analysis_name, contrast_name, 'sig.mgh', 3.0)
                                 for direction in sim_direction:
                                     sum_mc_f = path.join(contrastdir, 'mc-z.'+direction+'.th'+str(self.cache)+'.sig.cluster.summary')
                                     cwsig_mc_f = path.join(contrastdir, 'mc-z.'+direction+'.th'+str(self.cache)+'.sig.cluster.mgh')
@@ -86,7 +86,7 @@ class SaveGLMimages():
         system('freeview -f $SUBJECTS_DIR/fsaverage/surf/'+hemi+'.inflated:overlay='+cwsig_mc_f+':overlay_threshold='+str(thresh)+',5:annot='+oannot_mc_f+' -viewport 3d -layout 1 -cmd '+f_with_cmds)
 
 
-    def make_images_results_fdr(self, hemi, glmdir, contrast_name, file, thresh):
+    def make_images_results_fdr(self, hemi, glmdir, analysis_name, contrast_name, file, thresh):
         self.PATH_save_fdr = path.join(self.PATHglm, 'results', 'fdr')
         if not path.isdir(self.PATH_save_fdr):
             makedirs(self.PATH_save_fdr)
@@ -96,10 +96,10 @@ class SaveGLMimages():
 #         'sclv_set_current_threshold_using_fdr 0.05 0', 'redraw', 'save_tiff '+self.PATH_save_fdr+'/'+contrast_name+'_fdr_med.tiff',
 #         'rotate_brain_y 180', 'redraw', 'save_tiff '+self.PATH_save_fdr+'/'+contrast_name+'_fdr_lat.tiff','exit']
 
-        tksurfer_cmds = ['set colscalebarflag 1', 'set scalebarflag 1', 'save_tiff '+path.join(self.PATH_save_fdr, contrast_name+'_'+str(3.0)+'_lat.tiff'),
-                         'rotate_brain_y 180', 'redraw', 'save_tiff '+path.join(self.PATH_save_fdr, contrast_name+'_'+str(3.0)+'_med.tiff'),
-                         'sclv_set_current_threshold_using_fdr 0.05 0', 'redraw', 'save_tiff '+path.join(self.PATH_save_fdr, contrast_name+'_fdr_med.tiff'),
-                         'rotate_brain_y 180', 'redraw', 'save_tiff '+path.join(self.PATH_save_fdr, contrast_name+'_fdr_lat.tiff'), 'exit']
+        tksurfer_cmds = ['set colscalebarflag 1', 'set scalebarflag 1', 'save_tiff '+path.join(self.PATH_save_fdr, analysis_name+'_'+contrast_name+'_'+str(3.0)+'_lat.tiff'),
+                         'rotate_brain_y 180', 'redraw', 'save_tiff '+path.join(self.PATH_save_fdr, analysis_name+'_'+contrast_name+'_'+str(3.0)+'_med.tiff'),
+                         'sclv_set_current_threshold_using_fdr 0.05 0', 'redraw', 'save_tiff '+path.join(self.PATH_save_fdr, analysis_name+'_'+contrast_name+'_fdr_med.tiff'),
+                         'rotate_brain_y 180', 'redraw', 'save_tiff '+path.join(self.PATH_save_fdr, analysis_name+'_'+contrast_name+'_fdr_lat.tiff'), 'exit']
         f_with_tkcmds = path.join(self.PATHglm, 'tkcmd.cmd')
         with open(f_with_tkcmds,'w') as f:
             for line in tksurfer_cmds:
@@ -153,9 +153,9 @@ if __name__ == '__main__':
     getvars = Get_Vars()
     vars_local = getvars.location_vars['local']
     projects = getvars.projects
-    params = get_parameters(projects['PROJECTS'])
+    params = get_parameters([i for i in projects.keys() if 'EXPLANATION' not in i and 'LOCATION' not in i])
     vars_project = getvars.projects[params.project]
-    SetProject(vars_local['NIMB_PATHS']['NIMB_tmp'], vars_local['STATS_PATHS'], params.project)
+    SetProject(vars_local['NIMB_PATHS']['NIMB_tmp'], getvars.stats_vars, params.project)
     fs_start_cmd = initiate_fs_from_sh(vars_local)
 
     try:
@@ -165,4 +165,4 @@ if __name__ == '__main__':
         print('please initiate freesurfer using the command: \n    {}'.format(fs_start_cmd))
 
     print('extracting glm images')
-    SaveGLMimages(vars_local)
+    SaveGLMimages(vars_local, getvars.stats_vars)
