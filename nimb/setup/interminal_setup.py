@@ -11,7 +11,7 @@ class term_setup():
             self.credentials = self.setupcredentials()
         else:
             self.credentials = self.cluster[self.remote]
-               
+
     def setupcredentials(self):
         from setup.term_questionnaire import PyInqQuest
         self.change2false()
@@ -42,10 +42,10 @@ def get_yes_no(q):
         return 1
     else:
         return 0
-        
+
 def get_FS_license():
     license = list()
-    for q in ['email', "1st license nr", "2nd license space-star-letter code", "3rd license space-letter code"]
+    for q in ['email', "1st license nr", "2nd license space-star-letter code", "3rd license space-letter code"]:
         res = input('Please provide FreeSurfer license {}: '.format(q))
         license.append(res)
     return license
