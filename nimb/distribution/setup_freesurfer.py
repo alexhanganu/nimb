@@ -47,8 +47,8 @@ class SETUP_FREESURFER():
                 f.write(line + '\n')
 
     def freesurfer_install(self, freesurfer_version, installers):
-        if freesurfer_version == 7:
-            installer = installers['freesurfer7.1.1_installer']
+        if freesurfer_version == '7.1.1':
+            installer = installers['install_fs7.1.1_centos7']
         else:
             print('freesurfer version not defined')
         chdir(self.NIMB_HOME)

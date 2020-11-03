@@ -183,7 +183,6 @@ class DistributionReady():
         """
         ready = False
         if not os.path.exists(os.path.join(self.locations['local']['FREESURFER']['FREESURFER_HOME'], "MCRv84")):
-            print('FreeSurfer must be installed')
             from .setup_freesurfer import SETUP_FREESURFER
             SETUP_FREESURFER(self.locations, self.installers)
             ready = True
