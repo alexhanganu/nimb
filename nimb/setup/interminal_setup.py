@@ -38,3 +38,9 @@ def get_userdefined_paths(path_name, old_path, add2path):
                 makedirs(new_path)
         print('new path is: {}'.format(new_path))
         return new_path
+
+def get_yes_no(q):
+    if 'y' in input(q):
+        return 1
+    else:
+        return 0

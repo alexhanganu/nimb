@@ -5,7 +5,7 @@ import shutil
 import json
 from .get_username import _get_username
 from .get_credentials_home import _get_credentials_home
-from .interminal_setup import get_userdefined_paths
+from .interminal_setup import get_userdefined_paths, get_yes_no
 
 class SetProject():
 
@@ -107,6 +107,8 @@ class Get_Vars():
         data['NIMB_PATHS']['miniconda_home']          = new_miniconda_path
         data['NIMB_PATHS']['miniconda_python_run']    = path.join(new_miniconda_path,'bin','python3.7').replace(path.expanduser("~"),"~")
         new_freesurfer_path = get_userdefined_paths('FreeSurfer folder', path.join(NIMB_HOME, '../..', 'freesurfer'), 'freesurfer')
+        FreeSurfer_install = get_yes_no('do you want to install FreeSurfer at the provided location {}? (y/n)'.format(new_freesurfer_path))
+        data['FREESURFER']['FreeSurfer_install']      = FreeSurfer_install
         data['FREESURFER']['FREESURFER_HOME']         = new_freesurfer_path
         data['FREESURFER']['FS_SUBJECTS_DIR']         = path.join(new_freesurfer_path, 'subjects')
         data['FREESURFER']['export_FreeSurfer_cmd']   = "export FREESURFER_HOME="+new_freesurfer_path
