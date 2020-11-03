@@ -46,7 +46,7 @@ class Get_Vars():
 
 
     def define_credentials(self):
-        self.credentials_home = get_userdefined_paths('credentials', self.credentials_home)
+        self.credentials_home = get_userdefined_paths('credentials', self.credentials_home, "nimb")
         with open(path.join(path.dirname(path.abspath(__file__)), 'credentials_path.py'), 'w') as f:
             f.write('credentials_home=\"'+self.credentials_home+'\"')
         with open(path.join(path.dirname(path.abspath(__file__)), 'credentials_path'), 'w') as f:
