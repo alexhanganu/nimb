@@ -1,7 +1,7 @@
 #20200915
 
 from setup import database
-from os import path, makedirs
+from os import path
 
 class term_setup():
     def __init__(self, remote):
@@ -34,8 +34,6 @@ def get_userdefined_paths(path_name, old_path, add2path):
             while not path.exists(user_path):
                 user_path = input('path does not exist. Please provide a new path where {} will be installed: '.format(path_name))
             new_path = path.join(user_path, add2path)
-            if not path.exists(new_path):
-                makedirs(new_path)
         print('new path is: {}'.format(new_path))
         return new_path
 

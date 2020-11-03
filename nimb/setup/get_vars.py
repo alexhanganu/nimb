@@ -99,6 +99,8 @@ class Get_Vars():
         print('NIMB_HOME is: ', NIMB_HOME)
         data['NIMB_PATHS']['NIMB_HOME']               = NIMB_HOME
         new_NIMB_tmp = get_userdefined_paths('NIMB temporary folder nimb_tmp', path.join(NIMB_HOME, '../..', 'nimb_tmp'), 'nimb_tmp')
+        if not path.exists(new_NIMB_tmp):
+            makedirs(new_NIMB_tmp)
         data['NIMB_PATHS']['NIMB_tmp']                = new_NIMB_tmp
         data['NIMB_PATHS']['NIMB_NEW_SUBJECTS']       = path.join(new_NIMB_tmp, 'nimb_new_subjects')
         data['NIMB_PATHS']['NIMB_PROCESSED_FS']       = path.join(new_NIMB_tmp, 'nimb_processed_fs')
