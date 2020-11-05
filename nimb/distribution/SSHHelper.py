@@ -12,7 +12,7 @@ try:
     import paramiko
     from scp import SCPClient, SCPException
 except ImportError:
-    print('Please install paramiko and scp using: pip install scp paramiko')
+    print("")
 
 import json
 from pathlib import Path
@@ -32,17 +32,24 @@ logger.setLevel(logging.DEBUG)
 FAILED_UPLOAD_FILE = "fail_upload_.log"
 
 
-def getSSHSession(remote):
+def getSSHSession(remotegetSSHSession):
     """
     :param targetIP: the ip address of cluster server or the name of the server
     :param username: username of ssh user
     :param password: password to login
     :return: a paramiko sshsession object
     """
-    credentials = interminal_setup.term_setup(remote).credentials
-    username = credentials['username']
-    targetIP = credentials['host']
-    password = credentials['password']
+    debug = True
+    if debug is True:
+        # credentials = guitk_setup.term_setup(remote).credentials
+        username = "hvt"
+        targetIP = "beluga.calculquebec.ca"
+        password = "Hoang067@"
+    else:
+        credentials = interminal_setup.term_setup(remote).credentials
+        username = credentials['username']
+        targetIP = credentials['host']
+        password = credentials['password']
 
     # Set up SSH
     logger.debug((username, targetIP))
@@ -68,7 +75,7 @@ def runCommandOverSSH(remote, command):
     :param command: the command to run
     :return: tuple(output of command, error) or None if error
     """
-    sshSession = getSSHSession(remote)
+    sshSession = (remote)
     assert type(sshSession) is paramiko.client.SSHClient, \
         "'sshSession' is type %s" % type(sshSession)
     # assert type(command) in (str, unicode), "'command' is type %s" % type(command)
