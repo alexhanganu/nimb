@@ -39,18 +39,19 @@ class MakeBIDS_subj2process():
 #            print(subject)
             self.d_subjects[subject] = {}
             path_2mris = self._get_MR_paths(path.join(self.DIR_SUBJECTS, subject))
-            ls_MR_paths = self.exclude_MR_types(path_2mris)
-#            print("ls_MR_paths: ", ls_MR_paths)
-            ls_sessions, d_paths = self.get_ls_sessions(ls_MR_paths)
-#            print(ls_sessions)
-            d_sessions = self.classify_by_sessions(ls_sessions)
-#            print(d_sessions)
-            dict_sessions_paths = self.make_dict_sessions_with_paths(d_paths, d_sessions)
-            d_ses_MR_types = self.classify_by_MR_types(dict_sessions_paths)
-            d_BIDS_structure = self.make_BIDS_structure(d_ses_MR_types)
-#            print(d_BIDS_structure)
-            self.d_subjects[subject] = d_BIDS_structure
-            self.save_json(self.DIR_SUBJECTS, self.d_subjects)
+            if path_2mris:
+                ls_MR_paths = self.exclude_MR_types(path_2mris)
+    #            print("ls_MR_paths: ", ls_MR_paths)
+                ls_sessions, d_paths = self.get_ls_sessions(ls_MR_paths)
+    #            print(ls_sessions)
+                d_sessions = self.classify_by_sessions(ls_sessions)
+    #            print(d_sessions)
+                dict_sessions_paths = self.make_dict_sessions_with_paths(d_paths, d_sessions)
+                d_ses_MR_types = self.classify_by_MR_types(dict_sessions_paths)
+                d_BIDS_structure = self.make_BIDS_structure(d_ses_MR_types)
+    #            print(d_BIDS_structure)
+                self.d_subjects[subject] = d_BIDS_structure
+                self.save_json(self.DIR_SUBJECTS, "all_subjects", self.d_subjects)
         print("classification of new subjects is complete")
         if self.multiple_T1_entries == 1:
             from classification.get_mr_params import verify_MRIs_for_similarity
