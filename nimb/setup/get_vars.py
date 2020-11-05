@@ -46,12 +46,16 @@ class Get_Vars():
 
 
     def define_credentials(self):
-        self.credentials_home = get_userdefined_paths('credentials', self.credentials_home, "nimb")
-        with open(path.join(path.dirname(path.abspath(__file__)), 'credentials_path.py'), 'w') as f:
-            f.write('credentials_home=\"'+self.credentials_home+'\"')
-        with open(path.join(path.dirname(path.abspath(__file__)), 'credentials_path'), 'w') as f:
-            json.dump(self.credentials_home, f)
-    
+        self.new_credentials_home = get_userdefined_paths('credentials', self.credentials_home, "nimb")
+        if self.new_credentials_home != self.credentials_home:
+            try:
+                with open(path.join(path.dirname(path.abspath(__file__)), 'credentials_path.py'), 'w') as f:
+                    f.write('credentials_home=\"'+self.credentials_home+'\"')
+                with open(path.join(path.dirname(path.abspath(__file__)), 'credentials_path'), 'w') as f:
+                    json.dump(self.credentials_home, f)
+            except Exception as e:
+                print(e)
+
     def read_file(self, file):
         with open(file) as jf:
             return json.load(jf)
