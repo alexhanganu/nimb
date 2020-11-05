@@ -20,7 +20,7 @@ from sys import platform
 import datetime as dt
 import time, json
 
-from classify_definitions import mr_modalities, BIDS_types, mr_types_2exclude
+from .classify_definitions import mr_modalities, BIDS_types, mr_types_2exclude
 
 class MakeBIDS_subj2process():
     def __init__(self, DIR_SUBJECTS,
@@ -50,7 +50,7 @@ class MakeBIDS_subj2process():
             d_BIDS_structure = self.make_BIDS_structure(d_ses_MR_types)
 #            print(d_BIDS_structure)
             self.d_subjects[subject] = d_BIDS_structure
-            self.save_json(self.DIR_SUBJECTS, "all_subjects", self.d_subjects)
+            self.save_json(self.DIR_SUBJECTS, self.d_subjects)
         print("classification of new subjects is complete")
         if self.multiple_T1_entries == 1:
             from classification.get_mr_params import verify_MRIs_for_similarity
