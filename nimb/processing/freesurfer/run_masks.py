@@ -4,7 +4,7 @@
 from os import path, system, mkdir
 from sys import argv
 import sys
-from path import Path
+from pathlib import Path
 import argparse
 
 class GetMasks:
@@ -124,8 +124,8 @@ if __name__ == '__main__':
     sys.path.append(str(top))
 
     import subprocess
-    from nimb.distribution.logger import Log
-    from nimb.setup.get_vars import Get_Vars, SetProject
+    # from distribution.logger import Log
+    from setup.get_vars import Get_Vars, SetProject
     getvars      = Get_Vars()
     vars_local   = getvars.location_vars['local']
     fs_start_cmd = initiate_fs_from_sh(vars_local)
