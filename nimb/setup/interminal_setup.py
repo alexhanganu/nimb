@@ -11,7 +11,7 @@ class term_setup():
             self.credentials = self.setupcredentials()
         else:
             self.credentials = self.cluster[self.remote]
-               
+
     def setupcredentials(self):
         from setup.term_questionnaire import PyInqQuest
         self.change2false()
@@ -34,7 +34,18 @@ def get_userdefined_paths(path_name, old_path, add2path):
             while not path.exists(user_path):
                 user_path = input('path does not exist. Please provide a new path where {} will be installed: '.format(path_name))
             new_path = path.join(user_path, add2path)
-            if not path.exists(new_path):
-                makedirs(new_path)
         print('new path is: {}'.format(new_path))
         return new_path
+
+def get_yes_no(q):
+    if 'y' in input(q):
+        return 1
+    else:
+        return 0
+
+def get_FS_license():
+    license = list()
+    for q in ['email', "1st license nr", "2nd license space-star-letter code", "3rd license space-letter code"]:
+        res = input('Please provide FreeSurfer license {}: '.format(q))
+        license.append(res)
+    return license

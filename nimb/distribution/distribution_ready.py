@@ -155,10 +155,10 @@ class DistributionReady():
             if len(self.locations['local']['FREESURFER']['FREESURFER_HOME']) < 1:
                 logger.fatal("FREESURFER_HOME is missing.")
                 return False
-            if not os.path.exists(self.locations['local']['FREESURFER']['FS_SUBJECTS_DIR']):
-                    print('creating path ', self.locations['local']['FREESURFER']['FS_SUBJECTS_DIR'])
-                    makedir_ifnot_exist(self.locations['local']['FREESURFER']['FS_SUBJECTS_DIR'])
             if self.check_freesurfer_ready():
+                if not os.path.exists(self.locations['local']['FREESURFER']['FS_SUBJECTS_DIR']):
+                        print('creating path ', self.locations['local']['FREESURFER']['FS_SUBJECTS_DIR'])
+                        makedir_ifnot_exist(self.locations['local']['FREESURFER']['FS_SUBJECTS_DIR'])
                 return self.fs_chk_fsaverage_ready()
         else:
             return False
@@ -174,7 +174,7 @@ class DistributionReady():
     def fs_fsaverage_copy(self):
         if not os.path.exists(os.path.join(self.locations['local']['FREESURFER']['FS_SUBJECTS_DIR'],'fsaverage', 'xhemi')):
             fsaverage_path = os.path.join(self.locations['local']['FREESURFER']['FREESURFER_HOME'], "subjects", "fsaverage")
-            shutil.copytree(fsaverage_path, os.path.join(self.vars['local']['FREESURFER']['FS_SUBJECTS_DIR'], 'fsaverage'))
+            shutil.copytree(fsaverage_path, os.path.join(self.locations['local']['FREESURFER']['FS_SUBJECTS_DIR'], 'fsaverage'))
 
     def check_freesurfer_ready(self):
         """
@@ -183,7 +183,6 @@ class DistributionReady():
         """
         ready = False
         if not os.path.exists(os.path.join(self.locations['local']['FREESURFER']['FREESURFER_HOME'], "MCRv84")):
-            print('FreeSurfer must be installed')
             from .setup_freesurfer import SETUP_FREESURFER
             SETUP_FREESURFER(self.locations, self.installers)
             ready = True

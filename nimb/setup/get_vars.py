@@ -5,7 +5,7 @@ import shutil
 import json
 from .get_username import _get_username
 from .get_credentials_home import _get_credentials_home
-from .interminal_setup import get_userdefined_paths
+from .interminal_setup import get_userdefined_paths, get_yes_no, get_FS_license
 
 class SetProject():
 
@@ -46,12 +46,16 @@ class Get_Vars():
 
 
     def define_credentials(self):
-        self.credentials_home = get_userdefined_paths('credentials', self.credentials_home, 'nimb')
-        with open(path.join(path.dirname(path.abspath(__file__)), 'credentials_path.py'), 'w') as f:
-            f.write('credentials_home=\"'+self.credentials_home+'\"')
-        with open(path.join(path.dirname(path.abspath(__file__)), 'credentials_path'), 'w') as f:
-            json.dump(self.credentials_home, f)
-    
+        self.new_credentials_home = get_userdefined_paths('credentials', self.credentials_home, "nimb")
+        if self.new_credentials_home != self.credentials_home:
+            try:
+                with open(path.join(path.dirname(path.abspath(__file__)), 'credentials_path.py'), 'w') as f:
+                    f.write('credentials_home=\"'+self.credentials_home+'\"')
+                with open(path.join(path.dirname(path.abspath(__file__)), 'credentials_path'), 'w') as f:
+                    json.dump(self.credentials_home, f)
+            except Exception as e:
+                print(e)
+
     def read_file(self, file):
         with open(file) as jf:
             return json.load(jf)
@@ -99,6 +103,8 @@ class Get_Vars():
         print('NIMB_HOME is: ', NIMB_HOME)
         data['NIMB_PATHS']['NIMB_HOME']               = NIMB_HOME
         new_NIMB_tmp = get_userdefined_paths('NIMB temporary folder nimb_tmp', path.join(NIMB_HOME, '../..', 'nimb_tmp'), 'nimb_tmp')
+        if not path.exists(new_NIMB_tmp):
+            makedirs(new_NIMB_tmp)
         data['NIMB_PATHS']['NIMB_tmp']                = new_NIMB_tmp
         data['NIMB_PATHS']['NIMB_NEW_SUBJECTS']       = path.join(new_NIMB_tmp, 'nimb_new_subjects')
         data['NIMB_PATHS']['NIMB_PROCESSED_FS']       = path.join(new_NIMB_tmp, 'nimb_processed_fs')
@@ -107,9 +113,18 @@ class Get_Vars():
         data['NIMB_PATHS']['miniconda_home']          = new_miniconda_path
         data['NIMB_PATHS']['miniconda_python_run']    = path.join(new_miniconda_path,'bin','python3.7').replace(path.expanduser("~"),"~")
         new_freesurfer_path = get_userdefined_paths('FreeSurfer folder', path.join(NIMB_HOME, '../..', 'freesurfer'), 'freesurfer')
+        if not path.exists(new_freesurfer_path):
+            FreeSurfer_install = get_yes_no('do you want to install FreeSurfer at the provided location {}? (y/n)'.format(new_freesurfer_path))
+            data['FREESURFER']['FreeSurfer_install']      = FreeSurfer_install
+            if FreeSurfer_install == 1:
+                freesurfer_license = get_FS_license()
+                data['FREESURFER']['freesurfer_license']  = freesurfer_license
+        else:
+            data['FREESURFER']['FreeSurfer_install']      = 1
         data['FREESURFER']['FREESURFER_HOME']         = new_freesurfer_path
         data['FREESURFER']['FS_SUBJECTS_DIR']         = path.join(new_freesurfer_path, 'subjects')
         data['FREESURFER']['export_FreeSurfer_cmd']   = "export FREESURFER_HOME="+new_freesurfer_path
+
         return data
 
 class SetLocation():
