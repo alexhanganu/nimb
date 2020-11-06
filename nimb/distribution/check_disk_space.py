@@ -43,7 +43,7 @@ class DiskspaceUtility:
         print("It would talke long time to get diskusage_report ")
         # first_line = output.decode("utf8").split("\n")[1].strip()
         first_line = output.split("\n")[1].strip()
-        results = re.sub("\s{4,}", "@@", first_line) #'/home (user hvt) 1173M/50G 20k/500k'
+        results = re.sub("\s{4,}", "@@", first_line) #'/home 1173M/50G 20k/500k'
         results = results.split("@@")[1].lstrip().strip() # 1173M/50G
         usage_space = re.findall("\d+", results)[0] # 1173
         total_space = re.findall("\d+", results)[1] # 50
@@ -198,8 +198,13 @@ class ListSubjectHelper:
         return diskusage
 
 if __name__ == "__main__":
-    size = DiskspaceUtility.get_free_space("../v02003/utility")
+    # ALWAYS AVOID LEAVING ANY CREDENTIALS OR PATHS INSIDE THE WORKING SCRIPT
+    file_with_paths  = 'path to file'
+    file_with_paths2 = 'path to file 2'
+    PATH = open(file_with_paths, 'r').readlines()
+    PATH2 = open(file_with_paths2, 'r').readlines()
+    size = DiskspaceUtility.get_free_space(PATH)
     print(f"current size is {size} MB")
-    py = DiskspaceUtility.get_files_upto_size(1, "../distribution", "*.*")
+    py = DiskspaceUtility.get_files_upto_size(1, PATH2, "*.*")
     print(f"list of python {py}")
 

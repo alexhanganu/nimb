@@ -429,13 +429,3 @@ def copy_subjects_to_cluster(subjects_json_file_path, cluster_subject_folder, a_
     :return: None
     '''
     SSHHelper.upload_all_subjects(subjects_json_file_path, cluster_subject_folder, a_folder)
-
-
-if __name__ == "__main__":
-    if True:
-        # test()
-        test2()
-    if False:
-        json_path = '../v02003/docs/new_subjects.json'
-        upload_all_subjects(subjects_json_file = json_path, subjects_folder="/home/hvt/test",
-                        a_folder ='/home/hvt/projects/def-hanganua/a')
