@@ -41,10 +41,7 @@ def getSSHSession(remotegetSSHSession):
     """
     debug = True
     if debug is True:
-        # credentials = guitk_setup.term_setup(remote).credentials
-        username = "hvt"
-        targetIP = "beluga.calculquebec.ca"
-        password = "Hoang067@"
+        credentials = guitk_setup.term_setup(remote).credentials
     else:
         credentials = interminal_setup.term_setup(remote).credentials
         username = credentials['username']
