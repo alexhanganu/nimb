@@ -80,7 +80,7 @@ class DCM2BIDS_helper():
         if self.chk_if_in_config(data_Type, modality, criterion):
             new_des = {
                ['dataType' : data_Type, 'modalityLabel' : modality,
-               'criteria':{criterion: self.sidecar_content[criterion]}}
+               'criteria':{criterion: self.sidecar_content[criterion]}]}
             self.config['descriptions'].append(new_des)
             self.save_json(self.config, self.config_file)
         else:

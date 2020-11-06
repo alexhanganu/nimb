@@ -42,7 +42,6 @@ class Get_Vars():
             self.location_vars = self.get_default_vars(self.projects)
             self.stats_vars = self.read_file(path.join(self.credentials_home, 'stats.json'))
         print('local user is: '+self.location_vars['local']['USER']['user'])
-        self.installers = self.read_file(path.join(path.dirname(path.abspath(__file__)), 'installers.json'))
 
 
     def define_credentials(self):

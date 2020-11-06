@@ -23,7 +23,6 @@ class DistributionHelper():
     def __init__(self, all_vars, projects, project):
 
         self.credentials_home = all_vars.credentials_home # NIMB_HOME/credentials_paths.py
-        self.installers       = all_vars.installers # NIMB_HOME/setup/installers.json
         self.locations        = all_vars.location_vars # credentials_home/local.json + remotes.json
         self.stats_vars       = all_vars.stats_vars
         self.projects         = projects # credentials_home/project.json
@@ -221,7 +220,7 @@ class DistributionHelper():
             # 1. install required library and software on the local computer, including freesurfer
             self.setting_up_local_computer()
             # install freesurfer locally
-            setup = SETUP_FREESURFER(self.locations,installers=self.installers)
+            setup = SETUP_FREESURFER(self.locations)
         else:
             logger.debug("Setting up the remote server")
             # --get the name and the address of remote server
@@ -416,8 +415,7 @@ class DistributionHelper():
 
 # if __name__ == "__main__":
     # distribution = DistributionHelper(projects,
-                                               # locations,
-                                               # installers)
+                                               # locations)
     # #DistributionHelper.is_setup_vars_folders(is_nimb_fs_stats=True, is_nimb_classification=True, is_freesurfer_nim=True)
     # user_name,user_password = DistributionHelper.get_username_password_cluster_from_sqlite()
     # cluster = "cedar.computecanada.ca"

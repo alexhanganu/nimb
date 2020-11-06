@@ -9,6 +9,8 @@ from os import path, chdir, system, remove, makedirs
 import subprocess
 from os.path import expanduser
 
+install_miniconda3 = "https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh"
+
 
 def is_command_ran_sucessfully(command):
     command = """
@@ -45,7 +47,7 @@ def setup_miniconda(miniconda_home):
 
     chdir(path.join(miniconda_home, '..'))
     is_command_ran_sucessfully(
-        'curl https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -o miniconda3.sh')
+        'curl {} -o miniconda3.sh'.format(install_miniconda3))
     system('chmod +x miniconda3.sh')
     system('./miniconda3.sh -b -p ' + path.join(miniconda_home,"miniconda3"))
     # remove('miniconda3.sh')

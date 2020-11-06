@@ -8,15 +8,16 @@ import time, shutil
 
 class SETUP_FREESURFER():
 
-    def __init__(self, vars, installers):
+    def __init__(self, vars):
 
         self.NIMB_HOME            = vars['local']['NIMB_PATHS']['NIMB_HOME']
         self.FS_vars              = vars['local']['FREESURFER'] 
         self.FREESURFER_HOME      = self.FS_vars['FREESURFER_HOME']
+        centos_version            = '7'
 
         if not path.exists(self.FREESURFER_HOME):
             print("freesurfer requires to be installed")
-            self.freesurfer_install(self.FS_vars['freesurfer_version'], installers)
+            self.freesurfer_install(self.FS_vars['freesurfer_version'], centos_version)
             print('FINISHED Installing')
         self.check_freesurfer_license(self.FS_vars['freesurfer_license'])
         self.check_matlab_installation('install')
@@ -46,9 +47,9 @@ class SETUP_FREESURFER():
             for line in license:
                 f.write(line + '\n')
 
-    def freesurfer_install(self, freesurfer_version, installers):
+    def freesurfer_install(self, freesurfer_version, centos_version):
         if freesurfer_version == '7.1.1':
-            installer = installers['install_fs7.1.1_centos7']
+            installer = self.fs_download_path(freesurfer_version, centos_version)
         else:
             print('freesurfer version not defined')
         chdir(self.NIMB_HOME)
@@ -72,6 +73,14 @@ class SETUP_FREESURFER():
             remove(installer_f)
         else:
             print('something wrong, please review')
+
+    def fs_download_path(self, freesurfer_version, centos_version):
+        if freesurfer_version == '7.1.1':
+            if centos_version == '7':
+                download_path = "https://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/7.1.1/freesurfer-linux-centos7_x86_64-7.1.1.tar.gz"
+            elif centos_version == '8':
+                download_path = "https://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/7.1.1/freesurfer-linux-centos8_x86_64-7.1.1.tar.gz"
+        return download_path
 
     def matlab_install(self, export_FreeSurfer_cmd, source_FreeSurfer_cmd):
         chdir(self.FREESURFER_HOME)

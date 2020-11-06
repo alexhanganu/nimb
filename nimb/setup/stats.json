@@ -18,11 +18,11 @@
        "cor_level_chosen"       : ["STRONG","MODERATE","WEAK"]
    },
 "EXPLANATION": {
-       "GLM_dir"            : "path to the folder were the glm analysis will be made",
-       "GLM_measurements"   : "cortical parameters that will be used for FreeSurfer GLM analysis: thickness,area,volume,curv",
-       "GLM_thresholds"     : "threshold levels for smoothing in mm, used for FreeSurfer GLM analysis: 5,10,15,20,25",
-       "GLM_MCz_cache"      : "level of FreeSurfer GLM MCZ simulation threshold 13 equals to p:0.05",
-       "freesurfer_version" : "default is 7 (for 7.1.1) but pipeline should also work with versions 6 and 5",
-       "freesurfer_license" : "license of freesurfer"
+       "GLM_dir"                : "path to the folder were the glm analysis will be made",
+       "GLM_measurements"       : "cortical parameters that will be used for FreeSurfer GLM analysis: thickness,area,volume,curv",
+       "GLM_thresholds"         : "threshold levels for smoothing in mm, used for FreeSurfer GLM analysis: 5,10,15,20,25",
+       "GLM_MCz_cache"          : "level of FreeSurfer GLM MCZ simulation threshold 13 equals to p:0.05",
+       "freesurfer_version"     : "default is 7 (for 7.1.1) but pipeline should also work with versions 6 and 5",
+       "freesurfer_license"     : "license of freesurfer"
    }
 }

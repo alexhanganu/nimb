@@ -27,7 +27,6 @@ class DistributionReady():
     def __init__(self, all_vars, projects, project):
         
         self.credentials_home = all_vars.credentials_home # NIMB_HOME/credentials_paths.py
-        self.installers       = all_vars.installers # NIMB_HOME/setup/installers.json
         self.locations        = all_vars.location_vars # credentials_home/local.json + remotes.json
         self.stats_vars       = all_vars.stats_vars
         self.projects         = projects # credentials_home/project.json
@@ -184,7 +183,7 @@ class DistributionReady():
         ready = False
         if not os.path.exists(os.path.join(self.locations['local']['FREESURFER']['FREESURFER_HOME'], "MCRv84")):
             from .setup_freesurfer import SETUP_FREESURFER
-            SETUP_FREESURFER(self.locations, self.installers)
+            SETUP_FREESURFER(self.locations)
             ready = True
         else:
             print('start freesurfer processing')
