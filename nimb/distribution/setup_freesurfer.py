@@ -74,13 +74,8 @@ class SETUP_FREESURFER():
         else:
             print('something wrong, please review')
 
-    def fs_download_path(self, freesurfer_version, centos_version):
-        if freesurfer_version == '7.1.1':
-            if centos_version == '7':
-                download_path = "https://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/7.1.1/freesurfer-linux-centos7_x86_64-7.1.1.tar.gz"
-            elif centos_version == '8':
-                download_path = "https://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/7.1.1/freesurfer-linux-centos8_x86_64-7.1.1.tar.gz"
-        return download_path
+    def fs_download_path(self, fs_v, centos_v):
+        return "https://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/{}/freesurfer-linux-centos{}_x86_64-{}.tar.gz".format(fs_v, centos_v, fs_v)
 
     def matlab_install(self, export_FreeSurfer_cmd, source_FreeSurfer_cmd):
         chdir(self.FREESURFER_HOME)
