@@ -16,7 +16,7 @@ class GetMasks:
     '''
 
     def __init__(self, vars_fs, masks = 'all'):
-        self.SUBJECTS_DIR = vars_fs['SUBJECTS_DIR']
+        self.SUBJECTS_DIR = vars_fs['FS_SUBJECTS_DIR']
         self.masks        = masks
         self.all_codes    = self.read_FreeSurferColorLUT()
         self.codes        = self.get_codes()
