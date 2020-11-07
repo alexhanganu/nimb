@@ -44,7 +44,9 @@ class GetMasks:
 
     def get_codes(self):
         if self.masks == 'subcortical':
-            return self.all_codes.valus().tolist()
+            return [10, 11, 12, 13, 18, 26, 49, 50, 51, 52, 54, 58]
+        if self.masks == 'hippocampus':
+            return [500, 502, 505, 506, 550, 552, 555, 556, 504, 507, 554, 557]
         if self.masks == 'cortical':
             return self.all_codes.valus().tolist()
         if self.masks == 'cerebralWM':
@@ -86,19 +88,6 @@ def get_parameters(projects):
     params = parser.parse_args()
     return params
 
-
-# THIS IS a list of subcortical codes, present in read_FreeSurferColorLUT()
-# {'left_hippocampus':17,'right_hippocampus':53,
-#                     'left_thalamus':10,'right_thalamus':49,'left_caudate':11,'right_caudate':50,
-#                     'left_putamen':12,'right_putamen':51,'left_pallidum':13,'right_pallidum':52,
-#                     'left_amygdala':18,'right_amygdala':54,'left_accumbens':26,'right_accumbens':58,
-#                     'left_hippocampus_CA2':550,'right_hippocampus_CA2':500,
-#                     'left_hippocampus_CA1':552,'right_hippocampus_CA1':502,
-#                     'left_hippocampus_CA4':556,'right_hippocampus_CA4':506,
-#                     'left_hippocampus_fissure':555,'right_hippocampus_fissure':505,
-#                     'left_amygdala_subiculum':557,'right_amygdala_subiculum':507,
-#                     'left_amygdala_presubiculum':554,'right_amygdala_presubiculum':504,
-#                     }
 
 def initiate_fs_from_sh(vars_local):
     """
