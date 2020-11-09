@@ -115,7 +115,7 @@ class MakeBIDS_subj2process():
         ls_iter = ls.copy()
         for mr_path in ls_iter:
             for ex_type in mr_types_2exclude:
-                if ex_type.lower() in mr_path.lower():
+                if ex_type.lower() in mr_path.replace(self.DIR_SUBJECTS,"").lower():
                     ls.remove(mr_path)
                     break
         return ls

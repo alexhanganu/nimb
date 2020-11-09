@@ -83,6 +83,29 @@ class NIMB(object):
                                                 activate_fs = False,
                                                 python_load = True)
 
+        if self.process == 'nilearn':
+            if not DistributionReady(self.all_vars, self.projects, self.project).nilearn_ready():
+                self.logger.info("Nilearn is not ready.")
+                sys.exit()
+            else:
+                cmd = '{} crun.py'.format(self.vars_local['PROCESSING']["python3_run_cmd"])
+                cd_cmd = 'cd '+path.join(self.NIMB_HOME, 'processing', 'nilearn')
+                self.schedule.submit_4_processing(cmd, 'nilearn','run', cd_cmd,
+                                                activate_fs = False,
+                                                python_load = True)
+
+        if self.process == 'dipy':
+            if not DistributionReady(self.all_vars, self.projects, self.project).dipy_ready():
+                self.logger.info("Dipy is not ready.")
+                sys.exit()
+            else:
+                cmd = '{} crun.py'.format(self.vars_local['PROCESSING']["python3_run_cmd"])
+                cd_cmd = 'cd '+path.join(self.NIMB_HOME, 'processing', 'dipy')
+                self.schedule.submit_4_processing(cmd, 'dipy','run', cd_cmd,
+                                                activate_fs = False,
+                                                python_load = True)
+
+
         if self.process == 'fs-get-stats':
             if not DistributionReady(self.all_vars, self.projects, self.project).nimb_stats_ready():
                 self.logger.info("NIMB is not ready to extract the FreeSurfer statistics per user. Please check the configuration files.")
@@ -142,7 +165,7 @@ def get_parameters(projects):
     parser.add_argument(
         "-process", required=False,
         default='ready',
-        choices = ['ready', 'check-new', 'freesurfer', 'classify', 'classify_dcm2bids', 'fs-get-stats', 'fs-get-masks', 'fs-glm', 'fs-glm-image', 'run-stats'],
+        choices = ['ready', 'check-new', 'freesurfer', 'classify', 'classify_dcm2bids', 'nilearn', 'dipy', 'fs-get-stats', 'fs-get-masks', 'fs-glm', 'fs-glm-image', 'run-stats'],
         help="freesurfer (start FreeSurfer pipeline), classify (classify MRIs) fs-stats (extract freesurfer stats from subjid/stats/* to an excel file), fs-glm (perform freesurfer mri_glmfit GLM analsysis), stats-general (perform statistical analysis)",
     )
 
