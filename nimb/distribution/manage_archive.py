@@ -9,12 +9,13 @@ import shutil
 
 class ZipArchiveManagement():
 
-    def __init__(self, zip_file_path, path2xtrct = False, path_err = False, dirs2xtrct = list()):
+    def __init__(self, zip_file_path, path2xtrct = False, path_err = False, dirs2xtrct = list(), log=True):
         self.zip_f_path = zip_file_path
         self.zip_file   = path.split(self.zip_f_path)[-1]
         self.path2xtrct = path2xtrct
         self.dirs2xtrct = dirs2xtrct
         self.path_err   = path_err
+        self.log        = log
         if self.chk_if_zipfile():
             self.zip_file_open = self.read_zip()
             if self.path2xtrct:
@@ -51,7 +52,8 @@ class ZipArchiveManagement():
                     pass
 
     def extract_archive(self):
-        print("extracting: {} to {}".format(self.zip_f_path, self.path2xtrct))
+        if self.log:
+            print("extracting: {} to {}".format(self.zip_f_path, self.path2xtrct))
         if self.dirs2xtrct:
             for folder in [path.join(self.zip_file.strip('.zip'), i) for i in self.dirs2xtrct]:
                 self.xtrct_dirs(pattern = folder)
