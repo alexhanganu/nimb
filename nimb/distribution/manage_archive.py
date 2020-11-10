@@ -9,8 +9,9 @@ import shutil
 
 class ZipArchiveManagement():
 
-    def __init__(self, zip_file, path2xtrct = False, path_err = False, dirs2xtrct = list()):
-        self.zip_file   = zip_file
+    def __init__(self, zip_file_path, path2xtrct = False, path_err = False, dirs2xtrct = list()):
+        self.zip_f_path = zip_file_path
+        self.zip_file   = path.split(self.zip_f_path)[-1]
         self.path2xtrct = path2xtrct
         self.dirs2xtrct = dirs2xtrct
         self.path_err   = path_err
@@ -20,8 +21,8 @@ class ZipArchiveManagement():
                 self.extract_archive()
 
     def chk_if_zipfile(self):
-        if not zipfile.is_zipfile(self.zip_file):
-            print(self.zip_file,' not a zip file')
+        if not zipfile.is_zipfile(self.zip_f_path):
+            print(self.zip_f_path,' not a zip file')
             if self.path_err:
                 self.move_error()
             return False
@@ -29,7 +30,7 @@ class ZipArchiveManagement():
             return True
 
     def read_zip(self):
-        return zipfile.ZipFile(self.zip_file, 'r')
+        return zipfile.ZipFile(self.zip_f_path, 'r')
 
     def zip_file_content(self):
         return self.zip_file_open.namelist()
@@ -50,7 +51,7 @@ class ZipArchiveManagement():
                     pass
 
     def extract_archive(self):
-        print("extracting: {} to {}".format(self.zip_file, self.path2xtrct))
+        print("extracting: {} to {}".format(self.zip_f_path, self.path2xtrct))
         if self.dirs2xtrct:
             for folder in [path.join(self.zip_file.strip('.zip'), i) for i in self.dirs2xtrct]:
                 self.xtrct_dirs(pattern = folder)
@@ -58,5 +59,5 @@ class ZipArchiveManagement():
             self.xtrct_all()
 
     def move_error(self):
-        shutil.move(self.zip_file, self.path_err)
+        shutil.move(self.zip_f_path, self.path_err)
         shutil.rename(path.join(self.path_err, self.zip_file), path.join(self.path_err, 'errzip_'+self.zip_file))
