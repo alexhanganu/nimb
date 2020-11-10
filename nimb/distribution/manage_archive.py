@@ -62,4 +62,4 @@ class ZipArchiveManagement():
 
     def move_error(self):
         shutil.move(self.zip_f_path, self.path_err)
-        shutil.rename(path.join(self.path_err, self.zip_file), path.join(self.path_err, 'errzip_'+self.zip_file))
+        shutil.move(path.join(self.path_err, self.zip_file), path.join(self.path_err, 'errzip_'+self.zip_file))
