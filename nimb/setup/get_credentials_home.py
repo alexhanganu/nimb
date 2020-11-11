@@ -3,7 +3,7 @@ from sys import platform
 
 def _get_credentials_home():
     if platform == 'win32':
-        home = environ['HOMEPATH']
+        home = environ['USERPROFILE']
     else:
         home = environ['HOME']
     try:
