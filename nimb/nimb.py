@@ -119,6 +119,14 @@ class NIMB(object):
                                    self.stats_vars["STATS_HOME"],
                                    PROCESSED_FS_DIR, data_only_volumes=False)
 
+        if self.process == 'fs-glm-prep':
+            '''
+            prepares for glm
+            : checks that all subjects are extracted and have all the required files
+            : if subjects are on a remote - will scp them to local where FreeSurfer Freeview is available
+            '''
+            DistributionHelper(self.all_vars, self.projects, self.project).fs_glm_prep()
+
         if self.process == 'fs-glm':
             if DistributionReady(self.all_vars, self.projects, self.project).fs_ready():
                 self.logger.info('Please check that all required variables for the GLM analysis are defined in the var.py file')
@@ -165,7 +173,7 @@ def get_parameters(projects):
     parser.add_argument(
         "-process", required=False,
         default='ready',
-        choices = ['ready', 'check-new', 'freesurfer', 'classify', 'classify_dcm2bids', 'nilearn', 'dipy', 'fs-get-stats', 'fs-get-masks', 'fs-glm', 'fs-glm-image', 'run-stats'],
+        choices = ['ready', 'check-new', 'freesurfer', 'classify', 'classify_dcm2bids', 'nilearn', 'dipy', 'fs-get-stats', 'fs-get-masks', 'fs-glm-prep', 'fs-glm', 'fs-glm-image', 'run-stats'],
         help="freesurfer (start FreeSurfer pipeline), classify (classify MRIs) fs-stats (extract freesurfer stats from subjid/stats/* to an excel file), fs-glm (perform freesurfer mri_glmfit GLM analsysis), stats-general (perform statistical analysis)",
     )
 

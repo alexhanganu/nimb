@@ -77,3 +77,10 @@ files_created = {
     'autorecon3': ['stats/aseg.stats','stats/wmparc.stats',],
     'qcache'    : ['surf/rh.w-g.pct.mgh.fsaverage.mgh', 'surf/lh.thickness.fwhm10.fsaverage.mgh']
 }
+
+class GLMVars:
+    def __init__(self, proj_vars):
+        self.proj_vars = proj_vars
+
+    def f_ids_processed(self):
+        return path.join(proj_vars['materials_DIR'], 'f_ids_processed.json')
