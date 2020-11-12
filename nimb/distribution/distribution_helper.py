@@ -168,19 +168,24 @@ class DistributionHelper():
 
     def get_stats_dir(self):
         """will return the folder with unzipped stats folder for each subject"""
-        PROCESSED_FS_DIR = self.projects[self.project_name]["PROCESSED_FS_DIR"]
-
         if any('.zip' in i for i in listdir(PROCESSED_FS_DIR)):
-            from .manage_archive import ZipArchiveManagement
-            zipmanager = ZipArchiveManagement()
-            tmp_dir = path.join(self.NIMB_tmp, 'tmp_subject_stats')
-            if not path.exists(tmp_dir):
-                makedir_ifnot_exist(tmp_dir)
-            zipmanager.extract_archive(PROCESSED_FS_DIR, ['stats',], tmp_dir)
-            return tmp_dir
+            NIMB_PROCESSED_FS = path.join(self.locations["local"]['NIMB_PATHS']['NIMB_PROCESSED_FS'])
+            logger.info('Must extract folder {} for each subject to destination {}'.format('stats', NIMB_PROCESSED_FS))
+            self.extract_dirs([path.join(PROCESSED_FS_DIR, i) for i in listdir(PROCESSED_FS_DIR) if '.zip' in i],
+                            NIMB_PROCESSED_FS,
+                            ['stats',])
+            return NIMB_PROCESSED_FS
         else:
-            return PROCESSED_FS_DIR
+            return self.projects[self.project_name]["PROCESSED_FS_DIR"]
         print('perform statistical analysis')
+
+    def extract_dirs(self, ls_zip_files, path2xtrct, dirs2extract):
+        from .manage_archive import ZipArchiveManagement
+        for zip_file_path in ls_zip_files:
+            ZipArchiveManagement(
+                    zip_file_path, 
+                    path2xtrct = path2xtrct, path_err = False,
+                    dirs2xtrct = dirs2extract, log=True)
 
     def get_subj_2classify(self):
         SUBJ_2Classify = self.locations["local"]['NIMB_PATHS']['NIMB_NEW_SUBJECTS']
@@ -212,9 +217,20 @@ class DistributionHelper():
                                 dir_2chk).miss
         if miss:
             print('starting subject preparation for glm')
-            print(miss)
+            self.fs_glm_prep_extract_dirs(list(miss.values()))
         else:
             return True
+
+    def fs_glm_prep_extract_dirs(self, ls):
+        dirs2extract = ['label','surf',]
+        NIMB_PROCESSED_FS = path.join(self.locations["local"]['NIMB_PATHS']['NIMB_PROCESSED_FS'])
+        not_exist = [i for i in ls if not path.exists(i)]
+        if not_exist:
+            logger.info('{} subject paths do not exist'.format(len(not_exist)))
+            ls = [i for i in ls if path.exists(i)]
+        logger.info('Must extract folders {} for {} subjects, to destination {}'.format(dirs2extract, len(ls), NIMB_PROCESSED_FS))
+        self.extract_dirs([i for i in ls if '.zip' in i],
+                          NIMB_PROCESSED_FS, dirs2extract)
 
     def run(self, Project):
         """
