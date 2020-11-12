@@ -76,7 +76,7 @@ class DistributionHelper():
         if len(locations) == 0:
             user is asked to change freesurfer_install to 1 for any location or
             user is asked to provide a new machine
-        else, user is asked to chose the machine or all machines to 
+        else, user is asked to chose the machine or all machines to
         be used for the processing
         :param locations ready to perform analysis
         :return locations chosen by the user
@@ -97,7 +97,7 @@ class DistributionHelper():
 
     def get_subject_data(self, unprocessed):
         """
-        it is expected that 
+        it is expected that
         for each subject to be processed (in unprocessed):
         compute volume of data (T1s, Flairs, rsfMRIs, DWIs
         :param number of subjects to be processed, from SOURCE_SUBJECTS_DIR:
@@ -133,7 +133,7 @@ class DistributionHelper():
         continue_processing = False
         # print("Remote server has {0}MB free, it can stored {1} subjects".format(free_space, len(to_be_process_subject)))
         return continue_processing
-    
+
     def make_processing_database(self):
         """
                 - create distrib-DATABASE (track files) ~/nimb/project-name_status.json:
@@ -142,7 +142,7 @@ class DistributionHelper():
             add each subjects to:
             - distrib-DATABASE[ACTION][notprocessed].append(subject)
             - distrib-DATABASE[LOCATION][local/remote_name].append(subject)
-        - populating rule: 
+        - populating rule:
             - continue populating until the volume of subjects + volume of estimated processed subjects (900Mb per subject) is less then 75% of the available disk space
             - populate local.json → NIMB_PATHS → NIMB_NEW_SUBJECTS based on populating rule
             - If there are more than one computer ready to perform freesurfer:
@@ -165,7 +165,7 @@ class DistributionHelper():
         """
         pass
 
-    
+
     def get_stats_dir(self):
         """will return the folder with unzipped stats folder for each subject"""
         PROCESSED_FS_DIR = self.projects[self.project_name]["PROCESSED_FS_DIR"]
