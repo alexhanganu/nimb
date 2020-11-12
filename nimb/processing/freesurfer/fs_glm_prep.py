@@ -3,10 +3,11 @@ check that all subjects are present in the FS_SUBJECTS_DIR folder
 in order to perform the FreeSurfer glm
 '''
 
-from os import listdir
+from os import listdir, path
 import sys
+import json
 
-from fs_definitions import GLMVars
+from .fs_definitions import GLMVars
 
 try:
     import pandas as pd
@@ -17,10 +18,10 @@ except ImportError as e:
 
 class CheckIfReady4GLM():
 
-    def __init__(self, proj_vars, vars_fs):
+    def __init__(self, proj_vars, dir_2chk):
         self.glm_vars = GLMVars(proj_vars)
-        self.vars_fs  = vars_fs
-        self.id_col   = proj_vars['id_col']
+        self.dir_2chk = dir_2chk
+        self.proj_vars = proj_vars
 
         self.miss = self.chk_if_subjects_ready()
 
@@ -28,9 +29,10 @@ class CheckIfReady4GLM():
         f_ids_processed = self.glm_vars.f_ids_processed()
         if path.exists(f_ids_processed):
             content = self.read_json(f_ids_processed)
-            return {i:conten[i]['processed'] for i in content}
+            return {i:content[i]['processed'] for i in content}
         else:
             print('getting ids from user-provided GLM file group')
+            # self.id_col   = self.proj_vars['id_col']
             # df_groups_clin = self.get_df_for_variables(GLM_file_group, variables)
             # self.ids = self.get_ids_ready4glm(df_groups_clin[self.id_col].tolist(), vars_fs)
             # d_init = df_groups_clin.to_dict()
@@ -40,11 +42,11 @@ class CheckIfReady4GLM():
         ids_processed = self.get_ids_processed()
         self.miss = {}
         for sub in ids_processed:
-            if subject not in listdir(self.vars_fs['FS_SUBJECTS_DIR']):
+            if sub not in listdir(self.dir_2chk):
                 self.miss[sub] = ids_processed[sub]
         return self.miss
 
-    def read_json(f):
+    def read_json(self, f):
         with open(f, 'r') as jf:
             return json.load(jf)
 

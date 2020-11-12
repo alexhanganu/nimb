@@ -206,10 +206,10 @@ class DistributionHelper():
             return ""
         return self.projects[project][var_name]
 
-    def fs_glm_prep(self):
+    def fs_glm_prep(self, dir_2chk):
         from processing.freesurfer.fs_glm_prep import CheckIfReady4GLM
         miss = CheckIfReady4GLM(self.projects[self.project_name],
-                                self.locations[location]["FREESURFER"]).miss
+                                dir_2chk).miss
         if miss:
             print('starting subject preparation for glm')
             print(miss)

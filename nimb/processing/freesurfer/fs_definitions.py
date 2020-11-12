@@ -83,4 +83,4 @@ class GLMVars:
         self.proj_vars = proj_vars
 
     def f_ids_processed(self):
-        return path.join(proj_vars['materials_DIR'], 'f_ids_processed.json')
+        return path.join(self.proj_vars['materials_DIR'], 'f_ids_processed.json')

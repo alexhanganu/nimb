@@ -125,7 +125,11 @@ class NIMB(object):
             : checks that all subjects are extracted and have all the required files
             : if subjects are on a remote - will scp them to local where FreeSurfer Freeview is available
             '''
-            DistributionHelper(self.all_vars, self.projects, self.project).fs_glm_prep()
+            if DistributionReady(self.all_vars, self.projects, self.project).fs_ready():
+                dir_2chk = self.vars_local['FREESURFER']['FS_SUBJECTS_DIR']
+            else:
+                dir_2chk = self.vars_local['NIMB_PATHS']['NIMB_PROCESSED_FS']
+            DistributionHelper(self.all_vars, self.projects, self.project).fs_glm_prep(dir_2chk)
 
         if self.process == 'fs-glm':
             if DistributionReady(self.all_vars, self.projects, self.project).fs_ready():
