@@ -181,8 +181,8 @@ def get_id_long(subjid, LONG_DIRS, base_name, long_name):
 def chk_subj_in_SUBJECTS_DIR(NIMB_tmp, db, vars_freesurfer):
     log.info('    SUBJECTS_DIR checking ...')
 
-    base_name          =vars_freesurfer["base_name"], 
-    long_name          = vars_freesurfer["long_name"],
+    base_name          = vars_freesurfer["base_name"]
+    long_name          = vars_freesurfer["long_name"]
     SUBJECTS_DIR       = vars_freesurfer["FS_SUBJECTS_DIR"]
     process_order      = vars_freesurfer["process_order"]
 
