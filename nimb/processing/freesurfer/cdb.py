@@ -82,8 +82,8 @@ def add_subjid_2_DB(NIMB_tmp, subjid, _id, ses, db, ls_SUBJECTS_in_long_dirs_pro
 def chk_subjects2fs_file(NIMB_tmp, db, vars_freesurfer):
     log.info('    NEW_SUBJECTS_DIR checking ...')
 
-    base_name =vars_freesurfer["base_name"], 
-    long_name = vars_freesurfer["long_name"],
+    base_name =vars_freesurfer["base_name"] 
+    long_name = vars_freesurfer["long_name"]
 
     ls_SUBJECTS_in_long_dirs_processed = get_ls_subjids_in_long_dirs(db)
     from fs_checker import FreeSurferChecker
