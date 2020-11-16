@@ -123,6 +123,22 @@ class Get_Vars():
         data['FREESURFER']['FREESURFER_HOME']         = new_freesurfer_path
         data['FREESURFER']['FS_SUBJECTS_DIR']         = path.join(new_freesurfer_path, 'subjects')
         data['FREESURFER']['export_FreeSurfer_cmd']   = "export FREESURFER_HOME="+new_freesurfer_path
+        environ = get_yes_no("Will this account use slurm or tmux for processing ? (y/n; y=slurm/ n=tmux)")
+        if environ == 1:
+            data['PROCESSING']['processing_env']      = 'slurm'
+            supervisor = input("For some slurm environments a supervisor account is required. Please type superviros account name or leave blank:")
+            if supervisor:
+                print('supervisor account name is: {}'.format(supervisor))
+                data['USER']['supervisor_account']       = str(supervisor)
+                data['PROCESSING']['text4_scheduler'][1] = data['PROCESSING']['text4_scheduler'][1].replace('def-supervisor',supervisor)
+            else:
+                print('supervisor account not provided')
+                data['USER']['supervisor_account']       = ''
+                data['PROCESSING']['text4_scheduler'].remove(data['PROCESSING']['text4_scheduler'][1])
+        else:
+            print('environment for processing is: {}'.format(environ))
+            data['PROCESSING']['processing_env']      = 'tmux'
+
 
         return data
 
