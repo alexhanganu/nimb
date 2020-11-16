@@ -43,19 +43,20 @@ class DCM2BIDS_helper():
         if self.run_stt == 1:
             self.config_file = self.get_config_file()
             print("config_file", self.config_file)
-            self.SUBJ_NAME = self.get_sub()
-            print(self.SUBJ_NAME)
-            # Run the dcm2bids app
-            system('dcm2bids -d {} -p {} -c {} -o {}'.format(self.DICOM_DIR, self.SUBJ_NAME, self.config_file, self.OUTPUT_DIR))
-            # set the subject dir
-            self.sub_SUBJDIR = path.join(self.OUTPUT_DIR, 'tmp_dcm2bids', 'sub-{}'.format(self.SUBJ_NAME))
-            self.chk_if_processed()
+            for subj_name in self.get_sub():
+                self.SUBJ_NAME = subj_name
+                print(self.SUBJ_NAME)
+                # Run the dcm2bids app
+                system('dcm2bids -d {} -p {} -c {} -o {}'.format(self.DICOM_DIR, self.SUBJ_NAME, self.config_file, self.OUTPUT_DIR))
+                # set the subject dir
+                self.sub_SUBJDIR = path.join(self.OUTPUT_DIR, 'tmp_dcm2bids', 'sub-{}'.format(self.SUBJ_NAME))
+                self.chk_if_processed()
 
 
     def get_sub(self):
-        print("test get_sub")
         """Get list of all file names in the input dir """
-        return listdir(self.DICOM_DIR)[0]
+        print("get_sub", listdir(self.DICOM_DIR))
+        return listdir(self.DICOM_DIR)
 
 
     def get_config_file(self):
