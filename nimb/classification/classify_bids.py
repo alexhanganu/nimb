@@ -21,6 +21,7 @@ import datetime as dt
 import time, json
 
 from .classify_definitions import mr_modalities, BIDS_types, mr_types_2exclude
+from .utils import get_path, save_json
 
 class MakeBIDS_subj2process():
     def __init__(self, DIR_SUBJECTS,
@@ -53,7 +54,8 @@ class MakeBIDS_subj2process():
                 d_BIDS_structure = self.make_BIDS_structure(d_ses_MR_types)
 #                print(d_BIDS_structure)
                 self.d_subjects[subject] = d_BIDS_structure
-                self.save_json(self.DIR_SUBJECTS, "all_subjects", self.d_subjects)
+                save_json(self.d_subjects, path.join(self.DIR_SUBJECTS, "all_subjects"))
+#                self.save_json(self.DIR_SUBJECTS, "all_subjects", self.d_subjects)
         print("classification of new subjects is complete")
         if self.multiple_T1_entries == 1:
             from classification.get_mr_params import verify_MRIs_for_similarity
@@ -62,7 +64,8 @@ class MakeBIDS_subj2process():
             self.d_subjects = self.keep_only1_T1(self.d_subjects)
 
         f_new_subjects = path.join(self.NIMB_tmp,'new_subjects.json')
-        self.save_json(self.NIMB_tmp, f_new_subjects, self.d_subjects)
+        save_json(self.d_subjects, f_new_subjects)
+#        self.save_json(self.NIMB_tmp, f_new_subjects, self.d_subjects)
         if path.exists(path.join(self.NIMB_tmp, f_new_subjects)):
             return True
         else:
@@ -73,7 +76,7 @@ class MakeBIDS_subj2process():
             content = self.chk_if_ziparchive(path2subj)
             path_2mris = self.get_paths2dcm_files_from_ls(content)
         elif path.isdir(path2subj):
-            path_2mris = self.get_paths2dcm_files_from_DIR(path2subj)
+            path_2mris = self.get_paths2dcm_files(path2subj)
         else:
             print(path2subj,' not a dir and not a .zip file')
             path_2mris = []
@@ -96,20 +99,39 @@ class MakeBIDS_subj2process():
                     ls_paths.append(path_mri)
         return ls_paths
 
-    def get_paths2dcm_files_from_DIR(self, path_root):
+
+    def get_paths2dcm_files(self, path_root):
+        '''
+        search the path to the .dcm or .nii file
+        '''
         ls_paths = list()
         for root, dirs, files in walk(path_root):
-            for file in files:
-                if '.dcm' in file:
-                    dir_path = root.replace('\\','/')
-                    dir_src = dir_path+'/'+sorted(listdir(dir_path))[0]
+            for file in sorted(files):
+                if file.endswith('.dcm'):
+                    dir_src = get_path(root, file)
                     ls_paths.append(dir_src)
                     break
-                if '.nii' in file:
-                    dir_src = root.replace('\\','/')+'/'+file
+                if file.endswith('.nii'):
+                    dir_src = get_path(root, file)
                     ls_paths.append(dir_src)
                     break
         return ls_paths
+
+
+    # def get_paths2dcm_files_from_DIR(self, path_root):
+    #     ls_paths = list()
+    #     for root, dirs, files in walk(path_root):
+    #         for file in files:
+    #             if '.dcm' in file:
+    #                 dir_path = root.replace('\\','/')
+    #                 dir_src = dir_path+'/'+sorted(listdir(dir_path))[0]
+    #                 ls_paths.append(dir_src)
+    #                 break
+    #             if '.nii' in file:
+    #                 dir_src = root.replace('\\','/')+'/'+file
+    #                 ls_paths.append(dir_src)
+    #                 break
+    #     return ls_paths
         
     def exclude_MR_types(self, ls):
         ls_iter = ls.copy()
@@ -270,11 +292,11 @@ class MakeBIDS_subj2process():
                         d_subjects[subject][session]['anat'].pop('t2', None)
         return d_subjects
 
-    def save_json(self, NIMB_tmp, file, dictionary):
-        jfile = path.join(NIMB_tmp, file)
-        with open(jfile,'w') as f:
-            json.dump(dictionary, f, indent=4)
-        system('chmod 777 {}'.format(jfile))
+    # def save_json(self, NIMB_tmp, file, dictionary):
+    #     jfile = path.join(NIMB_tmp, file)
+    #     with open(jfile,'w') as f:
+    #         json.dump(dictionary, f, indent=4)
+    #     system('chmod 777 {}'.format(jfile))
 
 # ===============================================================
 # ===============================================================
