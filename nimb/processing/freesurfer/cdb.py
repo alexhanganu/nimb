@@ -38,7 +38,7 @@ def Get_DB(NIMB_HOME, NIMB_tmp, process_order):
 
 
 def Update_DB(db, NIMB_tmp):
-	f2save = path.join(NIMB_tmp, 'db.json')
+    f2save = path.join(NIMB_tmp, 'db.json')
     with open(f2save, 'w') as jf:
         json.dump(db, jf, indent=4)
     system('chmod 777 {}'.format(f2save))
