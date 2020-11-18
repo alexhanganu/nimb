@@ -196,8 +196,8 @@ class DistributionHelper():
             SUBJ_2Classify = source_subj[1]
         elif listdir(self.locations["local"]['NIMB_PATHS']['NIMB_NEW_SUBJECTS']):
             SUBJ_2Classify = self.locations["local"]['NIMB_PATHS']['NIMB_NEW_SUBJECTS']
-        logger.info('Folder with Subjects to classify is: {}'.format(SUBJ_2Classify))
         if SUBJ_2Classify:
+            logger.info('Folder with Subjects to classify is: {}'.format(SUBJ_2Classify))
             return SUBJ_2Classify
         else:
             logger.info('Could not define the Folder with Subjects to classify is. Please adjust the file: {}'.format(path.join(self.credentials_home, 'projects.json')))
