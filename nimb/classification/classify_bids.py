@@ -160,7 +160,6 @@ class MakeBIDS_subj2process():
                     if mr_name.lower() in mr_path.lower():
                         d_paths[date].append(mr_path)
             if not d_paths:
-                log.info('ATENTION: cannot define MRI type. Considering as T1w: {}'.format(mr_path))
                 d_paths[date].append(mr_path)
         return ls_sessions, d_paths
     
