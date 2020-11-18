@@ -1,7 +1,7 @@
 #!/bin/python
 # -*- coding: utf-8 -*-
 
-from os import makedirs, path, sep
+from os import makedirs, path, sep, system
 import json
 from collections import OrderedDict
 

@@ -1,7 +1,7 @@
 #!/bin/python
 # 2020.08.25
 
-from os import path, listdir, rename, environ
+from os import path, listdir, rename, environ, system
 import time, json
 import logging
 
@@ -38,8 +38,10 @@ def Get_DB(NIMB_HOME, NIMB_tmp, process_order):
 
 
 def Update_DB(db, NIMB_tmp):
-    with open(path.join(NIMB_tmp, 'db.json'), 'w') as jf:
+	f2save = path.join(NIMB_tmp, 'db.json')
+    with open(f2save, 'w') as jf:
         json.dump(db, jf, indent=4)
+    system('chmod 777 {}'.format(f2save))
 
 
 def get_ls_subjids_in_long_dirs(db):
