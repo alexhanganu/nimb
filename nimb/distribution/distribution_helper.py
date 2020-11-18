@@ -188,15 +188,20 @@ class DistributionHelper():
                     dirs2xtrct = dirs2extract, log=True)
 
     def get_subj_2classify(self):
-        SUBJ_2Classify = self.locations["local"]['NIMB_PATHS']['NIMB_NEW_SUBJECTS']
         bids_cred = self.projects[self.project_name]['SOURCE_BIDS_DIR']
         source_subj = self.projects[self.project_name]['SOURCE_SUBJECTS_DIR']
-        if bids_cred[0] == 'local' and path.exists(bids_cred[1]):
+        if bids_cred[0] == 'local' and path.exists(bids_cred[1]) and listdir(bids_cred[1]):
             SUBJ_2Classify = bids_cred[1]
-        elif source_subj[0] == 'local' and path.exists(source_subj[1]):
+        elif source_subj[0] == 'local' and path.exists(source_subj[1]) and listdir(source_subj[1]):
             SUBJ_2Classify = source_subj[1]
-        logger.info('Folder with Subject to classify is: {}'.format(SUBJ_2Classify))
-        return SUBJ_2Classify
+        elif listdir(self.locations["local"]['NIMB_PATHS']['NIMB_NEW_SUBJECTS']):
+            SUBJ_2Classify = self.locations["local"]['NIMB_PATHS']['NIMB_NEW_SUBJECTS']
+        logger.info('Folder with Subjects to classify is: {}'.format(SUBJ_2Classify))
+        if SUBJ_2Classify:
+            return SUBJ_2Classify
+        else:
+            logger.info('Could not define the Folder with Subjects to classify is. Please adjust the file: {}'.format(path.join(self.credentials_home, 'projects.json')))
+            return False
 
     def get_project_vars(self, var_name, project):
         """

@@ -61,11 +61,12 @@ class NIMB(object):
                 sys.exit()
             else:
                 SUBJ_2Classify = DistributionHelper(self.all_vars, self.projects, self.project).get_subj_2classify()
-                from classification.classify_bids import MakeBIDS_subj2process
-                return MakeBIDS_subj2process(SUBJ_2Classify,
-                                     self.NIMB_tmp,
-                                     self.vars_local['FREESURFER']['multiple_T1_entries'],
-                                     self.vars_local['FREESURFER']['flair_t2_add']).run()
+                if SUBJ_2Classify:
+                    from classification.classify_bids import MakeBIDS_subj2process
+                    return MakeBIDS_subj2process(SUBJ_2Classify,
+                                         self.NIMB_tmp,
+                                         self.vars_local['FREESURFER']['multiple_T1_entries'],
+                                         self.vars_local['FREESURFER']['flair_t2_add']).run()
 
         if self.process == 'classify_dcm2bids':
             self.logger.info("initiating dcm2bids transformation for project: {}".format(self.project))
