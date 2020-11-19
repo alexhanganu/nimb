@@ -32,6 +32,16 @@ f_autorecon = {1:['mri/nu.mgz','mri/orig.mgz','mri/brainmask.mgz',],
 
 hemi = ['lh','rh']
 
+class FreeSurferVersion:
+    def __init__(self, freesurfer_version):
+        self.version = freesurfer_version
+
+    def fs_ver(self):
+        if len(str(self.version)) > 1:
+            return str(self.version[0])
+        else:
+            return str(self.version)
+
 class FilePerFSVersion:
     def __init__(self, freesurfer_version):
         self.freesurfer_version = freesurfer_version

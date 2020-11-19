@@ -8,6 +8,7 @@ import shutil
 import logging
 import cdb, fs_err_helper, fs_checker
 from fs_checker import FreeSurferChecker
+from fs_definitions import FreeSurferVersion
 
 environ['TZ'] = 'US/Eastern'
 time.tzset()
@@ -32,9 +33,9 @@ class get_cmd():
         if process == 'qcache':
             self.cmd = "recon-all -qcache -s {}".format(_id)
         if process == 'brstem':
-            self.cmd = 'segmentBS.sh {}'.format(_id) if vars_freesurfer["freesurfer_version"]>6 else 'recon-all -s {} -brainstem-structures'.format(_id)
+            self.cmd = 'segmentBS.sh {}'.format(_id) if fs_ver > '6' else 'recon-all -s {} -brainstem-structures'.format(_id)
         if process == 'hip':
-            self.cmd = 'segmentHA_T1.sh {}'.format(_id) if vars_freesurfer["freesurfer_version"]>6 else 'recon-all -s {} -hippocampal-subfields-T1'.format(_id)
+            self.cmd = 'segmentHA_T1.sh {}'.format(_id) if fs_ver > '6' else 'recon-all -s {} -hippocampal-subfields-T1'.format(_id)
         if process == 'tha':
             self.cmd = "segmentThalamicNuclei.sh {}".format(_id)
         if process == 'masks':
@@ -426,7 +427,8 @@ def Update_running(NIMB_tmp, cmd):
 
 def run(varslocal):
 
-    global db, schedule, log, chk, vars_local, vars_freesurfer, vars_processing, vars_nimb, NIMB_HOME, NIMB_tmp, SUBJECTS_DIR, max_walltime, process_order, processing_env
+    global db, schedule, log, chk, vars_local, vars_freesurfer, fs_ver, vars_processing, vars_nimb, NIMB_HOME, NIMB_tmp, SUBJECTS_DIR, max_walltime, process_order, processing_env
+    
     vars_local      = varslocal
     vars_freesurfer = vars_local["FREESURFER"]
     vars_processing = vars_local["PROCESSING"]
@@ -438,7 +440,7 @@ def run(varslocal):
     max_walltime    = vars_processing["max_walltime"]
     SUBJECTS_DIR    = vars_freesurfer["FS_SUBJECTS_DIR"]
     process_order   = vars_freesurfer["process_order"]
-
+    fs_ver          = FreeSurferVersion(vars_freesurfer["freesurfer_version"]).fs_ver()
     log             = logging.getLogger(__name__)
     chk             = FreeSurferChecker(vars_freesurfer)
     schedule        = Scheduler(vars_local)
