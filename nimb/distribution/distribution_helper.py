@@ -201,7 +201,7 @@ class DistributionHelper():
             logger.info('Folder with Subjects to classify is: {}'.format(SUBJ_2Classify))
             return SUBJ_2Classify
         else:
-            logger.info('Could not define the Folder with Subjects to classify is. Please adjust the file: {}'.format(path.join(self.credentials_home, 'projects.json')))
+            logger.info('Could not define the Folder with Subjects to classify. Please adjust the file: {}'.format(path.join(self.credentials_home, 'projects.json')))
             return False
 
     def get_project_vars(self, var_name, project):

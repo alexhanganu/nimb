@@ -31,6 +31,7 @@ log.setLevel(logging.DEBUG)
 class MakeBIDS_subj2process():
     def __init__(self, DIR_SUBJECTS,
                 NIMB_tmp,
+                fix_spaces,
                 multiple_T1_entries = False,
                 flair_t2_add = False):
         self.DIR_SUBJECTS = DIR_SUBJECTS
@@ -38,11 +39,18 @@ class MakeBIDS_subj2process():
         self.multiple_T1_entries  = multiple_T1_entries
         self.flair_t2_add  = flair_t2_add
         self.MR_type_default = 't1'
+        self.file_nimb_classified = "nimb_classified"
+        self.fix_spaces = fix_spaces
         self.d_subjects = dict()
+        self.spaces_in_paths = list()
         log.info("classification of new subjects is running ...")
 
     def run(self):
-        for self.subject in listdir(self.DIR_SUBJECTS):
+        print('inside running')
+        ls_subj_in_DirSubjects = listdir(self.DIR_SUBJECTS)
+        if self.file_nimb_classified:
+            ls_subj_in_DirSubjects.remove(self.file_nimb_classified)
+        for self.subject in ls_subj_in_DirSubjects:
 #            print(self.subject)
             self.d_subjects[self.subject] = {}
             path_2mris = self._get_MR_paths(path.join(self.DIR_SUBJECTS, self.subject))
@@ -60,8 +68,7 @@ class MakeBIDS_subj2process():
                 d_BIDS_structure = self.make_BIDS_structure(d_ses_MR_types)
 #                print(d_BIDS_structure)
                 self.d_subjects[self.subject] = d_BIDS_structure
-                save_json(self.d_subjects, path.join(self.DIR_SUBJECTS, "all_subjects"))
-#                self.save_json(self.DIR_SUBJECTS, "all_subjects", self.d_subjects)
+                save_json(self.d_subjects, path.join(self.DIR_SUBJECTS, self.file_nimb_classified))
         log.info("classification of new subjects is complete")
         if self.multiple_T1_entries == 1:
             from classification.get_mr_params import verify_MRIs_for_similarity
@@ -69,13 +76,21 @@ class MakeBIDS_subj2process():
         else:
             self.d_subjects = self.keep_only1_T1(self.d_subjects)
 
-        f_new_subjects = path.join(self.NIMB_tmp,'new_subjects.json')
+        f_new_subjects = path.join(self.NIMB_tmp,'z2new_subjects.json')
         save_json(self.d_subjects, f_new_subjects)
-#        self.save_json(self.NIMB_tmp, f_new_subjects, self.d_subjects)
+        self.chk_spaces()
         if path.exists(path.join(self.NIMB_tmp, f_new_subjects)):
             return True
         else:
             return False
+
+    def chk_spaces(self):
+        if self.spaces_in_paths and not self.fix_spaces:
+            f_paths_spaces = path.join(self.NIMB_tmp,'paths_with_spaces.json')
+            save_json(self.d_subjects, f_paths_spaces)
+            log.info('ATTENTION: ERR: paths of {} subjects have spaces and will not be processed by FreeSurfer'.format(len(self.spaces_in_paths)))
+            log.info('ATTENTION: paths with spaces can be found here: {}'.format(f_paths_spaces))
+            log.info('ATTENTION: nimb can change spaces to underscores when adding the parameter: -fix-spaces; example: python nimb.py -process classify -project Project -fix-spaces')
 
     def _get_MR_paths(self, path2subj):
         if '.zip' in path2subj:
@@ -271,14 +286,36 @@ class MakeBIDS_subj2process():
         d_BIDS_structure = {}
         for ses in d_ses_MR_types:
             d_BIDS_structure[ses] = {}
-            for key in d_ses_MR_types[ses]:
-                for group in BIDS_types:
-                    if key in BIDS_types[group]:
-                        if group not in d_BIDS_structure[ses]:
-                            d_BIDS_structure[ses][group] = {}
-                        d_BIDS_structure[ses][group][key] = d_ses_MR_types[ses][key]
+            for modalityLabel in d_ses_MR_types[ses]:
+                for dataType in BIDS_types:
+                    if modalityLabel in BIDS_types[dataType]:
+                        if dataType not in d_BIDS_structure[ses]:
+                            d_BIDS_structure[ses][dataType] = {}
+                        d_BIDS_structure[ses][dataType][modalityLabel] = d_ses_MR_types[ses][modalityLabel]
+                        self.check_spaces(d_ses_MR_types[ses][modalityLabel], ses, dataType, modalityLabel)
                         break
         return d_BIDS_structure
+
+    def check_spaces(self, ls_paths2chk, ses, dataType, modalityLabel):
+        paths_with_spaces = list()
+        for path2chk in ls_paths2chk:
+            if ' ' in path2chk:
+                paths_with_spaces.append(path2chk)
+        if not self.fix_spaces:
+            self.spaces_in_paths = self.spaces_in_paths+paths_with_spaces
+            return ls_paths2chk
+        else:
+            ls_checked = list()
+            for path2chk in paths_with_spaces:
+                log.info('fix-spaces chosen')
+                new_path = path2chk.replace(' ','_')
+                log.info('{} replacing to: {}'.format(path2chk, new_path))
+#                    shutil.move(path2chk, path2chk.replace(' ','_'))
+                ls_checked.append(new_path)
+                self.spaces_in_paths.remove(path2chk)
+            return ls_checked
+
+
 
     def keep_only1_T1(self, d_subjects):
         for subject in d_subjects:

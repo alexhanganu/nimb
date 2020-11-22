@@ -40,7 +40,6 @@ class DistributionReady():
         :return: False if there is something wrong
                 Otherwise True
         """
-        print('inside check_ready')
         self.verify_paths()
         self.is_setup_vars(self.locations['local']['NIMB_PATHS'])
         self.is_setup_vars(self.locations['local']['PROCESSING'])
