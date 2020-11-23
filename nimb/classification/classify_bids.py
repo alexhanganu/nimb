@@ -13,9 +13,10 @@ Kim Phuong Pham
 6)
 '''
 
-from os import path, listdir, getenv, walk, system
+from os import path, listdir, getenv, walk, system, sep
 from collections import defaultdict
 from sys import platform
+import shutil
 
 import datetime as dt
 import time, json
@@ -48,7 +49,7 @@ class MakeBIDS_subj2process():
     def run(self):
         print('inside running')
         ls_subj_in_DirSubjects = listdir(self.DIR_SUBJECTS)
-        if self.file_nimb_classified:
+        if self.file_nimb_classified in ls_subj_in_DirSubjects:
             ls_subj_in_DirSubjects.remove(self.file_nimb_classified)
         for self.subject in ls_subj_in_DirSubjects:
 #            print(self.subject)
@@ -76,7 +77,7 @@ class MakeBIDS_subj2process():
         else:
             self.d_subjects = self.keep_only1_T1(self.d_subjects)
 
-        f_new_subjects = path.join(self.NIMB_tmp,'z2new_subjects.json')
+        f_new_subjects = path.join(self.NIMB_tmp,'new_subjects.json')
         save_json(self.d_subjects, f_new_subjects)
         self.chk_spaces()
         if path.exists(path.join(self.NIMB_tmp, f_new_subjects)):
@@ -85,9 +86,9 @@ class MakeBIDS_subj2process():
             return False
 
     def chk_spaces(self):
-        if self.spaces_in_paths and not self.fix_spaces:
+        if self.spaces_in_paths:
             f_paths_spaces = path.join(self.NIMB_tmp,'paths_with_spaces.json')
-            save_json(self.d_subjects, f_paths_spaces)
+            save_json(self.spaces_in_paths, f_paths_spaces)
             log.info('ATTENTION: ERR: paths of {} subjects have spaces and will not be processed by FreeSurfer'.format(len(self.spaces_in_paths)))
             log.info('ATTENTION: paths with spaces can be found here: {}'.format(f_paths_spaces))
             log.info('ATTENTION: nimb can change spaces to underscores when adding the parameter: -fix-spaces; example: python nimb.py -process classify -project Project -fix-spaces')
@@ -291,30 +292,36 @@ class MakeBIDS_subj2process():
                     if modalityLabel in BIDS_types[dataType]:
                         if dataType not in d_BIDS_structure[ses]:
                             d_BIDS_structure[ses][dataType] = {}
-                        d_BIDS_structure[ses][dataType][modalityLabel] = d_ses_MR_types[ses][modalityLabel]
-                        self.check_spaces(d_ses_MR_types[ses][modalityLabel], ses, dataType, modalityLabel)
+                        ls_paths = self.check_spaces(d_ses_MR_types[ses][modalityLabel])
+                        d_BIDS_structure[ses][dataType][modalityLabel] = ls_paths
                         break
         return d_BIDS_structure
 
-    def check_spaces(self, ls_paths2chk, ses, dataType, modalityLabel):
-        paths_with_spaces = list()
+    def check_spaces(self, ls_paths2chk):
         for path2chk in ls_paths2chk:
             if ' ' in path2chk:
-                paths_with_spaces.append(path2chk)
-        if not self.fix_spaces:
-            self.spaces_in_paths = self.spaces_in_paths+paths_with_spaces
-            return ls_paths2chk
-        else:
-            ls_checked = list()
-            for path2chk in paths_with_spaces:
-                log.info('fix-spaces chosen')
-                new_path = path2chk.replace(' ','_')
-                log.info('{} replacing to: {}'.format(path2chk, new_path))
-#                    shutil.move(path2chk, path2chk.replace(' ','_'))
-                ls_checked.append(new_path)
-                self.spaces_in_paths.remove(path2chk)
-            return ls_checked
+                if not self.fix_spaces:
+                    self.spaces_in_paths.append(path2chk)
+                else:
+                    log.info('fix-spaces chosen')
+                    new_path = self.spaces_in_path_change(path2chk)
+                    ls_paths2chk.remove(path2chk)
+                    ls_paths2chk.append(new_path)
+                    log.info('new path is: {}'.format(new_path))
+        return ls_paths2chk
 
+    def spaces_in_path_change(self, path2chk):
+        path2chk_split = path2chk.split(sep)
+        paths_with_spaces = [i for i in path2chk_split if ' ' in i]
+        for path_with_space in paths_with_spaces:
+            subdir_ix = path2chk_split.index(path_with_space)
+            path2keep = sep.join(path2chk_split[:subdir_ix])
+            old_path_with_space = path.join(path2keep, path_with_space)
+            new_path_no_space   = path.join(path2keep, path_with_space.replace(' ','_'))
+            log.info('moving {} TO:\n     {}'.format(old_path_with_space, new_path_no_space))
+            shutil.move(old_path_with_space, new_path_no_space)
+            new_path = path.join(new_path_no_space, sep.join(path2chk_split[subdir_ix+1:]))
+        return new_path
 
 
     def keep_only1_T1(self, d_subjects):
