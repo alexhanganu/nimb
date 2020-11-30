@@ -32,7 +32,7 @@ class DCM2BIDS_helper():
         self.repeat_lim = repeat_lim
         self.repeat_updating = 0
         self.DICOM_DIR  = self.get_SUBJ_DIR()
-        self.OUTPUT_DIR = self.chk_dir()
+        self.OUTPUT_DIR = self.chk_dir(self.proj_vars['SOURCE_BIDS_DIR'][1])
 
 
     def run(self, subjid = 'none'):
@@ -41,18 +41,19 @@ class DCM2BIDS_helper():
             self.config_file = self.get_config_file()
             print("config_file", self.config_file)
             list_subj = self.get_sub()
+            print("kp_list_subj:", list_subj)
             if list_subj != None:
                 for subj_name in list_subj:
                     self.SUBJ_NAME = subj_name
-                    print(self.SUBJ_NAME)
+                    print("kptest:", self.SUBJ_NAME)
                     # Run the dcm2bids app
                     try:
                         system('dcm2bids -d {} -p {} -c {} -o {}'.format(self.DICOM_DIR, self.SUBJ_NAME, self.config_file, self.OUTPUT_DIR))
+                        # set the subject dir
+                        self.sub_SUBJDIR = path.join(self.OUTPUT_DIR, 'tmp_dcm2bids', 'sub-{}'.format(self.SUBJ_NAME))
+                        self.chk_if_processed()
                     except Exception as e:
                         print(e)
-                    # set the subject dir
-                    self.sub_SUBJDIR = path.join(self.OUTPUT_DIR, 'tmp_dcm2bids', 'sub-{}'.format(self.SUBJ_NAME))
-                    self.chk_if_processed()
             else:
                 return
 
@@ -61,7 +62,7 @@ class DCM2BIDS_helper():
     def get_sub(self):
         """Get list of all file names in the input dir """
         try:
-            list_files = listdir(self.DICOM_DIR)[0]
+            list_files = listdir(self.DICOM_DIR)
             return list_files
         except Exception as e:
             print(e)
@@ -87,6 +88,9 @@ class DCM2BIDS_helper():
           - if not converted, try to create the config file (get_sidecar(), update_config())
           - redo run() up to repeat_lim
         """
+        print("testkp:subdir ", self.sub_SUBJDIR)
+        # self.chk_dir(self.sub_SUBJDIR)
+        # print ("testkp:list: ", listdir(self.sub_SUBJDIR))
         if [i for i in listdir(self.sub_SUBJDIR) if '.nii.gz' in i]:
             if self.repeat_updating < self.repeat_lim:
                 self.get_sidecar()
@@ -101,8 +105,11 @@ class DCM2BIDS_helper():
 
     def get_sidecar(self):
         """...."""
+        print("get_sidecar")
         sidecar = [i for i in listdir(self.sub_SUBJDIR) if '.json' in i][0]
+        print(type(sidecar), sidecar)
         self.sidecar_content = self.get_json_content(path.join(self.sub_SUBJDIR, sidecar))
+        print("kp_sidecar:", self.sidecar_content)
         data_Type, modality, criterion = self.classify_mri()
         self.update_config(data_Type, modality, criterion)
 
@@ -130,6 +137,7 @@ class DCM2BIDS_helper():
             if data_Type in des['dataType'] and \
                modality in des['modalityLabel'] and \
                self.sidecar_content[criterion] in des['criteria'][criterion]:
+                    print("kp_criterion_found:", self.sidecar_content[criterion])
                     return True
             else:
                 self.run_stt == 0
@@ -184,10 +192,10 @@ class DCM2BIDS_helper():
         system('rm -r {}'.format(DIR))
 
 
-    def chk_dir(self):
+    def chk_dir(self, location):
         """Check if a directory exists. If not, create a directory"""
-        OUTPUT_DIR = self.proj_vars['SOURCE_BIDS_DIR'][1]
-        if not path.exists(OUTPUT_DIR):
-            makedirs(OUTPUT_DIR)
-        return OUTPUT_DIR
+        print(location)
+        if not path.exists(location):
+            makedirs(location)
+        return location
 
