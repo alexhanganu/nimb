@@ -11,13 +11,10 @@ file_with_all_sheets = 'data_FreeSurfer_'+date+'.xlsx'
 file_with_only_subcortical_volumes = 'data_FreeSurfer_subcortical_volumes_'+date+'.xlsx'
 file_with_all_data_one_sheet = 'data_FreeSurfer_one_sheet_'+date+'.xlsx'
 
-
-
 from os import path, listdir
 import pandas as pd
 import numpy as np
 import xlsxwriter, xlrd
-
 
 def chk_if_subjects_ready(PATHstats, SUBJECTS_DIR):
     ''' this checks if all subjects have all stats files'''
@@ -70,6 +67,28 @@ def chk_if_subjects_ready(PATHstats, SUBJECTS_DIR):
             json.dump(miss, j, indent=4)
 
 
+
+def get_stats_dir(self):
+    """will return the folder with archived/ or raw FreeSurfer processed data subjects"""
+    
+    if any('.zip' in i for i in listdir(PROCESSED_FS_DIR)):
+        NIMB_PROCESSED_FS = path.join(self.locations["local"]['NIMB_PATHS']['NIMB_PROCESSED_FS'])
+        logger.info('Must extract folder {} for each subject to destination {}'.format('stats', NIMB_PROCESSED_FS))
+        self.extract_dirs([path.join(PROCESSED_FS_DIR, i) for i in listdir(PROCESSED_FS_DIR) if '.zip' in i],
+                        NIMB_PROCESSED_FS,
+                        ['stats',])
+        return NIMB_PROCESSED_FS
+    else:
+        return self.projects[self.project_name]["PROCESSED_FS_DIR"]
+    print('perform statistical analysis')
+
+def extract_dirs(self, ls_zip_files, path2xtrct, dirs2extract):
+    from .manage_archive import ZipArchiveManagement
+    for zip_file_path in ls_zip_files:
+        ZipArchiveManagement(
+                zip_file_path, 
+                path2xtrct = path2xtrct, path_err = False,
+                dirs2xtrct = dirs2extract, log=True)
 
 
 

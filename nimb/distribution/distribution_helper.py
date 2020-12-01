@@ -166,27 +166,6 @@ class DistributionHelper():
         pass
 
 
-    def get_stats_dir(self):
-        """will return the folder with unzipped stats folder for each subject"""
-        if any('.zip' in i for i in listdir(PROCESSED_FS_DIR)):
-            NIMB_PROCESSED_FS = path.join(self.locations["local"]['NIMB_PATHS']['NIMB_PROCESSED_FS'])
-            logger.info('Must extract folder {} for each subject to destination {}'.format('stats', NIMB_PROCESSED_FS))
-            self.extract_dirs([path.join(PROCESSED_FS_DIR, i) for i in listdir(PROCESSED_FS_DIR) if '.zip' in i],
-                            NIMB_PROCESSED_FS,
-                            ['stats',])
-            return NIMB_PROCESSED_FS
-        else:
-            return self.projects[self.project_name]["PROCESSED_FS_DIR"]
-        print('perform statistical analysis')
-
-    def extract_dirs(self, ls_zip_files, path2xtrct, dirs2extract):
-        from .manage_archive import ZipArchiveManagement
-        for zip_file_path in ls_zip_files:
-            ZipArchiveManagement(
-                    zip_file_path, 
-                    path2xtrct = path2xtrct, path_err = False,
-                    dirs2xtrct = dirs2extract, log=True)
-
     def get_subj_2classify(self):
         bids_cred = self.projects[self.project_name]['SOURCE_BIDS_DIR']
         source_subj = self.projects[self.project_name]['SOURCE_SUBJECTS_DIR']

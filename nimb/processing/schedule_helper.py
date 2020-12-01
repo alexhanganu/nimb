@@ -4,11 +4,13 @@ import subprocess
 import logging
 from datetime import datetime, timedelta
 from processing.freesurfer import fs_definitions
+from sys import platform
 
 log = logging.getLogger(__name__)
 
 environ['TZ'] = 'US/Eastern'
-time.tzset()
+if platform != "win32":
+    time.tzset()
 
 class Scheduler():
 

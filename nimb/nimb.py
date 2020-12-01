@@ -108,13 +108,12 @@ class NIMB(object):
                                                 activate_fs = False,
                                                 python_load = True)
 
-
         if self.process == 'fs-get-stats':
             if not DistributionReady(self.all_vars, self.projects, self.project).nimb_stats_ready():
                 self.logger.info("NIMB is not ready to extract the FreeSurfer statistics per user. Please check the configuration files.")
                 sys.exit()
             else:
-                PROCESSED_FS_DIR = DistributionHelper(self.all_vars, self.projects, self.project).get_stats_dir()
+                PROCESSED_FS_DIR = self.projects[self.project]["PROCESSED_FS_DIR"]
                 self.logger.info(PROCESSED_FS_DIR)
                 from stats import fs_stats2table
                 fs_stats2table.chk_if_subjects_ready(self.stats_vars["STATS_HOME"], PROCESSED_FS_DIR)
