@@ -11,16 +11,107 @@ file_with_all_sheets = 'data_FreeSurfer_'+date+'.xlsx'
 file_with_only_subcortical_volumes = 'data_FreeSurfer_subcortical_volumes_'+date+'.xlsx'
 file_with_all_data_one_sheet = 'data_FreeSurfer_one_sheet_'+date+'.xlsx'
 
-from os import path, listdir
+from os import path, listdir, sep
 import pandas as pd
 import numpy as np
 import xlsxwriter, xlrd
+from distribution.manage_archive import ZipArchiveManagement
+import json
+from stats.stats_definitions import (BS_Hip_Tha_stats_f, parc_DK_f2rd, parc_DS_f2rd)
+
+
+class FSStats2Table:
+    def __init__(self, SUBJECTS_DIR, NIMB_PROCESSED_FS):
+        self.SUBJECTS_DIR      = SUBJECTS_DIR
+        self.NIMB_PROCESSED_FS = NIMB_PROCESSED_FS
+        self.dir_stats         = 'stats'
+        self.run()
+
+    def run(self):
+        '''
+        will run the pipeline of extracting FreeSurfer stats to excel file
+        '''
+
+        for sub in sorted(listdir(self.SUBJECTS_DIR)):
+            stats_dir_path = get_path(self.get_stats_dir(sub), self.dir_stats)
+            if self.stats_ready():
+                print('stats dir is ready')
+
+
+    def get_stats_dir(self, sub):
+        '''
+        checks if subject is archived
+        used the corresponding archiving method
+        extracts the "stats" folder of the subject
+        '''
+        sub_path = self.get_path(self.SUBJECTS_DIR, sub)
+        if not path.isdir(sub_path):
+            if sub.endswith('zip'):
+                print('extracting')
+                # logger.info('Must extract folder {} for each subject to destination {}'.format('stats', NIMB_PROCESSED_FS))
+                ZipArchiveManagement(
+                        sub_path, 
+                        path2xtrct = self.NIMB_PROCESSED_FS, path_err = False,
+                        dirs2xtrct = [self.dir_stats,], log=True)
+                return self.get_path(self.NIMB_PROCESSED_FS, sub.replace('.zip',''))
+        else:
+            return sub_path
+
+    def stats_ready(self):
+        ''' this checks if all subjects have all stats files'''
+
+        self.miss = dict()
+
+        subjects = sorted(listdir(SUBJECTS_DIR))
+        for _SUBJECT in subjects:
+            print('reading: ', _SUBJECT, '; left: ', len(subjects[subjects.index(_SUBJECT):]))
+            for sheet in BS_Hip_Tha_stats_f:
+                try:
+                    file_with_stats = [i for i in BS_Hip_Tha_stats_f[sheet] if path.exists(path.join(SUBJECTS_DIR,_SUBJECT,i))][0]
+                    if not file_with_stats:
+                        print('missing: ', sheet)
+                        self.miss = self.add_2dict(self.miss, _SUBJECT, sheet)
+                except Exception as e:
+                    print(e)
+                    self.miss = self.add_2dict(self.miss, _SUBJECT, sheet)                
+            if not path.exists(path.join(SUBJECTS_DIR,_SUBJECT, 'stats', 'aseg.stats')):
+                    print('missing: ', 'aseg.stats')
+                    self.miss = self.add_2dict(self.miss, _SUBJECT, 'VolSeg')
+            for hemisphere in parc_DK_f2rd:
+                file_with_stats = parc_DK_f2rd[hemisphere]
+                if not path.isfile(path.join(SUBJECTS_DIR,_SUBJECT,'stats',file_with_stats)):
+                    print('missing: ', file_with_stats)
+                    self.miss = self.add_2dict(self.miss, _SUBJECT, file_with_stats)
+            for hemisphere in parc_DS_f2rd:
+                file_with_stats = parc_DS_f2rd[hemisphere]
+                if not path.isfile(path.join(SUBJECTS_DIR,_SUBJECT,'stats',file_with_stats)):
+                    print('missing: ', file_with_stats)
+                    self.miss = self.add_2dict(self.miss, _SUBJECT, file_with_stats)
+            file_with_stats = 'wmparc.stats'
+            if not path.isfile(path.join(SUBJECTS_DIR,_SUBJECT,'stats',file_with_stats)):
+                    self.miss = self.add_2dict(self.miss, _SUBJECT, file_with_stats)
+                    print('missing: ', file_with_stats)
+
+        if self.miss:
+            print('ERROR: some subjects are missing the required files')
+            with open(path.join(PATHstats, 'subjects_missing.json'), 'w') as j:
+                json.dump(self.miss, j, indent=4)
+
+    def add_2dict(self, d, key, val):
+            if key not in d:
+                d[key] = list()
+            if val:
+                d[key].append(val)
+            return d
+
+
+    def get_path(self, link1, link2):
+        return path.join(link1, link2).replace(sep, '/')
+
+
 
 def chk_if_subjects_ready(PATHstats, SUBJECTS_DIR):
     ''' this checks if all subjects have all stats files'''
-
-    import json
-    from stats.stats_definitions import (BS_Hip_Tha_stats_f, parc_DK_f2rd, parc_DS_f2rd)
 
     miss = dict()
 
@@ -68,32 +159,11 @@ def chk_if_subjects_ready(PATHstats, SUBJECTS_DIR):
 
 
 
-def get_stats_dir(self):
-    """will return the folder with archived/ or raw FreeSurfer processed data subjects"""
-    
-    if any('.zip' in i for i in listdir(PROCESSED_FS_DIR)):
-        NIMB_PROCESSED_FS = path.join(self.locations["local"]['NIMB_PATHS']['NIMB_PROCESSED_FS'])
-        logger.info('Must extract folder {} for each subject to destination {}'.format('stats', NIMB_PROCESSED_FS))
-        self.extract_dirs([path.join(PROCESSED_FS_DIR, i) for i in listdir(PROCESSED_FS_DIR) if '.zip' in i],
-                        NIMB_PROCESSED_FS,
-                        ['stats',])
-        return NIMB_PROCESSED_FS
-    else:
-        return self.projects[self.project_name]["PROCESSED_FS_DIR"]
-    print('perform statistical analysis')
-
-def extract_dirs(self, ls_zip_files, path2xtrct, dirs2extract):
-    from .manage_archive import ZipArchiveManagement
-    for zip_file_path in ls_zip_files:
-        ZipArchiveManagement(
-                zip_file_path, 
-                path2xtrct = path2xtrct, path_err = False,
-                dirs2xtrct = dirs2extract, log=True)
-
-
 
 # works on stats of FreeSurfer 7.1, needs to be confirmed on stats from FreeSurfer <7
 def stats2table_v7(PATHstats, SUBJECTS_DIR, data_only_volumes=True):
+
+
 
     dataf = path.join(PATHstats,file_with_all_sheets)
     data_subcortical_volumes = path.join(PATHstats,file_with_only_subcortical_volumes)
