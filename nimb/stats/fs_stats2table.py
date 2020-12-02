@@ -25,6 +25,7 @@ class FSStats2Table:
         self.SUBJECTS_DIR      = SUBJECTS_DIR
         self.NIMB_PROCESSED_FS = NIMB_PROCESSED_FS
         self.dir_stats         = 'stats'
+        self.miss = dict()
         self.run()
 
     def run(self):
@@ -33,9 +34,15 @@ class FSStats2Table:
         '''
 
         for sub in sorted(listdir(self.SUBJECTS_DIR)):
+            # print('reading: ', sub, '; left: ', len(subjects[subjects.index(sub):]))
             stats_dir_path = get_path(self.get_stats_dir(sub), self.dir_stats)
-            if self.stats_ready():
+            if self.stats_ready(sub):
                 print('stats dir is ready')
+                stats2table_v7(PATHstats, stats_dir_path, data_only_volumes=True):
+
+        if self.miss:
+            print('ERROR: some subjects are missing the required files. Check file: {}'.format())
+            self.save_json(self.miss, self.get_path(self.SUBJECTS_DIR, 'subjects_missing.json'))
 
 
     def get_stats_dir(self, sub):
@@ -57,45 +64,36 @@ class FSStats2Table:
         else:
             return sub_path
 
-    def stats_ready(self):
-        ''' this checks if all subjects have all stats files'''
-
-        self.miss = dict()
-
-        subjects = sorted(listdir(SUBJECTS_DIR))
-        for _SUBJECT in subjects:
-            print('reading: ', _SUBJECT, '; left: ', len(subjects[subjects.index(_SUBJECT):]))
-            for sheet in BS_Hip_Tha_stats_f:
-                try:
-                    file_with_stats = [i for i in BS_Hip_Tha_stats_f[sheet] if path.exists(path.join(SUBJECTS_DIR,_SUBJECT,i))][0]
-                    if not file_with_stats:
-                        print('missing: ', sheet)
-                        self.miss = self.add_2dict(self.miss, _SUBJECT, sheet)
-                except Exception as e:
-                    print(e)
-                    self.miss = self.add_2dict(self.miss, _SUBJECT, sheet)                
-            if not path.exists(path.join(SUBJECTS_DIR,_SUBJECT, 'stats', 'aseg.stats')):
-                    print('missing: ', 'aseg.stats')
-                    self.miss = self.add_2dict(self.miss, _SUBJECT, 'VolSeg')
-            for hemisphere in parc_DK_f2rd:
-                file_with_stats = parc_DK_f2rd[hemisphere]
-                if not path.isfile(path.join(SUBJECTS_DIR,_SUBJECT,'stats',file_with_stats)):
-                    print('missing: ', file_with_stats)
-                    self.miss = self.add_2dict(self.miss, _SUBJECT, file_with_stats)
-            for hemisphere in parc_DS_f2rd:
-                file_with_stats = parc_DS_f2rd[hemisphere]
-                if not path.isfile(path.join(SUBJECTS_DIR,_SUBJECT,'stats',file_with_stats)):
-                    print('missing: ', file_with_stats)
-                    self.miss = self.add_2dict(self.miss, _SUBJECT, file_with_stats)
-            file_with_stats = 'wmparc.stats'
+    def stats_ready(self, _SUBJECT):
+        ''' checks if subject has all stats files
+        '''
+        for sheet in BS_Hip_Tha_stats_f:
+            try:
+                file_with_stats = [i for i in BS_Hip_Tha_stats_f[sheet] if path.exists(path.join(SUBJECTS_DIR,_SUBJECT,i))][0]
+                if not file_with_stats:
+                    print('missing: ', sheet)
+                    self.miss = self.add_2dict(self.miss, _SUBJECT, sheet)
+            except Exception as e:
+                print(e)
+                self.miss = self.add_2dict(self.miss, _SUBJECT, sheet)                
+        if not path.exists(path.join(SUBJECTS_DIR,_SUBJECT, 'stats', 'aseg.stats')):
+                print('missing: ', 'aseg.stats')
+                self.miss = self.add_2dict(self.miss, _SUBJECT, 'VolSeg')
+        for hemisphere in parc_DK_f2rd:
+            file_with_stats = parc_DK_f2rd[hemisphere]
             if not path.isfile(path.join(SUBJECTS_DIR,_SUBJECT,'stats',file_with_stats)):
-                    self.miss = self.add_2dict(self.miss, _SUBJECT, file_with_stats)
-                    print('missing: ', file_with_stats)
+                print('missing: ', file_with_stats)
+                self.miss = self.add_2dict(self.miss, _SUBJECT, file_with_stats)
+        for hemisphere in parc_DS_f2rd:
+            file_with_stats = parc_DS_f2rd[hemisphere]
+            if not path.isfile(path.join(SUBJECTS_DIR,_SUBJECT,'stats',file_with_stats)):
+                print('missing: ', file_with_stats)
+                self.miss = self.add_2dict(self.miss, _SUBJECT, file_with_stats)
+        file_with_stats = 'wmparc.stats'
+        if not path.isfile(path.join(SUBJECTS_DIR,_SUBJECT,'stats',file_with_stats)):
+                self.miss = self.add_2dict(self.miss, _SUBJECT, file_with_stats)
+                print('missing: ', file_with_stats)
 
-        if self.miss:
-            print('ERROR: some subjects are missing the required files')
-            with open(path.join(PATHstats, 'subjects_missing.json'), 'w') as j:
-                json.dump(self.miss, j, indent=4)
 
     def add_2dict(self, d, key, val):
             if key not in d:
@@ -108,6 +106,9 @@ class FSStats2Table:
     def get_path(self, link1, link2):
         return path.join(link1, link2).replace(sep, '/')
 
+    def save_json(self, d, f):
+        with open(f, 'w') as jf:
+            json.dump(d, jf, indent=4)
 
 
 def chk_if_subjects_ready(PATHstats, SUBJECTS_DIR):
