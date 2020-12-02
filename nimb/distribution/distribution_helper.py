@@ -165,6 +165,13 @@ class DistributionHelper():
         """
         pass
 
+    def get_local_remote_dir(self, dir_data):
+        if dir_data[0] == 'local':
+            logger.info('working folder is: {}'.format(dir_data[1]))
+            return dir_data[1]
+        else:
+            logger.info('folder {} is located on a remote: {}'.format(dir_data[1], dir_data[0]))
+            return False
 
     def get_subj_2classify(self):
         bids_cred = self.projects[self.project_name]['SOURCE_BIDS_DIR']

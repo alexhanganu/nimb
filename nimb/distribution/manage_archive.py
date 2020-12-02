@@ -3,7 +3,7 @@ if processed data is stored as zip archived
 script extracts of specific folders
 """
 
-from os import path, makedirs, listdir
+from os import path, makedirs, listdir, sep
 import zipfile
 import shutil
 
@@ -55,7 +55,7 @@ class ZipArchiveManagement():
         if self.log:
             print("extracting: {} to {}".format(self.zip_f_path, self.path2xtrct))
         if self.dirs2xtrct:
-            for folder in [path.join(self.zip_file.strip('.zip'), i) for i in self.dirs2xtrct]:
+            for folder in [path.join(self.zip_file.strip('.zip'), i).replace(sep,'/') for i in self.dirs2xtrct]:
                 self.xtrct_dirs(pattern = folder)
         else:
             self.xtrct_all()
