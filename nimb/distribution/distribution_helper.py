@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import shutil
 from os import system, path, listdir, environ, remove
 from distribution.utilities import ErrorMessages, makedir_ifnot_exist
@@ -144,7 +145,7 @@ class DistributionHelper():
             - distrib-DATABASE[LOCATION][local/remote_name].append(subject)
         - populating rule:
             - continue populating until the volume of subjects + volume of estimated processed subjects (900Mb per subject) is less then 75% of the available disk space
-            - populate local.json → NIMB_PATHS → NIMB_NEW_SUBJECTS based on populating rule
+            - populate local.json - NIMB_PATHS - NIMB_NEW_SUBJECTS based on populating rule
             - If there are more than one computer ready to perform freesurfer:
                 - send archived subjects to each of them based on the estimated time required to process one subject and choose the methods that would deliver the lowest estimated time to process.
             - once copied to the NIMB_NEW_SUBJECTS:
@@ -306,7 +307,7 @@ class DistributionHelper():
         # if content of subject to be processed, in SOURCE_SUBJECTS_DIR is NOT archived:
         #     - archive and copy to local/remote.json → Nimb_PATHS → NIMB_NEW_SUBECTS.
         clusters = database._get_Table_Data('Clusters', 'all')
-        cname = [*clusters.keys()][0]
+        cname = [clusters.keys()][0]
         project_folder = clusters[cname]['HOME']
         a_folder = clusters[cname]['App_DIR']
         subjects_folder = clusters[cname]['Subjects_raw_DIR']
@@ -333,7 +334,7 @@ class DistributionHelper():
         #   h. run the command to process ready
         # get the nimb_home at remote server
         load_python_3 = 'module load python/3.7.4; module load python/3.8.2;' # python 2 is okay, need to check
-        cmd_git = f" cd ~; git clone {self.git_repo};  "
+        cmd_git = f" cd ~; git clone {self.git_repo}; "
         cmd_install_miniconda = "python nimb/distribution/setup_miniconda.py; "
         cmd_run_setup = " cd nimb/setup; python nimb.py -process ready"
 
