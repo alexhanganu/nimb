@@ -108,19 +108,24 @@ class NIMB(object):
                                                 activate_fs = False,
                                                 python_load = True)
 
-
         if self.process == 'fs-get-stats':
             if not DistributionReady(self.all_vars, self.projects, self.project).nimb_stats_ready():
                 self.logger.info("NIMB is not ready to extract the FreeSurfer statistics per user. Please check the configuration files.")
                 sys.exit()
             else:
-                PROCESSED_FS_DIR = DistributionHelper(self.all_vars, self.projects, self.project).get_stats_dir()
-                self.logger.info(PROCESSED_FS_DIR)
-                from stats import fs_stats2table
-                fs_stats2table.chk_if_subjects_ready(self.stats_vars["STATS_HOME"], PROCESSED_FS_DIR)
-                fs_stats2table.stats2table_v7(
-                                   self.stats_vars["STATS_HOME"],
-                                   PROCESSED_FS_DIR, data_only_volumes=False)
+                helper = DistributionHelper(self.all_vars, self.projects, self.project)
+                PROCESSED_FS_DIR = helper.get_local_remote_dir(self.projects[self.project]["PROCESSED_FS_DIR"])
+                from setup.get_vars import SetProject
+                self.stats_vars = SetProject(self.NIMB_tmp, self.stats_vars, self.project).stats
+                from stats.fs_stats2table import FSStats2Table
+                FSStats2Table(self.stats_vars["STATS_PATHS"]["STATS_HOME"],
+                              PROCESSED_FS_DIR, self.NIMB_tmp,
+                              data_only_volumes=False)
+                # from stats import fs_stats2table
+                # fs_stats2table.chk_if_subjects_ready(self.stats_vars["STATS_HOME"], PROCESSED_FS_DIR)
+                # fs_stats2table.stats2table_v7(
+                                   # self.stats_vars["STATS_HOME"],
+                                   # PROCESSED_FS_DIR, data_only_volumes=False)
 
         if self.process == 'fs-glm-prep':
             '''
