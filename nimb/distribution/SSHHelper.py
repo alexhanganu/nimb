@@ -44,9 +44,9 @@ def getSSHSession(remote):
         credentials = interminal_setup.term_setup(remote).credentials
     else:
         credentials = interminal_setup.term_setup(remote).credentials
-        username = credentials['username']
-        targetIP = credentials['host']
-        password = credentials['password']
+    username = credentials['username']
+    targetIP = credentials['host']
+    password = credentials['password']
 
     # Set up SSH
     logger.debug((username, targetIP))
