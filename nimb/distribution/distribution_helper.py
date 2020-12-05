@@ -239,6 +239,7 @@ class DistributionHelper():
         df = pd.read_csv(path.join(self.projects[self.project_name]['materials_DIR'], self.projects[self.project_name]['GLM_file_group']))
         ls_miss = df[irm_source_col].tolist()
         remote_loc = self.get_processing_location('freesurfer')
+        remote_loc = remote_loc[0]
         # check if self.fs_ready(remote_loc)
 #        host_name = ""
 #        if self.fs_ready():
@@ -246,10 +247,7 @@ class DistributionHelper():
 #            self.setting_up_local_computer()
 #            # install freesurfer locally
 #            setup = SETUP_FREESURFER(self.locations)
-
-        for i in ls_miss[:2]:
-            remote_loc = remote_loc[0]
-            SSHHelper.upload_files_to_cluster(remote_loc, i, self.locations[remote_loc]["NIMB_PATHS"]["NIMB_NEW_SUBJECTS"])
+        SSHHelper.upload_multiple_files_to_cluster(remote_loc, ls_miss, self.locations[remote_loc]["NIMB_PATHS"]["NIMB_NEW_SUBJECTS"])
 
         '''
         else:

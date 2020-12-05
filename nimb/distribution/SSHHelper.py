@@ -189,6 +189,31 @@ def __progress(filename, size, sent):
     """Display SCP progess."""
     logger.debug("%s\'s progress: %.2f%%   \r" % (filename, float(sent) / float(size) * 100))
 
+def upload_files_to_cluster(remote, file_, dest_folder):
+    '''
+     upload multiple files to cluster, cannot keep track which file is fail upload.
+    Arg:
+        param remote     : name of the remote location, as defined in projects.json-> locations
+        param file_      : file to be copied
+        param dest_folder: destination folder, as defined in nimb/remote.json -> ["NIMB_PATHS"]["NIMB_NEW_SUBJECTS"]
+    Return:
+        none or message if copy was correct
+    '''
+    logger.info("Uploading files to server ")
+    ssh_session = getSSHSession(remote)
+    scp = SCPClient(ssh_session.get_transport(),progress = __progress)
+    try:
+        scp.put(file_,
+                recursive=True,
+                remote_path=dest_folder)
+        logger.debug("Finish uploading files")
+    except SCPException:
+        logger.debug("Error uploading files to cluster %s", SCPException.message)
+        raise SCPException.message
+    finally:
+        scp.close()
+
+
 def upload_single_file_to_cluster(scp, dest_folder, file_, failed_upload_files = FAILED_UPLOAD_FILE):
     '''
     copy files to the cluster server
@@ -240,7 +265,7 @@ def retry_upload_files(ssh_session, file_name = FAILED_UPLOAD_FILE):
     scp.close()
 
 
-def upload_multiple_files_to_cluster(ssh_session, dest_folder, file_list):
+def upload_multiple_files_to_cluster(remote, file_list, dest_folder):
     '''
     upload all files to cluster, one by one
     This is to keep track of which file is failed to upload
@@ -250,34 +275,11 @@ def upload_multiple_files_to_cluster(ssh_session, dest_folder, file_list):
     :return:
     '''
     logger.debug("Uploading files to server ")
+    ssh_session = getSSHSession(remote)
     scp = SCPClient(ssh_session.get_transport(), progress = __progress)
     for file_ in file_list:
         upload_single_file_to_cluster(scp, dest_folder, file_, failed_upload_files=FAILED_UPLOAD_FILE)
     scp.close()
-
-def upload_files_to_cluster(remote, file_, dest_folder):
-    '''
-     upload multiple files to cluster, cannot keep track which file is fail upload.
-    Arg:
-        param remote     : name of the remote location, as defined in projects.json-> locations
-        param file_      : file to be copied
-        param dest_folder: destination folder, as defined in nimb/remote.json -> ["NIMB_PATHS"]["NIMB_NEW_SUBJECTS"]
-    Return:
-        none or message if copy was correct
-    '''
-    logger.info("Uploading files to server ")
-    ssh_session = getSSHSession(remote)
-    scp = SCPClient(ssh_session.get_transport(),progress = __progress)
-    try:
-        scp.put(file_,
-                recursive=True,
-                remote_path=dest_folder)
-        logger.debug("Finish uploading files")
-    except SCPException:
-        logger.debug("Error uploading files to cluster %s", SCPException.message)
-        raise SCPException.message
-    finally:
-        scp.close()
 
 
 def rename_existed_failed_upload_files_list(file_name = FAILED_UPLOAD_FILE):
