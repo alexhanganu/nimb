@@ -66,7 +66,6 @@ class DistributionHelper():
         loc = list()
         if app == 'freesurfer':
             for location in self.locations:
-                print(location)
                 if self.locations[location]["FREESURFER"]["FreeSurfer_install"] == 1:
                     loc.append(location)
         return loc
