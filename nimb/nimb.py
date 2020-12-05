@@ -52,7 +52,7 @@ class NIMB(object):
             DistributionReady(self.all_vars, self.projects, self.project).check_ready()
 
         if self.process == 'run':
-            self.logger.info('running project {}'.format(self.project))
+            DistributionHelper(self.all_vars, self.projects, self.project).run()
 
         if self.process == 'check-new':
             self.logger.info('checking for new subject to be processed')
