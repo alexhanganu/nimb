@@ -31,6 +31,11 @@ logger.setLevel(logging.DEBUG)
 
 FAILED_UPLOAD_FILE = "fail_upload_.log"
 
+class RemoteConnManager:
+    def __init__(self, remote):
+        self.remote = remote
+    def conn(self):
+        return 'connection'
 
 def getSSHSession(remote):
     """

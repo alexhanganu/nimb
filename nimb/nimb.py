@@ -52,7 +52,8 @@ class NIMB(object):
             DistributionReady(self.all_vars, self.projects, self.project).check_ready()
 
         if self.process == 'run':
-            DistributionHelper(self.all_vars, self.projects, self.project).run()
+            from distribution.project_helper import ProjectManager
+            ProjectManager(self.projects[self.project]).run()
 
         if self.process == 'check-new':
             self.logger.info('checking for new subject to be processed')
