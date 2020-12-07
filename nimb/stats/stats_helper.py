@@ -118,6 +118,9 @@ class RUN_stats():
 
             else:
                 # STEP run Linear Regression Moderation
+                self.run_descriptive_stats(df_clin_group, features,
+                                           varia.get_dir(path.join(self.stats_paths['STATS_HOME'],
+                                           'description')))
                 if self.STEP_LinRegModeration:
                     from stats import stats_models
                     print('performing Linear Regression Moderation analysis')
@@ -140,6 +143,11 @@ class RUN_stats():
                                                                                 self.stats_paths['laterality_dir']))).run()
 
 
+
+    run_descriptive_stats(self, df_clin_group, features,
+                                           varia.get_dir(path.join(self.stats_paths['STATS_HOME'],
+                                           'description'))):
+        print('running descriptive statistics')
 
     def get_tables(self):
         f_CoreTIVNaNOut = self.stats_params["file_name_corrected"]

@@ -51,6 +51,10 @@ class NIMB(object):
         if self.process == 'ready':
             DistributionReady(self.all_vars, self.projects, self.project).check_ready()
 
+        if self.process == 'run':
+            from distribution.project_helper import ProjectManager
+            ProjectManager(self.projects[self.project]).run()
+
         if self.process == 'check-new':
             self.logger.info('checking for new subject to be processed')
             DistributionHelper(self.all_vars, self.projects, self.project).check_new()
@@ -169,7 +173,6 @@ class NIMB(object):
                 stats_helper.RUN_stats(self.stats_vars, self.projects[self.project]).run_stats()
         return 1
 
-
 def get_parameters(projects):
     """get parameters for nimb"""
     parser = argparse.ArgumentParser(
@@ -185,7 +188,7 @@ def get_parameters(projects):
     parser.add_argument(
         "-process", required=False,
         default='ready',
-        choices = ['ready', 'check-new', 'freesurfer', 'classify', 'classify_dcm2bids', 'nilearn', 'dipy', 'fs-get-stats', 'fs-get-masks', 'fs-glm-prep', 'fs-glm', 'fs-glm-image', 'run-stats'],
+        choices = ['ready', 'check-new', 'freesurfer', 'classify', 'classify_dcm2bids', 'nilearn', 'dipy', 'fs-get-stats', 'fs-get-masks', 'fs-glm-prep', 'fs-glm', 'fs-glm-image', 'run-stats', 'run'],
         help="freesurfer (start FreeSurfer pipeline), classify (classify MRIs) fs-stats (extract freesurfer stats from subjid/stats/* to an excel file), fs-glm (perform freesurfer mri_glmfit GLM analsysis), stats-general (perform statistical analysis)",
     )
 

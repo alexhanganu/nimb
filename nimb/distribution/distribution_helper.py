@@ -67,7 +67,6 @@ class DistributionHelper():
         loc = list()
         if app == 'freesurfer':
             for location in self.locations:
-                print(location)
                 if self.locations[location]["FREESURFER"]["FreeSurfer_install"] == 1:
                     loc.append(location)
         return loc
@@ -224,44 +223,6 @@ class DistributionHelper():
         logger.info('Must extract folders {} for {} subjects, to destination {}'.format(dirs2extract, len(ls), NIMB_PROCESSED_FS))
         self.extract_dirs([i for i in ls if '.zip' in i],
                           NIMB_PROCESSED_FS, dirs2extract)
-
-    def run(self, Project):
-        """
-        # todo: need to find a location for this function
-        :param Project:
-        :return:
-        """
-        # 0 check the variables
-        # if FreeSurfer_install = 1:
-        host_name = ""
-        if self.fs_ready():
-            # 1. install required library and software on the local computer, including freesurfer
-            self.setting_up_local_computer()
-            # install freesurfer locally
-            setup = SETUP_FREESURFER(self.locations)
-        else:
-            logger.debug("Setting up the remote server")
-            # --get the name and the address of remote server
-            for machine_name, machine_config in self.locations.items():
-                if machine_name == 'local': # skip
-                    continue
-                # a. check the fs_install == 1
-                if machine_config['FREESURFER']['FreeSurfer_install'] == 1:
-                    host_name = self.projects['LOCATION'][machine_name]
-                    self.setting_up_remote_linux_with_freesurfer(host_name=host_name)
-
-        # continue working from below
-        # must set SOURCE_SUBJECTS_DIR, PROCESSED_FS_DIR before calling: get from project
-        # project name get from where?
-
-        machine_PROCESSED_FS_DIR, PROCESSED_FS_DIR = self.get_PROCESSED_FS_DIR()
-        machine_SOURCE_SUBJECTS_DIR, SOURCE_SUBJECTS_DIR = self.get_SOURCE_SUBJECTS_DIR()
-
-        self.run_copy_subject_to_cluster(Project)
-        logger.debug('Cluster analysis started')
-        logger.debug("Cluster analysing running....")
-        self.run_processing_on_cluster_2()
-
 
     def run_processing_on_cluster_2(self):
         '''
