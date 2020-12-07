@@ -12,6 +12,7 @@ Alexandru Hanganu
 from os import path, system, makedirs, listdir
 import shutil
 import json
+import time
 
 from classification.classify_definitions import BIDS_types, mr_modalities
 
@@ -25,7 +26,7 @@ class DCM2BIDS_helper():
           (4) redo run() up to repeat_lim
     """
 
-    def __init__(self, proj_vars, project, repeat_lim = 1):
+    def __init__(self, proj_vars, project, repeat_lim = 10):
         self.proj_vars  = proj_vars
         self.project    = project    #project item in projects.json
         self.run_stt        = 1
@@ -44,16 +45,31 @@ class DCM2BIDS_helper():
             print("kp_list_subj:", list_subj)
             if list_subj != None:
                 for subj_name in list_subj:
+                    # self.SUBJ_NAME = self.get_sub()
                     self.SUBJ_NAME = subj_name
-                    print("kptest:", self.SUBJ_NAME)
-                    # Run the dcm2bids app
+                    print("kptest_subjectdir:", self.SUBJ_NAME)
+                    # with each subject create temporary directory for Dcm2niix
+                    # self.chk_dir(self.sub_SUBJDIR)
+                    # Run the dcm2bids aself.SUBJ_NAMEpp
                     try:
-                        system('dcm2bids -d {} -p {} -c {} -o {}'.format(self.DICOM_DIR, self.SUBJ_NAME, self.config_file, self.OUTPUT_DIR))
-                        # set the subject dir
+                        # print(self.DICOM_DIR, subj_name,self.OUTPUT_DIR)
+                        # --clobber: Overwrite output if it exists
+                        # ----forceDcm2niix: Overwrite previous temporary dcm2niix output if it exists
+                        sub_dir = path.join(self.DICOM_DIR, self.SUBJ_NAME)
+                        return_value = system('dcm2bids -d {} -p {} -c {} -o {}'.format(sub_dir, self.SUBJ_NAME, self.config_file, self.OUTPUT_DIR))
+                        # the tempo subj dir contains remaining unconvert files
+                        # Calculate the return value code
+                        return_value = int(bin(return_value).replace("0b", "").rjust(16, '0')[:8], 2)
+                        if return_value != 0:# failed
+                            system('dcm2bids -d {} -p {} -c {} -o {}'.format(sub_dir, self.SUBJ_NAME, self.config_file,
+                                                                             self.OUTPUT_DIR))
                         self.sub_SUBJDIR = path.join(self.OUTPUT_DIR, 'tmp_dcm2bids', 'sub-{}'.format(self.SUBJ_NAME))
+                        print("kptest_sub_dir:", self.sub_SUBJDIR)
                         self.chk_if_processed()
-                    except Exception as e:
-                        print(e)
+                    except Exception as e: # run second time
+                        system('dcm2bids -d {} -p {} -c {} -o {}'.format(self.DICOM_DIR, self.SUBJ_NAME, self.config_file, self.OUTPUT_DIR))
+                    finally:
+                        print("/"*40)
             else:
                 return
 
@@ -88,10 +104,11 @@ class DCM2BIDS_helper():
           - if not converted, try to create the config file (get_sidecar(), update_config())
           - redo run() up to repeat_lim
         """
-        print("testkp:subdir ", self.sub_SUBJDIR)
         # self.chk_dir(self.sub_SUBJDIR)
-        # print ("testkp:list: ", listdir(self.sub_SUBJDIR))
+        # Read all .nii in subjdir and move to appropriate folder
+        print("*********Convert remaining folder",self.sub_SUBJDIR)
         if [i for i in listdir(self.sub_SUBJDIR) if '.nii.gz' in i]:
+            print("case1")
             if self.repeat_updating < self.repeat_lim:
                 self.get_sidecar()
                 print('removing folder tmp_dcm2bids/sub')
@@ -100,22 +117,24 @@ class DCM2BIDS_helper():
                 print('re-renning dcm2bids')
                 self.run(self.SUBJ_NAME)
         else:
+            print("case2")
             self.rm_dir(self.sub_SUBJDIR)
 
 
-    def get_sidecar(self):
+    def get_sidecar(self): # not correct - need to modify
         """...."""
         print("get_sidecar")
         sidecar = [i for i in listdir(self.sub_SUBJDIR) if '.json' in i][0]
-        print(type(sidecar), sidecar)
+        print("sidecar:", sidecar)
         self.sidecar_content = self.get_json_content(path.join(self.sub_SUBJDIR, sidecar))
-        print("kp_sidecar:", self.sidecar_content)
+        #print("kp_sidecar:", self.sidecar_content)
         data_Type, modality, criterion = self.classify_mri()
         self.update_config(data_Type, modality, criterion)
 
 
-    def update_config(self, data_Type, modality, criterion):
+    def update_config(self, data_Type, modality, criterion): # to modify
         """....."""
+        print("Config file:",self.config_file)
         self.config = self.get_json_content(self.config_file)
         if self.chk_if_in_config(data_Type, modality, criterion):
             new_des = {
