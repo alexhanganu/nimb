@@ -6,7 +6,22 @@
             "modalityLabel": "T1w",
             "criteria": {
                 "SeriesDescription": "*MPRAGE*",
-                "SidecarFilename": "*MPRAGE*",
+                "SidecarFilename": "*MPRAGE*"
+            }
+        },
+                {
+            "dataType": "anat",
+            "modalityLabel": "T1w",
+            "criteria": {
+                "SeriesDescription":  "localizer",
+                "ProtocolName": "localizer"
+            }
+        },
+                {
+            "dataType": "anat",
+            "modalityLabel": "T1w",
+            "criteria": {
+                "SeriesDescription":  "*MPRage_T1W*"
             }
         },
         {
@@ -14,15 +29,16 @@
             "modalityLabel": "T2w",
             "criteria": {
                 "SidecarFilename": "007*",
-                "EchoTime": 0.1
+                "ProtocolName": "*MPRAGE*"
             }
         },
         {
             "dataType": "anat",
             "modalityLabel": "PD",
             "criteria": {
-                "SeriesDescription": "*TSE*",
-                "EchoTime": 0.008
+                "SidecarFilename": "*TSE*",
+                "ProtocolName": "*TSE*",
+                "ScanningSequence": "SE"
             }
         },
         {
