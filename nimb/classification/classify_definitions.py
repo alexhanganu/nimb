@@ -7,7 +7,7 @@ mr_types_2exclude = ['calibration','localizer','loc',
 
 mr_modalities = {'flair' :['flair',],
                  'dwi'   :['hardi','dti','diffus'],
-                 'bold'  :['resting_state_fmri','rsfmri'],
+                 'bold'  :['resting_state_fmri','rsfmri','mocoseries'],
                  'fmap'  :['field_map','field_mapping','fieldmap'],
                  't1'    :['t1','spgr','rage'],
                  't2'    :['t2',],
