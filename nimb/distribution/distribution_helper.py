@@ -174,15 +174,18 @@ class DistributionHelper():
             return False
 
     def get_subj_2classify(self):
+        new_subj = self.locations["local"]["NIMB_PATHS"]["NIMB_NEW_SUBJECTS"]
         bids_cred = self.projects[self.project_name]['SOURCE_BIDS_DIR']
         source_subj = self.projects[self.project_name]['SOURCE_SUBJECTS_DIR']
         SUBJ_2Classify = ''
-        if bids_cred[0] == 'local' and path.exists(bids_cred[1]) and listdir(bids_cred[1]):
+        if listdir(new_subj):
+            SUBJ_2Classify = new_subj
+        elif bids_cred[0] == 'local' and path.exists(bids_cred[1]) and listdir(bids_cred[1]):
             SUBJ_2Classify = bids_cred[1]
-        elif source_subj[0] == 'local' and path.exists(source_subj[1]) and listdir(source_subj[1]):
-            SUBJ_2Classify = source_subj[1]
-        elif listdir(self.locations["local"]['NIMB_PATHS']['NIMB_NEW_SUBJECTS']):
-            SUBJ_2Classify = self.locations["local"]['NIMB_PATHS']['NIMB_NEW_SUBJECTS']
+#        elif bids_cred[0] == 'local' and path.exists(bids_cred[1]) and listdir(bids_cred[1]):
+#            SUBJ_2Classify = bids_cred[1]
+#        elif source_subj[0] == 'local' and path.exists(source_subj[1]) and listdir(source_subj[1]):
+#            SUBJ_2Classify = source_subj[1]
         if SUBJ_2Classify:
             logger.info('Folder with Subjects to classify is: {}'.format(SUBJ_2Classify))
             return SUBJ_2Classify
