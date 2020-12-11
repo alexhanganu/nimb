@@ -17,10 +17,10 @@ from setup.version import __version__
 class NIMB(object):
     """ Object to initiate pipeline
     Args:
-        process: process to be initiated
-        project: project name, if not provided first is taken, credentials_path/projects.json
+        params  : from parameters defined by user, process, project
+        projects: parameters of all projects from credentials_path/projects.json
         projects: parameters of all projects
-        all_vars: all variables of local.json and all remotes.json 
+        all_vars: all variables of local.json and all remotes.json as defiend in credentials_path/projects.json -> LOCATION
     """
 
     def __init__(
@@ -31,16 +31,17 @@ class NIMB(object):
     ):
 
 
-        self.process     = params.process
-        self.project     = params.project
-        self.fix_spaces  = params.fix_spaces
-        self.projects    = projects
-        self.all_vars    = all_vars
-        self.locations   = all_vars.location_vars
-        self.stats_vars  = all_vars.stats_vars
-        self.vars_local  = self.locations['local']
-        self.NIMB_HOME   = self.vars_local['NIMB_PATHS']['NIMB_HOME']
-        self.NIMB_tmp    = self.vars_local['NIMB_PATHS']['NIMB_tmp']
+        self.process      = params.process
+        self.project      = params.project
+        self.projects     = projects
+        self.project_vars = projects[self.project]
+        self.all_vars     = all_vars
+        self.locations    = all_vars.location_vars
+        self.stats_vars   = all_vars.stats_vars
+        self.vars_local   = self.locations['local']
+        self.NIMB_HOME    = self.vars_local['NIMB_PATHS']['NIMB_HOME']
+        self.NIMB_tmp     = self.vars_local['NIMB_PATHS']['NIMB_tmp']
+        self.fix_spaces   = params.fix_spaces
         Log(self.NIMB_tmp, self.vars_local['FREESURFER']['freesurfer_version'])
         self.logger = logging.getLogger(__name__)
         self.schedule = Scheduler(self.vars_local)
@@ -53,7 +54,7 @@ class NIMB(object):
 
         if self.process == 'run':
             from distribution.project_helper import ProjectManager
-            ProjectManager(self.projects[self.project]).run()
+            ProjectManager(self.project_vars).run()
 
         if self.process == 'check-new':
             self.logger.info('checking for new subject to be processed')
@@ -77,7 +78,7 @@ class NIMB(object):
         if self.process == 'classify_dcm2bids':
             self.logger.info("initiating dcm2bids transformation for project: {}".format(self.project))
             from classification.dcm2bids_helper import DCM2BIDS_helper
-            return DCM2BIDS_helper(self.projects[self.project], self.project).run()
+            return DCM2BIDS_helper(self.project_vars, self.project).run()
 
         if self.process == 'freesurfer':
             if not DistributionReady(self.all_vars, self.projects, self.project).fs_ready():
@@ -118,13 +119,23 @@ class NIMB(object):
                 sys.exit()
             else:
                 helper = DistributionHelper(self.all_vars, self.projects, self.project)
-                PROCESSED_FS_DIR = helper.get_local_remote_dir(self.projects[self.project]["PROCESSED_FS_DIR"])
+                PROCESSED_FS_DIR = helper.get_local_remote_dir(self.project_vars["PROCESSED_FS_DIR"])
                 from setup.get_vars import SetProject
                 self.stats_vars = SetProject(self.NIMB_tmp, self.stats_vars, self.project).stats
                 from stats.fs_stats2table import FSStats2Table
                 FSStats2Table(self.stats_vars["STATS_PATHS"]["STATS_HOME"],
                               PROCESSED_FS_DIR, self.NIMB_tmp,
                               data_only_volumes=False)
+
+        if self.process == 'fs-glm':
+            '''
+            performs FreeSurfer GLM
+            '''
+            if DistributionReady(self.all_vars, self.projects, self.project).fs_ready():
+                self.logger.info('Please check that all required variables for the GLM analysis are defined in the var.py file')
+                cmd = '{} fs_glm_runglm.py -project {}'.format(self.vars_local['PROCESSING']["python3_run_cmd"], self.project)
+                cd_cmd = 'cd '+path.join(self.NIMB_HOME, 'processing', 'freesurfer')
+                self.schedule.submit_4_processing(cmd, 'fs_glm','run_glm', cd_cmd)
 
         if self.process == 'fs-glm-prep':
             '''
@@ -137,13 +148,6 @@ class NIMB(object):
             else:
                 dir_2chk = self.vars_local['NIMB_PATHS']['NIMB_PROCESSED_FS']
             DistributionHelper(self.all_vars, self.projects, self.project).fs_glm_prep(dir_2chk)
-
-        if self.process == 'fs-glm':
-            if DistributionReady(self.all_vars, self.projects, self.project).fs_ready():
-                self.logger.info('Please check that all required variables for the GLM analysis are defined in the var.py file')
-                cmd = '{} fs_glm_runglm.py -project {}'.format(self.vars_local['PROCESSING']["python3_run_cmd"], self.project)
-                cd_cmd = 'cd '+path.join(self.NIMB_HOME, 'processing', 'freesurfer')
-                self.schedule.submit_4_processing(cmd, 'fs_glm','run_glm', cd_cmd)
 
         if self.process == 'fs-glm-image':
             if DistributionReady(self.all_vars, self.projects, self.project).fs_ready():
@@ -165,7 +169,7 @@ class NIMB(object):
                 sys.exit()
             else:
                 from stats import stats_helper
-                stats_helper.RUN_stats(self.stats_vars, self.projects[self.project]).run_stats()
+                stats_helper.RUN_stats(self.stats_vars, self.project_vars).run_stats()
         return 1
 
 def get_parameters(projects):

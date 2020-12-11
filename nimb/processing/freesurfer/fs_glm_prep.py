@@ -18,7 +18,7 @@ except ImportError as e:
 
 class CheckIfReady4GLM():
 
-    def __init__(self, proj_vars, dir_2chk):
+    def __init__(self, proj_vars, dir_2chk, f_GLM_group):
         self.glm_vars = GLMVars(proj_vars)
         self.dir_2chk = dir_2chk
         self.proj_vars = proj_vars

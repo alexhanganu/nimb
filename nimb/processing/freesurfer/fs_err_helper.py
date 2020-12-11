@@ -123,15 +123,15 @@ def fs_find_error(subjid, SUBJECTS_DIR, NIMB_tmp):
                     break
                 elif  'error: mghRead' in line:
                     log.info('        ERROR: orig bad registration, probably due to multiple -i entries, rerun with less entries')
-                    error = 'errorigmgz'
+                    error = 'origmgz'
                     break
                 elif 'error: ERROR: MRISread: file ../surf/lh.white has many more faces than vertices!' in line:
                     log.info('        ERROR: MRISread: file surf/lh.white has many more faces than vertices')
-                    error = 'errMRISread'
+                    error = 'MRISread'
                     break
                 elif 'error: MRISreadCurvature:' in line:
                     log.info('                    ERROR: MRISreadCurvature')
-                    error = 'errCurvature'
+                    error = 'Curvature'
                     break
                 if 'ERROR: Talairach failed!' in line or 'error: transforms/talairach.m3z' in line:
                     log.info('        ERROR: Manual Talairach alignment may be necessary, or include the -notal-check flag to skip this test')
@@ -151,21 +151,21 @@ def fs_find_error(subjid, SUBJECTS_DIR, NIMB_tmp):
                     break
                 elif 'error: MRIresample():' in line:
                     log.info('        ERROR: MRIresample error')
-                    error = 'errMRIresample'
+                    error = 'MRIresample'
                     break
                 elif 'Disk quota exceeded' in line:
                     log.info('        ERROR: Disk quota exceeded')
-                    error = 'errdiskquota'
+                    error = 'diskquota'
                     break
                 elif 'ERROR: Invalid FreeSurfer license key' in line:
                     log.info('        ERROR: FreeSurfer license key is missing')
-                    error = 'errlicense'
+                    error = 'license'
                     break
         else:
-            log.info('        ERROR: '+file_2read+' not in '+path.join(SUBJECTS_DIR,subjid,'scripts'))
+            log.info('        ERROR: {} not in {}'.format(file_2read, path.join(SUBJECTS_DIR, subjid, 'scripts')))
     except FileNotFoundError as e:
         print(e)
-        log.info('    '+subjid+' '+str(e))
+        log.info('    {}: {}'.format(subjid, str(e)))
     return error
 
 
@@ -173,7 +173,7 @@ def fs_find_error(subjid, SUBJECTS_DIR, NIMB_tmp):
 def solve_error(subjid, error, SUBJECTS_DIR, NIMB_tmp):
     file_2read = path.join(SUBJECTS_DIR,subjid,'scripts','recon-all.log')
     f = open(file_2read,'r').readlines()
-    if error == "errCurvature":
+    if error == "Curvature":
         for line in reversed(f):
             if 'error: MRISreadCurvature:' in line:
                 line_nr = f.index(line)
@@ -184,7 +184,7 @@ def solve_error(subjid, error, SUBJECTS_DIR, NIMB_tmp):
                 return 'continue'
         else:
             return 'unsolved'
-    if error == 'voxsizediff' or error == 'errorigmgz' or error == 'errlicense':
+    if error == 'voxsizediff' or error == 'origmgz' or error == 'license':
         return 'repeat_reg'
 
 

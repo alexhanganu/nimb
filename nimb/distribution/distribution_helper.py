@@ -28,6 +28,7 @@ class DistributionHelper():
         self.stats_vars       = all_vars.stats_vars
         self.projects         = projects # credentials_home/project.json
         self.project_name     = project
+        self.proj_vars        = projects[project]
         self.NIMB_HOME        = self.locations["local"]["NIMB_PATHS"]["NIMB_HOME"]
         self.NIMB_tmp         = self.locations["local"]["NIMB_PATHS"]["NIMB_tmp"]
 
@@ -41,7 +42,7 @@ class DistributionHelper():
         if user approves, initiats the processing on local/ remote
         """
         from distribution.distribution_check_new import DistributionCheckNew
-        unprocessed = DistributionCheckNew(self.projects[self.project_name], self.NIMB_tmp).unprocessed
+        unprocessed = DistributionCheckNew(self.proj_vars, self.NIMB_tmp).unprocessed
 #        unprocessed = ['adni_test1','adni_test2']
 #        if unprocessed:
 #            print('there are {} subjects to be processed'.format(len(unprocessed)))
@@ -175,8 +176,8 @@ class DistributionHelper():
 
     def get_subj_2classify(self):
         new_subj = self.locations["local"]["NIMB_PATHS"]["NIMB_NEW_SUBJECTS"]
-        bids_cred = self.projects[self.project_name]['SOURCE_BIDS_DIR']
-        source_subj = self.projects[self.project_name]['SOURCE_SUBJECTS_DIR']
+        bids_cred = self.proj_vars['SOURCE_BIDS_DIR']
+        source_subj = self.proj_vars['SOURCE_SUBJECTS_DIR']
         SUBJ_2Classify = ''
         if listdir(new_subj):
             SUBJ_2Classify = new_subj
@@ -202,19 +203,24 @@ class DistributionHelper():
         """
         # PROJECT_DATA
         if project not in self.projects.keys():
-            print("There is no path for project: "+project+" defined. Please check the file: {}".format(path.join(self.credentials_home, "projects.json")))
+            print("There is no path for project: {} defined. Please check the file: {}".format(project, path.join(self.credentials_home, "projects.json")))
             return ""
         return self.projects[project][var_name]
 
     def fs_glm_prep(self, dir_2chk):
-        from processing.freesurfer.fs_glm_prep import CheckIfReady4GLM
-        miss = CheckIfReady4GLM(self.projects[self.project_name],
-                                dir_2chk).miss
-        if miss:
-            print('starting subject preparation for glm')
-            self.fs_glm_prep_extract_dirs(list(miss.values()))
+        if self.proj_vars['materials_DIR'][0] == 'local':
+            f_GLM_group = path.join(self.proj_vars['materials_DIR'][1], self.proj_vars['GLM_file_group'])
+            print(f_GLM_group)
         else:
-            return True
+            f_GLM_group = self.proj_vars['materials_DIR'][0]
+        if path.exists(f_GLM_group):
+            from processing.freesurfer.fs_glm_prep import CheckIfReady4GLM
+            miss = CheckIfReady4GLM(self.proj_vars, dir_2chk, f_GLM_group).miss
+            if miss:
+                print('starting subject preparation for glm')
+                self.fs_glm_prep_extract_dirs(list(miss.values()))
+            else:
+                return True
 
     def fs_glm_prep_extract_dirs(self, ls):
         dirs2extract = ['label','surf',]

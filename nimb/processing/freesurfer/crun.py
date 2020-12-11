@@ -182,13 +182,13 @@ def check_error(scheduler_jobs, process):
                                         system('rm -r '+path.join(SUBJECTS_DIR, subjid))
                                         log.info('        moving from error_{} to RUNNING registration'.format(process))
                                     else:
-                                        new_name = 'error_noreg_'+subjid
+                                        new_name = 'err_noreg_{}'.format(subjid)
                                         log.info('            solved: {} but subjid is missing from db[REGISTRATION]'.format(solve))
                                 else:
-                                    new_name = 'error_'+fs_error+'_'+subjid
+                                    new_name = 'err_{}_{}'.format(fs_error, subjid)
                                     log.info('            not solved')
                             else:
-                                new_name = 'error_'+process+'_'+subjid
+                                new_name = 'err_{}_{}'.format(process, subjid)
                             if not solved:
                                 log.info('            Excluding {} from pipeline'.format(subjid))
                                 _id, _ = cdb.get_id_long(subjid, db['LONG_DIRS'], vars_freesurfer["base_name"], vars_freesurfer["long_name"])
