@@ -125,11 +125,6 @@ class NIMB(object):
                 FSStats2Table(self.stats_vars["STATS_PATHS"]["STATS_HOME"],
                               PROCESSED_FS_DIR, self.NIMB_tmp,
                               data_only_volumes=False)
-                # from stats import fs_stats2table
-                # fs_stats2table.chk_if_subjects_ready(self.stats_vars["STATS_HOME"], PROCESSED_FS_DIR)
-                # fs_stats2table.stats2table_v7(
-                                   # self.stats_vars["STATS_HOME"],
-                                   # PROCESSED_FS_DIR, data_only_volumes=False)
 
         if self.process == 'fs-glm-prep':
             '''

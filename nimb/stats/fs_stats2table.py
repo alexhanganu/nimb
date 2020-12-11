@@ -1,6 +1,19 @@
 #!/bin/python
-#Alexandru Hanganu, 2020 12 02
+#Alexandru Hanganu, 2020 12 03
+'''
+Extract the stats data for all subjects located in a folder, to 2/3 excel files
 
+Args:
+    PATHstats = path of the folder where the final excel files will be saved
+    NIMB_PROCESSED_FS = path to the folder where the FreeSurfer processed subjects are located. These can be 
+                        raw folders, or zip archived folders (with .zip as ending)
+    NIMB_tmp = folder where temporary files will be saved and folder where the 
+                "stats" folder of the subjects will be extracted if subjects are archived with .zip
+    data_only_volumes = True or False, is user wants an additional file to constructed that will include only subcortical volumes
+Return:
+    an excel file with all subjects and all parameters, per sheets
+    one big excel file with all parameters on one sheet
+'''
 
 import time
 date = str(time.strftime('%Y%m%d', time.localtime()))
@@ -25,7 +38,7 @@ from stats.stats_definitions import (BS_Hip_Tha_stats_f, brstem_hip_header,
 columns_2_remove = ['ventricle_5th','wm_hypointensities_L',
                     'wm_hypointensities_R','non_wm_hypointensities',
                     'non_wm_hypointensities_L','non_wm_hypointensities_R',
-                    'eTIV', 'volBrainSegNotVent']
+                    'eTIV', 'volBrainSegNotVent'] #removing because they are zeros and this gives errors in stats
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -37,10 +50,12 @@ class FSStats2Table:
         self.NIMB_tmp          = NIMB_tmp
         self.data_only_volumes = data_only_volumes
         self.dir_stats         = 'stats'
+
         self.miss = dict()
-        self.dataf                    = path.join(self.stats_DIR, file_with_all_sheets)
-        self.data_subcortical_volumes = path.join(self.stats_DIR, file_with_only_subcortical_volumes)
-        self.data_big                 = path.join(self.stats_DIR, file_with_all_data_one_sheet)
+        self.dataf                    = self.get_path(self.stats_DIR, file_with_all_sheets)
+        self.data_subcortical_volumes = self.get_path(self.stats_DIR, file_with_only_subcortical_volumes)
+        self.data_big                 = self.get_path(self.stats_DIR, file_with_all_data_one_sheet)
+        self.f_subj_with_errors       = self.get_path(self.stats_DIR, 'subjects_with_errors.json')
         self.run()
 
     def run(self):
@@ -64,11 +79,11 @@ class FSStats2Table:
                 self.get_parcelations(stats_dir_path, sub)
                 self.get_parcelations_destrieux(stats_dir_path, sub)
                 self.get_parcelations_desikan_wm(stats_dir_path, sub)
-            self.row += 1
+                self.row += 1
         self.writer.save()
 
         if self.miss:
-            f_miss = self.get_path(self.NIMB_PROCESSED_FS, 'subjects_missing.json')
+            f_miss = self.get_path(self.NIMB_PROCESSED_FS, 'nimb_subjects_missing.json')
             logger.info('ERROR: some subjects are missing the required files. Check file: {}'.format(f_miss))
             self.save_json(self.miss, f_miss)
 
@@ -79,7 +94,7 @@ class FSStats2Table:
     def get_stats_dir(self, sub):
         '''
         checks if subject is archived
-        used the corresponding archiving method
+        using only the "zip" methods currently
         extracts the "stats" folder of the subject
         '''
         sub_path = self.get_path(self.NIMB_PROCESSED_FS, sub)
@@ -96,7 +111,8 @@ class FSStats2Table:
             return sub_path, sub
 
     def stats_ready(self, _SUBJECT, stats_dir_path):
-        ''' checks if subject has all stats files
+        '''
+        checks if subject has all stats files
         '''
         ready = True
         for sheet in BS_Hip_Tha_stats_f:
@@ -370,11 +386,9 @@ class FSStats2Table:
 
         for sheet in self.sheetnames[1:]:
             df2 = pd.read_excel(self.dataf, sheet_name=sheet, index_col = 0)
-            print(df2.columns)
             df2 = self.change_column_name(df2, sheet)
             frames = (df_concat, df2)
             df_concat = pd.concat(frames, axis=1, sort=True)
-            print(df_concat.columns)
 
         df_segmentations = pd.read_excel(self.dataf, sheet_name='VolSeg', index_col = 0)
         frame_final = (df_concat, df_segmentations['eTIV'])
@@ -384,6 +398,29 @@ class FSStats2Table:
         df_concat.to_excel(writer, 'stats')
         writer.save()
         logger.info('FINISHED creating One file for all subjects')
+        self.check_nan(df_concat)
+
+
+    def check_nan(self, df):
+        '''
+        df.index must be the ids, as str() not int()
+        Args:
+            df to be checked
+        Return:
+            json file with a dictionary {id: [columns with nan]}
+        '''
+        d_err = dict()
+        for col in df.columns:
+            if df[col].isnull().values.any():
+                ls = df[col].isnull().tolist()
+                for val in ls:
+                    if val:
+                        _id = df.index[ls.index(val)]
+                        if _id not in d_err:
+                            d_err[_id] = list()
+                        if col not in d_err[_id]:
+                            d_err[_id].append(col)
+        self.save_json(d_err, self.f_subj_with_errors)
 
     def change_column_name(self, df, sheet):
         ls = df.columns.tolist()
@@ -414,6 +451,12 @@ class FSStats2Table:
             json.dump(d, jf, indent=4)
 
 
+
+
+'''
+below are previous versions of multiple scripts
+that were assembled in the FSStats2Table class
+'''
 def chk_if_subjects_ready(PATHstats, SUBJECTS_DIR):
     ''' this checks if all subjects have all stats files'''
 

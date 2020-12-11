@@ -334,10 +334,10 @@ def long_check_groups(_id):
 
 
 def move_processed_subjects(subject, db_source, new_name):
-    file_mrparams = path.join(NIMB_tmp,'mriparams',subject+'_mrparams')
+    file_mrparams = path.join(NIMB_tmp, 'mriparams', '{}_mrparams'.format(subject))
     if path.isfile(file_mrparams):
         shutil.move(file_mrparams, path.join(SUBJECTS_DIR, subject, 'stats'))
-    log.info('    '+subject+' copying from '+db_source)
+    log.info('    {} copying from {}'.format(subject, db_source))
     size_src = sum(f.stat().st_size for f in Path(path.join(SUBJECTS_DIR, subject)).glob('**/*') if f.is_file())
     shutil.copytree(path.join(SUBJECTS_DIR, subject), path.join(vars_nimb["NIMB_PROCESSED_FS"], subject))
     size_dst = sum(f.stat().st_size for f in Path(path.join(vars_nimb["NIMB_PROCESSED_FS"], subject)).glob('**/*') if f.is_file())
@@ -349,13 +349,13 @@ def move_processed_subjects(subject, db_source, new_name):
         if vars_processing["archive_processed"] == 1:
             log.info('        archiving ...')
             chdir(vars_nimb["NIMB_PROCESSED_FS"])
-            system('zip -r -q -m '+subject+'.zip '+subject)
+            system('zip -r -q -m {}.zip {}'.format(subject, subject))
         if new_name:
-            log.info('        renaming '+subject+' to '+new_name+', moving to processed error')
-            shutil.move(path.join(vars_nimb["NIMB_PROCESSED_FS"], subject+'.zip'),
-                        path.join(vars_nimb["NIMB_PROCESSED_FS_error"], new_name+'.zip'))
+            log.info('        renaming {} to {}, moving to {}'.format(subject, new_name, vars_nimb["NIMB_PROCESSED_FS_error"]))
+            shutil.move(path.join(vars_nimb["NIMB_PROCESSED_FS"], '{}.zip'.format(subject)),
+                        path.join(vars_nimb["NIMB_PROCESSED_FS_error"], '{}.zip'.format(new_name)))
     else:
-        log.info('        ERROR in moving, not moved correctly '+str(size_src)+' '+str(size_dst))
+        log.info('        ERROR in moving, not moved correctly {} {}'.format(str(size_src), str(size_dst)))
         shutil.rmtree(path.join(vars_nimb["NIMB_PROCESSED_FS"], subject))
     log.info('        moving DONE')
 
@@ -417,13 +417,13 @@ def Count_TimeSleep():
 def Update_running(NIMB_tmp, cmd):
     file = path.join(NIMB_tmp, 'running_')
     if cmd == 1:
-        if path.isfile(file+'0'):
-            rename(file+'0', file+'1')
+        if path.isfile('{}0'.format(file)):
+            rename('{}0'.format(file), '{}1'.format(file))
         else:
-            open(file+'1', 'w').close()
+            open('{}1'.format(file), 'w').close()
     else:
-        if path.isfile(file+'1'):
-            rename(file+'1', file+'0')
+        if path.isfile('{}1'.format(file)):
+            rename('{}1'.format(file), '{}0'.format(file))
 
 def run(varslocal):
 
