@@ -214,6 +214,8 @@ class DistributionHelper():
         else:
             f_GLM_group = self.proj_vars['materials_DIR'][0]
         if path.exists(f_GLM_group):
+            dir_2chk = self.locations["loca"]l['FREESURFER']['FS_SUBJECTS_DIR']
+            dir_2chk = self.locations["local"]["NIMB_PATHS"]["NIMB_PROCESSED_FS"]
             from processing.freesurfer.fs_glm_prep import CheckIfReady4GLM
             miss = CheckIfReady4GLM(self.proj_vars, dir_2chk, f_GLM_group).miss
             if miss:

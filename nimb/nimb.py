@@ -145,9 +145,8 @@ class NIMB(object):
             '''
             if DistributionReady(self.all_vars, self.projects, self.project).fs_ready():
                 dir_2chk = self.vars_local['FREESURFER']['FS_SUBJECTS_DIR']
-            else:
-                dir_2chk = self.vars_local['NIMB_PATHS']['NIMB_PROCESSED_FS']
-            DistributionHelper(self.all_vars, self.projects, self.project).fs_glm_prep(dir_2chk)
+#                dir_2chk = self.vars_local['NIMB_PATHS']['NIMB_PROCESSED_FS']
+                DistributionHelper(self.all_vars, self.projects, self.project).fs_glm_prep(dir_2chk)
 
         if self.process == 'fs-glm-image':
             if DistributionReady(self.all_vars, self.projects, self.project).fs_ready():
