@@ -22,25 +22,15 @@ except ImportError:
 
 class PyInqQuest():
 
-    def __init__(self, qa = {"q":False}, type = 'inputs'):
-        self.qa = qa
-        self.type = type
-        if self.add():
-            new_name = self.define_key()
-            self.populate_qa()
-            self.answered = (new_name, self.qa)
-
-    def add(self):
-        answer = True
-        print('location is not defined or credentials are missing, please provide credentials for {}:'.format(self.qa))
-        return answer
-
-    def define_key(self):
-        q_input['name'] = 'name'
-        q_input['message'] = 'Please provide {}'.format('name')
-        return self.ask_input()['name']
+    def __init__(self, remote, qa = {"q":False}, type = 'inputs'):
+        self.qa     = qa
+        self.remote = remote
+        self.type   = type
+        self.populate_qa()
+        self.answered = (self.remote, self.qa)
 
     def populate_qa(self):
+        print('credentials are missing. Please provide credentials for {}:'.format(self.remote))
         for key in self.qa:
             if not self.qa[key]:
                 q_input['name'] = key

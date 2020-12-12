@@ -8,6 +8,13 @@ from .get_credentials_home import _get_credentials_home
 from .interminal_setup import get_userdefined_paths, get_yes_no, get_FS_license
 
 class SetProject():
+    '''
+    stats defined in credentials_path-> stats.json are general. This one defines stats folder for each project
+    Args:
+        NIMB_tmp folder, current stats folder names, project name
+    Return:
+        new dict stats with the project name as folder inside the nimb_tmp folder
+    '''
 
     def __init__(self, NIMB_tmp, stats, project):
         self.stats = self.set_project(NIMB_tmp, stats, project)

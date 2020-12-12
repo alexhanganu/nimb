@@ -6,13 +6,14 @@ notes: code is modified from hw5
 import logging
 import tempfile
 import time
-import os
+import os, sys
 from sys import platform
 try:
     import paramiko
     from scp import SCPClient, SCPException
 except ImportError:
-    print("")
+    print("please install paramiko and scp: pip3 install paramiko scp")
+    sys.exit(0)
 
 import json
 from pathlib import Path
@@ -44,23 +45,17 @@ def getSSHSession(remote):
     :param password: password to login
     :return: a paramiko sshsession object
     """
-    debug = True
-    if debug is True:
-        credentials = interminal_setup.term_setup(remote).credentials
-    else:
-        credentials = interminal_setup.term_setup(remote).credentials
-    username = credentials['username']
+    credentials = interminal_setup.term_setup(remote).credentials
     targetIP = credentials['host']
-    password = credentials['password']
 
     # Set up SSH
-    logger.debug((username, targetIP))
+    logger.debug((targetIP))
     sshSession = paramiko.SSHClient()
     sshSession.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
     while True:
         try:
-            sshSession.connect(targetIP, username = username, password = password)
+            sshSession.connect(targetIP, username = credentials['username'], password = credentials['password'])
             logger.debug("SSH to %s successful" % targetIP)
             break
         except Exception as e:
@@ -119,7 +114,7 @@ def download_files_from_server(remote, remote_folder, local_folder):
     :type local_folder:
     """
     sshSession = getSSHSession(remote)
-    scp = SCPClient(ssh_session.get_transport(), progress=__progress)
+    scp = SCPClient(sshSession.get_transport(), progress=__progress)
     scp.get(remote_folder, local_folder, recursive=True)
 
 
@@ -158,8 +153,9 @@ def make_destination_folders(ssh_session, dest_folder,subject_id_folder_name):
     @param list_subfolder:
     Do not return anything
     """
+    sshSession = getSSHSession(remote)
     logger.info('Making folder for %s', subject_id_folder_name)
-    sftp = paramiko.SFTPClient.from_transport(ssh_session.get_transport())
+    sftp = paramiko.SFTPClient.from_transport(sshSession.get_transport())
     new_folder = dest_folder +"/" + subject_id_folder_name
     make_folder_at_cluster(sftp, new_folder)
     return True
@@ -205,8 +201,8 @@ def upload_files_to_cluster(remote, file_, dest_folder):
         none or message if copy was correct
     '''
     logger.info("Uploading files to server ")
-    ssh_session = getSSHSession(remote)
-    scp = SCPClient(ssh_session.get_transport(),progress = __progress)
+    sshSession = getSSHSession(remote)
+    scp = SCPClient(sshSession.get_transport(),progress = __progress)
     try:
         scp.put(file_,
                 recursive=True,
@@ -252,7 +248,8 @@ def retry_upload_files(ssh_session, file_name = FAILED_UPLOAD_FILE):
     # if that file does not exist. Nice! get out immediately
     if not Path(FAILED_UPLOAD_FILE).is_file():
         return
-    scp = SCPClient(ssh_session.get_transport(), progress=__progress)
+    sshSession = getSSHSession(remote)
+    scp = SCPClient(sshSession.get_transport(), progress=__progress)
     all_files = open(file_name)
     # remove the \n line
     all_files = [line for line in all_files if len(line) > 1]
@@ -280,8 +277,8 @@ def upload_multiple_files_to_cluster(remote, file_list, dest_folder):
     :return:
     '''
     logger.debug("Uploading files to server ")
-    ssh_session = getSSHSession(remote)
-    scp = SCPClient(ssh_session.get_transport(), progress = __progress)
+    sshSession = getSSHSession(remote)
+    scp = SCPClient(sshSession.get_transport(), progress = __progress)
     for file_ in file_list:
         upload_single_file_to_cluster(scp, dest_folder, file_, failed_upload_files=FAILED_UPLOAD_FILE)
     scp.close()
@@ -332,7 +329,7 @@ def upload_all_subjects(subjects_json_file, subjects_folder, a_folder):
     for subject_id in subject_dicts.keys():
         t1_path, t2_path, flair_path = \
             get_files_inside_subject_id(subject_dicts, subject_id)
-        ssh_session = getSSHSession(host_name, user_name, user_password)
+        sshSession = getSSHSession(host_name, user_name, user_password)
 
         rename_existed_failed_upload_files_list(file_name=FAILED_UPLOAD_FILE)
 
@@ -344,7 +341,7 @@ def upload_all_subjects(subjects_json_file, subjects_folder, a_folder):
         if len(t1_path) > 0:
             # make the new folder in the cluster as template pls_hc000_ses-1_t1
             subject_id_folder_name = subject_id + "_" + SES_1 + "_" + T1
-            make_destination_folders(ssh_session, subjects_folder, subject_id_folder_name)
+            make_destination_folders(sshSession, subjects_folder, subject_id_folder_name)
             subject_id_folder = subjects_folder + "/" + subject_id_folder_name
             # update the path of the json on the cluster
             subject_dicts_a[subject_id][SES_1][ANAT][T1] = subject_id_folder
@@ -352,32 +349,32 @@ def upload_all_subjects(subjects_json_file, subjects_folder, a_folder):
             # Note: Not considering the confliction of file_name in different folders of 1 MRI_type
             for i in range(len(t1_path)):
                 all_t1_files = get_all_files(t1_path[i],extension_file_list)
-                upload_multiple_files_to_cluster(ssh_session, subject_id_folder, all_t1_files)
+                upload_multiple_files_to_cluster(sshSession, subject_id_folder, all_t1_files)
 
         if len(t2_path) > 0:
             subject_id_folder_name = subject_id + "_" + SES_1 + "_" + T2
-            make_destination_folders(ssh_session, subjects_folder, subject_id_folder_name)
+            make_destination_folders(sshSession, subjects_folder, subject_id_folder_name)
             subject_id_folder = subjects_folder + "/" + subject_id_folder_name
             # update the path of the json on the cluster
             subject_dicts_a[subject_id][SES_1][ANAT][T2] = subject_id_folder
 
             for i in range(len(t2_path)):
                 all_t2_files = get_all_files(t2_path[i],extension_file_list)
-                upload_multiple_files_to_cluster(ssh_session, subject_id_folder, all_t2_files)
+                upload_multiple_files_to_cluster(sshSession, subject_id_folder, all_t2_files)
 
         if len(flair_path) > 0:
             subject_id_folder_name = subject_id + "_" + SES_1 + "_" + FLAIR
-            make_destination_folders(ssh_session, subjects_folder, subject_id_folder_name)
+            make_destination_folders(sshSession, subjects_folder, subject_id_folder_name)
             subject_id_folder = subjects_folder + "/" + subject_id_folder_name
             # update the path of the json on the cluster
             subject_dicts_a[subject_id][SES_1][ANAT][FLAIR] = subject_id_folder
 
             for i in range(len(flair_path)):
                 all_flair_files = get_all_files(flair_path[i],extension_file_list)
-                upload_multiple_files_to_cluster(ssh_session, subject_id_folder, all_flair_files)
+                upload_multiple_files_to_cluster(sshSession, subject_id_folder, all_flair_files)
 
         # retry upload the file
-        retry_upload_files(ssh_session, file_name=FAILED_UPLOAD_FILE)
+        retry_upload_files(sshSession, file_name=FAILED_UPLOAD_FILE)
         logger.info("Finish uploading all files!")
 
     # create tempo folder for storing new subjects_json_file
@@ -392,7 +389,7 @@ def upload_all_subjects(subjects_json_file, subjects_folder, a_folder):
     with open(new_file, 'w') as outfile:
         json.dump(subject_dicts_a, outfile)
     # do the final job!
-    upload_subject_json_to_server(new_file, a_folder, ssh_session)
+    upload_subject_json_to_server(new_file, a_folder, sshSession)
 
 
 def upload_subject_json_to_server(new_subjects_json_file, dest_folder, ssh_session):

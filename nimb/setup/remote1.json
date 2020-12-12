@@ -1,20 +1,20 @@
 {
 "USER":{
-    "user"                       : "user1",
-    "users_list"                 : [],
-    "supervisor_account"         : ""
+    "user"                    : "user1",
+    "users_list"              : [],
+    "supervisor_account"      : ""
         },
 "NIMB_PATHS": {
-    "NIMB_HOME"                  : "~/nimb",
-    "NIMB_tmp"                   : "~/nimb_tmp",
-    "NIMB_NEW_SUBJECTS"          : "~/nimb_tmp/new_subjects",
-    "NIMB_PROCESSED_FS"          : "~/nimb_tmp/nimb_processed_fs",
-    "NIMB_PROCESSED_FS_error"    : "~/nimb_tmp/nimb_processed_fs_error",
-    "miniconda_home"             : "~/miniconda3",
-    "time_format"                : "%Y%m%d_%H%M"
+    "NIMB_HOME"               : "~/nimb",
+    "NIMB_tmp"                : "~/nimb_tmp",
+    "NIMB_NEW_SUBJECTS"       : "~/nimb_tmp/new_subjects",
+    "NIMB_PROCESSED_FS"       : "~/nimb_tmp/nimb_processed_fs",
+    "NIMB_PROCESSED_FS_error" : "~/nimb_tmp/nimb_processed_fs_error",
+    "miniconda_home"          : "~/miniconda3",
+    "time_format"             : "%Y%m%d_%H%M"
               },
 "PROCESSING": {
-    "SUBMIT": 1,
+    "SUBMIT"                  : 1,
     "processing_env"          : "slurm",
     "max_nr_running_batches"  : 5,
     "text4_scheduler"         : ["#!/bin/sh","#SBATCH --account=def-supervisor","#SBATCH --mem=8G"],

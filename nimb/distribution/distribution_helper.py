@@ -10,8 +10,6 @@ try:
 except ImportError:
     gui_setup = 'term'
 
-from distribution.check_disk_space import *
-from distribution import SSHHelper
 import logging
 
 # -- for logging, instead of using print --
@@ -19,16 +17,14 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 # --
 
+
 class DistributionHelper():
 
-    def __init__(self, all_vars, projects, project):
+    def __init__(self, all_vars, project_vars):
 
         self.credentials_home = all_vars.credentials_home # NIMB_HOME/credentials_paths.py
         self.locations        = all_vars.location_vars # credentials_home/local.json + remotes.json
-        self.stats_vars       = all_vars.stats_vars
-        self.projects         = projects # credentials_home/project.json
-        self.project_name     = project
-        self.proj_vars        = projects[project]
+        self.proj_vars        = project_vars
         self.NIMB_HOME        = self.locations["local"]["NIMB_PATHS"]["NIMB_HOME"]
         self.NIMB_tmp         = self.locations["local"]["NIMB_PATHS"]["NIMB_tmp"]
 
@@ -116,6 +112,7 @@ class DistributionHelper():
         :return: dict volume for each location in the NEW_SUBJECTS dir
         """
         # based on availabe space
+        from distribution.check_disk_space import DiskspaceUtility
         print(self.locations_4process)
         # free_space = DiskspaceUtility.get_free_space_remote(ssh_session)
         # # consider the space available the remote server
@@ -207,33 +204,36 @@ class DistributionHelper():
             return ""
         return self.projects[project][var_name]
 
-    def fs_glm_prep(self, dir_2chk):
+    def fs_glm_prep(self, FS_GLM_dir):
+        makedir_ifnot_exist(FS_GLM_dir)
+        f_GLM_group = path.join(self.proj_vars['materials_DIR'][1], self.proj_vars['GLM_file_group'])
         if self.proj_vars['materials_DIR'][0] == 'local':
-            f_GLM_group = path.join(self.proj_vars['materials_DIR'][1], self.proj_vars['GLM_file_group'])
             print(f_GLM_group)
         else:
-            f_GLM_group = self.proj_vars['materials_DIR'][0]
+            print('nimb must access the remote computer: {}'.format(self.proj_vars['materials_DIR'][0]))
+            from distribution import SSHHelper
+            SSHHelper.download_files_from_server(self.proj_vars['materials_DIR'][0], f_GLM_group, FS_GLM_dir)
+            f_GLM_group = path.join(FS_GLM_dir, self.proj_vars['GLM_file_group'])
         if path.exists(f_GLM_group):
-            dir_2chk = self.locations["loca"]l['FREESURFER']['FS_SUBJECTS_DIR']
-            dir_2chk = self.locations["local"]["NIMB_PATHS"]["NIMB_PROCESSED_FS"]
             from processing.freesurfer.fs_glm_prep import CheckIfReady4GLM
-            miss = CheckIfReady4GLM(self.proj_vars, dir_2chk, f_GLM_group).miss
+            ids, miss = CheckIfReady4GLM(self.proj_vars, self.locations["local"], f_GLM_group).chk_if_subjects_ready()
             if miss:
-                print('starting subject preparation for glm')
+                print('{} subjects are missing and {} are present in the processing folder'.format(len(miss), len(ids.keys())))
                 self.fs_glm_prep_extract_dirs(list(miss.values()))
             else:
                 return True
 
     def fs_glm_prep_extract_dirs(self, ls):
-        dirs2extract = ['label','surf',]
-        NIMB_PROCESSED_FS = path.join(self.locations["local"]['NIMB_PATHS']['NIMB_PROCESSED_FS'])
-        not_exist = [i for i in ls if not path.exists(i)]
-        if not_exist:
-            logger.info('{} subject paths do not exist'.format(len(not_exist)))
-            ls = [i for i in ls if path.exists(i)]
-        logger.info('Must extract folders {} for {} subjects, to destination {}'.format(dirs2extract, len(ls), NIMB_PROCESSED_FS))
-        self.extract_dirs([i for i in ls if '.zip' in i],
-                          NIMB_PROCESSED_FS, dirs2extract)
+        if self.proj_vars['materials_DIR'][0] == 'local':
+            dirs2extract = ['label','surf',]
+            NIMB_PROCESSED_FS = path.join(self.locations["local"]['NIMB_PATHS']['NIMB_PROCESSED_FS'])
+            not_exist = [i for i in ls if not path.exists(i)]
+            if not_exist:
+                logger.info('{} subject paths do not exist'.format(len(not_exist)))
+                ls = [i for i in ls if path.exists(i)]
+            logger.info('Must extract folders {} for {} subjects, to destination {}'.format(dirs2extract, len(ls), NIMB_PROCESSED_FS))
+            self.extract_dirs([i for i in ls if '.zip' in i],
+                              NIMB_PROCESSED_FS, dirs2extract)
 
     def run_processing_on_cluster_2(self):
         '''
@@ -241,6 +241,7 @@ class DistributionHelper():
         :return:
         '''
         # version 2: add username, password, and command line to run here
+        from distribution import SSHHelper
         clusters = database._get_Table_Data('Clusters', 'all')
 
         # project_folder = clusters[list(clusters)[0]]['HOME']
@@ -264,6 +265,7 @@ class DistributionHelper():
         # todo: how to get the active cluster for this project
         # if content of subject to be processed, in SOURCE_SUBJECTS_DIR is NOT archived:
         #     - archive and copy to local/remote.json → Nimb_PATHS → NIMB_NEW_SUBECTS.
+        from distribution import SSHHelper
         clusters = database._get_Table_Data('Clusters', 'all')
         cname = [clusters.keys()][0]
         project_folder = clusters[cname]['HOME']
@@ -300,6 +302,7 @@ class DistributionHelper():
         print("command: " + cmd_run_crun_on_cluster)
         # todo: how to know if the setting up is failed?
         print("Setting up the remote cluster")
+        from distribution import SSHHelper
         SSHHelper.running_command_ssh_2(host_name=host_name, user_name=self.user_name,
                                     user_password=self.user_password,
                                     cmd_run_crun_on_cluster=cmd_run_crun_on_cluster)
@@ -386,6 +389,7 @@ class DistributionHelper():
         :param remote_password:
         :return: None
         """
+        from distribution import SSHHelper
         ssh_session = SSHHelper.getSSHSession(remote_id)
         stdin, stdout, stderr = ssh_session.exec_command('ls '+path_dst)
         ls_copy = [line.strip('\n') for line in stdout]

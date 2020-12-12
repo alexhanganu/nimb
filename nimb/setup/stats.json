@@ -1,7 +1,7 @@
 {
 "STATS_PATHS": {
+       "FS_GLM_dir"             : "~/nimb_tmp/projects/fs_glm",
        "STATS_HOME"             : "~/nimb_tmp/projects/stats",
-       "FS_GLM_dir"             : "~/nimb_tmp/projects/stats/fs_glm",
        "features"               : "~/nimb_tmp/projects/stats/features",
        "anova"                  : "~/nimb_tmp/projects/stats/anova",
        "simp_lin_reg_dir"       : "~/nimb_tmp/projects/stats/simple_lin_regression",
