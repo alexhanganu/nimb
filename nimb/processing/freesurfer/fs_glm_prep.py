@@ -46,8 +46,11 @@ class CheckIfReady4GLM():
             else:
                 self.add_path(_id)
         if self.miss.keys():
-            print('some subjects or files are missing: {}'.format(self.miss))
-        return {i:self.ids[i] for i in self.ids if i not in self.miss.keys()}, list(self.miss.keys())
+            ids_ok = {i:self.ids[i] for i in self.ids if i not in self.miss.keys()}
+            print('{} subjects are missing and {} are present in the processing folder'.format(len(self.miss.keys()), len(ids_ok.keys())))
+            return list(self.miss.keys())
+        else:
+            return list()
 
     def chk_path(self, path2chk, _id):
         if path.exists(path.join(path2chk, 'surf')) and path.exists(path.join(path2chk, 'label')):

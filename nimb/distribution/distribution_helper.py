@@ -216,12 +216,9 @@ class DistributionHelper():
             f_GLM_group = path.join(FS_GLM_dir, self.proj_vars['GLM_file_group'])
         if path.exists(f_GLM_group):
             from processing.freesurfer.fs_glm_prep import CheckIfReady4GLM
-            ids, miss = CheckIfReady4GLM(self.proj_vars, self.locations["local"], f_GLM_group).chk_if_subjects_ready()
-            if miss:
-                print('{} subjects are missing and {} are present in the processing folder'.format(len(miss), len(ids.keys())))
-                self.fs_glm_prep_extract_dirs(list(miss.values()))
-            else:
-                return True
+            miss_ls = CheckIfReady4GLM(self.proj_vars, self.locations["local"], f_GLM_group).chk_if_subjects_ready()
+            if miss_ls:
+                self.fs_glm_prep_extract_dirs(miss_ls)
 
     def fs_glm_prep_extract_dirs(self, ls):
         if self.proj_vars['materials_DIR'][0] == 'local':

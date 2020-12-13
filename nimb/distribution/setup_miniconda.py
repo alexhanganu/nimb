@@ -78,6 +78,7 @@ def setup_miniconda(miniconda_home):
     system(f'{conda_bin} install -y xlrd')
     system(f'{conda_bin} install -y -c conda-forge nipy')
     system(f'{conda_bin} install -y scp')
+    system(f'{conda_bin} install -y prompt_toolkit')
     system(f'{conda_bin} install -y -c conda-forge PyInquirer')
     # must activate the conda environment before using by sourcing the bash profile. Otherwise, does not work
     system("source $HOME/.bashrc")

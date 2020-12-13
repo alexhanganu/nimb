@@ -13,9 +13,8 @@ import sys
 try:
     from PyInquirer import prompt
 except ImportError:
-    import argparse
-    print('please install PyInquirer: pip3 install PyInquirer')
-    sys.exit(0)
+    from setup.PyInquirer.prompt import prompt
+    print('PyInquirer is not installed. I am using the adapted version. For future support, please try to install: pip3 install PyInquirer')
 
 # type = 'inputs' for adding string to dictionary keys
 # type = 'paths' for adding paths to dictionary keys

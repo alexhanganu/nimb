@@ -12,8 +12,14 @@ try:
     import paramiko
     from scp import SCPClient, SCPException
 except ImportError:
-    print("please install paramiko and scp: pip3 install paramiko scp")
+    print("please install paramiko: pip3 install paramiko")
     sys.exit(0)
+try:
+    from scp import SCPClient, SCPException
+except ImportError:
+    print("please install scp: pip3 install scp")
+    sys.exit(0)
+
 
 import json
 from pathlib import Path
