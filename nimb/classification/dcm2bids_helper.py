@@ -14,6 +14,18 @@ import shutil
 import json
 import time
 
+import logging
+logger = logging.getLogger(__name__)
+logging.basicConfig(format='%(asctime)s %(module)s %(levelname)s: %(message)s')
+# logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
+
+try:
+    import coloredlogs, logging
+    coloredlogs.install()
+except:
+    print("no colorlog")
+
 from classification.classify_definitions import BIDS_types, mr_modalities
 
 class DCM2BIDS_helper():
@@ -41,37 +53,39 @@ class DCM2BIDS_helper():
         if self.run_stt == 1:
             self.config_file = self.get_config_file()
             print("config_file", self.config_file)
+            logger.fatal("configggg")
             list_subj = self.get_sub()
             print("kp_list_subj:", list_subj)
             if list_subj != None:
-                for subj_name in list_subj:
-                    # self.SUBJ_NAME = self.get_sub()
-                    self.SUBJ_NAME = subj_name
+                 # for subj_name in list_subj[0]:
+            # subj_name =  "Vasculaire_CAS235_MM4"
+            # self.SUBJ_NAME = self.get_sub()[0]
+            #         self.SUBJ_NAME = subj_name
+                    self.SUBJ_NAME = 'PPMI_3301'
+                    print("*"*50)
                     print("kptest_subjectdir:", self.SUBJ_NAME)
+                    print("*" * 50)
                     # with each subject create temporary directory for Dcm2niix
                     # self.chk_dir(self.sub_SUBJDIR)
                     # Run the dcm2bids aself.SUBJ_NAMEpp
-                    try:
-                        # print(self.DICOM_DIR, subj_name,self.OUTPUT_DIR)
-                        # --clobber: Overwrite output if it exists
-                        # ----forceDcm2niix: Overwrite previous temporary dcm2niix output if it exists
-                        sub_dir = path.join(self.DICOM_DIR, self.SUBJ_NAME)
-                        return_value = system('dcm2bids -d {} -p {} -c {} -o {}'.format(sub_dir, self.SUBJ_NAME, self.config_file, self.OUTPUT_DIR))
-                        # the tempo subj dir contains remaining unconvert files
-                        # Calculate the return value code
-                        return_value = int(bin(return_value).replace("0b", "").rjust(16, '0')[:8], 2)
-                        if return_value != 0:# failed
-                            system('dcm2bids -d {} -p {} -c {} -o {}'.format(sub_dir, self.SUBJ_NAME, self.config_file,
-                                                                             self.OUTPUT_DIR))
-                        self.sub_SUBJDIR = path.join(self.OUTPUT_DIR, 'tmp_dcm2bids', 'sub-{}'.format(self.SUBJ_NAME))
-                        print("kptest_sub_dir:", self.sub_SUBJDIR)
-                        self.chk_if_processed()
-                    except Exception as e: # run second time
-                        system('dcm2bids -d {} -p {} -c {} -o {}'.format(self.DICOM_DIR, self.SUBJ_NAME, self.config_file, self.OUTPUT_DIR))
-                    finally:
-                        print("/"*40)
-            else:
-                return
+                    # print(self.DICOM_DIR, subj_name,self.OUTPUT_DIR)
+                    # --clobber: Overwrite output if it exists
+                    # ----forceDcm2niix: Overwrite previous temporary dcm2niix output if it exists
+                    sub_dir = path.join(self.DICOM_DIR, self.SUBJ_NAME)
+                    return_value = system('dcm2bids -d {} -p {} -c {} -o {}'.format(sub_dir, self.SUBJ_NAME, self.config_file, self.OUTPUT_DIR))
+                    # the tempo subj dir contains remaining unconvert files
+                    # Calculate the return value code
+                    return_value = int(bin(return_value).replace("0b", "").rjust(16, '0')[:8], 2)
+                    if return_value != 0:# failed
+                        system('dcm2bids -d {} -p {} -c {} -o {}'.format(sub_dir, self.SUBJ_NAME, self.config_file,
+                                                                         self.OUTPUT_DIR))
+                    self.sub_SUBJDIR = path.join(self.OUTPUT_DIR, 'tmp_dcm2bids', 'sub-{}'.format(self.SUBJ_NAME))
+                    print("kptest_sub_dir:", self.sub_SUBJDIR)
+                    self.chk_if_processed()
+                    print("/"*40)
+
+            # else:
+            #     return
 
 
 
@@ -108,11 +122,11 @@ class DCM2BIDS_helper():
         # Read all .nii in subjdir and move to appropriate folder
         print("*********Convert remaining folder",self.sub_SUBJDIR)
         if [i for i in listdir(self.sub_SUBJDIR) if '.nii.gz' in i]:
-            print("case1")
+            print("remaining nii in ", self.sub_SUBJDIR)
             if self.repeat_updating < self.repeat_lim:
                 self.get_sidecar()
                 print('removing folder tmp_dcm2bids/sub')
-                self.rm_dir(self.sub_SUBJDIR)
+                # self.rm_dir(self.sub_SUBJDIR)
                 self.repeat_updating += 1
                 print('re-renning dcm2bids')
                 self.run(self.SUBJ_NAME)
@@ -123,45 +137,99 @@ class DCM2BIDS_helper():
 
     def get_sidecar(self): # not correct - need to modify
         """...."""
-        print("get_sidecar")
-        sidecar = [i for i in listdir(self.sub_SUBJDIR) if '.json' in i][0]
-        print("sidecar:", sidecar)
+        print("get_sidecar") # list of sidecar
+        list_sidecar = [i for i in listdir(self.sub_SUBJDIR) if '.json' in i]
+        sidecar = list_sidecar[0]
+        print("sidecar:", list_sidecar)
+        print(">>>>"*20)
+        # for sidecar in list_sidecar:
+        print(path.join(self.sub_SUBJDIR, sidecar))
+        print(">>>>" * 20)
         self.sidecar_content = self.get_json_content(path.join(self.sub_SUBJDIR, sidecar))
-        #print("kp_sidecar:", self.sidecar_content)
-        data_Type, modality, criterion = self.classify_mri()
-        self.update_config(data_Type, modality, criterion)
+        # data_Type, modality, criterion = self.classify_mri()
+        list_critera = self.classify_mri()
+        print(list_critera)
+        print("##################################")
+        # get all types and etc
+        # loop to update config for each of them
+        # todo: here
+
+        print("*" * 50)
+
+        # print(data_Type, modality, criterion)
+        print("*" * 50)
+        for criteron in list_critera:
+            data_Type, modality, criterion1 = criteron
+            self.update_config(data_Type, modality, criterion1)
+            break
+            # break
 
 
     def update_config(self, data_Type, modality, criterion): # to modify
         """....."""
         print("Config file:",self.config_file)
-        self.config = self.get_json_content(self.config_file)
-        if self.chk_if_in_config(data_Type, modality, criterion):
+        # if criterion in sidecar not = criterion in config -> add new des
+        if  not self.chk_if_in_config(data_Type, modality, criterion):
             new_des = {
                'dataType': data_Type,
                'modalityLabel' : modality,
-               'criteria':{criterion: self.sidecar_content[criterion]}}
+               'criteria':{criterion:  self.sidecar_content[criterion]}}
+            print("==="*30)
+            print(new_des)
+            print("===" * 30)
             self.config['descriptions'].append(new_des)
             self.save_json(self.config, self.config_file)
+            print("<<<<<<<<>>>> chet tiet .." + self.config_file)
         else:
            print('criterion {} present in config file'.format(criterion))
 
 
     def chk_if_in_config(self, data_Type, modality, criterion):
-        """...."""
+        """
+        true: in config
+        false: not in config
+        """
+        """..If sidecar criterion exist in config.."""
         print ("chk_if_in_config")
+        self.config = self.get_json_content(self.config_file)
+        print(self.sidecar_content.keys())
+        print("++" * 20)
+        # print(self.config['descriptions'])
+        print("++" * 20)
         for des in self.config['descriptions']:
-            # print("json:", des['data_Type'])
-            # print("json2:", des['modalityLabel'])
-            if data_Type in des['dataType'] and \
-               modality in des['modalityLabel'] and \
-               self.sidecar_content[criterion] in des['criteria'][criterion]:
-                    print("kp_criterion_found:", self.sidecar_content[criterion])
-                    return True
-            else:
-                self.run_stt == 0
-                return False
+            if not (criterion in self.sidecar_content):
+                continue
+            # kiem tra key co trong des khong
+            if not criterion in des['criteria'].keys():
+                continue
+            if not ( data_Type in des['dataType'] and modality in des['modalityLabel'] ):
+                continue
+            # kiem tra value of key co trong des khong
+            if  (self.sidecar_content[criterion] == des['criteria'][criterion]):
+                return True
 
+            # if not self.sidecar_content[criterion] in des['criteria'].keys():
+            #     continue
+            #     #############
+            # if data_Type in des['dataType'] and \
+            #    modality in des['modalityLabel'] and \
+            #    self.sidecar_content[criterion] == des['criteria'][criterion]: # gia tri giong nhau thi false
+            #     print ("*"*30 + "chk_if_in_config" +"#"*30)
+            #     # move .nii + classify theo bids
+            #     return False
+            # ################
+            # if data_Type in des['dataType'] and \
+            #    modality in des['modalityLabel'] and \
+            #    self.sidecar_content[criterion] in des['criteria'][criterion]: # if paired
+            #     print ("*"*30 + "chk_if_in_config" +"#"*30)
+            #     # move .nii + classify theo bids
+            #     return True
+            # else: # no pairing -> chinh file config lai
+            #     self.run_stt = 0# coi lai
+                # return False
+            # todo: here
+        #self.run_stt = 0
+        return False
 
     def run_helper(self):
         """...."""
@@ -179,8 +247,17 @@ class DCM2BIDS_helper():
         criterion = 'SeriesDescription'
         type = 'anat'
         modality = 'T1w'
-        return type, modality, criterion
 
+        self.config = self.get_json_content(self.config_file)
+        list_criteria = set()
+        for des in self.config['descriptions']:
+            criterion = list(des['criteria'].keys())[0]
+            modality = des["modalityLabel"]
+            type = des['dataType']
+            list_criteria.add((type, modality, criterion))
+
+        # return type, modality, criterion
+        return list_criteria
 
     def validate_bids(self):
         print("test validate_bids")
