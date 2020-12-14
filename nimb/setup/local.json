@@ -10,13 +10,13 @@
     "NIMB_NEW_SUBJECTS"       : "~/nimb_tmp/new_subjects",
     "NIMB_PROCESSED_FS"       : "~/nimb_tmp/nimb_processed_fs",
     "NIMB_PROCESSED_FS_error" : "~/nimb_tmp/nimb_processed_fs_error",
+    "file_ids_processed"      : "f_ids.json",
     "miniconda_home"          : "~/miniconda3",
     "time_format"             : "%Y%m%d_%H%M"
               },
 "PROCESSING": {
-    "SUBMIT"                  : 1,
-    "processing_env"          : "slurm",
     "max_nr_running_batches"  : 5,
+    "processing_env"          : "slurm",
     "text4_scheduler"         : ["#!/bin/sh","#SBATCH --account=def-supervisor","#SBATCH --mem=8G"],
     "batch_walltime_cmd"      : "#SBATCH --time=",
     "batch_output_cmd"        : "#SBATCH --output=",
@@ -26,7 +26,8 @@
     "walltime_format"         : "%H:%M:%S",
     "python3_load_cmd"        : "module load python/3.8.2",
     "python3_run_cmd"         : "python",
-    "archive_processed"       : 1
+    "archive_processed"       : 1,
+    "SUBMIT"                  : 1
               },
 "FREESURFER": {
     "FreeSurfer_install"      : 0,
@@ -51,17 +52,18 @@
     "user"                    : "username to access the remote computer. Password will be asked by nimb and stored in sqlite",
     "users_list"              : "if the number of users on the remote computer are more than 1, can be: ['user1','user2']",
     "supervisor_account"      : "variable used on compute canada clusters to create the batches",
-    "miniconda_home"          : "path to miniconda3 installation",
 
     "NIMB_HOME"               : "where the local/remote nimb folder is downloaded",
     "NIMB_tmp"                : "Default is NIMB_HOME/tmp path to a temporary folder where all temporary files will be saved. This folder needs to be put in a place that allows quick reading and writing and to delete the files; This folder can get very big. On compute canada it should be put on scratch",
     "NIMB_NEW_SUBJECTS"       : "Default: NIMB_tmp/nimb_new_subjects; path to the folder where the new zipped and unzipped raw MR data is copied in order to be used by the classifyer and the FreeSurfer registration; subjects are removed from the folder once processing is done",
     "NIMB_PROCESSED_FS"       : "Default: NIMB_tmp/nimb_processed_fs; path where the processed FreeSurfer subjects are moved before they are moved to PROCESSED_FS_DIR",
     "NIMB_PROCESSED_FS_error" : "Default: NIMB_tmp/nimb_processed_FS_error: path where subjects that had errors during FreeSurfer processing; before they are moved to PROCESSED_FS_DIR_error",
+    "file_ids_processed"      : "name of the file with the ids of bids, source and processed subjects, classified based on bids names; it will be created in NIMB_tmp and for fs-glm analysis must be located in projects-> materials",
+    "miniconda_home"          : "path to miniconda3 installation",
+    "time_format"             : "the format of the time string for files; %Y%m%d_%H%M",
 
-    "SUBMIT"                  : " 1 for submit, 0 for not submit; defines if the scheduler batches are submitted to the scheduler. Is used to verify the batches",
-    "processing_env"          : "slurm or tmux or moab is the environment used for processing data",
     "max_nr_running_batches"  : "the number of batches that can be sent to the scheduler at the same time",
+    "processing_env"          : "slurm or tmux or moab is the environment used for processing data",
     "text4_scheduler"         : "the text used for the scheduler",
     "batch_walltime_cmd"      : "this command differs between schedulers",
     "batch_output_cmd"        : "command used in the batch to define the path of the output file",
@@ -71,6 +73,7 @@
     "python3_load_cmd"        : "command if python is used as module, can be: module load python/3.8.2",
     "python3_run_cmd"         : "command used on the local or remote computer that is used to initiate python 3; could be python or ~/miniconda3/bin/python3.7",
     "archive_processed"       : "define if processed data must be archived; 1= yes, 0=no",
+    "SUBMIT"                  : "1 for submit, 0 for NOT submit; defines if the scheduler batches are submitted to the scheduler. Is used to verify the batches",
 
     "FreeSurfer_install"      : "1 = install, 0 = no installation; define if the local/remote compute will be used to perform FreeSurfer analysis",
     "FREESURFER_HOME"         : " path to the freesurfer folder. Default is $NIMB_HOME/freesurfer. If OS is Windows, pipeline will ask the credentials for a remote Linux/Mac",
