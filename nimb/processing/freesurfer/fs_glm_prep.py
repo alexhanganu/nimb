@@ -86,6 +86,22 @@ class CheckIfReady4GLM():
         else:
             print('id is missing {}'.format(_id))
             self.add_to_miss(_id, 'id_missing')
+        path2use = max(self.defined_path, key = self.defined_path.count)
+        self.create_glm_df([i for i in self.ids if path2use in self.ids[i]])
+
+    def create_glm_df(ls_ids):
+        ls_ix_2rm = list()
+        self.df['fs_id'] = ''
+        for ix in self.df.index:
+            src_id = self.df.at[ix, self.proj_vars['id_col']]
+            bids_id = [i for i in self.ids_all if self.ids_all[i]['source'] == src_id][0]
+            self.df.at[ix, 'fs_id'] = bids_id
+            if bids_id not in ls_ids:
+                ls_ix_2rm.append(ix)
+        self.df_new = self.df.drop(ls_ix_2rm)
+        self.df_new.drop(columns=[self.proj_vars['id_col']], inplace=True)
+        self.df.rename(columns={'fs_id': self.proj_vars['id_col']}, inplace=True)
+        self.df_new.to_excel(self.f_GLM_group)
 
     def get_ids_processed(self):
         '''retrieves the bids names of the IDs provided in the GLM file.
@@ -93,10 +109,10 @@ class CheckIfReady4GLM():
             the f_ids.json has the BIDS names of the subjects, the source names and the freesurfer/nilearn/dipy names
             see nimb/example/f_ids.json
         '''
-        ids_all = self.read_json(self.f_ids_processed)
+        self.ids_all = self.read_json(self.f_ids_processed)
         self.df = self.get_df()
         ids_glm_file = self.df[self.proj_vars['id_col']].tolist()
-        return {i: 'path' for i in ids_all if ids_all['source'] in ids_glm_file}
+        return {i: 'path' for i in self.ids_all if self.ids_all[i]['source'] in ids_glm_file}
 
 
     def add_to_miss(self, _id, file):
