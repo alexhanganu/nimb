@@ -28,7 +28,7 @@ class CheckIfReady4GLM():
         self.miss = {}
         self.ids = self.get_ids_processed()
         for _id in self.ids:
-                self.add_path(_id)
+            self.define_subjects_path(_id)
         if self.miss.keys():
             ids_ok = {i:self.ids[i] for i in self.ids if i not in self.miss.keys()}
             print('{} subjects are missing and {} are present in the processing folder'.format(len(self.miss.keys()), len(ids_ok.keys())))
@@ -56,8 +56,12 @@ class CheckIfReady4GLM():
                             self.add_to_miss(_id, file)
         else:
             self.add_to_miss(_id, 'surf label missing')
+        if _id not in self.miss:
+            return True
+        else:
+            return False
 
-    def add_path(self, _id):
+    def define_subjects_path(self, _id):
         '''it is expected that the BIDS IDs after processing are located in one of the two folders
             script defines the the folder for analysis
             checks if subjects are present
@@ -68,6 +72,7 @@ class CheckIfReady4GLM():
             populates dict with ids
             Folder with Subjects for GLM analysis
         '''
+        self.defined_path = list()
         path_id_processed = ''
         for path_subjs in [self.FS_SUBJECTS_DIR, self.NIMB_PROCESSED_FS]:
             path2chk = path.join(path_subjs, _id)
@@ -75,13 +80,12 @@ class CheckIfReady4GLM():
                 path_id_processed = path2chk
                 break
         if path_id_processed:
-            self.chk_path(path_id_processed, _id)
+            if self.chk_path(path_id_processed, _id):
+                self.defined_path.append(path_id_processed)
+                self.ids[_id] = path_id_processed
         else:
             print('id is missing {}'.format(_id))
             self.add_to_miss(_id, 'id_missing')
-        if _id not in self.miss:
-            # print('adding path for {}, in {}'.format(_id, path2chk))
-            self.ids[_id] = path2chk
 
     def get_ids_processed(self):
         '''retrieves the bids names of the IDs provided in the GLM file.
@@ -90,9 +94,9 @@ class CheckIfReady4GLM():
             see nimb/example/f_ids.json
         '''
         ids_all = self.read_json(self.f_ids_processed)
-        df = self.get_df()
-        ids_glm_file = df[self.proj_vars['id_col']].tolist()
-        return [i for i in ids_all if ids_all['source'] in ids_glm_file]
+        self.df = self.get_df()
+        ids_glm_file = self.df[self.proj_vars['id_col']].tolist()
+        return {i: 'path' for i in ids_all if ids_all['source'] in ids_glm_file}
 
 
     def add_to_miss(self, _id, file):
