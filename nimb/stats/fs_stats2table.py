@@ -1,5 +1,4 @@
 #!/bin/python
-#Alexandru Hanganu, 2020 12 03
 '''
 Extract the stats data for all subjects located in a folder, to 2/3 excel files
 
@@ -360,37 +359,37 @@ class FSStats2Table:
         '''CREATING ONE BIG STATS FILE'''
         logger.info('CREATING file with Subcortical Volumes')
 
-        df_concat = pd.read_excel(self.dataf, sheet_name=self.sheetnames[0])
+        df_concat = pd.read_excel(self.dataf, engine = 'openpyxl', sheet_name=self.sheetnames[0])
         df_concat = self.change_column_name(df_concat, self.sheetnames[0])
 
         for sheet in self.sheetnames[1:5]:
-            df2 = pd.read_excel(self.dataf, sheet_name=sheet)
+            df2 = pd.read_excel(self.dataf, engine = 'openpyxl', sheet_name=sheet)
             df2 = self.change_column_name(df2, sheet)
             frames = (df_concat, df2)
             df_concat = pd.concat(frames, axis=1, sort=True)
 
-        df_segmentations = pd.read_excel(self.dataf, sheet_name='VolSeg')
+        df_segmentations = pd.read_excel(self.dataf, engine = 'openpyxl', sheet_name='VolSeg')
         frame_final = (df_concat, df_segmentations['eTIV'])
         df_concat = pd.concat(frame_final,axis=1, sort=True)
 
         writer = pd.ExcelWriter(self.data_subcortical_volumes, engine='xlsxwriter')
         df_concat.to_excel(writer, 'stats')
         writer.save()
-        logger.info('FINISHED creating file with Subcortical Volumes')    
+        logger.info('FINISHED creating file with Subcortical Volumes')
 
     def create_BIG_data_file(self):
 
         logger.info('CREATING One file for all subjects')
-        df_concat = pd.read_excel(self.dataf, sheet_name=self.sheetnames[0], index_col = 0)
+        df_concat = pd.read_excel(self.dataf, engine = 'openpyxl', sheet_name=self.sheetnames[0], index_col = 0)
         df_concat = self.change_column_name(df_concat, self.sheetnames[0])
 
         for sheet in self.sheetnames[1:]:
-            df2 = pd.read_excel(self.dataf, sheet_name=sheet, index_col = 0)
+            df2 = pd.read_excel(self.dataf, engine = 'openpyxl', sheet_name=sheet, index_col = 0)
             df2 = self.change_column_name(df2, sheet)
             frames = (df_concat, df2)
             df_concat = pd.concat(frames, axis=1, sort=True)
 
-        df_segmentations = pd.read_excel(self.dataf, sheet_name='VolSeg', index_col = 0)
+        df_segmentations = pd.read_excel(self.dataf, engine = 'openpyxl', sheet_name='VolSeg', index_col = 0)
         frame_final = (df_concat, df_segmentations['eTIV'])
         df_concat = pd.concat(frame_final, axis=1, sort=True)
 

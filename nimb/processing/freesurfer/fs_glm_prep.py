@@ -6,6 +6,7 @@ in order to perform the FreeSurfer glm
 from os import listdir, path
 import sys
 import json
+import openpyxl
 
 try:
     import pandas as pd

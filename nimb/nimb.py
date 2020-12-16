@@ -62,7 +62,7 @@ class NIMB(object):
 
         if self.process == 'check-new':
             self.logger.info('checking for new subject to be processed')
-            DistributionHelper(self.all_vars, project_vars).check_new()
+            DistributionHelper(self.all_vars, self.project_vars).check_new()
 
         if self.process == 'classify':
             self.logger.info('checking if ready to classify')
@@ -70,7 +70,7 @@ class NIMB(object):
                 ErrorMessages.error_classify()
                 sys.exit()
             else:
-                SUBJ_2Classify = DistributionHelper(self.all_vars, project_vars).get_subj_2classify()
+                SUBJ_2Classify = DistributionHelper(self.all_vars, self.project_vars).get_subj_2classify()
                 if SUBJ_2Classify:
                     from classification.classify_bids import MakeBIDS_subj2process
                     return MakeBIDS_subj2process(SUBJ_2Classify,
@@ -122,7 +122,7 @@ class NIMB(object):
                 self.logger.info("NIMB is not ready to extract the FreeSurfer statistics per user. Please check the configuration files.")
                 sys.exit()
             else:
-                helper = DistributionHelper(self.all_vars, project_vars)
+                helper = DistributionHelper(self.all_vars, self.project_vars)
                 PROCESSED_FS_DIR = helper.get_local_remote_dir(self.project_vars["PROCESSED_FS_DIR"])
                 from stats.fs_stats2table import FSStats2Table
                 FSStats2Table(self.stats_vars["STATS_PATHS"]["STATS_HOME"],
