@@ -224,7 +224,7 @@ class DistributionHelper():
             if miss_ls:
                 print('some subjects are missing, nimb must extract their surf and label folders')
 #                self.fs_glm_prep_extract_dirs(miss_ls)
-                return False`
+                return False
             else:
                 return True
         else:
