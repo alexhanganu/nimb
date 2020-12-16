@@ -6,12 +6,13 @@ in order to perform the FreeSurfer glm
 from os import listdir, path
 import sys
 import json
-import openpyxl
 
 try:
     import pandas as pd
     import xlrd
+    import openpyxl
 except ImportError as e:
+    print('could not import modules: pandas or xlrd or openpyxl')
     sys.exit(e)
 
 
@@ -33,9 +34,9 @@ class CheckIfReady4GLM():
         if self.miss.keys():
             ids_ok = {i:self.ids[i] for i in self.ids if i not in self.miss.keys()}
             print('{} subjects are missing and {} are present in the processing folder'.format(len(self.miss.keys()), len(ids_ok.keys())))
-            return list(self.miss.keys())
+            return self.SUBJECTS_DIR, list(self.miss.keys())
         else:
-            return list()
+            return self.SUBJECTS_DIR, list()
 
     def chk_path(self, path2chk, _id):
         '''FS GLM requires two folders: surf and label
@@ -87,8 +88,8 @@ class CheckIfReady4GLM():
         else:
             print('id is missing {}'.format(_id))
             self.add_to_miss(_id, 'id_missing')
-        path2use = max(self.defined_path, key = self.defined_path.count)
-        self.create_glm_df([i for i in self.ids if path2use in self.ids[i]])
+        self.SUBJECTS_DIR = max(self.defined_path, key = self.defined_path.count)
+        self.create_glm_df([i for i in self.ids if self.SUBJECTS_DIR in self.ids[i]])
 
     def create_glm_df(ls_ids):
         ls_ix_2rm = list()

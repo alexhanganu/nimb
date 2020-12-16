@@ -220,13 +220,14 @@ class DistributionHelper():
         f_ids_processed = path.join(FS_GLM_dir, self.locations["local"]["NIMB_PATHS"]['file_ids_processed'])
         if path.exists(f_GLM_group) and path.exists(f_ids_processed):
             from processing.freesurfer.fs_glm_prep import CheckIfReady4GLM
-            miss_ls = CheckIfReady4GLM(self.locations["local"]['NIMB_PATHS'], self.locations["local"]['FREESURFER'], self.proj_vars, f_ids_processed, f_GLM_group).chk_if_subjects_ready()
+            SUBJECTS_DIR, miss_ls = CheckIfReady4GLM(self.locations["local"]['NIMB_PATHS'], self.locations["local"]['FREESURFER'], self.proj_vars, f_ids_processed, f_GLM_group).chk_if_subjects_ready()
             if miss_ls:
                 print('some subjects are missing, nimb must extract their surf and label folders')
 #                self.fs_glm_prep_extract_dirs(miss_ls)
                 return False
             else:
-                return True
+                print('all ids are present in the analysis folder, ready for glm analysis')
+                return SUBJECTS_DIR
         else:
             print('GLM files are missing: {}, {}'.format(f_GLM_group, f_ids_processed))
             return False

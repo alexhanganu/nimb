@@ -381,7 +381,7 @@ class PerformGLM():
             f.write(path.join(glmdir,contrast_name)+'\n')
 
 
-def get_parameters(projects):
+def get_parameters(projects, vars_local):
     """get parameters for nimb"""
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter
@@ -392,6 +392,12 @@ def get_parameters(projects):
         default=projects[:1][0],
         choices = projects,
         help="names of projects located in credentials_path.py/nimb/projects.json -> PROJECTS",
+    )
+    parser.add_argument(
+        "-subjects_dir", required=False,
+        default=vars_local["FREESURFER"]["FS_SUBJECTS_DIR"],
+        choices = [vars_local["FREESURFER"]["FS_SUBJECTS_DIR"], vars_local["NIMB_PATHS"]["NIMB_PROCESSED_FS"]],
+        help="path to SUBJECTS_DIR if different from default",
     )
 
     params = parser.parse_args()
@@ -425,8 +431,9 @@ if __name__ == "__main__":
     getvars      = Get_Vars()
     vars_local   = getvars.location_vars['local']
     projects     = getvars.projects
-    params       = get_parameters(projects['PROJECTS'])
+    params       = get_parameters(projects['PROJECTS'], vars_local)
     vars_project = getvars.projects[params.project]
+    SUBJECTS_DIR = getvars.projects[params.subjects_dir]
     stats_vars   = getvars.stats_vars
     SetProject(vars_local['NIMB_PATHS']['NIMB_tmp'], stats_vars, params.project)
     fs_start_cmd = initiate_fs_from_sh(vars_local)
@@ -447,11 +454,11 @@ if __name__ == "__main__":
                   vars_local["FREESURFER"])
 
     print('\nSTEP 2 of 2: performing GLM analysis')
-    print(vars_local["FREESURFER"]["FS_SUBJECTS_DIR"])
+    print('subjects are located in: {}'.format(SUBJECTS_DIR))
     PerformGLM(vars_local["STATS_PATHS"]["FS_GLM_dir"],
-                            vars_local["FREESURFER"]["FREESURFER_HOME"],
-                            vars_local["FREESURFER"]["FS_SUBJECTS_DIR"],
-                            vars_local["FREESURFER"]["GLM_measurements"],
-                            vars_local["FREESURFER"]["GLM_thresholds"],
-                            vars_local["FREESURFER"]["GLM_MCz_cache"])
+               vars_local["FREESURFER"]["FREESURFER_HOME"],
+               SUBJECTS_DIR,
+               vars_local["FREESURFER"]["GLM_measurements"],
+               vars_local["FREESURFER"]["GLM_thresholds"],
+               vars_local["FREESURFER"]["GLM_MCz_cache"])
 
