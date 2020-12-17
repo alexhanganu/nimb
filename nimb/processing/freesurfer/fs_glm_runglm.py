@@ -431,7 +431,7 @@ if __name__ == "__main__":
     getvars      = Get_Vars()
     vars_local   = getvars.location_vars['local']
     projects     = getvars.projects
-    params       = get_parameters(projects['PROJECTS'], vars_local)
+    params       = get_parameters([i for i in projects.keys() if 'EXPLANATION' not in i and 'LOCATION' not in i], vars_local)
     vars_project = getvars.projects[params.project]
     SUBJECTS_DIR = getvars.projects[params.subjects_dir]
     stats_vars   = getvars.stats_vars
