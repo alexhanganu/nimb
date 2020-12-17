@@ -24,13 +24,12 @@ class DistributionReady():
     local_json = "~/nimb/local.json"
     module_list = ["pandas", "numpy", "xlrd", "xlsxwriter", "paramiko", "dcm2niix", "dcm2bids", "dipy"]
     #modules = open('requirements.txt').readlines()
-    def __init__(self, all_vars, projects, project):
-        
+    def __init__(self, all_vars, proj_vars):
+
         self.credentials_home = all_vars.credentials_home # NIMB_HOME/credentials_paths.py
         self.locations        = all_vars.location_vars # credentials_home/local.json + remotes.json
         self.stats_vars       = all_vars.stats_vars
-        self.projects         = projects # credentials_home/project.json
-        self.project_name     = project
+        self.proj_vars        = proj_vars # credentials_home/project.json
         self.NIMB_HOME        = self.locations["local"]["NIMB_PATHS"]["NIMB_HOME"]
         self.NIMB_tmp         = self.locations["local"]["NIMB_PATHS"]["NIMB_tmp"]
         
@@ -154,25 +153,26 @@ class DistributionReady():
                 logger.fatal("FREESURFER_HOME is missing.")
                 return False
             if self.check_freesurfer_ready():
-                if not os.path.exists(self.locations['local']['FREESURFER']['FS_SUBJECTS_DIR']):
-                        print('creating path ', self.locations['local']['FREESURFER']['FS_SUBJECTS_DIR'])
-                        makedir_ifnot_exist(self.locations['local']['FREESURFER']['FS_SUBJECTS_DIR'])
-                return self.fs_chk_fsaverage_ready()
+                SUBJECTS_DIR = self.locations['local']['FREESURFER']['FS_SUBJECTS_DIR']
+                if not os.path.exists(SUBJECTS_DIR):
+                        print('creating path {}'.format(SUBJECTS_DIR))
+                        makedir_ifnot_exist(SUBJECTS_DIR)
+                return self.fs_chk_fsaverage_ready(SUBJECTS_DIR)
         else:
             return False
 
-    def fs_chk_fsaverage_ready(self):
-        self.fs_fsaverage_copy()
-        if not os.path.exists(os.path.join(self.locations['local']['FREESURFER']['FS_SUBJECTS_DIR'],'fsaverage', 'xhemi')):
-            print('fsaverage or fsaverage/xhemi is missing from SUBJECTS_DIR: {}'.format(self.locations['local']['FREESURFER']['FS_SUBJECTS_DIR']))
+    def fs_chk_fsaverage_ready(self, SUBJECTS_DIR):
+        self.fs_fsaverage_copy(SUBJECTS_DIR)
+        if not os.path.exists(os.path.join(SUBJECTS_DIR,'fsaverage', 'xhemi')):
+            print('fsaverage or fsaverage/xhemi is missing from SUBJECTS_DIR: {}'.format(SUBJECTS_DIR))
             return False
         else:
             return True
 
-    def fs_fsaverage_copy(self):
-        if not os.path.exists(os.path.join(self.locations['local']['FREESURFER']['FS_SUBJECTS_DIR'],'fsaverage', 'xhemi')):
+    def fs_fsaverage_copy(self, SUBJECTS_DIR):
+        if not os.path.exists(os.path.join(SUBJECTS_DIR, 'fsaverage', 'xhemi')):
             fsaverage_path = os.path.join(self.locations['local']['FREESURFER']['FREESURFER_HOME'], "subjects", "fsaverage")
-            shutil.copytree(fsaverage_path, os.path.join(self.locations['local']['FREESURFER']['FS_SUBJECTS_DIR'], 'fsaverage'))
+            shutil.copytree(fsaverage_path, os.path.join(SUBJECTS_DIR, 'fsaverage'))
 
     def check_freesurfer_ready(self):
         """
@@ -202,9 +202,9 @@ class DistributionReady():
            if all paths for stats are created
            if NIMB is ready to perform statistical analysis"""
         ready = False
-        file = self.projects[self.project_name]["GLM_file_group"]
-        if self.projects[self.project_name]["materials_DIR"][0] == 'local' and os.path.exists(os.path.join(self.projects[self.project_name]["materials_DIR"][1], file)):
+        file = self.proj_vars["GLM_file_group"]
+        if self.proj_vars["materials_DIR"][0] == 'local' and os.path.exists(os.path.join(self.proj_vars["materials_DIR"][1], file)):
             ready = True
         else:
-            print("data file is missing or not located on a local folder. Check file {}".format(os.path.join(self.credentials_home, 'projects.json', self.project_name)))
+            print("data file is missing or not located on a local folder. Check file {}".format(os.path.join(self.credentials_home, 'projects.json')))
         return ready

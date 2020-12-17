@@ -22,6 +22,7 @@ class DistributionHelper():
 
     def __init__(self, all_vars, project_vars):
 
+        self.all_vars         = all_vars
         self.credentials_home = all_vars.credentials_home # NIMB_HOME/credentials_paths.py
         self.locations        = all_vars.location_vars # credentials_home/local.json + remotes.json
         self.proj_vars        = project_vars
@@ -230,6 +231,7 @@ class DistributionHelper():
                 return False
             else:
                 print('all ids are present in the analysis folder, ready for glm analysis')
+                DistributionReady(self.all_vars, self.proj_vars).fs_chk_fsaverage_ready(SUBJECTS_DIR)
                 return SUBJECTS_DIR
         else:
             print('GLM files are missing: {}, {}'.format(f_GLM_group, f_ids_processed))
