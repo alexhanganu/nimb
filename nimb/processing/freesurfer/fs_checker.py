@@ -5,6 +5,7 @@ from os import listdir, path, system, remove
 import shutil
 import logging
 import fs_definitions
+# from fs_glm_prep import ChkFSQcache
 
 log = logging.getLogger(__name__)
 
@@ -89,23 +90,21 @@ class FreeSurferChecker():
                     return True
     def chk_if_qcache_done(self, subjid): # move to chk_process_files
         if 'rh.w-g.pct.mgh.fsaverage.mgh' and 'lh.thickness.fwhm10.fsaverage.mgh' in listdir(path.join(self.SUBJECTS_DIR, subjid, 'surf')):
+            # files_ok = ChkFSQcache(self.SUBJECTS_DIR, subjid, vars_fs).miss
             self.check_qcache_files(subjid)
             return True
         else:
             return False
     def check_qcache_files(self, subjid):
-            miss = list()
-            for hemi in fs_definitions.hemi:
-                for meas in self.meas:
-                    for thresh in self.thresh:
-                        file = hemi+'.'+meas+'.fwhm'+str(thresh)+'.fsaverage.mgh'
-                        if not path.exists(path.join(self.SUBJECTS_DIR, subjid, 'surf', file)):
-                            miss.append(file)
-            if not miss:
-                return True
-            else:
-                log.info('    files are missing: {}'.format(str(miss)))
-                return False
+        miss = list()
+        for hemi in fs_definitions.hemi:
+            for meas in self.meas:
+                for thresh in self.thresh:
+                    file = hemi+'.'+meas+'.fwhm'+str(thresh)+'.fsaverage.mgh'
+                    if not path.exists(path.join(self.SUBJECTS_DIR, subjid, 'surf', file)):
+                        miss.append(file)
+        if miss:
+            log.info('    files are missing: {}'.format(str(miss)))
 
     def log_chk(self, process, subjid):
         log_file = path.join(self.SUBJECTS_DIR, subjid, self.file.log_f(process))

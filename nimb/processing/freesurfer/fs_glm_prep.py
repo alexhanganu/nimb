@@ -15,6 +15,40 @@ except ImportError as e:
     print('could not import modules: pandas or xlrd or openpyxl')
     sys.exit(e)
 
+class ChkFSQcache:
+    '''FS GLM requires two folders: surf and label
+        script checks that both folders are present
+        checks that all GLM files are present
+    Args:
+        path2chk: path to the folder with the subject
+        _id: ID of the subject to chk
+    Return:
+        populates list of missing subjects
+    '''
+    def __init__(self, path2chk, _id, vars_fs):
+        self.miss       = {}
+        self.path2chk   = path2chk
+        self._id        = _id
+        self.GLM_meas   = vars_fs["GLM_measurements"]
+        self.GLM_thresh = vars_fs["GLM_thresholds"]
+        self.chk_f()
+
+    def chk_f(self):
+        if path.exists(path.join(self.path2chk, self._id, 'surf')) and path.exists(path.join(self.path2chk, self._id, 'label')):
+            for hemi in ['lh','rh']:
+                for meas in self.GLM_meas:
+                    for thresh in self.GLM_thresh:
+                        file = '{}.{}.fwhm{}.fsaverage.mgh'.format(hemi, meas, str(thresh))
+                        if not path.exists(path.join(self.path2chk, self._id, 'surf', file)):
+                            self.populate_miss(file)
+        else:
+            self.populate_miss('surf label missing')
+
+    def populate_miss(self, file):
+        if self._id not in self.miss:
+            self.miss[self._id] = list()
+        self.miss[self._id].append(file)
+
 
 class CheckIfReady4GLM():
 
@@ -47,15 +81,13 @@ class CheckIfReady4GLM():
             return False, list()
 
     def chk_path(self, path2chk, _id):
-        '''FS GLM requires two folders: surf and label
-            scripts checks that both folders are present
-            checks that all GLM files are present
-        Args:
-            path2chk: path to the folder with the subject
-            _id: ID of the subject to chk
-        Return:
-            populates list of missing subjects
-        '''
+        # files_ok = ChkFSQcache(path2chk, _id, self.vars_fs)
+        # if not files_ok:
+            # self.miss.update(files_ok)
+            # return False
+        # else:
+            # return True
+
         if path.exists(path.join(path2chk, _id, 'surf')) and path.exists(path.join(path2chk, _id, 'label')):
             for hemi in ['lh','rh']:
                 for meas in self.vars_fs["GLM_measurements"]:
