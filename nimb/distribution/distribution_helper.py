@@ -231,6 +231,7 @@ class DistributionHelper():
                 return False
             else:
                 print('all ids are present in the analysis folder, ready for glm analysis')
+                from distribution import DistributionReady
                 DistributionReady(self.all_vars, self.proj_vars).fs_chk_fsaverage_ready(SUBJECTS_DIR)
                 return SUBJECTS_DIR
         else:
