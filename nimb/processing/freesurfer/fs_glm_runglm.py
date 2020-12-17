@@ -5,6 +5,7 @@
 from os import system, listdir, makedirs, path, remove
 import shutil, linecache, sys, json
 import argparse
+from fs_glm_prep import ChkFSQcache
 
 try:
     import pandas as pd
@@ -17,7 +18,7 @@ except ImportError as e:
 class PrepareForGLM():
 
     #https://surfer.nmr.mgh.harvard.edu/fswiki/FsgdExamples
-    def __init__(self, GLM_dir, GLM_file_group, id_col, group_col, variables, vars_fs):
+    def __init__(self, SUBJECTS_DIR, GLM_dir, GLM_file_group, id_col, group_col, variables, vars_fs):
 
         self.PATH_GLM_dir = GLM_dir
         self.group_col = group_col
@@ -26,17 +27,16 @@ class PrepareForGLM():
         self.PATHmtx = path.join(self.PATH_GLM_dir,'contrasts')
 
         if not path.isdir(self.PATH_GLM_dir): makedirs(self.PATH_GLM_dir)
-        shutil.copy(GLM_file_group, path.join(self.PATH_GLM_dir, Path(GLM_file_group).name))
+        if Path(GLM_file_group).name not in listdir(self.PATH_GLM_dir):
+            shutil.copy(GLM_file_group, path.join(self.PATH_GLM_dir, Path(GLM_file_group).name))
         if not path.isdir(self.PATHfsgd): makedirs(self.PATHfsgd)
         if not path.isdir(self.PATHmtx): makedirs(self.PATHmtx)
-        print(self.PATHfsgd)
 
         df_groups_clin = self.get_df_for_variables(GLM_file_group, variables)
-        self.ids = self.get_ids_ready4glm(df_groups_clin[self.id_col].tolist(), vars_fs)
+        self.ids = self.get_ids_ready4glm(SUBJECTS_DIR, df_groups_clin[self.id_col].tolist(), vars_fs)
         d_init = df_groups_clin.to_dict()
         self.d_subjid = {}
         self.ls_vars_stats = [key for key in d_init if key != self.id_col]
-        self.ls_groups = []
         for rownr in d_init[self.id_col]:
             id = d_init[self.id_col][rownr]
             if id in self.ids:
@@ -44,9 +44,6 @@ class PrepareForGLM():
                 for var in self.ls_vars_stats:
                     self.d_subjid[id][var] = d_init[var][rownr]
         self.ls_vars_stats.remove(self.group_col)
-        for id in self.d_subjid:
-            if self.d_subjid[id][self.group_col] not in self.ls_groups:
-                self.ls_groups.append(self.d_subjid[id][self.group_col])
 
         self.contrasts = {'g1v1':{'slope.mtx':['0 1','t-test with the slope>0 being positive; is the slope equal to 0? does the correlation between thickness and variable differ from zero ?',],},
             'g2v0':{'group.diff.mtx':['1 -1','t-test with Group1>Group2 being positive; is there a difference between the group intercepts? Is there a difference between groups?',],},
@@ -99,30 +96,20 @@ class PrepareForGLM():
             df.drop(columns=cols2drop, inplace=True)
         return df
 
-    def get_ids_ready4glm(self, ids, vars_fs):
-
-        def add_to_miss(miss, _id, file):
-            if _id not in miss:
-                miss[_id] = list()
-            miss[_id].append(file)
-            return miss
-
+    def get_ids_ready4glm(self, SUBJECTS_DIR, ids, vars_fs):
         miss = {}
         for _id in ids:
-            if path.exists(path.join(vars_fs["FS_SUBJECTS_DIR"], _id, 'surf')) and path.exists(path.join(vars_fs["FS_SUBJECTS_DIR"], _id, 'label')):
-                for hemi in ['lh','rh']:
-                    for meas in vars_fs["GLM_measurements"]:
-                        for thresh in vars_fs["GLM_thresholds"]:
-                            file = hemi+'.'+meas+'.fwhm'+str(thresh)+'.fsaverage.mgh'
-                            if not path.exists(path.join(vars_fs["FS_SUBJECTS_DIR"], _id, 'surf', file)):
-                                miss = add_to_miss(miss, _id, file)
-            else:
-                miss = add_to_miss(miss, _id, 'none')
+            files_ok = ChkFSQcache(SUBJECTS_DIR, _id, vars_fs)
+            if not files_ok:
+                miss.update(files_ok)
         if miss.keys():
             print('some subjects or files are missing: {}'.format(miss))
         return [i for i in ids if i not in miss.keys()]
 
     def make_subjects_per_group(self, df):
+        self.ls_groups = list()
+        self.ls_groups = [i for i in df[self.group_col] if i not in self.ls_groups]
+        print(self.ls_groups)
         subjects_per_group = dict()
         for group in self.ls_groups:
             subjects_per_group[group] = []
@@ -137,7 +124,7 @@ class PrepareForGLM():
 
 
     def make_fsgd_g1g2v0(self):
-        file = 'g2v0'+'_'+self.ls_groups[0]+'_'+self.ls_groups[1]+'.fsgd'
+        file = 'g2v0_{}_{}.fsgd'.format(self.ls_groups[0], self.ls_groups[1])
         open(path.join(self.PATHfsgd,file), 'w').close()
         with open(path.join(self.PATHfsgd,file), 'a') as f:
             f.write('GroupDescriptorFile 1\nClass '+self.ls_groups[0]+' plus blue\nClass '+self.ls_groups[1]+' circle green\n')
@@ -270,6 +257,7 @@ class PerformGLM():
                 print(e)
                 sys.exit('files for glm is missing')
 
+        print('subjects are located in: {}'.format(SUBJECTS_DIR))
         for group in subjects_per_group:
             for subject in subjects_per_group[group]:
                 if subject not in listdir(SUBJECTS_DIR):
@@ -403,8 +391,7 @@ def get_parameters(projects, vars_local):
 
     parser.add_argument(
         "-glm_file_path", required=False,
-        default=projects[projects[:1][0]]["GLM_file_group"],
-        choices = ['none'],
+        default='none',
         help="path to SUBJECTS_DIR if different from default",
     )
     params = parser.parse_args()
@@ -454,7 +441,8 @@ if __name__ == "__main__":
         print('please initiate freesurfer using the command: \n    {}'.format(fs_start_cmd))
 
     print('\nSTEP 1 of 2: preparing data for GLM analysis')
-    PrepareForGLM(stats_vars["STATS_PATHS"]["FS_GLM_dir"],
+    PrepareForGLM(SUBJECTS_DIR,
+                  stats_vars["STATS_PATHS"]["FS_GLM_dir"],
                   GLM_file_path,
                   vars_project["id_col"],
                   vars_project["group_col"],
@@ -462,7 +450,6 @@ if __name__ == "__main__":
                   vars_local["FREESURFER"])
 
     print('\nSTEP 2 of 2: performing GLM analysis')
-    print('subjects are located in: {}'.format(SUBJECTS_DIR))
     PerformGLM(stats_vars["STATS_PATHS"]["FS_GLM_dir"],
                vars_local["FREESURFER"]["FREESURFER_HOME"],
                SUBJECTS_DIR,

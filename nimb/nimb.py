@@ -139,7 +139,8 @@ class NIMB(object):
                     self.vars_local['FREESURFER']['FS_SUBJECTS_DIR'] = SUBJECTS_DIR
                     schedule_fsglm = Scheduler(self.vars_local)
                     self.logger.info('CHECK!! that pandas, xlrd and pathlib are installed in the python version used for the analysis. \n CHECK!! that all required variables for the GLM analysis are defined in the credentials_path/projects.py -> {}'.format(self.project))
-                    cmd = '{} fs_glm_runglm.py -project {} -subjects_dir {} -glm_file_path {}'.format(self.vars_local['PROCESSING']["python3_run_cmd"], self.project, SUBJECTS_DIR, GLM_file_path)
+                    python_run_cmd = path.join(self.vars_local["NIMB_PATHS"]["miniconda_home"], 'bin', 'python3.7')
+                    cmd = '{} fs_glm_runglm.py -project {} -subjects_dir {} -glm_file_path {}'.format(python_run_cmd, self.project, SUBJECTS_DIR, GLM_file_path)
                     cd_cmd = 'cd {}'.format(path.join(self.NIMB_HOME, 'processing', 'freesurfer'))
                     schedule_fsglm.submit_4_processing(cmd, 'fs_glm','run_glm', cd_cmd)
 

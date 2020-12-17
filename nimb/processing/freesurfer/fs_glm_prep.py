@@ -81,27 +81,27 @@ class CheckIfReady4GLM():
             return False, list()
 
     def chk_path(self, path2chk, _id):
-        # files_ok = ChkFSQcache(path2chk, _id, self.vars_fs)
-        # if not files_ok:
-            # self.miss.update(files_ok)
-            # return False
-        # else:
-            # return True
-
-        if path.exists(path.join(path2chk, _id, 'surf')) and path.exists(path.join(path2chk, _id, 'label')):
-            for hemi in ['lh','rh']:
-                for meas in self.vars_fs["GLM_measurements"]:
-                    for thresh in self.vars_fs["GLM_thresholds"]:
-                        file = '{}.{}.fwhm{}.fsaverage.mgh'.format(hemi, meas, str(thresh))
-                        if not path.exists(path.join(path2chk, _id, 'surf', file)):
-                            print('    id {} misses file {}'.format(_id, file))
-                            self.add_to_miss(_id, file)
-        else:
-            self.add_to_miss(_id, 'surf label missing')
-        if _id not in self.miss:
-            return True
-        else:
+        files_ok = ChkFSQcache(path2chk, _id, self.vars_fs)
+        if not files_ok:
+            self.miss.update(files_ok)
             return False
+        else:
+            return True
+
+        # if path.exists(path.join(path2chk, _id, 'surf')) and path.exists(path.join(path2chk, _id, 'label')):
+            # for hemi in ['lh','rh']:
+                # for meas in self.vars_fs["GLM_measurements"]:
+                    # for thresh in self.vars_fs["GLM_thresholds"]:
+                        # file = '{}.{}.fwhm{}.fsaverage.mgh'.format(hemi, meas, str(thresh))
+                        # if not path.exists(path.join(path2chk, _id, 'surf', file)):
+                            # print('    id {} misses file {}'.format(_id, file))
+                            # self.add_to_miss(_id, file)
+        # else:
+            # self.add_to_miss(_id, 'surf label missing')
+        # if _id not in self.miss:
+            # return True
+        # else:
+            # return False
 
     def define_subjects_path(self, _id):
         '''it is expected that the BIDS IDs after processing are located in one of the two folders
