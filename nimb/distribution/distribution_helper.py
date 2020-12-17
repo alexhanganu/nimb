@@ -225,6 +225,9 @@ class DistributionHelper():
                 print('some subjects are missing, nimb must extract their surf and label folders')
 #                self.fs_glm_prep_extract_dirs(miss_ls)
                 return False
+            elif not SUBJECTS_DIR:
+                print('SUBJECTS_DIR cannot be defined')
+                return False
             else:
                 print('all ids are present in the analysis folder, ready for glm analysis')
                 return SUBJECTS_DIR

@@ -29,14 +29,22 @@ class CheckIfReady4GLM():
     def chk_if_subjects_ready(self):
         self.miss = {}
         self.ids = self.get_ids_processed()
-        for _id in self.ids:
-            self.define_subjects_path(_id)
-        if self.miss.keys():
-            ids_ok = {i:self.ids[i] for i in self.ids if i not in self.miss.keys()}
-            print('{} subjects are missing and {} are present in the processing folder'.format(len(self.miss.keys()), len(ids_ok.keys())))
-            return self.SUBJECTS_DIR, list(self.miss.keys())
+        if self.ids:
+            for _id in self.ids:
+                self.define_subjects_path(_id)
+            if self.miss.keys():
+                ids_ok = {i:self.ids[i] for i in self.ids if i not in self.miss.keys()}
+                print('{} subjects are missing and {} are present in the processing folder'.format(len(self.miss.keys()), len(ids_ok.keys())))
+                return False, list(self.miss.keys())
+            elif self.defined_path:
+                print(self.defined_path)
+                self.SUBJECTS_DIR = max(self.defined_path, key = self.defined_path.count)
+                print(self.SUBJECTS_DIR)
+                self.create_glm_df([i for i in self.ids if self.SUBJECTS_DIR in self.ids[i]])
+                return self.SUBJECTS_DIR, list()
         else:
-            return self.SUBJECTS_DIR, list()
+            print('no ids found')
+            return False, list()
 
     def chk_path(self, path2chk, _id):
         '''FS GLM requires two folders: surf and label
@@ -48,12 +56,12 @@ class CheckIfReady4GLM():
         Return:
             populates list of missing subjects
         '''
-        if path.exists(path.join(path2chk, 'surf')) and path.exists(path.join(path2chk, 'label')):
+        if path.exists(path.join(path2chk, _id, 'surf')) and path.exists(path.join(path2chk, _id, 'label')):
             for hemi in ['lh','rh']:
                 for meas in self.vars_fs["GLM_measurements"]:
                     for thresh in self.vars_fs["GLM_thresholds"]:
                         file = '{}.{}.fwhm{}.fsaverage.mgh'.format(hemi, meas, str(thresh))
-                        if not path.exists(path.join(path2chk, 'surf', file)):
+                        if not path.exists(path.join(path2chk, _id, 'surf', file)):
                             print('    id {} misses file {}'.format(_id, file))
                             self.add_to_miss(_id, file)
         else:
@@ -79,7 +87,7 @@ class CheckIfReady4GLM():
         for path_subjs in [self.FS_SUBJECTS_DIR, self.NIMB_PROCESSED_FS]:
             path2chk = path.join(path_subjs, _id)
             if path.exists(path2chk):
-                path_id_processed = path2chk
+                path_id_processed = path_subjs
                 break
         if path_id_processed:
             if self.chk_path(path_id_processed, _id):
@@ -88,10 +96,8 @@ class CheckIfReady4GLM():
         else:
             print('id is missing {}'.format(_id))
             self.add_to_miss(_id, 'id_missing')
-        self.SUBJECTS_DIR = max(self.defined_path, key = self.defined_path.count)
-        self.create_glm_df([i for i in self.ids if self.SUBJECTS_DIR in self.ids[i]])
 
-    def create_glm_df(ls_ids):
+    def create_glm_df(self, ls_ids):
         ls_ix_2rm = list()
         self.df['fs_id'] = ''
         for ix in self.df.index:
@@ -111,6 +117,7 @@ class CheckIfReady4GLM():
             the f_ids.json has the BIDS names of the subjects, the source names and the freesurfer/nilearn/dipy names
             see nimb/example/f_ids.json
         '''
+        print('extracting list of ids')
         self.ids_all = self.read_json(self.f_ids_processed)
         self.df = self.get_df()
         ids_glm_file = self.df[self.proj_vars['id_col']].tolist()
