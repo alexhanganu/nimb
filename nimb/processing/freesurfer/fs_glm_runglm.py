@@ -393,6 +393,7 @@ def get_parameters(projects, vars_local):
         choices = projects,
         help="names of projects located in credentials_path.py/nimb/projects.json -> PROJECTS",
     )
+
     parser.add_argument(
         "-subjects_dir", required=False,
         default=vars_local["FREESURFER"]["FS_SUBJECTS_DIR"],
@@ -400,6 +401,12 @@ def get_parameters(projects, vars_local):
         help="path to SUBJECTS_DIR if different from default",
     )
 
+    parser.add_argument(
+        "-glm_file_path", required=False,
+        default=projects[projects[:1][0]]["GLM_file_group"],
+        choices = ['none'],
+        help="path to SUBJECTS_DIR if different from default",
+    )
     params = parser.parse_args()
     return params
 
@@ -431,10 +438,11 @@ if __name__ == "__main__":
     getvars      = Get_Vars()
     vars_local   = getvars.location_vars['local']
     projects     = getvars.projects
-    params       = get_parameters([i for i in projects.keys() if 'EXPLANATION' not in i and 'LOCATION' not in i], vars_local)
-    vars_project = getvars.projects[params.project]
-    SUBJECTS_DIR = getvars.projects[params.subjects_dir]
     stats_vars   = getvars.stats_vars
+    params       = get_parameters([i for i in projects.keys() if 'EXPLANATION' not in i and 'LOCATION' not in i], vars_local)
+    SUBJECTS_DIR = params.subjects_dir
+    GLM_file_path= params.glm_file_path
+    vars_project = getvars.projects[params.project]
     SetProject(vars_local['NIMB_PATHS']['NIMB_tmp'], stats_vars, params.project)
     fs_start_cmd = initiate_fs_from_sh(vars_local)
 
@@ -446,8 +454,8 @@ if __name__ == "__main__":
         print('please initiate freesurfer using the command: \n    {}'.format(fs_start_cmd))
 
     print('\nSTEP 1 of 2: preparing data for GLM analysis')
-    PrepareForGLM(vars_local["STATS_PATHS"]["FS_GLM_dir"],
-                  vars_project["GLM_file_group"],
+    PrepareForGLM(stats_vars["STATS_PATHS"]["FS_GLM_dir"],
+                  GLM_file_path,
                   vars_project["id_col"],
                   vars_project["group_col"],
                   vars_project["variables_for_glm"],
@@ -455,7 +463,7 @@ if __name__ == "__main__":
 
     print('\nSTEP 2 of 2: performing GLM analysis')
     print('subjects are located in: {}'.format(SUBJECTS_DIR))
-    PerformGLM(vars_local["STATS_PATHS"]["FS_GLM_dir"],
+    PerformGLM(stats_vars["STATS_PATHS"]["FS_GLM_dir"],
                vars_local["FREESURFER"]["FREESURFER_HOME"],
                SUBJECTS_DIR,
                vars_local["FREESURFER"]["GLM_measurements"],

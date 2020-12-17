@@ -207,18 +207,20 @@ class DistributionHelper():
 
     def fs_glm_prep(self, FS_GLM_dir):
         makedir_ifnot_exist(FS_GLM_dir)
-        f_GLM_group     = path.join(self.proj_vars['materials_DIR'][1], self.proj_vars['GLM_file_group'])
-        f_ids_processed = path.join(self.proj_vars['materials_DIR'][1], self.locations["local"]["NIMB_PATHS"]['file_ids_processed'])
-        if self.proj_vars['materials_DIR'][0] == 'local':
-            shutil.copy(f_GLM_group, FS_GLM_dir)
-            shutil.copy(f_ids_processed, FS_GLM_dir)
+        f_GLM_group_name = self.proj_vars['GLM_file_group']
+        f_ids_processed_name = self.locations["local"]["NIMB_PATHS"]['file_ids_processed']
+        location = self.proj_vars['materials_DIR'][0]
+        materials_dir_path = self.proj_vars['materials_DIR'][1]
+        if location == 'local':
+            shutil.copy(path.join(materials_dir_path, f_GLM_group_name), FS_GLM_dir)
+            shutil.copy(path.join(materials_dir_path, f_ids_processed_name), FS_GLM_dir)
         else:
-            print('nimb must access the remote computer: {}'.format(self.proj_vars['materials_DIR'][0]))
+            print('nimb must access the remote computer: {}'.format(location))
             from distribution import SSHHelper
-            SSHHelper.download_files_from_server(self.proj_vars['materials_DIR'][0], f_GLM_group, FS_GLM_dir)
-            SSHHelper.download_files_from_server(self.proj_vars['materials_DIR'][0], f_ids_processed, FS_GLM_dir)
-        f_GLM_group     = path.join(FS_GLM_dir, self.proj_vars['GLM_file_group'])
-        f_ids_processed = path.join(FS_GLM_dir, self.locations["local"]["NIMB_PATHS"]['file_ids_processed'])
+            file_dir_list = [f_GLM_group_name, f_ids_processed_name]
+            SSHHelper.download_files_from_server(location, materials_dir_path, FS_GLM_dir, file_dir_list)
+        f_GLM_group     = path.join(FS_GLM_dir, f_GLM_group_name)
+        f_ids_processed = path.join(FS_GLM_dir, f_ids_processed_name)
         if path.exists(f_GLM_group) and path.exists(f_ids_processed):
             from processing.freesurfer.fs_glm_prep import CheckIfReady4GLM
             SUBJECTS_DIR, miss_ls = CheckIfReady4GLM(self.locations["local"]['NIMB_PATHS'], self.locations["local"]['FREESURFER'], self.proj_vars, f_ids_processed, f_GLM_group).chk_if_subjects_ready()
@@ -231,9 +233,9 @@ class DistributionHelper():
                 return False
             else:
                 print('all ids are present in the analysis folder, ready for glm analysis')
-                from distribution import DistributionReady
+                from distribution.distribution_ready import DistributionReady
                 DistributionReady(self.all_vars, self.proj_vars).fs_chk_fsaverage_ready(SUBJECTS_DIR)
-                return SUBJECTS_DIR
+                return SUBJECTS_DIR, f_GLM_group
         else:
             print('GLM files are missing: {}, {}'.format(f_GLM_group, f_ids_processed))
             return False

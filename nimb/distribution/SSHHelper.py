@@ -111,7 +111,7 @@ def runCommandOverSSH(remote, command):
 #            logger.debug("%s\n" % out)
         return (out)
 
-def download_files_from_server(remote, remote_folder, local_folder):
+def download_files_from_server(remote, remote_folder, local_folder, file_dir_list):
     """
     download files from server
     :param remote_folder:
@@ -119,10 +119,16 @@ def download_files_from_server(remote, remote_folder, local_folder):
     :param local_folder:
     :type local_folder:
     """
-    sshSession = getSSHSession(remote)
-    scp = SCPClient(sshSession.get_transport(), progress=__progress)
-    scp.get(remote_folder, local_folder, recursive=True)
 
+    
+    sshSession = getSSHSession(remote)
+    scp = SCPClient(sshSession.get_transport(), progress = __progress)
+    for file_dir_ in file_dir_list:
+        remote_path_file_dir = os.path.join(remote_folder, file_dir_)
+        local_path_file_dir  = os.path.join(local_folder, file_dir_)
+        scp.get(remote_path_file_dir, local_path_file_dir, recursive=True)
+        logger.debug("Uploading file to server: {}".format(file_dir_))
+    scp.close()
 
 def read_json(json_file_name):
     """

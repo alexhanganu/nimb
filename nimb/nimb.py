@@ -134,12 +134,12 @@ class NIMB(object):
                 sends cmd to batch to initiate FreeSurfer GLM running script
             '''
             if DistributionReady(self.all_vars, self.project_vars).fs_ready():
-                SUBJECTS_DIR = DistributionHelper(self.all_vars, self.project_vars).fs_glm_prep(self.stats_vars["STATS_PATHS"]["FS_GLM_dir"])
+                SUBJECTS_DIR, GLM_file_path = DistributionHelper(self.all_vars, self.project_vars).fs_glm_prep(self.stats_vars["STATS_PATHS"]["FS_GLM_dir"])
                 if SUBJECTS_DIR:
                     self.vars_local['FREESURFER']['FS_SUBJECTS_DIR'] = SUBJECTS_DIR
                     schedule_fsglm = Scheduler(self.vars_local)
-                    self.logger.info('Please check that all required variables for the GLM analysis are defined in the credentials_path/projects.py -> {}'.format(self.project))
-                    cmd = '{} fs_glm_runglm.py -project {} -subjects_dir {}'.format(self.vars_local['PROCESSING']["python3_run_cmd"], self.project, SUBJECTS_DIR)
+                    self.logger.info('CHECK!! that pandas, xlrd and pathlib are installed in the python version used for the analysis. \n CHECK!! that all required variables for the GLM analysis are defined in the credentials_path/projects.py -> {}'.format(self.project))
+                    cmd = '{} fs_glm_runglm.py -project {} -subjects_dir {} -glm_file_path {}'.format(self.vars_local['PROCESSING']["python3_run_cmd"], self.project, SUBJECTS_DIR, GLM_file_path)
                     cd_cmd = 'cd {}'.format(path.join(self.NIMB_HOME, 'processing', 'freesurfer'))
                     schedule_fsglm.submit_4_processing(cmd, 'fs_glm','run_glm', cd_cmd)
 
