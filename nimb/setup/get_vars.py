@@ -21,12 +21,14 @@ class SetProject():
 
     def set_project(self, NIMB_tmp, stats, project):
         for key in stats['STATS_PATHS']:
-            if project not in stats['STATS_PATHS'][key]:
-                    if key != "STATS_HOME":
-                        new_ending = '/'.join(stats['STATS_PATHS'][key].replace(sep, '/').split('/')[-2:])
-                    else:
-                        new_ending = '/'.join(stats['STATS_PATHS'][key].replace(sep, '/').split('/')[-1:])
-                    stats['STATS_PATHS'][key] = path.join(NIMB_tmp, project, new_ending).replace(sep, '/')
+            if 'nimb_tmp' in stats['STATS_PATHS'][key]:
+                if key == "FS_GLM_dir":
+                    stats['STATS_PATHS'][key] = path.join(NIMB_tmp, 'projects', project, 'fs_glm').replace(sep, '/')
+                elif key == "STATS_HOME":
+                    stats['STATS_PATHS'][key] = path.join(NIMB_tmp, 'projects', project, 'stats').replace(sep, '/')
+                else:
+                    new_ending = stats['STATS_PATHS'][key].replace(sep, '/').split('/')[-1]
+                    stats['STATS_PATHS'][key] = path.join(NIMB_tmp, 'projects', project, 'stats', new_ending).replace(sep, '/')
         return stats
 
 class Get_Vars():
