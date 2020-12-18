@@ -140,7 +140,7 @@ class CheckIfReady4GLM():
                 ls_ix_2rm.append(ix)
         self.df_new = self.df.drop(ls_ix_2rm)
         self.df_new.drop(columns=[self.proj_vars['id_col']], inplace=True)
-        self.df.rename(columns={'fs_id': self.proj_vars['id_col']}, inplace=True)
+        self.df_new.rename(columns={'fs_id': self.proj_vars['id_col']}, inplace=True)
         self.df_new.to_excel(self.f_GLM_group)
 
     def get_ids_processed(self):
