@@ -8,6 +8,7 @@ import shutil
 import datetime
 import time
 import logging
+import fs_definitions
 
 log = logging.getLogger(__name__)
 
@@ -31,7 +32,7 @@ class ErrorCheck():
                     log.info('        checking if all files were created for: '+process)
                     if not fs_checker.checks_from_runfs(SUBJECTS_DIR, process, subjid, vars_local["FREESURFER"]["freesurfer_version"], vars_local["FREESURFER"]["masks"]):
                             log.info('            some files were not created and recon-all-status has errors.')
-                            fs_error = fs_err_helper.fs_find_error(subjid, SUBJECTS_DIR, NIMB_tmp)
+                            fs_error = fs_err_helper.fs_find_error(subjid, SUBJECTS_DIR, NIMB_tmp, process)
                             solved = False
                             if fs_error:
                                 solve = fs_err_helper.solve_error(subjid, fs_error, SUBJECTS_DIR, NIMB_tmp)
@@ -109,10 +110,15 @@ class ErrorCheck():
 
 
 
-def fs_find_error(subjid, SUBJECTS_DIR, NIMB_tmp):
+def fs_find_error(subjid, SUBJECTS_DIR, NIMB_tmp, process):
     error = ''
     print('                identifying THE error')
-    file_2read = path.join(SUBJECTS_DIR,subjid,'scripts','recon-all.log')
+    files = fs_definitions.FilePerFSVersion(vars_fs['freesurfer_version'])
+    log_file = path.join(SUBJECTS_DIR, subjid, files.log_f(process))
+    if process == 'brstem':
+        file_2read = log_file
+    else:
+        file_2read = path.join(SUBJECTS_DIR, subjid,'scripts','recon-all.log')
     try:
         if path.exists(file_2read):
             f = open(file_2read,'r').readlines()
@@ -161,6 +167,10 @@ def fs_find_error(subjid, SUBJECTS_DIR, NIMB_tmp):
                     log.info('        ERROR: FreeSurfer license key is missing')
                     error = 'license'
                     break
+                elif 'freesurfer/bin/segmentSubject: error while loading shared libraries:' in line:
+                    log.info('        ERROR: MATLAB: shared libraries cannot be opened. Try to reinstall Matlab or search for this error on freesurfer mailing list: https://www.mail-archive.com/freesurfer@nmr.mgh.harvard.edu/')
+                    error = 'matlab'
+                    break                    
         else:
             log.info('        ERROR: {} not in {}'.format(file_2read, path.join(SUBJECTS_DIR, subjid, 'scripts')))
     except FileNotFoundError as e:

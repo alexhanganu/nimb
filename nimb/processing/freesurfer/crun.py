@@ -39,21 +39,15 @@ class get_cmd():
         if process == 'tha':
             self.cmd = "segmentThalamicNuclei.sh {}".format(_id)
         if process == 'masks':
-            self.cmd = "cd "+path.join(NIMB_HOME,'processing','freesurfer')+"\npython run_masks.py {}".format(_id)
+            self.cmd = "cd {}\npython run_masks.py {}".format(path.join(NIMB_HOME, 'processing', 'freesurfer'), _id)
 
     def registration(self, _id):
         t1_ls_f, flair_ls_f, t2_ls_f = cdb.get_registration_files(_id, db, NIMB_HOME, NIMB_tmp, vars_freesurfer["flair_t2_add"])
+        t1_cmd    = ''.join([' -i '+i for i in t1_ls_f])
         flair_cmd = '{}'.format(''.join([' -FLAIR '+i for i in flair_ls_f])) if flair_ls_f != 'none' else ''
-        t2_cmd = '{}'.format(''.join([' -T2 '+i for i in t2_ls_f])) if t2_ls_f != 'none' else ''
-        return "recon-all{}".format(''.join([' -i '+i for i in t1_ls_f]))+flair_cmd+t2_cmd+' -s '+_id
-
-
-# def Get_walltime(process):  #2RM
-    # if fs_definitions.suggested_times[process] <= max_walltime:
-        # return fs_definitions.suggested_times[process]
-    # else:
-        # return max_walltime
-
+        t2_cmd    = '{}'.format(''.join([' -T2 '   +i for i in t2_ls_f]))    if t2_ls_f    != 'none' else ''
+        return "recon-all{}{}{} -s {}".format(t1_cmd, flair_cmd, t2_cmd, _id)
+#        return "recon-all{}".format(''.join([' -i '+i for i in t1_ls_f]))+flair_cmd+t2_cmd+' -s '+_id
 
 def Get_status_for_subjid_in_queue(running_jobs, subjid, scheduler_jobs):
     if subjid in running_jobs:
@@ -159,7 +153,7 @@ def check_error(scheduler_jobs, process):
                     if not chk.checks_from_runfs(process, subjid):
                     # if not fs_checker.checks_from_runfs(SUBJECTS_DIR, process, subjid, vars_freesurfer["freesurfer_version"], vars_freesurfer["masks"]):
                             log.info('            some files were not created and recon-all-status has errors.')
-                            fs_error = fs_err_helper.fs_find_error(subjid, SUBJECTS_DIR, NIMB_tmp)
+                            fs_error = fs_err_helper.fs_find_error(subjid, SUBJECTS_DIR, NIMB_tmp, process)
                             solved = False
                             if fs_error:
                                 solve = fs_err_helper.solve_error(subjid, fs_error, SUBJECTS_DIR, NIMB_tmp)
