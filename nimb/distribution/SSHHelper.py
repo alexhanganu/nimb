@@ -124,10 +124,10 @@ def download_files_from_server(remote, remote_folder, local_folder, file_dir_lis
     sshSession = getSSHSession(remote)
     scp = SCPClient(sshSession.get_transport(), progress = __progress)
     for file_dir_ in file_dir_list:
+        logger.debug("Downloading file {} from remote: {}".format(file_dir_, remote))
         remote_path_file_dir = os.path.join(remote_folder, file_dir_)
         local_path_file_dir  = os.path.join(local_folder, file_dir_)
         scp.get(remote_path_file_dir, local_path_file_dir, recursive=True)
-        logger.debug("Uploading file to server: {}".format(file_dir_))
     scp.close()
 
 def read_json(json_file_name):
