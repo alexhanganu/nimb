@@ -137,6 +137,7 @@ class NIMB(object):
                 SUBJECTS_DIR, GLM_file_path = DistributionHelper(self.all_vars, self.project_vars).fs_glm_prep(self.stats_vars["STATS_PATHS"]["FS_GLM_dir"])
                 if SUBJECTS_DIR:
                     self.vars_local['FREESURFER']['FS_SUBJECTS_DIR'] = SUBJECTS_DIR
+                    self.vars_local['PROCESSING']['processing_env'] = "tmux"
                     schedule_fsglm = Scheduler(self.vars_local)
                     self.logger.info('CHECK!! that pandas, xlrd and pathlib are installed in the python version used for the analysis. \n CHECK!! that all required variables for the GLM analysis are defined in the credentials_path/projects.py -> {}'.format(self.project))
                     python_run_cmd = path.join(self.vars_local["NIMB_PATHS"]["miniconda_home"], 'bin', 'python3.7')
