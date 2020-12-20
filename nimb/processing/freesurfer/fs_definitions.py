@@ -72,12 +72,6 @@ class FilePerFSVersion:
                         }
         self.hemi = {'lh':'lh.', 'rh':'rh.', 'lhrh':''}
         self.fs_ver = FreeSurferVersion(freesurfer_version).fs_ver()
-
-    # def fs_ver(self):
-    #     if len(str(self.fs_ver)) > 1:
-    #         return str(self.fs_ver[0])
-    #     else:
-    #         return str(self.fs_ver)
     
     def log_f(self, process):
         return path.join('scripts', self.log[process][self.fs_ver])
