@@ -32,34 +32,33 @@ class SaveGLMimages():
         sim_direction = ['pos', 'neg',]
 
         with open(path.join(self.PATHglm, "files_for_glm.json"), 'rt') as f:
-            files_for_glm = json.load(f)
+            files_glm = json.load(f)
 
-        for contrast_type in files_for_glm:
-            for fsgd_file in files_for_glm[contrast_type]['fsgd']:
+        for fsgd_type in files_glm:
+            for fsgd_file in files_glm[fsgd_type]['fsgd']:
                 fsgd_f_unix = path.join(self.PATHglm, 'fsgd_unix', fsgd_file.replace('.fsgd','')+'_unix.fsgd')
                 for hemi in hemispheres:
                     for meas in vars_local["FREESURFER"]["GLM_measurements"]:
                         for thresh in vars_local["FREESURFER"]["GLM_thresholds"]:
                             analysis_name = fsgd_file.replace('.fsgd','')+'.'+meas+'.'+hemi+'.fwhm'+str(thresh)
                             glmdir = path.join(self.PATHglm_glm, analysis_name)
-                            for contrast in files_for_glm[contrast_type]['mtx']:
-                                contrast_name = contrast.replace('.mtx','')
-                                contrastdir = path.join(glmdir, contrast_name)
-                                if self.check_maxvox(glmdir, contrast_name):
-                                    self.make_images_results_fdr(hemi, glmdir, analysis_name, contrast_name)
+                            for contrast_file in files_glm[fsgd_type]['mtx']:
+                                fsgd_type_contrast = contrast_file.replace('.mtx','')
+                                contrast = fsgd_type_contrast.replace(fsgd_type+'_','')
+                                dir_glm_fsgd_type_contrast = path.join(glmdir, fsgd_type_contrast)
+                                if self.check_maxvox(glmdir, fsgd_type_contrast):
+                                    self.make_images_results_fdr(hemi, glmdir, analysis_name, fsgd_type_contrast)
                                 for direction in sim_direction:
-                                    sum_mc_f = path.join(contrastdir, 'mc-z.{}.th{}.sig.cluster.summary'.format(direction, str(self.mc_cache_thresh)))
+                                    sum_mc_f = path.join(dir_glm_fsgd_type_contrast, 'mc-z.{}.th{}.sig.cluster.summary'.format(direction, str(self.mc_cache_thresh)))
                                     if self.check_mcz_summary(sum_mc_f):
                                         self.make_images_results_mc(hemi,
                                                                     analysis_name,
-                                                                    contrastdir,
-                                                                    contrast_name.replace(contrast_type+'_',''),
-                                                                    direction,
-                                                                    cwsig_mc_f,
-                                                                    oannot_mc_f)
+                                                                    dir_glm_fsgd_type_contrast,
+                                                                    contrast,
+                                                                    direction)
 
-    def check_maxvox(self, glmdir, contrast_name):
-        val = [i.strip() for i in open(path.join(glmdir, contrast_name, 'maxvox.dat')).readlines()][0].split()[0]
+    def check_maxvox(self, glmdir, fsgd_type_contrast):
+        val = [i.strip() for i in open(path.join(glmdir, fsgd_type_contrast, 'maxvox.dat')).readlines()][0].split()[0]
         if float(val) > 3.0 or float(val) < -3.0:
             return True
         else:
@@ -72,7 +71,7 @@ class SaveGLMimages():
         else:
             return False
 
-    def make_images_results_mc(self, hemi, analysis_name, contrastdir, contrast, direction):
+    def make_images_results_mc(self, hemi, analysis_name, dir_glm_fsgd_type_contrast, contrast, direction):
         self.PATH_save_mc = path.join(self.PATHglm, 'results', 'mc')
         if not path.isdir(self.PATH_save_mc):
             makedirs(self.PATH_save_mc)
@@ -86,40 +85,40 @@ class SaveGLMimages():
         with open(f_with_cmds,'w') as f:
             for line in fv_cmds:
                 f.write(line+'\n')
-        cwsig_mc_f  = path.join(contrastdir, 'mc-z.{}.th{}.sig.cluster.mgh'.format(direction, str(self.mc_cache_thresh)))
-        oannot_mc_f = path.join(contrastdir, 'mc-z.{}.th{}.sig.ocn.annot'.format(direction, str(self.mc_cache_thresh)))
+        cwsig_mc_f  = path.join(dir_glm_fsgd_type_contrast, 'mc-z.{}.th{}.sig.cluster.mgh'.format(direction, str(self.mc_cache_thresh)))
+        oannot_mc_f = path.join(dir_glm_fsgd_type_contrast, 'mc-z.{}.th{}.sig.ocn.annot'.format(direction, str(self.mc_cache_thresh)))
 
         system('freeview -f $SUBJECTS_DIR/fsaverage/surf/{}.inflated:overlay={}:overlay_threshold={},5:annot={} -viewport 3d -layout 1 -cmd {}'.format(hemi, cwsig_mc_f, str(self.mc_img_thresh), oannot_mc_f, f_with_cmds))
 
 
-    def make_images_results_fdr(self, hemi, glmdir, analysis_name, contrast_name):
+    def make_images_results_fdr(self, hemi, glmdir, analysis_name, fsgd_type_contrast):
         sig_file   = 'sig.mgh'
         thresh = self.fdr_thresh
         self.PATH_save_fdr = path.join(self.PATHglm, 'results', 'fdr')
         if not path.isdir(self.PATH_save_fdr):
             makedirs(self.PATH_save_fdr)
 
-#        tksurfer_cmds = ['set colscalebarflag 1', 'set scalebarflag 1', 'save_tiff '+self.PATH_save_fdr+'/'+contrast_name+'_'+str(3.0)+'_lat.tiff',
-#         'rotate_brain_y 180', 'redraw', 'save_tiff '+self.PATH_save_fdr+'/'+contrast_name+'_'+str(3.0)+'_med.tiff',
-#         'sclv_set_current_threshold_using_fdr 0.05 0', 'redraw', 'save_tiff '+self.PATH_save_fdr+'/'+contrast_name+'_fdr_med.tiff',
-#         'rotate_brain_y 180', 'redraw', 'save_tiff '+self.PATH_save_fdr+'/'+contrast_name+'_fdr_lat.tiff','exit']
+#        tksurfer_cmds = ['set colscalebarflag 1', 'set scalebarflag 1', 'save_tiff '+self.PATH_save_fdr+'/'+fsgd_type_contrast+'_'+str(3.0)+'_lat.tiff',
+#         'rotate_brain_y 180', 'redraw', 'save_tiff '+self.PATH_save_fdr+'/'+fsgd_type_contrast+'_'+str(3.0)+'_med.tiff',
+#         'sclv_set_current_threshold_using_fdr 0.05 0', 'redraw', 'save_tiff '+self.PATH_save_fdr+'/'+fsgd_type_contrast+'_fdr_med.tiff',
+#         'rotate_brain_y 180', 'redraw', 'save_tiff '+self.PATH_save_fdr+'/'+fsgd_type_contrast+'_fdr_lat.tiff','exit']
 
         tksurfer_cmds = ['set colscalebarflag 1', 'set scalebarflag 1', 
-                                                        'save_tiff '  +path.join(self.PATH_save_fdr, '{}_{}_{}_lat.tiff'.format(analysis_name, contrast_name, str(self.fdr_thresh))),
+                                                        'save_tiff '  +path.join(self.PATH_save_fdr, '{}_{}_{}_lat.tiff'.format(analysis_name, fsgd_type_contrast, str(self.fdr_thresh))),
                          'rotate_brain_y 180', 'redraw',
-                                                        'save_tiff '  +path.join(self.PATH_save_fdr, '{}_{}_{}_med.tiff'.format(analysis_name, contrast_name, str(self.fdr_thresh))),
+                                                        'save_tiff '  +path.join(self.PATH_save_fdr, '{}_{}_{}_med.tiff'.format(analysis_name, fsgd_type_contrast, str(self.fdr_thresh))),
                          'sclv_set_current_threshold_using_fdr 0.05 0', 
-                                               'redraw','save_tiff '  +path.join(self.PATH_save_fdr, '{}_{}_fdr005_med.tiff'.format(analysis_name, contrast_name)),
+                                               'redraw','save_tiff '  +path.join(self.PATH_save_fdr, '{}_{}_fdr005_med.tiff'.format(analysis_name, fsgd_type_contrast)),
                          'rotate_brain_y 180', 'redraw',
-                                                        'save_tiff '  +path.join(self.PATH_save_fdr, '{}_{}_fdr005_lat.tiff'.format(analysis_name, contrast_name)), 
+                                                        'save_tiff '  +path.join(self.PATH_save_fdr, '{}_{}_fdr005_lat.tiff'.format(analysis_name, fsgd_type_contrast)), 
                          'exit']
         f_with_tkcmds = path.join(self.PATHglm, 'tkcmd.cmd')
         with open(f_with_tkcmds,'w') as f:
             for line in tksurfer_cmds:
                 f.write(line+'\n')
-        print('tksurfer fsaverage {} inflated -overlay {} -fthresh {} -tcl {}'.format(hemi, path.join(glmdir, contrast_name, sig_file), str(self.fdr_thresh), f_with_tkcmds))
-        system('tksurfer fsaverage {} inflated -overlay {} -fthresh {} -tcl {}'.format(hemi, path.join(glmdir, contrast_name, sig_file), str(self.fdr_thresh), f_with_tkcmds))
-#        system('tksurfer fsaverage '+hemi+' inflated -overlay '+path.join(glmdir, contrast_name, sig_file)+' -fthresh '+str(self.fdr_thresh)+' -tcl '+f_with_tkcmds)
+        print('tksurfer fsaverage {} inflated -overlay {} -fthresh {} -tcl {}'.format(hemi, path.join(glmdir, fsgd_type_contrast, sig_file), str(self.fdr_thresh), f_with_tkcmds))
+        system('tksurfer fsaverage {} inflated -overlay {} -fthresh {} -tcl {}'.format(hemi, path.join(glmdir, fsgd_type_contrast, sig_file), str(self.fdr_thresh), f_with_tkcmds))
+#        system('tksurfer fsaverage '+hemi+' inflated -overlay '+path.join(glmdir, fsgd_type_contrast, sig_file)+' -fthresh '+str(self.fdr_thresh)+' -tcl '+f_with_tkcmds)
 
 
 

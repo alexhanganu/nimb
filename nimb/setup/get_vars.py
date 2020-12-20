@@ -68,6 +68,8 @@ class Get_Vars():
             try:
                 with open(path.join(path.dirname(path.abspath(__file__)), 'credentials_path.py'), 'w') as f:
                     f.write('credentials_home=\"'+self.credentials_home+'\"')
+                # with open(path.join(path.dirname(path.abspath(__file__)), 'credentials_path'), 'w') as f:
+                #     json.dump(self.credentials_home, f)
             except Exception as e:
                 print(e)
 

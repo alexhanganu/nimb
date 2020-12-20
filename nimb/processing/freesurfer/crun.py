@@ -1,7 +1,7 @@
 #!/bin/python
 # 2020.09.10
 
-from os import path, system, chdir, environ
+from os import path, system, chdir, environ, rename
 from pathlib import Path
 import time
 import shutil

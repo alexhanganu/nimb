@@ -5,6 +5,7 @@
 from os import system, listdir, makedirs, path
 import linecache, sys
 import json
+import shutil
 
 
 class PerformGLM():
@@ -13,7 +14,7 @@ class PerformGLM():
         self.PATHglm = PATHglm
         self.FREESURFER_HOME = FREESURFER_HOME
         self.sig_fdr_thresh  = sig_fdr_thresh
-        self.sig_mc_thresh   = GLM_MCz_thresh
+        self.mc_cache_thresh   = GLM_MCz_thresh
 
         self.PATHglm_glm     = path.join(self.PATHglm,'glm/')
         self.PATHglm_results = path.join(self.PATHglm,'results')
@@ -35,7 +36,7 @@ class PerformGLM():
             sys.exit('subjects per group is missing')
         try:
             with open(path.join(self.PATHglm, 'files_for_glm.json'),'r') as jf:
-                files_for_glm = json.load(jf)
+                files_glm = json.load(jf)
                 print('files for glm imported')
         except ImportError as e:
                 print(e)
@@ -50,19 +51,19 @@ class PerformGLM():
                 else:
                     RUN = True
         if RUN:
-            self.RUN_GLM(files_for_glm, measurements, thresholds)
+            self.RUN_GLM(files_glm, measurements, thresholds)
             print('\n\nGLM DONE')
         else:
             sys.exit('some subjects are missing from the freesurfer folder')
 
 
-    def RUN_GLM(self, files_for_glm, measurements, thresholds):
+    def RUN_GLM(self, files_glm, measurements, thresholds):
         print('performing GLM analysis using mri_glmfit')
         self.err_preproc = list()
 
         hemispheres = ['lh','rh']
-        for contrast_type in files_for_glm:
-            for fsgd_file in files_for_glm[contrast_type]['fsgd']:
+        for fsgd_type in files_glm:
+            for fsgd_file in files_glm[fsgd_type]['fsgd']:
                 fsgd_f_unix = path.join(self.PATHglm,'fsgd',fsgd_file.replace('.fsgd','')+'_unix.fsgd')
                 for hemi in hemispheres:
                     for meas in measurements:
@@ -74,15 +75,16 @@ class PerformGLM():
                             if not path.isdir(glmdir):
                                 self.run_mris_preproc(fsgd_f_unix, meas, thresh, hemi, mgh_f)
                                 if path.isfile(mgh_f):
-                                    for contrast in files_for_glm[contrast_type]['mtx']:
-                                        contrast_name = contrast.replace('.mtx','')
-                                        explanation = files_for_glm[contrast_type]['mtx_explanation'][files_for_glm[contrast_type]['mtx'].index(contrast)]
-                                        for gd2mtx in files_for_glm[contrast_type]['gd2mtx']:
-                                            self.run_mri_glmfit(mgh_f, fsgd_f_unix, gd2mtx, glmdir, hemi, contrast)
-                                            if self.check_maxvox(glmdir, contrast_name):
-                                                self.log_contrasts_with_significance(glmdir, contrast_name)
-                                                self.prepare_for_image_extraction_fdr(hemi, glmdir, analysis_name, contrast_name)
-                                            self.run_mri_surfcluster(glmdir, contrast_name, hemi, contrast_type, analysis_name, meas, explanation)
+                                    for contrast_file in files_glm[fsgd_type]['mtx']:
+                                        fsgd_type_contrast = contrast_file.replace('.mtx','')
+                                        contrast = fsgd_type_contrast.replace(fsgd_type+'_','')
+                                        explanation = files_glm[fsgd_type]['mtx_explanation'][files_glm[fsgd_type]['mtx'].index(contrast_file)]
+                                        for gd2mtx in files_glm[fsgd_type]['gd2mtx']:
+                                            self.run_mri_glmfit(mgh_f, fsgd_f_unix, gd2mtx, glmdir, hemi, contrast_file)
+                                            if self.check_maxvox(glmdir, fsgd_type_contrast):
+                                                self.log_contrasts_with_significance(glmdir, fsgd_type_contrast)
+                                                self.prepare_for_image_extraction_fdr(hemi, glmdir, analysis_name, fsgd_type_contrast)
+                                            self.run_mri_surfcluster(glmdir, fsgd_type_contrast, hemi, contrast, analysis_name, meas, explanation)
                                 else:
                                     print('{} not created; ERROR in mris_preproc'.format(mgh_f))
                                     self.err_preproc.append(mgh_f)
@@ -100,42 +102,42 @@ class PerformGLM():
         system('mris_preproc --fsgd {} --cache-in {}.fwhm{}.fsaverage --target fsaverage --hemi {} --out {}'.format(fsgd_file, meas, str(thresh), hemi, mgh_f))
         # system('mris_preproc --fsgd '+fsgd_f_unix+' --cache-in '+meas+'.fwhm'+str(thresh)+'.fsaverage --target fsaverage --hemi '+hemi+' --out '+mgh_f)
 
-    def run_mri_glmfit(self, mgh_f, fsgd_file, gd2mtx, glmdir, hemi, contrast):
-        # system('mri_glmfit --y '+mgh_f+' --fsgd '+fsgd_f_unix+' '+gd2mtx+' --glmdir '+glmdir+' --surf fsaverage '+hemi+' --label '+path.join(self.SUBJECTS_DIR,'fsaverage','label',hemi+'.aparc.label')+' --C '+path.join(self.PATHglm,'contrasts',contrast))
+    def run_mri_glmfit(self, mgh_f, fsgd_file, gd2mtx, glmdir, hemi, contrast_file):
+        # system('mri_glmfit --y '+mgh_f+' --fsgd '+fsgd_f_unix+' '+gd2mtx+' --glmdir '+glmdir+' --surf fsaverage '+hemi+' --label '+path.join(self.SUBJECTS_DIR,'fsaverage','label',hemi+'.aparc.label')+' --C '+path.join(self.PATHglm,'contrasts', contrast_file))
         label_cmd    = ' --label {}'.format(path.join(self.SUBJECTS_DIR, 'fsaverage', 'label', hemi+'.aparc.label'))
-        contrast_cmd = ' --C {}'.format(path.join(self.PATHglm, 'contrasts', contrast))
+        contrast_cmd = ' --C {}'.format(path.join(self.PATHglm, 'contrasts', contrast_file))
         cmd          = 'mri_glmfit --y {} --fsgd {} {} --glmdir {} --surf fsaverage {}{}{}'.format(mgh_f, fsgd_file, gd2mtx, glmdir, hemi, label_cmd, contrast_cmd)
         system(cmd)
 
 
-    def run_mri_surfcluster(self, glmdir, contrast_name, hemi, contrast_type, analysis_name, meas, explanation):
+    def run_mri_surfcluster(self, glmdir, fsgd_type_contrast, hemi, contrast, analysis_name, meas, explanation):
         sim_direction = ['pos', 'neg',]
-        contrastdir = path.join(glmdir, contrast_name)
+        dir_glm_fsgd_type_contrast = path.join(glmdir, fsgd_type_contrast)
         GLM_sim_fwhm4csd = {'thickness': {'lh': '15','rh': '15'},'area': {'lh': '24','rh': '25'},'volume': {'lh': '16','rh': '16'},}
         GLM_measurements = {'thickness':'th','area':'ar','volume':'vol'}
         for direction in sim_direction:
-            contrast_dir = '{}.{}{}'.format(direction, GLM_measurements[meas], str(self.sig_mc_thresh))
-            sig_f       = path.join(contrastdir,'sig.mgh')
-            cwsig_mc_f  = path.join(contrastdir,'mc-z.{}.sig.cluster.mgh'.format(contrast_dir))
-            vwsig_mc_f  = path.join(contrastdir,'mc-z.{}.sig.vertex.mgh'.format(contrast_dir))
-            sum_mc_f    = path.join(contrastdir,'mc-z.{}.sig.cluster.summary'.format(contrast_dir))
-            ocn_mc_f    = path.join(contrastdir,'mc-z.{}.sig.ocn.mgh'.format(contrast_dir))
-            oannot_mc_f = path.join(contrastdir,'mc-z.{}.sig.ocn.annot'.format(contrast_dir))
-            csdpdf_mc_f = path.join(contrastdir,'mc-z.{}.pdf.dat'.format(contrast_dir))
+            contrast_dir = '{}.{}{}'.format(direction, GLM_measurements[meas], str(self.mc_cache_thresh))
+            sig_f       = path.join(dir_glm_fsgd_type_contrast,'sig.mgh')
+            cwsig_mc_f  = path.join(dir_glm_fsgd_type_contrast,'mc-z.{}.sig.cluster.mgh'.format(contrast_dir))
+            vwsig_mc_f  = path.join(dir_glm_fsgd_type_contrast,'mc-z.{}.sig.vertex.mgh'.format(contrast_dir))
+            sum_mc_f    = path.join(dir_glm_fsgd_type_contrast,'mc-z.{}.sig.cluster.summary'.format(contrast_dir))
+            ocn_mc_f    = path.join(dir_glm_fsgd_type_contrast,'mc-z.{}.sig.ocn.mgh'.format(contrast_dir))
+            oannot_mc_f = path.join(dir_glm_fsgd_type_contrast,'mc-z.{}.sig.ocn.annot'.format(contrast_dir))
+            csdpdf_mc_f = path.join(dir_glm_fsgd_type_contrast,'mc-z.{}.pdf.dat'.format(contrast_dir))
             if meas != 'curv':
-                csd_mc_f = path.join(self.FREESURFER_HOME, 'average', 'mult-comp-cor', 'fsaverage', hemi, 'cortex', 'fwhm'+GLM_sim_fwhm4csd[meas][hemi],direction, 'th'+str(self.sig_mc_thresh), 'mc-z.csd')
+                csd_mc_f = path.join(self.FREESURFER_HOME, 'average', 'mult-comp-cor', 'fsaverage', hemi, 'cortex', 'fwhm'+GLM_sim_fwhm4csd[meas][hemi],direction, 'th'+str(self.mc_cache_thresh), 'mc-z.csd')
                 system('mri_surfcluster --in {} --csd {} --mask {} --cwsig {} --vwsig {} --sum {} --ocn {} --oannot {} --csdpdf {} --annot aparc --cwpvalthresh 0.05 --surf white'.format(sig_f, csd_mc_f, path.join(glmdir,'mask.mgh'), cwsig_mc_f, vwsig_mc_f, sum_mc_f, ocn_mc_f, oannot_mc_f, csdpdf_mc_f))                                        
                 if self.check_mcz_summary(sum_mc_f):
-                    self.cluster_stats_to_file(analysis_name, sum_mc_f, contrast_name.replace(contrast_type+'_',''), direction, explanation)
-                    self.prepare_for_image_extraction_mc(hemi, analysis_name, contrast_name.replace(contrast_type+'_',''), direction, cwsig_mc_f, oannot_mc_f)
+                    self.cluster_stats_to_file(analysis_name, sum_mc_f, contrast, direction, explanation)
+                    self.prepare_for_image_extraction_mc(hemi, analysis_name, dir_glm_fsgd_type_contrast, fsgd_type_contrast, contrast, direction, cwsig_mc_f, oannot_mc_f)
             else:
-                system('mri_glmfit-sim --glmdir {} --cache {} {} --cwp 0.05 --2spaces'.format(path.join(glmdir, contrast_name), str(self.sig_mc_thresh), direction))
+                system('mri_glmfit-sim --glmdir {} --cache {} {} --cwp 0.05 --2spaces'.format(path.join(glmdir, fsgd_type_contrast), str(self.mc_cache_thresh), direction))
                 if self.check_mcz_summary(sum_mc_f):
-                    self.cluster_stats_to_file(analysis_name, sum_mc_f, contrast_name.replace(contrast_type+'_',''), direction, explanation)
+                    self.cluster_stats_to_file(analysis_name, sum_mc_f, contrast, direction, explanation)
 
-    def check_maxvox(self, glmdir, contrast_name):
+    def check_maxvox(self, glmdir, fsgd_type_contrast):
         res = False
-        maxvox = path.join(glmdir, contrast_name, 'maxvox.dat')
+        maxvox = path.join(glmdir, fsgd_type_contrast, 'maxvox.dat')
         if path.exists(maxvox):
             val = [i.strip() for i in open(maxvox).readlines()][0].split()[0]
             if float(val) > self.sig_fdr_thresh or float(val) < -self.sig_fdr_thresh:
@@ -149,7 +151,7 @@ class PerformGLM():
             return False
 
 
-    def cluster_stats_to_file(self, analysis_name, sum_mc_f, contrast_name, direction, explanation):
+    def cluster_stats_to_file(self, analysis_name, sum_mc_f, contrast, direction, explanation):
         file = path.join(self.PATHglm_results,'cluster_stats.log')
         if not path.isfile(file):
             open(file,'w').close()
@@ -157,38 +159,81 @@ class PerformGLM():
         for line in list(open(sum_mc_f))[41:sum(1 for line in open(sum_mc_f))]:
             ls.append(line.rstrip())
         with open(file, 'a') as f:
-            f.write('{}_{}_{}\n'.format(analysis_name, contrast_name, direction))
+            f.write('{}_{}_{}\n'.format(analysis_name, contrast, direction))
             f.write(explanation+'\n')
             for value in ls:
                 f.write(value+'\n')
             f.write('\n')
 
-    def log_contrasts_with_significance(self, glmdir, contrast_name):
+    def log_contrasts_with_significance(self, glmdir, fsgd_type_contrast):
         file = path.join(self.PATHglm_results,'sig_contrasts.log')
         if not path.isfile(file):
             open(file,'w').close()
         with open(file, 'a') as f:
-            f.write(path.join(glmdir,contrast_name)+'\n')
+            f.write(path.join(glmdir, fsgd_type_contrast)+'\n')
 
-    def prepare_for_image_extraction_fdr(self, hemi, glmdir, analysis_name, contrast_name):
+    def prepare_for_image_extraction_fdr(self, hemi, glmdir, analysis_name, fsgd_type_contrast):
+        '''copying sig.mgh file from the contrasts to the image/contrast folder
+            populating dict with significant fdr data, that contains the data to access the sig.mgh file
+        Args:
+            hemi: hemisphere
+            glmdir: dir for the analysis = self.PATHglm_glm + analysis_name
+            analysis_name: name of the folder for glm analysis
+            fsgd_type_contrast: name of the folder for the specific contrast used
+        Return:
+            none
+            creates corresponding folder in the self.PATH_img folder
+            populates the sig_fdr_data dictionary
+        '''
+        glm_image_dir = path.join(self.PATH_img, analysis_name, fsgd_type_contrast)
+        if not path.exists(glm_image_dir):
+            makedirs(glm_image_dir)
+        sig_file = 'sig.mgh'
+        shutil.copy(path.join(glmdir, fsgd_type_contrast, sig_file), glm_image_dir)
+        
         sig_count = len(self.sig_fdr_data.keys())+1
         self.sig_fdr_data[sig_count] = {
                                 'hemi'         : hemi,
-                                'glmdir'       : glmdir,
                                 'analysis_name': analysis_name,
-                                'contrast_name': contrast_name,
+                                'fsgd_type_contrast': fsgd_type_contrast,
                                 'sig_thresh'   : self.sig_fdr_thresh}
 
 
-    def prepare_for_image_extraction_mc(self, hemi, analysis_name, contrast, direction, cwsig_mc_f, oannot_mc_f):
+    def prepare_for_image_extraction_mc(self, hemi, analysis_name, dir_glm_fsgd_type_contrast, fsgd_type_contrast, contrast, direction, cwsig_mc_f, oannot_mc_f):
+        '''copying MCz significancy files file from the contrasts to the image/analysis_name/fsgd_type_contrast folder
+            populating dict with significant MCz data, in order to extract the images
+        Args:
+            hemi: hemisphere
+            analysis_name: as previous defined
+            dir_glm_fsgd_type_contrast: folder where the post FS-GLM files are stores
+            fsgd_type_contrast: specific folder in the dir_glm_fsgd_type_contrast
+            contrast: name of the contrast used
+            direction: direction of the MCz analysis
+            cwsig_mc_f: file with significant MCz results
+            oannot_mc_f: file with significant MCz annotations
+        Return:
+            none
+            creates corresponding folder in the self.PATH_img folder
+            populates the sig_mc_data dictionary
+        '''
+        glm_image_dir = path.join(self.PATH_img, analysis_name, fsgd_type_contrast)
+        if not path.exists(glm_image_dir):
+            makedirs(glm_image_dir)
+        cwsig_mc_f       = path.join(dir_glm_fsgd_type_contrast, 'mc-z.{}.th{}.sig.cluster.mgh'.format(direction, str(self.mc_cache_thresh)))
+        oannot_mc_f      = path.join(dir_glm_fsgd_type_contrast, 'mc-z.{}.th{}.sig.ocn.annot'.format(direction, str(self.mc_cache_thresh)))
+        shutil.copy(cwsig_mc_f, glm_image_dir)
+        shutil.copy(oannot_mc_f, glm_image_dir)
+        cwsig_mc_f_copy  = path.join(glm_image_dir,              'mc-z.{}.th{}.sig.cluster.mgh'.format(direction, str(self.mc_cache_thresh)))
+        oannot_mc_f_copy = path.join(glm_image_dir,              'mc-z.{}.th{}.sig.ocn.annot'.format(direction, str(self.mc_cache_thresh)))
+
         sig_mc_count = len(self.sig_mc_data.keys())+1
         self.sig_mc_data[sig_mc_count] = {
                                 'hemi'         : hemi,
                                 'analysis_name': analysis_name,
                                 'contrast'     : contrast,
                                 'direction'    : direction,
-                                'cwsig_mc_f'   : cwsig_mc_f,
-                                'oannot_mc_f'  : oannot_mc_f,
+                                'cwsig_mc_f'   : cwsig_mc_f_copy,
+                                'oannot_mc_f'  : oannot_mc_f_copy,
                                 'sig_thresh'   : self.sig_mc_thresh}
 
 

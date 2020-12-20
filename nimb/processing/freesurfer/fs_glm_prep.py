@@ -219,24 +219,38 @@ class PrepareForGLM():
                     self.d_subjid[id][var] = d_init[var][rownr]
         self.ls_vars_stats.remove(self.group_col)
 
-        self.contrasts = {'g1v1':{'slope.mtx':['0 1','t-test with the slope>0 being positive; is the slope equal to 0? does the correlation between thickness and variable differ from zero ?',],},
-            'g2v0':{'group.diff.mtx':['1 -1','t-test with Group1>Group2 being positive; is there a difference between the group intercepts? Is there a difference between groups?',],},
-            'g2v1':{'group.diff.mtx':['1 -1 0 0','t-test with Group1>Group2 being positive; is there a difference between the group intercepts? Is there a difference between groups regressing out the effect of age?',],'group-x-var.mtx':['0 0 1 -1','t-test with Group1>Group2 being positive; is there a difference between the group age slopes? Note: this is an interaction between group and age. Note: not possible to test with DOSS',],
-                    'g1g2.var.mtx':['0 0 0.5 0.5','This is a t-test with (Group1+Group2)/2 > 0 being positive (red/yellow). If the mean is < 0, then it will be displayed in blue/cyan; does mean of group age slope differ from 0? Is there an average affect of age regressing out the effect of group?',],}}
-        # contrasts_not_used = 
-                # {'g1v0':{'intercept.mtx':['1','t-test with the intercept>0 being positive; is the intercept/mean equal to 0?',],},
-                # 'g1v1':{'intercept.mtx':['1 0','t-test with the intercept>0 being positive; is the intercept equal to 0? Does the average thickness differ from zero ?',],},
-                # 'g1v2':{'main.mtx':['1 0 0','t-test with offset>0 being positive; the intercept/offset is different than 0 after regressing out the effects of var1 and var2',],'var1.mtx':['0 1 0','t-test with var1 slope>0 being positive',],'var2.mtx':['0 0 1','t-test with var2 slope>0 being positive',],},
-                # 'g2v0':{'group1.mtx':['1 0','t-test with Group1>0 being positive; is there a main effect of Group1? Does the mean of Group1 equal 0?',],'group2.mtx':['0 1','t-test with Group2>0 being positive; is there a main effect of Group2? Does the mean of Group2 equal 0?',],'g1g2.intercept.mtx':['0.5 0.5','t-test with (Group1+Group2)/2 > 0 being positive (red/yellow). If the mean is < 0, then it will be displayed in blue/cyan; does mean of the group means differ from 0?',],}
-                # 'g2v1':{'g1g2.intercept.mtx':['0.5 0.5 0 0','t-test with (Group1+Group2)/2 > 0 being positive (red/yellow). If the mean is < 0, then it will be displayed in blue/cyan; does mean of group intercepts differ from 0? Is there an average main effect regressing out age?',]},}
-        gd2 = {'g1v1':['dods',],'g2v0':['doss','dods',],'g2v1':['dods',],}#gd2_not_used = {'g1v0':['dods',],'g1v2':['dods',],}
+        self.contrasts = {
+            'g1v1':{'slope.mtx'         :['0 1',        't-test with the slope>0 being positive; is the slope equal to 0? does the correlation between thickness and variable differ from zero ?',],},
+            'g2v0':{'group.diff.mtx'    :['1 -1',       't-test with Group1>Group2 being positive; is there a difference between the group intercepts? Is there a difference between groups?',],},
+            'g2v1':{'group.diff.mtx'    :['1 -1 0 0',   't-test with Group1>Group2 being positive; is there a difference between the group intercepts? Is there a difference between groups regressing out the effect of age?',],
+                    'group-x-var.mtx'   :['0 0 1 -1',   't-test with Group1>Group2 being positive; is there a difference between the group age slopes? Note: this is an interaction between group and age. Note: not possible to test with DOSS',],
+                    'g1g2.var.mtx'      :['0 0 0.5 0.5','t-test with (Group1+Group2)/2 > 0 being positive (red/yellow). If mean < 0, then it will be displayed in blue/cyan; does mean of group age slope differ from 0? Is there an average affect of age regressing out the effect of group?',],}
+                            }
+        dods_doss = {
+            'g1v1':[       'dods',],
+            'g2v0':['doss','dods',],
+            'g2v1':[       'dods',],}
+        contrasts_not_used = {
+            'g1v0':{'intercept.mtx'     :['1',          't-test with intercept>0 being positive; is the intercept/mean equal to 0?',],},
+            'g1v1':{'intercept.mtx'     :['1 0',        't-test with intercept>0 being positive; is the intercept equal to 0? Does the average thickness differ from zero ?',],},
+            'g1v2':{'main.mtx'          :['1 0 0',      't-test with offset>0 being positive; the intercept/offset is different than 0 after regressing out the effects of var1 and var2',],
+                    'var1.mtx'          :['0 1 0',      't-test with var1 slope>0 being positive',],
+                    'var2.mtx'          :['0 0 1',      't-test with var2 slope>0 being positive',],},
+            'g2v0':{'group1.mtx'        :['1 0',        't-test with Group1>0 being positive; is there a main effect of Group1? Does the mean of Group1 equal 0?',],
+                    'group2.mtx'        :['0 1',        't-test with Group2>0 being positive; is there a main effect of Group2? Does the mean of Group2 equal 0?',],
+                    'g1g2.intercept.mtx':['0.5 0.5',    't-test with (Group1+Group2)/2 > 0 being positive (red/yellow). If the mean is < 0, then it will be displayed in blue/cyan; does mean of the group means differ from 0?',],},
+            'g2v1':{'g1g2.intercept.mtx':['0.5 0.5 0 0','t-test with (Group1+Group2)/2 > 0 being positive (red/yellow). If the mean is < 0, then it will be displayed in blue/cyan; does mean of group intercepts differ from 0? Is there an average main effect regressing out age?',]}
+                                }
+        dods_doss_not_used = {
+            'g1v0':['dods',],
+            'g1v2':['dods',],}
         self.files_glm = {}
-        for contrast_type in self.contrasts:
-            self.files_glm[contrast_type]={}
-            self.files_glm[contrast_type]['fsgd'] = []
-            self.files_glm[contrast_type]['mtx'] = []
-            self.files_glm[contrast_type]['mtx_explanation'] = []
-            self.files_glm[contrast_type]['gd2mtx'] = gd2[contrast_type]
+        for fsgd_type in self.contrasts:
+            self.files_glm[fsgd_type]={
+                                        'fsgd' : [],
+                                        'mtx' : [],
+                                        'mtx_explanation' : [],
+                                        'gd2mtx' : dods_doss[fsgd_type]}
 
         print('creating list of subjects')
         self.make_subjects_per_group(df_groups_clin)
@@ -385,14 +399,14 @@ class PrepareForGLM():
 
 
     def make_contrasts(self):
-        for contrast_type in self.contrasts:
-            for contrast_name in self.contrasts[contrast_type]:
-                file = contrast_type+'_'+contrast_name
+        for fsgd_type in self.contrasts:
+            for contrast_mtx in self.contrasts[fsgd_type]:
+                file = '{}_{}'.format(fsgd_type, contrast_mtx)
                 open(path.join(self.PATHmtx,file), 'w').close()
-                with open(path.join(self.PATHmtx,file), 'a') as f:
-                    f.write(self.contrasts[contrast_type][contrast_name][0])
-                self.files_glm[contrast_type]['mtx'].append(file)
-                self.files_glm[contrast_type]['mtx_explanation'].append(self.contrasts[contrast_type][contrast_name][1])
+                with open(path.join(self.PATHmtx, file), 'a') as f:
+                    f.write(self.contrasts[fsgd_type][contrast_mtx][0])
+                self.files_glm[fsgd_type]['mtx'].append(file)
+                self.files_glm[fsgd_type]['mtx_explanation'].append(self.contrasts[fsgd_type][contrast_mtx][1])
 
 
     def make_files_for_glm(self):
