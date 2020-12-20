@@ -32,6 +32,15 @@ class SetProject():
         return stats
 
 class Get_Vars():
+    '''retrieving main variables, based on the json files located in credentials_home/
+        if variables are missing - they are being defined through a questionnaire
+    Args:
+        none
+    Return:
+        projects - dict with all projects from the credentials_home/projects.json file
+        location_vars - dict with all varibale from the credentials_home/local.json and all remote.json files
+        stats_vars - dict with all vars from the credentials_home/stats.json file
+    '''
 
     def __init__(self):
 
@@ -59,8 +68,6 @@ class Get_Vars():
             try:
                 with open(path.join(path.dirname(path.abspath(__file__)), 'credentials_path.py'), 'w') as f:
                     f.write('credentials_home=\"'+self.credentials_home+'\"')
-                with open(path.join(path.dirname(path.abspath(__file__)), 'credentials_path'), 'w') as f:
-                    json.dump(self.credentials_home, f)
             except Exception as e:
                 print(e)
 
@@ -110,17 +117,17 @@ class Get_Vars():
         NIMB_HOME = path.abspath(path.join(path.dirname(__file__), '..'))
         print('NIMB_HOME is: ', NIMB_HOME)
         data['NIMB_PATHS']['NIMB_HOME']               = NIMB_HOME
-        new_NIMB_tmp = get_userdefined_paths('NIMB temporary folder nimb_tmp', path.join(NIMB_HOME, '../..', 'nimb_tmp'), 'nimb_tmp')
+        new_NIMB_tmp = get_userdefined_paths('NIMB temporary folder nimb_tmp', path.join(NIMB_HOME.replace('/nimb/nimb', ''), 'nimb_tmp'), 'nimb_tmp')
         if not path.exists(new_NIMB_tmp):
             makedirs(new_NIMB_tmp)
         data['NIMB_PATHS']['NIMB_tmp']                = new_NIMB_tmp
         data['NIMB_PATHS']['NIMB_NEW_SUBJECTS']       = path.join(new_NIMB_tmp, 'nimb_new_subjects')
         data['NIMB_PATHS']['NIMB_PROCESSED_FS']       = path.join(new_NIMB_tmp, 'nimb_processed_fs')
         data['NIMB_PATHS']['NIMB_PROCESSED_FS_error'] = path.join(new_NIMB_tmp, 'nimb_processed_fs_error')
-        new_miniconda_path = get_userdefined_paths('miniconda3 folder', path.join(NIMB_HOME, '../..', 'miniconda3'), 'miniconda3')
+        new_miniconda_path = get_userdefined_paths('miniconda3 folder', path.join(NIMB_HOME.replace('/nimb/nimb', ''), 'miniconda3'), 'miniconda3')
         data['NIMB_PATHS']['miniconda_home']          = new_miniconda_path
         data['NIMB_PATHS']['miniconda_python_run']    = path.join(new_miniconda_path,'bin','python3.7').replace(path.expanduser("~"),"~")
-        new_freesurfer_path = get_userdefined_paths('FreeSurfer folder', path.join(NIMB_HOME, '../..', 'freesurfer'), 'freesurfer')
+        new_freesurfer_path = get_userdefined_paths('FreeSurfer folder', path.join(NIMB_HOME.replace('/nimb/nimb', ''), 'freesurfer'), 'freesurfer')
         if not path.exists(new_freesurfer_path):
             FreeSurfer_install = get_yes_no('do you want to install FreeSurfer at the provided location {}? (y/n)'.format(new_freesurfer_path))
             data['FREESURFER']['FreeSurfer_install']      = FreeSurfer_install
