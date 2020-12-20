@@ -22,9 +22,11 @@ except ImportError as e:
 class SaveGLMimages():
 
     def __init__(self, vars_local, stats_vars):
-        self.cache = vars_local["FREESURFER"]["GLM_MCz_cache"]
-        self.PATHglm = stats_vars["STATS_PATHS"]["FS_GLM_dir"]
-        self.PATHglm_glm = path.join(self.PATHglm,'glm/')
+        self.PATHglm         = stats_vars["STATS_PATHS"]["FS_GLM_dir"]
+        self.PATHglm_glm     = path.join(self.PATHglm,'glm')
+        self.fdr_thresh      = 3.0 #p = 0.001
+        self.mc_cache_thresh = vars_local["FREESURFER"]["GLM_MCz_cache"]
+        self.mc_img_thresh   = 1.3 #p = 0.05
 
         hemispheres = ['lh','rh']
         sim_direction = ['pos', 'neg',]
@@ -44,18 +46,17 @@ class SaveGLMimages():
                                 contrast_name = contrast.replace('.mtx','')
                                 contrastdir = path.join(glmdir, contrast_name)
                                 if self.check_maxvox(glmdir, contrast_name):
-                                    self.make_images_results_fdr(hemi, glmdir, analysis_name, contrast_name, 'sig.mgh', 3.0)
+                                    self.make_images_results_fdr(hemi, glmdir, analysis_name, contrast_name)
                                 for direction in sim_direction:
-                                    sum_mc_f = path.join(contrastdir, 'mc-z.'+direction+'.th'+str(self.cache)+'.sig.cluster.summary')
-                                    cwsig_mc_f = path.join(contrastdir, 'mc-z.'+direction+'.th'+str(self.cache)+'.sig.cluster.mgh')
-                                    oannot_mc_f = path.join(contrastdir, 'mc-z.'+direction+'.th'+str(self.cache)+'.sig.ocn.annot')
+                                    sum_mc_f = path.join(contrastdir, 'mc-z.{}.th{}.sig.cluster.summary'.format(direction, str(self.mc_cache_thresh)))
                                     if self.check_mcz_summary(sum_mc_f):
                                         self.make_images_results_mc(hemi,
                                                                     analysis_name,
+                                                                    contrastdir,
                                                                     contrast_name.replace(contrast_type+'_',''),
                                                                     direction,
                                                                     cwsig_mc_f,
-                                                                    oannot_mc_f, str(self.cache), 1.3)
+                                                                    oannot_mc_f)
 
     def check_maxvox(self, glmdir, contrast_name):
         val = [i.strip() for i in open(path.join(glmdir, contrast_name, 'maxvox.dat')).readlines()][0].split()[0]
@@ -71,22 +72,29 @@ class SaveGLMimages():
         else:
             return False
 
-    def make_images_results_mc(self, hemi, analysis_name, contrast, direction, cwsig_mc_f, oannot_mc_f, cache, thresh):
+    def make_images_results_mc(self, hemi, analysis_name, contrastdir, contrast, direction):
         self.PATH_save_mc = path.join(self.PATHglm, 'results', 'mc')
         if not path.isdir(self.PATH_save_mc):
             makedirs(self.PATH_save_mc)
-        fv_cmds = ['-ss '+path.join(self.PATH_save_mc, analysis_name+'_'+contrast+'_lat_mc_'+direction+cache+'.tiff -noquit'),
+        file_lat_mc = path.join(self.PATH_save_mc, '{}_{}_lat_mc_{}{}.tiff'.format(analysis_name, contrast, direction, str(self.mc_cache_thresh)))
+        file_med_mc = path.join(self.PATH_save_mc, '{}_{}_med_mc_{}{}.tiff'.format(analysis_name, contrast, direction, str(self.mc_cache_thresh)))
+        fv_cmds = ['-ss {} -noquit'.format(file_lat_mc),
                     '-cam Azimuth 180',
-                    '-ss '+path.join(self.PATH_save_mc, analysis_name+'_'+contrast+'_med_mc_'+direction+cache+'.tiff -quit'),]
+                    '-ss {} -quit'.format(file_med_mc),
+                  ]
         f_with_cmds = path.join(self.PATHglm, 'fv.cmd')
         with open(f_with_cmds,'w') as f:
             for line in fv_cmds:
                 f.write(line+'\n')
+        cwsig_mc_f  = path.join(contrastdir, 'mc-z.{}.th{}.sig.cluster.mgh'.format(direction, str(self.mc_cache_thresh)))
+        oannot_mc_f = path.join(contrastdir, 'mc-z.{}.th{}.sig.ocn.annot'.format(direction, str(self.mc_cache_thresh)))
 
-        system('freeview -f $SUBJECTS_DIR/fsaverage/surf/'+hemi+'.inflated:overlay='+cwsig_mc_f+':overlay_threshold='+str(thresh)+',5:annot='+oannot_mc_f+' -viewport 3d -layout 1 -cmd '+f_with_cmds)
+        system('freeview -f $SUBJECTS_DIR/fsaverage/surf/{}.inflated:overlay={}:overlay_threshold={},5:annot={} -viewport 3d -layout 1 -cmd {}'.format(hemi, cwsig_mc_f, str(self.mc_img_thresh), oannot_mc_f, f_with_cmds))
 
 
-    def make_images_results_fdr(self, hemi, glmdir, analysis_name, contrast_name, file, thresh):
+    def make_images_results_fdr(self, hemi, glmdir, analysis_name, contrast_name):
+        sig_file   = 'sig.mgh'
+        thresh = self.fdr_thresh
         self.PATH_save_fdr = path.join(self.PATHglm, 'results', 'fdr')
         if not path.isdir(self.PATH_save_fdr):
             makedirs(self.PATH_save_fdr)
@@ -96,16 +104,22 @@ class SaveGLMimages():
 #         'sclv_set_current_threshold_using_fdr 0.05 0', 'redraw', 'save_tiff '+self.PATH_save_fdr+'/'+contrast_name+'_fdr_med.tiff',
 #         'rotate_brain_y 180', 'redraw', 'save_tiff '+self.PATH_save_fdr+'/'+contrast_name+'_fdr_lat.tiff','exit']
 
-        tksurfer_cmds = ['set colscalebarflag 1', 'set scalebarflag 1', 'save_tiff '+path.join(self.PATH_save_fdr, analysis_name+'_'+contrast_name+'_'+str(3.0)+'_lat.tiff'),
-                         'rotate_brain_y 180', 'redraw', 'save_tiff '+path.join(self.PATH_save_fdr, analysis_name+'_'+contrast_name+'_'+str(3.0)+'_med.tiff'),
-                         'sclv_set_current_threshold_using_fdr 0.05 0', 'redraw', 'save_tiff '+path.join(self.PATH_save_fdr, analysis_name+'_'+contrast_name+'_fdr_med.tiff'),
-                         'rotate_brain_y 180', 'redraw', 'save_tiff '+path.join(self.PATH_save_fdr, analysis_name+'_'+contrast_name+'_fdr_lat.tiff'), 'exit']
+        tksurfer_cmds = ['set colscalebarflag 1', 'set scalebarflag 1', 
+                                                        'save_tiff '  +path.join(self.PATH_save_fdr, '{}_{}_{}_lat.tiff'.format(analysis_name, contrast_name, str(self.fdr_thresh))),
+                         'rotate_brain_y 180', 'redraw',
+                                                        'save_tiff '  +path.join(self.PATH_save_fdr, '{}_{}_{}_med.tiff'.format(analysis_name, contrast_name, str(self.fdr_thresh))),
+                         'sclv_set_current_threshold_using_fdr 0.05 0', 
+                                               'redraw','save_tiff '  +path.join(self.PATH_save_fdr, '{}_{}_fdr005_med.tiff'.format(analysis_name, contrast_name)),
+                         'rotate_brain_y 180', 'redraw',
+                                                        'save_tiff '  +path.join(self.PATH_save_fdr, '{}_{}_fdr005_lat.tiff'.format(analysis_name, contrast_name)), 
+                         'exit']
         f_with_tkcmds = path.join(self.PATHglm, 'tkcmd.cmd')
         with open(f_with_tkcmds,'w') as f:
             for line in tksurfer_cmds:
                 f.write(line+'\n')
-        print('tksurfer fsaverage '+hemi+' inflated -overlay '+path.join(glmdir, contrast_name, file+' -fthresh '+str(thresh)+' -tcl '+f_with_tkcmds))
-        system('tksurfer fsaverage '+hemi+' inflated -overlay '+path.join(glmdir, contrast_name, file+' -fthresh '+str(thresh)+' -tcl '+f_with_tkcmds))
+        print('tksurfer fsaverage {} inflated -overlay {} -fthresh {} -tcl {}'.format(hemi, path.join(glmdir, contrast_name, sig_file), str(self.fdr_thresh), f_with_tkcmds))
+        system('tksurfer fsaverage {} inflated -overlay {} -fthresh {} -tcl {}'.format(hemi, path.join(glmdir, contrast_name, sig_file), str(self.fdr_thresh), f_with_tkcmds))
+#        system('tksurfer fsaverage '+hemi+' inflated -overlay '+path.join(glmdir, contrast_name, sig_file)+' -fthresh '+str(self.fdr_thresh)+' -tcl '+f_with_tkcmds)
 
 
 

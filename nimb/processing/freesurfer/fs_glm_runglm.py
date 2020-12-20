@@ -8,15 +8,23 @@ import json
 
 
 class PerformGLM():
-    def __init__(self, PATHglm, FREESURFER_HOME, SUBJECTS_DIR, measurements, thresholds, cache):
+    def __init__(self, PATHglm, FREESURFER_HOME, SUBJECTS_DIR, measurements, thresholds, GLM_MCz_thresh, sig_fdr_thresh):
         self.SUBJECTS_DIR = SUBJECTS_DIR
         self.PATHglm = PATHglm
         self.FREESURFER_HOME = FREESURFER_HOME
+        self.sig_fdr_thresh  = sig_fdr_thresh
+        self.sig_mc_thresh   = GLM_MCz_thresh
 
-        self.PATHglm_glm = path.join(self.PATHglm,'glm/')
+        self.PATHglm_glm     = path.join(self.PATHglm,'glm/')
         self.PATHglm_results = path.join(self.PATHglm,'results')
-        for subdir in (self.PATHglm_glm, self.PATHglm_results):
+        self.PATH_img        = path.join(self.PATHglm,'images')
+        for subdir in (self.PATHglm_glm, self.PATHglm_results, self.PATH_img):
             if not path.isdir(subdir): makedirs(subdir)
+        self.err_mris_preproc_file = path.join(self.PATHglm_results,'error_mris_preproc.json')
+        self.sig_fdr_json          = path.join(self.PATHglm, 'sig_fdr.json')
+        self.sig_mc_json           = path.join(self.PATHglm, 'sig_mc.json')
+        self.sig_fdr_data = dict()
+        self.sig_mc_data  = dict()
 
         try:
             with open(path.join(self.PATHglm, 'subjects_per_group.json'),'r') as jf:
@@ -42,13 +50,13 @@ class PerformGLM():
                 else:
                     RUN = True
         if RUN:
-            self.RUN_GLM(files_for_glm, measurements, thresholds, cache)
+            self.RUN_GLM(files_for_glm, measurements, thresholds)
             print('\n\nGLM DONE')
         else:
             sys.exit('some subjects are missing from the freesurfer folder')
 
 
-    def RUN_GLM(self, files_for_glm, measurements, thresholds, cache):
+    def RUN_GLM(self, files_for_glm, measurements, thresholds):
         print('performing GLM analysis using mri_glmfit')
         self.err_preproc = list()
 
@@ -67,19 +75,26 @@ class PerformGLM():
                                 self.run_mris_preproc(fsgd_f_unix, meas, thresh, hemi, mgh_f)
                                 if path.isfile(mgh_f):
                                     for contrast in files_for_glm[contrast_type]['mtx']:
+                                        contrast_name = contrast.replace('.mtx','')
                                         explanation = files_for_glm[contrast_type]['mtx_explanation'][files_for_glm[contrast_type]['mtx'].index(contrast)]
                                         for gd2mtx in files_for_glm[contrast_type]['gd2mtx']:
                                             self.run_mri_glmfit(mgh_f, fsgd_f_unix, gd2mtx, glmdir, hemi, contrast)
-                                            if self.check_maxvox(glmdir, contrast.replace('.mtx','')):
-                                                self.log_contrasts_with_significance(glmdir, contrast.replace('.mtx',''))
-                                            self.run_mri_surfcluster(glmdir, contrast.replace('.mtx',''), hemi, contrast_type, analysis_name, meas, cache, explanation)
+                                            if self.check_maxvox(glmdir, contrast_name):
+                                                self.log_contrasts_with_significance(glmdir, contrast_name)
+                                                self.prepare_for_image_extraction_fdr(hemi, glmdir, analysis_name, contrast_name)
+                                            self.run_mri_surfcluster(glmdir, contrast_name, hemi, contrast_type, analysis_name, meas, explanation)
                                 else:
                                     print('{} not created; ERROR in mris_preproc'.format(mgh_f))
                                     self.err_preproc.append(mgh_f)
         if self.err_preproc:
-            file = path.join(self.PATHglm_results,'error_mris_preproc.json')
-            with open(file, 'w') as jf:
+            with open(self.err_mris_preproc_file, 'w') as jf:
                 json.dump(self.err_preproc, jf, indent = 4)
+        if self.sig_fdr_data:
+            with open(self.sig_fdr_json, 'w') as jf:
+                json.dump(self.sig_fdr_data, jf, indent = 4)
+        if self.sig_mc_data:
+            with open(self.self.sig_mc_json, 'w') as jf:
+                json.dump(self.sig_mc_data, jf, indent = 4)
 
     def run_mris_preproc(self, fsgd_file, meas, thresh, hemi, mgh_f):
         system('mris_preproc --fsgd {} --cache-in {}.fwhm{}.fsaverage --target fsaverage --hemi {} --out {}'.format(fsgd_file, meas, str(thresh), hemi, mgh_f))
@@ -93,34 +108,37 @@ class PerformGLM():
         system(cmd)
 
 
-    def run_mri_surfcluster(self, glmdir, contrast_name, hemi, contrast_type, analysis_name, meas, cache, explanation):
+    def run_mri_surfcluster(self, glmdir, contrast_name, hemi, contrast_type, analysis_name, meas, explanation):
         sim_direction = ['pos', 'neg',]
         contrastdir = path.join(glmdir, contrast_name)
         GLM_sim_fwhm4csd = {'thickness': {'lh': '15','rh': '15'},'area': {'lh': '24','rh': '25'},'volume': {'lh': '16','rh': '16'},}
         GLM_measurements = {'thickness':'th','area':'ar','volume':'vol'}
         for direction in sim_direction:
-            contrast_dir = '{}.{}{}'.format(direction, GLM_measurements[meas], str(cache))
-            sig_f = path.join(contrastdir,'sig.mgh')
-            cwsig_mc_f = path.join(contrastdir,'mc-z.{}.sig.cluster.mgh'.format(contrast_dir))
-            vwsig_mc_f = path.join(contrastdir,'mc-z.{}.sig.vertex.mgh'.format(contrast_dir))
-            sum_mc_f = path.join(contrastdir,'mc-z.{}.sig.cluster.summary'.format(contrast_dir))
-            ocn_mc_f = path.join(contrastdir,'mc-z.{}.sig.ocn.mgh'.format(contrast_dir))
+            contrast_dir = '{}.{}{}'.format(direction, GLM_measurements[meas], str(self.sig_mc_thresh))
+            sig_f       = path.join(contrastdir,'sig.mgh')
+            cwsig_mc_f  = path.join(contrastdir,'mc-z.{}.sig.cluster.mgh'.format(contrast_dir))
+            vwsig_mc_f  = path.join(contrastdir,'mc-z.{}.sig.vertex.mgh'.format(contrast_dir))
+            sum_mc_f    = path.join(contrastdir,'mc-z.{}.sig.cluster.summary'.format(contrast_dir))
+            ocn_mc_f    = path.join(contrastdir,'mc-z.{}.sig.ocn.mgh'.format(contrast_dir))
             oannot_mc_f = path.join(contrastdir,'mc-z.{}.sig.ocn.annot'.format(contrast_dir))
             csdpdf_mc_f = path.join(contrastdir,'mc-z.{}.pdf.dat'.format(contrast_dir))
             if meas != 'curv':
-                csd_mc_f = path.join(self.FREESURFER_HOME, 'average', 'mult-comp-cor', 'fsaverage', hemi, 'cortex', 'fwhm'+GLM_sim_fwhm4csd[meas][hemi],direction, 'th'+str(cache), 'mc-z.csd')
+                csd_mc_f = path.join(self.FREESURFER_HOME, 'average', 'mult-comp-cor', 'fsaverage', hemi, 'cortex', 'fwhm'+GLM_sim_fwhm4csd[meas][hemi],direction, 'th'+str(self.sig_mc_thresh), 'mc-z.csd')
                 system('mri_surfcluster --in {} --csd {} --mask {} --cwsig {} --vwsig {} --sum {} --ocn {} --oannot {} --csdpdf {} --annot aparc --cwpvalthresh 0.05 --surf white'.format(sig_f, csd_mc_f, path.join(glmdir,'mask.mgh'), cwsig_mc_f, vwsig_mc_f, sum_mc_f, ocn_mc_f, oannot_mc_f, csdpdf_mc_f))                                        
                 if self.check_mcz_summary(sum_mc_f):
                     self.cluster_stats_to_file(analysis_name, sum_mc_f, contrast_name.replace(contrast_type+'_',''), direction, explanation)
+                    self.prepare_for_image_extraction_mc(hemi, analysis_name, contrast_name.replace(contrast_type+'_',''), direction, cwsig_mc_f, oannot_mc_f)
             else:
-                system('mri_glmfit-sim --glmdir {} --cache {} {} --cwp 0.05 --2spaces'.format(path.join(glmdir, contrast_name), str(cache), direction))
+                system('mri_glmfit-sim --glmdir {} --cache {} {} --cwp 0.05 --2spaces'.format(path.join(glmdir, contrast_name), str(self.sig_mc_thresh), direction))
+                if self.check_mcz_summary(sum_mc_f):
+                    self.cluster_stats_to_file(analysis_name, sum_mc_f, contrast_name.replace(contrast_type+'_',''), direction, explanation)
 
     def check_maxvox(self, glmdir, contrast_name):
         res = False
         maxvox = path.join(glmdir, contrast_name, 'maxvox.dat')
         if path.exists(maxvox):
             val = [i.strip() for i in open(maxvox).readlines()][0].split()[0]
-            if float(val) > 3.0 or float(val) < -3.0:
+            if float(val) > self.sig_fdr_thresh or float(val) < -self.sig_fdr_thresh:
                 res = True
         return res
 
@@ -139,7 +157,7 @@ class PerformGLM():
         for line in list(open(sum_mc_f))[41:sum(1 for line in open(sum_mc_f))]:
             ls.append(line.rstrip())
         with open(file, 'a') as f:
-            f.write(analysis_name+'_'+contrast_name+'_'+direction+'\n')
+            f.write('{}_{}_{}\n'.format(analysis_name, contrast_name, direction))
             f.write(explanation+'\n')
             for value in ls:
                 f.write(value+'\n')
@@ -152,7 +170,26 @@ class PerformGLM():
         with open(file, 'a') as f:
             f.write(path.join(glmdir,contrast_name)+'\n')
 
+    def prepare_for_image_extraction_fdr(self, hemi, glmdir, analysis_name, contrast_name):
+        sig_count = len(self.sig_fdr_data.keys())+1
+        self.sig_fdr_data[sig_count] = {
+                                'hemi'         : hemi,
+                                'glmdir'       : glmdir,
+                                'analysis_name': analysis_name,
+                                'contrast_name': contrast_name,
+                                'sig_thresh'   : self.sig_fdr_thresh}
 
+
+    def prepare_for_image_extraction_mc(self, hemi, analysis_name, contrast, direction, cwsig_mc_f, oannot_mc_f):
+        sig_mc_count = len(self.sig_mc_data.keys())+1
+        self.sig_mc_data[sig_mc_count] = {
+                                'hemi'         : hemi,
+                                'analysis_name': analysis_name,
+                                'contrast'     : contrast,
+                                'direction'    : direction,
+                                'cwsig_mc_f'   : cwsig_mc_f,
+                                'oannot_mc_f'  : oannot_mc_f,
+                                'sig_thresh'   : self.sig_mc_thresh}
 
 
 def get_parameters(projects, vars_local):
@@ -221,6 +258,7 @@ if __name__ == "__main__":
     SUBJECTS_DIR = params.subjects_dir
     stats_vars   = SetProject(vars_local['NIMB_PATHS']['NIMB_tmp'], getvars.stats_vars, params.project).stats
     fs_start_cmd = initiate_fs_from_sh(vars_local)
+    sig_fdr_thresh= 3.0 #p = 0.001; for p=0.05 use value 1.3, but it should be used ONLY for visualisation.
 
     print('please initiate freesurfer using the command: \n    {}'.format(fs_start_cmd))
     try:
@@ -234,5 +272,6 @@ if __name__ == "__main__":
                SUBJECTS_DIR,
                vars_local["FREESURFER"]["GLM_measurements"],
                vars_local["FREESURFER"]["GLM_thresholds"],
-               vars_local["FREESURFER"]["GLM_MCz_cache"])
+               vars_local["FREESURFER"]["GLM_MCz_cache"],
+               sig_fdr_thresh)
 

@@ -46,9 +46,10 @@ class FreeSurferVersion:
         else:
             return str(self.version)
 
+
 class FilePerFSVersion:
     def __init__(self, freesurfer_version):
-        self.fs_ver    = freesurfer_version
+        # self.fs_ver    = freesurfer_version
         self.processes = ['bs', 'hip', 'amy', 'tha']
         self.log       = {'recon':{'7':'recon-all.log',                       '6':'recon-all.log'},
                           'bs'   :{'7':'brainstem-substructures-T1.log',      '6':'brainstem-structures.log'},
@@ -70,18 +71,19 @@ class FilePerFSVersion:
                             }
                         }
         self.hemi = {'lh':'lh.', 'rh':'rh.', 'lhrh':''}
+        self.fs_ver = FreeSurferVersion(freesurfer_version).fs_ver()
 
-    def fs_ver(self):
-        if len(str(self.fs_ver)) > 1:
-            return str(self.fs_ver[0])
-        else:
-            return str(self.fs_ver)
+    # def fs_ver(self):
+    #     if len(str(self.fs_ver)) > 1:
+    #         return str(self.fs_ver[0])
+    #     else:
+    #         return str(self.fs_ver)
     
     def log_f(self, process):
-        return path.join('scripts', self.log[process][self.fs_ver()])
+        return path.join('scripts', self.log[process][self.fs_ver])
         
     def stats_f(self, process, dir, hemi='lhrh'):
-        file = '{}{}'.format(self.hemi[hemi], self.stats_files[dir][process][self.fs_ver()])
+        file = '{}{}'.format(self.hemi[hemi], self.stats_files[dir][process][self.fs_ver])
         return path.join(dir, file)
 
 # must check for all files: https://surfer.nmr.mgh.harvard.edu/fswiki/ReconAllDevTable
