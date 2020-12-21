@@ -338,7 +338,6 @@ def move_processed_subjects(subject, db_source, new_name):
     if size_src == size_dst:
         db['PROCESSED'][db_source].remove(subject)
         cdb.Update_DB(db, NIMB_tmp)
-        log.info('    copied correctly, removing from SUBJECTS_DIR')
         shutil.rmtree(path.join(SUBJECTS_DIR, subject))
         if vars_processing["archive_processed"] == 1:
             log.info('        archiving ...')
@@ -351,9 +350,6 @@ def move_processed_subjects(subject, db_source, new_name):
     else:
         log.info('        ERROR in moving, not moved correctly {} {}'.format(str(size_src), str(size_dst)))
         shutil.rmtree(path.join(vars_nimb["NIMB_PROCESSED_FS"], subject))
-    log.info('        moving DONE')
-
-
 
 def loop_run():
     cdb.Update_DB(db, NIMB_tmp)
