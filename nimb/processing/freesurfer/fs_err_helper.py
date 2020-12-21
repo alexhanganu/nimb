@@ -110,10 +110,10 @@ class ErrorCheck():
 
 
 
-def fs_find_error(subjid, SUBJECTS_DIR, NIMB_tmp, process):
+def fs_find_error(subjid, SUBJECTS_DIR, NIMB_tmp, process, fs_version):
     error = ''
     print('                identifying THE error')
-    files = fs_definitions.FilePerFSVersion(vars_fs['freesurfer_version'])
+    files = fs_definitions.FilePerFSVersion(fs_version)
     log_file = path.join(SUBJECTS_DIR, subjid, files.log_f(process))
     if process == 'brstem':
         file_2read = log_file

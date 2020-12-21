@@ -153,7 +153,7 @@ def check_error(scheduler_jobs, process):
                     if not chk.checks_from_runfs(process, subjid):
                     # if not fs_checker.checks_from_runfs(SUBJECTS_DIR, process, subjid, vars_freesurfer["freesurfer_version"], vars_freesurfer["masks"]):
                             log.info('            some files were not created and recon-all-status has errors.')
-                            fs_error = fs_err_helper.fs_find_error(subjid, SUBJECTS_DIR, NIMB_tmp, process)
+                            fs_error = fs_err_helper.fs_find_error(subjid, SUBJECTS_DIR, NIMB_tmp, process, fs_ver)
                             solved = False
                             if fs_error:
                                 solve = fs_err_helper.solve_error(subjid, fs_error, SUBJECTS_DIR, NIMB_tmp)
