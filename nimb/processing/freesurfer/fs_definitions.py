@@ -65,10 +65,14 @@ class FilePerFSVersion:
         # self.fs_ver    = freesurfer_version
         self.processes = ['bs', 'hip', 'amy', 'tha']
         self.log       = {
-                'recon':{'7':'recon-all.log',                       '6':'recon-all.log'},
-                'bs'   :{'7':'brainstem-substructures-T1.log',      '6':'brainstem-structures.log'},
-                'hip'  :{'7':'hippocampal-subfields-T1.log',        '6':'hippocampal-subfields-T1.log'},
-                'tha'  :{'7':'thalamic-nuclei-mainFreeSurferT1.log','6':''}
+            'recon'     :{'7':'recon-all.log',                       '6':'recon-all.log'},
+            'autorecon1':{'7':'recon-all.log',                       '6':'recon-all.log'},
+            'autorecon1':{'7':'recon-all.log',                       '6':'recon-all.log'},
+            'autorecon1':{'7':'recon-all.log',                       '6':'recon-all.log'},
+            'qcache'    :{'7':'recon-all.log',                       '6':'recon-all.log'},
+            'bs'        :{'7':'brainstem-substructures-T1.log',      '6':'brainstem-structures.log'},
+            'hip'       :{'7':'hippocampal-subfields-T1.log',        '6':'hippocampal-subfields-T1.log'},
+            'tha'       :{'7':'thalamic-nuclei-mainFreeSurferT1.log','6':''}
                           }
         self.stats_files = {
             'stats': {
