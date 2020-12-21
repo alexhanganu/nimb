@@ -1,22 +1,30 @@
 #!/bin/python
 # 2020.09.04
 from os import path
-processes_recon   = ["autorecon1","autorecon2","autorecon3"]
+processes_recon   = ["autorecon1",
+                     "autorecon2",
+                     "autorecon3",
+                     "qcache"]
 processes_subcort = ["brstem","hip","tha"]
 
-process_order = ["registration","autorecon1","autorecon2","autorecon3","brstem","hip","tha", "qcache"]
+process_order = ["registration",]+processes_recon+processes_subcort
+
 GLM_measurements = {'thickness':'th',
                     'area'     :'ar',
                     'volume'   :'vol'}
-GLM_sim_fwhm4csd = {'thickness': {'lh': '15','rh': '15'},
-                    'area'     : {'lh': '24','rh': '25'},
-                    'volume'   : {'lh': '16','rh': '16'},}
+GLM_sim_fwhm4csd = {'thickness': {'lh': '15',
+                                  'rh': '15'},
+                    'area'     : {'lh': '24',
+                                  'rh': '25'},
+                    'volume'   : {'lh': '16',
+                                  'rh': '16'},
+                    }
 GLM_sim_directions = ['pos', 'neg']
 
 suggested_times = {
         'registration':'01:00:00',
         'recon'       :'30:00:00',
-        'autorecon1'  :'5:00:00',
+        'autorecon1'  :'05:00:00',
         'autorecon2'  :'12:00:00',
         'autorecon3'  :'12:00:00',
         'recbase'     :'30:00:00',
@@ -28,11 +36,16 @@ suggested_times = {
         'masks'       :'12:00:00',
         }
 
-IsRunning_files = ['IsRunning.lh+rh', 'IsRunningBSsubst', 'IsRunningHPsubT1.lh+rh', 'IsRunningThalamicNuclei_mainFreeSurferT1']
+IsRunning_files = ['IsRunning.lh+rh',
+                   'IsRunningBSsubst',
+                   'IsRunningHPsubT1.lh+rh',
+                   'IsRunningThalamicNuclei_mainFreeSurferT1']
 
-f_autorecon = {1:['mri/nu.mgz','mri/orig.mgz','mri/brainmask.mgz',],
-                2:['stats/lh.curv.stats','stats/rh.curv.stats',],
-                3:['stats/aseg.stats','stats/wmparc.stats',]}
+f_autorecon = {
+        1:['mri/nu.mgz','mri/orig.mgz','mri/brainmask.mgz',],
+        2:['stats/lh.curv.stats','stats/rh.curv.stats',],
+        3:['stats/aseg.stats','stats/wmparc.stats',]
+        }
 
 hemi = ['lh','rh']
 
@@ -51,24 +64,25 @@ class FilePerFSVersion:
     def __init__(self, freesurfer_version):
         # self.fs_ver    = freesurfer_version
         self.processes = ['bs', 'hip', 'amy', 'tha']
-        self.log       = {'recon':{'7':'recon-all.log',                       '6':'recon-all.log'},
-                          'bs'   :{'7':'brainstem-substructures-T1.log',      '6':'brainstem-structures.log'},
-                          'hip'  :{'7':'hippocampal-subfields-T1.log',        '6':'hippocampal-subfields-T1.log'},
-                          'tha'  :{'7':'thalamic-nuclei-mainFreeSurferT1.log','6':''}
+        self.log       = {
+                'recon':{'7':'recon-all.log',                       '6':'recon-all.log'},
+                'bs'   :{'7':'brainstem-substructures-T1.log',      '6':'brainstem-structures.log'},
+                'hip'  :{'7':'hippocampal-subfields-T1.log',        '6':'hippocampal-subfields-T1.log'},
+                'tha'  :{'7':'thalamic-nuclei-mainFreeSurferT1.log','6':''}
                           }
         self.stats_files = {
-                        'stats': {
-                            'bs': {'7':'brainstem.v12.stats',              '6':'brainstem.v10.stats',},
-                            'hip':{'7':'hipposubfields.T1.v21.stats',      '6':'hipposubfields.T1.v10.stats',},
-                            'amy':{'7':'amygdalar-nuclei.T1.v21.stats',    '6':'',},
-                            'tha':{'7':'thalamic-nuclei.v12.T1.stats',     '6':'',}
-                            },
-                        'mri': {
-                            'bs': {'7':'brainstemSsVolumes.v12.txt',       '6':'brainstemSsVolumes.v10',},
-                            'hip':{'7':'hippoSfVolumes-T1.v21.txt',        '6':'hippoSfVolumes-T1.v10.txt',},
-                            'amy':{'7':'amygNucVolumes-T1.v21.txt',        '6':'',},
-                            'tha':{'7':'ThalamicNuclei.v12.T1.volumes.txt','6':'',}
-                            }
+            'stats': {
+                'bs'   :{'7':'brainstem.v12.stats'   ,              '6':'brainstem.v10.stats',},
+                'hip'  :{'7':'hipposubfields.T1.v21.stats',         '6':'hipposubfields.T1.v10.stats',},
+                'amy'  :{'7':'amygdalar-nuclei.T1.v21.stats',       '6':'',},
+                'tha'  :{'7':'thalamic-nuclei.v12.T1.stats',        '6':'',}
+                },
+            'mri': {
+                'bs'   :{'7':'brainstemSsVolumes.v12.txt',          '6':'brainstemSsVolumes.v10',},
+                'hip'  :{'7':'hippoSfVolumes-T1.v21.txt',           '6':'hippoSfVolumes-T1.v10.txt',},
+                'amy'  :{'7':'amygNucVolumes-T1.v21.txt',           '6':'',},
+                'tha'  :{'7':'ThalamicNuclei.v12.T1.volumes.txt',   '6':'',}
+                }
                         }
         self.hemi = {'lh':'lh.', 'rh':'rh.', 'lhrh':''}
         self.fs_ver = FreeSurferVersion(freesurfer_version).fs_ver()
