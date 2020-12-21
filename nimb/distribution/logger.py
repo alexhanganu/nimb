@@ -41,10 +41,11 @@ class Log():
 
     def set_logger(self):
         """ Set a basic logger"""
+        today = time.strftime("%Y%m%d",time.localtime(time.time()))
         logFile = os.path.join(
             self.output_dir,
             "log_{}.log".format(
-                          time.strftime("%Y%m%d_%H%M",time.localtime(time.time()))
+                          today
                                ),
                               )
 
@@ -56,7 +57,7 @@ class Log():
 def setup_logging(logLevel, logFile=None):
     """ Setup logging configuration"""
 #    logging.basicConfig(format='%(asctime)s %(module)s %(levelname)s: %(message)s')
-    logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s')
+    logging.basicConfig(format='%(asctime)s : %(message)s')
     logger = logging.getLogger()
 
     # Check level
