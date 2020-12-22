@@ -57,7 +57,7 @@ class Log():
 def setup_logging(logLevel, logFile=None):
     """ Setup logging configuration"""
 #    logging.basicConfig(format='%(asctime)s %(module)s %(levelname)s: %(message)s')
-    logging.basicConfig(format='%(asctime)s : %(message)s')
+    logging.basicConfig(format='{asctime} : {message}')
     logger = logging.getLogger()
 
     # Check level
@@ -68,7 +68,8 @@ def setup_logging(logLevel, logFile=None):
 
     # Set FileHandler
     if logFile:
-        formatter = logging.Formatter(logging.BASIC_FORMAT)
+        formatter = logging.Formatter("%(asctime)s : %(message)s",
+                              "%Y-%m-%d %H:%M:%S")
         handler = logging.FileHandler(logFile)
         handler.setFormatter(formatter)
         handler.setLevel("DEBUG")

@@ -13,7 +13,7 @@ import shutil
 from setup.get_vars import Get_Vars
 from distribution.utilities import is_writable_directory, is_ENV_defined
 from distribution.setup_miniconda import setup_miniconda, is_miniconda_installed, is_conda_module_installed
-from distribution.distribution_helper import logger
+from distribution.logger import Log
 from distribution.utilities import ErrorMessages, makedir_ifnot_exist
 from sys import platform
 
@@ -32,7 +32,8 @@ class DistributionReady():
         self.proj_vars        = proj_vars # credentials_home/project.json
         self.NIMB_HOME        = self.locations["local"]["NIMB_PATHS"]["NIMB_HOME"]
         self.NIMB_tmp         = self.locations["local"]["NIMB_PATHS"]["NIMB_tmp"]
-        
+        self.logger           = Log(self.NIMB_tmp, self.locations["local"]['FREESURFER']['freesurfer_version']).logger
+
     def check_ready(self):
         """
 
@@ -58,7 +59,7 @@ class DistributionReady():
         # if not is_miniconda_installed():
             # # if has permission to install
             # if not is_writable_directory(mini_conda_path):
-                # logger.fatal("miniconda path is not writable. Check the permission.")
+                # self.logger.fatal("miniconda path is not writable. Check the permission.")
                 # return False
             # # true: install setup_minicoda.py
             # setup_miniconda(mini_conda_path)
@@ -73,7 +74,7 @@ class DistributionReady():
         # # source home
         # os.system("source ~/.bashrc")
         # if not is_ENV_defined("$FREESURFER_HOME"):
-            # logger.fatal("$FREESURFER_HOME is not defined")
+            # self.logger.fatal("$FREESURFER_HOME is not defined")
             # return False
 
     def get_user_paths_from_terminal(self):
@@ -128,7 +129,7 @@ class DistributionReady():
         """
         for key in dict:
             if type(dict[key]) != int and len(dict[key]) < 1:
-                logger.fatal(f"{key} is missing")
+                self.logger.fatal(f"{key} is missing")
                 return False
         return True
 
@@ -150,7 +151,7 @@ class DistributionReady():
     def fs_ready(self):
         if self.locations['local']['FREESURFER']['FreeSurfer_install'] == 1:
             if len(self.locations['local']['FREESURFER']['FREESURFER_HOME']) < 1:
-                logger.fatal("FREESURFER_HOME is missing.")
+                self.logger.fatal("FREESURFER_HOME is missing.")
                 return False
             if self.check_freesurfer_ready():
                 SUBJECTS_DIR = self.locations['local']['FREESURFER']['FS_SUBJECTS_DIR']

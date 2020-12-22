@@ -341,8 +341,13 @@ def move_processed_subjects(subject, db_source, new_name):
         shutil.rmtree(path.join(SUBJECTS_DIR, subject))
         if vars_processing["archive_processed"] == 1:
             log.info('        archiving ...')
-            chdir(vars_nimb["NIMB_PROCESSED_FS"])
-            system('zip -r -q -m {}.zip {}'.format(subject, subject))
+            # chdir(vars_nimb["NIMB_PROCESSED_FS"])
+            # system('zip -r -q -m {}.zip {}'.format(subject, subject))
+            cd_cmd = 'cd {}'.format(vars_nimb["NIMB_PROCESSED_FS"])
+            cmd = 'zip -r -q -m {}.zip {}'.format(subject, subject)
+            schedule.submit_4_processing(cmd,'nimb','archiving', cd_cmd,
+                                        activate_fs = False,
+                                        python_load = False)
         if new_name:
             log.info('        renaming {} to {}, moving to {}'.format(subject, new_name, vars_nimb["NIMB_PROCESSED_FS_error"]))
             shutil.move(path.join(vars_nimb["NIMB_PROCESSED_FS"], '{}.zip'.format(subject)),
@@ -415,7 +420,7 @@ def Update_running(NIMB_tmp, cmd):
         if path.isfile('{}1'.format(file)):
             rename('{}1'.format(file), '{}0'.format(file))
 
-def run(varslocal):
+def run(varslocal, logger):
 
     global db, schedule, log, chk, vars_local, vars_freesurfer, fs_ver, vars_processing, vars_nimb, NIMB_HOME, NIMB_tmp, SUBJECTS_DIR, max_walltime, process_order, processing_env
     
@@ -431,7 +436,7 @@ def run(varslocal):
     SUBJECTS_DIR    = vars_freesurfer["FS_SUBJECTS_DIR"]
     process_order   = vars_freesurfer["process_order"]
     fs_ver          = FreeSurferVersion(vars_freesurfer["freesurfer_version"]).fs_ver()
-    log             = logging.getLogger(__name__)
+    log             = logger #logging.getLogger(__name__)
     chk             = FreeSurferChecker(vars_freesurfer)
     schedule        = Scheduler(vars_local)
 
@@ -503,10 +508,11 @@ if __name__ == "__main__":
     from distribution.logger import Log
     getvars = Get_Vars()
     vars_local = getvars.location_vars['local']
-    Log(vars_local['NIMB_PATHS']['NIMB_tmp'],
-        vars_local['FREESURFER']['freesurfer_version'])
+    # Log(vars_local['NIMB_PATHS']['NIMB_tmp'],
+    #     vars_local['FREESURFER']['freesurfer_version'])
+    logger = Log(vars_local['NIMB_PATHS']['NIMB_tmp'], self.vars_local['FREESURFER']['freesurfer_version']).logger
 
     from processing.schedule_helper import Scheduler, get_jobs_status
 
-    run(vars_local)
+    run(vars_local, logger)
 

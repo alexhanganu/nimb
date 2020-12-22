@@ -41,8 +41,8 @@ class Scheduler():
 
     def get_submit_file_names(self, name, task):
         dt = time.strftime("%Y%m%d_%H%M",time.localtime(time.time()))
-        sh_file = name+'_'+task+'_'+str(dt)+'.sh'
-        out_file = name+'_'+task+'_'+str(dt)+'.out'
+        sh_file = '{}_{}_{}.sh'.format(name, task, str(dt))
+        out_file = '{}_{}_{}.out'.format(name, task, str(dt))
         return sh_file, out_file
 
     def Get_walltime(self, process):

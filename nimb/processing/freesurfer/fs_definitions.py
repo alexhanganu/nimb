@@ -34,6 +34,7 @@ suggested_times = {
         'hip'         :'03:00:00',
         'tha'         :'03:00:00',
         'masks'       :'12:00:00',
+        'archiving'   :'01:00:00',
         }
 
 IsRunning_files = ['IsRunning.lh+rh',

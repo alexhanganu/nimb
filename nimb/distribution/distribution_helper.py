@@ -4,18 +4,13 @@ from os import system, path, listdir, environ, remove
 from distribution.utilities import ErrorMessages, makedir_ifnot_exist
 from distribution.setup_miniconda import setup_miniconda
 from distribution.setup_freesurfer import SETUP_FREESURFER
+from distribution.logger import Log
+
 from setup import interminal_setup
 try:
     from setup import guitk_setup
 except ImportError:
     gui_setup = 'term'
-
-import logging
-
-# -- for logging, instead of using print --
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-# --
 
 
 class DistributionHelper():
@@ -28,6 +23,7 @@ class DistributionHelper():
         self.proj_vars        = project_vars
         self.NIMB_HOME        = self.locations["local"]["NIMB_PATHS"]["NIMB_HOME"]
         self.NIMB_tmp         = self.locations["local"]["NIMB_PATHS"]["NIMB_tmp"]
+        self.logger           = Log(self.NIMB_tmp, self.locations["local"]['FREESURFER']['freesurfer_version']).logger
 
         # setup folder
         self.setup_folder = "../setup"
@@ -51,7 +47,8 @@ class DistributionHelper():
 #            if self.get_userdefined_location(): # If user chooses at least one machine for analysis:
 #                print(self.locations_4process)
                 # self.get_subject_data(unprocessed)
-                # self.get_available_space() #- compute available disk space on the local and/or remote (where freesurfer_install ==1) for the folder FS_SUBJECTS_DIR and NIMB_PROCESSED_FS ==> get_free_space_remote
+                # self.get_available_space() #- compute available disk space on the local and/or remote 
+#                (where freesurfer_install ==1) for the folder FS_SUBJECTS_DIR and NIMB_PROCESSED_FS ==> get_free_space_remote
 #                if self.get_user_confirmation():
 #                    self.make_processing_database()
 #                    self.run_processing()
@@ -142,10 +139,12 @@ class DistributionHelper():
             - distrib-DATABASE[ACTION][notprocessed].append(subject)
             - distrib-DATABASE[LOCATION][local/remote_name].append(subject)
         - populating rule:
-            - continue populating until the volume of subjects + volume of estimated processed subjects (900Mb per subject) is less then 75% of the available disk space
+            - continue populating until the volume of subjects + volume of estimated processed subjects 
+                (900Mb per subject) is less then 75% of the available disk space
             - populate local.json - NIMB_PATHS - NIMB_NEW_SUBJECTS based on populating rule
             - If there are more than one computer ready to perform freesurfer:
-                - send archived subjects to each of them based on the estimated time required to process one subject and choose the methods that would deliver the lowest estimated time to process.
+                - send archived subjects to each of them based on the estimated time required to process 
+                    one subject and choose the methods that would deliver the lowest estimated time to process.
             - once copied to the NIMB_NEW_SUBJECTS:
                 - add subject to distrib-DATABSE → LOCATION → remote_name
                 - move subject in distrib-DATABASE → ACTION notprocessed → copied2process
@@ -156,20 +155,24 @@ class DistributionHelper():
 
     def run_processing(self):
         """
-            - after all subjects are copied to the NIMB_NEW_SUBJECTS folder: initiate the classifier on the local/remote computer with keys: cd $NIMB_HOME && python nimb.py -process classify
+            - after all subjects are copied to the NIMB_NEW_SUBJECTS folder: initiate the 
+                classifier on the local/remote computer with keys: cd $NIMB_HOME && python nimb.py -process classify
             - wait for the answer; If True and new_subjects.json file was created:
             - start the -process freesurfer
-            - after each 2 hours check the local/remote NIMB_PROCESSED_FS and NIMB_PROCESSED_FS_ERROR folders. If not empty: mv (or copy/rm) to the path provided in the ~/nimb/projects.json → project → local or remote $PROCESSED_FS_DIR folder
-            - if SOURCE_BIDS_DIR is provided: moves the processed subjects to corresponding SOURCE_BIDS_DIR/subject/session/processed_fs folder
+            - after each 2 hours check the local/remote NIMB_PROCESSED_FS and NIMB_PROCESSED_FS_ERROR folders. 
+                If not empty: mv (or copy/rm) to the path provided in the ~/nimb/projects.json → project → local 
+                    or remote $PROCESSED_FS_DIR folder
+            - if SOURCE_BIDS_DIR is provided: moves the processed subjects to 
+                corresponding SOURCE_BIDS_DIR/subject/session/processed_fs folder
         """
         pass
 
     def get_local_remote_dir(self, dir_data):
         if dir_data[0] == 'local':
-            logger.info('working folder is: {}'.format(dir_data[1]))
+            self.logger.info('working folder is: {}'.format(dir_data[1]))
             return dir_data[1]
         else:
-            logger.info('folder {} is located on a remote: {}'.format(dir_data[1], dir_data[0]))
+            self.logger.info('folder {} is located on a remote: {}'.format(dir_data[1], dir_data[0]))
             return False
 
     def get_subj_2classify(self):
@@ -186,10 +189,11 @@ class DistributionHelper():
 #        elif source_subj[0] == 'local' and path.exists(source_subj[1]) and listdir(source_subj[1]):
 #            SUBJ_2Classify = source_subj[1]
         if SUBJ_2Classify:
-            logger.info('Folder with Subjects to classify is: {}'.format(SUBJ_2Classify))
+            self.logger.info('Folder with Subjects to classify is: {}'.format(SUBJ_2Classify))
             return SUBJ_2Classify
         else:
-            logger.info('Could not define the Folder with Subjects to classify. Please adjust the file: {}'.format(path.join(self.credentials_home, 'projects.json')))
+            self.logger.info('Could not define the Folder with Subjects to classify. Please adjust the file: {}'.format(
+                                                                path.join(self.credentials_home, 'projects.json')))
             return False
 
     def get_project_vars(self, var_name, project):
@@ -201,7 +205,8 @@ class DistributionHelper():
         """
         # PROJECT_DATA
         if project not in self.projects.keys():
-            print("There is no path for project: {} defined. Please check the file: {}".format(project, path.join(self.credentials_home, "projects.json")))
+            print("There is no path for project: {} defined. Please check the file: {}".format(
+                                    project, path.join(self.credentials_home, "projects.json")))
             return ""
         return self.projects[project][var_name]
 
@@ -251,9 +256,9 @@ class DistributionHelper():
             NIMB_PROCESSED_FS = path.join(self.locations["local"]['NIMB_PATHS']['NIMB_PROCESSED_FS'])
             not_exist = [i for i in ls if not path.exists(i)]
             if not_exist:
-                logger.info('{} subject paths do not exist'.format(len(not_exist)))
+                self.logger.info('{} subject paths do not exist'.format(len(not_exist)))
                 ls = [i for i in ls if path.exists(i)]
-            logger.info('Must extract folders {} for {} subjects, to destination {}'.format(dirs2extract, len(ls), NIMB_PROCESSED_FS))
+            self.logger.info('Must extract folders {} for {} subjects, to destination {}'.format(dirs2extract, len(ls), NIMB_PROCESSED_FS))
             self.extract_dirs([i for i in ls if '.zip' in i],
                               NIMB_PROCESSED_FS, dirs2extract)
 
@@ -417,35 +422,14 @@ class DistributionHelper():
         ls_copy = [line.strip('\n') for line in stdout]
         sftp = ssh_session.open_sftp()
         for val in ls_copy:
-                    size_src = SSHHelper.get_size_on_remote(ssh_session, path.join(path_dst, val))
-                    print('left to copy: ',len(ls_copy[ls_copy.index(val):]))
-                    SSHHelper.download_files_from_server(ssh_session, remote_path, local_destination)
-                    size_dst = path.getsize(path_src+'/'+val)
-                    if size_dst == size_src:
-                        print('        copy ok')
-                        #SSHHelper.remove_on_remote(path.join(path_dst, val))
-                    else:
-                        print('copy error, retrying ...')
+            size_src = SSHHelper.get_size_on_remote(ssh_session, path.join(path_dst, val))
+            print('left to copy: ',len(ls_copy[ls_copy.index(val):]))
+            SSHHelper.download_files_from_server(ssh_session, remote_path, local_destination)
+            size_dst = path.getsize(path_src+'/'+val)
+            if size_dst == size_src:
+                print('        copy ok')
+                #SSHHelper.remove_on_remote(path.join(path_dst, val))
+            else:
+                print('copy error, retrying ...')
         ssh_session.close()
 
-
-# if __name__ == "__main__":
-    # distribution = DistributionHelper(projects,
-                                               # locations)
-    # #DistributionHelper.is_setup_vars_folders(is_nimb_fs_stats=True, is_nimb_classification=True, is_freesurfer_nim=True)
-    # user_name,user_password = DistributionHelper.get_username_password_cluster_from_sqlite()
-    # cluster = "cedar.computecanada.ca"
-    # subjects = DistributionHelper.get_list_subject_to_be_processed_remote_version("/Users/van/Downloads/tmp/fs","/home/hvt/tmp2",cluster,user_name,user_password)
-    # print(subjects)
-    # ssh = SSHHelper.getSSHSession(cluster, user_name, user_password)
-    # # download data from remote
-    # download_files_from_server(ssh,SOURCE_SUBJECTS_DIR,PROCESSED_FS_DIR)
-    # ssh.close()
-
-    # # send data
-    # DistributionHelper.send_subject_data(config_file=path.join(credentials_home, "projects.json"))
-
-if __name__ == "__main__":
-    d = DistributionHelper()
-    if d.is_setup_vars_folders(is_freesurfer_nim=True, is_nimb_fs_stats=True, is_nimb_classification=False): # True
-        pass

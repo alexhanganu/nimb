@@ -43,8 +43,7 @@ class NIMB(object):
         self.NIMB_HOME    = self.vars_local['NIMB_PATHS']['NIMB_HOME']
         self.NIMB_tmp     = self.vars_local['NIMB_PATHS']['NIMB_tmp']
         self.fix_spaces   = params.fix_spaces
-        Log(self.NIMB_tmp, self.vars_local['FREESURFER']['freesurfer_version'])
-        self.logger = logging.getLogger(__name__)
+        self.logger       = Log(self.NIMB_tmp, self.vars_local['FREESURFER']['freesurfer_version']).logger
         self.schedule     = Scheduler(self.vars_local)
         if self.process == 'fs-get-stats' or self.process == 'fs-glm' or self.process == 'run-stats':
             from setup.get_vars import SetProject
