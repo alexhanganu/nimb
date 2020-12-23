@@ -6,20 +6,9 @@ processes_recon   = ["autorecon1",
                      "autorecon3",
                      "qcache"]
 processes_subcort = ["brstem","hip","tha"]
-
 process_order = ["registration",]+processes_recon+processes_subcort
 
-GLM_measurements = {'thickness':'th',
-                    'area'     :'ar',
-                    'volume'   :'vol'}
-GLM_sim_fwhm4csd = {'thickness': {'lh': '15',
-                                  'rh': '15'},
-                    'area'     : {'lh': '24',
-                                  'rh': '25'},
-                    'volume'   : {'lh': '16',
-                                  'rh': '16'},
-                    }
-GLM_sim_directions = ['pos', 'neg']
+hemi = ['lh','rh']
 
 suggested_times = {
         'registration':'01:00:00',
@@ -42,13 +31,19 @@ IsRunning_files = ['IsRunning.lh+rh',
                    'IsRunningHPsubT1.lh+rh',
                    'IsRunningThalamicNuclei_mainFreeSurferT1']
 
+# must check for all files: https://surfer.nmr.mgh.harvard.edu/fswiki/ReconAllDevTable
 f_autorecon = {
         1:['mri/nu.mgz','mri/orig.mgz','mri/brainmask.mgz',],
         2:['stats/lh.curv.stats','stats/rh.curv.stats',],
         3:['stats/aseg.stats','stats/wmparc.stats',]
         }
-
-hemi = ['lh','rh']
+files_created = {
+    'recon-all' : ['mri/wmparc.mgz',],
+    'autorecon1': ['mri/nu.mgz','mri/orig.mgz','mri/brainmask.mgz',],
+    'autorecon2': ['stats/lh.curv.stats','stats/rh.curv.stats',],
+    'autorecon3': ['stats/aseg.stats','stats/wmparc.stats',],
+    'qcache'    : ['surf/rh.w-g.pct.mgh.fsaverage.mgh', 'surf/lh.thickness.fwhm10.fsaverage.mgh']
+}
 
 class FreeSurferVersion:
     def __init__(self, freesurfer_version):
@@ -99,14 +94,6 @@ class FilePerFSVersion:
         file = '{}{}'.format(self.hemi[hemi], self.stats_files[dir][process][self.fs_ver])
         return path.join(dir, file)
 
-# must check for all files: https://surfer.nmr.mgh.harvard.edu/fswiki/ReconAllDevTable
-files_created = {
-    'recon-all' : ['mri/wmparc.mgz',],
-    'autorecon1': ['mri/nu.mgz','mri/orig.mgz','mri/brainmask.mgz',],
-    'autorecon2': ['stats/lh.curv.stats','stats/rh.curv.stats',],
-    'autorecon3': ['stats/aseg.stats','stats/wmparc.stats',],
-    'qcache'    : ['surf/rh.w-g.pct.mgh.fsaverage.mgh', 'surf/lh.thickness.fwhm10.fsaverage.mgh']
-}
 
 class GLMVars:
     def __init__(self, proj_vars):
@@ -114,3 +101,27 @@ class GLMVars:
 
     def f_ids_processed(self):
         return path.join(self.proj_vars['materials_DIR'][1], 'f_ids.json')
+
+
+class FSGLMParams:
+    def __init__(self, path_GLMdir):
+        self.GLM_sim_fwhm4csd = {'thickness': {'lh': '15',
+                                          'rh': '15'},
+                            'area'     : {'lh': '24',
+                                          'rh': '25'},
+                            'volume'   : {'lh': '16',
+                                          'rh': '16'},
+                    }
+        self.mcz_sim_direction = ['pos', 'neg',]
+
+        self.GLM_MCz_meas_codes = {'thickness':'th',
+                                      'area':'ar',
+                                      'volume':'vol'}
+        self.PATHglm_glm           = path.join(path_GLMdir, 'glm')
+        self.subjects_per_group    = path.join(path_GLMdir, 'subjects_per_group.json')
+        self.files_for_glm         = path.join(path_GLMdir, 'files_for_glm.json')
+        self.PATH_img              = path.join(path_GLMdir, 'images')
+        self.sig_fdr_json          = path.join(self.PATH_img, 'sig_fdr.json')
+        self.sig_mc_json           = path.join(self.PATH_img, 'sig_mc.json')
+        self.PATHglm_results       = path.join(path_GLMdir, 'results')
+        self.err_mris_preproc_file = path.join(self.PATHglm_results,'error_mris_preproc.json')

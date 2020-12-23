@@ -6,6 +6,7 @@ from os import system, listdir, makedirs, path
 import linecache, sys
 import json
 import shutil
+from fs_definitions import hemi, FSGLMParams
 
 
 class PerformGLM():
@@ -17,29 +18,36 @@ class PerformGLM():
         self.FREESURFER_HOME       = FREESURFER_HOME
         self.sig_fdr_thresh        = sig_fdr_thresh
         self.mc_cache_thresh       = GLM_MCz_thresh
+        param                      = FSGLMParams(PATHglm)
 
-        self.PATHglm_glm           = path.join(self.PATHglm, 'glm/')
-        self.PATH_img              = path.join(self.PATHglm, 'images')
-        self.PATHglm_results       = path.join(self.PATHglm, 'results')
-        self.sig_fdr_json          = path.join(self.PATHglm, 'sig_fdr.json')
-        self.sig_mc_json           = path.join(self.PATHglm, 'sig_mc.json')
-        self.err_mris_preproc_file = path.join(self.PATHglm_results,'error_mris_preproc.json')
+        self.PATHglm_glm           = param.PATHglm_glm
+        self.PATH_img              = param.PATH_img
+        self.PATHglm_results       = param.PATHglm_results
+        self.sig_fdr_json          = param.sig_fdr_json
+        self.sig_mc_json           = param.sig_mc_json
+        self.err_mris_preproc_file = param.err_mris_preproc_file
+        self.mcz_sim_direction     = param.mcz_sim_direction
+        self.hemispheres           = hemi
+        self.GLM_sim_fwhm4csd      = param.GLM_sim_fwhm4csd
+        self.GLM_MCz_meas_codes    = param.GLM_MCz_meas_codes
+        self.cluster_stats         = path.join(self.PATHglm_results,'cluster_stats.log')
+        self.sig_contrasts         = path.join(self.PATHglm_results,'sig_contrasts.log')
 
         for subdir in (self.PATHglm_glm, self.PATHglm_results, self.PATH_img):
             if not path.isdir(subdir): makedirs(subdir)
         self.sig_fdr_data = dict()
         self.sig_mc_data  = dict()
-        self.err_preproc = list()
+        self.err_preproc  = list()
 
         try:
-            with open(path.join(self.PATHglm, 'subjects_per_group.json'),'r') as jf:
+            with open(param.subjects_per_group,'r') as jf:
                 subjects_per_group = json.load(jf)
                 print('subjects per group imported')
         except Exception as e:
             print(e)
             sys.exit('subjects per group is missing')
         try:
-            with open(path.join(self.PATHglm, 'files_for_glm.json'),'r') as jf:
+            with open(param.files_for_glm,'r') as jf:
                 files_glm = json.load(jf)
                 print('files for glm imported')
         except ImportError as e:
@@ -71,7 +79,6 @@ class PerformGLM():
 
     def run_loop(self, files_glm, measurements, thresholds):
         print('performing GLM analysis using mri_glmfit')
-        hemispheres = ['lh','rh']
         for fsgd_type in files_glm:
             for fsgd_file in files_glm[fsgd_type]['fsgd']:
                 fsgd_f_unix = path.join(self.PATHglm,'fsgd',fsgd_file.replace('.fsgd','')+'_unix.fsgd')
@@ -100,7 +107,7 @@ class PerformGLM():
                         self.run_mri_glmfit(mgh_f, fsgd_f_unix, gd2mtx, glmdir,
                                             hemi, contrast_file)
                         if self.check_maxvox(glmdir, fsgd_type_contrast):
-                            self.log_contrasts_with_significance(glmdir, fsgd_type_contrast)
+                            self.log_contrasts_with_significance(analysis_name, fsgd_type_contrast)
                             self.prepare_for_image_extraction_fdr(hemi, glmdir, analysis_name,
                                                                   fsgd_type_contrast)
                         self.run_mri_surfcluster(glmdir, fsgd_type_contrast,
@@ -127,16 +134,9 @@ class PerformGLM():
 
     def run_mri_surfcluster(self, glmdir, fsgd_type_contrast, hemi,
                                   contrast, analysis_name, meas, explanation):
-        sim_direction = ['pos', 'neg',]
         path_2contrast = path.join(glmdir, fsgd_type_contrast)
-        GLM_sim_fwhm4csd = {'thickness': {'lh': '15','rh': '15'},
-                            'area': {'lh': '24','rh': '25'},
-                            'volume': {'lh': '16','rh': '16'},}
-        GLM_MCz_meas_codes = {'thickness':'th',
-                              'area':'ar',
-                              'volume':'vol'}
-        mcz_meas = GLM_MCz_meas_codes[meas]
-        for direction in sim_direction:
+        mcz_meas = self.GLM_MCz_meas_codes[meas]
+        for direction in self.mcz_sim_direction:
             mcz_header  = 'mc-z.{}.{}{}'.format(direction, mcz_meas, str(self.mc_cache_thresh))
             sig_f       = path.join(path_2contrast,'sig.mgh')
             cwsig_mc_f  = path.join(path_2contrast,'{}.sig.cluster.mgh'.format(mcz_header))
@@ -147,7 +147,7 @@ class PerformGLM():
             csdpdf_mc_f = path.join(path_2contrast,'{}.pdf.dat'.format(mcz_header))
             if meas != 'curv':
                 path_2fsavg = path.join(self.FREESURFER_HOME, 'average', 'mult-comp-cor', 'fsaverage')
-                fwhm = 'fwhm{}'.format(GLM_sim_fwhm4csd[meas][hemi])
+                fwhm = 'fwhm{}'.format(self.GLM_sim_fwhm4csd[meas][hemi])
                 th   = 'th{}'.format(str(self.mc_cache_thresh))
                 csd_mc_f = path.join(path_2fsavg, hemi, 'cortex', fwhm, direction, th, 'mc-z.csd')
                 cmd_header = 'mri_surfcluster --in {} --csd {}'.format(sig_f, csd_mc_f)
@@ -186,7 +186,7 @@ class PerformGLM():
 
     def cluster_stats_to_file(self, analysis_name, sum_mc_f, contrast,
                                     direction, explanation):
-        file = path.join(self.PATHglm_results,'cluster_stats.log')
+        file = self.cluster_stats
         if not path.isfile(file):
             open(file,'w').close()
         ls = list()
@@ -199,12 +199,12 @@ class PerformGLM():
                 f.write(value+'\n')
             f.write('\n')
 
-    def log_contrasts_with_significance(self, glmdir, fsgd_type_contrast):
-        file = path.join(self.PATHglm_results,'sig_contrasts.log')
+    def log_contrasts_with_significance(self, analysis_name, fsgd_type_contrast):
+        file = self.sig_contrasts
         if not path.isfile(file):
             open(file,'w').close()
         with open(file, 'a') as f:
-            f.write(path.join(glmdir, fsgd_type_contrast)+'\n')
+            f.write('{}/{}\n'.format(analysis_name, fsgd_type_contrast))
 
     def prepare_for_image_extraction_fdr(self, hemi, glmdir, analysis_name, fsgd_type_contrast):
         '''copying sig.mgh file from the contrasts to the image/contrast folder
@@ -257,18 +257,17 @@ class PerformGLM():
             makedirs(glm_image_dir)
         shutil.copy(cwsig_mc_f, glm_image_dir)
         shutil.copy(oannot_mc_f, glm_image_dir)
-        cwsig_mc_f_copy  = path.join(glm_image_dir, cwsig_mc_f.replace(path_2contrast, ''))
-        oannot_mc_f_copy = path.join(glm_image_dir, oannot_mc_f.replace(path_2contrast, ''))
+        cwsig_mc_f_copy  = path.join(analysis_name, fsgd_type_contrast, cwsig_mc_f.replace(path_2contrast+'/', ''))
+        oannot_mc_f_copy = path.join(analysis_name, fsgd_type_contrast, oannot_mc_f.replace(path_2contrast+'/', ''))
 
         sig_mc_count = len(self.sig_mc_data.keys())+1
         self.sig_mc_data[sig_mc_count] = {
-                                'hemi'           : hemi,
-                                'analysis_name'  : analysis_name,
-                                'contrast'       : contrast,
-                                'direction'      : direction,
-                                'cwsig_mc_f'     : cwsig_mc_f_copy,
-                                'oannot_mc_f'    : oannot_mc_f_copy,
-                                'mc_cache_thresh': self.mc_cache_thresh}
+                                'hemi'              : hemi,
+                                'analysis_name'     : analysis_name,
+                                'contrast'          : contrast,
+                                'direction'         : direction,
+                                'cwsig_mc_f'        : cwsig_mc_f_copy,
+                                'oannot_mc_f'       : oannot_mc_f_copy}
 
 
 def get_parameters(projects, vars_local):
