@@ -143,8 +143,15 @@ class NIMB(object):
                     cmd = '{} fs_glm_runglm.py -project {} -subjects_dir {}'.format(python_run_cmd, self.project, SUBJECTS_DIR)
                     cd_cmd = 'cd {}'.format(path.join(self.NIMB_HOME, 'processing', 'freesurfer'))
                     schedule_fsglm.submit_4_processing(cmd, 'fs_glm','run_glm', cd_cmd)
-
         if self.process == 'fs-glm-image':
+            if not "export_screen" in self.vars_local['FREESURFER']:
+                self.logger.info("PLEASE check that you can export your screen or you can run screen-based applications. \
+                                    This is necessary for Freeview and Tksurfer. \
+                                    Check the variable: export_screen in file {}".format(
+                                        "credentials_path.py/nimb/local.json"))
+            elif self.vars_local['FREESURFER']["export_screen"] == 0:
+                self.logger.info("Current environment is not ready to export screen. Please define a compute where the screen can \
+                                    be used for FreeSurfer Freeview and tksurfer")
             if DistributionReady(self.all_vars, self.project_vars).fs_ready():
                 self.logger.info('before running the script, remember to source $FREESURFER_HOME')
                 cmd = '{} fs_glm_extract_images.py -project {}'.format(self.vars_local['PROCESSING']["python3_run_cmd"], self.project)

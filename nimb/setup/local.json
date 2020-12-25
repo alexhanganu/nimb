@@ -46,7 +46,8 @@
     "GLM_thresholds"          : [10],
     "GLM_MCz_cache"           : 13,
     "freesurfer_version"      : "7.1.1",
-    "freesurfer_license"      : ["email", "00000", " *ABCDEFGHIJKL", " ABCDEFGHIJKLM"]
+    "freesurfer_license"      : ["email", "00000", " *ABCDEFGHIJKL", " ABCDEFGHIJKLM"],
+    "export_screen"           : 0
      },
 "EXPLANATION": {
     "user"                    : "username to access the remote computer. Password will be asked by nimb and stored in sqlite",
@@ -93,6 +94,7 @@
     "GLM_thresholds"          : "threshold levels for smoothing in mm, used for FreeSurfer GLM analysis: 5,10,15,20,25",
     "GLM_MCz_cache"           : "level of FreeSurfer GLM MCZ simulation threshold 13 equals to p:0.05",
     "freesurfer_version"      : "default is 7 (for 7.1.1) but pipeline should also work with versions 6 and 5",
-    "freesurfer_license"      : "license of freesurfer"
+    "freesurfer_license"      : "license of freesurfer",
+    "export_screen"           : "can the screen be vewed/ exported ? This is necessary for fs-glm-images in order to extract glm images with freeview and tksurfer; 1= Yes, 0= No"
    }
 }
