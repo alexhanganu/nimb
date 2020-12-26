@@ -55,14 +55,14 @@ class DistributionReady():
             ErrorMessages.error_fsready()
             ready = False
 
-        # mini_conda_path = self.locations['local']['NIMB_PATHS']['miniconda_home']
-        # if not is_miniconda_installed():
+        conda_path = self.locations['local']['NIMB_PATHS']['conda_home']
+        if not is_miniconda_installed(conda_path):
             # # if has permission to install
-            # if not is_writable_directory(mini_conda_path):
+            # if not is_writable_directory(conda_path):
                 # self.logger.fatal("miniconda path is not writable. Check the permission.")
                 # return False
             # # true: install setup_minicoda.py
-            # setup_miniconda(mini_conda_path)
+            setup_miniconda(conda_path)
         # else:
             # for module in self.module_list:
                 # if not is_conda_module_installed(module):
@@ -105,7 +105,7 @@ class DistributionReady():
         install miniconda and require library
         :return:
         """
-        setup_miniconda(self.locations['local']['NIMB_PATHS']['miniconda_home'])
+        setup_miniconda(self.locations['local']['NIMB_PATHS']['conda_home'])
         
 
     def verify_paths(self):

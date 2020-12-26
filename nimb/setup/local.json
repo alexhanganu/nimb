@@ -11,7 +11,7 @@
     "NIMB_PROCESSED_FS"       : "~/nimb_tmp/nimb_processed_fs",
     "NIMB_PROCESSED_FS_error" : "~/nimb_tmp/nimb_processed_fs_error",
     "file_ids_processed"      : "f_ids.json",
-    "miniconda_home"          : "~/miniconda3",
+    "conda_home"              : "~/conda",
     "time_format"             : "%Y%m%d_%H%M"
               },
 "PROCESSING": {

@@ -139,7 +139,7 @@ class NIMB(object):
                     self.vars_local['PROCESSING']['processing_env']  = "tmux"
                     schedule_fsglm = Scheduler(self.vars_local)
                     self.logger.info('CHECK!! that pandas, xlrd and pathlib are installed in the python version used for the analysis. \n CHECK!! that all required variables for the GLM analysis are defined in the credentials_path/projects.py -> {}'.format(self.project))
-                    python_run_cmd = path.join(self.vars_local["NIMB_PATHS"]["miniconda_home"], 'bin', 'python3.7')
+                    python_run_cmd = path.join(self.vars_local["NIMB_PATHS"]["conda_home"], 'bin', 'python3.7')
                     cmd = '{} fs_glm_runglm.py -project {} -subjects_dir {}'.format(python_run_cmd, self.project, SUBJECTS_DIR)
                     cd_cmd = 'cd {}'.format(path.join(self.NIMB_HOME, 'processing', 'freesurfer'))
                     schedule_fsglm.submit_4_processing(cmd, 'fs_glm','run_glm', cd_cmd)

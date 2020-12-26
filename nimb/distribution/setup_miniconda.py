@@ -34,30 +34,30 @@ def is_command_return_okay(command):
         return True
     return False
 
-def setup_miniconda(miniconda_home):
+def setup_miniconda(conda_home):
     """
     :param miniconda_home: it is the prefix of miniconda, for example /users/test/demo, it then
     creates the miniconda3 folder like this   /users/test/demo/miniconda3
     :return:
     """
     # if any system() return non-zero number, quit the application and raise error?
-    miniconda_home = expanduser(miniconda_home)
-    if not path.exists(miniconda_home):
-        makedirs(miniconda_home)
+    conda_home = expanduser(conda_home)
+    if not path.exists(conda_home):
+        makedirs(conda_home)
 
-    chdir(path.join(miniconda_home, '..'))
+    chdir(path.join(conda_home, '..'))
     is_command_ran_sucessfully(
         'curl {} -o miniconda3.sh'.format(install_miniconda3))
     system('chmod +x miniconda3.sh')
-    system('./miniconda3.sh -b -p ' + path.join(miniconda_home,"miniconda3"))
+    system('./miniconda3.sh -b -p ' + path.join(conda_home,"miniconda3"))
     # remove('miniconda3.sh')
-    cmd = 'export PATH=' + path.join(miniconda_home,'miniconda3') + '/bin:$PATH >> $HOME/.bashrc'
-    cmd = """echo  'export PATH="{0}/bin:$PATH"' >> $HOME/.bashrc""".format(path.join(miniconda_home,'miniconda3'))
+    cmd = 'export PATH=' + path.join(conda_home,'miniconda3') + '/bin:$PATH >> $HOME/.bashrc'
+    cmd = """echo  'export PATH="{0}/bin:$PATH"' >> $HOME/.bashrc""".format(path.join(conda_home,'miniconda3'))
     print(cmd)
     print("*"*10)
     system(cmd)
     # make sure install python 3.7
-    conda_bin = path.join(miniconda_home,'miniconda3/bin/conda')
+    conda_bin = path.join(conda_home,'miniconda3/bin/conda')
     system(f'{conda_bin} install -y python=3.7')
     system(f'{conda_bin} init')
     system(f'{conda_bin} update -y conda')
@@ -95,7 +95,7 @@ def check_that_modules_are_installed():
     print('checking that modules are installed')
 
 
-def is_miniconda_installed():
+def is_miniconda_installed(conda_home):
     """
     check if miniconda/anaconda is installed in the system:
         it will check the existing of conda command
@@ -104,12 +104,15 @@ def is_miniconda_installed():
         - True: miniconda is installed
         - False otherwise
     """
-    command = "source $HOME/.bashrc > dev/null; command -v conda"  # check if conand exisit in the path
-    out = subprocess.getoutput(command)
-    # print(command, out)
-    if len(out) < 1:
+    if path.exists(conda_home):
+        command = "source $HOME/.bashrc > dev/null; command -v conda"  # check if conda exists in the path
+        out = subprocess.getoutput(command)
+        # print(command, out)
+        if len(out) < 1:
+            return False
+        return True
+    else:
         return False
-    return True
 
 
 def is_conda_module_installed(module_name):
@@ -122,5 +125,5 @@ def is_conda_module_installed(module_name):
 
 
 if __name__ == "__main__":
-    miniconda_home = NIMB_HOME = "~/tmp1"
-    setup_miniconda(miniconda_home)
+    conda_home = NIMB_HOME = "~/tmp1"
+    setup_miniconda(conda_home)
