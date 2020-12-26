@@ -16,7 +16,9 @@ try:
     import openpyxl
     from pathlib import Path
 except ImportError as e:
-    print('could not import modules: pandas or xlrd or openpyxl')
+    print('could not import modules: pandas or xlrd or openpyxl.\
+        try to install them using pip, or use the miniconda run with the command located \
+        in credentials_path.py/local.json -> miniconda_python_run')
     sys.exit(e)
 
 class ChkFSQcache:
