@@ -22,8 +22,6 @@ class DistributionReady():
     This file sole for the READY command.
     """
     local_json = "~/nimb/local.json"
-    module_list = ["pandas", "numpy", "xlrd", "xlsxwriter", "paramiko", "dcm2niix", "dcm2bids", "dipy"]
-    #modules = open('requirements.txt').readlines()
     def __init__(self, all_vars, proj_vars):
 
         self.credentials_home = all_vars.credentials_home # NIMB_HOME/credentials_paths.py
@@ -64,7 +62,7 @@ class DistributionReady():
             # # true: install setup_minicoda.py
             setup_miniconda(conda_path)
         # else:
-            # for module in self.module_list:
+            # for module in self.get_modules():
                 # if not is_conda_module_installed(module):
                     # os.system(
                         # "conda install -y dcm2niix dcm2bids pandas numpy xlrd xlsxwriter paramiko dipy -c conda-forge -c default")
@@ -76,6 +74,17 @@ class DistributionReady():
         # if not is_ENV_defined("$FREESURFER_HOME"):
             # self.logger.fatal("$FREESURFER_HOME is not defined")
             # return False
+
+    def get_modules(self):
+        modules = list()
+        requirements = os.path.join(self.locations["local"]["NIMB_PATHS"]["NIMB_HOME"], '../requirements.txt')
+        for val in open(requirements).readlines():
+            if '>=' in val:
+                module = val[:val.find('>')]
+            elif '==' in val:
+                module = val[:val.find('=')]
+            modules.append(module)
+        return modules
 
     def get_user_paths_from_terminal(self):
         """
