@@ -5,6 +5,7 @@ from distribution.utilities import ErrorMessages, makedir_ifnot_exist
 from distribution.setup_miniconda import setup_miniconda
 from distribution.setup_freesurfer import SETUP_FREESURFER
 from distribution.logger import Log
+from setup.interminal_setup import get_yes_no
 
 from setup import interminal_setup
 try:
@@ -236,7 +237,8 @@ class DistributionHelper():
                                                     FS_GLM_dir).chk_if_subjects_ready()
             if miss_ls:
                 print('some subjects are missing, nimb must extract their surf and label folders')
-                self.fs_glm_prep_extract_dirs(miss_ls)
+                if get_yes_no('do you want to prepare the missing subjects for glm analysis? (y/n)') == 1:
+                    self.fs_glm_prep_extract_dirs(miss_ls)
                 return False
             else:
                 print('all ids are present in the analysis folder, ready for glm analysis')

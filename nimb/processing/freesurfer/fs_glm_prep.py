@@ -82,7 +82,7 @@ class CheckIfReady4GLM():
             if self.miss.keys():
                 ids_ok = {i:self.ids[i] for i in self.ids if i not in self.miss.keys()}
                 print('{} subjects are missing and {} are present in the processing folder'.format(len(self.miss.keys()), len(ids_ok.keys())))
-                if get_yes_no('do you want to do glm analysis with current subjects (yes) or do you want to try and prepare the remaining subjects for glm (no) ? (y/n)') == 1:
+                if get_yes_no('do you want to do glm analysis with current subjects ? (y/n)') == 1:
                     self.create_glm_df([i for i in self.ids if self.FS_SUBJECTS_DIR in self.ids[i]])
                     PrepareForGLM(self.FS_SUBJECTS_DIR,
                                     self.FS_GLM_dir,
