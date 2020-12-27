@@ -108,6 +108,8 @@ class ErrorMessages:
     @staticmethod
     def error_bash_command(command):
         logger.fatal("ERROR: {command} is fail".format(command=command))
+    def error_conda():
+        logger.info("conda is missing some modules")
 
 if __name__ == "__main__":
     # x = is_command_ran_sucessfully("which python")

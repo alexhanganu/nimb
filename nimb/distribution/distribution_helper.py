@@ -228,7 +228,7 @@ class DistributionHelper():
         f_ids_processed = path.join(FS_GLM_dir, f_ids_processed_name)
         if path.exists(f_GLM_group) and path.exists(f_ids_processed):
             from processing.freesurfer.fs_glm_prep import CheckIfReady4GLM
-            SUBJECTS_DIR, miss_ls = CheckIfReady4GLM(self.locations["local"]['NIMB_PATHS'], 
+            ready, miss_ls = CheckIfReady4GLM(self.locations["local"]['NIMB_PATHS'], 
                                                     self.locations["local"]['FREESURFER'], 
                                                     self.proj_vars, 
                                                     f_ids_processed, 
@@ -236,31 +236,38 @@ class DistributionHelper():
                                                     FS_GLM_dir).chk_if_subjects_ready()
             if miss_ls:
                 print('some subjects are missing, nimb must extract their surf and label folders')
-#                self.fs_glm_prep_extract_dirs(miss_ls)
-                return False
-            elif not SUBJECTS_DIR:
-                print('SUBJECTS_DIR cannot be defined')
+                self.fs_glm_prep_extract_dirs(miss_ls)
                 return False
             else:
                 print('all ids are present in the analysis folder, ready for glm analysis')
                 from distribution.distribution_ready import DistributionReady
                 DistributionReady(self.all_vars, self.proj_vars).fs_chk_fsaverage_ready(SUBJECTS_DIR)
-                return SUBJECTS_DIR, f_GLM_group
+                return f_GLM_group
         else:
             print('GLM files are missing: {}, {}'.format(f_GLM_group, f_ids_processed))
             return False
 
     def fs_glm_prep_extract_dirs(self, ls):
+        SUBJECTS_DIR = self.locations["local"]['FREESURFER']['FS_SUBJECTS_DIR']
+        from .manage_archive import ZipArchiveManagement
         if self.proj_vars['materials_DIR'][0] == 'local':
-            dirs2extract = ['label','surf',]
+            dirs2extract = ['label','surf','stats']
             NIMB_PROCESSED_FS = path.join(self.locations["local"]['NIMB_PATHS']['NIMB_PROCESSED_FS'])
-            not_exist = [i for i in ls if not path.exists(i)]
-            if not_exist:
-                self.logger.info('{} subject paths do not exist'.format(len(not_exist)))
-                ls = [i for i in ls if path.exists(i)]
-            self.logger.info('Must extract folders {} for {} subjects, to destination {}'.format(dirs2extract, len(ls), NIMB_PROCESSED_FS))
-            self.extract_dirs([i for i in ls if '.zip' in i],
-                              NIMB_PROCESSED_FS, dirs2extract)
+            for sub in ls[:1]:
+                zip_file_path = path.join(NIMB_PROCESSED_FS, '{}.zip'.format(sub))
+                if path.exists(zip_file_path):
+                    extract = True
+                elif self.proj_vars['PROCESSED_FS_DIR'][0] == 'local':
+                    zip_file_path = path.join(self.proj_vars['PROCESSED_FS_DIR'][1], '{}.zip'.format(sub))
+                    if path.exists(zip_file_path):
+                        extract = True
+                if extract:
+                    self.logger.info('Extracting folders {} for subject {}, to destination {}'.format(dirs2extract, sub, SUBJECTS_DIR))
+                    ZipArchiveManagement(zip_file_path, path2xtrct = SUBJECTS_DIR,
+                                        path_err = self.NIMB_tmp, dirs2xtrct = dirs2extract,
+                                        log=True)
+                else:
+                    self.logger.info('{} subject missing from {}'.format(sub, NIMB_PROCESSED_FS))
 
     def run_processing_on_cluster_2(self):
         '''

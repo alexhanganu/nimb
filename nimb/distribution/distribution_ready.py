@@ -53,7 +53,6 @@ class DistributionReady():
         else:
             ErrorMessages.error_fsready()
             ready = False
-
         conda_home = self.locations['local']['NIMB_PATHS']['conda_home']
         if not is_miniconda_installed(conda_home):
             # # if has permission to install
@@ -62,8 +61,11 @@ class DistributionReady():
                 # return False
             # # true: install setup_minicoda.py
             setup_miniconda(conda_home, self.NIMB_HOME)
+        if check_that_modules_are_installed(conda_home, self.NIMB_HOME):
+            print("conda has all modules installes")
         else:
-            check_that_modules_are_installed(conda_home, self.NIMB_HOME)
+            ErrorMessages.error_conda()
+            return False
 
         # # check $FREESURFER_HOME  exists
         # # source home

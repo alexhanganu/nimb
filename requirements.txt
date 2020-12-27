@@ -1,5 +1,3 @@
-glob
-shutil
 pandas==1.1.2
 numpy==1.19.1
 xlrd==1.2.0

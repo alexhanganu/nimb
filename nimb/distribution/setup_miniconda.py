@@ -61,10 +61,12 @@ def setup_miniconda(conda_home, NIMB_HOME):
     system(f'{conda_bin} update -y conda')
     system(f'{conda_bin} config --set report_errors false')
     check_that_modules_are_installed(conda_home, NIMB_HOME)
+    print('FINISHED Installing miniconda3')
 
 def install_conda_module(conda_home, NIMB_HOME, module):
     conda_bin = path.join(conda_home,'miniconda3/bin/conda')
     forge_list = ['dcm2bids', 'dcm2niix', 'dipy', 'nilearn', 'submitit']
+    print('installing module: {}'.format(module))
     if module not in forge_list:
         system(f'{conda_bin} install -y {module}')
         # system(f'{conda_bin} install -y shutil')
@@ -77,6 +79,8 @@ def install_conda_module(conda_home, NIMB_HOME, module):
         # system(f'{conda_bin} install -y paramiko')
         # system(f'{conda_bin} install -y scp')
         # system(f'{conda_bin} install -y prompt_toolkit')
+    elif module == 'xlsxwriter':
+        system(f'{conda_bin} install -y -c conda-forge/label/gcc7 {module}')
     else:
         system(f'{conda_bin} install -y -c conda-forge {module}')
         # system(f'{conda_bin} install -y -c conda-forge dcm2niix')
@@ -85,19 +89,24 @@ def install_conda_module(conda_home, NIMB_HOME, module):
         # system(f'{conda_bin} install -y -c conda-forge submitit')
     # must activate the conda environment before using by sourcing the bash profile. Otherwise, does not work
     system("source $HOME/.bashrc")
-    print(
-        'FINISHED Installing miniconda3')
-
 
 def check_that_modules_are_installed(conda_home, NIMB_HOME):
     print('checking that modules are installed')
+    miss = list()
     for module in get_modules(NIMB_HOME):
         if not is_conda_module_installed(module):
+            miss.append(module)
             install_conda_module(conda_home, NIMB_HOME, module)
+    if miss:
+        print('some modules were not installed in conda. Please run again nimb or try to install manually')
+        return False
+    else:
+        return True
+
 
 def get_modules(NIMB_HOME):
     modules = list()
-    requirements = os.path.join(NIMB_HOME, '../requirements.txt')
+    requirements = path.join(NIMB_HOME, '../requirements.txt')
     for val in open(requirements).readlines():
         if '>=' in val:
             module = val[:val.find('>')]

@@ -9,6 +9,7 @@ import sys
 import json
 import shutil
 import linecache
+from setup.interminal_setup import get_yes_no
 
 try:
     import pandas as pd
@@ -72,85 +73,61 @@ class CheckIfReady4GLM():
         self.ids = self.get_ids_processed()
         if self.ids:
             for _id in self.ids:
-                self.define_subjects_path(_id)
+                if path.exists(path.join(self.FS_SUBJECTS_DIR, _id)):
+                    self.chk_path(_id)
+                else:
+                    print('id is missing {}'.format(_id))
+                    self.add_to_miss(_id, 'id_missing')
             if self.miss.keys():
                 ids_ok = {i:self.ids[i] for i in self.ids if i not in self.miss.keys()}
                 print('{} subjects are missing and {} are present in the processing folder'.format(len(self.miss.keys()), len(ids_ok.keys())))
-                return False, list(self.miss.keys())
-            elif self.defined_path:
-                print(self.defined_path)
-                self.SUBJECTS_DIR = max(self.defined_path, key = self.defined_path.count)
-                print(self.SUBJECTS_DIR)
-                self.create_glm_df([i for i in self.ids if self.SUBJECTS_DIR in self.ids[i]])
-                PrepareForGLM(self.SUBJECTS_DIR,
-                                self.FS_GLM_dir,
-                                self.f_GLM_group, 
-                                self.proj_vars,
-                                self.vars_fs)
-                return self.SUBJECTS_DIR, list()
+                if get_yes_no('do you want to do glm analysis with current subjects (yes) or do you want to try and prepare the remaining subjects for glm (no) ? (y/n)') == 1:
+                    self.create_glm_df([i for i in self.ids if self.FS_SUBJECTS_DIR in self.ids[i]])
+                    PrepareForGLM(self.FS_SUBJECTS_DIR,
+                                    self.FS_GLM_dir,
+                                    self.f_GLM_group, 
+                                    self.proj_vars,
+                                    self.vars_fs)
+                    return True, list()
+                else:
+                    return False, list(self.miss.keys())
+
         else:
             print('no ids found')
             return False, list()
 
-    def chk_path(self, path2chk, _id):
-        files_ok = ChkFSQcache(path2chk, _id, self.vars_fs)
-        if not files_ok:
-            self.miss.update(files_ok)
-            return False
-        else:
-            return True
-
-        # if path.exists(path.join(path2chk, _id, 'surf')) and path.exists(path.join(path2chk, _id, 'label')):
-            # for hemi in ['lh','rh']:
-                # for meas in self.vars_fs["GLM_measurements"]:
-                    # for thresh in self.vars_fs["GLM_thresholds"]:
-                        # file = '{}.{}.fwhm{}.fsaverage.mgh'.format(hemi, meas, str(thresh))
-                        # if not path.exists(path.join(path2chk, _id, 'surf', file)):
-                            # print('    id {} misses file {}'.format(_id, file))
-                            # self.add_to_miss(_id, file)
-        # else:
-            # self.add_to_miss(_id, 'surf label missing')
-        # if _id not in self.miss:
-            # return True
-        # else:
-            # return False
-
-    def define_subjects_path(self, _id):
-        '''it is expected that the BIDS IDs after processing are located in one of the two folders
-            script defines the the folder for analysis
-            checks if subjects are present
+    def chk_path(self, _id):
+        '''it is expected that the BIDS IDs are located in FS_SUBJECTS_DIR
+            script checks if subjects are present
         Args:
             _id: ID of the subject to chk
         Return:
             populates list of missing subjects
             populates dict with ids
-            Folder with Subjects for GLM analysis
         '''
-        self.defined_path = list()
-        path_id_processed = ''
-        for path_subjs in [self.FS_SUBJECTS_DIR, self.NIMB_PROCESSED_FS]:
-            path2chk = path.join(path_subjs, _id)
-            if path.exists(path2chk):
-                path_id_processed = path_subjs
-                break
-        if path_id_processed:
-            if self.chk_path(path_id_processed, _id):
-                self.defined_path.append(path_id_processed)
-                self.ids[_id] = path_id_processed
+        files_ok = ChkFSQcache(self.FS_SUBJECTS_DIR, _id, self.vars_fs)
+        if not files_ok:
+            for file in files_ok:
+                self.add_to_miss(_id, file)
+            return False
         else:
-            print('id is missing {}'.format(_id))
-            self.add_to_miss(_id, 'id_missing')
+            return True
 
     def create_glm_df(self, ls_ids):
         ls_ix_2rm = list()
         self.df['fs_id'] = ''
         for ix in self.df.index:
             src_id = self.df.at[ix, self.proj_vars['id_col']]
-            bids_id = [i for i in self.ids_all if self.ids_all[i]['source'] == src_id][0]
-            self.df.at[ix, 'fs_id'] = bids_id
-            if bids_id not in ls_ids:
+            try:
+                bids_id = [i for i in self.ids_all if self.ids_all[i]['source'] == src_id][0]
+                self.df.at[ix, 'fs_id'] = bids_id
+                if bids_id not in ls_ids:
+                    ls_ix_2rm.append(ix)
+            except Exception as e:
+                print(e)
                 ls_ix_2rm.append(ix)
         self.df_new = self.df.drop(ls_ix_2rm)
+        print('subjects are missing and will be removed from futher analysis: {}'.format(len(ls_ix_2rm)))
         self.df_new.drop(columns=[self.proj_vars['id_col']], inplace=True)
         self.df_new.rename(columns={'fs_id': self.proj_vars['id_col']}, inplace=True)
         self.df_new.to_excel(self.f_GLM_group)
@@ -186,8 +163,11 @@ class CheckIfReady4GLM():
         '''
         if '.csv' in self.f_GLM_group:
             return pd.read_csv(self.f_GLM_group)
-        elif '.xlsx' in self.f_GLM_group or '.xls' in self.f_GLM_group:
+        if self.f_GLM_group.endswith('.xls'):
             return pd.read_excel(self.f_GLM_group)
+        if self.f_GLM_group.endswith('.xlsx'):
+            return pd.read_excel(self.f_GLM_group, engine='openpyxl')
+
 
 
 
