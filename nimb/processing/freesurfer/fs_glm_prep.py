@@ -10,6 +10,7 @@ import json
 import shutil
 import linecache
 from setup.interminal_setup import get_yes_no
+from setup.db_processing import Table
 
 try:
     import pandas as pd
@@ -140,7 +141,7 @@ class CheckIfReady4GLM():
         '''
         print('extracting list of ids')
         self.ids_all = self.read_json(self.f_ids_processed)
-        self.df = self.get_df()
+        self.df = Table().get_df(self.f_GLM_group)
         ids_glm_file = self.df[self.proj_vars['id_col']].tolist()
         return {i: 'path' for i in self.ids_all if self.ids_all[i]['source'] in ids_glm_file}
 
@@ -158,19 +159,6 @@ class CheckIfReady4GLM():
         with open(f, 'r') as jf:
             return json.load(jf)
 
-    def get_df(self):
-        '''reads a csv or an xlsx file
-        '''
-        if '.csv' in self.f_GLM_group:
-            return pd.read_csv(self.f_GLM_group)
-        if self.f_GLM_group.endswith('.xls'):
-            return pd.read_excel(self.f_GLM_group)
-        if self.f_GLM_group.endswith('.xlsx'):
-            return pd.read_excel(self.f_GLM_group, engine='openpyxl')
-
-
-
-
 
 class PrepareForGLM():
 
@@ -187,8 +175,9 @@ class PrepareForGLM():
             shutil.copy(GLM_file_group, path.join(self.PATH_GLM_dir, Path(GLM_file_group).name))
         if not path.isdir(self.PATHfsgd): makedirs(self.PATHfsgd)
         if not path.isdir(self.PATHmtx): makedirs(self.PATHmtx)
+        cols_2use = proj_vars["variables_for_glm"]+[self.id_col, self.group_col]
+        df_groups_clin = Table().get_df_with_columns(GLM_file_group, cols_2use)
 
-        df_groups_clin = self.get_df_for_variables(GLM_file_group, proj_vars["variables_for_glm"])
         self.ids = self.get_ids_ready4glm(SUBJECTS_DIR, df_groups_clin[self.id_col].tolist(), vars_fs)
         d_init = df_groups_clin.to_dict()
         self.d_subjid = {}
@@ -252,19 +241,6 @@ class PrepareForGLM():
         self.make_files_for_glm()
         print('creating qdec fsgd files')
         self.make_qdec_fsgd_g2()
-
-    def get_df_for_variables(self, GLM_file_group, variables):
-        if '.csv' in GLM_file_group:
-            df = pd.read_csv(GLM_file_group)
-        elif '.xlsx' in GLM_file_group or '.xls' in file_group:
-            df = pd.read_excel(GLM_file_group)
-        cols2drop = list()
-        for col in df.columns.tolist():
-            if col not in variables+[self.id_col, self.group_col]:
-                cols2drop.append(col)
-        if cols2drop:
-            df.drop(columns=cols2drop, inplace=True)
-        return df
 
     def get_ids_ready4glm(self, SUBJECTS_DIR, ids, vars_fs):
         miss = {}

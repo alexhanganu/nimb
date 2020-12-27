@@ -1,5 +1,5 @@
 """
-this module contains common commands that use freqently
+this module contains frequently used commands
 """
 
 import os
