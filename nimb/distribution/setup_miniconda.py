@@ -34,7 +34,7 @@ def is_command_return_okay(command):
         return True
     return False
 
-def setup_miniconda(conda_home):
+def setup_miniconda(conda_home, NIMB_HOME):
     """
     :param miniconda_home: it is the prefix of miniconda, for example /users/test/demo, it then
     creates the miniconda3 folder like this   /users/test/demo/miniconda3
@@ -56,44 +56,55 @@ def setup_miniconda(conda_home):
     print(cmd)
     print("*"*10)
     system(cmd)
-    # make sure install python 3.7
-    conda_bin = path.join(conda_home,'miniconda3/bin/conda')
     system(f'{conda_bin} install -y python=3.7')
     system(f'{conda_bin} init')
     system(f'{conda_bin} update -y conda')
     system(f'{conda_bin} config --set report_errors false')
-    system(f'{conda_bin} install -y -c conda-forge dcm2niix')
-    system(f'{conda_bin} install -y -c conda-forge dipy')
-    system(f'{conda_bin} install -y -c conda-forge nilearn')
-    system(f'{conda_bin} install -y -c conda-forge nipype')
-    system(f'{conda_bin} install -y glob')
-    system(f'{conda_bin} install -y shutil')
-    system(f'{conda_bin} install -y pandas')
-    system(f'{conda_bin} install -y numpy')
-    system(f'{conda_bin} install -y scipy')
-    system(f'{conda_bin} install -y xlrd')
-    system(f'{conda_bin} install -y paramiko')
-    system(f'{conda_bin} install -y openpyxl')
-    system(f'{conda_bin} install -y xlsxwriter')
-    system(f'{conda_bin} install -y xlrd')
-    system(f'{conda_bin} install -y -c conda-forge nipy')
-    system(f'{conda_bin} install -y scp')
-    system(f'{conda_bin} install -y prompt_toolkit')
-    system(f'{conda_bin} install -y -c conda-forge PyInquirer')
+    check_that_modules_are_installed(conda_home, NIMB_HOME)
+
+def install_conda_module(conda_home, NIMB_HOME, module):
+    conda_bin = path.join(conda_home,'miniconda3/bin/conda')
+    forge_list = ['dcm2bids', 'dcm2niix', 'dipy', 'nilearn', 'submitit']
+    if module not in forge_list:
+        system(f'{conda_bin} install -y {module}')
+        # system(f'{conda_bin} install -y shutil')
+        # system(f'{conda_bin} install -y pandas')
+        # system(f'{conda_bin} install -y xlrd')
+        # system(f'{conda_bin} install -y xlsxwriter')
+        # system(f'{conda_bin} install -y openpyxl')
+        # system(f'{conda_bin} install -y numpy')
+        # system(f'{conda_bin} install -y scipy')
+        # system(f'{conda_bin} install -y paramiko')
+        # system(f'{conda_bin} install -y scp')
+        # system(f'{conda_bin} install -y prompt_toolkit')
+    else:
+        system(f'{conda_bin} install -y -c conda-forge {module}')
+        # system(f'{conda_bin} install -y -c conda-forge dcm2niix')
+        # system(f'{conda_bin} install -y -c conda-forge dipy')
+        # system(f'{conda_bin} install -y -c conda-forge nilearn')
+        # system(f'{conda_bin} install -y -c conda-forge submitit')
     # must activate the conda environment before using by sourcing the bash profile. Otherwise, does not work
     system("source $HOME/.bashrc")
-    try:
-        system(f'{conda_bin} install -y -c conda-forge dcm2bids')
-    except Exception as e:
-        print(e)
     print(
-        'FINISHED Installing miniconda3 with dcm2niix, dcm2bids, pandas, numpy, xlrd, xlsxwriter, paramiko, dipy')
-    # return True
+        'FINISHED Installing miniconda3')
 
 
-def check_that_modules_are_installed():
+def check_that_modules_are_installed(conda_home, NIMB_HOME):
     print('checking that modules are installed')
+    for module in get_modules(NIMB_HOME):
+        if not is_conda_module_installed(module):
+            install_conda_module(conda_home, NIMB_HOME, module)
 
+def get_modules(NIMB_HOME):
+    modules = list()
+    requirements = os.path.join(NIMB_HOME, '../requirements.txt')
+    for val in open(requirements).readlines():
+        if '>=' in val:
+            module = val[:val.find('>')]
+        elif '==' in val:
+            module = val[:val.find('=')]
+        modules.append(module)
+    return modules
 
 def is_miniconda_installed(conda_home):
     """

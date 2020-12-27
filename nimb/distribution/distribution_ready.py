@@ -12,7 +12,8 @@ import os, sys
 import shutil
 from setup.get_vars import Get_Vars
 from distribution.utilities import is_writable_directory, is_ENV_defined
-from distribution.setup_miniconda import setup_miniconda, is_miniconda_installed, is_conda_module_installed
+from distribution.setup_miniconda import (setup_miniconda, is_miniconda_installed,
+                                        is_conda_module_installed, check_that_modules_are_installed)
 from distribution.logger import Log
 from distribution.utilities import ErrorMessages, makedir_ifnot_exist
 from sys import platform
@@ -53,20 +54,16 @@ class DistributionReady():
             ErrorMessages.error_fsready()
             ready = False
 
-        conda_path = self.locations['local']['NIMB_PATHS']['conda_home']
-        if not is_miniconda_installed(conda_path):
+        conda_home = self.locations['local']['NIMB_PATHS']['conda_home']
+        if not is_miniconda_installed(conda_home):
             # # if has permission to install
-            # if not is_writable_directory(conda_path):
+            # if not is_writable_directory(conda_home):
                 # self.logger.fatal("miniconda path is not writable. Check the permission.")
                 # return False
             # # true: install setup_minicoda.py
-            setup_miniconda(conda_path)
-        # else:
-            # for module in self.get_modules():
-                # if not is_conda_module_installed(module):
-                    # os.system(
-                        # "conda install -y dcm2niix dcm2bids pandas numpy xlrd xlsxwriter paramiko dipy -c conda-forge -c default")
-                    # break
+            setup_miniconda(conda_home, self.NIMB_HOME)
+        else:
+            check_that_modules_are_installed(conda_home, self.NIMB_HOME)
 
         # # check $FREESURFER_HOME  exists
         # # source home
@@ -74,17 +71,6 @@ class DistributionReady():
         # if not is_ENV_defined("$FREESURFER_HOME"):
             # self.logger.fatal("$FREESURFER_HOME is not defined")
             # return False
-
-    def get_modules(self):
-        modules = list()
-        requirements = os.path.join(self.locations["local"]["NIMB_PATHS"]["NIMB_HOME"], '../requirements.txt')
-        for val in open(requirements).readlines():
-            if '>=' in val:
-                module = val[:val.find('>')]
-            elif '==' in val:
-                module = val[:val.find('=')]
-            modules.append(module)
-        return modules
 
     def get_user_paths_from_terminal(self):
         """
