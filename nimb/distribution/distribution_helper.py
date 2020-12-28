@@ -212,6 +212,7 @@ class DistributionHelper():
         return self.projects[project][var_name]
 
     def fs_glm_prep(self, FS_GLM_dir):
+        SUBJECTS_DIR = self.locations["local"]['FREESURFER']['FS_SUBJECTS_DIR']
         makedir_ifnot_exist(FS_GLM_dir)
         f_GLM_group_name = self.proj_vars['GLM_file_group']
         f_ids_processed_name = self.locations["local"]["NIMB_PATHS"]['file_ids_processed']
@@ -238,7 +239,7 @@ class DistributionHelper():
             if miss_ls:
                 print('some subjects are missing, nimb must extract their surf and label folders')
                 if get_yes_no('do you want to prepare the missing subjects for glm analysis? (y/n)') == 1:
-                    self.fs_glm_prep_extract_dirs(miss_ls)
+                    self.fs_glm_prep_extract_dirs(miss_ls, SUBJECTS_DIR)
                 return False
             else:
                 print('all ids are present in the analysis folder, ready for glm analysis')
@@ -249,13 +250,12 @@ class DistributionHelper():
             print('GLM files are missing: {}, {}'.format(f_GLM_group, f_ids_processed))
             return False
 
-    def fs_glm_prep_extract_dirs(self, ls):
-        SUBJECTS_DIR = self.locations["local"]['FREESURFER']['FS_SUBJECTS_DIR']
+    def fs_glm_prep_extract_dirs(self, ls, SUBJECTS_DIR):
         from .manage_archive import ZipArchiveManagement
         if self.proj_vars['materials_DIR'][0] == 'local':
             dirs2extract = ['label','surf','stats']
             NIMB_PROCESSED_FS = path.join(self.locations["local"]['NIMB_PATHS']['NIMB_PROCESSED_FS'])
-            for sub in ls[:1]:
+            for sub in ls:
                 zip_file_path = path.join(NIMB_PROCESSED_FS, '{}.zip'.format(sub))
                 if path.exists(zip_file_path):
                     extract = True

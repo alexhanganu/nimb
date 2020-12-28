@@ -72,7 +72,7 @@ class Table:
         return df[df[param_col] == param]
 
     def get_df_with_columns(self, path2file, columns_only):
-        df = get_df(path2file)
+        df = self.get_df(path2file)
         cols2drop = list()
         for col in df.columns.tolist():
             if col not in columns_only:

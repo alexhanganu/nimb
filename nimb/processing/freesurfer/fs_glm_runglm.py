@@ -82,7 +82,7 @@ class PerformGLM():
         for fsgd_type in files_glm:
             for fsgd_file in files_glm[fsgd_type]['fsgd']:
                 fsgd_f_unix = path.join(self.PATHglm,'fsgd',fsgd_file.replace('.fsgd','')+'_unix.fsgd')
-                for hemi in hemispheres:
+                for hemi in self.hemispheres:
                     for meas in measurements:
                         for thresh in thresholds:
                             self.RUN_GLM(fsgd_type, files_glm, fsgd_file,
