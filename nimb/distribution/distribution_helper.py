@@ -4,7 +4,6 @@ from os import system, path, listdir, environ, remove
 from distribution.utilities import ErrorMessages, makedir_ifnot_exist
 from distribution.setup_miniconda import setup_miniconda
 from distribution.setup_freesurfer import SETUP_FREESURFER
-from distribution.logger import Log
 from setup.interminal_setup import get_yes_no
 
 from setup import interminal_setup
@@ -16,7 +15,7 @@ except ImportError:
 
 class DistributionHelper():
 
-    def __init__(self, all_vars, project_vars):
+    def __init__(self, all_vars, project_vars, logger):
 
         self.all_vars         = all_vars
         self.credentials_home = all_vars.credentials_home # NIMB_HOME/credentials_paths.py
@@ -24,7 +23,7 @@ class DistributionHelper():
         self.proj_vars        = project_vars
         self.NIMB_HOME        = self.locations["local"]["NIMB_PATHS"]["NIMB_HOME"]
         self.NIMB_tmp         = self.locations["local"]["NIMB_PATHS"]["NIMB_tmp"]
-        self.logger           = Log(self.NIMB_tmp, self.locations["local"]['FREESURFER']['freesurfer_version']).logger
+        self.logger           = logger
 
         # setup folder
         self.setup_folder = "../setup"
@@ -197,25 +196,13 @@ class DistributionHelper():
                                                                 path.join(self.credentials_home, 'projects.json')))
             return False
 
-    def get_project_vars(self, var_name, project):
-        """
-        get the PROCESSED_FS_DIR
-        :param config_file:
-        :var_name: like PROCESSED_FS_DIR
-        :return: empty string, or values
-        """
-        # PROJECT_DATA
-        if project not in self.projects.keys():
-            print("There is no path for project: {} defined. Please check the file: {}".format(
-                                    project, path.join(self.credentials_home, "projects.json")))
-            return ""
-        return self.projects[project][var_name]
-
     def fs_glm_prep(self, FS_GLM_dir):
-        SUBJECTS_DIR = self.locations["local"]['FREESURFER']['FS_SUBJECTS_DIR']
-        makedir_ifnot_exist(FS_GLM_dir)
-        f_GLM_group_name = self.proj_vars['GLM_file_group']
+        SUBJECTS_DIR         = self.locations["local"]['FREESURFER']['FS_SUBJECTS_DIR']
+        f_GLM_group_name     = self.proj_vars['GLM_file_group']
         f_ids_processed_name = self.locations["local"]["NIMB_PATHS"]['file_ids_processed']
+        glm_folder_per_file  =  path.splitext(f_GLM_group_name)[0].replace('(','').replace(')','')
+        FS_GLM_dir           = path.join(FS_GLM_dir, glm_folder_per_file)
+        makedir_ifnot_exist(FS_GLM_dir)
         location = self.proj_vars['materials_DIR'][0]
         materials_dir_path = self.proj_vars['materials_DIR'][1]
         if location == 'local':
@@ -236,24 +223,27 @@ class DistributionHelper():
                                                     f_ids_processed, 
                                                     f_GLM_group,
                                                     FS_GLM_dir).chk_if_subjects_ready()
+            self.logger.info(f'variables used for GLM are: {self.proj_vars["variables_for_glm"]}')
+            self.logger.info(f'    ID columns is: {self.proj_vars["id_col"]}')
+            self.logger.info(f'    Group column is: {self.proj_vars["group_col"]}')
+            self.logger.info(f'variables EXCLUDED from GLM are: {self.proj_vars["other_params"]}')
+            self.logger.info(f'    for details check: credentials_path/projects.py')
             if miss_ls:
                 print('some subjects are missing, nimb must extract their surf and label folders')
                 if get_yes_no('do you want to prepare the missing subjects for glm analysis? (y/n)') == 1:
-                    self.fs_glm_prep_extract_dirs(miss_ls, SUBJECTS_DIR)
+                    dirs2extract = ['label','surf',]
+                    self.fs_glm_prep_extract_dirs(miss_ls, SUBJECTS_DIR, dirs2extract)
                 return False
             else:
                 print('all ids are present in the analysis folder, ready for glm analysis')
-                from distribution.distribution_ready import DistributionReady
-                DistributionReady(self.all_vars, self.proj_vars).fs_chk_fsaverage_ready(SUBJECTS_DIR)
-                return f_GLM_group
+                return f_GLM_group, FS_GLM_dir
         else:
             print('GLM files are missing: {}, {}'.format(f_GLM_group, f_ids_processed))
             return False
 
-    def fs_glm_prep_extract_dirs(self, ls, SUBJECTS_DIR):
+    def fs_glm_prep_extract_dirs(self, ls, SUBJECTS_DIR, dirs2extract):
         from .manage_archive import ZipArchiveManagement
         if self.proj_vars['materials_DIR'][0] == 'local':
-            dirs2extract = ['label','surf','stats']
             NIMB_PROCESSED_FS = path.join(self.locations["local"]['NIMB_PATHS']['NIMB_PROCESSED_FS'])
             for sub in ls:
                 zip_file_path = path.join(NIMB_PROCESSED_FS, '{}.zip'.format(sub))
@@ -442,3 +432,18 @@ class DistributionHelper():
                 print('copy error, retrying ...')
         ssh_session.close()
 
+
+
+    # def get_project_vars(self, var_name, project):
+    #     """
+    #     get the PROCESSED_FS_DIR
+    #     :param config_file:
+    #     :var_name: like PROCESSED_FS_DIR
+    #     :return: empty string, or values
+    #     """
+    #     # PROJECT_DATA
+    #     if project not in self.projects.keys():
+    #         print("There is no path for project: {} defined. Please check the file: {}".format(
+    #                                 project, path.join(self.credentials_home, "projects.json")))
+    #         return ""
+    #     return self.projects[project][var_name]

@@ -3,7 +3,7 @@
 # last update: 2020-08-21
 # script intends to work specifically with pandas on the excel and csv files
 
-
+import sys
 try:
     import pandas as pd
     import xlrd

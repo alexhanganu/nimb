@@ -6,6 +6,7 @@ import json
 from .get_username import _get_username
 from .get_credentials_home import _get_credentials_home
 from .interminal_setup import get_userdefined_paths, get_yes_no, get_FS_license
+from distribution.utilities import load_json, save_json
 
 class SetProject():
     '''
@@ -45,21 +46,27 @@ class Get_Vars():
     def __init__(self):
 
         self.credentials_home = _get_credentials_home()
-        print("credentials are located at: {}".format(self.credentials_home))
+        print("        credentials are located at: {}".format(self.credentials_home))
+        self.default_projects = load_json(path.join(path.dirname(path.abspath(__file__)), 'projects.json'))
+        self.default_local    = load_json(path.join(path.dirname(path.abspath(__file__)), 'local.json'))
+        self.default_stats    = load_json(path.join(path.dirname(path.abspath(__file__)), 'stats.json'))
+
         if path.exists(path.join(self.credentials_home, 'projects.json')):
-            self.projects   = self.read_file(path.join(self.credentials_home, 'projects.json'))
-            self.location_vars = self.get_vars(self.projects, self.credentials_home)
-            self.stats_vars = self.read_file(path.join(self.credentials_home, 'stats.json'))
+            projects_user      = load_json(path.join(self.credentials_home, 'projects.json'))
+            self.projects      = self.chk_projects(projects_user)
+            all_loc_vars       = self.get_all_locations_vars(self.projects['LOCATION'], self.credentials_home)
+            self.location_vars = self.chk_location_vars(all_loc_vars)
+            self.stats_vars    = load_json(path.join(self.credentials_home, 'stats.json'))
         else:
             self.define_credentials()
             shutil.copy(path.join(path.dirname(path.abspath(__file__)), 'projects.json'), path.join(self.credentials_home, 'projects.json'))
             shutil.copy(path.join(path.dirname(path.abspath(__file__)), 'local.json'), path.join(self.credentials_home, 'local.json'))
             shutil.copy(path.join(path.dirname(path.abspath(__file__)), 'remote1.json'), path.join(self.credentials_home, 'remote1.json'))
             shutil.copy(path.join(path.dirname(path.abspath(__file__)), 'stats.json'), path.join(self.credentials_home, 'stats.json'))
-            self.projects = self.read_file(path.join(self.credentials_home, 'projects.json'))
+            self.projects = load_json(path.join(self.credentials_home, 'projects.json'))
             self.location_vars = self.get_default_vars(self.projects)
-            self.stats_vars = self.read_file(path.join(self.credentials_home, 'stats.json'))
-        print('local user is: '+self.location_vars['local']['USER']['user'])
+            self.stats_vars = load_json(path.join(self.credentials_home, 'stats.json'))
+        # print('local user is: '+self.location_vars['local']['USER']['user'])
 
 
     def define_credentials(self):
@@ -73,24 +80,21 @@ class Get_Vars():
             except Exception as e:
                 print(e)
 
-    def read_file(self, file):
-        with open(file) as jf:
-            return json.load(jf)
-
-    def get_vars(self, projects, path_files):
+    def get_all_locations_vars(self, all_locations, path_files):
         d_all_vars = dict()
-        for location in projects['LOCATION']:
+        for location in all_locations:
             try:
-                d_all_vars[location] = self.read_file(path.join(path_files, location+'.json'))
+                d_all_vars[location] = load_json(path.join(path_files, location+'.json'))
             except Exception as e:
                 print(e)
         d_all_vars = self.change_username(d_all_vars)
         return d_all_vars
 
     def get_default_vars(self, projects):
-        d_all_vars = self.get_vars(projects, path.dirname(path.abspath(__file__)))
+        d_all_vars = self.get_all_locations_vars(projects['LOCATION'], path.dirname(path.abspath(__file__)))
         d_all_vars['local'] = self.setup_default_local_nimb(d_all_vars['local'])
-        self.save_json('local.json', d_all_vars['local'], self.credentials_home)
+        save_json(d_all_vars['local'], path.join(self.credentials_home, 'local.json'))
+        # self.save_json('local.json', d_all_vars['local'], self.credentials_home)
         print('PROJECTS AND VARIABLES ARE NOT DEFINED. check: '+self.credentials_home)
         return d_all_vars
 
@@ -111,9 +115,9 @@ class Get_Vars():
             data['local']['FREESURFER']["export_FreeSurfer_cmd"] = data['local']['FREESURFER']["export_FreeSurfer_cmd"].replace(user, user_local)
         return data
 
-    def save_json(self, file, data, dst):
-        with open(path.join(dst, file), 'w') as jf:
-            json.dump(data, jf, indent=4)
+    # def save_json(self, file, data, dst):
+    #     with open(path.join(dst, file), 'w') as jf:
+    #         json.dump(data, jf, indent=4)
 
     def setup_default_local_nimb(self, data):
         NIMB_HOME = path.abspath(path.join(path.dirname(__file__), '..'))
@@ -156,9 +160,66 @@ class Get_Vars():
         else:
             print('environment for processing is: {}'.format(environ))
             data['PROCESSING']['processing_env']      = 'tmux'
-
-
         return data
+
+
+    def chk_projects(self, projects_user):
+        """
+        check if variables are defined in json
+        :param config_file: path to configuration json file
+        :return: True if there is no error, otherwise, return False
+        """
+        update = False
+        all_projects = [i for i in projects_user.keys() if 'EXPLANATION' not in i and 'LOCATION' not in i and 'PROJECTS' not in i]
+        for Project in all_projects:
+            for subkey in self.default_projects["project1"]:
+                if subkey not in projects_user[Project]:
+                    print('adding missing subkey {} to project: {}'.format(subkey, Project))
+                    projects_user[Project][subkey] = self.default_projects["project1"][subkey]
+                    update = True
+                if isinstance(subkey, list):
+                    if not isinstance(projects_user[Project][subkey], list):
+                        print('types are different {}'.format(subkey))
+        if update:
+            save_json(projects_user, path.join(self.credentials_home, 'projects.json'))
+        return projects_user
+
+    def chk_location_vars(self, all_loc_vars):
+        update = False
+        for location in all_loc_vars:
+            for Key in self.default_local:
+                if Key not in all_loc_vars[location]:
+                    print('adding missing key {} to location: {}'.format(Key, location))
+                    all_loc_vars[location][Key] = self.default_local[Key]
+                    update = True
+                for subkey in self.default_local[Key]:
+                    if subkey not in all_loc_vars[location][Key]:
+                        print('adding missing subkey {} to location: {}, key: {}'.format(subkey, location, Key))
+                        all_loc_vars[location][Key][subkey] = self.default_local[Key][subkey]
+                        update = True
+            if location == 'local':
+                self.chk_paths(all_loc_vars[location])
+            if update:
+                print('must update location: {}'.format(location))
+                save_json(all_loc_vars[location], path.join(self.credentials_home, location+'.json'))
+        return all_loc_vars
+
+    def chk_paths(self, local_vars):
+        # to verify paths and if not present - create them or return error
+        NIMB_HOME = local_vars['NIMB_PATHS']['NIMB_HOME']
+        if path.exists(NIMB_HOME):
+            NIMB_tmp = local_vars['NIMB_PATHS']['NIMB_tmp']
+            for p in (NIMB_tmp,
+                 path.join(NIMB_tmp, 'mriparams'),
+                 path.join(NIMB_tmp, 'usedpbs'),
+                           local_vars['NIMB_PATHS']['NIMB_NEW_SUBJECTS'],
+                           local_vars['NIMB_PATHS']['NIMB_PROCESSED_FS'],
+                           local_vars['NIMB_PATHS']['NIMB_PROCESSED_FS_error']):
+                if not path.exists(p):
+                    print('creating path ',p)
+                    makedirs(p)
+        else:
+            print(f"path NIMB_HOME is missing at: {NIMB_HOME}")
 
 class SetLocation():
 
@@ -170,17 +231,15 @@ class SetLocation():
 
     def set_project(self, location):
         if path.exists(path.join(self.credentials_home, 'projects.json')):
-            projects = self.read_file(path.join(self.credentials_home, 'projects.json'))
+            projects = load_json(path.join(self.credentials_home, 'projects.json'))
             projects['LOCATION'].append(location)
-            self.save_json('projects.json', projects, self.credentials_home)
-            new_loc = self.read_file(path.join(self.credentials_home, 'remote1.json'))
+            save_json(projects, path.join(self.credentials_home, 'projects.json'))
+            # self.save_json('projects.json', projects, self.credentials_home)
+            new_loc = load_json(path.join(self.credentials_home, 'remote1.json'))
             new_loc['USER']['user']= self.username
-            self.save_json(location+'.json', new_loc, self.credentials_home)
+            save_json(new_loc, path.join(self.credentials_home, location+'.json'))
+            # self.save_json(location+'.json', new_loc, self.credentials_home)
 
-    def read_file(self, file):
-        with open(file) as jf:
-            return json.load(jf)
-
-    def save_json(self, file, data, dst):
-        with open(path.join(dst, file), 'w') as jf:
-            json.dump(data, jf, indent=4)
+    # def save_json(self, file, data, dst):
+    #     with open(path.join(dst, file), 'w') as jf:
+    #         json.dump(data, jf, indent=4)

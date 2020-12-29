@@ -14,16 +14,12 @@ from setup.get_vars import Get_Vars
 from distribution.utilities import is_writable_directory, is_ENV_defined
 from distribution.setup_miniconda import (setup_miniconda, is_miniconda_installed,
                                         is_conda_module_installed, check_that_modules_are_installed)
-from distribution.logger import Log
 from distribution.utilities import ErrorMessages, makedir_ifnot_exist
 from sys import platform
+from setup.interminal_setup import get_yes_no
 
 class DistributionReady():
-    """
-    This file sole for the READY command.
-    """
-    local_json = "~/nimb/local.json"
-    def __init__(self, all_vars, proj_vars):
+    def __init__(self, all_vars, proj_vars, log):
 
         self.credentials_home = all_vars.credentials_home # NIMB_HOME/credentials_paths.py
         self.locations        = all_vars.location_vars # credentials_home/local.json + remotes.json
@@ -31,7 +27,7 @@ class DistributionReady():
         self.proj_vars        = proj_vars # credentials_home/project.json
         self.NIMB_HOME        = self.locations["local"]["NIMB_PATHS"]["NIMB_HOME"]
         self.NIMB_tmp         = self.locations["local"]["NIMB_PATHS"]["NIMB_tmp"]
-        self.logger           = Log(self.NIMB_tmp, self.locations["local"]['FREESURFER']['freesurfer_version']).logger
+        self.logger           = log
 
     def check_ready(self):
         """
@@ -39,30 +35,28 @@ class DistributionReady():
         :return: False if there is something wrong
                 Otherwise True
         """
-        self.verify_paths()
-        self.is_setup_vars(self.locations['local']['NIMB_PATHS'])
-        self.is_setup_vars(self.locations['local']['PROCESSING'])
-        # self.get_user_paths_from_terminal()  # to do, which ones are get from user?
         if self.classify_ready():
-            print("NIMB ready to perform classification")
+            self.logger("NIMB ready to perform classification")
         else:
             ErrorMessages.error_classify()
             ready = False
         if self.fs_ready():
-            print("NIMB ready to perform FreeSurfer processing")
+            self.logger("NIMB ready to perform FreeSurfer processing")
         else:
             ErrorMessages.error_fsready()
             ready = False
         conda_home = self.locations['local']['NIMB_PATHS']['conda_home']
+        self.logger('checking conda at: {}'.format(conda_home))
         if not is_miniconda_installed(conda_home):
             # # if has permission to install
             # if not is_writable_directory(conda_home):
                 # self.logger.fatal("miniconda path is not writable. Check the permission.")
                 # return False
             # # true: install setup_minicoda.py
-            setup_miniconda(conda_home, self.NIMB_HOME)
+            if get_yes_no('do you want to try and install conda? (may take up to 30 minutes) (y/n)') == 1:
+                setup_miniconda(conda_home, self.NIMB_HOME)
         if check_that_modules_are_installed(conda_home, self.NIMB_HOME):
-            print("conda has all modules installes")
+            self.logger("conda has all modules installed")
         else:
             ErrorMessages.error_conda()
             return False
@@ -73,6 +67,27 @@ class DistributionReady():
         # if not is_ENV_defined("$FREESURFER_HOME"):
             # self.logger.fatal("$FREESURFER_HOME is not defined")
             # return False
+    def chk_if_modules_are_installed(self, module_list):
+        '''
+        scripts checks that modules are installed inside the python environement
+        Args:
+            modules_list: list with required modules to be checked
+        Return:
+            True if all modules are installed, else Fale
+        '''
+        installed = True
+        modules = []
+        miss = []
+        for module in module_list:
+            try:
+                modules.append(__import__(module))
+            except ImportError as e:
+                self.logger(e)
+                self.logger(f'module {module} is not installed. Cannot continue process')
+                miss.append(module)
+        if miss:
+            installed = False
+        return installed, miss
 
     def get_user_paths_from_terminal(self):
         """
@@ -87,14 +102,14 @@ class DistributionReady():
 
     def setting_up_local_computer(self):
         if platform.startswith('linux'):
-            print("Currently only support setting up on Ubuntu-based system")
+            self.logger("Currently only support setting up on Ubuntu-based system")
             # do the job here
             self.setting_up_local_linux_with_freesurfer()
         elif platform in ["win32"]:
-            print("The system is not fully supported in Windows OS. The application quits now .")
+            self.logger("The system is not fully supported in Windows OS. The application quits now .")
             exit()
         else: # like freebsd,
-            print("This platform is not supported")
+            self.logger("This platform is not supported")
             exit()
 
     def setting_up_local_linux_with_freesurfer(self):
@@ -103,32 +118,6 @@ class DistributionReady():
         :return:
         """
         setup_miniconda(self.locations['local']['NIMB_PATHS']['conda_home'])
-        
-
-    def verify_paths(self):
-        # to verify paths and if not present - create them or return error
-        if os.path.exists(self.NIMB_HOME):
-            for p in (     self.NIMB_tmp,
-                 os.path.join(self.NIMB_tmp, 'mriparams'),
-                 os.path.join(self.NIMB_tmp, 'usedpbs'),
-                           self.locations['local']['NIMB_PATHS']['NIMB_NEW_SUBJECTS'],
-                           self.locations['local']['NIMB_PATHS']['NIMB_PROCESSED_FS'],
-                           self.locations['local']['NIMB_PATHS']['NIMB_PROCESSED_FS_error']):
-                if not os.path.exists(p):
-                    print('creating path ',p)
-                    makedir_ifnot_exist(p)
-
-    def is_setup_vars(self, dict):
-        """
-        check if variables are defined in json
-        :param config_file: path to configuration json file
-        :return: True if there is no error, otherwise, return False
-        """
-        for key in dict:
-            if type(dict[key]) != int and len(dict[key]) < 1:
-                self.logger.fatal(f"{key} is missing")
-                return False
-        return True
 
     def classify_ready(self):
         ready = True
@@ -139,7 +128,7 @@ class DistributionReady():
                     # if path start with ~
                     makedir_ifnot_exist(p)
                 except Exception as e:
-                    print(e)
+                    self.logger(e)
             if not os.path.exists(p):
                 ready = False
                 break
@@ -153,7 +142,7 @@ class DistributionReady():
             if self.check_freesurfer_ready():
                 SUBJECTS_DIR = self.locations['local']['FREESURFER']['FS_SUBJECTS_DIR']
                 if not os.path.exists(SUBJECTS_DIR):
-                        print('creating path {}'.format(SUBJECTS_DIR))
+                        self.logger('    creating path {}'.format(SUBJECTS_DIR))
                         makedir_ifnot_exist(SUBJECTS_DIR)
                 return self.fs_chk_fsaverage_ready(SUBJECTS_DIR)
         else:
@@ -162,7 +151,7 @@ class DistributionReady():
     def fs_chk_fsaverage_ready(self, SUBJECTS_DIR):
         self.fs_fsaverage_copy(SUBJECTS_DIR)
         if not os.path.exists(os.path.join(SUBJECTS_DIR,'fsaverage', 'xhemi')):
-            print('fsaverage or fsaverage/xhemi is missing from SUBJECTS_DIR: {}'.format(SUBJECTS_DIR))
+            self.logger('fsaverage or fsaverage/xhemi is missing from SUBJECTS_DIR: {}'.format(SUBJECTS_DIR))
             return False
         else:
             return True
@@ -183,10 +172,18 @@ class DistributionReady():
             SETUP_FREESURFER(self.locations)
             ready = True
         else:
-            print('start freesurfer processing')
             ready =  True
         return ready
-        
+
+    def fs_glm_ready(self):
+        ready = True
+        modules_list = ['pandas', 'xlrd', 'openpyxl', 'pathlib']
+        if self.fs_ready():
+            if not self.chk_if_modules_are_installed(modules_list):
+                ready = False
+        else:
+            ready = False
+        return ready        
     def nimb_stats_ready(self):
         """will check if the STATS folder is present and will create if absent"""
 
@@ -204,5 +201,5 @@ class DistributionReady():
         if self.proj_vars["materials_DIR"][0] == 'local' and os.path.exists(os.path.join(self.proj_vars["materials_DIR"][1], file)):
             ready = True
         else:
-            print("data file is missing or not located on a local folder. Check file {}".format(os.path.join(self.credentials_home, 'projects.json')))
+            self.logger("data file is missing or not located on a local folder. Check file {}".format(os.path.join(self.credentials_home, 'projects.json')))
         return ready

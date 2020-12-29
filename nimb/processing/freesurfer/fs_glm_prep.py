@@ -71,20 +71,20 @@ class CheckIfReady4GLM():
 
     def chk_if_subjects_ready(self):
         self.miss = {}
-        self.ids = self.get_ids_processed()
-        if self.ids:
-            for _id in self.ids:
-                if path.exists(path.join(self.FS_SUBJECTS_DIR, _id)):
-                    self.chk_glm_files(_id)
+        self.bids_ids = self.get_ids_processed()
+        if self.bids_ids:
+            for bids_id in self.bids_ids:
+                if path.exists(path.join(self.FS_SUBJECTS_DIR, bids_id)):
+                    self.chk_glm_files(bids_id)
                 else:
-                    print('id is missing {}'.format(_id))
-                    self.add_to_miss(_id, 'id_missing')
-            ids_for_glm = [i for i in self.ids if i not in self.miss]
+                    print('id is missing {}'.format(bids_id))
+                    self.add_to_miss(bids_id, 'id_missing')
+            ids_for_glm = [i for i in self.bids_ids if i not in self.miss.keys()]
             if self.miss.keys():
-                ids_ok = {i:self.ids[i] for i in self.ids if i not in self.miss.keys()}
-                print('{} subjects are missing and \
-                       {} are present in the processing folder'.format(
-                           len(self.miss.keys()), len(ids_ok.keys())))
+                subjs_missing = len(self.miss.keys())
+                subjs_present = len(ids_for_glm)
+                print(f'{subjs_missing} subjects are missing and \
+                        {subjs_present} are present in the processing folder')
                 if get_yes_no('do you want to do glm analysis with current subjects ? (y/n)') == 1:
                     self.create_glm_df(ids_for_glm)
                     return True, list()
@@ -97,19 +97,19 @@ class CheckIfReady4GLM():
             print('no ids found')
             return False, list()
 
-    def chk_glm_files(self, _id):
+    def chk_glm_files(self, bids_id):
         '''it is expected that the BIDS IDs are located in FS_SUBJECTS_DIR
             script checks if subjects are present
         Args:
-            _id: ID of the subject to chk
+            bids_id: ID of the subject to chk
         Return:
             populates list of missing subjects
             populates dict with ids
         '''
-        files_ok = ChkFSQcache(self.FS_SUBJECTS_DIR, _id, self.vars_fs)
+        files_ok = ChkFSQcache(self.FS_SUBJECTS_DIR, bids_id, self.vars_fs)
         if not files_ok:
             for file in files_ok:
-                self.add_to_miss(_id, file)
+                self.add_to_miss(bids_id, file)
             return False
         else:
             return True
@@ -120,15 +120,15 @@ class CheckIfReady4GLM():
         for ix in self.df.index:
             src_id = self.df.at[ix, self.proj_vars['id_col']]
             try:
-                bids_id = [i for i in self.ids_all if self.ids_all[i]['source'] == src_id][0]
+                bids_id = [i for i in self.ids_bids_src_proc_all if self.ids_bids_src_proc_all[i]['source'] == src_id][0]
                 self.df.at[ix, 'fs_id'] = bids_id
                 if bids_id not in ls_ids:
                     ls_ix_2rm.append(ix)
             except Exception as e:
                 print(e)
                 ls_ix_2rm.append(ix)
+        print('        {} subjects are missing and will be removed from futher analysis'.format(len(ls_ix_2rm)))
         self.df_new = self.df.drop(ls_ix_2rm)
-        print('{} subjects are missing and will be removed from futher analysis'.format(len(ls_ix_2rm)))
         self.df_new.drop(columns=[self.proj_vars['id_col']], inplace=True)
         self.df_new.rename(columns={'fs_id': self.proj_vars['id_col']}, inplace=True)
         self.df_new.to_excel(self.f_GLM_group)
@@ -145,18 +145,18 @@ class CheckIfReady4GLM():
             see nimb/example/f_ids.json
         '''
         print('extracting list of ids')
-        self.ids_all = self.read_json(self.f_ids_processed)
+        self.ids_bids_src_proc_all = self.read_json(self.f_ids_processed)
         self.df = Table().get_df(self.f_GLM_group)
-        ids_glm_file = self.df[self.proj_vars['id_col']].tolist()
-        return {i: 'path' for i in self.ids_all if self.ids_all[i]['source'] in ids_glm_file}
+        ids_src_glm_file = self.df[self.proj_vars['id_col']].tolist()
+        return {i: 'path' for i in self.ids_bids_src_proc_all if self.ids_bids_src_proc_all[i]['source'] in ids_src_glm_file}
 
 
-    def add_to_miss(self, _id, file):
+    def add_to_miss(self, bids_id, file):
         '''add to the list of missing subjects
         '''
-        if _id not in self.miss:
-            self.miss[_id] = list()
-        self.miss[_id].append(file)
+        if bids_id not in self.miss:
+            self.miss[bids_id] = list()
+        self.miss[bids_id].append(file)
 
     def read_json(self, f):
         '''read a json file
@@ -228,23 +228,23 @@ class PrepareForGLM():
                                         'mtx_explanation' : [],
                                         'gd2mtx' : dods_doss[fsgd_type]}
 
-        print('creating list of subjects')
+        # print('creating list of subjects')
         self.make_subjects_per_group(df_groups_clin)
-        print('creating fsgd for g1g2v0')
+        # print('creating fsgd for g1g2v0')
         self.make_fsgd_g1g2v0()
-        print('creating fsgd for g1v1')
+        # print('creating fsgd for g1v1')
         self.make_fsgd_g1v1()
-        print('creating fsgd for g1v2')
+        # print('creating fsgd for g1v2')
         # self.make_fsgd_g1v2()
         # print('creating fsgd for g2v1')
         self.make_fsgd_g2v1()
-        print('creating unix version of fsgd files, to convert Windows tabulations to unix')
+        # print('creating unix version of fsgd files, to convert Windows tabulations to unix')
         self.fsgd_win_to_unix()
-        print('creating contrasts')
+        # print('creating contrasts')
         self.make_contrasts()
-        print('creating py file with all data')
+        # print('creating py file with all data')
         self.make_files_for_glm()
-        print('creating qdec fsgd files')
+        # print('creating qdec fsgd files')
         self.make_qdec_fsgd_g2()
 
     def get_ids_ready4glm(self, SUBJECTS_DIR, ids, vars_fs):
@@ -265,7 +265,7 @@ class PrepareForGLM():
             for row in df.index.tolist():
                 if df.at[row, self.group_col] == group and df.at[row, self.id_col] in self.ids:
                     subjects_per_group[group].append(df.at[row, self.id_col])
-            print('group: {}, has {} subjects'.format(group, len(subjects_per_group[group])))
+            print('        group: {}, has {} subjects'.format(group, len(subjects_per_group[group])))
 
         file = 'subjects_per_group.json'
         with open(path.join(self.PATH_GLM_dir, file), 'w') as f:

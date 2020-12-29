@@ -270,7 +270,7 @@ class PerformGLM():
                                 'oannot_mc_f'       : oannot_mc_f_copy}
 
 
-def get_parameters(projects, vars_local):
+def get_parameters(projects, FS_GLM_DIR):
     """get parameters for nimb"""
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter
@@ -278,24 +278,17 @@ def get_parameters(projects, vars_local):
 
     parser.add_argument(
         "-project", required=False,
-        default=projects[:1][0],
+        default=projects[0],
         choices = projects,
         help="names of projects located in credentials_path.py/nimb/projects.json -> PROJECTS",
     )
 
     parser.add_argument(
-        "-subjects_dir", required=False,
-        default=vars_local["FREESURFER"]["FS_SUBJECTS_DIR"],
-        choices = [vars_local["FREESURFER"]["FS_SUBJECTS_DIR"],
-                   vars_local["NIMB_PATHS"]["NIMB_PROCESSED_FS"]],
-        help="path to SUBJECTS_DIR if different from default",
+        "-glm_dir", required=False,
+        default=FS_GLM_DIR,
+        help="path to GLM folder",
     )
 
-    parser.add_argument(
-        "-glm_file_path", required=False,
-        default='none',
-        help="path to SUBJECTS_DIR if different from default",
-    )
     params = parser.parse_args()
     return params
 
@@ -332,12 +325,15 @@ if __name__ == "__main__":
     from setup.get_vars import Get_Vars, SetProject
     getvars      = Get_Vars()
     vars_local   = getvars.location_vars['local']
-    NIMB_tmp     = vars_local['NIMB_PATHS']['NIMB_tmp']
     projects     = getvars.projects
     all_projects = [i for i in projects.keys() if 'EXPLANATION' not in i and 'LOCATION' not in i]
-    params       = get_parameters(all_projects, vars_local)
-    SUBJECTS_DIR = params.subjects_dir
-    stats_vars   = SetProject(NIMB_tmp, getvars.stats_vars, params.project).stats
+    NIMB_tmp     = vars_local['NIMB_PATHS']['NIMB_tmp']
+    stats_vars   = SetProject(NIMB_tmp, getvars.stats_vars, all_projects[0]).stats
+    FS_GLM_DIR   = stats_vars["STATS_PATHS"]["FS_GLM_dir"]
+
+    params       = get_parameters(all_projects, FS_GLM_DIR)
+    GLM_DIR      = params.glm_dir
+
     fs_start_cmd = initiate_fs_from_sh(vars_local)
     sig_fdr_thresh= 3.0 #p = 0.001; for p=0.05 use value 1.3, but it should be used ONLY for visualisation.
 
@@ -348,9 +344,9 @@ if __name__ == "__main__":
         print(e)
         print('please initiate freesurfer using the command: \n    {}'.format(fs_start_cmd))
 
-    PerformGLM(stats_vars["STATS_PATHS"]["FS_GLM_dir"],
+    PerformGLM(GLM_DIR,
                vars_local["FREESURFER"]["FREESURFER_HOME"],
-               SUBJECTS_DIR,
+               vars_local["FREESURFER"]["FS_SUBJECTS_DIR"],
                vars_local["FREESURFER"]["GLM_measurements"],
                vars_local["FREESURFER"]["GLM_thresholds"],
                vars_local["FREESURFER"]["GLM_MCz_cache"],

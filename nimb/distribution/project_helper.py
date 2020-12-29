@@ -45,7 +45,7 @@ class ProjectManager:
 #            self.setting_up_local_computer()
 #            # install freesurfer locally
 #            setup = SETUP_FREESURFER(self.locations)
-        SSHHelper.upload_multiple_files_to_cluster(remote_loc, ls_miss, self.locations[remote_loc]["NIMB_PATH>
+        SSHHelper.upload_multiple_files_to_cluster(remote_loc, ls_miss, self.locations[remote_loc]["NIMB_PATHS"]["NIMB_tmp"]
 
         '''
         else:
