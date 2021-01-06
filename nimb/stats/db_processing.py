@@ -19,16 +19,29 @@ class Table:
     def __init__(self):
         self.pd_ver = pd.__version__
 
-    def get_df(self, path2file):
+    def get_df(self, path2file, sheetname = 0, cols = None, index = None, rename=False):
+        print(f'    reading file: {path2file},\n    sheet: {sheetname}')
+        df = self.read_df(path2file, sheetname, cols)
+        if index:
+            df = self.change_index(df, index)
+        if rename:
+            df.rename(columns = rename, inplace=True)
+        return df
+
+    def read_df(self, path2file, sheetname, cols):
         '''reads a csv, xls or an xlsx file
         '''
-        if '.csv' in path2file:
-            return pd.read_csv(path2file)
+        if path2file.endswith('.csv'):
+            return pd.read_csv(path2file, sheet_name = sheetname, usecols = cols)
         if path2file.endswith('.xls'):
-            return pd.read_excel(path2file)
+            return pd.read_excel(path2file, sheet_name = sheetname, usecols = cols)
         if path2file.endswith('.xlsx'):
-            return pd.read_excel(path2file, engine='openpyxl')
+            return pd.read_excel(path2file, engine='openpyxl', sheet_name = sheetname, usecols = cols)
 
+    def change_index(self, df, index):
+        '''to set the index, based on column with str name
+        '''
+        return df.set_index(index)
 
     def get_df_index(self, file, index_col='default'):
         if index_col=='default':
@@ -62,11 +75,13 @@ class Table:
         return df.drop(columns=cols)
 
     def save_df(self, df, f_path_to_save, sheet_name):
-        df.to_excel(f_path_to_save, sheet_name=sheet_name)
+        if f_path_to_save.endswith('.csv'):
+            df.to_csv(f_path_to_save)
+        elif f_path_to_save.endswith('.xls') or f_path_to_save.endswith('.xlsx'):
+            df.to_excel(f_path_to_save, sheet_name=sheet_name)
 
     def save_df_tocsv(self, df, f_path_to_save):
         df.to_csv(f_path_to_save)
-
 
     def get_df_per_parameter(self, df, param_col, param):
         return df[df[param_col] == param]
