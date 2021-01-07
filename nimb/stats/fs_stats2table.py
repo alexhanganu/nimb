@@ -399,7 +399,6 @@ class FSStats2Table:
         logger.info('FINISHED creating One file for all subjects')
         self.check_nan(df_concat)
 
-
     def check_nan(self, df):
         '''
         df.index must be the ids, as str() not int()
@@ -806,24 +805,6 @@ def stats2table_v7(PATHstats, SUBJECTS_DIR, data_only_volumes=True):
 
 
 '''
-
-def check_nan(df):
-
-    d_err = dict()
-    for col in df.columns:
-        if df[col].isnull().values.any():
-            ls = df[col].isnull().tolist()
-            for val in ls:
-                if val:
-                    _id = df.index[ls.index(val)]
-                    if _id not in d_err:
-                        d_err[_id] = list()
-                    if col not in d_err[_id]:
-                        d_err[_id].append(col)
-    return d_err
-
-
-
 def create_HIP_to_cortex_ratio(df_data_big, HIP_to_cortex_ratio_DK, HIP_to_cortex_ratio_DS):
 
 	print('CREATING file Hippocampus to Cortex ratio')

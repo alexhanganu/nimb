@@ -1,7 +1,7 @@
 # !/usr/bin/env python
 # coding: utf-8
 # last update: 2020-08-21
-# script intends to work specifically with pandas on the excel and csv files
+# script intends to work specifically with pandas on xlx, xlsx and csv files
 
 import sys
 try:
@@ -14,13 +14,14 @@ except ImportError as e:
         try to install them using pip, or use the miniconda run with the command located \
         in credentials_path.py/local.json -> miniconda_python_run')
     sys.exit(e)
+from distribution.utilities import save_json
 
 class Table:
     def __init__(self):
         self.pd_ver = pd.__version__
 
     def get_df(self, path2file, sheetname = 0, cols = None, index = None, rename=False):
-        print(f'    reading file: {path2file},\n    sheet: {sheetname}')
+        print(f"    reading file: {path2file},\n    sheet: {sheetname}")
         df = self.read_df(path2file, sheetname, cols)
         if index:
             df = self.change_index(df, index)
@@ -95,3 +96,24 @@ class Table:
         if cols2drop:
             df.drop(columns=cols2drop, inplace=True)
         return df
+
+    def check_nan(self, df, err_file_abspath):
+        d_err = dict()
+        cols_with_nans = list()
+        for col in df.columns:
+            if df[col].isnull().values.any():
+                ls = df[col].isnull().tolist()
+                for val in ls:
+                    if val:
+                        ix = df.index[ls.index(val)]
+                        if ix not in d_err:
+                            d_err[ix] = list()
+                        if col not in d_err[ix]:
+                            d_err[ix].append(col)
+                        if col not in cols_with_nans:
+                            cols_with_nans.append(col)
+        save_json(d_err, err_file_abspath)
+        return d_err, cols_with_nans
+
+    def get_mean(self, values_list):
+        return values_list

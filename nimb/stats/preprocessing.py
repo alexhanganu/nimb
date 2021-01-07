@@ -2,7 +2,7 @@
 # coding: utf-8
 # last update: 2020-03-27
 
-# script intends to work specifically with pandas on the excel and csv files
+# script intends to work specifically with sklearn and statistical modules
 
 
 '''
@@ -51,14 +51,6 @@ def get_df_with_params(df, params):
     print(ls_cols_2get)
 
     return df_subcort_atlas, ls_cols_X_atlas
-
-
-def get_groups(df, group_col):
-    groups = []
-    for val in df[group_col]:
-            if val not in groups:
-                groups.append(val)
-    return groups
 
 def scale_X(df):
     """
@@ -109,3 +101,15 @@ def Z_Scores_create():
     writer.save()
 
 
+def get_groups(groups_list):
+    '''
+    Args:
+        groups_list = list with all group variables
+    Return:
+        list with only one group variable, no repetition
+    '''
+    groups = []
+    for val in groups_list:
+            if val not in groups:
+                groups.append(val)
+    return groups

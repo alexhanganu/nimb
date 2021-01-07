@@ -9,25 +9,25 @@ class RUN_stats():
 
     def __init__(self, nimb_stats, project_vars):
 
-        self.atlas = ('DK','DS','DKDS')[1]
+        self.atlas        = ('DK','DS','DKDS')[1]
         self.project_vars = project_vars
-        self.stats_paths = nimb_stats['STATS_PATHS']
+        self.stats_paths  = nimb_stats['STATS_PATHS']
         self.stats_params = nimb_stats['STATS_PARAMS']
+        group_param       = project_vars['group_param']
+        regression_param  = project_vars['regression_param']
+        other_params      = project_vars['other_params']
+        f_data_clinical   = project_vars['GLM_file_group']
         print('materials located at: {:>40}'.format(project_vars['materials_DIR'][1]))
-        print('file for analysis: {:>40}'.format(project_vars['GLM_file_group']))
+        print('file for analysis: {:>40}'.format(f_data_clinical))
         print('id column: {:>40}'.format(str(project_vars['id_col'])))
         print('group column: {:>40}'.format(str(project_vars['group_col'])))
         print('variables to analyse: {:>40}'.format(str(project_vars['variables_for_glm'])))
         print('stats will be saved at: {:>40}'.format(self.stats_paths['STATS_HOME']))
-        group_param = project_vars['group_param']
-        regression_param = project_vars['regression_param']
-        other_params = project_vars['other_params']
-        f_data_clinical = project_vars['GLM_file_group']
 
-        self.feature_algo = 'PCA' #'RFE'
+        self.feature_algo    = 'PCA' #'RFE'
         self.prediction_vars = self.stats_params["prediction_vars"]
-        cor_methods = self.stats_params["cor_methods"]
-        cor_level_chosen = self.stats_params["cor_level_chosen"]
+        cor_methods          = self.stats_params["cor_methods"]
+        cor_level_chosen     = self.stats_params["cor_level_chosen"]
 
         self.get_tables()
 
