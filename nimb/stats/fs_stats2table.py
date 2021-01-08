@@ -377,6 +377,24 @@ class FSStats2Table:
         writer.save()
         logger.info('FINISHED creating file with Subcortical Volumes')
 
+    def create_file_with_only_subcort_volumes_V2(self):
+        '''CREATING ONE BIG STATS FILE'''
+        logger.info('CREATING file with Subcortical Volumes - VERSION 2, must be checked')
+
+        all_df = dict()
+        df_segmentations = pd.read_excel(self.dataf, engine = 'openpyxl', sheet_name='VolSeg')
+
+        for sheet in self.sheetnames[0:5]:
+            df = pd.read_excel(self.dataf, engine = 'openpyxl', sheet_name=sheet)
+            all_df[sheet] = self.change_column_name(df, sheet)
+        frames = [all_df[i] for i in all_df]+[df_segmentations['eTIV']]
+        df_concat = pd.concat(frames, axis=1, sort=True)
+
+        writer = pd.ExcelWriter(self.data_subcortical_volumes, engine='xlsxwriter')
+        df_concat.to_excel(writer, 'stats')
+        writer.save()
+        logger.info('FINISHED creating file with Subcortical Volumes')
+
     def create_BIG_data_file(self):
 
         logger.info('CREATING One file for all subjects')
