@@ -114,6 +114,3 @@ class Table:
                             cols_with_nans.append(col)
         save_json(d_err, err_file_abspath)
         return d_err, cols_with_nans
-
-    def get_mean(self, values_list):
-        return values_list

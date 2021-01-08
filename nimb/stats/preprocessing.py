@@ -11,12 +11,11 @@ The power transform finds the optimal scaling factor to stabilize variance and m
 PowerTransformer uses the Yeo-Johnson transformed, applies zero-mean, unit variance normalization to the transformed output.
 This is useful for modeling issues related to heteroscedasticity (non-constant variance), or other situations where normality is desired.
 '''
-
+import sklearn
 from sklearn.preprocessing import LabelEncoder
 from sklearn.preprocessing import PowerTransformer as scale #StandardScaler, PowerTransformer QuantileTransformer, RobustScaler 
 
 from stats import db_processing#, varia
-
 
 def get_df(f_subcort, f_atlas_DK, f_atlas_DS, atlas, id_col):
     cols_DK = [id_col,'cortex_thickness_ThickL_DK', 'cortex_vol_VolR_DK', 'cortex_area_AreaL_DK']
@@ -100,16 +99,25 @@ def Z_Scores_create():
     dfzvalues.to_excel(writer)
     writer.save()
 
+class Preprocess:
+    def __init__(self):
+        self.sklearn_ver = sklearn.__version__
 
-def get_groups(groups_list):
-    '''
-    Args:
-        groups_list = list with all group variables
-    Return:
-        list with only one group variable, no repetition
-    '''
-    groups = []
-    for val in groups_list:
-            if val not in groups:
-                groups.append(val)
-    return groups
+    def populate_missing_vals_2mean(self, df, cols):
+        for col in cols:
+            col_mean = df[col].mean()
+            print(col_mean)
+        return df
+
+    def get_groups(self, groups_list):
+        '''
+        Args:
+            groups_list = list with all group variables
+        Return:
+            list with only one group variable, no repetition
+        '''
+        groups = []
+        for val in groups_list:
+                if val not in groups:
+                    groups.append(val)
+        return groups
