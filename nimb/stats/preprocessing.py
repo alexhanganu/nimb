@@ -106,7 +106,7 @@ class Preprocess:
     def populate_missing_vals_2mean(self, df, cols):
         for col in cols:
             col_mean = df[col].mean()
-            print(col_mean)
+            df[col]  = df[col].fillna(col_mean)
         return df
 
     def get_groups(self, groups_list):
