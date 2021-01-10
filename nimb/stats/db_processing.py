@@ -21,7 +21,7 @@ class Table:
         self.pd_ver = pd.__version__
 
     def get_df(self, path2file, sheetname = 0, cols = None, index = None, rename=False):
-        print(f"    reading file: {path2file},\n    sheet: {sheetname}")
+        print(f"    reading file: {path2file},\n        sheet: {sheetname}")
         df = self.read_df(path2file, sheetname, cols)
         if index:
             df = self.change_index(df, index)
@@ -79,7 +79,7 @@ class Table:
         if f_path_to_save.endswith('.csv'):
             df.to_csv(f_path_to_save)
         elif f_path_to_save.endswith('.xls') or f_path_to_save.endswith('.xlsx'):
-            df.to_excel(f_path_to_save, sheet_name=sheet_name)
+            df.to_excel(f_path_to_save, engine='openpyxl', sheet_name=sheet_name)
 
     def save_df_tocsv(self, df, f_path_to_save):
         df.to_csv(f_path_to_save)
@@ -114,3 +114,26 @@ class Table:
                             cols_with_nans.append(col)
         save_json(d_err, err_file_abspath)
         return d_err, cols_with_nans
+
+    def concat_dfs(self, frames, ax=1, sort = True):
+        '''
+            frames: tuple of DataFrames to concatenate
+            default ax = 1 concatenates based on the index
+        '''
+        return pd.concat(frames, axis=ax, sort=sort)
+
+
+    def get_nan_from_col(self, df, col):
+        return df[col].isnull().tolist()
+
+    def rm_rows_with_nan(self, df, col2chk=None):
+        if col2chk:
+            vals_nan = self.get_nan_from_col(df, col2chk)
+            idxs_2rm = [i for i in df.index if vals_nan[df.index.tolist().index(i)]]
+        else:
+            idxs_2rm = list(df.loc[pd.isnull(df).any(1), :].index.values)
+        if idxs_2rm:
+            print('    removing rows with NAN')
+            df.drop(idxs_2rm, axis = 0, inplace = True)
+            df.reset_index(drop = True, inplace = True)
+        return df
