@@ -97,7 +97,7 @@ class NIMB(object):
             if DistributionReady(self.all_vars, self.project_vars, self.logger).chk_if_ready_for_stats():
                 PROCESSED_FS_DIR, dir_4stats = DistributionHelper(self.all_vars, self.project_vars, self.logger).prep_4fs_stats()
                 if PROCESSED_FS_DIR:
-                    from stats.fs_stats2table import FSStats2Table
+                    from processing.freesurfer.fs_stats2table import FSStats2Table
                     FSStats2Table(dir_4stats, PROCESSED_FS_DIR, self.NIMB_tmp,
                                   data_only_volumes=False)
         if self.process == 'fs-glm':
