@@ -94,8 +94,11 @@ class NIMB(object):
                                                 activate_fs = False,
                                                 python_load = True)
         if self.process == 'fs-get-stats':
+            dir_4stats = self.stats_vars["STATS_PATHS"]["STATS_HOME"]
             if DistributionReady(self.all_vars, self.project_vars, self.logger).chk_if_ready_for_stats():
-                PROCESSED_FS_DIR = DistributionHelper(self.all_vars, self.project_vars, self.logger).prep_4fs_stats()
+                PROCESSED_FS_DIR = DistributionHelper(self.all_vars,
+                                                      self.project_vars,
+                                                      self.logger).prep_4fs_stats(dir_4stats)
                 if PROCESSED_FS_DIR:
                     self.vars_local['PROCESSING']['processing_env']  = "tmux"
                     schedule = Scheduler(self.vars_local)

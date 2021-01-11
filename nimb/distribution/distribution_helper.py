@@ -211,7 +211,7 @@ class DistributionHelper():
         else:
             return False
 
-    def prep_4fs_stats(self):
+    def prep_4fs_stats(self, dir_4stats):
         '''create DIR to store stats files
             check if processed subjects are on the local computer
             if yes:
@@ -222,7 +222,7 @@ class DistributionHelper():
         Args:
             None
         '''
-        dir_4stats = makedir_ifnot_exist(self.stats_vars["STATS_PATHS"]["STATS_HOME"])
+        dir_4stats = makedir_ifnot_exist(dir_4stats)
         PROCESSED_FS_DIR = get_local_remote_dir(self.proj_vars["PROCESSED_FS_DIR"])
         if PROCESSED_FS_DIR:
             f_GLM_group_name     = self.proj_vars['GLM_file_group']
