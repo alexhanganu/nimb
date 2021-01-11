@@ -175,7 +175,7 @@ class DistributionReady():
             ready =  True
         return ready
 
-    def fs_glm_ready(self):
+    def chk_if_ready_for_fs_glm(self):
         ready = True
         modules_list = ['pandas', 'xlrd', 'openpyxl', 'pathlib']
         if self.fs_ready():
@@ -183,23 +183,19 @@ class DistributionReady():
                 ready = False
         else:
             ready = False
-        return ready        
-    def nimb_stats_ready(self):
-        """will check if the STATS folder is present and will create if absent"""
-
-        if not os.path.exists(self.stats_vars["STATS_PATHS"]["STATS_HOME"]):
-            makedir_ifnot_exist(self.stats_vars["STATS_PATHS"]["STATS_HOME"])
-        return self.is_setup_vars(self.stats_vars)
+        return ready     
         
-    def check_stats_ready(self):
+    def chk_if_ready_for_stats(self):
         """will check if xlsx file for project is provided
            if all variables are provided
            if all paths for stats are created
            if NIMB is ready to perform statistical analysis"""
-        ready = False
-        file = self.proj_vars["GLM_file_group"]
-        if self.proj_vars["materials_DIR"][0] == 'local' and os.path.exists(os.path.join(self.proj_vars["materials_DIR"][1], file)):
-            ready = True
+        ready = True
+        modules_list = ['pandas', 'xlrd', 'openpyxl', 'pathlib']
+        if self.fs_ready():
+            if not self.chk_if_modules_are_installed(modules_list):
+                ready = False
         else:
-            self.logger("data file is missing or not located on a local folder. Check file {}".format(os.path.join(self.credentials_home, 'projects.json')))
-        return ready
+            ready = False
+        return ready     
+

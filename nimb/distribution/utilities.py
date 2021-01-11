@@ -2,7 +2,6 @@
 this module contains frequently used commands
 """
 
-import os
 from os import makedirs, path, sep
 import json
 from collections import OrderedDict
@@ -50,9 +49,10 @@ def chk_if_exists(dir):
         return dir
 def makedir_ifnot_exist(path2chk):
     if path2chk.startswith("~"):
-        path = os.path.expanduser(path2chk)
-    if not os.path.exists(path2chk):
-        os.makedirs(path2chk)
+        path2chk = path.expanduser(path2chk)
+    if not path.exists(path2chk):
+        makedirs(path2chk)
+    return path2chk
 
 def get_path(link1, link2):
         return path.join(link1, link2).replace(sep, '/')

@@ -196,25 +196,53 @@ class DistributionHelper():
                                                                 path.join(self.credentials_home, 'projects.json')))
             return False
 
-    def fs_glm_prep(self, FS_GLM_dir):
-        SUBJECTS_DIR         = self.locations["local"]['FREESURFER']['FS_SUBJECTS_DIR']
-        f_GLM_group_name     = self.proj_vars['GLM_file_group']
-        f_ids_processed_name = self.locations["local"]["NIMB_PATHS"]['file_ids_processed']
-        glm_folder_per_file  =  path.splitext(f_GLM_group_name)[0].replace('(','').replace(')','')
-        FS_GLM_dir           = path.join(FS_GLM_dir, glm_folder_per_file)
-        makedir_ifnot_exist(FS_GLM_dir)
+    def get_files_for_stats(self, path_2copy_files, list_of_files):
         location = self.proj_vars['materials_DIR'][0]
         materials_dir_path = self.proj_vars['materials_DIR'][1]
         if location == 'local':
-            shutil.copy(path.join(materials_dir_path, f_GLM_group_name), FS_GLM_dir)
-            shutil.copy(path.join(materials_dir_path, f_ids_processed_name), FS_GLM_dir)
+            for file in list_of_files:
+                shutil.copy(path.join(materials_dir_path, file), path_2copy_files)
         else:
             print('nimb must access the remote computer: {}'.format(location))
             from distribution import SSHHelper
-            file_dir_list = [f_GLM_group_name, f_ids_processed_name]
-            SSHHelper.download_files_from_server(location, materials_dir_path, FS_GLM_dir, file_dir_list)
+            SSHHelper.download_files_from_server(location, materials_dir_path, path_2copy_files, list_of_files)
+        if path.exists(path.join(path_2copy_files, list_of_files[-1])):
+            return True
+        else:
+            return False
+
+    def prep_4fs_stats(self):
+        '''create DIR to store stats files
+            check if processed subjects are on the local computer
+            if yes:
+                copy corresponding stats files to stats DIR
+                return OK to perform stats
+            else:
+                return False
+        Args:
+            None
+        '''
+        dir_4stats = makedir_ifnot_exist(self.stats_vars["STATS_PATHS"]["STATS_HOME"])            
+        PROCESSED_FS_DIR = get_local_remote_dir(self.proj_vars["PROCESSED_FS_DIR"])
+        if PROCESSED_FS_DIR:
+            f_GLM_group_name     = self.proj_vars['GLM_file_group']
+            f_ids_processed_name = self.locations["local"]["NIMB_PATHS"]['file_ids_processed']
+            if not get_files_for_stats(dir_4stats, [f_GLM_group_name, f_ids_processed_name]):
+                sys.exit()
+        return PROCESSED_FS_DIR, dir_4stats
+
+    def fs_glm_prep(self, FS_GLM_dir):
+        f_GLM_group_name     = self.proj_vars['GLM_file_group']
+        glm_dir_from_file    = path.splitext(f_GLM_group_name)[0].replace('(','').replace(')','')
+        FS_GLM_dir           = makedir_ifnot_exist(path.join(FS_GLM_dir, glm_dir_from_file))
+        f_ids_processed_name = self.locations["local"]["NIMB_PATHS"]['file_ids_processed']
+        if not self.get_files_for_stats(FS_GLM_dir,
+                                [f_GLM_group_name, f_ids_processed_name]):
+            sys.exit()
         f_GLM_group     = path.join(FS_GLM_dir, f_GLM_group_name)
         f_ids_processed = path.join(FS_GLM_dir, f_ids_processed_name)
+
+        SUBJECTS_DIR         = self.locations["local"]['FREESURFER']['FS_SUBJECTS_DIR']
         if path.exists(f_GLM_group) and path.exists(f_ids_processed):
             from processing.freesurfer.fs_glm_prep import CheckIfReady4GLM
             ready, miss_ls = CheckIfReady4GLM(self.locations["local"]['NIMB_PATHS'], 
