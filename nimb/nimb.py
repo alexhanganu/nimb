@@ -103,7 +103,7 @@ class NIMB(object):
                     self.vars_local['PROCESSING']['processing_env']  = "tmux"
                     schedule = Scheduler(self.vars_local)
                     python_run_cmd = path.join(self.vars_local["NIMB_PATHS"]["conda_home"], 'bin', 'python3')
-                    cmd = f'{python_run_cmd} fs_stats2table.py -project {self.project}'
+                    cmd = f'{python_run_cmd} fs_stats2table.py -project {self.project} -stats_dir {dir_4stats}'
                     cd_cmd = 'cd {}'.format(path.join(self.NIMB_HOME, 'processing', 'freesurfer'))
                     schedule.submit_4_processing(cmd, 'fs_stats','get_stats', cd_cmd)
         if self.process == 'fs-glm':

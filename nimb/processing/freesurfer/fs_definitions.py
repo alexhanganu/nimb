@@ -576,22 +576,3 @@ def get_atlas_measurements():
             measurements[parc_parameters[meas]].append(parc_parameters[meas]+'R'+atlas)
     return measurements
 
-def change_column_name(df, sheet):
-        columns_2_remove = ['ventricle_5th','wm_hypointensities_L',
-                        'wm_hypointensities_R','non_wm_hypointensities',
-                        'non_wm_hypointensities_L','non_wm_hypointensities_R',
-                        'eTIV', 'volBrainSegNotVent','lhSurfaceHoles',
-                        'rhSurfaceHoles','SurfaceHoles',]
-        ls = df.columns.tolist()
-        columns_2_drop = []
-        for col in columns_2_remove:
-            if col in ls:
-                columns_2_drop.append(col)
-                ls.remove(col)
-
-        if len(columns_2_drop)>0:
-            df.drop(columns=columns_2_drop, inplace=True)
-        for col in ls:
-            ls[ls.index(col)] = col+'_'+sheet
-        df.columns = ls
-        return df
