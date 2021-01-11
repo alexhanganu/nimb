@@ -95,11 +95,14 @@ class NIMB(object):
                                                 python_load = True)
         if self.process == 'fs-get-stats':
             if DistributionReady(self.all_vars, self.project_vars, self.logger).chk_if_ready_for_stats():
-                PROCESSED_FS_DIR, dir_4stats = DistributionHelper(self.all_vars, self.project_vars, self.logger).prep_4fs_stats()
+                PROCESSED_FS_DIR = DistributionHelper(self.all_vars, self.project_vars, self.logger).prep_4fs_stats()
                 if PROCESSED_FS_DIR:
-                    from processing.freesurfer.fs_stats2table import FSStats2Table
-                    FSStats2Table(dir_4stats, PROCESSED_FS_DIR, self.NIMB_tmp,
-                                  data_only_volumes=False)
+                    self.vars_local['PROCESSING']['processing_env']  = "tmux"
+                    schedule = Scheduler(self.vars_local)
+                    python_run_cmd = path.join(self.vars_local["NIMB_PATHS"]["conda_home"], 'bin', 'python3')
+                    cmd = f'{python_run_cmd} fs_stats2table.py -project {self.project}'
+                    cd_cmd = 'cd {}'.format(path.join(self.NIMB_HOME, 'processing', 'freesurfer'))
+                    schedule.submit_4_processing(cmd, 'fs','get_stats', cd_cmd)
         if self.process == 'fs-glm':
             '''checks that all subjects are present in the SUBJECTS_DIR folder that will be used for GLM analysis,
                 sends cmd to batch to initiate FreeSurfer GLM running script
@@ -110,7 +113,7 @@ class NIMB(object):
                 if GLM_file_path:
                     self.vars_local['PROCESSING']['processing_env']  = "tmux"
                     schedule_fsglm = Scheduler(self.vars_local)
-                    python_run_cmd = path.join(self.vars_local["NIMB_PATHS"]["conda_home"], 'bin', 'python3.7')
+                    python_run_cmd = path.join(self.vars_local["NIMB_PATHS"]["conda_home"], 'bin', 'python3')
                     cmd = f'{python_run_cmd} fs_glm_runglm.py -project {self.project} -glm_dir {GLM_dir}'
                     cd_cmd = 'cd {}'.format(path.join(self.NIMB_HOME, 'processing', 'freesurfer'))
                     schedule_fsglm.submit_4_processing(cmd, 'fs_glm','run_glm', cd_cmd)

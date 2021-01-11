@@ -13,7 +13,6 @@ Return:
     an excel file with all subjects and all parameters, per sheets
     one big excel file with all parameters on one sheet
 '''
-
 import time
 date = str(time.strftime('%Y%m%d', time.localtime()))
 
@@ -917,3 +916,71 @@ def create_SurfArea_to_Vol_ratio(df_data_big, f_SA_to_Vol_ratio_DK, f_SA_to_Vol_
 
 
 '''
+
+def get_parameters(projects):
+    """get parameters for nimb"""
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+
+    parser.add_argument(
+        "-project", required=False,
+        default=projects[0],
+        choices = projects,
+        help="names of projects located in credentials_path.py/nimb/projects.json -> PROJECTS",
+    )
+
+    params = parser.parse_args()
+    return params
+
+
+def initiate_fs_from_sh(vars_local):
+    """
+    FreeSurfer needs to be initiated with source and export
+    this functions tries to automate this
+    """
+    sh_file = path.join(vars_local["NIMB_PATHS"]["NIMB_tmp"], 'source_fs.sh')
+    with open(sh_file, 'w') as f:
+        f.write(vars_local["FREESURFER"]["export_FreeSurfer_cmd"]+'\n')
+        f.write("export SUBJECTS_DIR="+vars_local["FREESURFER"]["FS_SUBJECTS_DIR"]+'\n')
+        f.write(vars_local["FREESURFER"]["source_FreeSurfer_cmd"]+'\n')
+    system("chmod +x {}".format(sh_file))
+    return ("source {}".format(sh_file))
+
+
+if __name__ == "__main__":
+
+    import sysfrom
+    from os import system
+    import argparse
+    try:
+        from pathlib import Path
+    except ImportError as e:
+        print('please install pathlib')
+        sys.exit(e)
+
+    file = Path(__file__).resolve()
+    parent, top = file.parent, file.parents[2]
+    sys.path.append(str(top))
+
+    import subprocess
+    from distribution.logger import Log
+    from setup.get_vars import Get_Vars, SetProject
+    getvars      = Get_Vars()
+    dir_4stats   = getvars.stats_vars["STATS_PATHS"]["STATS_HOME"]
+    vars_local   = getvars.location_vars['local']
+    NIMB_tmp     = vars_local['NIMB_PATHS']['NIMB_tmp']
+    fs_start_cmd = initiate_fs_from_sh(vars_local)
+    try:
+        subprocess.run(['mri_info'], stdout=subprocess.PIPE).stdout.decode('utf-8')
+    except Exception as e:
+        print(e)
+        print('please initiate freesurfer using the command: \n    {}'.format(fs_start_cmd))
+
+    projects     = getvars.projects
+    all_projects = [i for i in projects.keys() if 'EXPLANATION' not in i and 'LOCATION' not in i]
+    params       = get_parameters(all_projects)
+    PROCESSED_FS_DIR = projects[params.project]["PROCESSED_FS_DIR"]
+
+    FSStats2Table(dir_4stats, PROCESSED_FS_DIR, NIMB_tmp,
+                    data_only_volumes=False)

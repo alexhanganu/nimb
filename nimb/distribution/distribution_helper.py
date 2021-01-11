@@ -222,14 +222,14 @@ class DistributionHelper():
         Args:
             None
         '''
-        dir_4stats = makedir_ifnot_exist(self.stats_vars["STATS_PATHS"]["STATS_HOME"])            
+        dir_4stats = makedir_ifnot_exist(self.stats_vars["STATS_PATHS"]["STATS_HOME"])
         PROCESSED_FS_DIR = get_local_remote_dir(self.proj_vars["PROCESSED_FS_DIR"])
         if PROCESSED_FS_DIR:
             f_GLM_group_name     = self.proj_vars['GLM_file_group']
             f_ids_processed_name = self.locations["local"]["NIMB_PATHS"]['file_ids_processed']
             if not get_files_for_stats(dir_4stats, [f_GLM_group_name, f_ids_processed_name]):
                 sys.exit()
-        return PROCESSED_FS_DIR, dir_4stats
+        return PROCESSED_FS_DIR
 
     def fs_glm_prep(self, FS_GLM_dir):
         f_GLM_group_name     = self.proj_vars['GLM_file_group']
