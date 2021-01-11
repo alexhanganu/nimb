@@ -3,9 +3,9 @@
 
 import pandas as pd
 from os import path
-from stats.stats_definitions import (get_structure_measurement,
-                                     get_names_of_measurements,
-                                     get_names_of_structures)
+from processing.freesurfer.fs_definitions import (get_structure_measurement,
+                                     			get_names_of_measurements,
+                                     			get_names_of_structures)
 ls_meas = get_names_of_measurements()
 ls_struct = get_names_of_structures()
 

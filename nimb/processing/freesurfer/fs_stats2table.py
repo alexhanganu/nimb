@@ -25,14 +25,13 @@ from os import path, listdir, sep
 import pandas as pd
 import numpy as np
 import xlsxwriter, xlrd
-from distribution.manage_archive import ZipArchiveManagement
 import json
 import logging
-from stats.stats_definitions import (BS_Hip_Tha_stats_f, brstem_hip_header,
-                                     segmentation_parameters,
-                                     segmentations_header, parc_parameters,
-                                     parc_DK_f2rd, parc_DK_header,
-                                     parc_DS_f2rd, parc_DS_header)
+from fs_definitions import (BS_Hip_Tha_stats_f, brstem_hip_header,
+                             segmentation_parameters,
+                             segmentations_header, parc_parameters,
+                             parc_DK_f2rd, parc_DK_header,
+                             parc_DS_f2rd, parc_DS_header)
 columns_2_remove = ['ventricle_5th','wm_hypointensities_L',
                     'wm_hypointensities_R','non_wm_hypointensities',
                     'non_wm_hypointensities_L','non_wm_hypointensities_R',
@@ -950,7 +949,7 @@ def initiate_fs_from_sh(vars_local):
 
 if __name__ == "__main__":
 
-    import sysfrom
+    import sys
     from os import system
     import argparse
     try:
@@ -965,6 +964,7 @@ if __name__ == "__main__":
 
     import subprocess
     from distribution.logger import Log
+    from distribution.manage_archive import ZipArchiveManagement
     from setup.get_vars import Get_Vars, SetProject
     getvars      = Get_Vars()
     dir_4stats   = getvars.stats_vars["STATS_PATHS"]["STATS_HOME"]
@@ -980,7 +980,7 @@ if __name__ == "__main__":
     projects     = getvars.projects
     all_projects = [i for i in projects.keys() if 'EXPLANATION' not in i and 'LOCATION' not in i]
     params       = get_parameters(all_projects)
-    PROCESSED_FS_DIR = projects[params.project]["PROCESSED_FS_DIR"]
+    PROCESSED_FS_DIR = projects[params.project]["PROCESSED_FS_DIR"][1]
 
     FSStats2Table(dir_4stats, PROCESSED_FS_DIR, NIMB_tmp,
                     data_only_volumes=False)

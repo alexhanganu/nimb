@@ -13,7 +13,7 @@ class Correlations_Run():
         self.cor_level_chosen = cor_level_chosen
         self.lvl_thresh = {'STRONG': {'minim':0.7,'maxim':1},
                            'MODERATE': {'minim':0.5,'maxim':0.7},
-                           'WEAK': {'minim':0.3, 'maxim':0.5}
+                           'WEAK': {'minim':0.3, 'maxim':0.5}}
         print('writing correlation sheet, group: ',group)
         self.make_correlations_per_group()
         print('FINISHED creating correlation file for group:', group)
@@ -37,9 +37,11 @@ class Correlations_Run():
                 cor_thresholds = self.lvl_thresh[cor_level]
                 for nr_col in range(0, len(df_cor.columns)+1):
                     for nr_row in range(nr_row_2_start, len(df_cor.iloc[nr_col])):
-                        if df_cor.iloc[nr_col, nr_row] > cor_thresholds['minim'] and df_cor.iloc[nr_col, nr_row]< cor_thresholds[>
+                        if df_cor.iloc[nr_col, nr_row] > cor_thresholds['minim']
+                        			and df_cor.iloc[nr_col, nr_row]< cor_thresholds['minim']
                             cor_type = cor_level+' POSITIVE'
-                        elif df_cor.iloc[nr_col, nr_row] < -cor_thresholds['minim'] and df_cor.iloc[nr_col, nr_row]> -cor_thresho>
+                        elif df_cor.iloc[nr_col, nr_row] < -cor_thresholds['minim']
+                        			and df_cor.iloc[nr_col, nr_row]> -cor_thresholds['minim']
                             cor_type = cor_level+' NEGATIVE '
                         else:
                             cor_type = 0
@@ -51,7 +53,7 @@ class Correlations_Run():
                             df_row += 1
                     nr_row_2_start += 1
                 results_df = results_df.sort_values(by=['Region1'])#or 'Correlation'
-                results_df.to_csv(PATH2save_res+'cor_res_'+group+'_'+cor+'_'+cor_level+'.csv', encoding='utf-8', index=F>
+                results_df.to_csv(PATH2save_res+'cor_res_'+group+'_'+cor+'_'+cor_level+'.csv', encoding='utf-8')#, index=F>
 
 	def RUN_CORRELATIONS_with_stats_stats_pearsonr(self):
 		groups = _GET_Groups(study)

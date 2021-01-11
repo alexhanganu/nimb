@@ -105,7 +105,7 @@ class NIMB(object):
                     python_run_cmd = path.join(self.vars_local["NIMB_PATHS"]["conda_home"], 'bin', 'python3')
                     cmd = f'{python_run_cmd} fs_stats2table.py -project {self.project}'
                     cd_cmd = 'cd {}'.format(path.join(self.NIMB_HOME, 'processing', 'freesurfer'))
-                    schedule.submit_4_processing(cmd, 'fs','get_stats', cd_cmd)
+                    schedule.submit_4_processing(cmd, 'fs_stats','get_stats', cd_cmd)
         if self.process == 'fs-glm':
             '''checks that all subjects are present in the SUBJECTS_DIR folder that will be used for GLM analysis,
                 sends cmd to batch to initiate FreeSurfer GLM running script

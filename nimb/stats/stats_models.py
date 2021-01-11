@@ -42,7 +42,7 @@ from statsmodels.formula.api import ols
 from sklearn.linear_model import LinearRegression
 
 from stats import db_processing
-from stats.stats_definitions import get_structure_measurement, get_names_of_measurements, get_names_of_structures
+from processing.freesurfer.fs_definitions import get_structure_measurement, get_names_of_measurements, get_names_of_structures
 
 
 class ANOVA_do():

@@ -191,7 +191,7 @@ class DistributionReady():
            if all paths for stats are created
            if NIMB is ready to perform statistical analysis"""
         ready = True
-        modules_list = ['pandas', 'xlrd', 'openpyxl', 'pathlib']
+        modules_list = ['pandas', 'xlsxwriter', 'xlrd', 'openpyxl', 'pathlib']
         if self.fs_ready():
             if not self.chk_if_modules_are_installed(modules_list):
                 ready = False

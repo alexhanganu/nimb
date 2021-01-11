@@ -5,7 +5,7 @@ skew: for normally distributed data, the skewness should be about zero. If >0, m
 '''
 
 from stats import db_processing
-from .stats_definitions import get_structure_measurement, get_names_of_measurements, get_names_of_structures
+from processing.freesurfer.fs_definitions import get_structure_measurement, get_names_of_measurements, get_names_of_structures
 import pandas as pd
 import numpy as np
 from scipy import stats
