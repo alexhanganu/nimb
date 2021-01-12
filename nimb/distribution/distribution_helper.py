@@ -230,6 +230,22 @@ class DistributionHelper():
             if not self.get_files_for_stats(dir_4stats,
                                 [f_GLM_group_name, f_ids_processed_name]):
                 sys.exit()
+    #     '''
+    #     checks if subject is archived
+    #     extract the "stats" folder of the subject
+    #     '''
+    #     sub_path = self.get_path(self.NIMB_PROCESSED_FS, sub)
+    #     if not path.isdir(sub_path):
+    #         if sub.endswith('zip'):
+    #             logger.info('Must extract folder {} for each subject to destination {}'.format('stats', sub_path))
+    #             ZipArchiveManagement(sub_path, 
+    #                                 path2xtrct = self.NIMB_tmp, path_err = False,
+    #                                 dirs2xtrct = [self.dir_stats,], log=True)
+    #             time.sleep(1)
+    #             sub = sub.replace('.zip','')
+    #             return self.get_path(self.NIMB_tmp, sub), sub
+    #     else:
+    #         return sub_path, sub
         return PROCESSED_FS_DIR
 
     def fs_glm_prep(self, FS_GLM_dir):

@@ -1,6 +1,6 @@
 {
     "BIDS_ID_session": {
-        "source"     : "source ID or GLM id", 
+        "source"     : "source ID or GLM id",
         "freesurfer" : "ID after FreeSurfer processing.zip",
         "nilearn"    : "ID after nilearn processing.zip",
         "dipy"       : "ID after dipy processing.zip"

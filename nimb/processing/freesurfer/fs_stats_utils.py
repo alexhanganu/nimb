@@ -13,7 +13,7 @@ class FSStatsUtils:
     def __init__(self, dataf, sheetnames, stats_DIR):
         self.dataf      = dataf
         self.sheetnames = sheetnames
-        self.f_subj_with_errors = self.get_path(stats_DIR, 'subjects_with_errors.json')
+        self.f_subj_with_errors = self.get_path(stats_DIR, 'subjects_with_missing_values.json')
         file_all_data = 'data_FreeSurfer_all.xlsx'
         self.data_big        = self.get_path(stats_DIR, file_all_data)
         file_subcortical_vol = 'data_FreeSurfer_subcortical_volumes.xlsx'

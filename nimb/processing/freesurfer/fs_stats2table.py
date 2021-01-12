@@ -6,8 +6,6 @@ Args:
     PATHstats = path of the folder where the final excel files will be saved
     NIMB_PROCESSED_FS = path to the folder where the FreeSurfer processed subjects are located. These can be 
                         raw folders, or zip archived folders (with .zip as ending)
-    NIMB_tmp = folder where temporary files will be saved and folder where the 
-                "stats" folder of the subjects will be extracted if subjects are archived with .zip
     data_only_volumes = True or False, is user wants an additional file to constructed that will include only subcortical volumes
 Return:
     an excel file with all subjects and all parameters, per sheets
@@ -31,8 +29,16 @@ logger.setLevel(logging.DEBUG)
 
 
 def chk_if_all_stats_present(_SUBJECT, stats_dir_path, miss = dict()):
-    ''' check if subject has all stats files'''
-    def add_2dict(self, d, key, val):
+    ''' check if subject has all stats files
+    Args:
+        _SUBJECT: sub to check, str
+        stats_dir_path: path to _SUBJECT + _SUBJECTS
+        miss : dictionary with missing data, to be populated
+    Return:
+        ready: _SUBJECT has all required files and is ready to undergo stats extraction
+        miss: newly populated dictionary with missing _SUBJECT or missing files
+    '''
+    def add_2dict(d, key, val):
         if key not in d:
             d[key] = list()
         if val:
@@ -78,10 +84,24 @@ import time
 date = str(time.strftime('%Y%m%d', time.localtime()))
 
 class FSStats2Table:
-    def __init__(self, PATHstats, NIMB_PROCESSED_FS, NIMB_tmp, big_file = True, data_only_volumes=False):
-        self.stats_DIR         = PATHstats
-        self.NIMB_PROCESSED_FS = NIMB_PROCESSED_FS
-        self.NIMB_tmp          = NIMB_tmp
+    '''extract stats of subjects to table
+    Args:
+        ls_subjects: list of subjects
+        PATH2subjects: it is expected that all subjects are located in the same folder PATH2subjects
+        stats_DIR: path to DIR where stats will be saved
+        big_file : True, will create one file with all FS stats on one sheet
+        data_only_volumes: True: will create one file with one sheet with only subcortical volumes
+    Return:
+        file_with_all_sheets: one files with multiple sheets. Sheet per parameter per hemisphere, per atlas
+    '''
+    def __init__(self, ls_subjects,
+                    stats_DIR,
+                    PATH2subjects,
+                    big_file = True,
+                    data_only_volumes=False):
+        self.ls_subjects       = ls_subjects
+        self.stats_DIR         = stats_DIR
+        self.PATH2subjects     = PATH2subjects
         self.data_only_volumes = data_only_volumes
         self.big_file          = big_file
         self.dir_stats         = 'stats'
@@ -93,18 +113,17 @@ class FSStats2Table:
 
     def run(self):
         '''
-        will run the pipeline of extracting FreeSurfer stats to excel file
+        runs the pipeline to extract FreeSurfer stats to excel file
         '''
-        logger.info(self.NIMB_PROCESSED_FS)
-        ls_all_sub = sorted(listdir(self.NIMB_PROCESSED_FS))
         self.writer=pd.ExcelWriter(self.dataf, engine='xlsxwriter')
         self.sheetnames = list()
         self.row=1
 
-        for sub in ls_all_sub:
-            logger.info('reading: {}; left: {}'.format(sub, len(ls_all_sub[ls_all_sub.index(sub):])))
-            stats_dir_path, sub = self.get_stats_dir(sub)
-            stats_dir_path = self.get_path(stats_dir_path, self.dir_stats)
+        for sub in self.ls_subjects:
+            subs_left = len(self.ls_subjects[self.ls_subjects.index(sub):])
+            logger.info(f'reading: {sub}; left: {subs_left}')
+            path_2sub        = self.get_path(self.PATH2subjects, sub)
+            stats_dir_path   = self.get_path(path_2sub, self.dir_stats)
             ready, self.miss = chk_if_all_stats_present(sub, stats_dir_path, self.miss)
             if ready:
                 logger.info('    extracting stats for {}'.format(sub))
@@ -117,7 +136,7 @@ class FSStats2Table:
         self.writer.save()
 
         if self.miss:
-            f_miss = self.get_path(self.NIMB_PROCESSED_FS, 'nimb_subjects_missing.json')
+            f_miss = self.get_path(self.stats_DIR, 'subjects_with_missing_files.json')
             logger.info('ERROR: some subjects are missing the required files. Check file: {}'.format(f_miss))
             self.save_json(self.miss, f_miss)
 
@@ -128,24 +147,6 @@ class FSStats2Table:
             if self.data_only_volumes:
                 fs_utils.create_file_with_only_subcort_volumes()
 
-    def get_stats_dir(self, sub):
-        '''
-        checks if subject is archived
-        using only the "zip" methods currently
-        extracts the "stats" folder of the subject
-        '''
-        sub_path = self.get_path(self.NIMB_PROCESSED_FS, sub)
-        if not path.isdir(sub_path):
-            if sub.endswith('zip'):
-                logger.info('Must extract folder {} for each subject to destination {}'.format('stats', sub_path))
-                ZipArchiveManagement(sub_path, 
-                                    path2xtrct = self.NIMB_tmp, path_err = False,
-                                    dirs2xtrct = [self.dir_stats,], log=True)
-                time.sleep(1)
-                sub = sub.replace('.zip','')
-                return self.get_path(self.NIMB_tmp, sub), sub
-        else:
-            return sub_path, sub
 
     def get_bs_hip_amy_tha(self, stats_dir_path, _SUBJECT):
         '''Extracting Brainstem,  Hippocampus, Amygdala, Thalamus'''
@@ -385,20 +386,6 @@ def get_parameters(projects, default_stats_dir):
     return params
 
 
-def initiate_fs_from_sh(vars_local):
-    """
-    FreeSurfer needs to be initiated with source and export
-    this functions tries to automate this
-    """
-    sh_file = path.join(vars_local["NIMB_PATHS"]["NIMB_tmp"], 'source_fs.sh')
-    with open(sh_file, 'w') as f:
-        f.write(vars_local["FREESURFER"]["export_FreeSurfer_cmd"]+'\n')
-        f.write("export SUBJECTS_DIR="+vars_local["FREESURFER"]["FS_SUBJECTS_DIR"]+'\n')
-        f.write(vars_local["FREESURFER"]["source_FreeSurfer_cmd"]+'\n')
-    system("chmod +x {}".format(sh_file))
-    return ("source {}".format(sh_file))
-
-
 if __name__ == "__main__":
 
     import sys
@@ -415,25 +402,21 @@ if __name__ == "__main__":
     sys.path.append(str(top))
 
     import subprocess
-    from distribution.logger import Log
-    from distribution.manage_archive import ZipArchiveManagement
     from setup.get_vars import Get_Vars, SetProject
     getvars           = Get_Vars()
     default_stats_dir = getvars.stats_vars["STATS_PATHS"]["STATS_HOME"]
-    vars_local        = getvars.location_vars['local']
-    NIMB_tmp          = vars_local['NIMB_PATHS']['NIMB_tmp']
-    fs_start_cmd      = initiate_fs_from_sh(vars_local)
-    try:
-        subprocess.run(['mri_info'], stdout=subprocess.PIPE).stdout.decode('utf-8')
-    except Exception as e:
-        print(e)
-        print('please initiate freesurfer using the command: \n    {}'.format(fs_start_cmd))
 
-    projects         = getvars.projects
-    all_projects     = [i for i in projects.keys() if 'EXPLANATION' not in i and 'LOCATION' not in i]
-    params           = get_parameters(all_projects, default_stats_dir)
-    PROCESSED_FS_DIR = projects[params.project]["PROCESSED_FS_DIR"][1]
-    dir_4stats       = params.stats_dir
+    projects      = getvars.projects
+    all_projects  = [i for i in projects.keys() if 'EXPLANATION' not in i and 'LOCATION' not in i]
+    params        = get_parameters(all_projects, default_stats_dir)
+    PATH2subjects = projects[params.project]["PROCESSED_FS_DIR"][1]
+    stats_DIR     = params.stats_dir
+    ls_subjects   = sorted(listdir(PATH2subjects))
+    logger.info(f'    Extracting stats for subjects located in folder: {PATH2subjects}')
 
-    FSStats2Table(dir_4stats, PROCESSED_FS_DIR, NIMB_tmp,
+    FSStats2Table(ls_subjects,
+                    stats_DIR,
+                    PATH2subjects,
+                    big_file = True,
                     data_only_volumes=False)
+
