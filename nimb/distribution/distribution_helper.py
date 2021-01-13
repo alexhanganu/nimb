@@ -211,6 +211,20 @@ class DistributionHelper():
         else:
             return False
 
+    def prep_4stats(self, dir_4stats, fs = False):
+        """create DIRs for stats (as per setup/stats.json)
+           get group file (provided by user)
+           return final stats_grid_file that will be used for statistical analysis
+        Args:
+            dir_4stats: DIR where stats are saved
+        """
+        dir_4stats       = makedir_ifnot_exist(dir_4stats)
+        f_GLM_group_name     = self.proj_vars['GLM_file_group']
+        if not self.get_files_for_stats(dir_4stats,
+                            [f_GLM_group_name,]):
+            sys.exit()
+        return f_GLM_group_name
+
     def prep_4fs_stats(self, dir_4stats):
         '''create DIR to store stats files
             check if processed subjects are on the local computer
@@ -220,7 +234,7 @@ class DistributionHelper():
             else:
                 return False
         Args:
-            None
+            dir_4stats: DIR where stats are saved
         '''
         dir_4stats       = makedir_ifnot_exist(dir_4stats)
         PROCESSED_FS_DIR = self.get_local_remote_dir(self.proj_vars["PROCESSED_FS_DIR"])

@@ -202,6 +202,60 @@ class RUN_stats():
         df_with_features = self.tab.get_df_from_df(df_X, usecols = features)
         return df_with_features, features, features_rfe_and_rank_df
 
-'''2DO
-    zipf's law https://getpocket.com/explore/item/mathematical-model-reveals-the-patterns-of-how-innovations-arise
-'''
+
+def get_parameters(projects):
+    """get parameters for nimb"""
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+
+    parser.add_argument(
+        "-project", required=False,
+        default=projects[0],
+        choices = projects,
+        help="names of projects located in credentials_path.py/nimb/projects.json -> PROJECTS",
+    )
+
+    params = parser.parse_args()
+    return params
+
+
+if __name__ == "__main__":
+
+    import sys
+    from os import system
+    import argparse
+    try:
+        from pathlib import Path
+    except ImportError as e:
+        print('please install pathlib')
+        sys.exit(e)
+
+    file = Path(__file__).resolve()
+    parent, top = file.parent, file.parents[2]
+    sys.path.append(str(top))
+
+    from setup.get_vars import Get_Vars, SetProject
+    getvars    = Get_Vars()
+    projects      = getvars.projects
+    all_projects  = [i for i in projects.keys() if 'EXPLANATION' not in i and 'LOCATION' not in i]
+    params        = get_parameters(all_projects)
+
+    NIMB_tmp   = getvars.location_vars['local']['NIMB_PATHS']['NIMB_tmp']
+    vars_stats = getvars.stats_vars
+    vars_stats = SetProject(NIMB_tmp, vars_stats, params.project).stats
+    if "STATS_FILES" in vars_stats:
+        stats_files   = vars_stats["STATS_FILES"]
+    else:
+        stats_files   = {
+       "fname_fs_per_param"     : "stats_FreeSurfer_per_param",
+       "fname_fs_all_stats"     : "stats_FreeSurfer_all",
+       "fname_fs_subcort_vol"   : "stats_FreeSurfer_subcortical",
+       "file_type"              : "xlsx"}
+
+    print(f'    Performing statistical analysis in folder: {vars_stats["STATS_PATHS"]["STATS_HOME"]}')
+
+    RUN_stats(vars_stats,
+              projects[params.project]
+              ).run_stats()
+

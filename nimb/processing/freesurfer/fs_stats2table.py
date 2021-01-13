@@ -413,7 +413,6 @@ if __name__ == "__main__":
     parent, top = file.parent, file.parents[2]
     sys.path.append(str(top))
 
-    import subprocess
     from setup.get_vars import Get_Vars, SetProject
     getvars           = Get_Vars()
     vars_stats        = getvars.stats_vars

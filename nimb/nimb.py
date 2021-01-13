@@ -76,8 +76,18 @@ class NIMB(object):
                 self.logger.info("NIMB is not ready to run the stats. Please check the configuration files.")
                 sys.exit()
             else:
-                from stats import stats_helper
-                stats_helper.RUN_stats(self.stats_vars, self.project_vars).run_stats()
+                dir_4stats = self.stats_vars["STATS_PATHS"]["STATS_HOME"]
+                f_with_groups = DistributionHelper(self.all_vars,
+                                                  self.project_vars,
+                                                  self.logger).prep_4stats(dir_4stats)
+                self.vars_local['PROCESSING']['processing_env']  = "tmux" #probably works with slurm, must be checked
+                schedule = Scheduler(self.vars_local)
+                cd_cmd = 'cd {}'.format(path.join(self.NIMB_HOME, 'processing', 'freesurfer'))
+                python_run_cmd = path.join(self.vars_local["NIMB_PATHS"]["conda_home"], 'bin', 'python3')
+                cmd = f'{python_run_cmd} stats_helper.py -project {self.project}'
+                # schedule.submit_4_processing(cmd, 'nimb_stats','run', cd_cmd)
+                # from stats import stats_helper
+                # stats_helper.RUN_stats(self.stats_vars, self.project_vars).run_stats()
 
         # FreeSurfer related codes: "freesurfer"   - performs preprocessing
         #							"fs-get-stats" - extracts statistical data an an xls/ xlsx/ csv file
@@ -100,11 +110,11 @@ class NIMB(object):
                                                       self.project_vars,
                                                       self.logger).prep_4fs_stats(dir_4stats)
                 if PROCESSED_FS_DIR:
-                    self.vars_local['PROCESSING']['processing_env']  = "tmux"
+                    self.vars_local['PROCESSING']['processing_env']  = "tmux" #probably works with slurm, must be checked
                     schedule = Scheduler(self.vars_local)
+                    cd_cmd = 'cd {}'.format(path.join(self.NIMB_HOME, 'processing', 'freesurfer'))
                     python_run_cmd = path.join(self.vars_local["NIMB_PATHS"]["conda_home"], 'bin', 'python3')
                     cmd = f'{python_run_cmd} fs_stats2table.py -project {self.project} -stats_dir {dir_4stats}'
-                    cd_cmd = 'cd {}'.format(path.join(self.NIMB_HOME, 'processing', 'freesurfer'))
                     schedule.submit_4_processing(cmd, 'fs_stats','get_stats', cd_cmd)
         if self.process == 'fs-glm':
             '''checks that all subjects are present in the SUBJECTS_DIR folder that will be used for GLM analysis,
@@ -116,9 +126,9 @@ class NIMB(object):
                 if GLM_file_path:
                     self.vars_local['PROCESSING']['processing_env']  = "tmux"
                     schedule_fsglm = Scheduler(self.vars_local)
+                    cd_cmd = 'cd {}'.format(path.join(self.NIMB_HOME, 'processing', 'freesurfer'))
                     python_run_cmd = path.join(self.vars_local["NIMB_PATHS"]["conda_home"], 'bin', 'python3')
                     cmd = f'{python_run_cmd} fs_glm_runglm.py -project {self.project} -glm_dir {GLM_dir}'
-                    cd_cmd = 'cd {}'.format(path.join(self.NIMB_HOME, 'processing', 'freesurfer'))
                     schedule_fsglm.submit_4_processing(cmd, 'fs_glm','run_glm', cd_cmd)
         if self.process == 'fs-glm-image':
             '''extracts FS-GLM images for p<0.05 and MCz-corrected results
