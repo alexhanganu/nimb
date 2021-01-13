@@ -121,6 +121,9 @@ class NIMB(object):
                     cd_cmd = 'cd {}'.format(path.join(self.NIMB_HOME, 'processing', 'freesurfer'))
                     schedule_fsglm.submit_4_processing(cmd, 'fs_glm','run_glm', cd_cmd)
         if self.process == 'fs-glm-image':
+            '''extracts FS-GLM images for p<0.05 and MCz-corrected results
+            requires FreeSurfer to be installed in order to access tksurfer and freeview
+            '''
             if not "export_screen" in self.vars_local['FREESURFER']:
                 self.logger.info("PLEASE check that you can export your screen or you can run screen-based applications. \
                                     This is necessary for Freeview and Tksurfer. \

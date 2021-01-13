@@ -10,18 +10,13 @@ logger.setLevel(logging.DEBUG)
 
 
 class FSStatsUtils:
-    def __init__(self, dataf, sheetnames, stats_DIR):
+    def __init__(self, dataf, stats_DIR, sheetnames):
         self.dataf      = dataf
         self.sheetnames = sheetnames
-        self.f_subj_with_errors = self.get_path(stats_DIR, 'subjects_with_missing_values.json')
-        file_all_data = 'data_FreeSurfer_all.xlsx'
-        self.data_big        = self.get_path(stats_DIR, file_all_data)
-        file_subcortical_vol = 'data_FreeSurfer_subcortical_volumes.xlsx'
-        self.data_subcortical_volumes = self.get_path(stats_DIR, file_subcortical_vol)
+        self.stats_DIR  = stats_DIR
+        self.f_errors   = self.get_path(stats_DIR, 'subjects_with_missing_values.json')
 
-
-
-    def create_file_with_only_subcort_volumes(self):
+    def create_file_with_only_subcort_volumes(self, file_name, file_type):
         '''CREATING ONE BIG STATS FILE'''
         logger.info('CREATING file with Subcortical Volumes')
 
@@ -38,12 +33,13 @@ class FSStatsUtils:
         frame_final = (df_concat, df_segmentations['eTIV'])
         df_concat = pd.concat(frame_final,axis=1, sort=True)
 
-        writer = pd.ExcelWriter(self.data_subcortical_volumes, engine='xlsxwriter')
+        self.f_subcort  = self.get_path(self.stats_DIR, f"{file_name}.{file_type}")
+        writer = pd.ExcelWriter(self.f_subcort, engine='xlsxwriter')
         df_concat.to_excel(writer, 'stats')
         writer.save()
         logger.info('FINISHED creating file with Subcortical Volumes')
 
-    def create_file_with_only_subcort_volumes_V2(self):
+    def create_file_with_only_subcort_volumes_V2(self, file_name, file_type):
         '''CREATING ONE BIG STATS FILE'''
         logger.info('CREATING file with Subcortical Volumes - VERSION 2, must be checked')
 
@@ -56,12 +52,13 @@ class FSStatsUtils:
         frames = [all_df[i] for i in all_df]+[df_segmentations['eTIV']]
         df_concat = pd.concat(frames, axis=1, sort=True)
 
-        writer = pd.ExcelWriter(self.data_subcortical_volumes, engine='xlsxwriter')
+        self.f_subcort  = self.get_path(self.stats_DIR, f"{file_name}.{file_type}")
+        writer = pd.ExcelWriter(self.f_subcort, engine='xlsxwriter')
         df_concat.to_excel(writer, 'stats')
         writer.save()
         logger.info('FINISHED creating file with Subcortical Volumes')
 
-    def create_BIG_data_file(self):
+    def create_BIG_data_file(self, file_name, file_type):
 
         logger.info('CREATING One file for all subjects')
         df_concat = pd.read_excel(self.dataf, engine = 'openpyxl', sheet_name=self.sheetnames[0], index_col = 0)
@@ -77,7 +74,8 @@ class FSStatsUtils:
         frame_final = (df_concat, df_segmentations['eTIV'])
         df_concat = pd.concat(frame_final, axis=1, sort=True)
 
-        writer = pd.ExcelWriter(self.data_big, engine='xlsxwriter')
+        path_2filename   = self.get_path(self.stats_DIR, f"{file_name}.{file_type}")
+        writer = pd.ExcelWriter(path_2filename, engine='xlsxwriter')
         df_concat.to_excel(writer, 'stats')
         writer.save()
         logger.info('FINISHED creating One file for all subjects')
@@ -192,7 +190,7 @@ class FSStatsUtils:
                             d_err[_id] = list()
                         if col not in d_err[_id]:
                             d_err[_id].append(col)
-        self.save_json(d_err, self.f_subj_with_errors)
+        self.save_json(d_err, self.f_errors)
 
     def change_column_name(self, df, sheet):
         columns_2_remove = ['eTIV'] #removing because there are multiple entries

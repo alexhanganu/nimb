@@ -92,23 +92,29 @@ class FSStats2Table:
         big_file : True, will create one file with all FS stats on one sheet
         data_only_volumes: True: will create one file with one sheet with only subcortical volumes
     Return:
-        file_with_all_sheets: one files with multiple sheets. Sheet per parameter per hemisphere, per atlas
+        fname_fs_per_param: one file with multiple sheets. Sheet per parameter per hemisphere, per atlas
     '''
     def __init__(self, ls_subjects,
                     stats_DIR,
                     PATH2subjects,
+                    stats_files,
                     big_file = True,
-                    data_only_volumes=False):
+                    data_only_volumes=False,
+                    new_date = True):
         self.ls_subjects       = ls_subjects
         self.stats_DIR         = stats_DIR
         self.PATH2subjects     = PATH2subjects
-        self.data_only_volumes = data_only_volumes
+        self.stats_files       = stats_files
+        fname_fs_per_param     = stats_files["fname_fs_per_param"]
         self.big_file          = big_file
+        self.data_only_volumes = data_only_volumes
+        if new_date:
+            file_name          = f"{fname_fs_per_param}_{date}.xlsx"
+        else:
+            file_name          = f"{fname_fs_per_param}.xlsx"
+        self.dataf             = self.get_path(self.stats_DIR, file_name)
         self.dir_stats         = 'stats'
-
         self.miss = dict()
-        file_with_all_sheets = 'data_FreeSurfer_'+date+'.xlsx'
-        self.dataf                    = self.get_path(self.stats_DIR, file_with_all_sheets)
         self.run()
 
     def run(self):
@@ -134,19 +140,8 @@ class FSStats2Table:
                 self.get_parcelations_desikan_wm(stats_dir_path, sub)
                 self.row += 1
         self.writer.save()
-
-        if self.miss:
-            f_miss = self.get_path(self.stats_DIR, 'subjects_with_missing_files.json')
-            logger.info('ERROR: some subjects are missing the required files. Check file: {}'.format(f_miss))
-            self.save_json(self.miss, f_miss)
-
-        if self.big_file:
-            from fs_stats_utils import FSStatsUtils
-            fs_utils = FSStatsUtils(self.dataf, self.sheetnames, self.stats_DIR)
-            fs_utils.create_BIG_data_file()
-            if self.data_only_volumes:
-                fs_utils.create_file_with_only_subcort_volumes()
-
+        self.save_missing()
+        self.make_one_sheet()
 
     def get_bs_hip_amy_tha(self, stats_dir_path, _SUBJECT):
         '''Extracting Brainstem,  Hippocampus, Amygdala, Thalamus'''
@@ -355,6 +350,23 @@ class FSStats2Table:
             ending = 'R'
         return ending
 
+    def save_missing(self):
+        if self.miss:
+            f_miss = self.get_path(self.stats_DIR, 'subjects_with_missing_files.json')
+            logger.info('ERROR: some subjects are missing the required files. Check file: {}'.format(f_miss))
+            self.save_json(self.miss, f_miss)
+
+    def make_one_sheet(self):
+        if self.big_file:
+            from fs_stats_utils import FSStatsUtils
+            fs_utils = FSStatsUtils(self.dataf, self.stats_DIR, self.sheetnames)
+            file_type = self.stats_files["file_type"]
+            file_name = self.stats_files["fname_fs_all_stats"]
+            fs_utils.create_BIG_data_file(file_name, file_type)
+            if self.data_only_volumes:
+                file_name = self.stats_files["fname_fs_subcort_vol"]
+                fs_utils.create_file_with_only_subcort_volumes(file_name, file_type)
+
     def get_path(self, link1, link2):
         return path.join(link1, link2).replace(sep, '/')
 
@@ -404,7 +416,16 @@ if __name__ == "__main__":
     import subprocess
     from setup.get_vars import Get_Vars, SetProject
     getvars           = Get_Vars()
-    default_stats_dir = getvars.stats_vars["STATS_PATHS"]["STATS_HOME"]
+    vars_stats        = getvars.stats_vars
+    default_stats_dir = vars_stats["STATS_PATHS"]["STATS_HOME"]
+    if "STATS_FILES" in vars_stats:
+        stats_files   = vars_stats["STATS_FILES"]
+    else:
+        stats_files   = {
+       "fname_fs_per_param"     : "stats_FreeSurfer_per_param",
+       "fname_fs_all_stats"     : "stats_FreeSurfer_all",
+       "fname_fs_subcort_vol"   : "stats_FreeSurfer_subcortical",
+       "file_type"              : "xlsx"}
 
     projects      = getvars.projects
     all_projects  = [i for i in projects.keys() if 'EXPLANATION' not in i and 'LOCATION' not in i]
@@ -417,6 +438,8 @@ if __name__ == "__main__":
     FSStats2Table(ls_subjects,
                     stats_DIR,
                     PATH2subjects,
+                    stats_files,
                     big_file = True,
-                    data_only_volumes=False)
+                    data_only_volumes=False,
+                    new_date = True)
 

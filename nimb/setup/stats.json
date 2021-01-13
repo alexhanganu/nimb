@@ -11,18 +11,28 @@
        "linreg_moderation_dir"  : "~/nimb_tmp/projects/stats/linreg_moderation"
    },
 "STATS_PARAMS": {
-       "file_name_corrected"    : "eTIVNaNOutcor",
-       "prediction_vars"        : {"target" : "group", "pca_threshold":0.5, "skf_NUM_ITER": 150, "NUM_ITER": 10, "nr_threads" : 15},
+       "prediction_vars"        : {"target" : "group", "pca_threshold":0.5, "skf_NUM_ITER": 150,        "NUM_ITER": 10, "nr_threads" : 15},
 
        "cor_methods"            : ["pearson","spearman","kendall"],
        "cor_level_chosen"       : ["STRONG","MODERATE","WEAK"]
    },
+"STATS_FILES": {
+       "fname_fs_per_param"     : "stats_FreeSurfer_per_param",
+       "fname_fs_all_stats"     : "stats_FreeSurfer_all",
+       "fname_fs_subcort_vol"   : "stats_FreeSurfer_subcortical",
+       "fname_ETIVcorrected"    : "eTIVNaNOutcor",
+       "file_type"              : "xlsx"
+   },
 "EXPLANATION": {
-       "GLM_dir"                : "path to the folder were the glm analysis will be made",
-       "GLM_measurements"       : "cortical parameters that will be used for FreeSurfer GLM analysis: thickness,area,volume,curv",
-       "GLM_thresholds"         : "threshold levels for smoothing in mm, used for FreeSurfer GLM analysis: 5,10,15,20,25",
-       "GLM_MCz_cache"          : "level of FreeSurfer GLM MCZ simulation threshold 13 equals to p:0.05",
-       "freesurfer_version"     : "default is 7 (for 7.1.1) but pipeline should also work with versions 6 and 5",
-       "freesurfer_license"     : "license of freesurfer"
+       "FS_GLM_dir"             : "path to the folder were the glm analysis will be made",
+       "STATS_HOME"             : "path to the folder were stats will be saved",
+       "prediction_vars"        : "variables for prediction analysis; target is the column used for prediction; pca_threshold 0.5 is 50% threshold for PCA analysis, skf_NUM_ITER is the number of iterations for the skf prediction, NUM_ITER: is the number of iterations used to repeat SKF prediction; nr_threads is the number of threads used to send the analysis to",
+       "cor_methods"            : "names of the methods used for correlational analysis",
+       "cor_level_chosen"       : "level of correlations that the used want to receive results for",
+       "fname_fs_per_param"     : "name of the file with FreeSurfer stats in format one sheet per parameter per atlas per hemisphere",
+       "fname_fs_all_stats"     : "name of the file with FreeSurfer stats results, all results on one sheet",
+       "fname_fs_subcort_vol"   : "name of the file with FreeSurfer stats only of subcortical volumes",
+       "fname_ETIVcorrected"    : "name of the file with FreeSurfer stats in which subcortical volumes were corrected for eTIV AND all values were checked for presence of missing (nan) values AND all columns were checked for outliers - outliers are corrected based on column mean",
+       "file_type"              : "xlsx (default), xslx, csv - type of file that user want to use to save the final stats results"
    }
 }
