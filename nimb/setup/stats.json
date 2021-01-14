@@ -18,9 +18,12 @@
    },
 "STATS_FILES": {
        "fname_fs_per_param"     : "stats_FreeSurfer_per_param",
-       "fname_fs_all_stats"     : "stats_FreeSurfer_all",
+       "fname_fs_all_stats"     : "stats_FreeSurfer",
        "fname_fs_subcort_vol"   : "stats_FreeSurfer_subcortical",
-       "fname_ETIVcorrected"    : "eTIVNaNOutcor",
+       "fname_func_all_stats"   : "stats_Nilearn",
+       "fname_NaNOcor"          : "stats_NaNOutcor",
+       "fname_eTIVcor"          : "stats_eTIVcor",
+       "fname_Outcor"           : "stats_Outcor",
        "file_type"              : "xlsx"
    },
 "EXPLANATION": {
@@ -32,7 +35,9 @@
        "fname_fs_per_param"     : "name of the file with FreeSurfer stats in format one sheet per parameter per atlas per hemisphere",
        "fname_fs_all_stats"     : "name of the file with FreeSurfer stats results, all results on one sheet",
        "fname_fs_subcort_vol"   : "name of the file with FreeSurfer stats only of subcortical volumes",
-       "fname_ETIVcorrected"    : "name of the file with FreeSurfer stats in which subcortical volumes were corrected for eTIV AND all values were checked for presence of missing (nan) values AND all columns were checked for outliers - outliers are corrected based on column mean",
+       "fname_NaNcor"           : "name of the file where all values were checked for missing values (nan); missing values are changed to column mean",
+       "fname_eTIVcor"          : "name of the file with FreeSurfer stats in which subcortical volumes were corrected for estimated Total Intracranial Volume (eTIV",
+       "fname_Outcor"           : "name of the file where all values were checked for outliers; outliers are changed to column mean",
        "file_type"              : "xlsx (default), xslx, csv - type of file that user want to use to save the final stats results"
    }
 }
