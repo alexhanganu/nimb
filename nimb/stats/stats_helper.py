@@ -7,29 +7,6 @@ class RUN_stats():
 
     def __init__(self, nimb_stats, project_vars):
 
-        self.atlas        = ('DK','DS','DKDS')[1]
-        self.project_vars = project_vars
-        self.stats_paths  = nimb_stats['STATS_PATHS']
-        self.stats_params = nimb_stats['STATS_PARAMS']
-        group_param       = project_vars['group_param']
-        regression_param  = project_vars['regression_param']
-        other_params      = project_vars['other_params']
-        f_data_clinical   = project_vars['GLM_file_group']
-        print('materials located at: {:>40}'.format(project_vars['materials_DIR'][1]))
-        print('file for analysis: {:>40}'.format(f_data_clinical))
-        print('id column: {:>40}'.format(str(project_vars['id_col'])))
-        print('group column: {:>40}'.format(str(project_vars['group_col'])))
-        print('variables to analyse: {:>40}'.format(str(project_vars['variables_for_glm'])))
-        print('stats will be saved at: {:>40}'.format(self.stats_paths['STATS_HOME']))
-
-        self.feature_algo    = 'PCA' #'RFE'
-        self.prediction_vars = self.stats_params["prediction_vars"]
-        cor_methods          = self.stats_params["cor_methods"]
-        cor_level_chosen     = self.stats_params["cor_level_chosen"]
-
-        self.get_tables()
-        self.tab = db_processing.Table()
-
         self.STEP_stats_ttest        = False
         self.STEP_Anova              = True
         self.STEP_SimpLinReg         = True # requires Anova to be True
@@ -40,6 +17,33 @@ class RUN_stats():
         self.STEP_Predict_RF_SKF     = False
         self.STEP_Predict_RF_LOO     = False
         self.STEP_get_param_based_db = False
+
+        self.atlas        = ('DK','DS','DKDS')[1]
+        self.project_vars = project_vars
+        self.stats_paths  = nimb_stats['STATS_PATHS']
+        self.stats_params = nimb_stats['STATS_PARAMS']
+        group_param       = project_vars['group_param']
+        regression_param  = project_vars['regression_param']
+        other_params      = project_vars['other_params']
+        print('    materials located at: {:<50}'.format(project_vars['materials_DIR'][1]))
+        print('    file for analysis: {:<50}'.format(project_vars['fname_groups']))
+        print('    id column: {:<50}'.format(str(project_vars['id_col'])))
+        print('    group column: {:<50}'.format(str(project_vars['group_col'])))
+        print('    variables to analyse: {:<50}'.format(str(project_vars['variables_for_glm'])))
+
+        self.feature_algo    = 'PCA' #'RFE'
+        self.prediction_vars = self.stats_params["prediction_vars"]
+        cor_methods          = self.stats_params["cor_methods"]
+        cor_level_chosen     = self.stats_params["cor_level_chosen"]
+
+        self.tab = db_processing.Table()
+        self.df_clin, self.df_clin_atlas,\
+            self.df_sub_and_cort,\
+            self.ls_cols_X_atlas,\
+            self.groups = make_stats_grid.MakeGrid(
+                                project_vars,
+                                nimb_stats).grid()
+
 
     def run_stats(self):
          for group in ['all',]:#+self.groups: #'all' stands for all groups
@@ -148,22 +152,6 @@ class RUN_stats():
                                # 'description'))):
         # print('running descriptive statistics')
 
-    def get_tables(self):
-        f_CoreTIVNaNOut = self.stats_params["file_name_corrected"]
-        atlas_sub = 'Subcort'
-        atlas_DK = 'DK'
-        atlas_DS = 'DS'
-        f_subcort    = path.join(self.project_vars['materials_DIR'][1], f_CoreTIVNaNOut+atlas_sub+'.xlsx')
-        f_atlas_DK   = path.join(self.project_vars['materials_DIR'][1], f_CoreTIVNaNOut+atlas_DK+'.xlsx')
-        f_atlas_DS   = path.join(self.project_vars['materials_DIR'][1], f_CoreTIVNaNOut+atlas_DS+'.xlsx')
-        self.df_clin = self.tab.get_df(path.join(self.project_vars['materials_DIR'][1], self.project_vars['GLM_file_group']),
-                                    usecols=[self.project_vars['id_col'], self.project_vars['group_col']]+self.project_vars['variables_for_glm'],
-                                    index_col = self.project_vars['id_col'])
-        self.groups = preprocessing.get_groups(self.df_clin, self.project_vars['group_col'])
-        self.df_sub_and_cort, self.ls_cols_X_atlas = preprocessing.get_df(f_subcort, f_atlas_DK, f_atlas_DS,
-                                                         self.atlas, self.project_vars['id_col'])
-        self.df_clin_atlas = self.tab.join_dfs(self.df_clin, self.df_sub_and_cort, how='outer')
-
     def get_X_data_per_group_all_groups(self, group):
     # extract X_scaled values for the brain parameters
         if group == 'all':
@@ -233,7 +221,9 @@ if __name__ == "__main__":
     parent, top = file.parent, file.parents[1]
     sys.path.append(str(top))
 
-    from stats import (db_processing, preprocessing, predict, varia)
+    from stats import (make_stats_grid,
+                        db_processing, preprocessing,
+                        predict, varia)
     from setup.get_vars import Get_Vars, SetProject
     getvars    = Get_Vars()
     projects      = getvars.projects

@@ -193,7 +193,7 @@ class DistributionReady():
         ready = True
         modules_list = ['pandas', 'xlsxwriter', 'xlrd',
                         'openpyxl', 'pathlib', 'sklearn',
-                        'matplotlib']
+                        'matplotlib', 'seaborn']
         if not self.chk_if_modules_are_installed(modules_list):
             print('some python modules are missing: pandas, xlsxwriter, xlrd, openpyxl, pathlib')
             ready = False

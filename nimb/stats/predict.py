@@ -3,20 +3,7 @@
 # coding: utf-8
 
 from os import path
-# path_main_dir = [p for p in ('/home_je/hanganua/sSylvie',
-# 						'J:/OneDrive - Universite de Montreal/s/s2018-sylvie-reserve',
-# 						'J:/Dropbox/2004étSylvie/materials') if os.path.exists(p)][0]
-# data_clin = path_main_dir + '/materials/0.data_clinical_'+date+'.xlsx'
 
-# if step == 1:
-# 	data_f_X = path_main_dir + '/materials/2.data_FS_eTIVNaNOutcor_'+atlas+'_'+date+'.xlsx'
-# elif step == 2:
-# 	data_f_X = path_main_dir + '/results/predict_'+date+'/materials/data_sig_feat_'+atlas+'_step'+str(step)+'.xlsx'
-
-# data_f_X = path_main_dir + '/materials/2.data_FS_eTIVNaNOutcor_'+atlas+'_'+date+'.xlsx'
-
-# path_save_results = path_main_dir + '/results/predict_'+date+'/step'+str(step)+'_'+atlas
-# save_f_name = '/predict_'+atlas+'_step'+str(part)+'_parts'+str(wanted_parts)+'_'
 print("Script executing.....")
 
 from stats import db_processing, plotting, varia
@@ -381,3 +368,17 @@ def save_to_csv(path, data):
     # predict.save_to_csv(varia.get_dir(definitions.paths['PATH_results'] +"_"+definitions.params['date'])+save_f_name+'stats.csv', stats)
 
 
+# path_main_dir = [p for p in ('/home_je/hanganua/sSylvie',
+# 						'J:/OneDrive - Universite de Montreal/s/s2018-sylvie-reserve',
+# 						'J:/Dropbox/2004étSylvie/materials') if os.path.exists(p)][0]
+# data_clin = path_main_dir + '/materials/0.data_clinical_'+date+'.xlsx'
+
+# if step == 1:
+# 	data_f_X = path_main_dir + '/materials/2.data_FS_eTIVNaNOutcor_'+atlas+'_'+date+'.xlsx'
+# elif step == 2:
+# 	data_f_X = path_main_dir + '/results/predict_'+date+'/materials/data_sig_feat_'+atlas+'_step'+str(step)+'.xlsx'
+
+# data_f_X = path_main_dir + '/materials/2.data_FS_eTIVNaNOutcor_'+atlas+'_'+date+'.xlsx'
+
+# path_save_results = path_main_dir + '/results/predict_'+date+'/step'+str(step)+'_'+atlas
+# save_f_name = '/predict_'+atlas+'_step'+str(part)+'_parts'+str(wanted_parts)+'_'

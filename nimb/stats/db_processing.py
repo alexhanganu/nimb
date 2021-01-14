@@ -138,3 +138,37 @@ class Table:
             if reset_index:
                 df.reset_index(drop = True, inplace = True)
         return df
+
+
+def get_df_with_params(df, params):
+
+    ls_cols_2get = list()
+    for val in df.columns:
+        for param in params:
+            if param in val:
+                ls_cols_2get.append(val)
+    print(ls_cols_2get)
+
+    return df_subcort_atlas, ls_cols_X_atlas
+    
+def get_df_for_fs_atlas(f_subcort, f_atlas_DK, f_atlas_DS, atlas, id_col):
+    cols_DK = [id_col,'cortex_thickness_ThickL_DK', 'cortex_vol_VolR_DK', 'cortex_area_AreaL_DK']
+    df_subcort = db_processing.get_df(f_subcort,
+                                        usecols=False,
+                                        index_col = id_col)
+    if 'DK' in atlas:
+        df_atlas = db_processing.get_df(f_atlas_DK,
+                                    usecols=False,
+                                    index_col = id_col)
+        if 'DS' in atlas:
+            df_atlas_DS = db_processing.get_df(f_atlas_DS,
+                                    usecols=False,
+                                    index_col = id_col)
+            df_atlas = db_processing.join_dfs(df_atlas, df_atlas_DS)
+    if atlas == 'DS':
+        df_atlas = db_processing.get_df(f_atlas_DS,
+                                    usecols=False,
+                                    index_col = id_col)
+    df_sub_and_cort = db_processing.join_dfs(df_subcort, df_atlas)
+    ls_cols_X = db_processing.get_cols_tolist(df_sub_and_cort)
+    return df_sub_and_cort, ls_cols_X
