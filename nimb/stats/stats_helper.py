@@ -2,8 +2,6 @@ from os import environ, path, chdir, system
 import sys
 import time
 
-from stats import (db_processing, preprocessing, predict, varia)
-
 class RUN_stats():
     """will run statistical analysis for the provided groups file"""
 
@@ -145,10 +143,10 @@ class RUN_stats():
 
 
 
-    run_descriptive_stats(self, df_clin_group, features,
-                                           varia.get_dir(path.join(self.stats_paths['STATS_HOME'],
-                                           'description'))):
-        print('running descriptive statistics')
+    # def run_descriptive_stats(self, df_clin_group, features,
+                               # varia.get_dir(path.join(self.stats_paths['STATS_HOME'],
+                               # 'description'))):
+        # print('running descriptive statistics')
 
     def get_tables(self):
         f_CoreTIVNaNOut = self.stats_params["file_name_corrected"]
@@ -232,9 +230,10 @@ if __name__ == "__main__":
         sys.exit(e)
 
     file = Path(__file__).resolve()
-    parent, top = file.parent, file.parents[2]
+    parent, top = file.parent, file.parents[1]
     sys.path.append(str(top))
 
+    from stats import (db_processing, preprocessing, predict, varia)
     from setup.get_vars import Get_Vars, SetProject
     getvars    = Get_Vars()
     projects      = getvars.projects

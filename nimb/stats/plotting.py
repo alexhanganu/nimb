@@ -119,7 +119,7 @@ Kernel distribution with density estimation and fitting
 parametric distribution to visualize how closely it corresponds to the observed data'''
 def Distributions_Compute_Plot(df_clin, group_col, groups, PATH2save_fig, PARAMETER_x_Age, PARAMETERS_INTEREST_y):
 
-    sns_plot_dist_all = sns.distplot(np.array(df_clin[PARAMETER_x_Age]), rug=True, fit=stats.gamma)#fit a parametric distribu>
+    sns_plot_dist_all = sns.distplot(np.array(df_clin[PARAMETER_x_Age]), rug=True, fit=stats.gamma)#fit a parametric distribution
     plt.savefig(PATH2save_fig+'distribution_histo_all.png')
     plt.close()
     for PARAMETER_y in PARAMETERS_INTEREST_y:
@@ -131,14 +131,19 @@ def Distributions_Compute_Plot(df_clin, group_col, groups, PATH2save_fig, PARAME
         plt.close()
 
     for group in groups:
-        sns_plot_dist = sns.distplot(np.array(df_clin[df_clin[group_col] == group][PARAMETER_x_Age]), rug=True, fit=stats.gam>
+        X = np.array(df_clin[df_clin[group_col] == group][PARAMETER_x_Age])
+        sns_plot_dist = sns.distplot(X, rug=True, fit=stats.gamma)
         plt.savefig(PATH2save_fig+'distribution_histo_'+group+'.png')
         plt.close()
         for PARAMETER_y in PARAMETERS_INTEREST_y:
-            sns_scatterplot_dist = sns.jointplot(x=df_clin[df_clin[group_col] == group][PARAMETER_x_Age], y=df_clin[df_clin[g>
-            sns_scatterplot_dist.savefig(PATH2save_fig+'scatterplot/distribution_scatterplot_'+group+'_'+PARAMETER_y+'.png')
+            X = df_clin[df_clin[group_col] == group][PARAMETER_x_Age]
+            Y = df_clin[df_clin[group_col] == group][PARAMETER_y]
+            fig_name = path.join(PATH2save_fig, f'scatterplot/distribution_scatterplot_{group}_{PARAMETER_y}.png')
+            sns_scatterplot_dist = sns.jointplot(x=X, y=Y, kind='kde')
+            sns_scatterplot_dist.savefig(fig_name)
             plt.close()
-            sns_density_dist = sns.jointplot(x=df_clin[df_clin[group_col] == group][PARAMETER_x_Age], y=df_clin[df_clin[group>
-            sns_density_dist.savefig(PATH2save_fig+'density/distribution_density_'+group+'_'+PARAMETER_y+'.png')
+            fig_name_sns = path.join(PATH2save_fig, f'density/distribution_density_{group}_{PARAMETER_y}.png')
+            sns_density_dist = sns.jointplot(x=X, y=Y, kind='kde')
+            sns_density_dist.savefig(fig_name_sns)
             plt.close()
 

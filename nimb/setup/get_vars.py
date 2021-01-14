@@ -148,7 +148,7 @@ class Get_Vars():
         environ = get_yes_no("Will this account use slurm or tmux for processing ? (y/n; y=slurm/ n=tmux)")
         if environ == 1:
             data['PROCESSING']['processing_env']      = 'slurm'
-            supervisor = input("For some slurm environments a supervisor account is required. Please type superviros account name or leave blank:")
+            supervisor = input("For some slurm environments a supervisor account is required. Please type supervisor account name or leave blank:")
             if supervisor:
                 print('supervisor account name is: {}'.format(supervisor))
                 data['USER']['supervisor_account']       = str(supervisor)

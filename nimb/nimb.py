@@ -5,7 +5,6 @@
 import argparse
 from os import path
 import sys
-import logging
 from setup.get_vars import Get_Vars
 from distribution.distribution_helper import DistributionHelper
 from distribution.distribution_ready import DistributionReady
@@ -48,6 +47,12 @@ class NIMB(object):
         if self.process == 'fs-get-stats' or self.process == 'fs-glm' or self.process == 'run-stats':
             from setup.get_vars import SetProject
             self.stats_vars = SetProject(self.NIMB_tmp, self.stats_vars, self.project).stats
+        #tmp adjustment: TypeError: 'Logger' object is not callable
+        try:
+            self.logger('logger set')
+        except TypeError:
+            print('    logger error; using print')
+            self.logger = print
 
     def run(self):
         """Run nimb"""
@@ -77,17 +82,16 @@ class NIMB(object):
                 sys.exit()
             else:
                 dir_4stats = self.stats_vars["STATS_PATHS"]["STATS_HOME"]
-                f_with_groups = DistributionHelper(self.all_vars,
+                fname_groups = DistributionHelper(self.all_vars,
                                                   self.project_vars,
                                                   self.logger).prep_4stats(dir_4stats)
-                self.vars_local['PROCESSING']['processing_env']  = "tmux" #probably works with slurm, must be checked
-                schedule = Scheduler(self.vars_local)
-                cd_cmd = 'cd {}'.format(path.join(self.NIMB_HOME, 'processing', 'freesurfer'))
-                python_run_cmd = path.join(self.vars_local["NIMB_PATHS"]["conda_home"], 'bin', 'python3')
-                cmd = f'{python_run_cmd} stats_helper.py -project {self.project}'
-                # schedule.submit_4_processing(cmd, 'nimb_stats','run', cd_cmd)
-                # from stats import stats_helper
-                # stats_helper.RUN_stats(self.stats_vars, self.project_vars).run_stats()
+                if fname_groups:
+                    self.vars_local['PROCESSING']['processing_env']  = "tmux" #probably works with slurm, must be checked
+                    schedule = Scheduler(self.vars_local)
+                    cd_cmd = 'cd {}'.format(path.join(self.NIMB_HOME, 'stats'))
+                    python_run_cmd = self.vars_local['PROCESSING']["python3_run_cmd"]
+                    cmd = f'{python_run_cmd} stats_helper.py -project {self.project}'
+                    schedule.submit_4_processing(cmd, 'nimb_stats','run', cd_cmd)
 
         # FreeSurfer related codes: "freesurfer"   - performs preprocessing
         #							"fs-get-stats" - extracts statistical data an an xls/ xlsx/ csv file

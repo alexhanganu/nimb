@@ -53,7 +53,6 @@ class Log():
         self.logger = logging.getLogger(__name__)
 
 
-
 def setup_logging(logLevel, logFile=None):
     """ Setup logging configuration"""
 #    logging.basicConfig(format='%(asctime)s %(module)s %(levelname)s: %(message)s')

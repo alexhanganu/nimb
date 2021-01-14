@@ -219,11 +219,11 @@ class DistributionHelper():
             dir_4stats: DIR where stats are saved
         """
         dir_4stats       = makedir_ifnot_exist(dir_4stats)
-        f_GLM_group_name     = self.proj_vars['fname_groups']
+        fname_groups     = self.proj_vars['fname_groups']
         if not self.get_files_for_stats(dir_4stats,
-                            [f_GLM_group_name,]):
+                            [fname_groups,]):
             sys.exit()
-        return f_GLM_group_name
+        return fname_groups
 
     def prep_4fs_stats(self, dir_4stats):
         '''create DIR to store stats files
@@ -239,10 +239,10 @@ class DistributionHelper():
         dir_4stats       = makedir_ifnot_exist(dir_4stats)
         PROCESSED_FS_DIR = self.get_local_remote_dir(self.proj_vars["PROCESSED_FS_DIR"])
         if PROCESSED_FS_DIR:
-            f_GLM_group_name     = self.proj_vars['fname_groups']
+            fname_groups     = self.proj_vars['fname_groups']
             f_ids_processed_name = self.locations["local"]["NIMB_PATHS"]['file_ids_processed']
             if not self.get_files_for_stats(dir_4stats,
-                                [f_GLM_group_name, f_ids_processed_name]):
+                                [fname_groups, f_ids_processed_name]):
                 sys.exit()
     #     '''
     #     checks if subject is archived
@@ -263,14 +263,14 @@ class DistributionHelper():
         return PROCESSED_FS_DIR
 
     def fs_glm_prep(self, FS_GLM_dir):
-        f_GLM_group_name     = self.proj_vars['fname_groups']
-        glm_dir_from_file    = path.splitext(f_GLM_group_name)[0].replace('(','').replace(')','')
+        fname_groups     = self.proj_vars['fname_groups']
+        glm_dir_from_file    = path.splitext(fname_groups)[0].replace('(','').replace(')','')
         FS_GLM_dir           = makedir_ifnot_exist(path.join(FS_GLM_dir, glm_dir_from_file))
         f_ids_processed_name = self.locations["local"]["NIMB_PATHS"]['file_ids_processed']
         if not self.get_files_for_stats(FS_GLM_dir,
-                                [f_GLM_group_name, f_ids_processed_name]):
+                                [fname_groups, f_ids_processed_name]):
             sys.exit()
-        f_GLM_group     = path.join(FS_GLM_dir, f_GLM_group_name)
+        f_GLM_group     = path.join(FS_GLM_dir, fname_groups)
         f_ids_processed = path.join(FS_GLM_dir, f_ids_processed_name)
 
         SUBJECTS_DIR         = self.locations["local"]['FREESURFER']['FS_SUBJECTS_DIR']
