@@ -10,10 +10,11 @@ logger.setLevel(logging.DEBUG)
 
 
 class FSStatsUtils:
-    def __init__(self, dataf, stats_DIR, sheetnames):
+    def __init__(self, dataf, stats_DIR, _id_col, sheetnames):
         self.dataf      = dataf
         self.sheetnames = sheetnames
         self.stats_DIR  = stats_DIR
+        self._id        = _id_col
         self.f_errors   = self.get_path(stats_DIR, 'subjects_with_missing_values.json')
 
     def create_file_with_only_subcort_volumes(self, file_name, file_type):
@@ -32,6 +33,7 @@ class FSStatsUtils:
         df_segmentations = pd.read_excel(self.dataf, engine = 'openpyxl', sheet_name='VolSeg')
         frame_final = (df_concat, df_segmentations['eTIV'])
         df_concat = pd.concat(frame_final,axis=1, sort=True)
+        df_concat.index.name = self._id
 
         self.f_subcort  = self.get_path(self.stats_DIR, f"{file_name}.{file_type}")
         writer = pd.ExcelWriter(self.f_subcort, engine='xlsxwriter')
@@ -51,6 +53,7 @@ class FSStatsUtils:
             all_df[sheet] = self.change_column_name(df, sheet)
         frames = [all_df[i] for i in all_df]+[df_segmentations['eTIV']]
         df_concat = pd.concat(frames, axis=1, sort=True)
+        df_concat.index.name = self._id
 
         self.f_subcort  = self.get_path(self.stats_DIR, f"{file_name}.{file_type}")
         writer = pd.ExcelWriter(self.f_subcort, engine='xlsxwriter')
@@ -73,6 +76,7 @@ class FSStatsUtils:
         df_segmentations = pd.read_excel(self.dataf, engine = 'openpyxl', sheet_name='VolSeg', index_col = 0)
         frame_final = (df_concat, df_segmentations['eTIV'])
         df_concat = pd.concat(frame_final, axis=1, sort=True)
+        df_concat.index.name = self._id
 
         path_2filename   = self.get_path(self.stats_DIR, f"{file_name}.{file_type}")
         writer = pd.ExcelWriter(path_2filename, engine='xlsxwriter')

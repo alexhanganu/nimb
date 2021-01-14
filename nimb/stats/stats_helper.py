@@ -37,13 +37,12 @@ class RUN_stats():
         cor_level_chosen     = self.stats_params["cor_level_chosen"]
 
         self.tab = db_processing.Table()
-        self.df_clin, self.df_clin_atlas,\
-            self.df_sub_and_cort,\
-            self.ls_cols_X_atlas,\
+        self.df_user_stats, self.df_final_grid,\
+            self.df_adjusted,\
+            self.cols_X,\
             self.groups = make_stats_grid.MakeGrid(
                                 project_vars,
                                 nimb_stats).grid()
-
 
     def run_stats(self):
          for group in ['all',]:#+self.groups: #'all' stands for all groups
@@ -100,7 +99,7 @@ class RUN_stats():
                     # STEP run Prediction RF SKF
                     if self.STEP_Predict_RF_SKF:
                         print('    performing RF SKF Prediction for all groups')
-                        df_X_scaled = self.tab.create_df(X_scaled, index_col=range(X_scaled.shape[0]), cols=self.ls_cols_X_atlas)
+                        df_X_scaled = self.tab.create_df(X_scaled, index_col=range(X_scaled.shape[0]), cols=self.cols_X)
                         accuracy, best_estimator, average_score_list, _ = predict.SKF_algorithm(
                                 features, df_X_scaled[features].values, y_labeled)
                         print("    prediction accuracy computed with RF and SKF based on PCA features is: ",accuracy)
@@ -111,7 +110,7 @@ class RUN_stats():
                     # STEP run Prediction RF LOO
                     if self.STEP_Predict_RF_LOO:
                         print('performing RF Leave-One_out Prediction for all groups')
-                        df_X_scaled = self.tab.create_df(X_scaled, index_col=range(X_scaled.shape[0]), cols=self.ls_cols_X_atlas)
+                        df_X_scaled = self.tab.create_df(X_scaled, index_col=range(X_scaled.shape[0]), cols=self.cols_X)
                         accuracy, best_estimator, average_score_list, _ = predict.LOO_algorithm(
                                 features, df_X_scaled[features].values, y_labeled)
                         print("    prediction accuracy computed with RF and SKF based on PCA features is: ",accuracy)
@@ -155,20 +154,20 @@ class RUN_stats():
     def get_X_data_per_group_all_groups(self, group):
     # extract X_scaled values for the brain parameters
         if group == 'all':
-                df_clin_group = self.df_clin
-                df_X = self.df_sub_and_cort
-                y_labeled = preprocessing.label_y(self.df_clin, self.prediction_vars['target'])
+                df_clin_group = self.df_user_stats
+                df_X = self.df_adjusted
+                y_labeled = preprocessing.label_y(self.df_user_stats, self.prediction_vars['target'])
                 X_scaled = preprocessing.scale_X(df_X)
         else:
-                df_group      = self.tab.get_df_per_parameter(self.df_clin_atlas, self.project_vars['group_col'], group)
-                df_clin_group = self.tab.rm_cols_from_df(df_group, self.ls_cols_X_atlas)
-                df_X          = self.tab.rm_cols_from_df(df_group, [i for i in df_group.columns.tolist() if i not in self.ls_cols_X_atlas])
+                df_group      = self.tab.get_df_per_parameter(self.df_final_grid, self.project_vars['group_col'], group)
+                df_clin_group = self.tab.rm_cols_from_df(df_group, self.cols_X)
+                df_X          = self.tab.rm_cols_from_df(df_group, [i for i in df_group.columns.tolist() if i not in self.cols_X])
                 y_labeled     = preprocessing.label_y(df_group, self.prediction_vars['target'])
                 X_scaled      = preprocessing.scale_X(df_X)
         return df_X, y_labeled, X_scaled, df_clin_group
 
     def log(self):
-        stats = predict.get_stats_df(len(ls_cols_X_atlas), atlas,
+        stats = predict.get_stats_df(len(cols_X), atlas,
                                      prediction_vars['nr_threads'], 
                                      definitions.sys.platform,
                                      time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()))
@@ -177,13 +176,13 @@ class RUN_stats():
         if self.feature_algo == 'PCA':# using PCA
                 features = predict.get_features_based_on_pca(varia.get_dir(path.join(self.stats_paths['STATS_HOME'], self.stats_paths['features'])),
                                                     self.prediction_vars['pca_threshold'],
-                                                    X_scaled, self.ls_cols_X_atlas,
+                                                    X_scaled, self.cols_X,
                                                     group, self.atlas)
                 features_rfe_and_rank_df = 'none'
         elif self.feature_algo == 'RFE': # using RFE
                 features, features_rfe_and_rank_df = predict.feature_ranking(X_scaled,
                                                                     y_labeled,
-                                                                    self.ls_cols_X_atlas)
+                                                                    self.cols_X)
                 print("    number of features extracted by RFE: ",len(features_rfe_and_rank_df.feature))
         df_with_features = self.tab.get_df_from_df(df_X, usecols = features)
         return df_with_features, features, features_rfe_and_rank_df

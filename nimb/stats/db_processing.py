@@ -122,6 +122,8 @@ class Table:
         '''
         return pd.concat(frames, axis=ax, sort=sort)
 
+    def get_rows_with_nans(self, df):
+        return list(df.loc[pd.isnull(df).any(1), :].index.values)
 
     def get_nan_from_col(self, df, col):
         return df[col].isnull().tolist()
@@ -131,7 +133,7 @@ class Table:
             vals_nan = self.get_nan_from_col(df, col2chk)
             idxs_2rm = [i for i in df.index if vals_nan[df.index.tolist().index(i)]]
         else:
-            idxs_2rm = list(df.loc[pd.isnull(df).any(1), :].index.values)
+            idxs_2rm = self.get_rows_with_nans(df)
         if idxs_2rm:
             print('    removing rows with NAN')
             df.drop(idxs_2rm, axis = 0, inplace = True)

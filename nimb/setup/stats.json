@@ -21,7 +21,7 @@
        "fname_fs_all_stats"     : "stats_FreeSurfer",
        "fname_fs_subcort_vol"   : "stats_FreeSurfer_subcortical",
        "fname_func_all_stats"   : "stats_Nilearn",
-       "fname_NaNOcor"          : "stats_NaNOutcor",
+       "fname_NaNcor"           : "stats_NaNcor",
        "fname_eTIVcor"          : "stats_eTIVcor",
        "fname_Outcor"           : "stats_Outcor",
        "file_type"              : "xlsx"

@@ -96,14 +96,14 @@ class FSStats2Table:
     '''
     def __init__(self, ls_subjects,
                     stats_DIR,
-                    PATH2subjects,
+                    project_vars,
                     stats_files,
                     big_file = True,
                     data_only_volumes=False,
                     new_date = True):
         self.ls_subjects       = ls_subjects
         self.stats_DIR         = stats_DIR
-        self.PATH2subjects     = PATH2subjects
+        self.PATH2subjects     = project_vars["PROCESSED_FS_DIR"][1]
         self.stats_files       = stats_files
         fname_fs_per_param     = stats_files["fname_fs_per_param"]
         self.big_file          = big_file
@@ -114,6 +114,10 @@ class FSStats2Table:
             file_name          = f"{fname_fs_per_param}.xlsx"
         self.dataf             = self.get_path(self.stats_DIR, file_name)
         self.dir_stats         = 'stats'
+        if not ls_subjects:
+            self.ls_subjects = sorted(listdir(self.PATH2subjects))
+            logger.info(f'    Extracting stats for subjects located in folder: {PATH2subjects}')
+
         self.miss = dict()
         self.run()
 
@@ -359,7 +363,7 @@ class FSStats2Table:
     def make_one_sheet(self):
         if self.big_file:
             from fs_stats_utils import FSStatsUtils
-            fs_utils = FSStatsUtils(self.dataf, self.stats_DIR, self.sheetnames)
+            fs_utils = FSStatsUtils(self.dataf, self.stats_DIR, _id_col, self.sheetnames)
             file_type = self.stats_files["file_type"]
             file_name = self.stats_files["fname_fs_all_stats"]
             fs_utils.create_BIG_data_file(file_name, file_type)
@@ -429,14 +433,13 @@ if __name__ == "__main__":
     projects      = getvars.projects
     all_projects  = [i for i in projects.keys() if 'EXPLANATION' not in i and 'LOCATION' not in i]
     params        = get_parameters(all_projects, default_stats_dir)
-    PATH2subjects = projects[params.project]["PROCESSED_FS_DIR"][1]
+    project_vars  = projects[params.project]
+    ls_subjects   = []
     stats_DIR     = params.stats_dir
-    ls_subjects   = sorted(listdir(PATH2subjects))
-    logger.info(f'    Extracting stats for subjects located in folder: {PATH2subjects}')
 
     FSStats2Table(ls_subjects,
                     stats_DIR,
-                    PATH2subjects,
+                    project_vars,
                     stats_files,
                     big_file = True,
                     data_only_volumes=False,
