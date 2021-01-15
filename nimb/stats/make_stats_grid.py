@@ -20,16 +20,28 @@ class MakeGrid:
         self.tab           = Table()
         self.preproc       = Preprocess()
         self.cp2materials  = []
+        self.grid          = path.join(self.stats_HOME, "grid.csv")
 
     def grid(self):
         self.get_main_stats()
+        if path.exists(self.grid):
+            df_final_grid, df_adjusted, cols_X = self.read_grid(self.grid)
+        else:
+            df_final_grid, df_adjusted, cols_X = self.make_grid()
+        return self.df_stats, df_final_grid, df_adjusted, cols_X, self.groups
+
+    def read_grid(self, file):
+            df_final_grid = self.tab.get_df(file,
+                                          index = self.id_col)
+            cols_grid     = self.tab.get_cols_tolist(df_final_grid)
+            cols_X        = [i for i in cols_grid if i not in self.df_stats.columns]
+            df_adjusted = df_final_grid[cols_X]
+        return df_final_grid, df_adjusted, cols_X
+
+    def make_grid(self):
         file_with_adjusted = self.get_base_file()
         if file_with_adjusted:
-            df_final_grid = self.tab.get_df(file_with_adjusted,
-                                          index = self.id_col)
-            cols_grid = self.tab.get_cols_tolist(df_final_grid)
-            cols_X    = [i for i in cols_grid if i not in self.df_stats.columns]
-            df_adjusted = df_final_grid[cols_X]
+            df_final_grid, df_adjusted, cols_X = self.read_grid(file_with_adjusted)
         else:
             file_other_stats = self.get_files_other_stats()
             if file_other_stats:
@@ -40,11 +52,10 @@ class MakeGrid:
                 cols_X = []
                 df_final_grid = self.df_stats
             df_final_grid = self.check_nans(df_final_grid)
-            path2save = path.join(self.stats_HOME, "grid.csv")
-            self.tab.save_df(df_final_grid, path2save, "grid")
+            self.tab.save_df(df_final_grid, self.grid, "grid")
             self.cp2materials.append(path2save)
             self.copy_2materials()
-        return self.df_stats, df_final_grid, df_adjusted, cols_X, self.groups
+        return df_final_grid, df_adjusted, cols_X
 
     def check_nans(self, df):
         rows_nan = self.tab.get_rows_with_nans(df)

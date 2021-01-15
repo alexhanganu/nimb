@@ -80,6 +80,8 @@ class Table:
             df.to_csv(f_path_to_save)
         elif f_path_to_save.endswith('.xls') or f_path_to_save.endswith('.xlsx'):
             df.to_excel(f_path_to_save, engine='openpyxl', sheet_name=sheet_name)
+        elif f_path_to_save.endswith('.tsv'):
+            df.to_csv(f_path_to_save, index=True, sep="\t", header=True)
 
     def save_df_tocsv(self, df, f_path_to_save):
         df.to_csv(f_path_to_save)
