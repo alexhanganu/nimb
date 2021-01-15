@@ -197,6 +197,7 @@ class DistributionHelper():
             return False
 
     def get_files_for_stats(self, path_2copy_files, list_of_files):
+        print(list_of_files)
         location = self.proj_vars['materials_DIR'][0]
         materials_dir_path = self.proj_vars['materials_DIR'][1]
         if location == 'local':
@@ -220,9 +221,23 @@ class DistributionHelper():
         """
         dir_4stats       = makedir_ifnot_exist(dir_4stats)
         fname_groups     = self.proj_vars['fname_groups']
+        file_other_stats = []
+        file_names = all_vars.stats_vars["STATS_FILES"]
+        for file in ["fname_fs_all_stats", "fname_func_all_stats", "fname_other_stats"]:
+            file_name = self.proj_vars[file]
+            if file_name:
+                if file_name == "default":
+                    file_name = file_names[file]
+                file_name = f'{file_name}.{file_names["file_type"]}'
+                file_other_stats.append(file_name)
+        for file in ["fname_Outcor", "fname_eTIVcor", "fname_NaNcor"]:
+            file_name = f'{file_names[file]}.{file_names["file_type"]}'
+            file_other_stats.append(file_name)
         if not self.get_files_for_stats(dir_4stats,
                             [fname_groups,]):
             sys.exit()
+        self.get_files_for_stats(dir_4stats,
+                            file_other_stats):
         return fname_groups
 
     def prep_4fs_stats(self, dir_4stats):

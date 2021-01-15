@@ -197,5 +197,8 @@ class DistributionReady():
         if not self.chk_if_modules_are_installed(modules_list):
             print('some python modules are missing: pandas, xlsxwriter, xlrd, openpyxl, pathlib')
             ready = False
+        if not self.proj_vars["fname_groups"]:
+            print(f'group file is missing. Please check file: {self.credentials_home}/nimb/projects.json')
+            ready = False
         return ready
 

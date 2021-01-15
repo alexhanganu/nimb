@@ -56,7 +56,8 @@ class Get_Vars():
             self.projects      = self.chk_projects(projects_user)
             all_loc_vars       = self.get_all_locations_vars(self.projects['LOCATION'], self.credentials_home)
             self.location_vars = self.chk_location_vars(all_loc_vars)
-            self.stats_vars    = load_json(path.join(self.credentials_home, 'stats.json'))
+            stats_user         = load_json(path.join(self.credentials_home, 'stats.json'))
+            self.stats_vars    = self.chk_stats(stats_user)
         else:
             self.define_credentials()
             shutil.copy(path.join(path.dirname(path.abspath(__file__)), 'projects.json'), path.join(self.credentials_home, 'projects.json'))
@@ -167,7 +168,7 @@ class Get_Vars():
         """
         check if variables are defined in json
         :param config_file: path to configuration json file
-        :return: True if there is no error, otherwise, return False
+        :return: new version, populated with missing values
         """
         update = False
         all_projects = [i for i in projects_user.keys() if 'EXPLANATION' not in i and 'LOCATION' not in i and 'PROJECTS' not in i]
@@ -181,6 +182,7 @@ class Get_Vars():
                     if not isinstance(projects_user[Project][subkey], list):
                         print('types are different {}'.format(subkey))
         if update:
+            projects_user['EXPLANATION'] = self.default_projects['EXPLANATION']
             save_json(projects_user, path.join(self.credentials_home, 'projects.json'))
         return projects_user
 
@@ -200,6 +202,7 @@ class Get_Vars():
             if location == 'local':
                 self.chk_paths(all_loc_vars[location])
             if update:
+                all_loc_vars[location]['EXPLANATION'] = self.default_local['EXPLANATION']
                 print('must update location: {}'.format(location))
                 save_json(all_loc_vars[location], path.join(self.credentials_home, location+'.json'))
         return all_loc_vars
@@ -220,6 +223,31 @@ class Get_Vars():
                     makedirs(p)
         else:
             print(f"path NIMB_HOME is missing at: {NIMB_HOME}")
+
+    def chk_stats(self, stats_user):
+        """
+        check if variables are defined in json
+        :param config_file: path to configuration json file
+        :return: new version, populated with missing values
+        """
+        update = False
+        for key in [i for i in self.default_stats.keys() if 'EXPLANATION' not in i]:
+            if key not in stats_user:
+                print('adding missing key {} to stats'.format(key))
+                stats_user[key] = self.default_stats[key]
+                update = True
+            for subkey in self.default_stats[key]:
+                if subkey not in stats_user[key]:
+                    print('adding missing subkey {} to stats group: {}'.format(subkey, key))
+                    stats_user[key][subkey] = self.default_stats[key][subkey]
+                    update = True
+                if isinstance(subkey, list):
+                    if not isinstance(stats_user[key][subkey], list):
+                        print('    types are different {}'.format(subkey))
+        if update:
+            stats_user['EXPLANATION'] = self.default_stats['EXPLANATION']
+            save_json(stats_user, path.join(self.credentials_home, 'stats.json'))
+        return stats_user
 
 class SetLocation():
 
