@@ -29,16 +29,15 @@ class MakeGrid:
                                           index = self.id_col)
             cols_grid = self.tab.get_cols_tolist(df_final_grid)
             cols_X    = [i for i in cols_grid if i not in self.df_stats.columns]
+            df_adjusted = df_final_grid[cols_X]
         else:
             file_other_stats = self.get_files_other_stats()
             if file_other_stats:
                 df_adjusted, cols_X = self.get_df_other_stats(file_other_stats)
+                df_final_grid = self.tab.concat_dfs((self.df_stats, df_adjusted))
             else:
                 df_adjusted = []
                 cols_X = []
-            if isinstance(df_adjusted, dict):
-                df_final_grid = self.tab.concat_dfs((self.df_stats, df_adjusted))
-            else:
                 df_final_grid = self.df_stats
             df_final_grid = self.check_nans(df_final_grid)
             path2save = path.join(self.stats_HOME, "grid.csv")
@@ -72,8 +71,7 @@ class MakeGrid:
         # df_meaned_vals = pd.concat_dfs(frames, axis=0, sort=True)
         for col in cols_with_nans:
             df[col] = df_meaned_vals[col]
-        if self.id_col in df.columns:
-            df.index.name = self.id_col
+        df.index.name = self.id_col
         file_name = f'{self.file_names["fname_NaNcor"]}.{self.file_names["file_type"]}'
         path2save = path.join(self.stats_HOME, file_name)
         print(f'Missing values were corrected to group mean. File saved at: {path2save}')
