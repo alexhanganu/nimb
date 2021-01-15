@@ -9,8 +9,9 @@ import sklearn
 import numpy
 
 class Preprocess:
-    def __init__(self):
+    def __init__(self, utilities):
         self.sklearn_ver = sklearn.__version__
+        self.save_json = utilities.save_json
 
     def populate_missing_vals_2mean(self, df, cols):
         for col in cols:
@@ -31,48 +32,86 @@ class Preprocess:
                     groups.append(val)
         return groups
 
-    def outliers_get(self, df, m=2):
+    def outliers_get(self, df, file2save=None, change_to_nan=True):
         '''script check outliers on each column in a pandas.DataFrame
             Outlier is defined as a value bigger than 10% from column mean
             Outliers are changed to NaN
         Args:
             df: pandas.DataFrame to be checked
-            m: value for StandardDeviation threshold
+            id_col: name of the column to be used as id, to be added to the json file
+            file2save: path to file with the json file with outliers will be saved
+            change_to_nan: True - Outliers will be changed to nan
         Return:
+            df: with Outliers to nan values or without changes
             outliers: dict{'index of outlier: column of outlier'}
         '''
         outliers = dict()
         for col in df:
-            data    = df[col]
-            dataout = self.outliers_find_with_iqr(data)
+            dataIn = df[col].to_numpy()
+            outliers_index = self.outliers_find_with_iqr(dataIn)
+            if outliers_index:
+                for ix in outliers_index:
+                    index_df_src = df.index.tolist()[ix]
+                    outliers = populate_outliers(outliers, index_df_src, col, outliers_index[ix])
+        if change_to_nan:
+            df = self.outliers_change_to_nan(df, outliers)
+        if file2save:
+            self.save_json(outliers, file2save)
+        return df, outliers
 
-
-
-            # stdev   = np.std(data)
-            # mean    = np.mean(data)
-            # maskMin = mean - stdev * m
-            # maskMax = mean + stdev * m
-            # mask    = np.ma.masked_outside(data, maskMin, maskMax)
-            # print(f'Masking values outside of {maskMin} and {maskMax}')
-            # print(mask)
-        return outliers
-
-    def outliers_find_with_iqr(self, dataIn, factor=3):
-        '''code by K.Foe and Alex S, 20121009
-            (https://stackoverflow.com/questions/11686720/is-there-a-numpy-builtin-to-reject-outliers-from-a-list)
+    def outliers_find_with_iqr(self, dataIn, factor=15):
+        '''code by K.Foe and Alex S, 20121009 (https://stackoverflow.com/questions/11686720/is-there-a-numpy-builtin-to-reject-outliers-from-a-list)
             find outliers based on InterQuartile Percentile, ONLY if data follows Gaussian distribution
         Args:
-            dataIn: data to be checked
-            factor: n*sigma range, default = 3; can be lowered to: 2.5, 2, 1.5
+            dataIn: data to be checked, numpy.array
+            factor: n*sigma range, default = 15; !!grid must be checked visually
         Return:
-            dataOut: data after Outliers adjusted
+            outliers_index: dict() {index of value: value}
         '''
+        outliers_index = dict()
         quant3, quant1 = np.percentile(dataIn, [75 ,25])
         iqr = quant3 - quant1
         iqrSigma = iqr/1.34896
         medData = np.median(dataIn)
-        dataOut = [ x for x in dataIn if ( (x > medData - factor* iqrSigma) and (x < medData + factor* iqrSigma) ) ] 
-        return(dataOut)
+        for i in range(len(dataIn)):
+            x = dataIn[i]
+            if not ( (x > medData - factor* iqrSigma)
+                    and (x < medData + factor* iqrSigma) ):
+                outliers_index[i] = x
+        return outliers_index
+
+    def populate_outliers(self, d, index, col, val):
+        if index not in d:
+            d[index] = dict()
+        if col not in d[index]:
+            d[index][col] = val
+        return d
+
+    def outliers_change_to_nan(self, df, outliers):
+        for ix in list(outliers.keys()):
+            for col in outliers[ix]:
+                df.loc[ix, col] = np.nan
+        return df
+
+    def nan_rm_cols_if_more(self, df, cols, threshold = 0.05):
+        '''if NaN number is more than threshold:
+                column is removed
+        Args:
+            df: pandas.DataFrame
+            cols: columns with NaNs
+            threshold: level to be considered to columns deletion; 0.05 = 5%
+        Return:
+            df: new pandas.DataFrame with removed columns
+        '''
+        cols2rm = list()
+        for col in cols:
+            nan_sum = df[col].isna().sum()
+            if nan_sum > len(df[col])*0.05:
+                print(f'    removing column: {col}')
+                cols2rm.append(col)
+        if cols2rm:
+            df.drop(columns = cols2rm, inplace=True)
+        return df
 
 def scale_X(df):
     """

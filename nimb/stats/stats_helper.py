@@ -36,12 +36,12 @@ class RUN_stats():
         cor_methods          = self.stats_params["cor_methods"]
         cor_level_chosen     = self.stats_params["cor_level_chosen"]
 
-        self.tab = db_processing.Table()
+        self.tab = Table()
+        self.preproc = preprocessing.Preprocess(utilities)
         self.df_user_stats, self.df_final_grid,\
             self.df_adjusted,\
             self.cols_X,\
-            self.groups = make_stats_grid.MakeGrid(
-                                project_vars,
+            self.groups = MakeGrid(project_vars,
                                 nimb_stats).grid()
 
     def run_stats(self):
@@ -220,10 +220,12 @@ if __name__ == "__main__":
     parent, top = file.parent, file.parents[1]
     sys.path.append(str(top))
 
-    from stats import (make_stats_grid,
-                        db_processing, preprocessing,
+    from stats import (db_processing, preprocessing,
                         predict, varia)
     from setup.get_vars import Get_Vars, SetProject
+    from stats.make_stats_grid import MakeGrid
+    from stats.db_processing import Table
+    from distribution import utilities
     getvars    = Get_Vars()
     projects      = getvars.projects
     all_projects  = [i for i in projects.keys() if 'EXPLANATION' not in i and 'LOCATION' not in i]
