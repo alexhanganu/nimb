@@ -6,6 +6,7 @@
 
 
 import sklearn
+import numpy
 
 class Preprocess:
     def __init__(self):
@@ -30,6 +31,48 @@ class Preprocess:
                     groups.append(val)
         return groups
 
+    def outliers_get(self, df, m=2):
+        '''script check outliers on each column in a pandas.DataFrame
+            Outlier is defined as a value bigger than 10% from column mean
+            Outliers are changed to NaN
+        Args:
+            df: pandas.DataFrame to be checked
+            m: value for StandardDeviation threshold
+        Return:
+            outliers: dict{'index of outlier: column of outlier'}
+        '''
+        outliers = dict()
+        for col in df:
+            data    = df[col]
+            dataout = self.outliers_find_with_iqr(data)
+
+
+
+            # stdev   = np.std(data)
+            # mean    = np.mean(data)
+            # maskMin = mean - stdev * m
+            # maskMax = mean + stdev * m
+            # mask    = np.ma.masked_outside(data, maskMin, maskMax)
+            # print(f'Masking values outside of {maskMin} and {maskMax}')
+            # print(mask)
+        return outliers
+
+    def outliers_find_with_iqr(self, dataIn, factor=3):
+        '''code by K.Foe and Alex S, 20121009
+            (https://stackoverflow.com/questions/11686720/is-there-a-numpy-builtin-to-reject-outliers-from-a-list)
+            find outliers based on InterQuartile Percentile, ONLY if data follows Gaussian distribution
+        Args:
+            dataIn: data to be checked
+            factor: n*sigma range, default = 3; can be lowered to: 2.5, 2, 1.5
+        Return:
+            dataOut: data after Outliers adjusted
+        '''
+        quant3, quant1 = np.percentile(dataIn, [75 ,25])
+        iqr = quant3 - quant1
+        iqrSigma = iqr/1.34896
+        medData = np.median(dataIn)
+        dataOut = [ x for x in dataIn if ( (x > medData - factor* iqrSigma) and (x < medData + factor* iqrSigma) ) ] 
+        return(dataOut)
 
 def scale_X(df):
     """
