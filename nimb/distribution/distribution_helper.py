@@ -202,7 +202,9 @@ class DistributionHelper():
         materials_dir_path = self.proj_vars['materials_DIR'][1]
         if location == 'local':
             for file in list_of_files:
-                shutil.copy(path.join(materials_dir_path, file), path_2copy_files)
+            	path2file = path.join(materials_dir_path, file)
+            	if path.exists(path2file):
+	                shutil.copy(path2file, path_2copy_files)
         else:
             print('nimb must access the remote computer: {}'.format(location))
             from distribution import SSHHelper
@@ -222,7 +224,7 @@ class DistributionHelper():
         dir_4stats       = makedir_ifnot_exist(dir_4stats)
         fname_groups     = self.proj_vars['fname_groups']
         file_other_stats = []
-        file_names = all_vars.stats_vars["STATS_FILES"]
+        file_names = self.all_vars.stats_vars["STATS_FILES"]
         for file in ["fname_fs_all_stats", "fname_func_all_stats", "fname_other_stats"]:
             file_name = self.proj_vars[file]
             if file_name:
