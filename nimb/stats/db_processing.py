@@ -16,9 +16,11 @@ except ImportError as e:
     sys.exit(e)
 from distribution.utilities import save_json
 
+
 class Table:
     def __init__(self):
         self.pd_ver = pd.__version__
+
 
     def get_df(self, path2file, sheetname = 0, cols = None, index = None, rename=False):
         print(f"    reading file: {path2file},\n        sheet: {sheetname}")
@@ -28,6 +30,7 @@ class Table:
         if rename:
             df.rename(columns = rename, inplace=True)
         return df
+
 
     def read_df(self, path2file, sheetname, cols):
         '''reads a csv, xls or an xlsx file
@@ -39,10 +42,12 @@ class Table:
         if path2file.endswith('.xlsx'):
             return pd.read_excel(path2file, engine='openpyxl', sheet_name = sheetname, usecols = cols)
 
+
     def change_index(self, df, index):
         '''to set the index, based on column with str name
         '''
         return df.set_index(index)
+
 
     def get_df_index(self, file, index_col='default'):
         if index_col=='default':
@@ -51,29 +56,38 @@ class Table:
             df = pd.read_excel(file, index_col = index_col)
         return df
 
+
     def get_df_from_df(self, df, usecols):
         return df[usecols]
+
 
     def join_dfs(self, df1, df2, how='outer'):
         return df1.join(df2, how=how)
 
+
     def get_cols(self, df):
         return df.columns
+
 
     def get_cols_tolist(self, df):
         return df.columns.tolist()
 
+
     def get_clean_df():
         return pd.DataFrame()
+
 
     def create_df(self, vals, index_col, cols):
         return pd.DataFrame(vals, index = index_col, columns=cols)
 
+
     def create_df_from_dict(self, d):
         return pd.DataFrame(d)
 
+
     def rm_cols_from_df(self, df, cols):
         return df.drop(columns=cols)
+
 
     def save_df(self, df, f_path_to_save, sheet_name):
         if f_path_to_save.endswith('.csv'):
@@ -83,11 +97,14 @@ class Table:
         elif f_path_to_save.endswith('.tsv'):
             df.to_csv(f_path_to_save, index=True, sep="\t", header=True)
 
+
     def save_df_tocsv(self, df, f_path_to_save):
         df.to_csv(f_path_to_save)
 
+
     def get_df_per_parameter(self, df, param_col, param):
         return df[df[param_col] == param]
+
 
     def get_df_with_columns(self, path2file, columns_only):
         df = self.get_df(path2file)
@@ -98,6 +115,7 @@ class Table:
         if cols2drop:
             df.drop(columns=cols2drop, inplace=True)
         return df
+
 
     def check_nan(self, df, err_file_abspath):
         d_err = dict()
@@ -117,6 +135,7 @@ class Table:
         save_json(d_err, err_file_abspath)
         return d_err, cols_with_nans
 
+
     def concat_dfs(self, frames, ax=1, sort = True):
         '''
             frames: tuple of DataFrames to concatenate
@@ -124,11 +143,14 @@ class Table:
         '''
         return pd.concat(frames, axis=ax, sort=sort)
 
+
     def get_rows_with_nans(self, df):
         return list(df.loc[pd.isnull(df).any(1), :].index.values)
 
+
     def get_nan_from_col(self, df, col):
         return df[col].isnull().tolist()
+
 
     def rm_rows_with_nan(self, df, col2chk=None, reset_index = False):
         if col2chk:
@@ -144,6 +166,7 @@ class Table:
         return df
 
 
+
 def get_df_with_params(df, params):
 
     ls_cols_2get = list()
@@ -154,7 +177,8 @@ def get_df_with_params(df, params):
     print(ls_cols_2get)
 
     return df_subcort_atlas, ls_cols_X_atlas
-    
+
+
 def get_df_for_fs_atlas(f_subcort, f_atlas_DK, f_atlas_DS, atlas, id_col):
     cols_DK = [id_col,'cortex_thickness_ThickL_DK', 'cortex_vol_VolR_DK', 'cortex_area_AreaL_DK']
     df_subcort = db_processing.get_df(f_subcort,
