@@ -237,7 +237,7 @@ class DistributionHelper():
                             [fname_groups,]):
             sys.exit()
         self.get_files_for_stats(dir_4stats,
-                            file_other_stats):
+                            file_other_stats)
         return fname_groups
 
     def prep_4fs_stats(self, dir_4stats):
