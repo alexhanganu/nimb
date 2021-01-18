@@ -6,7 +6,8 @@ from os import path
 
 print("Script executing.....")
 
-from stats import db_processing, plotting, varia
+from stats import plotting, varia
+from stats.db_processing import Table
 
 import time, warnings
 warnings.filterwarnings("ignore")
@@ -40,9 +41,9 @@ def get_stats_df(len_df_X, atlas, nr_threads, env_name, time_started):
     import sklearn
     import matplotlib
 
-    stats = db_processing.get_clean_df()
+    stats = Table().get_clean_df()
     d = {
-        'pandas version':db_processing.get_pandas_version(),
+        'pandas version':Table().pd_ver,
         'numpy version':np.__version__,
         'matplotlib version':matplotlib.__version__,
         'sklearn version':sklearn.__version__,
@@ -110,7 +111,7 @@ def get_features_based_on_pca(dir_pca, threshold, X_scaled, ls_cols_X, group, at
         else:
             new_variance = dic_feat_comps[ls_cols_X[idx]]+ls_expl_variance[i]
             dic_feat_comps[feat] = new_variance
-    df_feat_comps = db_processing.create_df(dic_feat_comps.values(), index_col = dic_feat_comps.keys(), cols=['explained_variance'])
+    df_feat_comps = Table().create_df(dic_feat_comps.values(), index_col = dic_feat_comps.keys(), cols=['explained_variance'])
 
     print('    PCA chose {} components and {} features '.format(len(ls_expl_variance), len(dic_feat_comps.keys())))
 
@@ -138,7 +139,7 @@ def feature_ranking(X_scaled, y_transform, cols_X):
     feature_selector = RFE(clf)
     feature_selector.fit(X_scaled, y_transform)
 
-    features_rfe_and_rank_df = db_processing.create_df(feature_selector.ranking_,
+    features_rfe_and_rank_df = Table().create_df(feature_selector.ranking_,
                                         index_col=cols_X, cols=['ranking']).sort_values(['ranking'])
 
     # features_rfe_and_rank_df = pd.DataFrame(feature_selector.ranking_,
@@ -309,7 +310,7 @@ def save_to_csv(path, data):
 # PREDICTION
 
     # # extract features using RFE algorithm and RandomForest
-    # _, features_and_rank_rfe = predict.feature_ranking(X_scaled, y_labeled, db_processing.get_cols(x_df))
+    # _, features_and_rank_rfe = predict.feature_ranking(X_scaled, y_labeled, Table().get_cols(x_df))
     # print('nr of features chosen by RFE: ',len(features_and_rank_rfe))
     # print(type(features_and_rank_rfe))
 
