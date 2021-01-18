@@ -36,7 +36,7 @@ class Table:
         '''reads a csv, xls or an xlsx file
         '''
         if path2file.endswith('.csv'):
-            return pd.read_csv(path2file, sheet_name = sheetname, usecols = cols)
+            return pd.read_csv(path2file, usecols = cols)
         if path2file.endswith('.xls'):
             return pd.read_excel(path2file, sheet_name = sheetname, usecols = cols)
         if path2file.endswith('.xlsx'):

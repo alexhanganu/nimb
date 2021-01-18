@@ -152,7 +152,13 @@ class MakeGrid:
         grid_src = path.join(
                     self.stats_HOME,
                     self.project_vars["fname_groups"])
-        self.df_stats = self.tab.get_df(grid_src,
+        if not self.vars_4stats:
+            self.df_stats = self.tab.get_df(grid_src,
+                                   index = self.id_col)
+            self.vars_4stats = [i for i in self.df_stats.columns.tolist() if i not in self.id_col and i not in self.group_col]
+            print(f'using vars: {self.vars_4stats}')
+        else:
+            self.df_stats = self.tab.get_df(grid_src,
                                    cols=[self.id_col, self.group_col]+self.vars_4stats,
                                    index = self.id_col)
         self.groups = self.preproc.get_groups(list(self.df_stats[self.group_col]))
