@@ -153,16 +153,19 @@ class RUN_stats():
 
     def get_X_data_per_group_all_groups(self, group):
     # extract X_scaled values for the brain parameters
+        predicted_target = self.project_vars["prediction_target"]
+        if not predicted_target:
+            predicted_target = self.project_vars["group_col"]
         if group == 'all':
                 df_clin_group = self.df_user_stats
                 df_X = self.df_adjusted
-                y_labeled = preprocessing.label_y(self.df_user_stats, self.prediction_vars['target'])
+                y_labeled = preprocessing.label_y(self.df_user_stats, predicted_target)
                 X_scaled = preprocessing.scale_X(df_X)
         else:
                 df_group      = self.tab.get_df_per_parameter(self.df_final_grid, self.project_vars['group_col'], group)
                 df_clin_group = self.tab.rm_cols_from_df(df_group, self.cols_X)
                 df_X          = self.tab.rm_cols_from_df(df_group, [i for i in df_group.columns.tolist() if i not in self.cols_X])
-                y_labeled     = preprocessing.label_y(df_group, self.prediction_vars['target'])
+                y_labeled     = preprocessing.label_y(df_group, predicted_target)
                 X_scaled      = preprocessing.scale_X(df_X)
         return df_X, y_labeled, X_scaled, df_clin_group
 

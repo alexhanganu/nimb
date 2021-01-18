@@ -14,7 +14,8 @@
     "group_param"            : "education",
     "regression_param"       : ["age"],
     "variables_for_glm"      : ["age", "education"],
-    "other_params"           : ["var1","var2"]
+    "other_params"           : [],
+    "prediction_target"      : []
                 },
 "LOCATION" : ["local", "remote1"],
 "EXPLANATION" : {
@@ -33,6 +34,7 @@
     "regression_param"       : "list of variables that will be used for the regression statistical analysis",
     "variables_for_glm"      : "list of variables that will be used for the FreeSurfer GLM analysis and general stats",
     "other_params"           : "list of variables that must be excluded from all statistical analysis",
+    "prediction_target"      : "list of variables that must will be used as targets to be predicted by the classification algorithms",
     "LOCATION"               : "list locations that can be used for FreeSurfer, nilearn, dipy processing, glm and statistical analysis; must inlcude the variable 'local'"
    }
 }
