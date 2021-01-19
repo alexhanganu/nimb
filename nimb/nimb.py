@@ -13,6 +13,7 @@ from distribution.logger import Log
 from processing.schedule_helper import Scheduler
 from setup.version import __version__
 
+import logging
 logger = logging.getLogger(__name__)
 logging.basicConfig(format='%(asctime)s %(module)s %(levelname)s: %(message)s')
 # logger.setLevel(logging.INFO)
