@@ -50,6 +50,7 @@ class NIMB(object):
         self.fix_spaces   = params.fix_spaces
         self.logger       = logger #Log(self.NIMB_tmp, self.vars_local['FREESURFER']['freesurfer_version']).logger
         self.schedule     = Scheduler(self.vars_local)
+        self.dist_ready   = DistributionReady(self.all_vars, self.project_vars)
         if self.process == 'fs-get-stats' or self.process == 'fs-glm' or self.process == 'run-stats':
             from setup.get_vars import SetProject
             self.stats_vars = SetProject(self.NIMB_tmp, self.stats_vars, self.project).stats
@@ -58,11 +59,11 @@ class NIMB(object):
         """Run nimb"""
 
         if self.process == 'ready':
-            DistributionReady(self.all_vars, self.project_vars, self.logger).check_ready()
+            DistributionReady(self.all_vars, self.project_vars).check_ready()
 
         if self.process == 'classify':
             self.logger.info('checking if ready to classify')
-            if not DistributionReady(self.all_vars, self.project_vars, self.logger).classify_ready():
+            if not DistributionReady(self.all_vars, self.project_vars).classify_ready():
                 ErrorMessages.error_classify()
                 sys.exit()
             else:
@@ -77,7 +78,7 @@ class NIMB(object):
 
 
         if self.process == 'run-stats':
-            if not DistributionReady(self.all_vars, self.project_vars, self.logger).chk_if_ready_for_stats():
+            if not DistributionReady(self.all_vars, self.project_vars).chk_if_ready_for_stats():
                 self.logger.info("NIMB is not ready to run the stats. Please check the configuration files.")
                 sys.exit()
             else:
@@ -97,7 +98,7 @@ class NIMB(object):
         # 							"fs-glm"       - performs FreeSurfer GLM analysis with mri_glm_fit
         # 							"fs-glm-image" - extracts the images for significant results after the GLM
         if self.process == 'freesurfer':
-            if not DistributionReady(self.all_vars, self.project_vars, self.logger).fs_ready():
+            if not DistributionReady(self.all_vars, self.project_vars).fs_ready():
                 self.logger.info("FreeSurfer is not ready or freesurfer_install is set to 0. Please check the configuration files.")
                 sys.exit()
             else:
@@ -108,7 +109,7 @@ class NIMB(object):
                                                 python_load = True)
         if self.process == 'fs-get-stats':
             dir_4stats = self.stats_vars["STATS_PATHS"]["STATS_HOME"]
-            if DistributionReady(self.all_vars, self.project_vars, self.logger).chk_if_ready_for_stats():
+            if DistributionReady(self.all_vars, self.project_vars).chk_if_ready_for_stats():
                 PROCESSED_FS_DIR = DistributionHelper(self.all_vars,
                                                       self.project_vars).prep_4fs_stats(dir_4stats)
                 if PROCESSED_FS_DIR:
@@ -122,9 +123,9 @@ class NIMB(object):
             '''checks that all subjects are present in the SUBJECTS_DIR folder that will be used for GLM analysis,
                 sends cmd to batch to initiate FreeSurfer GLM running script
             '''
-            if DistributionReady(self.all_vars, self.project_vars, self.logger).chk_if_ready_for_fs_glm():
+            if DistributionReady(self.all_vars, self.project_vars).chk_if_ready_for_fs_glm():
                 GLM_file_path, GLM_dir = DistributionHelper(self.all_vars, self.project_vars).fs_glm_prep(self.stats_vars["STATS_PATHS"]["FS_GLM_dir"])
-                DistributionReady(self.all_vars, self.project_vars, self.logger).fs_chk_fsaverage_ready(self.vars_local['FREESURFER']['FS_SUBJECTS_DIR'])
+                DistributionReady(self.all_vars, self.project_vars).fs_chk_fsaverage_ready(self.vars_local['FREESURFER']['FS_SUBJECTS_DIR'])
                 if GLM_file_path:
                     self.vars_local['PROCESSING']['processing_env']  = "tmux"
                     schedule_fsglm = Scheduler(self.vars_local)
@@ -144,7 +145,7 @@ class NIMB(object):
             elif self.vars_local['FREESURFER']["export_screen"] == 0:
                 self.logger.info("Current environment is not ready to export screen. Please define a compute where the screen can \
                                     be used for FreeSurfer Freeview and tksurfer")
-            if DistributionReady(self.all_vars, self.project_vars, self.logger).fs_ready():
+            if DistributionReady(self.all_vars, self.project_vars).fs_ready():
                 self.logger.info('before running the script, remember to source $FREESURFER_HOME')
                 cmd = '{} fs_glm_extract_images.py -project {}'.format(self.vars_local['PROCESSING']["python3_run_cmd"], self.project)
                 cd_cmd = 'cd '+path.join(self.NIMB_HOME, 'processing', 'freesurfer')
@@ -152,7 +153,7 @@ class NIMB(object):
 
         # Nilearn related codes: "nilearn" - performs preprocessing of rsfMRI data
         if self.process == 'nilearn':
-            if not DistributionReady(self.all_vars, self.project_vars, self.logger).nilearn_ready():
+            if not DistributionReady(self.all_vars, self.project_vars).nilearn_ready():
                 self.logger.info("Nilearn is not ready.")
                 sys.exit()
             else:
@@ -164,7 +165,7 @@ class NIMB(object):
 
         # Dipy related codes: "dipy" - performs preprocessing of DWI data
         if self.process == 'dipy':
-            if not DistributionReady(self.all_vars, self.project_vars, self.logger).dipy_ready():
+            if not DistributionReady(self.all_vars, self.project_vars).dipy_ready():
                 self.logger.info("Dipy is not ready.")
                 sys.exit()
             else:
@@ -188,7 +189,7 @@ class NIMB(object):
             DistributionHelper(self.all_vars, self.project_vars).check_new()
 
         if self.process == 'fs-get-masks':
-            if DistributionReady(self.all_vars, self.project_vars, self.logger).fs_ready():
+            if DistributionReady(self.all_vars, self.project_vars).fs_ready():
                 self.logger.info('running mask extraction')
                 cmd = '{} run_masks.py -project {}'.format(self.vars_local['PROCESSING']["python3_run_cmd"], self.project)
                 cd_cmd = 'cd '+path.join(self.NIMB_HOME, 'processing', 'freesurfer')

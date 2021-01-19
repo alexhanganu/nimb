@@ -18,8 +18,15 @@ from distribution.utilities import ErrorMessages, makedir_ifnot_exist
 from sys import platform
 from setup.interminal_setup import get_yes_no
 
+import logging
+logger = logging.getLogger(__name__)
+logging.basicConfig(format='%(asctime)s %(module)s %(levelname)s: %(message)s')
+# logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
+
+
 class DistributionReady():
-    def __init__(self, all_vars, proj_vars, log):
+    def __init__(self, all_vars, proj_vars):
 
         self.credentials_home = all_vars.credentials_home # NIMB_HOME/credentials_paths.py
         self.locations        = all_vars.location_vars # credentials_home/local.json + remotes.json
@@ -27,7 +34,7 @@ class DistributionReady():
         self.proj_vars        = proj_vars # credentials_home/project.json
         self.NIMB_HOME        = self.locations["local"]["NIMB_PATHS"]["NIMB_HOME"]
         self.NIMB_tmp         = self.locations["local"]["NIMB_PATHS"]["NIMB_tmp"]
-        self.logger           = log
+        self.logger           = logger
 
     def check_ready(self):
         """
