@@ -6,8 +6,6 @@ from datetime import datetime, timedelta
 from processing.freesurfer import fs_definitions
 from sys import platform
 
-log = logging.getLogger(__name__)
-
 environ['TZ'] = 'US/Eastern'
 if platform != "win32":
     time.tzset()
@@ -34,9 +32,9 @@ class Scheduler():
             elif self.processing_env == 'tmux':
                 self.submit_2tmux(cmd, name, cd_cmd)
             else:
-                log.info('ERROR: processing environment not provided or incorrect')
+                print('ERROR: processing environment not provided or incorrect')
         else:
-            log.info('        SUBMITTING is stopped')
+            print('        SUBMITTING is stopped')
         return self.job_id
 
     def get_submit_file_names(self, name, task):
@@ -56,7 +54,6 @@ class Scheduler():
         if process == 'now':
             return str(format(datetime.now(), "%Y%m%d_%H%M"))
         else:
-#            nr_hours = datetime.strptime(self.Get_walltime(process), '%H:%M:%S').hour
             nr_hours = datetime.strptime(self.Get_walltime(process), self.vars_local['PROCESSING']["walltime_format"]).hour
             return str(format(datetime.now()+timedelta(hours=nr_hours), "%Y%m%d_%H%M"))
 
@@ -79,17 +76,17 @@ class Scheduler():
         return sh_file
 
     def submit_2scheduler(self, sh_file):
-        log.info('        submitting {}'.format(sh_file))
+        print('        submitting {}'.format(sh_file))
         time.sleep(1)
         try:
             resp = subprocess.run(['sbatch',path.join(self.NIMB_tmp,'usedpbs',sh_file)], stdout=subprocess.PIPE).stdout.decode('utf-8')
             self.job_id = list(filter(None, resp.split(' ')))[-1].strip('\n')
         except Exception as e:
-            log.info(e)
+            print(e)
 
     def submit_2tmux(self, cmd, subjid, cd_cmd):
         self.job_id = 'tmux_'+str(subjid)
-        log.info('        submitting to tmux session: {}'.format(self.job_id))
+        print('        submitting to tmux session: {}'.format(self.job_id))
         system('tmux new -d -s {}'.format(self.job_id))
         if self.activate_fs:
             system("tmux send-keys -t '{}' '{}' ENTER".format(str(self.job_id), self.vars_local["FREESURFER"]["export_FreeSurfer_cmd"]))

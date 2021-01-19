@@ -58,6 +58,7 @@ brain_structures = {
 def get_brain_structure(region):
 
     structure = ''
+    short_region = ''
     defined = False
 
     for struct in brain_structures:
@@ -79,10 +80,6 @@ def get_brain_structure(region):
                 break
         if defined:
             break
-    if not defined:
-        print(region, 'no struct')
-    # print(region, structure, short_region)
-
     return structure, short_region, defined
 
 
@@ -103,7 +100,6 @@ def extract_regions(dic, path_save_results, atlas):
                 regions[struct][0] = regions[struct][0] + dic[feat]
             sub_region= region.replace(short_region,'')
             if region not in regions[struct]:
-                # print(region, '->',sub_region)
                 regions[struct].append('{:.6}'.format(str(dic[feat]))+'_'+sub_region)
         else:
             print(region, 'not defined')
@@ -129,5 +125,5 @@ def extract_regions(dic, path_save_results, atlas):
     df_feat = pd.DataFrame.from_dict(regions, orient='index', columns=cols)
     df_feat.sort_values(by=['explained_variance'], inplace=True, ascending=False)
 
-    db_processing.save_df_tocsv(df_feat, path.join(path_save_results,'regions_from_pca_features_'+atlas+'.csv'))
+    db_processing.Table().save_df_tocsv(df_feat, path.join(path_save_results,'regions_from_pca_features_'+atlas+'.csv'))
 

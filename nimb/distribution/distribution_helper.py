@@ -12,9 +12,6 @@ try:
 except ImportError:
     gui_setup = 'term'
 
-import logging
-logger = logging.getLogger(__name__)
-logging.basicConfig(format='%(asctime)s %(module)s %(levelname)s: %(message)s')
 
 class DistributionHelper():
 
@@ -26,7 +23,6 @@ class DistributionHelper():
         self.proj_vars        = project_vars
         self.NIMB_HOME        = self.locations["local"]["NIMB_PATHS"]["NIMB_HOME"]
         self.NIMB_tmp         = self.locations["local"]["NIMB_PATHS"]["NIMB_tmp"]
-        self.logger           = logger
 
         # setup folder
         self.setup_folder = "../setup"
@@ -172,10 +168,10 @@ class DistributionHelper():
 
     def get_local_remote_dir(self, dir_data):
         if dir_data[0] == 'local':
-            self.logger.info('working folder is: {}'.format(dir_data[1]))
+            print('working folder is: {}'.format(dir_data[1]))
             return dir_data[1]
         else:
-            self.logger.info('folder {} is located on a remote: {}'.format(dir_data[1], dir_data[0]))
+            print('folder {} is located on a remote: {}'.format(dir_data[1], dir_data[0]))
             return False
 
     def get_subj_2classify(self):
@@ -192,10 +188,10 @@ class DistributionHelper():
 #        elif source_subj[0] == 'local' and path.exists(source_subj[1]) and listdir(source_subj[1]):
 #            SUBJ_2Classify = source_subj[1]
         if SUBJ_2Classify:
-            self.logger.info('Folder with Subjects to classify is: {}'.format(SUBJ_2Classify))
+            print('Folder with Subjects to classify is: {}'.format(SUBJ_2Classify))
             return SUBJ_2Classify
         else:
-            self.logger.info('Could not define the Folder with Subjects to classify. Please adjust the file: {}'.format(
+            print('Could not define the Folder with Subjects to classify. Please adjust the file: {}'.format(
                                                                 path.join(self.credentials_home, 'projects.json')))
             return False
 
@@ -271,7 +267,7 @@ class DistributionHelper():
     #     sub_path = self.get_path(self.NIMB_PROCESSED_FS, sub)
     #     if not path.isdir(sub_path):
     #         if sub.endswith('zip'):
-    #             logger.info('Must extract folder {} for each subject to destination {}'.format('stats', sub_path))
+    #             print('Must extract folder {} for each subject to destination {}'.format('stats', sub_path))
     #             ZipArchiveManagement(sub_path, 
     #                                 path2xtrct = self.NIMB_tmp, path_err = False,
     #                                 dirs2xtrct = [self.dir_stats,], log=True)
@@ -302,11 +298,11 @@ class DistributionHelper():
                                                     f_ids_processed, 
                                                     f_GLM_group,
                                                     FS_GLM_dir).chk_if_subjects_ready()
-            self.logger.info(f'variables used for GLM are: {self.proj_vars["variables_for_glm"]}')
-            self.logger.info(f'    ID columns is: {self.proj_vars["id_col"]}')
-            self.logger.info(f'    Group column is: {self.proj_vars["group_col"]}')
-            self.logger.info(f'variables EXCLUDED from GLM are: {self.proj_vars["other_params"]}')
-            self.logger.info(f'    for details check: credentials_path/projects.py')
+            print(f'variables used for GLM are: {self.proj_vars["variables_for_glm"]}')
+            print(f'    ID columns is: {self.proj_vars["id_col"]}')
+            print(f'    Group column is: {self.proj_vars["group_col"]}')
+            print(f'variables EXCLUDED from GLM are: {self.proj_vars["other_params"]}')
+            print(f'    for details check: credentials_path/projects.py')
             if miss_ls:
                 print('some subjects are missing, nimb must extract their surf and label folders')
                 if get_yes_no('do you want to prepare the missing subjects for glm analysis? (y/n)') == 1:
@@ -333,12 +329,12 @@ class DistributionHelper():
                     if path.exists(zip_file_path):
                         extract = True
                 if extract:
-                    self.logger.info('Extracting folders {} for subject {}, to destination {}'.format(dirs2extract, sub, SUBJECTS_DIR))
+                    print('Extracting folders {} for subject {}, to destination {}'.format(dirs2extract, sub, SUBJECTS_DIR))
                     ZipArchiveManagement(zip_file_path, path2xtrct = SUBJECTS_DIR,
                                         path_err = self.NIMB_tmp, dirs2xtrct = dirs2extract,
                                         log=True)
                 else:
-                    self.logger.info('{} subject missing from {}'.format(sub, NIMB_PROCESSED_FS))
+                    print('{} subject missing from {}'.format(sub, NIMB_PROCESSED_FS))
 
     def run_processing_on_cluster_2(self):
         '''

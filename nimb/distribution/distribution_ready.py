@@ -18,13 +18,6 @@ from distribution.utilities import ErrorMessages, makedir_ifnot_exist
 from sys import platform
 from setup.interminal_setup import get_yes_no
 
-import logging
-logger = logging.getLogger(__name__)
-logging.basicConfig(format='%(asctime)s %(module)s %(levelname)s: %(message)s')
-# logger.setLevel(logging.INFO)
-logger.setLevel(logging.DEBUG)
-
-
 class DistributionReady():
     def __init__(self, all_vars, proj_vars):
 
@@ -34,7 +27,6 @@ class DistributionReady():
         self.proj_vars        = proj_vars # credentials_home/project.json
         self.NIMB_HOME        = self.locations["local"]["NIMB_PATHS"]["NIMB_HOME"]
         self.NIMB_tmp         = self.locations["local"]["NIMB_PATHS"]["NIMB_tmp"]
-        self.logger           = logger
 
     def check_ready(self):
         """
@@ -43,27 +35,27 @@ class DistributionReady():
                 Otherwise True
         """
         if self.classify_ready():
-            self.logger("NIMB ready to perform classification")
+            print("NIMB ready to perform classification")
         else:
             ErrorMessages.error_classify()
             ready = False
         if self.fs_ready():
-            self.logger("NIMB ready to perform FreeSurfer processing")
+            print("NIMB ready to perform FreeSurfer processing")
         else:
             ErrorMessages.error_fsready()
             ready = False
         conda_home = self.locations['local']['NIMB_PATHS']['conda_home']
-        self.logger('checking conda at: {}'.format(conda_home))
+        print('checking conda at: {}'.format(conda_home))
         if not is_miniconda_installed(conda_home):
             # # if has permission to install
             # if not is_writable_directory(conda_home):
-                # self.logger.fatal("miniconda path is not writable. Check the permission.")
+                # print("miniconda path is not writable. Check the permission.")
                 # return False
             # # true: install setup_minicoda.py
             if get_yes_no('do you want to try and install conda? (may take up to 30 minutes) (y/n)') == 1:
                 setup_miniconda(conda_home, self.NIMB_HOME)
         if check_that_modules_are_installed(conda_home, self.NIMB_HOME):
-            self.logger("conda has all modules installed")
+            print("conda has all modules installed")
         else:
             ErrorMessages.error_conda()
             return False
@@ -72,7 +64,7 @@ class DistributionReady():
         # # source home
         # os.system("source ~/.bashrc")
         # if not is_ENV_defined("$FREESURFER_HOME"):
-            # self.logger.fatal("$FREESURFER_HOME is not defined")
+            # print("$FREESURFER_HOME is not defined")
             # return False
     def chk_if_modules_are_installed(self, module_list):
         '''
@@ -89,8 +81,8 @@ class DistributionReady():
             try:
                 modules.append(__import__(module))
             except ImportError as e:
-                self.logger(e)
-                self.logger(f'module {module} is not installed. Cannot continue process')
+                print(e)
+                print(f'module {module} is not installed. Cannot continue process')
                 miss.append(module)
         if miss:
             installed = False
@@ -109,14 +101,14 @@ class DistributionReady():
 
     def setting_up_local_computer(self):
         if platform.startswith('linux'):
-            self.logger("Currently only support setting up on Ubuntu-based system")
+            print("Currently only support setting up on Ubuntu-based system")
             # do the job here
             self.setting_up_local_linux_with_freesurfer()
         elif platform in ["win32"]:
-            self.logger("The system is not fully supported in Windows OS. The application quits now .")
+            print("The system is not fully supported in Windows OS. The application quits now .")
             exit()
         else: # like freebsd,
-            self.logger("This platform is not supported")
+            print("This platform is not supported")
             exit()
 
     def setting_up_local_linux_with_freesurfer(self):
@@ -135,7 +127,7 @@ class DistributionReady():
                     # if path start with ~
                     makedir_ifnot_exist(p)
                 except Exception as e:
-                    self.logger(e)
+                    print(e)
             if not os.path.exists(p):
                 ready = False
                 break
@@ -144,12 +136,12 @@ class DistributionReady():
     def fs_ready(self):
         if self.locations['local']['FREESURFER']['FreeSurfer_install'] == 1:
             if len(self.locations['local']['FREESURFER']['FREESURFER_HOME']) < 1:
-                self.logger.fatal("FREESURFER_HOME is missing.")
+                print("FREESURFER_HOME is missing.")
                 return False
             if self.check_freesurfer_ready():
                 SUBJECTS_DIR = self.locations['local']['FREESURFER']['FS_SUBJECTS_DIR']
                 if not os.path.exists(SUBJECTS_DIR):
-                        self.logger('    creating path {}'.format(SUBJECTS_DIR))
+                        print('    creating path {}'.format(SUBJECTS_DIR))
                         makedir_ifnot_exist(SUBJECTS_DIR)
                 return self.fs_chk_fsaverage_ready(SUBJECTS_DIR)
         else:
@@ -158,7 +150,7 @@ class DistributionReady():
     def fs_chk_fsaverage_ready(self, SUBJECTS_DIR):
         self.fs_fsaverage_copy(SUBJECTS_DIR)
         if not os.path.exists(os.path.join(SUBJECTS_DIR,'fsaverage', 'xhemi')):
-            self.logger('fsaverage or fsaverage/xhemi is missing from SUBJECTS_DIR: {}'.format(SUBJECTS_DIR))
+            print('fsaverage or fsaverage/xhemi is missing from SUBJECTS_DIR: {}'.format(SUBJECTS_DIR))
             return False
         else:
             return True

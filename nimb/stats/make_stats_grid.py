@@ -30,7 +30,11 @@ class MakeGrid:
     def grid(self):
         self.get_main_stats()
         if path.exists(self.grid_file):
-            df_final_grid, df_adjusted, cols_X = self.read_grid(self.grid_file)
+            df_final_grid = self.tab.get_df(self.grid_file, index = self.id_col)
+            cols_grid     = self.tab.get_cols_tolist(df_final_grid)
+            cols_X        = [i for i in cols_grid if i not in [self.id_col, 
+                                        self.group_col, self.vars_4stats]]
+            df_adjusted   = df_final_grid[cols_X]
         else:
             df_final_grid, df_adjusted, cols_X = self.make_grid()
         return self.df_stats, df_final_grid, df_adjusted, cols_X, self.groups
