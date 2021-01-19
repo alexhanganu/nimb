@@ -13,6 +13,11 @@ from distribution.logger import Log
 from processing.schedule_helper import Scheduler
 from setup.version import __version__
 
+logger = logging.getLogger(__name__)
+logging.basicConfig(format='%(asctime)s %(module)s %(levelname)s: %(message)s')
+# logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
+
 
 class NIMB(object):
     """ Object to initiate pipeline
@@ -42,17 +47,11 @@ class NIMB(object):
         self.NIMB_HOME    = self.vars_local['NIMB_PATHS']['NIMB_HOME']
         self.NIMB_tmp     = self.vars_local['NIMB_PATHS']['NIMB_tmp']
         self.fix_spaces   = params.fix_spaces
-        self.logger       = Log(self.NIMB_tmp, self.vars_local['FREESURFER']['freesurfer_version']).logger
+        self.logger       = logger #Log(self.NIMB_tmp, self.vars_local['FREESURFER']['freesurfer_version']).logger
         self.schedule     = Scheduler(self.vars_local)
         if self.process == 'fs-get-stats' or self.process == 'fs-glm' or self.process == 'run-stats':
             from setup.get_vars import SetProject
             self.stats_vars = SetProject(self.NIMB_tmp, self.stats_vars, self.project).stats
-        #tmp adjustment: TypeError: 'Logger' object is not callable
-        try:
-            self.logger('logger set')
-        except TypeError:
-            print('    logger error; using print')
-            self.logger = print
 
     def run(self):
         """Run nimb"""
@@ -66,7 +65,7 @@ class NIMB(object):
                 ErrorMessages.error_classify()
                 sys.exit()
             else:
-                SUBJ_2Classify = DistributionHelper(self.all_vars, self.project_vars, self.logger).get_subj_2classify()
+                SUBJ_2Classify = DistributionHelper(self.all_vars, self.project_vars).get_subj_2classify()
                 if SUBJ_2Classify:
                     from classification.classify_bids import MakeBIDS_subj2process
                     return MakeBIDS_subj2process(SUBJ_2Classify,
@@ -83,8 +82,7 @@ class NIMB(object):
             else:
                 dir_4stats = self.stats_vars["STATS_PATHS"]["STATS_HOME"]
                 fname_groups = DistributionHelper(self.all_vars,
-                                                  self.project_vars,
-                                                  self.logger).prep_4stats(dir_4stats)
+                                                  self.project_vars).prep_4stats(dir_4stats)
                 if fname_groups:
                     self.vars_local['PROCESSING']['processing_env']  = "tmux" #probably works with slurm, must be checked
                     schedule = Scheduler(self.vars_local)
@@ -111,8 +109,7 @@ class NIMB(object):
             dir_4stats = self.stats_vars["STATS_PATHS"]["STATS_HOME"]
             if DistributionReady(self.all_vars, self.project_vars, self.logger).chk_if_ready_for_stats():
                 PROCESSED_FS_DIR = DistributionHelper(self.all_vars,
-                                                      self.project_vars,
-                                                      self.logger).prep_4fs_stats(dir_4stats)
+                                                      self.project_vars).prep_4fs_stats(dir_4stats)
                 if PROCESSED_FS_DIR:
                     self.vars_local['PROCESSING']['processing_env']  = "tmux" #probably works with slurm, must be checked
                     schedule = Scheduler(self.vars_local)
@@ -125,7 +122,7 @@ class NIMB(object):
                 sends cmd to batch to initiate FreeSurfer GLM running script
             '''
             if DistributionReady(self.all_vars, self.project_vars, self.logger).chk_if_ready_for_fs_glm():
-                GLM_file_path, GLM_dir = DistributionHelper(self.all_vars, self.project_vars, self.logger).fs_glm_prep(self.stats_vars["STATS_PATHS"]["FS_GLM_dir"])
+                GLM_file_path, GLM_dir = DistributionHelper(self.all_vars, self.project_vars).fs_glm_prep(self.stats_vars["STATS_PATHS"]["FS_GLM_dir"])
                 DistributionReady(self.all_vars, self.project_vars, self.logger).fs_chk_fsaverage_ready(self.vars_local['FREESURFER']['FS_SUBJECTS_DIR'])
                 if GLM_file_path:
                     self.vars_local['PROCESSING']['processing_env']  = "tmux"
@@ -187,7 +184,7 @@ class NIMB(object):
 
         if self.process == 'check-new':
             self.logger.info('checking for new subject to be processed')
-            DistributionHelper(self.all_vars, self.project_vars, self.logger).check_new()
+            DistributionHelper(self.all_vars, self.project_vars).check_new()
 
         if self.process == 'fs-get-masks':
             if DistributionReady(self.all_vars, self.project_vars, self.logger).fs_ready():

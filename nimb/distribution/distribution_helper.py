@@ -12,10 +12,13 @@ try:
 except ImportError:
     gui_setup = 'term'
 
+import logging
+logger = logging.getLogger(__name__)
+logging.basicConfig(format='%(asctime)s %(module)s %(levelname)s: %(message)s')
 
 class DistributionHelper():
 
-    def __init__(self, all_vars, project_vars, logger):
+    def __init__(self, all_vars, project_vars):
 
         self.all_vars         = all_vars
         self.credentials_home = all_vars.credentials_home # NIMB_HOME/credentials_paths.py
