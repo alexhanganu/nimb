@@ -7,6 +7,9 @@ class RUN_stats():
 
     def __init__(self, nimb_stats, project_vars):
 
+        self.use_features            = False
+        self.feature_algo            = 'PCA' #'RFE'
+
         self.STEP_stats_ttest        = False
         self.STEP_Anova              = True
         self.STEP_SimpLinReg         = True # requires Anova to be True
@@ -31,7 +34,6 @@ class RUN_stats():
         print('    group column: {:<50}'.format(str(project_vars['group_col'])))
         print('    variables to analyse: {:<50}'.format(str(project_vars['variables_for_glm'])))
 
-        self.feature_algo    = 'PCA' #'RFE'
         self.prediction_vars = self.stats_params["prediction_vars"]
         cor_methods          = self.stats_params["cor_methods"]
         cor_level_chosen     = self.stats_params["cor_level_chosen"]
@@ -64,7 +66,7 @@ class RUN_stats():
                 if self.STEP_Anova:
                     from stats.stats_models import ANOVA_do
                     print('performing ANOVA')
-                    sig_cols = ANOVA_do(self.tab.join_dfs(df_clin_group, df_with_features),
+                    sig_cols = ANOVA_do(self.df_final_grid,
                                        self.project_vars['variables_for_glm'], features,
                                        varia.get_dir(self.stats_paths['anova']),
                                        p_thresh = 0.05, intercept_thresh = 0.05).sig_cols
@@ -72,7 +74,7 @@ class RUN_stats():
                     if self.STEP_SimpLinReg:
                         print('performing Simple Linear Regression based on ANOVA significant columns')
                         from stats.plotting import Make_Plot_Regression
-                        Make_Plot_Regression(self.tab.join_dfs(df_clin_group, df_with_features),
+                        Make_Plot_Regression(self.df_final_grid,
                                              sig_cols, self.project_vars['group_col'],
                                              varia.get_dir(self.stats_paths['simp_lin_reg_dir']))
                         Make_plot_group_difference(self.tab.join_dfs(df_clin_group, df_with_features),
@@ -158,9 +160,9 @@ class RUN_stats():
             predicted_target = self.project_vars["group_col"]
         if group == 'all':
                 df_clin_group = self.df_user_stats
-                df_X = self.df_adjusted
-                y_labeled = preprocessing.label_y(self.df_user_stats, predicted_target)
-                X_scaled = preprocessing.scale_X(df_X)
+                df_X          = self.df_adjusted
+                y_labeled     = preprocessing.label_y(self.df_user_stats, predicted_target)
+                X_scaled      = preprocessing.scale_X(df_X)
         else:
                 df_group      = self.tab.get_df_per_parameter(self.df_final_grid, self.project_vars['group_col'], group)
                 df_clin_group = self.tab.rm_cols_from_df(df_group, self.cols_X)
@@ -176,18 +178,22 @@ class RUN_stats():
                                      time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()))
 
     def get_features_df_per_group(self, group, X_scaled, y_labeled, df_X):
-        if self.feature_algo == 'PCA':# using PCA
-                features = predict.get_features_based_on_pca(varia.get_dir(path.join(self.stats_paths['STATS_HOME'], self.stats_paths['features'])),
-                                                    self.prediction_vars['pca_threshold'],
-                                                    X_scaled, self.cols_X,
-                                                    group, self.atlas)
-                features_rfe_and_rank_df = 'none'
-        elif self.feature_algo == 'RFE': # using RFE
-                features, features_rfe_and_rank_df = predict.feature_ranking(X_scaled,
-                                                                    y_labeled,
-                                                                    self.cols_X)
-                print("    number of features extracted by RFE: ",len(features_rfe_and_rank_df.feature))
-        df_with_features = self.tab.get_df_from_df(df_X, usecols = features)
+        features_rfe_and_rank_df = 'none'
+        if self.use_features:
+            if self.feature_algo == 'PCA':# using PCA
+                    features = predict.get_features_based_on_pca(varia.get_dir(path.join(self.stats_paths['STATS_HOME'], self.stats_paths['features'])),
+                                                        self.prediction_vars['pca_threshold'],
+                                                        X_scaled, self.cols_X,
+                                                        group, self.atlas)
+            elif self.feature_algo == 'RFE': # using RFE
+                    features, features_rfe_and_rank_df = predict.feature_ranking(X_scaled,
+                                                                        y_labeled,
+                                                                        self.cols_X)
+                    print("    number of features extracted by RFE: ",len(features_rfe_and_rank_df.feature))
+            df_with_features = self.tab.get_df_from_df(df_X, usecols = features)
+        else:
+            df_with_features = self.tab.get_df_from_df(df_X, usecols = self.cols_X)
+            features = self.cols_X
         return df_with_features, features, features_rfe_and_rank_df
 
 

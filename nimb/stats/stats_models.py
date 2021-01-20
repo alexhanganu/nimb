@@ -153,54 +153,54 @@ def posthoc_run(model,res,factor,measurement):
 
 
 
-def RUN_ANOVA_SimpleLinearRegression(data_anova, PARAMETER_x_Age, PARAMETERS_INTEREST_y, ls_struct_cols, PATH2save_anova):
-    Make_Dirs(PATH2save_anova)
+# def RUN_ANOVA_SimpleLinearRegression(data_anova, PARAMETER_x_Age, PARAMETERS_INTEREST_y, ls_struct_cols, PATH2save_anova):
+#     Make_Dirs(PATH2save_anova)
 
-    res_anova_age_struct = {}
-    res_anova_parameter_struct = {}
-    res_anova_parameter_age_struct = {}
+#     res_anova_age_struct = {}
+#     res_anova_parameter_struct = {}
+#     res_anova_parameter_age_struct = {}
 
 
-    for col in ls_struct_cols:
-        model_age_struct = ols(formula=col+' ~ '+PARAMETER_x_Age, data=data_anova).fit()
-        res_age_struct = model_age_struct.pvalues
-        if res_age_struct.Intercept<0.05:
-            if res_age_struct.Age<0.05:
-                measurement, structure = get_structure_measurement(col)
-                res_anova_age_struct[structure] = Make_Posthoc(model_age_struct,res_age_struct,[PARAMETER_x_Age],measurement) 
-        save_df(res_anova_age_struct, PARAMETER_x_Age, PATH2save_anova)
-        print('DONE for all')
+#     for col in ls_struct_cols:
+#         model_age_struct = ols(formula=col+' ~ '+PARAMETER_x_Age, data=data_anova).fit()
+#         res_age_struct = model_age_struct.pvalues
+#         if res_age_struct.Intercept<0.05:
+#             if res_age_struct.Age<0.05:
+#                 measurement, structure = get_structure_measurement(col)
+#                 res_anova_age_struct[structure] = Make_Posthoc(model_age_struct,res_age_struct,[PARAMETER_x_Age],measurement) 
+#         save_df(res_anova_age_struct, PARAMETER_x_Age, PATH2save_anova)
+#         print('DONE for all')
 
-    for PARAMETER in PARAMETERS_INTEREST_y:
-        for col in ls_struct_cols:
-            model_parameter_struct = ols(formula=col+' ~ '+PARAMETER, data=data_anova).fit()
-            res_parameter_struct = model_parameter_struct.pvalues
-            if res_parameter_struct.Intercept<0.05:
-                measurement, structure = get_structure_measurement(col)
-                if PARAMETER == 'education':
-                    if res_parameter_struct.education<0.05:
-                        res_anova_parameter_struct[structure] = Make_Posthoc(model_parameter_struct,res_parameter_struct,[PAR>
-                elif PARAMETER == 'MOCA':
-                    if res_parameter_struct.MOCA<0.05:
-                        res_anova_parameter_struct[structure] = Make_Posthoc(model_parameter_struct,res_parameter_struct,[PAR>
-                else:
-                    print('PARAMETER name is:',PARAMETER,'not testing if <0.05')
-                    res_anova_parameter_struct[structure] = Make_Posthoc(model_parameter_struct,res_parameter_struct,[PARAMET>
-            model_parameter_age_struct = ols(formula=col+' ~ '+PARAMETER+' + '+PARAMETER_x_Age, data=data_anova).fit()
-            res_parameter_age_struct = model_parameter_age_struct.pvalues
-            if res_parameter_age_struct.Intercept<0.05:
-                measurement, structure = get_structure_measurement(col)
-                if PARAMETER == 'education':
-                    if res_parameter_struct.education<0.05:
-                        res_anova_parameter_age_struct[structure] = Make_Posthoc(model_parameter_age_struct,res_parameter_age>
-                elif PARAMETER == 'MOCA':
-                    if res_parameter_struct.MOCA<0.05:
-                        res_anova_parameter_struct[structure] = Make_Posthoc(model_parameter_struct,res_parameter_struct,[PAR>
-                else:
-                    print('PARAMETER name is:',PARAMETER,'not testing if <0.05')
-                    res_anova_parameter_age_struct[structure] = Make_Posthoc(model_parameter_age_struct,res_parameter_age_str>
+#     for PARAMETER in PARAMETERS_INTEREST_y:
+#         for col in ls_struct_cols:
+#             model_parameter_struct = ols(formula=col+' ~ '+PARAMETER, data=data_anova).fit()
+#             res_parameter_struct = model_parameter_struct.pvalues
+#             if res_parameter_struct.Intercept<0.05:
+#                 measurement, structure = get_structure_measurement(col)
+#                 if PARAMETER == 'education':
+#                     if res_parameter_struct.education<0.05:
+#                         res_anova_parameter_struct[structure] = Make_Posthoc(model_parameter_struct,res_parameter_struct,[PAR>
+#                 elif PARAMETER == 'MOCA':
+#                     if res_parameter_struct.MOCA<0.05:
+#                         res_anova_parameter_struct[structure] = Make_Posthoc(model_parameter_struct,res_parameter_struct,[PAR>
+#                 else:
+#                     print('PARAMETER name is:',PARAMETER,'not testing if <0.05')
+#                     res_anova_parameter_struct[structure] = Make_Posthoc(model_parameter_struct,res_parameter_struct,[PARAMET>
+#             model_parameter_age_struct = ols(formula=col+' ~ '+PARAMETER+' + '+PARAMETER_x_Age, data=data_anova).fit()
+#             res_parameter_age_struct = model_parameter_age_struct.pvalues
+#             if res_parameter_age_struct.Intercept<0.05:
+#                 measurement, structure = get_structure_measurement(col)
+#                 if PARAMETER == 'education':
+#                     if res_parameter_struct.education<0.05:
+#                         res_anova_parameter_age_struct[structure] = Make_Posthoc(model_parameter_age_struct,res_parameter_age>
+#                 elif PARAMETER == 'MOCA':
+#                     if res_parameter_struct.MOCA<0.05:
+#                         res_anova_parameter_struct[structure] = Make_Posthoc(model_parameter_struct,res_parameter_struct,[PAR>
+#                 else:
+#                     print('PARAMETER name is:',PARAMETER,'not testing if <0.05')
+#                     res_anova_parameter_age_struct[structure] = Make_Posthoc(model_parameter_age_struct,res_parameter_age_str>
 
-        save_df(res_anova_parameter_struct, PARAMETER, PATH2save_anova)
-        save_df(res_anova_parameter_age_struct, PARAMETER+'_'+PARAMETER_x_Age, PATH2save_anova)
-        print('DONE for ',PARAMETER)
+#         save_df(res_anova_parameter_struct, PARAMETER, PATH2save_anova)
+#         save_df(res_anova_parameter_age_struct, PARAMETER+'_'+PARAMETER_x_Age, PATH2save_anova)
+#         print('DONE for ',PARAMETER)
 
