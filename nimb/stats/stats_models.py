@@ -40,37 +40,38 @@ import numpy as np
 import statsmodels.api as sm
 from statsmodels.formula.api import ols
 from sklearn.linear_model import LinearRegression
-
-from stats import db_processing
-from processing.freesurfer.fs_definitions import get_structure_measurement, get_names_of_measurements, get_names_of_structures
+from distribution.utilities import save_json
+from stats.db_processing import Table
+from processing.freesurfer.fs_definitions import GetFSStructureMeasurement
 
 
 class ANOVA_do():
     def __init__(self, df, params_y, ls_cols4anova, path2save, p_thresh = 0.05, intercept_thresh = 0.05):
-        self.ls_meas = get_names_of_measurements()
-        self.ls_struct = get_names_of_structures()
-        self.df = df
-        self.params_y = params_y
+        self.df            = df
+        self.params_y      = params_y
         self.ls_cols4anova = ls_cols4anova
-        self.sig_cols = dict()
+        self.sig_cols      = dict()
+        self.tab           = Table()
+        self.fs_struc_meas = GetFSStructureMeasurement()
         self.run_anova(p_thresh, intercept_thresh, path2save)
 
     def run_anova(self, p_thresh, intercept_thresh, path2save):
-        for param_y in self.params_y:
+        ls_err = list()
+        for param_y in self.params_y[:1]:#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             x = np.array(self.df[param_y])
-            df_result = db_processing.get_clean_df()
+            df_result = self.tab.get_clean_df()
             df_result_list = df_result.copy()
             df_result[param_y] = ''
             df_result_list[param_y] = ''
             ix = 1
             ixx = 1
-            for col in self.ls_cols4anova:
-                print('{}    left to analyse: {}'.format(col, len(self.ls_cols4anova[self.ls_cols4anova.index(col):])))
+            print(f'    analysing {len(self.ls_cols4anova)} features for parameer: {param_y}')
+            for col in self.ls_cols4anova[:100]:#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 y = np.array(self.df[col])
                 data_tmp = pd.DataFrame({'x':x,col:y})
                 model = ols(col+" ~ x", data_tmp).fit()
                 if model.pvalues.Intercept < p_thresh and model.pvalues.x < intercept_thresh:
-                    measurement, structure = get_structure_measurement(col, self.ls_meas, self.ls_struct)
+                    measurement, structure, ls_err = self.fs_struc_meas.get(col, ls_err)
                     if param_y not in self.sig_cols:
                         self.sig_cols[param_y] = dict()
                     self.sig_cols[param_y][col] = {'pvalues':model.pvalues.x, 'intercept': model.pvalues.Intercept, 'meas': measurement, 'struct': structure}
@@ -81,8 +82,10 @@ class ANOVA_do():
                     else:
                         df_result = self.populate_df(df_result, df_result[param_y].tolist().index(structure), {measurement: '%.4f'%model.pvalues.x})
                     ixx += 1
-        db_processing.save_df_tocsv(df_result_list, path.join(path2save, 'anova_per_significance_'+param_y+'.csv'))
-        db_processing.save_df_tocsv(df_result, path.join(path2save, 'anova_per_structure_'+param_y+'.csv'))
+            self.tab.save_df_tocsv(df_result_list, path.join(path2save, f'anova_per_significance_{param_y}.csv'))
+            self.tab.save_df_tocsv(df_result, path.join(path2save, f'anova_per_structure_{param_y}.csv'))
+        save_json(self.sig_cols, path.join(path2save, f'anova_significant_features.json'))
+        print('NOT freesurfer structures: ', ls_err)
 
     def populate_df(self, df, idx, cols_vals):
         for col in cols_vals:

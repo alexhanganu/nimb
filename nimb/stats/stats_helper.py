@@ -70,10 +70,9 @@ class RUN_stats():
                                        self.project_vars['variables_for_glm'], features,
                                        varia.get_dir(self.stats_paths['anova']),
                                        p_thresh = 0.05, intercept_thresh = 0.05).sig_cols
-                    print(sig_cols)
                     if self.STEP_SimpLinReg:
                         print('performing Simple Linear Regression based on ANOVA significant columns')
-                        from stats.plotting import Make_Plot_Regression
+                        from stats.plotting import Make_Plot_Regression, Make_plot_group_difference
                         Make_Plot_Regression(self.df_final_grid,
                                              sig_cols, self.project_vars['group_col'],
                                              varia.get_dir(self.stats_paths['simp_lin_reg_dir']))

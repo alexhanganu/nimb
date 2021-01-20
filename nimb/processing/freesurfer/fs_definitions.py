@@ -539,32 +539,39 @@ class cols_per_measure_per_atlas():
                         result[atlas][meas].append(self.ls_columns.index(col))
         return result
 
-def get_structure_measurement(name, ls_meas, ls_struct):
-    if name == 'eTIV':
-        measurement = 'eTIV'
-        structure = 'eTIV'
-    else:
-        measurement = ''
-        structure = ''
-        i = 0
-        while structure not in ls_struct and i<5:
-            if measurement not in ls_meas:
-                for meas in ls_meas:
-                    if meas in name:
-                        measurement = meas
-                        break
-            else:
-                ls_meas = ls_meas[ls_meas.index(measurement)+1:]
-                for meas in ls_meas:
-                    if meas in name:
-                        measurement = meas
-                        break
+class GetFSStructureMeasurement:
+    def __init__(self):
+        self.ls_meas   = get_names_of_measurements()
+        self.ls_struct = get_names_of_structures()
 
-            structure = name.replace('_'+measurement,'')
-            i += 1
-    if structure != 'eTIV' and structure+'_'+measurement != name:
-            print('ERROR in get_structure_measurement')
-    return measurement, structure
+    def get(self, name, ls_err = list()):
+        meas_try1   = name[name.rfind('_')+1:]
+        struct_try1 = name.replace(f'_{meas_try1}','')
+        if struct_try1 in self.ls_struct and meas_try1 in self.ls_meas:
+            return meas_try1, struct_try1, ls_err
+        elif name == 'eTIV':
+            return 'eTIV', 'eTIV', ls_err
+        else:
+            measurement = name
+            structure = name
+            i = 0
+            while structure not in self.ls_struct and i<5:
+                if measurement not in self.ls_meas:
+                    for meas in self.ls_meas:
+                        if meas in name:
+                            measurement = meas
+                            break
+                else:
+                    self.ls_meas = self.ls_meas[self.ls_meas.index(measurement)+1:]
+                    for meas in self.ls_meas:
+                        if meas in name:
+                            measurement = meas
+                            break
+                structure = name.replace('_'+measurement,'')
+                i += 1
+            if f'{structure}_{measurement}' != name:
+                    ls_err.append(name)
+            return measurement, structure, ls_err
 
 
 def get_atlas_measurements():

@@ -4,9 +4,11 @@
 
 # script intends to do all the plots
 
-
+from os import path
 import matplotlib.pyplot as plt
 import seaborn as sns
+import pandas as pd
+import numpy as np
 
 
 def plot_simple(vals, xlabel, ylabel, path_to_save_file):
@@ -33,23 +35,31 @@ def Make_plot_group_difference(df, param_feat, group_col, groups, PATH_plots_gro
             df_2 = df_group[['group', groups[0], groups[1]]]
             dd=pd.melt(df_2, id_vars=['group'], value_vars=[groups[0], groups[1]], var_name=feat)
             group_plot = sns.boxplot(x='group', y='value', data=dd, hue=feat)
-            group_plot.figure.savefig(path.join(PATH_plots_groups,'{}_{}.png'.format(param_features[param_y][feat]['struct'], param_features[param_y][feat]['meas'])))
+            structure = param_features[param_y][feat]['struct']
+            meas = param_features[param_y][feat]['meas']
+            fig_name = f'{param_y}_{structure}_{meas}.png'
+            group_plot.figure.savefig(path.join(PATH_2plots, fig_name))
             plt.close()
 
 def Make_Plot_Regression(df, param_features, group_col,
-                         PATH_plots_regression):
+                         PATH_2plots):
 
     for param_y in param_features:
         for feat in param_features[param_y]:
             df_plot = pd.DataFrame({
                 'group':np.array(df[group_col]),
-                parameter:np.array(df[param_y]),
-                col:np.array(df[col])})
-            sns_plot = sns.lmplot(x=parameter, y=col, hue='group', data=df_plot)#, robust=True
+                param_y:np.array(df[param_y]),
+                feat:np.array(df[feat])})
+            sns_plot = sns.lmplot(x=param_y, y=feat, hue='group', data=df_plot)#, robust=True
             axes = sns_plot.axes.flatten()
-            axes[0].set_title('Group diff. p='+str('%.4f'%param_features[param_y][feat]['pvalues'])+'; intercept='+str('%.4f'%param_features[param_y][feat]['intercept']))
-        #    axes[0].set_title('Group diff. p='+str('%.4f'%model.pvalues.x)+'; intercept='+str('%.4f'%model.pvalues.Intercept))
-            sns_plot.savefig(path.join(PATH_plots_regression, '{}_{}_{}.png'.format(param_y,param_features[param_y][feat]['struct'], param_features[param_y][feat]['meas'])))
+            p_value = str('%.4f'%param_features[param_y][feat]['pvalues'])
+            intercept = str('%.4f'%param_features[param_y][feat]['intercept'])
+            Title = f'Group diff. p={p_value}; intercept={intercept}'
+            axes[0].set_title(Title)
+            structure = param_features[param_y][feat]['struct']
+            meas = param_features[param_y][feat]['meas']
+            fig_name = f'{param_y}_{structure}_{meas}.png'
+            sns_plot.savefig(path.join(PATH_2plots, fig_name))
             plt.close()
 
 

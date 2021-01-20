@@ -73,7 +73,7 @@ class Table:
         return df.columns.tolist()
 
 
-    def get_clean_df():
+    def get_clean_df(self):
         return pd.DataFrame()
 
 
