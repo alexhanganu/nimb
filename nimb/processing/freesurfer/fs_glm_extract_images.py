@@ -6,18 +6,11 @@ uses freeview to create the images
 and saves the images
 '''
 
-from os import system, listdir, makedirs, path, remove, getcwd, chdir
-import shutil, linecache, sys
+from os import system, makedirs, path
+import linecache, sys
 import argparse
-import subprocess
 from fs_definitions import hemi, FSGLMParams
 
-try:
-    import pandas as pd
-    import xlrd
-    from pathlib import Path
-except ImportError as e:
-    sys.exit(e)
 
 
 class SaveGLMimages():
@@ -35,14 +28,14 @@ class SaveGLMimages():
         self.mc_img_thresh     = 1.3 #p = 0.05
 
     def run(self):
-        # if path.exists(self.param.sig_fdr_json):
-        #     print('file exists')
-        #     self.read_fdr_images()
+        if path.exists(self.param.sig_fdr_json):
+            print('reading images for FDR significant results')
+            self.read_fdr_images()
         if path.exists(self.param.sig_mc_json):
-            print('reding mc iamge file')
+            print('reding images with MC-z corrected results')
             self.read_mc_images()
         elif path.exists(self.param.files_for_glm):
-            print('reading complete glm folders')
+            print('reading images after FreeSurfer GLM analysis')
             self.read_glm_subdirs()
         if path.exists(self.f_with_cmds):
         	system('rm {}'.format(self.f_with_cmds))
@@ -68,7 +61,7 @@ class SaveGLMimages():
                                         cwsig_mc_f,
                                         oannot_mc_f)
     def read_glm_subdirs(self):
-    	files_glm = load_json(self.param.files_for_glm)
+        files_glm = load_json(self.param.files_for_glm)
         for fsgd_type in files_glm:
             for fsgd_file in files_glm[fsgd_type]['fsgd']:
                 fsgd_f_unix = path.join(self.PATHglm, 'fsgd_unix', '{}_unix.fsgd'.format(fsgd_file.replace('.fsgd','')))
@@ -187,24 +180,9 @@ def get_parameters(projects):
     return params
 
 
-def initiate_fs_from_sh(vars_local):
-    """
-    FreeSurfer needs to be initiated with source and export
-    this functions tries to automate this
-    """
-    sh_file = path.join(vars_local["NIMB_PATHS"]["NIMB_tmp"], 'source_fs.sh')
-    with open(sh_file, 'w') as f:
-        f.write(vars_local["FREESURFER"]["export_FreeSurfer_cmd"]+'\n')
-        f.write(vars_local["FREESURFER"]["source_FreeSurfer_cmd"]+'\n')
-        f.write("export SUBJECTS_DIR="+vars_local["FREESURFER"]["FS_SUBJECTS_DIR"]+'\n')
-    system("chmod +x {}".format(sh_file))
-    system("./{}".format(sh_file))
-    return ("source {}".format(sh_file))
-
-
 if __name__ == '__main__':
 
-
+    from pathlib import Path
     file = Path(__file__).resolve()
     parent, top = file.parent, file.parents[2]
     sys.path.append(str(top))
@@ -215,15 +193,11 @@ if __name__ == '__main__':
     vars_local = getvars.location_vars['local']
     projects = getvars.projects
     params = get_parameters([i for i in projects.keys() if 'EXPLANATION' not in i and 'LOCATION' not in i])
-    vars_project = getvars.projects[params.project]
-    SetProject(vars_local['NIMB_PATHS']['NIMB_tmp'], getvars.stats_vars, params.project)
-    fs_start_cmd = initiate_fs_from_sh(vars_local)
-
-    try:
-        subprocess.run(['mri_info'], stdout=subprocess.PIPE).stdout.decode('utf-8')
-    except Exception as e:
-        print(e)
-        print('please initiate freesurfer using the command: \n    {}'.format(fs_start_cmd))
+    project = params.project
+    vars_project = getvars.projects[project]
+    NIMB_tmp = vars_local['NIMB_PATHS']['NIMB_tmp']
+    fname_groups = projects[project]["fname_groups"]
+    stats_vars = SetProject(NIMB_tmp, getvars.stats_vars, project, fname_groups).stats
 
     print('extracting glm images')
-    SaveGLMimages(vars_local, getvars.stats_vars).run()
+    SaveGLMimages(vars_local, stats_vars).run()

@@ -47,7 +47,10 @@ class NIMB(object):
         self.dist_ready   = DistributionReady(self.all_vars, self.project_vars)
         if self.process == 'fs-get-stats' or self.process == 'fs-glm' or self.process == 'run-stats':
             from setup.get_vars import SetProject
-            self.stats_vars = SetProject(self.NIMB_tmp, self.stats_vars, self.project).stats
+            self.stats_vars = SetProject(self.NIMB_tmp,
+                                        self.stats_vars,
+                                        self.project,
+                                        self.project_vars['fname_groups']).stats
 
     def run(self):
         """Run nimb"""
@@ -117,9 +120,15 @@ class NIMB(object):
             '''checks that all subjects are present in the SUBJECTS_DIR folder that will be used for GLM analysis,
                 sends cmd to batch to initiate FreeSurfer GLM running script
             '''
+            fs_glm_dir   = self.stats_vars["STATS_PATHS"]["FS_GLM_dir"]
+            fname_groups = self.proj_vars['fname_groups']
             if DistributionReady(self.all_vars, self.project_vars).chk_if_ready_for_fs_glm():
-                GLM_file_path, GLM_dir = DistributionHelper(self.all_vars, self.project_vars).fs_glm_prep(self.stats_vars["STATS_PATHS"]["FS_GLM_dir"])
-                DistributionReady(self.all_vars, self.project_vars).fs_chk_fsaverage_ready(self.vars_local['FREESURFER']['FS_SUBJECTS_DIR'])
+                GLM_file_path, GLM_dir = DistributionHelper(self.all_vars,
+                                            self.project_vars
+                                            ).fs_glm_prep(fs_glm_dir,
+                                                        fname_groups)
+                FS_SUBJECTS_DIR = self.vars_local['FREESURFER']['FS_SUBJECTS_DIR']
+                DistributionReady(self.all_vars, self.project_vars).fs_chk_fsaverage_ready(FS_SUBJECTS_DIR)
                 if GLM_file_path:
                     self.vars_local['PROCESSING']['processing_env']  = "tmux"
                     schedule_fsglm = Scheduler(self.vars_local)
@@ -141,7 +150,8 @@ class NIMB(object):
                                     be used for FreeSurfer Freeview and tksurfer")
             if DistributionReady(self.all_vars, self.project_vars).fs_ready():
                 print('before running the script, remember to source $FREESURFER_HOME')
-                cmd = '{} fs_glm_extract_images.py -project {}'.format(self.vars_local['PROCESSING']["python3_run_cmd"], self.project)
+                python_run_cmd = self.vars_local['PROCESSING']["python3_run_cmd"]
+                cmd = '{} fs_glm_extract_images.py -project {}'.format(python_run_cmd, self.project)
                 cd_cmd = 'cd '+path.join(self.NIMB_HOME, 'processing', 'freesurfer')
                 self.schedule.submit_4_processing(cmd, 'fs_glm','extract_images', cd_cmd)
 

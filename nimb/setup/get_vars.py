@@ -17,19 +17,20 @@ class SetProject():
         new dict stats with the project name as folder inside the nimb_tmp folder
     '''
 
-    def __init__(self, NIMB_tmp, stats, project):
-        self.stats = self.set_project(NIMB_tmp, stats, project)
+    def __init__(self, NIMB_tmp, stats, project, fname_groups):
+        self.stats = self.set_project(NIMB_tmp, stats, project, fname_groups)
 
-    def set_project(self, NIMB_tmp, stats, project):
+    def set_project(self, NIMB_tmp, stats, project, fname_groups):
+        fname_dir = path.splitext(fname_groups)[0].replace('(','').replace(')','')
         for key in stats['STATS_PATHS']:
             if 'nimb_tmp' in stats['STATS_PATHS'][key]:
                 if key == "FS_GLM_dir":
-                    stats['STATS_PATHS'][key] = path.join(NIMB_tmp, 'projects', project, 'fs_glm').replace(sep, '/')
+                    stats['STATS_PATHS'][key] = path.join(NIMB_tmp, 'projects', project, fname_dir, 'fs_glm').replace(sep, '/')
                 elif key == "STATS_HOME":
-                    stats['STATS_PATHS'][key] = path.join(NIMB_tmp, 'projects', project, 'stats').replace(sep, '/')
+                    stats['STATS_PATHS'][key] = path.join(NIMB_tmp, 'projects', project, fname_dir, 'stats').replace(sep, '/')
                 else:
                     new_ending = stats['STATS_PATHS'][key].replace(sep, '/').split('/')[-1]
-                    stats['STATS_PATHS'][key] = path.join(NIMB_tmp, 'projects', project, 'stats', new_ending).replace(sep, '/')
+                    stats['STATS_PATHS'][key] = path.join(NIMB_tmp, 'projects', project, fname_dir, 'stats', new_ending).replace(sep, '/')
         return stats
 
 class Get_Vars():
