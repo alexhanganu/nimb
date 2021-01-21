@@ -1,5 +1,5 @@
 mriFunctionalData:
-	msFileName=/media/g/nimb_tmp/projects/ad-irm-lucas/datas_ADNI_v00_MCIvsAD/fs_glm/images/g2v1_MCI_AD_FAQTOTAL.thickness.lh.fwhm10/g2v1_g1g2.var/sig.mgh
+	msFileName=/media/g/nimb_tmp/projects/ad-irm-lucas/datas_ADNI_v00_CNvsAD/fs_glm/images/g1v1_CN_PTEDUCAT.area.lh.fwhm10/g1v1_slope/sig.mgh
 	msRegistrationFileName=
 	msSubjectName=
 	mpData->ps=1.000000

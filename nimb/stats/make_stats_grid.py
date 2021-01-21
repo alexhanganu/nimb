@@ -3,8 +3,7 @@ script creates the final grid file for statistical analysis
 '''
 
 from os import path
-import preprocessing
-from db_processing import Table
+from .db_processing import Table
 from stats.preprocessing import Preprocess
 from distribution import utilities
 

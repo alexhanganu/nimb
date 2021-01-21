@@ -18,6 +18,7 @@ class SaveGLMimages():
     def __init__(self, vars_local, stats_vars):
         self.PATHglm           = stats_vars["STATS_PATHS"]["FS_GLM_dir"]
         self.param             = FSGLMParams(self.PATHglm)
+        print(self.PATHglm)
         self.PATHglm_glm       = self.param.PATHglm_glm
         self.hemispheres       = hemi
         self.mcz_sim_direction = self.param.mcz_sim_direction

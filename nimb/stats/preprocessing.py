@@ -134,7 +134,8 @@ def scale_X(df):
     #scales: StandardScaler(), PowerTransformer(), QuantileTransformer(), RobustScaler()
     PowerTransformer is a parametric, monotonic transformation that applies a power transformation to each feature to make the data more Gaussian-like. It finds the optimal scaling factor to stabilize variance and mimimize skewness through maximum likelihood estimation. PowerTransformer uses the Yeo-Johnson transformed, applies zero-mean, unit variance normalization to the transformed output. This is useful for modeling issues related to heteroscedasticity (non-constant variance), or other situations where normality is desired.
     '''
-    scaler = sklearn.preprocessing.PowerTransformer()
+    from sklearn.preprocessing import PowerTransformer #!! there is an issue with using directly sklearn.preprocessing.PowerTransformer
+    scaler = PowerTransformer()
     print(scaler.fit(df))
     X_Scaled = scaler.transform(df)
     return X_Scaled

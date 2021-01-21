@@ -57,7 +57,7 @@ class ANOVA_do():
 
     def run_anova(self, p_thresh, intercept_thresh, path2save):
         ls_err = list()
-        for param_y in self.params_y[:1]:#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        for param_y in self.params_y:
             x = np.array(self.df[param_y])
             df_result = self.tab.get_clean_df()
             df_result_list = df_result.copy()
@@ -65,8 +65,8 @@ class ANOVA_do():
             df_result_list[param_y] = ''
             ix = 1
             ixx = 1
-            print(f'    analysing {len(self.ls_cols4anova)} features for parameer: {param_y}')
-            for col in self.ls_cols4anova[:100]:#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            print(f'    analysing {len(self.ls_cols4anova)} features for parameter: {param_y}')
+            for col in self.ls_cols4anova:
                 y = np.array(self.df[col])
                 data_tmp = pd.DataFrame({'x':x,col:y})
                 model = ols(col+" ~ x", data_tmp).fit()

@@ -76,12 +76,12 @@ class RUN_stats():
                         Make_Plot_Regression(self.df_final_grid,
                                              sig_cols, self.project_vars['group_col'],
                                              varia.get_dir(self.stats_paths['simp_lin_reg_dir']))
-                        Make_plot_group_difference(self.tab.join_dfs(df_clin_group, df_with_features),
+                        Make_plot_group_difference(self.df_final_grid,
                                                    sig_cols, self.project_vars['group_col'], self.groups,
                                                    varia.get_dir(self.stats_paths['anova']))
 
 #                    from stats.stats_groups_anova import RUN_GroupAnalysis_ANOVA_SimpleLinearRegression
-#                    RUN_GroupAnalysis_ANOVA_SimpleLinearRegression(self.tab.join_dfs(df_clin_group, df_with_features),
+#                    RUN_GroupAnalysis_ANOVA_SimpleLinearRegression(self.df_final_grid,
 #                                                            groups,
 #                                                            self.project_vars['variables_for_glm'],
 #                                                            other_params,
@@ -128,7 +128,7 @@ class RUN_stats():
                     from stats import stats_models
                     print('performing Linear Regression Moderation analysis')
                     stats_models.linreg_moderation_results(
-                            self.tab.join_dfs(df_clin_group, df_with_features),
+                            self.df_final_grid,
                             features, group_param, regression_param,
                             varia.get_dir(path.join(self.stats_paths['STATS_HOME'],
                                           self.stats_paths['linreg_moderation_dir'])),
@@ -234,14 +234,15 @@ if __name__ == "__main__":
     from stats.make_stats_grid import MakeGrid
     from stats.db_processing import Table
     from distribution import utilities
-    getvars    = Get_Vars()
+    getvars       = Get_Vars()
     projects      = getvars.projects
     all_projects  = [i for i in projects.keys() if 'EXPLANATION' not in i and 'LOCATION' not in i]
     params        = get_parameters(all_projects)
 
-    NIMB_tmp   = getvars.location_vars['local']['NIMB_PATHS']['NIMB_tmp']
-    vars_stats = getvars.stats_vars
-    vars_stats = SetProject(NIMB_tmp, vars_stats, params.project).stats
+    NIMB_tmp     = getvars.location_vars['local']['NIMB_PATHS']['NIMB_tmp']
+    fname_groups = projects[params.project]["fname_groups"]
+    vars_stats   = getvars.stats_vars
+    vars_stats   = SetProject(NIMB_tmp, vars_stats, params.project, ).stats
     if "STATS_FILES" in vars_stats:
         stats_files   = vars_stats["STATS_FILES"]
     else:
