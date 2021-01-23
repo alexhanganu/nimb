@@ -26,7 +26,7 @@ def plot_features(df): #written by Lynn Valeyry Verty, adapted by Alex Hanganu
     plt.title('All Parameters', loc='center')
     plt.show()
 
-def Make_plot_group_difference(df, param_feat, group_col, groups, PATH_plots_groups):
+def Make_plot_group_difference(df, param_features, group_col, groups, PATH_2plots):
     for param_y in param_features:
         for feat in param_features[param_y]:
             df_group = pd.DataFrame({'group':df[group_col],\
@@ -37,7 +37,10 @@ def Make_plot_group_difference(df, param_feat, group_col, groups, PATH_plots_gro
             group_plot = sns.boxplot(x='group', y='value', data=dd, hue=feat)
             structure = param_features[param_y][feat]['struct']
             meas = param_features[param_y][feat]['meas']
-            fig_name = f'{param_y}_{structure}_{meas}.png'
+            if structure != meas:
+                fig_name = f'{param_y}_{structure}_{meas}.png'
+            else:
+                fig_name = f'{param_y}_{structure}.png'
             group_plot.figure.savefig(path.join(PATH_2plots, fig_name))
             plt.close()
 
@@ -58,7 +61,10 @@ def Make_Plot_Regression(df, param_features, group_col,
             axes[0].set_title(Title)
             structure = param_features[param_y][feat]['struct']
             meas = param_features[param_y][feat]['meas']
-            fig_name = f'{param_y}_{structure}_{meas}.png'
+            if structure != meas:
+                fig_name = f'{param_y}_{structure}_{meas}.png'
+            else:
+                fig_name = f'{param_y}_{structure}.png'
             sns_plot.savefig(path.join(PATH_2plots, fig_name))
             plt.close()
 
