@@ -4,8 +4,6 @@
 
 from os import path
 
-print("Script executing.....")
-
 from stats import plotting, varia
 from stats.db_processing import Table
 
@@ -90,8 +88,18 @@ def preprocessing_data(data, target):
     X_scaled = x_scaler.transform(data_x)
     return X_scaled, y_transform, data_x
 
+params_lang = {
+    "FR": {
+    'nr_components': 'nombre de composants',
+    'expl_cum_var' : 'variance expliquée cumulative'
+    },
+    "EN": {
+    'nr_components': 'number of components',
+    'expl_cum_var' : 'explained cumulative variance'
+    },
 
-def get_features_based_on_pca(dir_pca, threshold, X_scaled, ls_cols_X, group, atlas):
+}
+def get_features_based_on_pca(dir_pca, threshold, X_scaled, ls_cols_X, group, atlas, lang='FR'):
 
     print('    nr of features to analyze by PCA: {}'.format(len(ls_cols_X)))
     model = PCA(n_components=threshold)
@@ -119,10 +127,10 @@ def get_features_based_on_pca(dir_pca, threshold, X_scaled, ls_cols_X, group, at
     varia.extract_regions(dic_feat_comps, dir_pca, atlas)
 
     # save results
-    df_feat_comps.to_csv(path.join(dir_pca, 'features_from_pca_'+group+'_'+atlas+'.csv'))
+    df_feat_comps.to_csv(path.join(dir_pca, f'features_from_pca_{group}_{atlas}.csv'))
     plotting.plot_simple(vals=np.cumsum(model.explained_variance_ratio_), 
-                    xlabel='nombre de composants', ylabel='variance expliquée cumulative',
-                    path_to_save_file=path.join(dir_pca,'pca_'+group+'_'+atlas+'.png'))
+                    xlabel=params_lang[lang]['nr_components'], ylabel=params_lang[lang]['expl_cum_var'],
+                    path_to_save_file=path.join(dir_pca,f'pca_{group}_{atlas}.png'))
 
     return list(dic_feat_comps.keys())
 
