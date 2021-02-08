@@ -156,7 +156,7 @@ def feature_ranking(X_scaled, y_transform, cols_X):
     return features_rfe_and_rank_df['feature'], features_rfe_and_rank_df
 
 
-def SKF_algorithm(current_feature_list, X_scaled, y_transform):
+def SKF_algorithm(current_feature_list, X_scaled, y_transform, NUM_ITER):
     """
     Run the Stratified KFold CV algorithm on the data set using current_feature_list
     Params:
@@ -190,7 +190,7 @@ def SKF_algorithm(current_feature_list, X_scaled, y_transform):
 
     rf_random = RandomizedSearchCV(estimator=rf,
                                    param_distributions=random_grid,
-                                   n_iter=definitions.prediction_defs['skf_NUM_ITER'], cv=cv_algo, verbose=0, random_state=42, n_jobs=-1)
+                                   n_iter=NUM_ITER, cv=cv_algo, verbose=0, random_state=42, n_jobs=-1)
 
     rf_random.fit(X_scaled, y_transform)
     best_rf = rf_random.best_estimator_
@@ -213,7 +213,7 @@ def SKF_algorithm(current_feature_list, X_scaled, y_transform):
     return avg_score[-1], best_rf, avg_score, score_list
 
 
-def LOO_algorithm(current_feature_list, x_transform, y_transform):
+def LOO_algorithm(current_feature_list, x_transform, y_transform,NUM_ITER):
     """
     Run the LOO algorithm on the data set using current_feature_list
     Params:
@@ -247,7 +247,7 @@ def LOO_algorithm(current_feature_list, x_transform, y_transform):
 
     rf_random = RandomizedSearchCV(estimator=rf,
                                    param_distributions=random_grid,
-                                   n_iter=definitions.prediction_defs['NUM_ITER'], cv=loo, verbose=0, random_state=42, n_jobs=-1)
+                                   n_iter=NUM_ITER, cv=loo, verbose=0, random_state=42, n_jobs=-1)
 
     rf_random.fit(x_transform, y_transform)
     best_rf = rf_random.best_estimator_
