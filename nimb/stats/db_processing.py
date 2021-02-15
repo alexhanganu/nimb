@@ -89,7 +89,7 @@ class Table:
         return df.drop(columns=cols)
 
 
-    def save_df(self, df, f_path_to_save, sheet_name):
+    def save_df(self, df, f_path_to_save, sheet_name = 'nimb_created'):
         if f_path_to_save.endswith('.csv'):
             df.to_csv(f_path_to_save)
         elif f_path_to_save.endswith('.xls') or f_path_to_save.endswith('.xlsx'):
