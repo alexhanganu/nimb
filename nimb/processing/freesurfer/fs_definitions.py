@@ -583,3 +583,52 @@ def get_atlas_measurements():
             measurements[parc_parameters[meas]].append(parc_parameters[meas]+'R'+atlas)
     return measurements
 
+
+
+
+class RReplace():
+    '''written for NIMB ROIs
+        created based on  Desikan/ Destrieux atlases + FreeSurfer measurement (thickness, area, etc.), + Hemisphere
+        e.g.: frontal_middle_caudal_ThickL_DK, where DK stands for Desikan and DS stands for Destrieux
+        extracts roi name and measurement
+        combines roi with contralateral roi
+    Args: feature to 
+    Return: {'feature_name':('Left-corresponding-feature', 'Right-corresponding-feature')}
+    '''
+
+    def __init__(self, features):
+        self.add_contralateral_features(features)
+        self.contralateral_features = self.lhrh
+
+    def add_contralateral_features(self, features):
+        self.lhrh = {}
+        for feat in features:
+            meas, struct, _ = GetFSStructureMeasurement().get(feat)
+            lr_feature = feat.replace(f'_{meas}','')
+            if lr_feature not in self.lhrh:
+                self.lhrh[lr_feature] = ''
+            if meas != 'VolSeg':
+                new_struct, hemi = self.get_contralateral_meas(meas)
+                contra_feat = f'{struct}_{new_struct}'
+            else:
+                new_struct, hemi = self.get_contralateral_meas(struct)
+                contra_feat = f'{new_struct}_{meas}'
+            if 'none' not in new_struct:
+                if hemi == 'L':
+                    self.lhrh[lr_feature] = (contra_feat, feat)
+                else:
+                    self.lhrh[lr_feature] = (feat, contra_feat)
+        # self.lhrh
+
+    def get_contralateral_meas(self, param):
+        if "L" in param:
+            return self.rreplace(param, "L", "R", 1), "R"
+        elif "R" in param:
+            return self.rreplace(param, "R", "L", 1), "L"
+        else:
+            # print('    no laterality in : {}'.format(param))
+            return 'none', 'none'
+
+    def rreplace(self, s, old, new, occurence):
+        li = s.rsplit(old, 1)
+        return new.join(li)

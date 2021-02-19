@@ -5,13 +5,13 @@ skew: for normally distributed data, the skewness should be about zero. If >0, m
 '''
 
 from stats import db_processing
-from processing.freesurfer.fs_definitions import get_structure_measurement, get_names_of_measurements, get_names_of_structures
+from processing.freesurfer import fs_definitions # import get_structure_measurement, get_names_of_measurements, get_names_of_structures
 import pandas as pd
 import numpy as np
 from scipy import stats
 import os
 from stats.db_processing import Table
-from distribution import utils
+from distribution import utilities
 
 
 class ttest_do():
@@ -146,7 +146,7 @@ def mkstatisticsf(df_4stats,
 
     df = tab.create_df_from_dict(stats_dic)
     tab.save_df(df, os.path.join(path2save, 'stats_general.csv'), sheet_name = 'stats')
-    utils.save_json(stats_dic, os.path.join(path2save,'stats_general.json'))
+    utilities.save_json(stats_dic, os.path.join(path2save,'stats_general.json'))
     if make_with_colors:
         save_2xlsx_with_colors(df, path2save = path2save,
                            cols2color_sig = cols2color_sig)
