@@ -1,16 +1,16 @@
 import os
-import db_processing
+from stats import db_processing
 
 
 class LateralityAnalysis():
-	'''creates a pandas.DataFrame with laterality analysis using the formula:
-		laterality = ( feature - contralateral_feature ) / ( feature + contralateral_feature )
-	Args: df: pandas.DataFrame to be used for columns
-			lhrh_feat_d: {'common_feature_name':('feature', 'contralateral_feature')}
-			file_name: name of the file.csv
-			PATH_save_results: abspath to save the file.csv
-	Return: pandas.DataFrame csv file with results
-	'''
+    '''creates a pandas.DataFrame with laterality analysis using the formula:
+        laterality = ( feature - contralateral_feature ) / ( feature + contralateral_feature )
+    Args: df: pandas.DataFrame to be used for columns
+            lhrh_feat_d: {'common_feature_name':('feature', 'contralateral_feature')}
+            file_name: name of the file.csv
+            PATH_save_results: abspath to save the file.csv
+    Return: pandas.DataFrame csv file with results
+    '''
 
     def __init__(self, df, lhrh_feat_d, file_name, PATH_save_results):
 

@@ -161,7 +161,7 @@ columns_secondary_order = ('VolSegWM_DK','VolSegNVoxels', 'VolSegnormMean', 'Vol
 
 
 all_data = {
-    'atlases':['Brainstem','HIP','Vol','ParcDK','ParcDS'],
+    'atlases':['Brainstem','HIP','AMY','THA','Vol','ParcDK','ParcDS'],
     'atlas_ending':{'Brainstem':'','HIP':'','Vol':'','ParcDK':'_DK','ParcDS':'_DS'},
     'Brainstem':{
         'two_hemi':False,
@@ -182,6 +182,31 @@ all_data = {
             'presubiculum':'presubiculum','parasubiculum':'parasubiculum','molecular_layer_HP':'molecularLayerHP',
             'GC-ML-DG':'gcmldg','CA3':'ca3','CA4':'ca4','fimbria':'fimbria','HATA':'hata',
             'Whole_hippocampus':'wholeHippocampus'}},
+    'AMY':{
+        'two_hemi':True,
+        'files':{'AMYL_stats':('stats/amygdalar-nuclei.lh.T1.v21.stats',),
+                 'AMYL_mri':('',),
+                 'AMYR_stats':('stats/amygdalar-nuclei.rh.T1.v21.stats',),
+                 'AMYR_mri':('',)},
+        'parameters' : {'AMYL':'AMYL','AMYR':'AMYR',},
+        'header': {
+            'Lateral-nucleus': 'Lateral-nucleus', 'Basal-nucleus': 'Basal-nucleus', 'Accessory-Basal-nucleus': 'Accessory-Basal-nucleus',
+            'Anterior-amygdaloid-area-AAA': 'Anterior-amygdaloid-area-AAA', 'Central-nucleus': 'Central-nucleus',
+            'Medial-nucleus': 'Medial-nucleus', 'Cortical-nucleus': 'Cortical-nucleus',
+            'Corticoamygdaloid-transitio': 'Corticoamygdaloid-transitio', 'Paralaminar-nucleus': 'Paralaminar-nucleus',
+            'Whole_amygdala': 'WholeAmygdala',}},
+    'THA':{
+        'two_hemi':True,
+        'files':{'THAL_stats':('stats/thalamic-nuclei.lh.v12.T1.stats',),
+                 'THAL_mri':('',),
+                 'THAR_stats':('stats/thalamic-nuclei.rh.v12.T1.stats',),
+                 'THAR_mri':('',)},
+        'parameters' : {'THAL':'THAL','THAR':'THAR',},
+        'header': {
+            'AV': 'AV', 'CeM': 'CeM', 'CL': 'CL', 'CM': 'CM', 'LD': 'LD', 'LGN': 'LGN', 'LP': 'LP', 'L-Sg': 'L-Sg',
+            'MDl': 'MDl', 'MDm': 'MDm', 'MGN': 'MGN', 'MV(Re)': 'MV(Re)', 'Pc': 'Pc', 'Pf': 'Pf', 'Pt': 'Pt', 'PuA': 'PuA',
+            'PuI': 'PuI', 'PuL': 'PuL', 'PuM': 'PuM', 'VA': 'VA', 'VAmc': 'VAmc', 'VLa': 'VLa', 'VLp': 'VLp', 'VM': 'VM',
+            'VPL': 'VPL', 'Whole_thalamus': 'WholeThalamus'}},
     'Vol':{
         'two_hemi':True,
         'files':{'Vol_stats':('aseg.parc.stats',),},
@@ -632,3 +657,55 @@ class RReplace():
     def rreplace(self, s, old, new, occurence):
         li = s.rsplit(old, 1)
         return new.join(li)
+
+
+
+def get_fs_rois_lateralized(atlas):
+    '''
+    create a dictionary with atlas-based FreeSurfer ROIs, with hemisphere based classification
+    available atlas are based on all_data
+    if atlas defined:
+        Return: {roi':('Left-roi', 'Right-roi')}
+    else:
+        Return: {atlas: {roi':('Left-roi', 'Right-roi')}}
+    '''
+    if atlas not in all_data['atlases']:
+        print(f'{atlas} is ill-defined. Please use one of the following names:\
+            {all_data['atlases']}. Returning all lateralized atlases')
+        return 
+    else:
+        lateralized = {atlas:{} for atlas in all_data['atlases'] if all_data[atlas]['two_hemi']}
+        for atlas in lateralized:
+            lateralized[atlas] = {header: {} for header in all_data[atlas]['header'].values()}
+            for header in lateralized[atlas]:
+                lateralized[atlas][header] = (f'{header}_{hemi[0]_{atlas}}',f'{header}_{hemi[1]_{atlas}}')
+        return lateralized
+
+
+# def get_names_of_structures():
+#     name_structures = list()
+
+#     for val in segmentations_header:
+#         name_structures.append(segmentations_header[val])
+#     for val in parc_DK_header:
+#         name_structures.append(parc_DK_header[val]) 
+#     for val in brstem_hip_header['all']:
+#         name_structures.append(brstem_hip_header['all'][val])
+#     for val in parc_DS_header:
+#         name_structures.append(parc_DS_header[val])
+
+#     return name_structures
+
+# def get_names_of_measurements():
+#     name_measurement = ['Brainstem','HIPL','HIPR',]
+
+#     for val in segmentation_parameters:
+#         name_measurement.append('VolSeg'+val.replace('Volume_mm3',''))
+#         name_measurement.append('VolSegWM'+val.replace('Volume_mm3','')+'_DK')
+
+#     for hemi in ('L','R',):
+#         for atlas in ('_DK','_DS',):
+#             for meas in parc_parameters:
+#                 name_measurement.append(parc_parameters[meas]+hemi+atlas)
+
+#     return name_measurement
