@@ -42,7 +42,7 @@ from statsmodels.formula.api import ols
 from sklearn.linear_model import LinearRegression
 from distribution.utilities import save_json
 from stats.db_processing import Table
-from processing.freesurfer.fs_definitions import GetFSStructureMeasurement
+from processing.freesurfer import fs_definitions
 
 
 class ANOVA_do():
@@ -54,7 +54,7 @@ class ANOVA_do():
         self.ls_cols4anova = ls_cols4anova
         self.sig_cols      = dict()
         self.tab           = Table()
-        self.fs_struc_meas = GetFSStructureMeasurement()
+        self.fs_struc_meas = fs_definitions.GetFSStructureMeasurement()
         self.run_anova(p_thresh, intercept_thresh, path2save)
 
     def run_anova(self, p_thresh, intercept_thresh, path2save):
