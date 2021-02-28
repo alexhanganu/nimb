@@ -47,7 +47,7 @@ class Get_Vars():
     def __init__(self):
 
         self.credentials_home = _get_credentials_home()
-        print("        credentials are located at: {}".format(self.credentials_home))
+        # print("        credentials are located at: {}".format(self.credentials_home))
         self.default_projects = load_json(path.join(path.dirname(path.abspath(__file__)), 'projects.json'))
         self.default_local    = load_json(path.join(path.dirname(path.abspath(__file__)), 'local.json'))
         self.default_stats    = load_json(path.join(path.dirname(path.abspath(__file__)), 'stats.json'))
