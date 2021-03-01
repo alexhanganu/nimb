@@ -98,7 +98,7 @@ class ANOVA_do():
 
 def get_main_dict(group_param, regression_param):
     d = {}
-    for i in ('R2_adjusted'+'_'+group_param+'_'+regression_param,
+    for i in (f'R2_adjusted_{group_param}_{regression_param}',
               'p_'+group_param,'p_'+regression_param,
               'B_'+group_param,'B_'+regression_param,
               'Intercept'):
@@ -127,12 +127,24 @@ def compute_linreg_data(df, ls_cols_X, group_param, regression_param):
 
 def linreg_moderation_results(df_X_linreg, ls_cols_X_atlas, group_param, regression_param,
                               path_dir_save_results, group):
+    '''perform moderation analysis
+    Args:
+        df_X_linreg:        pandas.DataFrame with columns and data for analysis
+        ls_cols_X_atlas:    ls of cols from df_X_linreg that will be used for linear regression analysis
+        group_param:        name of the column from df_X_linreg that was used to create the groups
+        regression_param:   name of the column from df_X_linreg that will be used for regression analysis (e.g., Age)
+        path_dir_save:      abspath to save csv file
+        group:              group name to use for the results csv file
+    Return:
+        none
+        creates csv file
+    '''
     d_result = compute_linreg_data(df_X_linreg,
                                    ls_cols_X_atlas,
                                    group_param,
                                    regression_param)
     df_result = db_processing.create_df_from_dict(d_result)
-    db_processing.save_df(df_result, path.join(path_dir_save_results,'linreg_moderation_'+group+'.csv'))
+    db_processing.save_df(df_result, path.join(path_dir_save_results,f'linreg_moderation_{group}.csv'))
 
 
 def posthoc_run(model,res,factor,measurement):
