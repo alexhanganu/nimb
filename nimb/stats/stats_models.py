@@ -105,14 +105,16 @@ def get_main_dict(group_param, regression_param):
         d[i] =[]
     return d
 
-def compute_linreg_data(df, ls_cols_X, group_param, regression_param):
+def compute_linreg_data(df, ls_X_params, group_param, regression_param):
+    '''X_param = (group_param*Beta_group_param) + (regression_param * Beta_regression_param)
+    '''
     d1 = get_main_dict(group_param, regression_param)
-    d1['Region'] = ls_cols_X
+    d1['X_param'] = ls_X_params
     X = df[[group_param, regression_param]]
     X = sm.add_constant(X.to_numpy())
 
-    for region in ls_cols_X:
-        y = df[[region]]
+    for X_param in ls_X_params:
+        y = df[[X_param]]
         model = sm.OLS(y, X).fit()
         reg = LinearRegression().fit(X, y)
         #predictions = model.predict(X)
@@ -120,8 +122,8 @@ def compute_linreg_data(df, ls_cols_X, group_param, regression_param):
         d1['R2_adjusted'+'_'+group_param+'_'+regression_param].append(model.rsquared_adj)
         d1['p_'+group_param].append(model.pvalues.x1)
         d1['p_'+regression_param].append(model.pvalues.x2)
-        d1['B_'+group_param].append((reg.coef_[0])[1])
-        d1['B_'+regression_param].append((reg.coef_[0])[2])
+        d1['Beta_'+group_param].append((reg.coef_[0])[1])
+        d1['Beta_'+regression_param].append((reg.coef_[0])[2])
         d1['Intercept'].append(reg.intercept_[0])
     return d1
 
@@ -131,8 +133,8 @@ def linreg_moderation_results(df_X_linreg, ls_cols_X_atlas, group_param, regress
     Args:
         df_X_linreg:        pandas.DataFrame with columns and data for analysis
         ls_cols_X_atlas:    ls of cols from df_X_linreg that will be used for linear regression analysis
-        group_param:        name of the column from df_X_linreg that was used to create the groups
-        regression_param:   name of the column from df_X_linreg that will be used for regression analysis (e.g., Age)
+        group_param:        str, name of the column from df_X_linreg that was used to create the groups
+        regression_param:   str, name of the column from df_X_linreg that will be used for regression analysis (e.g., Age)
         path_dir_save:      abspath to save csv file
         group:              group name to use for the results csv file
     Return:
@@ -143,8 +145,8 @@ def linreg_moderation_results(df_X_linreg, ls_cols_X_atlas, group_param, regress
                                    ls_cols_X_atlas,
                                    group_param,
                                    regression_param)
-    df_result = db_processing.create_df_from_dict(d_result)
-    db_processing.save_df(df_result, path.join(path_dir_save_results,f'linreg_moderation_{group}.csv'))
+    df_result = Table().create_df_from_dict(d_result)
+    Table().save_df(df_result, path.join(path_dir_save_results,f'linreg_moderation_{group}.csv'))
 
 
 def posthoc_run(model,res,factor,measurement):
