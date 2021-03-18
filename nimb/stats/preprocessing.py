@@ -7,9 +7,10 @@
 
 import sklearn
 import numpy as np
+from distribution import utilities
 
 class Preprocess:
-    def __init__(self, utilities):
+    def __init__(self):
         self.sklearn_ver = sklearn.__version__
         self.save_json   = utilities.save_json
 
