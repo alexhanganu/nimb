@@ -33,10 +33,10 @@ class Log():
         self.set_logger()
 
         self.logger.info("--- nimb start ---")
-        self.logger.info("OS        :version: {}".format(platform.platform()))
-        self.logger.info("python    :version: {}".format(sys.version.replace("\n", "")))
-        self.logger.info("nimb      :version: {}".format(__version__))
-        self.logger.info("freesurfer:version: {}".format(freesurfer_version))
+        self.logger.info("OS        : {}".format(platform.platform()))
+        self.logger.info("python    : {}".format(sys.version.replace("\n", "")))
+        self.logger.info("nimb      : {}".format(__version__))
+        self.logger.info("freesurfer: {}".format(freesurfer_version))
 
 
     def set_logger(self):

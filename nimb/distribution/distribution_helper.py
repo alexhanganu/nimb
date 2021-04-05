@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
+import os
+import sys
 import shutil
-from os import system, path, listdir, environ, remove
+
 from distribution.utilities import ErrorMessages, makedir_ifnot_exist
 from distribution.setup_miniconda import setup_miniconda
 from distribution.setup_freesurfer import SETUP_FREESURFER
 from setup.interminal_setup import get_yes_no
-
 from setup import interminal_setup
 try:
     from setup import guitk_setup
@@ -179,20 +180,20 @@ class DistributionHelper():
         bids_cred = self.proj_vars['SOURCE_BIDS_DIR']
         source_subj = self.proj_vars['SOURCE_SUBJECTS_DIR']
         SUBJ_2Classify = ''
-        if listdir(new_subj):
+        if os.listdir(new_subj):
             SUBJ_2Classify = new_subj
-        elif bids_cred[0] == 'local' and path.exists(bids_cred[1]) and listdir(bids_cred[1]):
+        elif bids_cred[0] == 'local' and os.path.exists(bids_cred[1]) and os.listdir(bids_cred[1]):
             SUBJ_2Classify = bids_cred[1]
-#        elif bids_cred[0] == 'local' and path.exists(bids_cred[1]) and listdir(bids_cred[1]):
+#        elif bids_cred[0] == 'local' and os.path.exists(bids_cred[1]) and os.listdir(bids_cred[1]):
 #            SUBJ_2Classify = bids_cred[1]
-#        elif source_subj[0] == 'local' and path.exists(source_subj[1]) and listdir(source_subj[1]):
+#        elif source_subj[0] == 'local' and os.path.exists(source_subj[1]) and os.listdir(source_subj[1]):
 #            SUBJ_2Classify = source_subj[1]
         if SUBJ_2Classify:
             print('Folder with Subjects to classify is: {}'.format(SUBJ_2Classify))
             return SUBJ_2Classify
         else:
             print('Could not define the Folder with Subjects to classify. Please adjust the file: {}'.format(
-                                                                path.join(self.credentials_home, 'projects.json')))
+                                                                os.path.join(self.credentials_home, 'projects.json')))
             return False
 
     def get_files_for_stats(self, path_2copy_files, list_of_files):
@@ -201,14 +202,14 @@ class DistributionHelper():
         materials_dir_path = self.proj_vars['materials_DIR'][1]
         if location == 'local':
             for file in list_of_files:
-            	path2file = path.join(materials_dir_path, file)
-            	if path.exists(path2file):
+            	path2file = os.path.join(materials_dir_path, file)
+            	if os.path.exists(path2file):
 	                shutil.copy(path2file, path_2copy_files)
         else:
             print('nimb must access the remote computer: {}'.format(location))
             from distribution import SSHHelper
             SSHHelper.download_files_from_server(location, materials_dir_path, path_2copy_files, list_of_files)
-        if path.exists(path.join(path_2copy_files, list_of_files[-1])):
+        if os.path.exists(os.path.join(path_2copy_files, list_of_files[-1])):
             return True
         else:
             return False
@@ -265,7 +266,7 @@ class DistributionHelper():
     #     extract the "stats" folder of the subject
     #     '''
     #     sub_path = self.get_path(self.NIMB_PROCESSED_FS, sub)
-    #     if not path.isdir(sub_path):
+    #     if not os.path.isdir(sub_path):
     #         if sub.endswith('zip'):
     #             print('Must extract folder {} for each subject to destination {}'.format('stats', sub_path))
     #             ZipArchiveManagement(sub_path, 
@@ -279,16 +280,17 @@ class DistributionHelper():
         return PROCESSED_FS_DIR
 
     def fs_glm_prep(self, FS_GLM_dir, fname_groups):
+        print('im in')
         FS_GLM_dir           = makedir_ifnot_exist(FS_GLM_dir)
         f_ids_processed_name = self.locations["local"]["NIMB_PATHS"]['file_ids_processed']
         if not self.get_files_for_stats(FS_GLM_dir,
                                 [fname_groups, f_ids_processed_name]):
             sys.exit()
-        f_GLM_group     = path.join(FS_GLM_dir, fname_groups)
-        f_ids_processed = path.join(FS_GLM_dir, f_ids_processed_name)
+        f_GLM_group     = os.path.join(FS_GLM_dir, fname_groups)
+        f_ids_processed = os.path.join(FS_GLM_dir, f_ids_processed_name)
 
         SUBJECTS_DIR         = self.locations["local"]['FREESURFER']['FS_SUBJECTS_DIR']
-        if path.exists(f_GLM_group) and path.exists(f_ids_processed):
+        if os.path.exists(f_GLM_group) and os.path.exists(f_ids_processed):
             from processing.freesurfer.fs_glm_prep import CheckIfReady4GLM
             ready, miss_ls = CheckIfReady4GLM(self.locations["local"]['NIMB_PATHS'], 
                                                     self.locations["local"]['FREESURFER'], 
@@ -317,14 +319,14 @@ class DistributionHelper():
     def fs_glm_prep_extract_dirs(self, ls, SUBJECTS_DIR, dirs2extract):
         from .manage_archive import ZipArchiveManagement
         if self.proj_vars['materials_DIR'][0] == 'local':
-            NIMB_PROCESSED_FS = path.join(self.locations["local"]['NIMB_PATHS']['NIMB_PROCESSED_FS'])
+            NIMB_PROCESSED_FS = os.path.join(self.locations["local"]['NIMB_PATHS']['NIMB_PROCESSED_FS'])
             for sub in ls:
-                zip_file_path = path.join(NIMB_PROCESSED_FS, '{}.zip'.format(sub))
-                if path.exists(zip_file_path):
+                zip_file_path = os.path.join(NIMB_PROCESSED_FS, '{}.zip'.format(sub))
+                if os.path.exists(zip_file_path):
                     extract = True
                 elif self.proj_vars['PROCESSED_FS_DIR'][0] == 'local':
-                    zip_file_path = path.join(self.proj_vars['PROCESSED_FS_DIR'][1], '{}.zip'.format(sub))
-                    if path.exists(zip_file_path):
+                    zip_file_path = os.path.join(self.proj_vars['PROCESSED_FS_DIR'][1], '{}.zip'.format(sub))
+                    if os.path.exists(zip_file_path):
                         extract = True
                 if extract:
                     print('Extracting folders {} for subject {}, to destination {}'.format(dirs2extract, sub, SUBJECTS_DIR))
@@ -494,13 +496,13 @@ class DistributionHelper():
         ls_copy = [line.strip('\n') for line in stdout]
         sftp = ssh_session.open_sftp()
         for val in ls_copy:
-            size_src = SSHHelper.get_size_on_remote(ssh_session, path.join(path_dst, val))
+            size_src = SSHHelper.get_size_on_remote(ssh_session, os.path.join(path_dst, val))
             print('left to copy: ',len(ls_copy[ls_copy.index(val):]))
             SSHHelper.download_files_from_server(ssh_session, remote_path, local_destination)
-            size_dst = path.getsize(path_src+'/'+val)
+            size_dst = os.path.getsize(path_src+'/'+val)
             if size_dst == size_src:
                 print('        copy ok')
-                #SSHHelper.remove_on_remote(path.join(path_dst, val))
+                #SSHHelper.remove_on_remote(os.path.join(path_dst, val))
             else:
                 print('copy error, retrying ...')
         ssh_session.close()
@@ -517,6 +519,6 @@ class DistributionHelper():
     #     # PROJECT_DATA
     #     if project not in self.projects.keys():
     #         print("There is no path for project: {} defined. Please check the file: {}".format(
-    #                                 project, path.join(self.credentials_home, "projects.json")))
+    #                                 project, os.path.join(self.credentials_home, "projects.json")))
     #         return ""
     #     return self.projects[project][var_name]

@@ -135,14 +135,15 @@ class DistributionReady():
         
     def fs_ready(self):
         if self.locations['local']['FREESURFER']['FreeSurfer_install'] == 1:
+            print('FreeSurfer is set to be installed on local computer')
             if len(self.locations['local']['FREESURFER']['FREESURFER_HOME']) < 1:
-                print("FREESURFER_HOME is missing.")
+                print("FREESURFER_HOME is missing. Please define FREESURFER_HOME in the nimb/local.json file")
                 return False
             if self.check_freesurfer_ready():
                 SUBJECTS_DIR = self.locations['local']['FREESURFER']['FS_SUBJECTS_DIR']
                 if not os.path.exists(SUBJECTS_DIR):
-                        print('    creating path {}'.format(SUBJECTS_DIR))
-                        makedir_ifnot_exist(SUBJECTS_DIR)
+                    print('    creating path {}'.format(SUBJECTS_DIR))
+                    makedir_ifnot_exist(SUBJECTS_DIR)
                 return self.fs_chk_fsaverage_ready(SUBJECTS_DIR)
         else:
             return False

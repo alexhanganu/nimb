@@ -121,7 +121,7 @@ class NIMB(object):
                 sends cmd to batch to initiate FreeSurfer GLM running script
             '''
             fs_glm_dir   = self.stats_vars["STATS_PATHS"]["FS_GLM_dir"]
-            fname_groups = self.proj_vars['fname_groups']
+            fname_groups = self.project_vars['fname_groups']
             if DistributionReady(self.all_vars, self.project_vars).chk_if_ready_for_fs_glm():
                 GLM_file_path, GLM_dir = DistributionHelper(self.all_vars,
                                             self.project_vars
@@ -130,6 +130,7 @@ class NIMB(object):
                 FS_SUBJECTS_DIR = self.vars_local['FREESURFER']['FS_SUBJECTS_DIR']
                 DistributionReady(self.all_vars, self.project_vars).fs_chk_fsaverage_ready(FS_SUBJECTS_DIR)
                 if GLM_file_path:
+                    print('GLM file path is:',GLM_file_path)
                     self.vars_local['PROCESSING']['processing_env']  = "tmux"
                     schedule_fsglm = Scheduler(self.vars_local)
                     cd_cmd = 'cd {}'.format(path.join(self.NIMB_HOME, 'processing', 'freesurfer'))
