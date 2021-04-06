@@ -197,7 +197,6 @@ class DistributionHelper():
             return False
 
     def get_files_for_stats(self, path_2copy_files, list_of_files):
-        print(list_of_files)
         location = self.proj_vars['materials_DIR'][0]
         materials_dir_path = self.proj_vars['materials_DIR'][1]
         if location == 'local':
@@ -212,6 +211,7 @@ class DistributionHelper():
         if os.path.exists(os.path.join(path_2copy_files, list_of_files[-1])):
             return True
         else:
+            print(f'files {list_of_files} are not present in the expected folder: {materials_dir_path}')
             return False
 
     def prep_4stats(self, dir_4stats, fs = False):
@@ -280,9 +280,9 @@ class DistributionHelper():
         return PROCESSED_FS_DIR
 
     def fs_glm_prep(self, FS_GLM_dir, fname_groups):
-        print('im in')
         FS_GLM_dir           = makedir_ifnot_exist(FS_GLM_dir)
         f_ids_processed_name = self.locations["local"]["NIMB_PATHS"]['file_ids_processed']
+        print('fs glm dir is:', FS_GLM_dir)
         if not self.get_files_for_stats(FS_GLM_dir,
                                 [fname_groups, f_ids_processed_name]):
             sys.exit()
