@@ -280,8 +280,11 @@ class DistributionHelper():
         return PROCESSED_FS_DIR
 
     def fs_glm_prep(self, FS_GLM_dir, fname_groups):
+        from distribution.project_helper import ProjectManager
+        proj_manager         = ProjectManager(self.proj_vars, self.locations["local"])
         FS_GLM_dir           = makedir_ifnot_exist(FS_GLM_dir)
-        f_ids_processed_name = self.locations["local"]["NIMB_PATHS"]['file_ids_processed']
+        f_ids_processed_name = proj_manager._ids_file()
+                            # self.locations["local"]["NIMB_PATHS"]['file_ids_processed']
         print('fs glm dir is:', FS_GLM_dir)
         if not self.get_files_for_stats(FS_GLM_dir,
                                 [fname_groups, f_ids_processed_name]):

@@ -31,7 +31,9 @@ class SETUP_FREESURFER():
                 self.matlab_install(self.FS_vars['export_FreeSurfer_cmd'],
                                     self.FS_vars['source_FreeSurfer_cmd'])
             else:
-                print('sorry, something whent wrong, cannot install MATLAB. Try to source freesurfer and run setup_fs_matlab.sh')
+                print(f'sorry, something whent wrong, cannot install MATLAB. Try the commands: \n\
+                cd {self.FREESURFER_HOME}\n\
+                ./setup_fs_matlab.sh')
         else:
             print('FINISHED Installing MATLAB')
 
