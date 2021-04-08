@@ -11,30 +11,36 @@ Args:
 Return:
     True, False
 '''
+
 import pandas as pd
-from .SSHHelper import RemoteConnManager
 
 class ProjectManager:
     def __init__(self,
                 project_vars,
                 local_vars):
-        self.proj_vars  = project_vars
         self.local_vars = local_vars
-        print('isnide1')
+        self.f_groups   = project_vars['fname_groups']
+        self.f_ids_name = self.local_vars["NIMB_PATHS"]['file_ids_processed']
+
 
         # self.run()
 
     def _ids_file(self):
-        print('isnide')
-        f_ids_name = self.local_vars["NIMB_PATHS"]['file_ids_processed']
-        import distribution_definitions
+        from . import distribution_definitions
         _ids = dict()
         for key in distribution_definitions.ids_processed:
             key_name = distribution_definitions.get_ids_processed(key)
             _ids[key_name] = ''
-        print(_ids, f_ids_name)
-        
-        return f_ids_name
+        print(_ids, self.f_ids_name)
+        return self.f_ids_name
+
+    def f_ids_in_dir(self, path_2copy_files):
+        if os.path.exists(os.path.join(
+                    path_2copy_files,
+                    self.f_ids_name)):
+            return True
+        else:
+            return False
 
 #     def run(self):
 #         """
@@ -45,6 +51,7 @@ class ProjectManager:
 #             stats
 #         """
 #         print('running projects {}'.format(self.project))
+#         import SSHHelper
 
 #         # check that all subjects have corresponding FreeSurfer processed data
 #         id_col           = self.projects[self.project_name]['id_col']

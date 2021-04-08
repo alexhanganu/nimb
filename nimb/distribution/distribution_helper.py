@@ -211,7 +211,18 @@ class DistributionHelper():
         if os.path.exists(os.path.join(path_2copy_files, list_of_files[-1])):
             return True
         else:
-            print(f'files {list_of_files} are not present in the expected folder: {materials_dir_path}')
+            return self.chk_files_for_stats(list_of_files, path_2copy_files)
+
+    def chk_files_for_stats(self, list_of_files, path_2copy_files):
+        f_ids_processed = self.locations["local"]["NIMB_PATHS"]['file_ids_processed']
+        f_ids_processed_abspath = os.path.join(path_2copy_files,
+                                                f_ids_processed)
+        if f_ids_processed in list_of_files and not os.path.exists(f_ids_processed_abspath):
+            print(f'file {f_ids_processed} is missing from folder: {path_2copy_files}')
+            if self.proj_vars['fname_groups'] in list_of_files:
+                from distribution.project_helper import ProjectManager
+                proj_manager = ProjectManager(self.proj_vars, self.locations["local"])
+                return proj_manager.f_ids_in_dir(path_2copy_files)
             return False
 
     def prep_4stats(self, dir_4stats, fs = False):
@@ -280,11 +291,8 @@ class DistributionHelper():
         return PROCESSED_FS_DIR
 
     def fs_glm_prep(self, FS_GLM_dir, fname_groups):
-        from distribution.project_helper import ProjectManager
-        proj_manager         = ProjectManager(self.proj_vars, self.locations["local"])
         FS_GLM_dir           = makedir_ifnot_exist(FS_GLM_dir)
-        f_ids_processed_name = proj_manager._ids_file()
-                            # self.locations["local"]["NIMB_PATHS"]['file_ids_processed']
+        f_ids_processed_name = self.locations["local"]["NIMB_PATHS"]['file_ids_processed']
         print('fs glm dir is:', FS_GLM_dir)
         if not self.get_files_for_stats(FS_GLM_dir,
                                 [fname_groups, f_ids_processed_name]):
