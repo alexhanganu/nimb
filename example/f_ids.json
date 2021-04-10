@@ -1,5 +1,11 @@
 {
-    "BIDS_ID_session": {
+    "BIDS_ID_1_session": {
+        "source"     : "source ID or GLM id",
+        "freesurfer" : "ID after FreeSurfer processing.zip",
+        "nilearn"    : "ID after nilearn processing.zip",
+        "dipy"       : "ID after dipy processing.zip"
+    },
+    "BIDS_ID_2_session": {
         "source"     : "source ID or GLM id",
         "freesurfer" : "ID after FreeSurfer processing.zip",
         "nilearn"    : "ID after nilearn processing.zip",

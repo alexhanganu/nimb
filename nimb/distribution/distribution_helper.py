@@ -16,7 +16,10 @@ except ImportError:
 
 class DistributionHelper():
 
-    def __init__(self, all_vars, project_vars):
+    def __init__(self,
+                all_vars,
+                project_vars,
+                stats_vars):
 
         self.all_vars         = all_vars
         self.credentials_home = all_vars.credentials_home # NIMB_HOME/credentials_paths.py
@@ -24,6 +27,7 @@ class DistributionHelper():
         self.proj_vars        = project_vars
         self.NIMB_HOME        = self.locations["local"]["NIMB_PATHS"]["NIMB_HOME"]
         self.NIMB_tmp         = self.locations["local"]["NIMB_PATHS"]["NIMB_tmp"]
+        self.stats_vars       = stats_vars
 
         # setup folder
         self.setup_folder = "../setup"
@@ -201,9 +205,9 @@ class DistributionHelper():
         materials_dir_path = self.proj_vars['materials_DIR'][1]
         if location == 'local':
             for file in list_of_files:
-            	path2file = os.path.join(materials_dir_path, file)
-            	if os.path.exists(path2file):
-	                shutil.copy(path2file, path_2copy_files)
+                path2file = os.path.join(materials_dir_path, file)
+                if os.path.exists(path2file):
+                    shutil.copy(path2file, path_2copy_files)
         else:
             print('nimb must access the remote computer: {}'.format(location))
             from distribution import SSHHelper
@@ -219,11 +223,17 @@ class DistributionHelper():
                                                 f_ids_processed)
         if f_ids_processed in list_of_files and not os.path.exists(f_ids_processed_abspath):
             print(f'file {f_ids_processed} is missing from folder: {path_2copy_files}')
-            if self.proj_vars['fname_groups'] in list_of_files:
+            group_file = self.proj_vars['fname_groups']
+            if group_file in list_of_files:
+                print(f"trying to create {f_ids_processed} from group file: {group_file}")
                 from distribution.project_helper import ProjectManager
-                proj_manager = ProjectManager(self.proj_vars, self.locations["local"])
+                proj_manager = ProjectManager(self.proj_vars,
+                                            self.locations["local"],
+                                            self.stats_vars)
                 return proj_manager.f_ids_in_dir(path_2copy_files)
-            return False
+            else:
+                print(f'Cannot find group file: {group_file}. Cannot continue.')
+                return False
 
     def prep_4stats(self, dir_4stats, fs = False):
         """create DIRs for stats (as per setup/stats.json)
@@ -290,10 +300,10 @@ class DistributionHelper():
     #         return sub_path, sub
         return PROCESSED_FS_DIR
 
-    def fs_glm_prep(self, FS_GLM_dir, fname_groups):
+    def prep_4fs_glm(self, FS_GLM_dir, fname_groups):
         FS_GLM_dir           = makedir_ifnot_exist(FS_GLM_dir)
         f_ids_processed_name = self.locations["local"]["NIMB_PATHS"]['file_ids_processed']
-        print('fs glm dir is:', FS_GLM_dir)
+        print('    fs glm dir is:', FS_GLM_dir)
         if not self.get_files_for_stats(FS_GLM_dir,
                                 [fname_groups, f_ids_processed_name]):
             sys.exit()
@@ -318,7 +328,7 @@ class DistributionHelper():
                 print('some subjects are missing, nimb must extract their surf and label folders')
                 if get_yes_no('do you want to prepare the missing subjects for glm analysis? (y/n)') == 1:
                     dirs2extract = ['label','surf',]
-                    self.fs_glm_prep_extract_dirs(miss_ls, SUBJECTS_DIR, dirs2extract)
+                    self.prep_4fs_glm_extract_dirs(miss_ls, SUBJECTS_DIR, dirs2extract)
                 return False
             else:
                 print('all ids are present in the analysis folder, ready for glm analysis')
@@ -327,7 +337,7 @@ class DistributionHelper():
             print('GLM files are missing: {}, {}'.format(f_GLM_group, f_ids_processed))
             return False
 
-    def fs_glm_prep_extract_dirs(self, ls, SUBJECTS_DIR, dirs2extract):
+    def prep_4fs_glm_extract_dirs(self, ls, SUBJECTS_DIR, dirs2extract):
         from .manage_archive import ZipArchiveManagement
         if self.proj_vars['materials_DIR'][0] == 'local':
             NIMB_PROCESSED_FS = os.path.join(self.locations["local"]['NIMB_PATHS']['NIMB_PROCESSED_FS'])

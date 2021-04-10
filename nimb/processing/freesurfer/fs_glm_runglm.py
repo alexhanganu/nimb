@@ -328,7 +328,10 @@ if __name__ == "__main__":
     projects     = getvars.projects
     all_projects = [i for i in projects.keys() if 'EXPLANATION' not in i and 'LOCATION' not in i]
     NIMB_tmp     = vars_local['NIMB_PATHS']['NIMB_tmp']
-    stats_vars   = SetProject(NIMB_tmp, getvars.stats_vars, all_projects[0]).stats
+    stats_vars   = SetProject(NIMB_tmp,
+                                getvars.stats_vars,
+                                all_projects[0],
+                                projects[all_projects[0]]['fname_groups']).stats
     FS_GLM_DIR   = stats_vars["STATS_PATHS"]["FS_GLM_dir"]
 
     params       = get_parameters(all_projects, FS_GLM_DIR)
@@ -351,4 +354,3 @@ if __name__ == "__main__":
                vars_local["FREESURFER"]["GLM_thresholds"],
                vars_local["FREESURFER"]["GLM_MCz_cache"],
                sig_fdr_thresh)
-

@@ -12,35 +12,72 @@ Return:
     True, False
 '''
 
+import os
 import pandas as pd
+
+from stats.db_processing import Table
 
 class ProjectManager:
     def __init__(self,
                 project_vars,
-                local_vars):
-        self.local_vars = local_vars
-        self.f_groups   = project_vars['fname_groups']
-        self.f_ids_name = self.local_vars["NIMB_PATHS"]['file_ids_processed']
+                local_vars,
+                stats_vars):
+        self.local_vars         = local_vars
+        self.f_groups           = project_vars['fname_groups']
+        self.bids_id_col        = project_vars['id_col']
+        self.location           = project_vars['materials_DIR'][0]
+        self.materials_dir_path = project_vars['materials_DIR'][1]
 
-
+        self.f_ids_name         = self.local_vars["NIMB_PATHS"]['file_ids_processed']
+        self.FS_SUBJECTS_DIR    = self.local_vars['FREESURFER']['FS_SUBJECTS_DIR']
+        self.path_2copy_files   = stats_vars["STATS_PATHS"]["FS_GLM_dir"]
+        self.tab                = Table()
         # self.run()
 
+    def get_groups_file(self):
+        if self.location == 'local':
+            self.groups_df = self.tab.get_df(os.path.join(self.materials_dir_path, self.f_groups))
+        else:
+            print('nimb must access the remote computer: {}'.format(self.location))
+            from distribution import SSHHelper
+            SSHHelper.download_files_from_server(self.location, self.materials_dir_path, self.path_2copy_files, [self.f_groups,])
+            path_2file = os.path.join(self.path_2copy_files, self.f_groups)
+            if os.path.exists(path_2file):
+                self.groups_df = self.tab.get_df(path_2file)
+            else:
+                self.groups_df = None
+
     def _ids_file(self):
-        from . import distribution_definitions
+        from . distribution_definitions import get_keys_processed
         _ids = dict()
-        for key in distribution_definitions.ids_processed:
-            key_name = distribution_definitions.get_ids_processed(key)
-            _ids[key_name] = ''
+        self.get_groups_file()
+        bids_ids = self.groups_df[self.bids_id_col]
+        for bids_id in bids_ids:
+            _ids[bids_id] = dict()
+            fs_key = get_keys_processed('fs')
+            path_2_processed = os.path.join(self.FS_SUBJECTS_DIR,
+                        bids_id)
+            if os.path.exists(path_2_processed):
+                _ids[bids_id][fs_key] = path_2_processed
+            else:
+                _ids[bids_id][fs_key] = ''
         print(_ids, self.f_ids_name)
-        return self.f_ids_name
+        return None# self.f_ids_name
 
     def f_ids_in_dir(self, path_2copy_files):
+        self.path_2copy_files = path_2copy_files
+        print(self.path_2copy_files)
         if os.path.exists(os.path.join(
                     path_2copy_files,
                     self.f_ids_name)):
             return True
         else:
-            return False
+            if self._ids_file():
+                return True
+            else:
+                print('could not create the file with ids')
+                return False
+
 
 #     def run(self):
 #         """

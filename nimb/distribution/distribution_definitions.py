@@ -1,6 +1,6 @@
 ids_processed = ('src', 'fs', 'freesurfer', 'nilearn', 'dipy')
 
-def get_ids_processed(key):
+def get_keys_processed(key):
     if key == 'src':
         return 'source'
     elif key == 'fs':

@@ -44,7 +44,8 @@ class Table:
 
 
     def change_index(self, df, index):
-        '''to set the index, based on column with str name
+        '''to set the index, based on column
+        Args: index = str(column name)
         '''
         return df.set_index(index)
 

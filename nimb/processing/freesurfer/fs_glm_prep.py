@@ -4,13 +4,14 @@ check that all subjects are present in the FS_SUBJECTS_DIR folder
 in order to perform the FreeSurfer glm
 '''
 
-from os import listdir, path, system, makedirs
+import os
 import sys
 import json
 import shutil
 import linecache
 from setup.interminal_setup import get_yes_no
 from stats.db_processing import Table
+from distribution.utilities import save_json
 
 try:
     import pandas as pd
@@ -42,12 +43,12 @@ class ChkFSQcache:
         self.chk_f()
 
     def chk_f(self):
-        if path.exists(path.join(self.path2chk, self._id, 'surf')) and path.exists(path.join(self.path2chk, self._id, 'label')):
+        if os.path.exists(os.path.join(self.path2chk, self._id, 'surf')) and os.path.exists(os.path.join(self.path2chk, self._id, 'label')):
             for hemi in ['lh','rh']:
                 for meas in self.GLM_meas:
                     for thresh in self.GLM_thresh:
                         file = '{}.{}.fwhm{}.fsaverage.mgh'.format(hemi, meas, str(thresh))
-                        if not path.exists(path.join(self.path2chk, self._id, 'surf', file)):
+                        if not os.path.exists(os.path.join(self.path2chk, self._id, 'surf', file)):
                             self.populate_miss(file)
         else:
             self.populate_miss('surf label missing')
@@ -68,30 +69,49 @@ class CheckIfReady4GLM():
         self.f_ids_processed   = f_ids_processed
         self.f_GLM_group       = f_GLM_group
         self.FS_GLM_dir        = FS_GLM_dir
+        self.archive_type      = '.zip'
+        self.tab               = Table()
+        self.miss              = dict()
+        self.ids_4fs_glm       = dict()
+        self.df                = self.tab.get_df(self.f_GLM_group)
+        self.bids_ids          = self.df[self.proj_vars['id_col']].tolist()
 
     def chk_if_subjects_ready(self):
-        self.miss = {}
-        self.bids_ids = self.get_ids_processed()
-        if self.bids_ids:
-            for bids_id in self.bids_ids:
-                if path.exists(path.join(self.FS_SUBJECTS_DIR, bids_id)):
+
+        fs_proc_ids = self.get_ids_processed('fs')
+        miss_bids_ids = [i for i in self.bids_ids if i not in fs_proc_ids.keys()]
+        if miss_bids_ids:
+            print(f'    some IDs are missing from the {self.f_ids_processed} file: {miss_bids_ids}')
+            for bids_id in miss_bids_ids:
+                self.add_to_miss(bids_id, 'id_missing')
+
+        if len(miss_bids_ids) < len(fs_proc_ids.keys()):
+            for bids_id in [i for i in self.bids_ids if i not in miss_bids_ids]:
+                fs_proc_id = fs_proc_ids[bids_id].replace(self.archive_type,'')
+                if os.path.exists(os.path.join(self.FS_SUBJECTS_DIR, bids_id)):
+                    self.ids_4fs_glm[bids_id] = bids_id
                     self.chk_glm_files(bids_id)
+                elif os.path.exists(os.path.join(self.FS_SUBJECTS_DIR, fs_proc_id)):
+                    self.ids_4fs_glm[bids_id] = fs_proc_id
+                    # self.chk_glm_files(fs_proc_id) #!!!!!!!!!!!!!!!!!! UNCOMMENT
                 else:
-                    print('id is missing {}'.format(bids_id))
+                    print(f'id {bids_id} or freesurfer id {fs_proc_id} \
+                        are missing from the {self.FS_SUBJECTS_DIR} folder')
                     self.add_to_miss(bids_id, 'id_missing')
-            ids_for_glm = [i for i in self.bids_ids if i not in self.miss.keys()]
             if self.miss.keys():
+                save_json(self.miss, os.path.join(self.FS_GLM_dir, 'excluded_from_glm.json'))
                 subjs_missing = len(self.miss.keys())
-                subjs_present = len(ids_for_glm)
-                print(f'{subjs_missing} subjects are missing and \
-                        {subjs_present} are present in the processing folder')
+                subjs_present = len(self.ids_4fs_glm.keys())
+                print(f'    {subjs_missing} missing \n\
+    {subjs_present} present\n\
+         in the folder: {self.FS_SUBJECTS_DIR}')
                 if get_yes_no('do you want to do glm analysis with current subjects ? (y/n)') == 1:
-                    self.create_glm_df(ids_for_glm)
+                    self.create_fs_glm_df()
                     return True, list()
                 else:
                     return False, list(self.miss.keys())
             else:
-                self.create_glm_df(ids_for_glm)
+                self.create_fs_glm_df()
                 return True, list()
         else:
             print('no ids found')
@@ -114,41 +134,48 @@ class CheckIfReady4GLM():
         else:
             return True
 
-    def create_glm_df(self, ls_ids):
-        ls_ix_2rm = list()
-        self.df['fs_id'] = ''
-        for ix in self.df.index:
-            src_id = self.df.at[ix, self.proj_vars['id_col']]
-            try:
-                bids_id = [i for i in self.ids_bids_src_proc_all if self.ids_bids_src_proc_all[i]['source'] == src_id][0]
-                self.df.at[ix, 'fs_id'] = bids_id
-                if bids_id not in ls_ids:
-                    ls_ix_2rm.append(ix)
-            except Exception as e:
-                print(e)
-                ls_ix_2rm.append(ix)
-        print('        {} subjects are missing and will be removed from futher analysis'.format(len(ls_ix_2rm)))
-        self.df_new = self.df.drop(ls_ix_2rm)
-        self.df_new.drop(columns=[self.proj_vars['id_col']], inplace=True)
-        self.df_new.rename(columns={'fs_id': self.proj_vars['id_col']}, inplace=True)
-        self.df_new.to_excel(self.f_GLM_group)
+    def create_fs_glm_df(self):
+        self.rm_missing_ids()
+        tmp_id = 'fs_id'
+        print('    creating the glm file for FreeSurfer GLM analysis')
+        d_ids = {self.proj_vars['id_col']: [i for i in list(self.ids_4fs_glm.keys())],
+                tmp_id                   : [i for i in list(self.ids_4fs_glm.values())]}
+        fs_proc_df     = self.tab.create_df_from_dict(d_ids)
+        fs_proc_df     = self.tab.change_index(fs_proc_df, self.proj_vars['id_col'])
+        grid_fs_df_pre = self.tab.change_index(self.df,    self.proj_vars['id_col'])
+        self.df_ids     = self.tab.join_dfs(grid_fs_df_pre, fs_proc_df, how='outer')
+        self.df_ids.rename(columns={tmp_id: self.proj_vars['id_col']}, inplace=True)
+        self.df_ids = self.tab.change_index(self.df_ids, self.proj_vars['id_col'])
+        self.tab.save_df(self.df_ids, self.f_GLM_group)
         PrepareForGLM(self.FS_SUBJECTS_DIR,
                     self.FS_GLM_dir,
                     self.f_GLM_group, 
                     self.proj_vars,
                     self.vars_fs)
 
-    def get_ids_processed(self):
+    def rm_missing_ids(self):
+        ls_ix_2rm = list()
+        for ix in self.df.index:
+            bids_id = self.df.at[ix, self.proj_vars['id_col']]
+            if bids_id not in self.ids_4fs_glm.keys():
+                ls_ix_2rm.append(ix)
+        print(f'        {len(ls_ix_2rm)} subjects are missing and will be removed from futher analysis')
+        self.df = self.df.drop(ls_ix_2rm)
+
+
+    def get_ids_processed(self, method):
         '''retrieves the bids names of the IDs provided in the GLM file.
             It is expected that each project had a group of subjects that are present in the dataset
-            the f_ids.json has the BIDS names of the subjects, the source names and the freesurfer/nilearn/dipy names
+            it is expected that BIDS names are the ones used in the groups_glm file for the ids
+            the f_ids.json has the BIDS names of the subjects, and for each BIDS name
+            has the corresponding names of the source file/freesurfer/nilearn/dipy processed ziped files
             see nimb/example/f_ids.json
         '''
         print('extracting list of ids')
-        self.ids_bids_src_proc_all = self.read_json(self.f_ids_processed)
-        self.df = Table().get_df(self.f_GLM_group)
-        ids_src_glm_file = self.df[self.proj_vars['id_col']].tolist()
-        return {i: 'path' for i in self.ids_bids_src_proc_all if self.ids_bids_src_proc_all[i]['source'] in ids_src_glm_file}
+        from distribution.distribution_definitions import get_keys_processed
+        self.ids_bids_proc_all = self.read_json(self.f_ids_processed)
+        return {i: self.ids_bids_proc_all[i][get_keys_processed(method)] for i in self.ids_bids_proc_all}
+        # return {i: 'path' for i in self.ids_bids_proc_all if self.ids_bids_proc_all[i]['source'] in ids_src_glm_file} #old version
 
 
     def add_to_miss(self, bids_id, file):
@@ -172,14 +199,14 @@ class PrepareForGLM():
         self.PATH_GLM_dir = GLM_dir
         self.group_col = proj_vars["group_col"]
         self.id_col = proj_vars["id_col"]
-        self.PATHfsgd = path.join(self.PATH_GLM_dir,'fsgd')
-        self.PATHmtx = path.join(self.PATH_GLM_dir,'contrasts')
+        self.PATHfsgd = os.path.join(self.PATH_GLM_dir,'fsgd')
+        self.PATHmtx = os.path.join(self.PATH_GLM_dir,'contrasts')
 
-        if not path.isdir(self.PATH_GLM_dir): makedirs(self.PATH_GLM_dir)
-        if Path(GLM_file_group).name not in listdir(self.PATH_GLM_dir):
-            shutil.copy(GLM_file_group, path.join(self.PATH_GLM_dir, Path(GLM_file_group).name))
-        if not path.isdir(self.PATHfsgd): makedirs(self.PATHfsgd)
-        if not path.isdir(self.PATHmtx): makedirs(self.PATHmtx)
+        if not os.path.isdir(self.PATH_GLM_dir): os.makedirs(self.PATH_GLM_dir)
+        if Path(GLM_file_group).name not in os.listdir(self.PATH_GLM_dir):
+            shutil.copy(GLM_file_group, os.path.join(self.PATH_GLM_dir, Path(GLM_file_group).name))
+        if not os.path.isdir(self.PATHfsgd): os.makedirs(self.PATHfsgd)
+        if not os.path.isdir(self.PATHmtx): os.makedirs(self.PATHmtx)
         cols_2use = proj_vars["variables_for_glm"]+[self.id_col, self.group_col]
         df_groups_clin = Table().get_df_with_columns(GLM_file_group, cols_2use)
 
@@ -268,22 +295,24 @@ class PrepareForGLM():
             print('        group: {}, has {} subjects'.format(group, len(subjects_per_group[group])))
 
         file = 'subjects_per_group.json'
-        with open(path.join(self.PATH_GLM_dir, file), 'w') as f:
+        with open(os.path.join(self.PATH_GLM_dir, file), 'w') as f:
             json.dump(subjects_per_group, f, indent=4)
 
 
     def make_fsgd_g1g2v0(self):
         file = 'g2v0_{}_{}.fsgd'.format(self.ls_groups[0], self.ls_groups[1])
-        open(path.join(self.PATHfsgd,file), 'w').close()
-        with open(path.join(self.PATHfsgd,file), 'a') as f:
-            f.write('GroupDescriptorFile 1\nClass '+self.ls_groups[0]+' plus blue\nClass '+self.ls_groups[1]+' circle green\n')
+        open(os.path.join(self.PATHfsgd,file), 'w').close()
+        with open(os.path.join(self.PATHfsgd,file), 'a') as f:
+            f.write('GroupDescriptorFile 1\nClass {} plus blue\nClass {} circle green\n'.format(
+                                                            self.ls_groups[0], self.ls_groups[1]))
+            # f.write('GroupDescriptorFile 1\nClass '+self.ls_groups[0]+' plus blue\nClass '+self.ls_groups[1]+' circle green\n')
             for subjid in self.d_subjid:
-                f.write('Input '+subjid+' '+self.d_subjid[subjid][self.group_col]+'\n')
+                f.write(f'Input {subjid} {self.d_subjid[subjid][self.group_col]}\n')
         self.files_glm['g2v0']['fsgd'].append(file)
         # for group in self.ls_groups:
             # file = 'g1v0'+'_'+group+'.fsgd'
-            # open(path.join(self.PATHfsgd,file), 'w').close()
-            # with open(path.join(self.PATHfsgd,file), 'a') as f:
+            # open(os.path.join(self.PATHfsgd,file), 'w').close()
+            # with open(os.path.join(self.PATHfsgd,file), 'a') as f:
                 # f.write('GroupDescriptorFile 1\nClass Main\n')
                 # for subjid in self.d_subjid:
                     # if self.d_subjid[subjid][self.group_col] == group:
@@ -302,8 +331,8 @@ class PrepareForGLM():
             for variable in self.ls_vars_stats:
                 if not self.check_var_zero(variable, group):
                     file = 'g1v1_{}_{}.fsgd'.format(group, variable)
-                    open(path.join(self.PATHfsgd,file), 'w').close()
-                    with open(path.join(self.PATHfsgd,file), 'a') as f:
+                    open(os.path.join(self.PATHfsgd,file), 'w').close()
+                    with open(os.path.join(self.PATHfsgd,file), 'a') as f:
                         f.write('GroupDescriptorFile 1\nClass Main\nVariables {}\n'.format(variable))
                         for subjid in self.d_subjid:
                             if self.d_subjid[subjid][self.group_col] == group:
@@ -318,8 +347,8 @@ class PrepareForGLM():
                     for variable2 in self.ls_vars_stats[self.ls_vars_stats.index(variable)+1:]:
                         if not self.check_var_zero(variable2, group):
                             file = 'g1v2_{}_{}_{}.fsgd'.format(group, str(variable), str(variable2))
-                            open(path.join(self.PATHfsgd,file), 'w').close()
-                            with open(path.join(self.PATHfsgd,file), 'a') as f:
+                            open(os.path.join(self.PATHfsgd,file), 'w').close()
+                            with open(os.path.join(self.PATHfsgd,file), 'a') as f:
                                 f.write('GroupDescriptorFile 1\nClass Main\nVariables {} {}\n'.format(
                                                                     str(variable), str(variable2)))
                                 for subjid in self.d_subjid:
@@ -332,8 +361,8 @@ class PrepareForGLM():
         for variable in self.ls_vars_stats:
             if not self.check_var_zero(variable, self.ls_groups[0]) and not self.check_var_zero(variable, self.ls_groups[1]):
                 file = 'g2v1_{}_{}_{}.fsgd'.format(self.ls_groups[0], self.ls_groups[1], variable)
-                open(path.join(self.PATHfsgd,file), 'w').close()
-                with open(path.join(self.PATHfsgd,file), 'a') as f:
+                open(os.path.join(self.PATHfsgd,file), 'w').close()
+                with open(os.path.join(self.PATHfsgd,file), 'a') as f:
                     f.write('GroupDescriptorFile 1\nClass {} plus blue\nClass {} circle green\nVariables '.format(
                                                             self.ls_groups[0], self.ls_groups[1]))
                     f.write(variable+'\n')
@@ -345,15 +374,15 @@ class PrepareForGLM():
     def fsgd_win_to_unix(self):
         for contrast_type in self.files_glm:
             for fsgd_file in self.files_glm[contrast_type]['fsgd']:
-                fsgd_f_unix = path.join(self.PATH_GLM_dir,'fsgd', '{}_unix.fsgd'.format(fsgd_file.replace('.fsgd','')))
-                if not path.isfile(fsgd_f_unix):
-                    system('cat {} | sed \'s/\\r/\\n/g\' > {}'.format(
-                        path.join(self.PATH_GLM_dir,'fsgd',fsgd_file), fsgd_f_unix))
+                fsgd_f_unix = os.path.join(self.PATH_GLM_dir,'fsgd', '{}_unix.fsgd'.format(fsgd_file.replace('.fsgd','')))
+                if not os.path.isfile(fsgd_f_unix):
+                    os.system('cat {} | sed \'s/\\r/\\n/g\' > {}'.format(
+                        os.path.join(self.PATH_GLM_dir,'fsgd',fsgd_file), fsgd_f_unix))
 
     def make_qdec_fsgd_g2(self):
         file = 'qdec_g2.fsgd'
-        open(path.join(self.PATH_GLM_dir,file), 'w').close()
-        with open(path.join(self.PATH_GLM_dir,file), 'a') as f:
+        open(os.path.join(self.PATH_GLM_dir,file), 'w').close()
+        with open(os.path.join(self.PATH_GLM_dir,file), 'a') as f:
             f.write('fsid group ')
             for variable in self.ls_vars_stats:
                 if not self.check_var_zero(variable, self.ls_groups[0]) and not self.check_var_zero(variable, self.ls_groups[1]):
@@ -370,8 +399,8 @@ class PrepareForGLM():
         for fsgd_type in self.contrasts:
             for contrast_mtx in self.contrasts[fsgd_type]:
                 file = '{}_{}'.format(fsgd_type, contrast_mtx)
-                open(path.join(self.PATHmtx,file), 'w').close()
-                with open(path.join(self.PATHmtx, file), 'a') as f:
+                open(os.path.join(self.PATHmtx,file), 'w').close()
+                with open(os.path.join(self.PATHmtx, file), 'a') as f:
                     f.write(self.contrasts[fsgd_type][contrast_mtx][0])
                 self.files_glm[fsgd_type]['mtx'].append(file)
                 self.files_glm[fsgd_type]['mtx_explanation'].append(self.contrasts[fsgd_type][contrast_mtx][1])
@@ -379,6 +408,6 @@ class PrepareForGLM():
 
     def make_files_for_glm(self):
         file = 'files_for_glm.json'
-        with open(path.join(self.PATH_GLM_dir, file), 'w') as f:
+        with open(os.path.join(self.PATH_GLM_dir, file), 'w') as f:
             json.dump(self.files_glm, f, indent=4)
 
