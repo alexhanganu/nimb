@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # coding: utf-8
 # 2020.09.02
 
@@ -41,7 +40,8 @@ class SETUP_FREESURFER():
         print('creating freesurfer license.txt file for FreeSurfer 7.1.1')
         if path.isfile(path.join(self.FREESURFER_HOME, 'license.txt')):
             try:
-                shutil.move(path.join(self.FREESURFER_HOME, 'license.txt'),path.join(self.FREESURFER_HOME, 'license_freesurfer.txt'))
+                shutil.move(path.join(self.FREESURFER_HOME, 'license.txt'),
+                            path.join(self.FREESURFER_HOME, 'license_freesurfer.txt'))
             except Exception as e:
                 print(e)
                 remove(path.join(self.FREESURFER_HOME, 'license.txt'))
@@ -77,7 +77,9 @@ class SETUP_FREESURFER():
             print('something wrong, please review')
 
     def fs_download_path(self, fs_v, centos_v):
-        return "https://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/{}/freesurfer-linux-centos{}_x86_64-{}.tar.gz".format(fs_v, centos_v, fs_v)
+        path2fs = "https://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/{}/freesurfer-linux-centos{}_x86_64-{}.tar.gz".format(
+                    fs_v, centos_v, fs_v)
+        return path2fs
 
     def matlab_install(self, export_FreeSurfer_cmd, source_FreeSurfer_cmd):
         chdir(self.FREESURFER_HOME)
