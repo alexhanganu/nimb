@@ -73,6 +73,8 @@ class PerformGLM():
             if self.sig_mc_data:
                 with open(self.sig_mc_json, 'w') as jf:
                     json.dump(self.sig_mc_data, jf, indent = 4)
+            if path.exists(self.cluster_stats):
+                self.cluster_log_to_csv()
             print('\n\nGLM DONE')
         else:
             sys.exit('some subjects are missing from the freesurfer folder')
@@ -268,6 +270,16 @@ class PerformGLM():
                                 'direction'         : direction,
                                 'cwsig_mc_f'        : cwsig_mc_f_copy,
                                 'oannot_mc_f'       : oannot_mc_f_copy}
+    def cluster_log_to_csv(self):
+        '''transforming the cluster_stats.log file into
+            cluster_stats.csv
+        '''
+        # must add header
+        # send contrasts name (e.g., g2v1..) to one cell
+        # send contrast comments to additional external cell, for quick removal
+        # split all values in different cells
+        print("working on transforming cluster log to csv")
+        # content = open(self.cluster_stats, 'r').readlines()
 
 
 def get_parameters(projects, FS_GLM_DIR):
