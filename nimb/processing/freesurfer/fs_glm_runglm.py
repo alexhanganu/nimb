@@ -270,6 +270,18 @@ class PerformGLM():
                                 'direction'         : direction,
                                 'cwsig_mc_f'        : cwsig_mc_f_copy,
                                 'oannot_mc_f'       : oannot_mc_f_copy}
+
+    def chk_contrast(self, line):
+        '''checks if contrast is present in the str(line)
+        must import constrast from fs_definitions
+        '''
+        exists = False
+        for contrast in contrasts.keys():
+            if contrast in line:
+                exists = True
+                break
+        return exists
+
     def cluster_log_to_csv(self):
         '''transforming the cluster_stats.log file into
             cluster_stats.csv

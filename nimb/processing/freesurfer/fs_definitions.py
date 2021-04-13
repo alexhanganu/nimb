@@ -129,6 +129,33 @@ class FSGLMParams:
         self.err_mris_preproc_file = path.join(self.PATHglm_results,'error_mris_preproc.json')
 
 
+
+contrasts = {
+            'g1v1':{'slope.mtx'         :['0 1',        't-test with the slope>0 being positive; is the slope equal to 0? does the correlation between thickness and variable differ from zero ?',],},
+            'g2v0':{'group.diff.mtx'    :['1 -1',       't-test with Group1>Group2 being positive; is there a difference between the group intercepts? Is there a difference between groups?',],},
+            'g2v1':{'group.diff.mtx'    :['1 -1 0 0',   't-test with Group1>Group2 being positive; is there a difference between the group intercepts? Is there a difference between groups regressing out the effect of age?',],
+                    'group-x-var.mtx'   :['0 0 1 -1',   't-test with Group1>Group2 being positive; is there a difference between the group age slopes? Note: this is an interaction between group and age. Note: not possible to test with DOSS',],
+                    'g1g2.var.mtx'      :['0 0 0.5 0.5','t-test with (Group1+Group2)/2 > 0 being positive (red/yellow). If mean < 0, then it will be displayed in blue/cyan; does mean of group age slope differ from 0? Is there an average affect of age regressing out the effect of group?',],}
+                            }
+dods_doss = {
+            'g1v1':[       'dods',],
+            'g2v0':['doss','dods',],
+            'g2v1':[       'dods',],}
+contrasts_not_used = {
+            'g1v0':{'intercept.mtx'     :['1',          't-test with intercept>0 being positive; is the intercept/mean equal to 0?',],},
+            'g1v1':{'intercept.mtx'     :['1 0',        't-test with intercept>0 being positive; is the intercept equal to 0? Does the average thickness differ from zero ?',],},
+            'g1v2':{'main.mtx'          :['1 0 0',      't-test with offset>0 being positive; the intercept/offset is different than 0 after regressing out the effects of var1 and var2',],
+                    'var1.mtx'          :['0 1 0',      't-test with var1 slope>0 being positive',],
+                    'var2.mtx'          :['0 0 1',      't-test with var2 slope>0 being positive',],},
+            'g2v0':{'group1.mtx'        :['1 0',        't-test with Group1>0 being positive; is there a main effect of Group1? Does the mean of Group1 equal 0?',],
+                    'group2.mtx'        :['0 1',        't-test with Group2>0 being positive; is there a main effect of Group2? Does the mean of Group2 equal 0?',],
+                    'g1g2.intercept.mtx':['0.5 0.5',    't-test with (Group1+Group2)/2 > 0 being positive (red/yellow). If the mean is < 0, then it will be displayed in blue/cyan; does mean of the group means differ from 0?',],},
+            'g2v1':{'g1g2.intercept.mtx':['0.5 0.5 0 0','t-test with (Group1+Group2)/2 > 0 being positive (red/yellow). If the mean is < 0, then it will be displayed in blue/cyan; does mean of group intercepts differ from 0? Is there an average main effect regressing out age?',]}
+                                }
+dods_doss_not_used = {
+            'g1v0':['dods',],
+            'g1v2':['dods',],}
+
 BS_Hip_Tha_stats_f = {
     'Brainstem':('mri/brainstemSsVolumes.v10.txt','stats/brainstem.v12.stats','stats/aseg.brainstem.volume.stats'),
     'HIPL'     :('mri/hippoSfVolumes-T1.v10.txt','stats/lh.hipposubfields.T1.v21.stats','stats/aseg.hippo.lh.volume.stats'),
@@ -534,6 +561,8 @@ parc_DS_header={'G&S_frontomargin': 'frontal_margin_GS',
                 'S_temporal_inf': 'temporal_inf_Sulc',
                 'S_temporal_sup': 'temporal_sup_Sulc',
                 'S_temporal_transverse': 'temporal_transverse_Sulc'}
+
+
 
 
 def get_names_of_structures():
