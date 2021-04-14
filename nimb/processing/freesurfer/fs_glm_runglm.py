@@ -271,16 +271,7 @@ class PerformGLM():
                                 'cwsig_mc_f'        : cwsig_mc_f_copy,
                                 'oannot_mc_f'       : oannot_mc_f_copy}
 
-    def chk_contrast(self, line):
-        '''checks if contrast is present in the str(line)
-        must import constrast from fs_definitions
-        '''
-        exists = False
-        for contrast in contrasts.keys():
-            if contrast in line:
-                exists = True
-                break
-        return exists
+
 
     def cluster_log_to_csv(self):
         '''transforming the cluster_stats.log file into
@@ -290,8 +281,47 @@ class PerformGLM():
         # send contrasts name (e.g., g2v1..) to one cell
         # send contrast comments to additional external cell, for quick removal
         # split all values in different cells
+        # clusterfile2csv = ClusterFile2CSV()
         print("working on transforming cluster log to csv")
         # content = open(self.cluster_stats, 'r').readlines()
+
+
+# class ClusterFile2CSV():
+
+#     def __init__(self):
+#         self.contrasts = {
+#             'g1v1':{'slope.mtx'         :['0 1',        't-test with the slope>0 being positive; is the slope equal to 0? does the correlation between thickness and variable differ from zero ?',],},
+#             'g2v0':{'group.diff.mtx'    :['1 -1',       't-test with Group1>Group2 being positive; is there a difference between the group intercepts? Is there a difference between groups?',],},
+#             'g2v1':{'group.diff.mtx'    :['1 -1 0 0',   't-test with Group1>Group2 being positive; is there a difference between the group intercepts? Is there a difference between groups regressing out the effect of age?',],
+#                     'group-x-var.mtx'   :['0 0 1 -1',   't-test with Group1>Group2 being positive; is there a difference between the group age slopes? Note: this is an interaction between group and age. Note: not possible to test with DOSS',],
+#                     'g1g2.var.mtx'      :['0 0 0.5 0.5','t-test with (Group1+Group2)/2 > 0 being positive (red/yellow). If mean < 0, then it will be displayed in blue/cyan; does mean of group age slope differ from 0? Is there an average affect of age regressing out the effect of group?',],}
+#                             }
+#         self.contrast_explanation = [list(contrasts[k].values())[0][1] for k in contrasts.keys()]
+#         # self.tab = Table()
+
+#     def chk_if_vals_in_line(line, ls_vals_2chk):
+#         '''will use each value from ls_vals_2chk
+#             if present in the line:
+#             will return True and break
+#             else: return False
+#         '''
+#         exists     = False
+#         val_exists = None
+        
+#         for val_2chk in ls_vals_2chk:
+#             if val_2chk in line:
+#                 exists = True
+#                 val_exists = val_2chk
+#                 break
+#         return exists, val_exists
+
+
+#     def clean_nans_from_list(ls):
+#         for i in ls[::-1]:
+#             if i == '':
+#                 ls.remove(i)
+#         return ls
+
 
 
 def get_parameters(projects, FS_GLM_DIR):
