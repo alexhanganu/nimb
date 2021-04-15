@@ -99,7 +99,7 @@ class Table:
             df.to_csv(f_path_to_save, index=True, sep="\t", header=True)
 
 
-    def save_df_tocsv(self, df, f_path_to_save):
+    def save_df_tocsv(self, df, f_path_to_save):#must be avoides in order to rm
         df.to_csv(f_path_to_save)
 
 

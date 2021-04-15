@@ -31,6 +31,7 @@ class PerformGLM():
         self.GLM_sim_fwhm4csd      = param.GLM_sim_fwhm4csd
         self.GLM_MCz_meas_codes    = param.GLM_MCz_meas_codes
         self.cluster_stats         = path.join(self.PATHglm_results,'cluster_stats.log')
+        self.cluster_stats_2csv    = path.join(self.PATHglm_results,'cluster_stats.csv')
         self.sig_contrasts         = path.join(self.PATHglm_results,'sig_contrasts.log')
 
         for subdir in (self.PATHglm_glm, self.PATHglm_results, self.PATH_img):
@@ -74,7 +75,8 @@ class PerformGLM():
                 with open(self.sig_mc_json, 'w') as jf:
                     json.dump(self.sig_mc_data, jf, indent = 4)
             if path.exists(self.cluster_stats):
-                self.cluster_log_to_csv()
+                ClusterFile2CSV(self.cluster_stats,
+                                self.cluster_stats_2csv)
             print('\n\nGLM DONE')
         else:
             sys.exit('some subjects are missing from the freesurfer folder')
@@ -272,55 +274,73 @@ class PerformGLM():
                                 'oannot_mc_f'       : oannot_mc_f_copy}
 
 
+class ClusterFile2CSV():
 
-    def cluster_log_to_csv(self):
-        '''transforming the cluster_stats.log file into
-            cluster_stats.csv
-        '''
-        # must add header
-        # send contrasts name (e.g., g2v1..) to one cell
-        # send contrast comments to additional external cell, for quick removal
-        # split all values in different cells
-        # clusterfile2csv = ClusterFile2CSV()
-        print("working on transforming cluster log to csv")
-        # content = open(self.cluster_stats, 'r').readlines()
+    def __init__(self, file_abspath, result_abspath):
+        self.contrasts = {
+            'g1v1':{'slope.mtx'         :['0 1',        't-test with the slope>0 being positive; is the slope equal to 0? does the correlation between thickness and variable differ from zero ?',],},
+            'g2v0':{'group.diff.mtx'    :['1 -1',       't-test with Group1>Group2 being positive; is there a difference between the group intercepts? Is there a difference between groups?',],},
+            'g2v1':{'group.diff.mtx'    :['1 -1 0 0',   't-test with Group1>Group2 being positive; is there a difference between the group intercepts? Is there a difference between groups regressing out the effect of age?',],
+                    'group-x-var.mtx'   :['0 0 1 -1',   't-test with Group1>Group2 being positive; is there a difference between the group age slopes? Note: this is an interaction between group and age. Note: not possible to test with DOSS',],
+                    'g1g2.var.mtx'      :['0 0 0.5 0.5','t-test with (Group1+Group2)/2 > 0 being positive (red/yellow). If mean < 0, then it will be displayed in blue/cyan; does mean of group age slope differ from 0? Is there an average affect of age regressing out the effect of group?',],}}
+        self.contrast_explanation = [list(contrasts[k].values())[0][1] for k in contrasts.keys()]
+        self.col_4constrasts = "Contrast"
+        self.header = ("ClusterNo",
+                      "Max", "VtxMax", "Size(mm^2)", 
+                      "TalX", "TalY", "TalZ",
+                      "CWP", "CWPLow", "CWPHi",
+                      "NVtxs", "WghtVtx",
+                      "Annot", self.col_4constrasts, "Explanation")
+        self.content = open(file_abspath, 'r').readlines()
+        self.result_abstpath = result_abspath
+        self.run()
+        self.tab = Table()
 
+    def run(self):
+        d = dict()
+        for i in range(len(self.content)):
+            line = self.content[i].replace('\n','')
+            con_exists, _     = self.chk_if_vals_in_line(line, self.contrasts.keys())
+            expl_exists, expl = self.chk_if_vals_in_line(line, self.contrast_explanation)
+            if con_exists:
+                d[i] = ['','','','','','','','','','','','','', line, self.content[i+1],]
+            elif expl_exists:
+                pass
+            else:
+                line = self.clean_nans_from_list(line.split(' '))
+                if len(line) != 0:
+                    d[i] = line + ['','']
+        self.save_2table(d)
 
-# class ClusterFile2CSV():
-
-#     def __init__(self):
-#         self.contrasts = {
-#             'g1v1':{'slope.mtx'         :['0 1',        't-test with the slope>0 being positive; is the slope equal to 0? does the correlation between thickness and variable differ from zero ?',],},
-#             'g2v0':{'group.diff.mtx'    :['1 -1',       't-test with Group1>Group2 being positive; is there a difference between the group intercepts? Is there a difference between groups?',],},
-#             'g2v1':{'group.diff.mtx'    :['1 -1 0 0',   't-test with Group1>Group2 being positive; is there a difference between the group intercepts? Is there a difference between groups regressing out the effect of age?',],
-#                     'group-x-var.mtx'   :['0 0 1 -1',   't-test with Group1>Group2 being positive; is there a difference between the group age slopes? Note: this is an interaction between group and age. Note: not possible to test with DOSS',],
-#                     'g1g2.var.mtx'      :['0 0 0.5 0.5','t-test with (Group1+Group2)/2 > 0 being positive (red/yellow). If mean < 0, then it will be displayed in blue/cyan; does mean of group age slope differ from 0? Is there an average affect of age regressing out the effect of group?',],}
-#                             }
-#         self.contrast_explanation = [list(contrasts[k].values())[0][1] for k in contrasts.keys()]
-#         # self.tab = Table()
-
-#     def chk_if_vals_in_line(line, ls_vals_2chk):
-#         '''will use each value from ls_vals_2chk
-#             if present in the line:
-#             will return True and break
-#             else: return False
-#         '''
-#         exists     = False
-#         val_exists = None
+    def save_2table(self, d):
+        df = self.tab.create_df_from_dict(d).T
+        column_names = {i[0]:i[1] for i in list(zip(df.columns, self.header))}
+        df = df.rename(columns = column_names)
+        df = df.set_index(df[self.col_4constrasts])
+        df = df.drop(columns = [self.col_4constrasts])
+        self.tab.save_df(df, self.result_abstpath)
         
-#         for val_2chk in ls_vals_2chk:
-#             if val_2chk in line:
-#                 exists = True
-#                 val_exists = val_2chk
-#                 break
-#         return exists, val_exists
+    def chk_if_vals_in_line(self, line, ls_vals_2chk):
+        '''will use each value from ls_vals_2chk
+            if present in the line:
+            will return True and break
+            else: return False
+        '''
+        exists     = False
+        val_exists = None
 
+        for val_2chk in ls_vals_2chk:
+            if val_2chk in line:
+                exists = True
+                val_exists = val_2chk
+                break
+        return exists, val_exists
 
-#     def clean_nans_from_list(ls):
-#         for i in ls[::-1]:
-#             if i == '':
-#                 ls.remove(i)
-#         return ls
+    def clean_nans_from_list(self, ls):
+        for i in ls[::-1]:
+            if i == '':
+                ls.remove(i)
+        return ls
 
 
 
@@ -377,6 +397,8 @@ if __name__ == "__main__":
     import subprocess
     from distribution.logger import Log
     from setup.get_vars import Get_Vars, SetProject
+    from stats.db_processing import Table
+
     getvars      = Get_Vars()
     vars_local   = getvars.location_vars['local']
     projects     = getvars.projects
