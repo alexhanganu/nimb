@@ -40,6 +40,13 @@ class SaveGLMimages():
             self.read_glm_subdirs()
         if path.exists(self.f_with_cmds):
         	system('rm {}'.format(self.f_with_cmds))
+        cluster_stats      = path.join(self.param.PATHglm_results,'cluster_stats.log')
+        cluster_stats_2csv = path.join(self.param.PATHglm_results,'cluster_stats.csv')
+        if path.exists(cluster_stats) and not path.exists(cluster_stats_2csv):
+            print(f'\ntransforming file {cluster_stats} to file: {cluster_stats_2csv}')
+            from fs_glm_runglm import ClusterFile2CSV
+            ClusterFile2CSV(cluster_stats, cluster_stats_2csv)
+
 
     def read_fdr_images(self):
         img = load_json(self.param.sig_fdr_json)
