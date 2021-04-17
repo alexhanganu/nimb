@@ -29,17 +29,17 @@ class SaveGLMimages():
         self.mc_img_thresh     = 1.3 #p = 0.05
 
     def run(self):
-        if path.exists(self.param.sig_fdr_json):
-            print('reading images for FDR significant results')
-            self.read_fdr_images()
-        if path.exists(self.param.sig_mc_json):
-            print('reding images with MC-z corrected results')
-            self.read_mc_images()
-        elif path.exists(self.param.files_for_glm):
-            print('reading images after FreeSurfer GLM analysis')
-            self.read_glm_subdirs()
-        if path.exists(self.f_with_cmds):
-        	system('rm {}'.format(self.f_with_cmds))
+        # if path.exists(self.param.sig_fdr_json):
+        #     print('reading images for FDR significant results')
+        #     self.read_fdr_images()
+        # if path.exists(self.param.sig_mc_json):
+        #     print('reding images with MC-z corrected results')
+        #     self.read_mc_images()
+        # elif path.exists(self.param.files_for_glm):
+        #     print('reading images after FreeSurfer GLM analysis')
+        #     self.read_glm_subdirs()
+        # if path.exists(self.f_with_cmds):
+        #     system('rm {}'.format(self.f_with_cmds))
         cluster_stats      = path.join(self.param.PATHglm_results,'cluster_stats.log')
         cluster_stats_2csv = path.join(self.param.PATHglm_results,'cluster_stats.csv')
         if path.exists(cluster_stats) and not path.exists(cluster_stats_2csv):

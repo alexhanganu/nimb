@@ -6,7 +6,7 @@ from os import system, listdir, makedirs, path
 import linecache, sys
 import json
 import shutil
-from fs_definitions import hemi, FSGLMParams
+from fs_definitions import hemi, FSGLMParams, GLMcontrasts
 
 
 class PerformGLM():
@@ -277,13 +277,10 @@ class PerformGLM():
 class ClusterFile2CSV():
 
     def __init__(self, file_abspath, result_abspath):
-        self.contrasts = {
-            'g1v1':{'slope.mtx'         :['0 1',        't-test with the slope>0 being positive; is the slope equal to 0? does the correlation between thickness and variable differ from zero ?',],},
-            'g2v0':{'group.diff.mtx'    :['1 -1',       't-test with Group1>Group2 being positive; is there a difference between the group intercepts? Is there a difference between groups?',],},
-            'g2v1':{'group.diff.mtx'    :['1 -1 0 0',   't-test with Group1>Group2 being positive; is there a difference between the group intercepts? Is there a difference between groups regressing out the effect of age?',],
-                    'group-x-var.mtx'   :['0 0 1 -1',   't-test with Group1>Group2 being positive; is there a difference between the group age slopes? Note: this is an interaction between group and age. Note: not possible to test with DOSS',],
-                    'g1g2.var.mtx'      :['0 0 0.5 0.5','t-test with (Group1+Group2)/2 > 0 being positive (red/yellow). If mean < 0, then it will be displayed in blue/cyan; does mean of group age slope differ from 0? Is there an average affect of age regressing out the effect of group?',],}}
-        self.contrast_explanation = [list(contrasts[k].values())[0][1] for k in contrasts.keys()]
+        from stats.db_processing import Table
+        self.contrasts = GLMcontrasts['contrasts']
+        self.get_explanations()
+
         self.col_4constrasts = "Contrast"
         self.header = ("ClusterNo",
                       "Max", "VtxMax", "Size(mm^2)", 
@@ -293,17 +290,19 @@ class ClusterFile2CSV():
                       "Annot", self.col_4constrasts, "Explanation")
         self.content = open(file_abspath, 'r').readlines()
         self.result_abstpath = result_abspath
-        self.run()
         self.tab = Table()
+        self.run()
 
     def run(self):
         d = dict()
         for i in range(len(self.content)):
             line = self.content[i].replace('\n','')
-            con_exists, _     = self.chk_if_vals_in_line(line, self.contrasts.keys())
-            expl_exists, expl = self.chk_if_vals_in_line(line, self.contrast_explanation)
+            con_exists  = self.chk_if_vals_in_line(line, self.contrasts.keys())
+            expl_exists = self.chk_if_vals_in_line(line, self.explanations)
+
             if con_exists:
-                d[i] = ['','','','','','','','','','','','','', line, self.content[i+1],]
+                expl = self.content[i+1].replace('\n','').replace(';','.')
+                d[i] = ['','','','','','','','','','','','','', line, expl,]
             elif expl_exists:
                 pass
             else:
@@ -327,20 +326,24 @@ class ClusterFile2CSV():
             else: return False
         '''
         exists     = False
-        val_exists = None
 
         for val_2chk in ls_vals_2chk:
             if val_2chk in line:
                 exists = True
-                val_exists = val_2chk
                 break
-        return exists, val_exists
+        return exists
 
     def clean_nans_from_list(self, ls):
         for i in ls[::-1]:
             if i == '':
                 ls.remove(i)
         return ls
+
+    def get_explanations(self):
+        self.explanations = list()
+        for key in self.contrasts:
+            for file_name in self.contrasts[key]:
+                self.explanations.append(self.contrasts[key][file_name][1])
 
 
 
