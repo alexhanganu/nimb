@@ -29,17 +29,25 @@ class SaveGLMimages():
         self.mc_img_thresh     = 1.3 #p = 0.05
 
     def run(self):
-        # if path.exists(self.param.sig_fdr_json):
-        #     print('reading images for FDR significant results')
-        #     self.read_fdr_images()
-        # if path.exists(self.param.sig_mc_json):
-        #     print('reding images with MC-z corrected results')
-        #     self.read_mc_images()
-        # elif path.exists(self.param.files_for_glm):
-        #     print('reading images after FreeSurfer GLM analysis')
-        #     self.read_glm_subdirs()
-        # if path.exists(self.f_with_cmds):
-        #     system('rm {}'.format(self.f_with_cmds))
+        if path.exists(self.param.sig_fdr_json):
+            print('reading images for FDR significant results')
+            self.read_fdr_images()
+        if path.exists(self.param.sig_mc_json):
+            print('reding images with MC-z corrected results')
+            self.read_mc_images()
+        elif path.exists(self.param.files_for_glm):
+            print('reading images after FreeSurfer GLM analysis')
+            self.read_glm_subdirs()
+
+        # cleaning unnecessary files:
+        if path.exists(self.f_with_cmds):
+            system('rm {}'.format(self.f_with_cmds))
+        files_2rm = ('surfer.log', '.xdebug_tksurfer')
+        for file in files_2rm:
+            if path.exists(file):
+                system(f'rm {file}')
+
+        # checking if file with clusters - transformed to CSV, if not - retrying
         cluster_stats      = path.join(self.param.PATHglm_results,'cluster_stats.log')
         cluster_stats_2csv = path.join(self.param.PATHglm_results,'cluster_stats.csv')
         if path.exists(cluster_stats) and not path.exists(cluster_stats_2csv):
@@ -112,6 +120,10 @@ class SaveGLMimages():
     def make_images_results_mc(self, hemi, analysis_name,
                                     contrast, direction,
                                     cwsig_mc_f, oannot_mc_f):
+        # must check the file exists:
+        # G2V1_1_2_...thickness.rh.fwhm10/g2v1_group_x-var/mc-z.pos.th13.sig.ocn.annot
+        # in some cases this file is missing and makes an error blocking the saving of images
+
         self.PATH_save_mc = path.join(self.PATHglm, 'results', 'mc')
         if not path.isdir(self.PATH_save_mc):
             makedirs(self.PATH_save_mc)
