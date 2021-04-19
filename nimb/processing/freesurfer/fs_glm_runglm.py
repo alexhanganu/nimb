@@ -4,7 +4,7 @@
 
 from os import system, listdir, makedirs, path
 import linecache, sys
-import json
+# import json
 import shutil
 from fs_definitions import hemi, FSGLMParams, GLMcontrasts
 
@@ -41,39 +41,44 @@ class PerformGLM():
         self.err_preproc  = list()
 
         try:
-            with open(param.subjects_per_group,'r') as jf:
-                subjects_per_group = json.load(jf)
-                print('subjects per group imported')
+            subjects_per_group = load_json(param.subjects_per_group)
+            # with open(param.subjects_per_group,'r') as jf:
+                # subjects_per_group = json.load(jf)
+            print(f'    successfully uploaded file: {param.subjects_per_group}')
         except Exception as e:
             print(e)
-            sys.exit('subjects per group is missing')
+            sys.exit(f'    file {param.subjects_per_group} is missing')
         try:
-            with open(param.files_for_glm,'r') as jf:
-                files_glm = json.load(jf)
-                print('files for glm imported')
+            files_glm = load_json(param.files_for_glm)
+            # with open(param.files_for_glm,'r') as jf:
+            #     files_glm = json.load(jf)
+            print(f'    successfully uploaded file: {param.files_for_glm}')
         except ImportError as e:
                 print(e)
-                sys.exit('files for glm is missing')
+                sys.exit(f'    file {param.files_for_glm} is missing')
 
-        print('subjects are located in: {}'.format(SUBJECTS_DIR))
+        print('    subjects are located in: {}'.format(SUBJECTS_DIR))
         for group in subjects_per_group:
             for subject in subjects_per_group[group]:
                 if subject not in listdir(SUBJECTS_DIR):
-                    print(subject,' is missing in the freesurfer folder')
+                    print(f' subject is missing from FreeSurfer Subjects folder: {subject}')
                     RUN = False
                 else:
                     RUN = True
         if RUN:
             self.run_loop(files_glm, measurements, thresholds)
             if self.err_preproc:
-                with open(self.err_mris_preproc_file, 'w') as jf:
-                    json.dump(self.err_preproc, jf, indent = 4)
+                save_json(self.err_preproc, self.err_mris_preproc_file)
+                # with open(self.err_mris_preproc_file, 'w') as jf:
+                #     json.dump(self.err_preproc, jf, indent = 4)
             if self.sig_fdr_data:
-                with open(self.sig_fdr_json, 'w') as jf:
-                    json.dump(self.sig_fdr_data, jf, indent = 4)
+                save_json(self.sig_fdr_data, self.sig_fdr_json)
+                # with open(self.sig_fdr_json, 'w') as jf:
+                #     json.dump(self.sig_fdr_data, jf, indent = 4)
             if self.sig_mc_data:
-                with open(self.sig_mc_json, 'w') as jf:
-                    json.dump(self.sig_mc_data, jf, indent = 4)
+                save_json(self.sig_mc_data, self.sig_mc_json)
+                # with open(self.sig_mc_json, 'w') as jf:
+                #     json.dump(self.sig_mc_data, jf, indent = 4)
             if path.exists(self.cluster_stats):
                 ClusterFile2CSV(self.cluster_stats,
                                 self.cluster_stats_2csv)
@@ -399,6 +404,7 @@ if __name__ == "__main__":
 
     import subprocess
     from distribution.logger import Log
+    from distribution.utilities import load_json, save_json
     from setup.get_vars import Get_Vars, SetProject
     from stats.db_processing import Table
 

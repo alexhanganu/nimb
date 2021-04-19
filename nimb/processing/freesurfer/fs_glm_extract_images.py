@@ -120,10 +120,6 @@ class SaveGLMimages():
     def make_images_results_mc(self, hemi, analysis_name,
                                     contrast, direction,
                                     cwsig_mc_f, oannot_mc_f):
-        # must check the file exists:
-        # G2V1_1_2_...thickness.rh.fwhm10/g2v1_group_x-var/mc-z.pos.th13.sig.ocn.annot
-        # in some cases this file is missing and makes an error blocking the saving of images
-
         self.PATH_save_mc = path.join(self.PATHglm, 'results', 'mc')
         if not path.isdir(self.PATH_save_mc):
             makedirs(self.PATH_save_mc)

@@ -34,7 +34,7 @@ def load_json(file_abspath):
     with open(file_abspath, 'r') as f:
         return json.load(f)
 
-def save_json(data, file_abspath):
+def save_json(data, file_abspath, ensure_ascii = False):
     print(data)
     print(file_abspath)
     with open(file_abspath, 'w') as f:
