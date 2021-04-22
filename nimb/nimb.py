@@ -261,6 +261,8 @@ def main():
     projects = all_vars.projects
     all_projects = [i for i in projects.keys() if 'EXPLANATION' not in i and 'LOCATION' not in i]
     params = get_parameters(all_projects)
+    if params.project == list(projects.keys())[:1][0]:
+        print(f'    no project was defined - working with project in first position: {params.project}')
     app = NIMB(params, projects, all_vars)
     return app.run()
 

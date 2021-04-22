@@ -32,7 +32,7 @@ class ProjectManager:
         self.FS_SUBJECTS_DIR    = self.local_vars['FREESURFER']['FS_SUBJECTS_DIR']
         self.path_2copy_files   = stats_vars["STATS_PATHS"]["FS_GLM_dir"]
         self.tab                = Table()
-        # self.run()
+        self.run()
 
     def get_groups_file(self):
         if self.location == 'local':
@@ -79,16 +79,17 @@ class ProjectManager:
                 return False
 
 
-#     def run(self):
-#         """
-#             will run the whole project starting with the file provided in the projects.json -> group
-#         Args:
-#             groups file
-#         Return:
-#             stats
-#         """
-#         print('running projects {}'.format(self.project))
-#         import SSHHelper
+    def run(self):
+        """
+            will run the whole project starting with the file provided in the projects.json -> group
+        Args:
+            groups file
+        Return:
+            stats
+        """
+        print(f'   running pipeline for project: {self.project}')
+
+        import SSHHelper
 
 #         # check that all subjects have corresponding FreeSurfer processed data
 #         id_col           = self.projects[self.project_name]['id_col']
