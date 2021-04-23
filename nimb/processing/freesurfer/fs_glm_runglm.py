@@ -278,6 +278,23 @@ class PerformGLM():
                                 'cwsig_mc_f'        : cwsig_mc_f_copy,
                                 'oannot_mc_f'       : oannot_mc_f_copy}
 
+class VertexParamsExtract():
+
+    def __init__(self):
+        """extract the FreeSurfer parameters (thickness, area, volume curvature)
+            for the vertices that were depicted as significant by FreeSurfer GLM
+        """
+        print(f'extracting vertex measurements')
+        # read_curv()
+
+#         if (have_fs()) {
+#    bert_dir = file.path(fs_subj_dir(), "bert", "surf")
+#    file = file.path(bert_dir, "lh.thickness")
+#    fid = file(file, open = "rb")
+#    out = freesurfer_read_curv(file)
+# } 
+
+
 
 class ClusterFile2CSV():
 
