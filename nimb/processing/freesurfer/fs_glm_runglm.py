@@ -4,9 +4,11 @@
 
 from os import system, listdir, makedirs, path
 import linecache, sys
-# import json
 import shutil
-from fs_definitions import hemi, FSGLMParams, GLMcontrasts
+try:
+    from processing.freesurfer.fs_definitions import hemi, FSGLMParams, GLMcontrasts
+except ImportError:
+    from fs_definitions import hemi, FSGLMParams, GLMcontrasts
 
 
 class PerformGLM():
@@ -285,14 +287,15 @@ class PerformGLM():
 #             for the vertices that were depicted as significant by FreeSurfer GLM
 #         """
 #         print(f'extracting vertex measurements')
-#         # read_curv()
+        # from nilearn import surface
+        # hemi = 'lh'
+        # meas = 'thickness'
+        # file = os.path.join(FS_SUBJECTS_DIR, subject, 'surf', f'{hemi}.{meas}')
+        # data = surface.load_surf_data(file)
 
-#         #         if (have_fs()) {
-#         #    bert_dir = file.path(fs_subj_dir(), "bert", "surf")
-#         #    file = file.path(bert_dir, "lh.thickness")
-#         #    fid = file(file, open = "rb")
-#         #    out = freesurfer_read_curv(file)
-#         # } 
+        # from nibabel import freesurfer
+        # data = freesurfer.io.read_morph_data(file)
+        # https://drmowinckels.io/blog/2020-04-30-using-freesurfer-annotation-files-to-plot-in-r/
 
 
 
@@ -310,25 +313,26 @@ class ClusterFile2CSV():
                       "CWP", "CWPLow", "CWPHi",
                       "NVtxs", "WghtVtx",
                       "Annot", self.col_4constrasts, "Explanation")
+        self.length_matrix = len(self.header)
         self.content = open(file_abspath, 'r').readlines()
-        self.result_abstpath = result_abspath
+        self.result_abspath = result_abspath
         self.tab = Table()
+        self.ls_vals_2chk = self.contrasts.keys()
         self.run()
 
     def run(self):
         d = dict()
-        for i in range(len(self.content)):
-            line = self.content[i].replace('\n','')
-            con_exists  = self.chk_if_vals_in_line(line, self.contrasts.keys())
-            expl_exists = self.chk_if_vals_in_line(line, self.explanations)
+        i = 0
 
-            if con_exists:
+        while i < len(self.content):
+            line = self.content[i].replace('\n','')
+            if self.chk_if_vals_in_line(line):
                 expl = self.content[i+1].replace('\n','').replace(';','.')
                 d[i] = ['','','','','','','','','','','','','', line, expl,]
-            elif expl_exists:
-                pass
+                i += 2
             else:
                 line = self.clean_nans_from_list(line.split(' '))
+                i += 1
                 if len(line) != 0:
                     d[i] = line + ['','']
         self.save_2table(d)
@@ -339,17 +343,17 @@ class ClusterFile2CSV():
         df = df.rename(columns = column_names)
         df = df.set_index(df[self.col_4constrasts])
         df = df.drop(columns = [self.col_4constrasts])
-        self.tab.save_df(df, self.result_abstpath)
+        self.tab.save_df(df, self.result_abspath)
         
-    def chk_if_vals_in_line(self, line, ls_vals_2chk):
-        '''will use each value from ls_vals_2chk
+    def chk_if_vals_in_line(self, line):
+        '''will use each value from self.ls_vals_2chk
             if present in the line:
             will return True and break
             else: return False
         '''
         exists     = False
 
-        for val_2chk in ls_vals_2chk:
+        for val_2chk in self.ls_vals_2chk:
             if val_2chk in line:
                 exists = True
                 break
@@ -424,6 +428,8 @@ if __name__ == "__main__":
     from distribution.utilities import load_json, save_json
     from setup.get_vars import Get_Vars, SetProject
     from stats.db_processing import Table
+    from processing.freesurfer.fs_definitions import hemi, FSGLMParams, GLMcontrasts
+
 
     getvars      = Get_Vars()
     vars_local   = getvars.location_vars['local']
