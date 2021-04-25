@@ -280,24 +280,6 @@ class PerformGLM():
                                 'cwsig_mc_f'        : cwsig_mc_f_copy,
                                 'oannot_mc_f'       : oannot_mc_f_copy}
 
-# class VertexParamsExtract():
-
-#     def __init__(self):
-#         """extract the FreeSurfer parameters (thickness, area, volume curvature)
-#             for the vertices that were depicted as significant by FreeSurfer GLM
-#         """
-#         print(f'extracting vertex measurements')
-        # from nilearn import surface
-        # hemi = 'lh'
-        # meas = 'thickness'
-        # file = os.path.join(FS_SUBJECTS_DIR, subject, 'surf', f'{hemi}.{meas}')
-        # data = surface.load_surf_data(file)
-
-        # from nibabel import freesurfer
-        # data = freesurfer.io.read_morph_data(file)
-        # https://drmowinckels.io/blog/2020-04-30-using-freesurfer-annotation-files-to-plot-in-r/
-
-
 
 class ClusterFile2CSV():
 
