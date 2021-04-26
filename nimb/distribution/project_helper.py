@@ -88,8 +88,15 @@ class ProjectManager:
             stats
         """
         print(f'   running pipeline for project: {self.project}')
+        # check that group file is provided
+        # chk that group file is present at the provided path
+        # chk that column group in present in the file
+        # chk that all participants underwent Freesurfer processing; IDs of participanta are considered to be BIDS ids (no session)
+        # if not - ask if FreeSurfer processing is requested by the user. Default - no.
+        # chk that group file includes all variables defined in the projects.json file
+        # chk that is ready to perform stats
+        # chk if stats were performed. If not - ask if stats are requested.
 
-        import SSHHelper
 
 #         # check that all subjects have corresponding FreeSurfer processed data
 #         id_col           = self.projects[self.project_name]['id_col']
