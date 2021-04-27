@@ -200,7 +200,7 @@ class DistributionHelper():
                                                                 os.path.join(self.credentials_home, 'projects.json')))
             return False
 
-    def get_files_for_stats(self, path_2copy_files, list_of_files):
+    def get_files_for_stats(self, path_2copy_files, list_of_files): # moving to project_helper
         location = self.proj_vars['materials_DIR'][0]
         materials_dir_path = self.proj_vars['materials_DIR'][1]
         if location == 'local':

@@ -34,6 +34,23 @@ class ProjectManager:
         self.tab                = Table()
         self.run()
 
+    # def get_files_for_stats(self, path_2copy_files, list_of_files): # moving to project_helper
+    #     location = self.proj_vars['materials_DIR'][0]
+    #     materials_dir_path = self.proj_vars['materials_DIR'][1]
+    #     if location == 'local':
+    #         for file in list_of_files:
+    #             path2file = os.path.join(materials_dir_path, file)
+    #             if os.path.exists(path2file):
+    #                 shutil.copy(path2file, path_2copy_files)
+    #     else:
+    #         print('nimb must access the remote computer: {}'.format(location))
+    #         from distribution import SSHHelper
+    #         SSHHelper.download_files_from_server(location, materials_dir_path, path_2copy_files, list_of_files)
+    #     if os.path.exists(os.path.join(path_2copy_files, list_of_files[-1])):
+    #         return True
+    #     else:
+    #         return self.chk_files_for_stats(list_of_files, path_2copy_files)
+
     def get_groups_file(self):
         if self.location == 'local':
             self.groups_df = self.tab.get_df(os.path.join(self.materials_dir_path, self.f_groups))
