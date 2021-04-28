@@ -19,10 +19,12 @@ from stats.db_processing import Table
 
 class ProjectManager:
     def __init__(self,
+                project,
                 project_vars,
                 local_vars,
                 stats_vars):
         self.local_vars         = local_vars
+        self.project            = project
         self.f_groups           = project_vars['fname_groups']
         self.bids_id_col        = project_vars['id_col']
         self.location           = project_vars['materials_DIR'][0]
@@ -30,7 +32,8 @@ class ProjectManager:
 
         self.f_ids_name         = self.local_vars["NIMB_PATHS"]['file_ids_processed']
         self.FS_SUBJECTS_DIR    = self.local_vars['FREESURFER']['FS_SUBJECTS_DIR']
-        self.path_2copy_files   = stats_vars["STATS_PATHS"]["FS_GLM_dir"]
+        self.path_stats_dir     = stats_vars["STATS_PATHS"]["STATS_HOME"]
+        self.path_fsglm_dir     = stats_vars["STATS_PATHS"]["FS_GLM_dir"]
         self.tab                = Table()
         self.run()
 
@@ -57,8 +60,8 @@ class ProjectManager:
         else:
             print('nimb must access the remote computer: {}'.format(self.location))
             from distribution import SSHHelper
-            SSHHelper.download_files_from_server(self.location, self.materials_dir_path, self.path_2copy_files, [self.f_groups,])
-            path_2file = os.path.join(self.path_2copy_files, self.f_groups)
+            SSHHelper.download_files_from_server(self.location, self.materials_dir_path, self.path_fsglm_dir, [self.f_groups,])
+            path_2file = os.path.join(self.path_fsglm_dir, self.f_groups)
             if os.path.exists(path_2file):
                 self.groups_df = self.tab.get_df(path_2file)
             else:
@@ -81,11 +84,10 @@ class ProjectManager:
         print(_ids, self.f_ids_name)
         return None# self.f_ids_name
 
-    def f_ids_in_dir(self, path_2copy_files):
-        self.path_2copy_files = path_2copy_files
-        print(self.path_2copy_files)
+    def f_ids_in_dir(self, path_2groups_f):
+        # print(self.path_2copy_files)
         if os.path.exists(os.path.join(
-                    path_2copy_files,
+                    path_2groups_f,
                     self.f_ids_name)):
             return True
         else:
@@ -105,7 +107,7 @@ class ProjectManager:
             stats
         """
         print(f'   running pipeline for project: {self.project}')
-        # check that group file is provided
+        # check that group file is provided in the nimb_tmp/projects/project/stats dir
         # chk that group file is present at the provided path
         # chk that column group in present in the file
         # chk that all participants underwent Freesurfer processing; IDs of participanta are considered to be BIDS ids (no session)
