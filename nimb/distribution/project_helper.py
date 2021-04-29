@@ -97,6 +97,12 @@ class ProjectManager:
                 print('could not create the file with ids')
                 return False
 
+    def get_ids(self):
+        # check that group file is provided in the nimb_tmp/projects/project/stats dir
+        # chk that group file is present at the provided path
+        # chk that column group in present in the file
+
+        return 'None'
 
     def run(self):
         """
@@ -107,9 +113,7 @@ class ProjectManager:
             stats
         """
         print(f'   running pipeline for project: {self.project}')
-        # check that group file is provided in the nimb_tmp/projects/project/stats dir
-        # chk that group file is present at the provided path
-        # chk that column group in present in the file
+        _ids_bids = self.get_ids()
         # chk that all participants underwent Freesurfer processing; IDs of participanta are considered to be BIDS ids (no session)
         # if not - ask if FreeSurfer processing is requested by the user. Default - no.
         # chk that group file includes all variables defined in the projects.json file
