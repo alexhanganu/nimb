@@ -16,6 +16,7 @@ import os
 import pandas as pd
 
 from stats.db_processing import Table
+from distribution.distribution_helper import  DistributionHelper
 
 class ProjectManager:
     def __init__(self,
@@ -35,6 +36,7 @@ class ProjectManager:
         self.path_stats_dir     = stats_vars["STATS_PATHS"]["STATS_HOME"]
         self.path_fsglm_dir     = stats_vars["STATS_PATHS"]["FS_GLM_dir"]
         self.tab                = Table()
+        # self.Dist               = DistributionHelper()
         self.run()
 
     # def get_files_for_stats(self, path_2copy_files, list_of_files): # moving to project_helper
@@ -98,9 +100,10 @@ class ProjectManager:
                 return False
 
     def get_ids(self):
-        # check that group file is provided in the nimb_tmp/projects/project/stats dir
-        # chk that group file is present at the provided path
-        # chk that column group in present in the file
+        """ check that group file is provided in the nimb_tmp/projects/project/stats dir
+        chk that group file is present at the provided path
+        chk that column group in present in the file"""
+        file = 
 
         return 'None'
 
