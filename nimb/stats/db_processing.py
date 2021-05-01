@@ -23,7 +23,7 @@ class Table:
 
 
     def get_df(self, path2file, sheetname = 0, cols = None, index = None, rename=False):
-        print(f"    reading file: {path2file},\n        sheet: {sheetname}")
+        print(f"    reading file: {path2file}\n    sheet: {sheetname}")
         df = self.read_df(path2file, sheetname, cols)
         if index:
             df = self.change_index(df, index)

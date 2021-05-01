@@ -16,18 +16,14 @@ except ImportError:
 
 class DistributionHelper():
 
-    def __init__(self,
-                all_vars,
-                project_vars,
-                stats_vars):
+    def __init__(self, all_vars):
 
         self.all_vars         = all_vars
         self.credentials_home = all_vars.credentials_home # NIMB_HOME/credentials_paths.py
         self.locations        = all_vars.location_vars # credentials_home/local.json + remotes.json
-        self.proj_vars        = project_vars
+        self.proj_vars        = all_vars.projects[all_vars.params.project]
         self.NIMB_HOME        = self.locations["local"]["NIMB_PATHS"]["NIMB_HOME"]
         self.NIMB_tmp         = self.locations["local"]["NIMB_PATHS"]["NIMB_tmp"]
-        self.stats_vars       = stats_vars
 
         # setup folder
         self.setup_folder = "../setup"
@@ -200,13 +196,14 @@ class DistributionHelper():
                                                                 os.path.join(self.credentials_home, 'projects.json')))
             return False
 
-    def get_files_for_stats(self, path_2copy_files, list_of_files): # moving to project_helper
+    def get_files_for_stats(self, path_2copy_files, list_of_files):
         location = self.proj_vars['materials_DIR'][0]
         materials_dir_path = self.proj_vars['materials_DIR'][1]
         if location == 'local':
             for file in list_of_files:
                 path2file = os.path.join(materials_dir_path, file)
                 if os.path.exists(path2file):
+                    print(f'    copying files: {file} to: {path_2copy_files}')
                     shutil.copy(path2file, path_2copy_files)
         else:
             print('nimb must access the remote computer: {}'.format(location))
@@ -217,7 +214,7 @@ class DistributionHelper():
         else:
             return self.chk_files_for_stats(list_of_files, path_2copy_files)
 
-    def chk_files_for_stats(self, list_of_files, path_2copy_files):
+    def chk_files_for_stats(self, list_of_files, path_2copy_files): #move to ProjectManager
         f_ids_processed = self.locations["local"]["NIMB_PATHS"]['file_ids_processed']
         f_ids_processed_abspath = os.path.join(path_2copy_files,
                                                 f_ids_processed)
@@ -227,22 +224,17 @@ class DistributionHelper():
             if group_file in list_of_files:
                 print(f"trying to create {f_ids_processed} from group file: {group_file}")
                 from distribution.project_helper import ProjectManager
-                proj_manager = ProjectManager(self.proj_vars,
-                                            self.locations["local"],
-                                            self.stats_vars)
-                return proj_manager.f_ids_in_dir(path_2copy_files)
+                return ProjectManager(self.all_vars).f_ids_in_dir(path_2copy_files)
             else:
                 print(f'Cannot find group file: {group_file}. Cannot continue.')
                 return False
 
-    def prep_4stats(self, dir_4stats, fs = False):
+    def prep_4stats(self, fs = False):
         """create DIRs for stats (as per setup/stats.json)
            get group file (provided by user)
            return final stats_grid_file that will be used for statistical analysis
-        Args:
-            dir_4stats: DIR where stats are saved
         """
-        dir_4stats       = makedir_ifnot_exist(dir_4stats)
+        dir_4stats       = makedir_ifnot_exist(self.all_vars.stats_vars["STATS_PATHS"]["STATS_HOME"])
         fname_groups     = self.proj_vars['fname_groups']
         file_other_stats = []
         file_names = self.all_vars.stats_vars["STATS_FILES"]
@@ -263,7 +255,7 @@ class DistributionHelper():
                             file_other_stats)
         return fname_groups
 
-    def prep_4fs_stats(self, dir_4stats):
+    def prep_4fs_stats(self):
         '''create DIR to store stats files
             check if processed subjects are on the local computer
             if yes:
@@ -271,10 +263,8 @@ class DistributionHelper():
                 return OK to perform stats
             else:
                 return False
-        Args:
-            dir_4stats: DIR where stats are saved
         '''
-        dir_4stats       = makedir_ifnot_exist(dir_4stats)
+        dir_4stats       = makedir_ifnot_exist(self.all_vars.stats_vars["STATS_PATHS"]["STATS_HOME"])
         PROCESSED_FS_DIR = self.get_local_remote_dir(self.proj_vars["PROCESSED_FS_DIR"])
         if PROCESSED_FS_DIR:
             fname_groups     = self.proj_vars['fname_groups']

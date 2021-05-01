@@ -1,90 +1,80 @@
-'''
-projects require assessment of stage. Stages:
-- file with data is present
-- ids are present
-- source for IRM is defined
-- ids are processed with FreeSurfer/ nilearn, DWI
-- stats performed
-For missing stages, helper will initiate distribution for the corresponding stage
-Args:
-    project variables
-Return:
-    True, False
-'''
+# -*- coding: utf-8 -*-
 
 import os
 import pandas as pd
 
 from stats.db_processing import Table
 from distribution.distribution_helper import  DistributionHelper
+from distribution.utilities import makedir_ifnot_exist
 
 class ProjectManager:
-    def __init__(self,
-                project,
-                project_vars,
-                local_vars,
-                stats_vars):
-        self.local_vars         = local_vars
-        self.project            = project
-        self.f_groups           = project_vars['fname_groups']
-        self.bids_id_col        = project_vars['id_col']
-        self.location           = project_vars['materials_DIR'][0]
-        self.materials_dir_path = project_vars['materials_DIR'][1]
+    '''
+    projects require assessment of stage. Stages:
+    - file with data is present
+    - ids are present
+    - source for IRM is defined
+    - ids are processed with FreeSurfer/ nilearn, DWI
+    - stats performed
+    For missing stages, helper will initiate distribution for the corresponding stage
+    Args:
+        all_vars
+    '''
+
+    def __init__(self, all_vars):
+
+        self.all_vars           = all_vars
+        self.local_vars         = all_vars.location_vars['local']
+        self.project            = all_vars.params.project
+        self.project_vars       = all_vars.projects[self.project]
+        self.bids_id_col        = self.project_vars['id_col']
+        self.location           = self.project_vars['materials_DIR'][0]
+        self.materials_dir_path = self.project_vars['materials_DIR'][1]
 
         self.f_ids_name         = self.local_vars["NIMB_PATHS"]['file_ids_processed']
+        # self.f_ids_proc_path = os.path.join(self.materials_DIR,
+        #                         local_vars["NIMB_PATHS"]['file_ids_processed'])
+
         self.FS_SUBJECTS_DIR    = self.local_vars['FREESURFER']['FS_SUBJECTS_DIR']
-        self.path_stats_dir     = stats_vars["STATS_PATHS"]["STATS_HOME"]
-        self.path_fsglm_dir     = stats_vars["STATS_PATHS"]["FS_GLM_dir"]
+        self.path_stats_dir     = all_vars.stats_vars["STATS_PATHS"]["STATS_HOME"]
+        self.path_fsglm_dir     = all_vars.stats_vars["STATS_PATHS"]["FS_GLM_dir"]
         self.tab                = Table()
-        # self.Dist               = DistributionHelper()
-        self.run()
+        self.df_f_groups        = self.get_df_f_groups()
 
-    # def get_files_for_stats(self, path_2copy_files, list_of_files): # moving to project_helper
-    #     location = self.proj_vars['materials_DIR'][0]
-    #     materials_dir_path = self.proj_vars['materials_DIR'][1]
-    #     if location == 'local':
-    #         for file in list_of_files:
-    #             path2file = os.path.join(materials_dir_path, file)
-    #             if os.path.exists(path2file):
-    #                 shutil.copy(path2file, path_2copy_files)
-    #     else:
-    #         print('nimb must access the remote computer: {}'.format(location))
-    #         from distribution import SSHHelper
-    #         SSHHelper.download_files_from_server(location, materials_dir_path, path_2copy_files, list_of_files)
-    #     if os.path.exists(os.path.join(path_2copy_files, list_of_files[-1])):
-    #         return True
-    #     else:
-    #         return self.chk_files_for_stats(list_of_files, path_2copy_files)
 
-    def get_groups_file(self):
-        if self.location == 'local':
-            self.groups_df = self.tab.get_df(os.path.join(self.materials_dir_path, self.f_groups))
+    def get_df_f_groups(self):
+        self.df_grid_ok = False
+        f_groups = self.project_vars['fname_groups']
+        dir_4stats       = makedir_ifnot_exist(self.path_stats_dir)
+        if DistributionHelper(self.all_vars).get_files_for_stats(dir_4stats,
+                                                            [f_groups,]):
+            self.df_grid_ok = True
+            return self.tab.get_df(os.path.join(dir_4stats, f_groups))
         else:
-            print('nimb must access the remote computer: {}'.format(self.location))
-            from distribution import SSHHelper
-            SSHHelper.download_files_from_server(self.location, self.materials_dir_path, self.path_fsglm_dir, [self.f_groups,])
-            path_2file = os.path.join(self.path_fsglm_dir, self.f_groups)
-            if os.path.exists(path_2file):
-                self.groups_df = self.tab.get_df(path_2file)
-            else:
-                self.groups_df = None
+            self.df_grid_ok = False
+            return 'None'
+
 
     def _ids_file(self):
-        from . distribution_definitions import get_keys_processed
-        _ids = dict()
-        self.get_groups_file()
-        bids_ids = self.groups_df[self.bids_id_col]
-        for bids_id in bids_ids:
-            _ids[bids_id] = dict()
-            fs_key = get_keys_processed('fs')
-            path_2_processed = os.path.join(self.FS_SUBJECTS_DIR,
-                        bids_id)
-            if os.path.exists(path_2_processed):
-                _ids[bids_id][fs_key] = path_2_processed
-            else:
-                _ids[bids_id][fs_key] = ''
-        print(_ids, self.f_ids_name)
-        return None# self.f_ids_name
+        if self.df_grid_ok:
+            from . distribution_definitions import get_keys_processed
+            _ids = dict()
+
+            self.groups_df = self.get_df_f_groups()
+            bids_ids = self.groups_df[self.bids_id_col]
+            for bids_id in bids_ids:
+                _ids[bids_id] = dict()
+                fs_key = get_keys_processed('fs')
+                path_2_processed = os.path.join(self.FS_SUBJECTS_DIR,
+                            bids_id)
+                if os.path.exists(path_2_processed):
+                    _ids[bids_id][fs_key] = path_2_processed
+                else:
+                    _ids[bids_id][fs_key] = ''
+            print(_ids, self.f_ids_name)
+            return None# self.f_ids_name
+        else:
+            pass
+
 
     def f_ids_in_dir(self, path_2groups_f):
         # print(self.path_2copy_files)
@@ -99,13 +89,98 @@ class ProjectManager:
                 print('could not create the file with ids')
                 return False
 
-    def get_ids(self):
-        """ check that group file is provided in the nimb_tmp/projects/project/stats dir
-        chk that group file is present at the provided path
-        chk that column group in present in the file"""
-        file = 
 
-        return 'None'
+    def get_ids(self):
+        """ 
+            extract bids ids from the file groups provided by user
+        """
+        if self.df_grid_ok:
+            return list(self.df_f_groups[self.bids_id_col])
+        else:
+            return 'None'
+
+
+    # def run_from_project(self):
+    #     grid_df = self.tab.get_df(os.path.join(self.materials_DIR, self.project_vars["fname_groups"]))
+
+    #     if os.path.exists(self.f_ids_proc_path):
+    #         return True
+    #     else:
+    #         self.grid_df = self.tab.get_df(self.files['grid']['file'])
+    #         ready, _ids_fsproc = self.get_fs_processed()
+    #         if ready:
+    #             from distribution.distribution_definitions import get_keys_processed
+    #             self.f_ids = dict()
+
+    #             for bids_id in [i for i in list(_ids_fsproc.keys())]:
+    #                 self.f_ids[bids_id] = dict()
+    #                 fs_key = get_keys_processed('fs')
+    #                 fs_id = _ids_fsproc[bids_id][0]
+    #                 if fs_id:
+    #                     self.f_ids[bids_id][fs_key] = fs_id
+    #                 else:
+    #                     self.f_ids[bids_id][fs_key] = ''
+    #             # d_ids = {self.files['grid']['ids']: [i for i in list(_ids_fsproc.keys())],
+    #             #          'freesurfer': [i[0].replace('.zip','') for i in list(_ids_fsproc.values())]}
+    #             # fs_proc_df = self.tab.create_df_from_dict(d_ids)
+    #             # fs_proc_df = self.tab.change_index(fs_proc_df, self.files['grid']['ids'])
+    #             # grid_fs_df_pre = self.tab.change_index(self.grid_df, self.files['grid']['ids'])
+    #             # self.f_ids = self.tab.join_dfs(grid_fs_df_pre, fs_proc_df, how='outer')
+    #             # _id_fsproc = self.extract_fs_proc()
+    #             return self.create_file_ids()
+    #         else:
+    #             return False
+
+    # def extract_fs_proc(self):
+    #     '''fs processed are zipped
+    #         this will unzip the surf and label folders
+    #     '''
+    #     for _id_zipped in [i[0] for i in _ids_fsproc.values()]:
+    #         _id_in_subj_dir = (os.path.join(self.SUBJECTS_DIR, _id_zipped.replace('.zip','')))
+    #         if not os.path.exists(_id_in_subj_dir):
+    #             print(_id_zipped,' missing')
+    #             zip_file_path = (os.path.join(self.vars.fs_processed_path(), _id_zipped))
+    #             dirs2xtrct = ['surf', 'label']
+    #             self.Zip(zip_file_path, path2xtrct = self.SUBJECTS_DIR, dirs2xtrct = dirs2xtrct)
+    #             if not os.path.exists(_id_in_subj_dir):
+    #                 print(_id_zipped,' not extracted')
+    #         else:
+    #             print(_id_zipped,' ready for FS glm')
+    #     return True
+
+
+    # def get_fs_processed(self):
+    #     '''use ids from the grid_ids
+    #        extract processed ids from the FreeSurfer processed folder
+    #        parameters present in the name: presence of WM, absence of T2, absence of T1B
+    #     '''
+    #     _id_fsproc = dict()
+    #     fs_processed_all = os.listdir(self.vars.fs_processed_path())
+    #     grid_ids = self.grid_df[self.files['grid']['ids']].tolist()
+    #     for _id in grid_ids:
+    #         for i in fs_processed_all:
+    #             if _id in i and 'WM' in i and 'T2' not in i and 'T1B' not in i:
+    #                 _id_fsproc = self.populate_dict(_id_fsproc, _id, i)
+    #     missing = [i for i in _id_fsproc if not _id_fsproc[i]]
+    #     if missing:
+    #         print('missing IDs:', len(missing), missing)
+    #         return False, missing
+    #     else:
+    #         return True, _id_fsproc
+
+
+    # def populate_dict(self, d, cle, val):
+    #     if cle not in d:
+    #         d[cle] = list()
+    #     if val not in d[cle]:
+    #         d[cle].append(val)
+    #     return d
+
+    # def create_file_ids(self):
+    #     print('creating file with groups {}'.format(self.f_ids_proc_path))
+    #     self.save_json(self.f_ids, self.f_ids_proc_path)
+    #     return True
+
 
     def run(self):
         """
@@ -125,7 +200,6 @@ class ProjectManager:
 
 
 #         # check that all subjects have corresponding FreeSurfer processed data
-#         id_col           = self.projects[self.project_name]['id_col']
 #         fs_processed_col = 'path_freesurfer711'
 #         irm_source_col = 'path_source'
 #         df = pd.read_csv(path.join(self.projects[self.project_name]['materials_DIR'], self.projects[self.proj>

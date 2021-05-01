@@ -19,12 +19,12 @@ from sys import platform
 from setup.interminal_setup import get_yes_no
 
 class DistributionReady():
-    def __init__(self, all_vars, proj_vars):
+    def __init__(self, all_vars):
 
         self.credentials_home = all_vars.credentials_home # NIMB_HOME/credentials_paths.py
         self.locations        = all_vars.location_vars # credentials_home/local.json + remotes.json
         self.stats_vars       = all_vars.stats_vars
-        self.proj_vars        = proj_vars # credentials_home/project.json
+        self.proj_vars        = all_vars.projects[all_vars.params.project] # credentials_home/project.json
         self.NIMB_HOME        = self.locations["local"]["NIMB_PATHS"]["NIMB_HOME"]
         self.NIMB_tmp         = self.locations["local"]["NIMB_PATHS"]["NIMB_tmp"]
 
@@ -45,20 +45,25 @@ class DistributionReady():
             ErrorMessages.error_fsready()
             ready = False
         conda_home = self.locations['local']['NIMB_PATHS']['conda_home']
-        print('checking conda at: {}'.format(conda_home))
-        if not is_miniconda_installed(conda_home):
-            # # if has permission to install
-            # if not is_writable_directory(conda_home):
-                # print("miniconda path is not writable. Check the permission.")
-                # return False
-            # # true: install setup_minicoda.py
-            if get_yes_no('do you want to try and install conda? (may take up to 30 minutes) (y/n)') == 1:
-                setup_miniconda(conda_home, self.NIMB_HOME)
-        if check_that_modules_are_installed(conda_home, self.NIMB_HOME):
-            print("conda has all modules installed")
+        python3_run_cmd = self.locations['local']['PROCESSING']['python3_run_cmd']
+        if conda_home in python3_run_cmd:
+            print('    conda is used to run python. checking conda at: {}'.format(conda_home))
+            if not is_miniconda_installed(conda_home):
+                # # if has permission to install
+                # if not is_writable_directory(conda_home):
+                    # print("miniconda path is not writable. Check the permission.")
+                    # return False
+                # # true: install setup_minicoda.py
+                if get_yes_no('do you want to try and install conda? (may take up to 30 minutes) (y/n)') == 1:
+                    setup_miniconda(conda_home, self.NIMB_HOME)
+            if check_that_modules_are_installed(conda_home, self.NIMB_HOME):
+                print("    conda has all modules installed")
+            else:
+                ErrorMessages.error_conda()
+                return False
         else:
-            ErrorMessages.error_conda()
-            return False
+            print(f"    using {python3_run_cmd} as command to run python")
+
 
         # # check $FREESURFER_HOME  exists
         # # source home

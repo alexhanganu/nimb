@@ -1,7 +1,5 @@
+
 import os
-from distribution.distribution_helper import DistributionHelper
-from setup.get_vars import Get_Vars
-from nimb import get_parameters, NIMB
 import logging
 logger = logging.getLogger(__name__)
 logging.basicConfig(format='%(asctime)s %(module)s %(levelname)s: %(message)s')
@@ -161,6 +159,8 @@ class DistributionCheckNew():
         pass
 
 if __name__ == "__main__":
+    from setup.get_vars import Get_Vars
+    from nimb import get_parameters, NIMB
 
     # {“adni”: “SOURCE_SUBJECTS_DIR” : ['beluga', '/home/$USER/projects/def-hanganua/databases/loni_adni/source/mri'];
     # “PROCESSED_FS_DIR” : ["beluga", "home/$USER/projects/def-hanganua/databases/loni_adni/processed_fs7"]}

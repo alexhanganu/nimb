@@ -48,9 +48,7 @@ class Get_Vars():
 
         self.credentials_home = _get_credentials_home()
         # print("        credentials are located at: {}".format(self.credentials_home))
-        self.default_projects = load_json(path.join(path.dirname(path.abspath(__file__)), 'projects.json'))
-        self.default_local    = load_json(path.join(path.dirname(path.abspath(__file__)), 'local.json'))
-        self.default_stats    = load_json(path.join(path.dirname(path.abspath(__file__)), 'stats.json'))
+        self.params           = list()
 
         if path.exists(path.join(self.credentials_home, 'projects.json')):
             projects_user      = load_json(path.join(self.credentials_home, 'projects.json'))
@@ -171,6 +169,8 @@ class Get_Vars():
         :param config_file: path to configuration json file
         :return: new version, populated with missing values
         """
+        self.default_projects = load_json(path.join(path.dirname(path.abspath(__file__)), 'projects.json'))
+
         update = False
         all_projects = [i for i in projects_user.keys() if 'EXPLANATION' not in i and 'LOCATION' not in i and 'PROJECTS' not in i]
         for Project in all_projects:
@@ -188,6 +188,8 @@ class Get_Vars():
         return projects_user
 
     def chk_location_vars(self, all_loc_vars):
+        self.default_local = load_json(path.join(path.dirname(path.abspath(__file__)), 'local.json'))
+
         update = False
         for location in all_loc_vars:
             for Key in self.default_local:
@@ -231,6 +233,8 @@ class Get_Vars():
         :param config_file: path to configuration json file
         :return: new version, populated with missing values
         """
+        self.default_stats = load_json(path.join(path.dirname(path.abspath(__file__)), 'stats.json'))
+
         update = False
         for key in [i for i in self.default_stats.keys() if 'EXPLANATION' not in i]:
             if key not in stats_user:
