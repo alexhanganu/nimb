@@ -54,7 +54,7 @@ class ProjectManager:
             return 'None'
 
 
-    def _ids_file(self):
+    def _ids_file_create(self):
         if self.df_grid_ok:
             from . distribution_definitions import get_keys_processed
             _ids = dict()
@@ -76,33 +76,7 @@ class ProjectManager:
             pass
 
 
-    def f_ids_in_dir(self, path_2groups_f):
-        # print(self.path_2copy_files)
-        if os.path.exists(os.path.join(
-                    path_2groups_f,
-                    self.f_ids_name)):
-            return True
-        else:
-            if self._ids_file():
-                return True
-            else:
-                print('could not create the file with ids')
-                return False
-
-
-    def get_ids(self):
-        """ 
-            extract bids ids from the file groups provided by user
-        """
-        if self.df_grid_ok:
-            return list(self.df_f_groups[self.bids_id_col])
-        else:
-            return 'None'
-
-
     # def run_from_project(self):
-    #     grid_df = self.tab.get_df(os.path.join(self.materials_DIR, self.project_vars["fname_groups"]))
-
     #     if os.path.exists(self.f_ids_proc_path):
     #         return True
     #     else:
@@ -126,27 +100,9 @@ class ProjectManager:
     #             # fs_proc_df = self.tab.change_index(fs_proc_df, self.files['grid']['ids'])
     #             # grid_fs_df_pre = self.tab.change_index(self.grid_df, self.files['grid']['ids'])
     #             # self.f_ids = self.tab.join_dfs(grid_fs_df_pre, fs_proc_df, how='outer')
-    #             # _id_fsproc = self.extract_fs_proc()
     #             return self.create_file_ids()
     #         else:
     #             return False
-
-    # def extract_fs_proc(self):
-    #     '''fs processed are zipped
-    #         this will unzip the surf and label folders
-    #     '''
-    #     for _id_zipped in [i[0] for i in _ids_fsproc.values()]:
-    #         _id_in_subj_dir = (os.path.join(self.SUBJECTS_DIR, _id_zipped.replace('.zip','')))
-    #         if not os.path.exists(_id_in_subj_dir):
-    #             print(_id_zipped,' missing')
-    #             zip_file_path = (os.path.join(self.vars.fs_processed_path(), _id_zipped))
-    #             dirs2xtrct = ['surf', 'label']
-    #             self.Zip(zip_file_path, path2xtrct = self.SUBJECTS_DIR, dirs2xtrct = dirs2xtrct)
-    #             if not os.path.exists(_id_in_subj_dir):
-    #                 print(_id_zipped,' not extracted')
-    #         else:
-    #             print(_id_zipped,' ready for FS glm')
-    #     return True
 
 
     # def get_fs_processed(self):
@@ -159,7 +115,7 @@ class ProjectManager:
     #     grid_ids = self.grid_df[self.files['grid']['ids']].tolist()
     #     for _id in grid_ids:
     #         for i in fs_processed_all:
-    #             if _id in i and 'WM' in i and 'T2' not in i and 'T1B' not in i:
+    #             if _id in i:
     #                 _id_fsproc = self.populate_dict(_id_fsproc, _id, i)
     #     missing = [i for i in _id_fsproc if not _id_fsproc[i]]
     #     if missing:
@@ -182,6 +138,38 @@ class ProjectManager:
     #     return True
 
 
+    def f_ids_in_dir(self, path_2groups_f):
+        f_ids_abspath = os.path.join(path_2groups_f, self.f_ids_name)
+        if os.path.exists(f_ids_abspath):
+            return True
+        else:
+            if self._ids_file_create():
+                return True
+            else:
+                print('could not create the file with ids')
+                return False
+
+
+    def get_ids_bids(self):
+        """ 
+            extract bids ids from the file groups provided by user
+        """
+        if self.df_grid_ok:
+            return list(self.df_f_groups[self.bids_id_col])
+        else:
+            return 'None'
+
+
+    def get_ids_all(self):
+        """ 
+            extract bids ids from the file groups provided by user
+        """
+        if self.f_ids_in_dir(self.path_stats_dir):
+            return os.path.join(self.path_stats_dir, self.f_ids_name)
+        else:
+            return 'None'
+
+
     def run(self):
         """
             will run the whole project starting with the file provided in the projects.json -> group
@@ -191,7 +179,9 @@ class ProjectManager:
             stats
         """
         print(f'   running pipeline for project: {self.project}')
-        _ids_bids = self.get_ids()
+        _ids_bids = self.get_ids_bids()
+        _ids_all = self.get_ids_all()
+
         # chk that all participants underwent Freesurfer processing; IDs of participanta are considered to be BIDS ids (no session)
         # if not - ask if FreeSurfer processing is requested by the user. Default - no.
         # chk that group file includes all variables defined in the projects.json file
