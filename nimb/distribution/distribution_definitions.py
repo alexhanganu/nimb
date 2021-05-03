@@ -1,4 +1,4 @@
-ids_processed = ('src', 'fs', 'freesurfer', 'nilearn', 'dipy')
+#ids_processed = ('src', 'fs', 'nilearn', 'dipy') #can be removed ?
 
 def get_keys_processed(key):
     if key == 'src':

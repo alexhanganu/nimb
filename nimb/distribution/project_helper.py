@@ -5,7 +5,16 @@ import pandas as pd
 
 from stats.db_processing import Table
 from distribution.distribution_helper import  DistributionHelper
-from distribution.utilities import makedir_ifnot_exist
+from distribution.utilities import save_json, makedir_ifnot_exist
+from distribution.distribution_definitions import get_keys_processed
+
+
+# 2ADD:
+# chk that group file includes all variables defined in the projects.json file
+# chk that is ready to perform stats
+# chk if stats were performed. If not - ask if stats are requested.
+# if not - ask if FreeSurfer processing is requested by the user. Default - no.
+
 
 class ProjectManager:
     '''
@@ -31,12 +40,14 @@ class ProjectManager:
         self.materials_dir_path = self.project_vars['materials_DIR'][1]
 
         self.f_ids_name         = self.local_vars["NIMB_PATHS"]['file_ids_processed']
+
         # self.f_ids_proc_path = os.path.join(self.materials_DIR,
         #                         local_vars["NIMB_PATHS"]['file_ids_processed'])
 
-        self.FS_SUBJECTS_DIR    = self.local_vars['FREESURFER']['FS_SUBJECTS_DIR']
         self.path_stats_dir     = all_vars.stats_vars["STATS_PATHS"]["STATS_HOME"]
         self.path_fsglm_dir     = all_vars.stats_vars["STATS_PATHS"]["FS_GLM_dir"]
+        self.f_ids_abspath      = os.path.join(self.path_stats_dir, self.f_ids_name)
+        self.archive_type       = '.zip'
         self.tab                = Table()
         self.df_f_groups        = self.get_df_f_groups()
 
@@ -54,105 +65,26 @@ class ProjectManager:
             return 'None'
 
 
-    def _ids_file_create(self):
-        if self.df_grid_ok:
-            from . distribution_definitions import get_keys_processed
-            _ids = dict()
-
-            self.groups_df = self.get_df_f_groups()
-            bids_ids = self.groups_df[self.bids_id_col]
-            for bids_id in bids_ids:
-                _ids[bids_id] = dict()
-                fs_key = get_keys_processed('fs')
-                path_2_processed = os.path.join(self.FS_SUBJECTS_DIR,
-                            bids_id)
-                if os.path.exists(path_2_processed):
-                    _ids[bids_id][fs_key] = path_2_processed
-                else:
-                    _ids[bids_id][fs_key] = ''
-            print(_ids, self.f_ids_name)
-            return None# self.f_ids_name
-        else:
-            pass
-
-
-    # def run_from_project(self):
-    #     if os.path.exists(self.f_ids_proc_path):
-    #         return True
-    #     else:
-    #         self.grid_df = self.tab.get_df(self.files['grid']['file'])
-    #         ready, _ids_fsproc = self.get_fs_processed()
-    #         if ready:
-    #             from distribution.distribution_definitions import get_keys_processed
-    #             self.f_ids = dict()
-
-    #             for bids_id in [i for i in list(_ids_fsproc.keys())]:
-    #                 self.f_ids[bids_id] = dict()
-    #                 fs_key = get_keys_processed('fs')
-    #                 fs_id = _ids_fsproc[bids_id][0]
-    #                 if fs_id:
-    #                     self.f_ids[bids_id][fs_key] = fs_id
-    #                 else:
-    #                     self.f_ids[bids_id][fs_key] = ''
-    #             # d_ids = {self.files['grid']['ids']: [i for i in list(_ids_fsproc.keys())],
-    #             #          'freesurfer': [i[0].replace('.zip','') for i in list(_ids_fsproc.values())]}
-    #             # fs_proc_df = self.tab.create_df_from_dict(d_ids)
-    #             # fs_proc_df = self.tab.change_index(fs_proc_df, self.files['grid']['ids'])
-    #             # grid_fs_df_pre = self.tab.change_index(self.grid_df, self.files['grid']['ids'])
-    #             # self.f_ids = self.tab.join_dfs(grid_fs_df_pre, fs_proc_df, how='outer')
-    #             return self.create_file_ids()
-    #         else:
-    #             return False
-
-
-    # def get_fs_processed(self):
-    #     '''use ids from the grid_ids
-    #        extract processed ids from the FreeSurfer processed folder
-    #        parameters present in the name: presence of WM, absence of T2, absence of T1B
-    #     '''
-    #     _id_fsproc = dict()
-    #     fs_processed_all = os.listdir(self.vars.fs_processed_path())
-    #     grid_ids = self.grid_df[self.files['grid']['ids']].tolist()
-    #     for _id in grid_ids:
-    #         for i in fs_processed_all:
-    #             if _id in i:
-    #                 _id_fsproc = self.populate_dict(_id_fsproc, _id, i)
-    #     missing = [i for i in _id_fsproc if not _id_fsproc[i]]
-    #     if missing:
-    #         print('missing IDs:', len(missing), missing)
-    #         return False, missing
-    #     else:
-    #         return True, _id_fsproc
-
-
-    # def populate_dict(self, d, cle, val):
-    #     if cle not in d:
-    #         d[cle] = list()
-    #     if val not in d[cle]:
-    #         d[cle].append(val)
-    #     return d
-
-    # def create_file_ids(self):
-    #     print('creating file with groups {}'.format(self.f_ids_proc_path))
-    #     self.save_json(self.f_ids, self.f_ids_proc_path)
-    #     return True
-
-
-    def f_ids_in_dir(self, path_2groups_f):
-        f_ids_abspath = os.path.join(path_2groups_f, self.f_ids_name)
-        if os.path.exists(f_ids_abspath):
-            return True
-        else:
-            if self._ids_file_create():
-                return True
-            else:
-                print('could not create the file with ids')
-                return False
+    def run(self):
+        """
+            will run the whole project starting with the file provided in the projects.json -> group
+        Args:
+            groups file
+        Return:
+            stats
+        """
+        print(f'   running pipeline for project: {self.project}')
+        _ids_bids = self.get_ids_bids()
+        _ids_all = self.get_ids_all()
 
 
     def get_ids_bids(self):
         """ 
             extract bids ids from the file groups provided by user
+            !! ATTENTION - bids_id must also comprise the session name
+            as defined in the sessions folder of BIDS structure
+            current abbreviation is ses_00; this varibale must be changed 
+            to allow users to define it
         """
         if self.df_grid_ok:
             return list(self.df_f_groups[self.bids_id_col])
@@ -170,42 +102,93 @@ class ProjectManager:
             return 'None'
 
 
-    def run(self):
-        """
-            will run the whole project starting with the file provided in the projects.json -> group
+    def f_ids_in_dir(self, path_2groups_f):
+        self.f_ids_abspath = os.path.join(path_2groups_f, self.f_ids_name)
+        if os.path.exists(self.f_ids_abspath):
+            return True
+        else:
+            return self._ids_file_try2make()
+
+
+    def _ids_file_try2make(self):
+        if self.df_grid_ok:
+            bids_ids = self.df_f_groups[self.bids_id_col]
+            self.make_reading_dirs()
+
+            _ids = dict()
+            for bids_id in bids_ids:
+                _ids = self.populate_ids_all(_ids, bids_id)
+            self.create_file_ids(_ids)
+
+            if os.path.exists(self.f_ids_abspath):
+                return True
+            else:
+                print('could not create the file with ids')
+                True
+        else:
+            return False
+
+
+    def make_reading_dirs(self):
+        dir_NEW_SUBJECTS = self.local_vars['NIMB_PATHS']['NIMB_NEW_SUBJECTS']
+        dir_PROCESSED_FS = self.local_vars['NIMB_PATHS']['NIMB_PROCESSED_FS']
+        dir_PROCESSED_NILEARN = self.local_vars['NIMB_PATHS']['NIMB_PROCESSED_NILEARN']
+        dir_PROCESSED_DIPY = self.local_vars['NIMB_PATHS']['NIMB_PROCESSED_DIPY']
+        self.keys2chk = {
+            'src': dir_NEW_SUBJECTS,
+            'fs': dir_PROCESSED_FS,
+            'nilearn': dir_PROCESSED_NILEARN,
+            'dipy': dir_PROCESSED_DIPY,
+                            }
+        self.content_dirs = {}
+        for key in self.keys2chk:
+            dir2chk = self.keys2chk[key]
+            if os.path.exists(dir2chk):
+                self.content_dirs[key] = dir2chk
+
+
+    def populate_ids_all(self, _ids, bids_id):
+        '''tries to populate the _ids_file with corresponding FreeSurfer processed folder
+            f_ids includes only the archived folder names
         Args:
-            groups file
+            _ids: dict() with bids_ids as keys and 'fs': fs_ids as as values
         Return:
-            stats
-        """
-        print(f'   running pipeline for project: {self.project}')
-        _ids_bids = self.get_ids_bids()
-        _ids_all = self.get_ids_all()
-
-        # chk that all participants underwent Freesurfer processing; IDs of participanta are considered to be BIDS ids (no session)
-        # if not - ask if FreeSurfer processing is requested by the user. Default - no.
-        # chk that group file includes all variables defined in the projects.json file
-        # chk that is ready to perform stats
-        # chk if stats were performed. If not - ask if stats are requested.
-
-
-#         # check that all subjects have corresponding FreeSurfer processed data
-#         fs_processed_col = 'path_freesurfer711'
-#         irm_source_col = 'path_source'
-#         df = pd.read_csv(path.join(self.projects[self.project_name]['materials_DIR'], self.projects[self.proj>
-#         ls_miss = df[irm_source_col].tolist()
-#         remote_loc = self.get_processing_location('freesurfer')
-#         remote_loc = remote_loc[0]
-#         # check if self.fs_ready(remote_loc)
-# #        host_name = ""
-# #        if self.fs_ready():
-# #            # 1. install required library and software on the local computer, including freesurfer
-# #            self.setting_up_local_computer()
-# #            # install freesurfer locally
-# #            setup = SETUP_FREESURFER(self.locations)
-#         SSHHelper.upload_multiple_files_to_cluster(remote_loc, ls_miss, self.locations[remote_loc]["NIMB_PATHS"]["NIMB_tmp"]
-
+            newly populated dict()
         '''
+        '''
+        2DO
+        currently - check if dirs are on local
+        must add if dirs are on remote
+        '''
+        _ids[bids_id] = dict()
+
+        for key in self.content_dirs:
+            key = get_keys_processed(self.content_dirs)
+            dir2chk = self.keys2chk[key]
+            content2chk  = self.content_dirs[key]
+            _ids[bids_id][key] = ''
+            for _dir in content2chk:
+                if bids_id in _dir:
+                    _ids[bids_id][key] = _dir
+        return _ids
+
+
+    def populate_ids_all_from_remote(self, _ids, bids_id):
+        '''
+        fs_processed_col = 'path_freesurfer711'
+        irm_source_col = 'path_source'
+        df = pd.read_csv(path.join(self.projects[self.project_name]['materials_DIR'], self.projects[self.proj>
+        ls_miss = df[irm_source_col].tolist()
+        remote_loc = self.get_processing_location('freesurfer')
+        remote_loc = remote_loc[0]
+        check if self.fs_ready(remote_loc)
+        host_name = ""
+        if self.fs_ready():
+           # 1. install required library and software on the local computer, including freesurfer
+           self.setting_up_local_computer()
+           # install freesurfer locally
+           setup = SETUP_FREESURFER(self.locations)
+        SSHHelper.upload_multiple_files_to_cluster(remote_loc, ls_miss, self.locations[remote_loc]["NIMB_PATHS"]["NIMB_tmp"]
         else:
             logger.debug("Setting up the remote server")
             # --get the name and the address of remote server
@@ -230,3 +213,10 @@ class ProjectManager:
         self.run_processing_on_cluster_2()
         '''
 
+        # return _ids
+        pass
+
+
+    def create_file_ids(self, _ids):
+        print('creating file with groups {}'.format(self.f_ids_abspath))
+        self.save_json(_ids, self.f_ids_abspath)

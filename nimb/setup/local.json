@@ -9,6 +9,8 @@
     "NIMB_tmp"                : "~/nimb_tmp",
     "NIMB_NEW_SUBJECTS"       : "~/nimb_tmp/new_subjects",
     "NIMB_PROCESSED_FS"       : "~/nimb_tmp/nimb_processed_fs",
+    "NIMB_PROCESSED_NILEARN"  : "~/nimb_tmp/nimb_processed_nilearn",
+    "NIMB_PROCESSED_DIPY"     : "~/nimb_tmp/nimb_processed_dipy",
     "NIMB_PROCESSED_FS_error" : "~/nimb_tmp/nimb_processed_fs_error",
     "file_ids_processed"      : "f_ids.json",
     "conda_home"              : "~/conda",
