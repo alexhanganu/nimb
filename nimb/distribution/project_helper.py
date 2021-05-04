@@ -21,7 +21,8 @@ class ProjectManager:
     projects require assessment of stage. Stages:
     - file with data is present
     - ids are present
-    - source for IRM is defined
+    - BIDS is performed, files are present in the BIDS corresponding folders
+    -> if not: source for IRM is defined
     - ids are processed with FreeSurfer/ nilearn, DWI
     - stats performed
     For missing stages, helper will initiate distribution for the corresponding stage
@@ -36,9 +37,6 @@ class ProjectManager:
         self.project            = all_vars.params.project
         self.project_vars       = all_vars.projects[self.project]
         self.bids_id_col        = self.project_vars['id_col']
-        self.location           = self.project_vars['materials_DIR'][0]
-        self.materials_dir_path = self.project_vars['materials_DIR'][1]
-
         self.f_ids_name         = self.local_vars["NIMB_PATHS"]['file_ids_processed']
 
         # self.f_ids_proc_path = os.path.join(self.materials_DIR,
@@ -130,21 +128,22 @@ class ProjectManager:
 
 
     def make_reading_dirs(self):
-        dir_NEW_SUBJECTS = self.local_vars['NIMB_PATHS']['NIMB_NEW_SUBJECTS']
-        dir_PROCESSED_FS = self.local_vars['NIMB_PATHS']['NIMB_PROCESSED_FS']
-        dir_PROCESSED_NILEARN = self.local_vars['NIMB_PATHS']['NIMB_PROCESSED_NILEARN']
-        dir_PROCESSED_DIPY = self.local_vars['NIMB_PATHS']['NIMB_PROCESSED_DIPY']
+        SOURCE_BIDS_DIR = self.project_vars['SOURCE_BIDS_DIR']
+        SOURCE_SUBJECTS_DIR = self.project_vars['SOURCE_SUBJECTS_DIR']
+        PROCESSED_FS_DIR = self.project_vars['PROCESSED_FS_DIR']
+        PROCESSED_NILEARN_DIR = self.project_vars['PROCESSED_NILEARN_DIR']
+        PROCESSED_DIPY_DIR = self.project_vars['PROCESSED_DIPY_DIR']
         self.keys2chk = {
-            'src': dir_NEW_SUBJECTS,
-            'fs': dir_PROCESSED_FS,
-            'nilearn': dir_PROCESSED_NILEARN,
-            'dipy': dir_PROCESSED_DIPY,
+            'src': SOURCE_SUBJECTS_DIR,
+            'fs': PROCESSED_FS_DIR,
+            'nilearn': PROCESSED_NILEARN_DIR,
+            'dipy': PROCESSED_DIPY_DIR,
                             }
         self.content_dirs = {}
         for key in self.keys2chk:
-            dir2chk = self.keys2chk[key]
+            dir2chk = self.keys2chk[key][1]
             if os.path.exists(dir2chk):
-                self.content_dirs[key] = dir2chk
+                self.content_dirs[key] = os.listdir(dir2chk)
 
 
     def populate_ids_all(self, _ids, bids_id):
@@ -162,14 +161,14 @@ class ProjectManager:
         '''
         _ids[bids_id] = dict()
 
-        for key in self.content_dirs:
-            key = get_keys_processed(self.content_dirs)
-            dir2chk = self.keys2chk[key]
-            content2chk  = self.content_dirs[key]
-            _ids[bids_id][key] = ''
+        for key in self.keys2chk:
+            dir2chk     = self.keys2chk[key][1]
+            content2chk = self.content_dirs[key]
+            key_nimb    = get_keys_processed(key)
+            _ids[bids_id][key_nimb] = ''
             for _dir in content2chk:
                 if bids_id in _dir:
-                    _ids[bids_id][key] = _dir
+                    _ids[bids_id][key_nimb] = _dir
         return _ids
 
 
