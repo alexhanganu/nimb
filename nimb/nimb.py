@@ -13,6 +13,7 @@ from distribution.logger import Log
 from processing.schedule_helper import Scheduler
 from setup.version import __version__
 
+
 class NIMB(object):
     """ Object to initiate pipeline
     Args:
@@ -44,6 +45,7 @@ class NIMB(object):
         if self.process == 'ready':
             DistributionReady(self.all_vars).check_ready()
 
+
         if self.process == 'classify':
             print('checking if ready to classify')
             if not DistributionReady(self.all_vars).classify_ready():
@@ -59,6 +61,7 @@ class NIMB(object):
                                          self.vars_local['FREESURFER']['multiple_T1_entries'],
                                          self.vars_local['FREESURFER']['flair_t2_add']).run()
 
+
         if self.process == 'run-stats':
             if not DistributionReady(self.all_vars).chk_if_ready_for_stats():
                 print("NIMB is not ready to run the stats. Please check the configuration files.")
@@ -71,6 +74,7 @@ class NIMB(object):
                     cd_cmd = 'cd {}'.format(path.join(self.NIMB_HOME, 'stats'))
                     cmd = f'{self.py_run_cmd} stats_helper.py -project {self.project}'
                     schedule.submit_4_processing(cmd, 'nimb_stats','run', cd_cmd)
+
 
         # FreeSurfer related codes: "freesurfer"   - performs preprocessing
         #							"fs-get-stats" - extracts statistical data an an xls/ xlsx/ csv file
@@ -86,6 +90,7 @@ class NIMB(object):
                 self.schedule.submit_4_processing(cmd, 'nimb','run', cd_cmd,
                                                 activate_fs = False,
                                                 python_load = True)
+
         if self.process == 'fs-get-stats':
             if DistributionReady(self.all_vars).chk_if_ready_for_stats():
                 PROCESSED_FS_DIR = DistributionHelper(self.all_vars).prep_4fs_stats()
@@ -96,6 +101,8 @@ class NIMB(object):
                     cmd = f'{self.py_run_cmd} fs_stats2table.py -project {self.project} -stats_dir {dir_4stats}'
                     cd_cmd = 'cd {}'.format(path.join(self.NIMB_HOME, 'processing', 'freesurfer'))
                     schedule.submit_4_processing(cmd, 'fs_stats','get_stats', cd_cmd)
+
+
         if self.process == 'fs-glm':
             '''checks that all subjects are present in the SUBJECTS_DIR folder that will be used for GLM analysis,
                 sends cmd to batch to initiate FreeSurfer GLM running script
@@ -114,6 +121,8 @@ class NIMB(object):
                     cd_cmd = 'cd {}'.format(path.join(self.NIMB_HOME, 'processing', 'freesurfer'))
                     cmd = f'{self.py_run_cmd} fs_glm_runglm.py -project {self.project} -glm_dir {GLM_dir}'
                     schedule_fsglm.submit_4_processing(cmd, 'fs_glm','run_glm', cd_cmd)
+
+
         if self.process == 'fs-glm-image':
             '''extracts FS-GLM images for p<0.05 and MCz-corrected results
             requires FreeSurfer to be installed in order to access tksurfer and freeview
@@ -132,6 +141,7 @@ class NIMB(object):
                 cd_cmd = 'cd '+path.join(self.NIMB_HOME, 'processing', 'freesurfer')
                 self.schedule.submit_4_processing(cmd, 'fs_glm','extract_images', cd_cmd)
 
+
         # Nilearn related codes: "nilearn" - performs preprocessing of rsfMRI data
         if self.process == 'nilearn':
             if not DistributionReady(self.all_vars).nilearn_ready():
@@ -143,6 +153,7 @@ class NIMB(object):
                 self.schedule.submit_4_processing(cmd, 'nilearn','run', cd_cmd,
                                                 activate_fs = False,
                                                 python_load = True)
+
 
         # Dipy related codes: "dipy" - performs preprocessing of DWI data
         if self.process == 'dipy':
@@ -156,18 +167,22 @@ class NIMB(object):
                                                 activate_fs = False,
                                                 python_load = True)
 
+
         if self.process == 'classify_dcm2bids':
             print("initiating dcm2bids transformation for project: {}".format(self.project))
             from classification.dcm2bids_helper import DCM2BIDS_helper
             return DCM2BIDS_helper(self.project_vars, self.project).run()
 
+
         if self.process == 'run':
             from distribution.project_helper import ProjectManager
             ProjectManager(self.all_vars).run()
 
+
         if self.process == 'check-new':
             print('checking for new subject to be processed')
             DistributionHelper(self.all_vars).check_new()
+
 
         if self.process == 'fs-get-masks':
             if DistributionReady(self.all_vars).fs_ready():
@@ -176,6 +191,7 @@ class NIMB(object):
                 cd_cmd = 'cd '+path.join(self.NIMB_HOME, 'processing', 'freesurfer')
                 self.schedule.submit_4_processing(cmd, 'fs','run_masks', cd_cmd)
         return 1
+
 
 def get_parameters(projects):
     """get parameters for nimb"""

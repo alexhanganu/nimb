@@ -30,6 +30,7 @@ class ProjectManager:
         all_vars
     '''
 
+
     def __init__(self, all_vars):
 
         self.all_vars           = all_vars

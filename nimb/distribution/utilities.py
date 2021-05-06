@@ -24,6 +24,7 @@ def load_json_ordered(file_abspath):
     with open(file_abspath, 'r') as f:
         return json.load(f, object_pairs_hook=OrderedDict)
 
+
 def load_json(file_abspath):
     """ Load a JSON file as UNordered dict
     Args:
@@ -34,21 +35,26 @@ def load_json(file_abspath):
     with open(file_abspath, 'r') as f:
         return json.load(f)
 
+
 def save_json(data, file_abspath, ensure_ascii = False):
     print(data)
     print(file_abspath)
     with open(file_abspath, 'w') as f:
         json.dump(data, f, indent=4)
 
+
 def write_txt(file_abspath, lines, write_type = 'w'):
     with open(file_abspath, write_type) as f:
         for val in lines:
             f.write('{}\n'.format(val))
 
+
 def chk_if_exists(dir):
         if not path.exists(dir):
             makedirs(dir)
         return dir
+
+
 def makedir_ifnot_exist(path2chk):
     if path2chk.startswith("~"):
         path2chk = path.expanduser(path2chk)
@@ -56,8 +62,10 @@ def makedir_ifnot_exist(path2chk):
         makedirs(path2chk)
     return path2chk
 
+
 def get_path(link1, link2):
         return path.join(link1, link2).replace(sep, '/')
+
 
 def is_command_ran_sucessfully(command):
     command = f"""
@@ -74,12 +82,14 @@ def is_command_ran_sucessfully(command):
         ErrorMessages.error_bash_command(command)
     return result
 
+
 def is_command_return_okay(command):
     out = subprocess.getoutput(command)
     print(out)
     if out == "YES":
         return True
     return False
+
 
 def is_ENV_defined(environment_var):
     command = f'if [[ -v {environment_var} ]] ;then echo "YES"; else echo "NO"; fi'
@@ -112,6 +122,7 @@ class ErrorMessages:
         logger.fatal("ERROR: {command} is fail".format(command=command))
     def error_conda():
         logger.info("conda is missing some modules")
+
 
 if __name__ == "__main__":
     # x = is_command_ran_sucessfully("which python")

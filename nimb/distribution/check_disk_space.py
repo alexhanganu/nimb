@@ -9,6 +9,7 @@ from distribution.SSHHelper import *
 
 class DiskspaceUtility:
 
+
     @staticmethod
     def get_free_space( path):
         """
@@ -30,6 +31,7 @@ class DiskspaceUtility:
         #     return 0 # command failed
         out = int(out)
         return out
+
 
     @staticmethod
     def get_free_space_remote(ssh_session, new_subject_folder):
@@ -81,7 +83,6 @@ class DiskspaceUtility:
         return list_files
 
 
-
     @staticmethod
     def get_subject_upto_size(size, unprocessed_subject_list):
         """
@@ -111,6 +112,7 @@ class DiskspaceUtility:
                 break
         return list_files
 
+
     @staticmethod
     def get_subject_to_be_process_with_free_space(unprocessed_subject_list ):
         """
@@ -122,6 +124,7 @@ class DiskspaceUtility:
         home = str(Path.home())
         size = DiskspaceUtility.get_free_space(home)
         return DiskspaceUtility.get_subject_upto_size(size,unprocessed_subject_list)
+
 
 class ListSubjectHelper:
 
@@ -140,6 +143,7 @@ class ListSubjectHelper:
             files_1 = [file for file in glob.glob(ext)]
             files.extend(files_1)
         return files
+
 
     @staticmethod
     def get_all_subjects_at_remote(PROCESSED_FS_DIR,
@@ -161,6 +165,7 @@ class ListSubjectHelper:
                 continue
             all_subjects.append(out.split("\n")[1:-1])
         return all_subjects
+
 
     @staticmethod
     def get_to_be_processed_subject_local(SOURCE_SUBJECTS_DIR, PROCESSED_FS_DIR):

@@ -16,6 +16,7 @@ except ImportError:
 
 class DistributionHelper():
 
+
     def __init__(self, all_vars):
 
         self.all_vars         = all_vars
@@ -28,6 +29,7 @@ class DistributionHelper():
         # setup folder
         self.setup_folder = "../setup"
         self.git_repo = "https://github.com/alexhanganu/nimb"
+
 
     def check_new(self):
         """
@@ -53,6 +55,7 @@ class DistributionHelper():
 #                    self.make_processing_database()
 #                    self.run_processing()
 
+
     def get_processing_location(self, app):
         """
         if freesurfer_install ==1 on local or remote
@@ -65,6 +68,7 @@ class DistributionHelper():
                 if self.locations[location]["FREESURFER"]["FreeSurfer_install"] == 1:
                     loc.append(location)
         return loc
+
 
     def get_userdefined_location(self):
         """
@@ -89,6 +93,7 @@ class DistributionHelper():
             return True
         else:
             return False
+
 
     def get_subject_data(self, unprocessed):
         """
@@ -118,6 +123,7 @@ class DistributionHelper():
         to_be_process_subject = DiskspaceUtility.get_subject_to_be_process_with_free_space(un_process_sj)
         #
 
+
     def get_user_confirmation(self):
         """
         tell user:
@@ -129,6 +135,7 @@ class DistributionHelper():
         continue_processing = False
         # print("Remote server has {0}MB free, it can stored {1} subjects".format(free_space, len(to_be_process_subject)))
         return continue_processing
+
 
     def make_processing_database(self):
         """
@@ -153,6 +160,7 @@ class DistributionHelper():
         # return [os.path.join(SOURCE_SUBJECTS_DIR,subject) for subject in to_be_process_subject] # full path
         pass
 
+
     def run_processing(self):
         """
             - after all subjects are copied to the NIMB_NEW_SUBJECTS folder: initiate the 
@@ -167,6 +175,7 @@ class DistributionHelper():
         """
         pass
 
+
     def get_local_remote_dir(self, dir_data):
         if dir_data[0] == 'local':
             print('working folder is: {}'.format(dir_data[1]))
@@ -174,6 +183,7 @@ class DistributionHelper():
         else:
             print('folder {} is located on a remote: {}'.format(dir_data[1], dir_data[0]))
             return False
+
 
     def get_subj_2classify(self):
         new_subj = self.locations["local"]["NIMB_PATHS"]["NIMB_NEW_SUBJECTS"]
@@ -196,6 +206,7 @@ class DistributionHelper():
                                                                 os.path.join(self.credentials_home, 'projects.json')))
             return False
 
+
     def get_files_for_stats(self, path_2copy_files, list_of_files):
         location = self.proj_vars['materials_DIR'][0]
         materials_dir_path = self.proj_vars['materials_DIR'][1]
@@ -214,6 +225,7 @@ class DistributionHelper():
         else:
             return self.chk_files_for_stats(list_of_files, path_2copy_files)
 
+
     def chk_files_for_stats(self, list_of_files, path_2copy_files): #move to ProjectManager
         f_ids_processed = self.locations["local"]["NIMB_PATHS"]['file_ids_processed']
         f_ids_processed_abspath = os.path.join(path_2copy_files,
@@ -228,6 +240,7 @@ class DistributionHelper():
             else:
                 print(f'Cannot find group file: {group_file}. Cannot continue.')
                 return False
+
 
     def prep_4stats(self, fs = False):
         """create DIRs for stats (as per setup/stats.json)
@@ -254,6 +267,7 @@ class DistributionHelper():
         self.get_files_for_stats(dir_4stats,
                             file_other_stats)
         return fname_groups
+
 
     def prep_4fs_stats(self):
         '''create DIR to store stats files
@@ -289,6 +303,7 @@ class DistributionHelper():
     #     else:
     #         return sub_path, sub
         return PROCESSED_FS_DIR
+
 
     def prep_4fs_glm(self, FS_GLM_dir, fname_groups):
         FS_GLM_dir           = makedir_ifnot_exist(FS_GLM_dir)
@@ -327,6 +342,7 @@ class DistributionHelper():
             print('GLM files are missing: {}, {}'.format(f_GLM_group, f_ids_processed))
             return False
 
+
     def prep_4fs_glm_extract_dirs(self, ls, SUBJECTS_DIR, dirs2extract):
         from .manage_archive import ZipArchiveManagement
         if self.proj_vars['materials_DIR'][0] == 'local':
@@ -346,6 +362,7 @@ class DistributionHelper():
                                         log=True)
                 else:
                     print('{} subject missing from {}'.format(sub, NIMB_PROCESSED_FS))
+
 
     def run_processing_on_cluster_2(self):
         '''
@@ -367,6 +384,7 @@ class DistributionHelper():
         SSHHelper.running_command_ssh_2(host_name=host_name, user_name=self.user_name,
                                     user_password=self.user_password,
                                     cmd_run_crun_on_cluster=cmd_run_crun_on_cluster)
+
 
     def run_copy_subject_to_cluster(Project):
         '''
@@ -419,6 +437,7 @@ class DistributionHelper():
                                     user_password=self.user_password,
                                     cmd_run_crun_on_cluster=cmd_run_crun_on_cluster)
 
+
     @staticmethod
     def load_configuration_json(config_file ="../setup/local.json"):
         # todo: this method is going to be abandon later: reason stop
@@ -426,6 +445,8 @@ class DistributionHelper():
         with open(config_file) as file:
             config_dict = json.load(file)
         return config_dict
+
+
     @staticmethod
     def send_subject_data(config_file ="../setup/local.json"):
         """
@@ -480,6 +501,8 @@ class DistributionHelper():
 
             return send_path
             # 4. upload the subjects to that path
+
+
     @staticmethod
     def upload_subject_to_remote(local_path, remote_path, remote_host, remote_username, remote_password):
         # call the ssh helper to upload the file
@@ -489,6 +512,7 @@ class DistributionHelper():
 
         raise NotImplementedError
         pass
+        
 
     @staticmethod
     def download_processed_subject(local_destination, remote_id, remote_path):

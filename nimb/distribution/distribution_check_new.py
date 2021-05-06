@@ -10,11 +10,13 @@ logger.setLevel(logging.DEBUG)
 
 class DistributionCheckNew():
 
+
     def __init__(self, project_vars, projects, project_name, NIMB_tmp):
         self.projects = projects
         self.project_vars = project_vars  # dictionary about 1 project
         self.NIMB_tmp = NIMB_tmp
         self.unprocessed = self.is_all_subject_processed()
+
 
     def __init__(self, projects, project_name):
         """
@@ -26,6 +28,7 @@ class DistributionCheckNew():
         self.project_vars = self.projects[project_name]  # dictionary about 1 project
         # self.unprocessed = self.is_all_subject_processed()
 
+
     def set_project(self, project_name, project_config):
         """
 
@@ -35,6 +38,7 @@ class DistributionCheckNew():
         """
         self.project_name = project_name
         self.project_config = project_config
+
 
     def check_projects(self, project_name=None):
         """
@@ -51,11 +55,13 @@ class DistributionCheckNew():
             for project_name in self.projects['PROJECT']:
                 self.check_single_project(project_name=project_name)
 
+
     def is_all_subject_processed(self):
         to_be_process = self.get_all_un_processed_subjects()
         if len(to_be_process) > 1:
             return True
         return False
+
 
     def get_all_un_processed_subjects(self):
         """
@@ -93,6 +99,7 @@ class DistributionCheckNew():
         # host = self.projects['LOCATION'][machine]
         # to_be_processed = self.get_list_subject_to_be_processed_remote_version(source_fs, process_fs,remote_id)
 
+
     def _get_ls_subjects(self, DIR="SOURCE_SUBJECTS_DIR"):
         """
         get list of subjects in a folder
@@ -111,6 +118,7 @@ class DistributionCheckNew():
             from distribution.SSHHelper import runCommandOverSSH
             return runCommandOverSSH(remote=self.project_vars[DIR][0], \
                                      command='ls {}'.format(self.project_vars[DIR][1])).split('\n')
+
 
     def _get_source_subj(self):
         DIR = 'SOURCE_SUBJECTS_DIR'
@@ -132,6 +140,7 @@ class DistributionCheckNew():
                 print(e)
                 return []
 
+
     def initiate_classify(self, SOURCE_SUBJECTS_DIR):
         from classification.classify_bids import MakeBIDS_subj2process
         MakeBIDS_subj2process(SOURCE_SUBJECTS_DIR,
@@ -139,10 +148,12 @@ class DistributionCheckNew():
                               multiple_T1_entries=False,
                               flair_t2_add=False).run()
 
+
     def read_json_f(self, f):
         import json
         with open(f, 'r') as f:
             return json.load(f)
+
 
     @staticmethod
     def helper(ls_output):
@@ -153,10 +164,14 @@ class DistributionCheckNew():
         """
         return ls_output.split("\n")[0:-1]
 
+
     def process_data_local(self):
         pass
+
+
     def process_data_remote(self):
         pass
+
 
 if __name__ == "__main__":
     from setup.get_vars import Get_Vars

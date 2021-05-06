@@ -1,5 +1,6 @@
 #ids_processed = ('src', 'fs', 'nilearn', 'dipy') #can be removed ?
 
+
 def get_keys_processed(key):
     if key == 'src':
         return 'source'
