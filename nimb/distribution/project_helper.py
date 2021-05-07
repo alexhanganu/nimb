@@ -40,8 +40,8 @@ class ProjectManager:
         self.bids_id_col        = self.project_vars['id_col']
         self.f_ids_name         = self.local_vars["NIMB_PATHS"]['file_ids_processed']
 
-        # self.f_ids_proc_path = os.path.join(self.materials_DIR,
-        #                         local_vars["NIMB_PATHS"]['file_ids_processed'])
+        # self.f_ids_proc_path  = os.path.join(self.materials_DIR,
+        #                                      local_vars["NIMB_PATHS"]['file_ids_processed'])
 
         self.path_stats_dir     = all_vars.stats_vars["STATS_PATHS"]["STATS_HOME"]
         self.path_fsglm_dir     = all_vars.stats_vars["STATS_PATHS"]["FS_GLM_dir"]
@@ -129,11 +129,11 @@ class ProjectManager:
 
 
     def make_reading_dirs(self):
-        SOURCE_BIDS_DIR = self.project_vars['SOURCE_BIDS_DIR']
-        SOURCE_SUBJECTS_DIR = self.project_vars['SOURCE_SUBJECTS_DIR']
-        PROCESSED_FS_DIR = self.project_vars['PROCESSED_FS_DIR']
+        SOURCE_BIDS_DIR       = self.project_vars['SOURCE_BIDS_DIR']
+        SOURCE_SUBJECTS_DIR   = self.project_vars['SOURCE_SUBJECTS_DIR']
+        PROCESSED_FS_DIR      = self.project_vars['PROCESSED_FS_DIR']
         PROCESSED_NILEARN_DIR = self.project_vars['PROCESSED_NILEARN_DIR']
-        PROCESSED_DIPY_DIR = self.project_vars['PROCESSED_DIPY_DIR']
+        PROCESSED_DIPY_DIR    = self.project_vars['PROCESSED_DIPY_DIR']
         self.keys2chk = {
             'src': SOURCE_SUBJECTS_DIR,
             'fs': PROCESSED_FS_DIR,
