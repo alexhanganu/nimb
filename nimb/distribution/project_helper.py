@@ -73,6 +73,7 @@ class ProjectManager:
             stats
         """
         print(f'   running pipeline for project: {self.project}')
+        print(self.project)
         _ids_bids = self.get_ids_bids()
         _ids_all = self.get_ids_all()
 

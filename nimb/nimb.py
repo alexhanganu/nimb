@@ -253,10 +253,10 @@ def main():
     """
     all_vars  = Get_Vars()
     projects  = all_vars.projects
-    all_projects = [i for i in projects.keys() if i not in ('EXPLANATION', 'LOCATION')]
-    all_vars.params    = get_parameters(all_projects)
+    project_ids = all_vars.project_ids
+    all_vars.params    = get_parameters(project_ids)
     project   = all_vars.params.project
-    if project == all_projects[0]:
+    if project == project_ids[0]:
         print(f'    no project was defined - working with project in first position: {project}')
 
     all_vars.stats_vars = SetProject(all_vars.location_vars['local']['NIMB_PATHS']['NIMB_tmp'],
