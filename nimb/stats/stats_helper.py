@@ -228,23 +228,26 @@ if __name__ == "__main__":
     parent, top = file.parent, file.parents[1]
     sys.path.append(str(top))
 
-    from stats import (db_processing, preprocessing,
+    from stats import (db_processing,
+                        preprocessing,
                         predict, varia)
     from setup.get_vars import Get_Vars, SetProject
     from stats.make_stats_grid import MakeGrid
     from stats.db_processing import Table
     from distribution import utilities
-    getvars       = Get_Vars()
-    projects      = getvars.projects
-    all_projects  = [i for i in projects.keys() if 'EXPLANATION' not in i and 'LOCATION' not in i]
-    params        = get_parameters(all_projects)
 
-    NIMB_tmp     = getvars.location_vars['local']['NIMB_PATHS']['NIMB_tmp']
-    fname_groups = projects[params.project]["fname_groups"]
-    vars_stats   = getvars.stats_vars
-    vars_stats   = SetProject(NIMB_tmp, vars_stats, params.project, ).stats
-    if "STATS_FILES" in vars_stats:
-        stats_files   = vars_stats["STATS_FILES"]
+    all_vars     = Get_Vars()
+    projects     = all_vars.projects
+    project_ids  = all_vars.project_ids
+    params       = get_parameters(project_ids)
+
+    NIMB_tmp     = all_vars.location_vars['local']['NIMB_PATHS']['NIMB_tmp']
+    all_vars.stats_vars   = SetProject(NIMB_tmp,
+                              all_vars.stats_vars,
+                              params.project,
+                              projects).stats
+    if "STATS_FILES" in all_vars.stats_vars:
+        stats_files   = all_vars.stats_vars["STATS_FILES"]
     else:
         stats_files   = {
        "fname_fs_per_param"     : "stats_FreeSurfer_per_param",
@@ -252,9 +255,9 @@ if __name__ == "__main__":
        "fname_fs_subcort_vol"   : "stats_FreeSurfer_subcortical",
        "file_type"              : "xlsx"}
 
-    print(f'    Performing statistical analysis in folder: {vars_stats["STATS_PATHS"]["STATS_HOME"]}')
+    print(f'    Performing statistical analysis in folder: {all_vars.stats_vars["STATS_PATHS"]["STATS_HOME"]}')
 
-    RUN_stats(vars_stats,
+    RUN_stats(all_vars.stats_vars,
               projects[params.project]
               ).run_stats()
 

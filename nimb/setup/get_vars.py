@@ -7,7 +7,7 @@ from .get_username import _get_username
 from .get_credentials_home import _get_credentials_home
 from .interminal_setup import get_userdefined_paths, get_yes_no, get_FS_license
 from distribution.utilities import load_json, save_json
-
+from distribution.distribution_definitions import DEFAULT
 
 
 class SetProject():
@@ -20,11 +20,16 @@ class SetProject():
     '''
 
 
-    def __init__(self, NIMB_tmp, stats, project, fname_groups = 'default'):
+    def __init__(self, NIMB_tmp, stats, project, projects):
+        if project in DEFAULT.project_ids:
+            print('this is default name of a project used by NIMB. It has pre-defined classification files')
+        fname_groups = projects[project]['fname_groups']
         self.stats = self.set_project(NIMB_tmp, stats, project, fname_groups)
 
 
     def set_project(self, NIMB_tmp, stats, project, fname_groups):
+        if fname_groups == 'default':
+            fname_groups = self.setup_default_fname_group()
         fname_dir = path.splitext(fname_groups)[0].replace('(','').replace(')','')
         for key in stats['STATS_PATHS']:
             if 'nimb_tmp' in stats['STATS_PATHS'][key]:
@@ -36,6 +41,12 @@ class SetProject():
                     new_ending = stats['STATS_PATHS'][key].replace(sep, '/').split('/')[-1]
                     stats['STATS_PATHS'][key] = path.join(NIMB_tmp, 'projects', project, fname_dir, 'stats', new_ending).replace(sep, '/')
         return stats
+
+    def setup_default_fname_group(self):
+        fname_groups_def = get_yes_no('    file with groups is missing.\n\
+        do you want to use the default file for groups? (y/n)')
+        if fname_groups_def == 1:
+            return DEFAULT.default_tab_name
 
 
 
@@ -183,25 +194,25 @@ class Get_Vars():
         :param config_file: path to configuration json file
         :return: new version, populated with missing values
         """
-        self.default_projects = load_json(path.join(path.dirname(path.abspath(__file__)), 'projects.json'))
+        default_project = load_json(path.join(path.dirname(path.abspath(__file__)), 'projects.json'))
 
         update = False
         all_projects = [i for i in projects_user.keys() if i not in ('EXPLANATION', 'LOCATION', 'PROJECTS')]
         for Project in all_projects:
-            for subkey in self.default_projects["project1"]:
+            for subkey in default_project["project1"]:
                 if subkey not in projects_user[Project]:
                     print('adding missing subkey {} to project: {}'.format(subkey, Project))
-                    projects_user[Project][subkey] = self.default_projects["project1"][subkey]
+                    projects_user[Project][subkey] = default_project["project1"][subkey]
                     update = True
                 if isinstance(subkey, list):
                     if not isinstance(projects_user[Project][subkey], list):
                         print('types are different {}'.format(subkey))
         if update:
-            projects_user['EXPLANATION'] = self.default_projects['EXPLANATION']
+            projects_user['EXPLANATION'] = default_project['EXPLANATION']
             save_json(projects_user, path.join(self.credentials_home, 'projects.json'))
-        for project in self.default_projects:
-            if project not in ('project1','EXPLANATION', 'LOCATION',):
-                projects_user[project] = self.default_projects[project]
+        for project in DEFAULT.project_ids:
+            if project not in projects_user:
+                projects_user[project] = default_project['project1']
         return projects_user
 
 

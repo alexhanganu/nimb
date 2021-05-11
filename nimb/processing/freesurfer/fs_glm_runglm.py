@@ -412,22 +412,21 @@ if __name__ == "__main__":
     from stats.db_processing import Table
     from processing.freesurfer.fs_definitions import hemi, FSGLMParams, GLMcontrasts
 
+    all_vars     = Get_Vars()
+    projects     = all_vars.projects
+    project_ids  = all_vars.project_ids
 
-    getvars      = Get_Vars()
-    vars_local   = getvars.location_vars['local']
-    projects     = getvars.projects
-    all_projects = [i for i in projects.keys() if 'EXPLANATION' not in i and 'LOCATION' not in i]
-    NIMB_tmp     = vars_local['NIMB_PATHS']['NIMB_tmp']
+    NIMB_tmp     = all_vars.location_vars['local']['NIMB_PATHS']['NIMB_tmp']
     stats_vars   = SetProject(NIMB_tmp,
-                                getvars.stats_vars,
-                                all_projects[0],
-                                projects[all_projects[0]]['fname_groups']).stats
+                                all_vars.stats_vars,
+                                project_ids[0],
+                                projects).stats
     FS_GLM_DIR   = stats_vars["STATS_PATHS"]["FS_GLM_dir"]
 
-    params       = get_parameters(all_projects, FS_GLM_DIR)
+    params       = get_parameters(project_ids, FS_GLM_DIR)
     GLM_DIR      = params.glm_dir
 
-    fs_start_cmd = initiate_fs_from_sh(vars_local)
+    fs_start_cmd = initiate_fs_from_sh(all_vars.location_vars['local'])
     sig_fdr_thresh= 3.0 #p = 0.001; for p=0.05 use value 1.3, but it should be used ONLY for visualisation.
 
     print('please initiate freesurfer using the command: \n    {}'.format(fs_start_cmd))

@@ -1,4 +1,11 @@
-#ids_processed = ('src', 'fs', 'nilearn', 'dipy') #can be removed ?
+class DEFAULT(object):
+    """ Default values """
+    
+    project_ids      = {'loni_ppmi':{},
+                           'loni_adni':{},}
+
+    default_tab_name = 'default_table.csv'
+    BIDS_DIR_name    = 'bids'
 
 
 def get_keys_processed(key):

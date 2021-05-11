@@ -205,15 +205,15 @@ if __name__ == '__main__':
 
     from setup.get_vars import Get_Vars, SetProject
     from distribution.utilities import load_json, write_txt
-    getvars = Get_Vars()
-    vars_local = getvars.location_vars['local']
-    projects = getvars.projects
-    params = get_parameters([i for i in projects.keys() if 'EXPLANATION' not in i and 'LOCATION' not in i])
-    project = params.project
-    vars_project = getvars.projects[project]
-    NIMB_tmp = vars_local['NIMB_PATHS']['NIMB_tmp']
-    fname_groups = projects[project]["fname_groups"]
-    stats_vars = SetProject(NIMB_tmp, getvars.stats_vars, project, fname_groups).stats
+
+    all_vars   = Get_Vars()
+    project    = get_parameters(all_vars.project_ids).project
+    vars_local = all_vars.location_vars['local']
+    NIMB_tmp   = vars_local['NIMB_PATHS']['NIMB_tmp']
+    stats_vars = SetProject(NIMB_tmp,
+                            all_vars.stats_vars,
+                            project,
+                            all_vars.projects).stats
 
     print('extracting glm images')
     SaveGLMimages(vars_local, stats_vars).run()

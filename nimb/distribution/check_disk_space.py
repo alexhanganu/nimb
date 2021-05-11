@@ -45,10 +45,10 @@ class DiskspaceUtility:
         print("It would talke long time to get diskusage_report ")
         # first_line = output.decode("utf8").split("\n")[1].strip()
         first_line = output.split("\n")[1].strip()
-        results = re.sub("\s{4,}", "@@", first_line) #'/home 1173M/50G 20k/500k'
-        results = results.split("@@")[1].lstrip().strip() # 1173M/50G
-        usage_space = re.findall("\d+", results)[0] # 1173
-        total_space = re.findall("\d+", results)[1] # 50
+        results = re.sub("%s{4,}", "@@", first_line)
+        results = results.split("@@")[1].lstrip().strip()
+        usage_space = re.findall("\d+", results)[0]
+        total_space = re.findall("\d+", results)[1]
         free_space = int(total_space)*1024 - int(usage_space)
         return free_space
 

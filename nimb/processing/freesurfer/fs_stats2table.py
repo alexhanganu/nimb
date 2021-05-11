@@ -417,7 +417,7 @@ if __name__ == "__main__":
     parent, top = file.parent, file.parents[2]
     sys.path.append(str(top))
 
-    from setup.get_vars import Get_Vars, SetProject
+    from setup.get_vars import Get_Vars
     getvars           = Get_Vars()
     vars_stats        = getvars.stats_vars
     default_stats_dir = vars_stats["STATS_PATHS"]["STATS_HOME"]

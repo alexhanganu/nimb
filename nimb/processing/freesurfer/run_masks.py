@@ -114,7 +114,7 @@ if __name__ == '__main__':
 
     import subprocess
     # from distribution.logger import Log
-    from setup.get_vars import Get_Vars, SetProject
+    from setup.get_vars import Get_Vars
     getvars      = Get_Vars()
     vars_local   = getvars.location_vars['local']
     fs_start_cmd = initiate_fs_from_sh(vars_local)
