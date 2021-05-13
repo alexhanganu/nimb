@@ -10,6 +10,14 @@ from distribution.utilities import load_json, save_json
 from distribution.distribution_definitions import DEFAULT
 
 
+def get_projects_ids(projects):
+    """temporary, to extract all project ids
+        intended to be moved in the future in the SetProject class
+        and the SetProject would be without params, would be used by Get_Vars
+        to retrieve projects_ids"""
+    return [i for i in projects.keys() if i not in ('EXPLANATION', 'LOCATION')]
+
+
 class SetProject():
     '''
     stats defined in credentials_path-> stats.json are general. This one defines stats folder for each project
@@ -22,14 +30,12 @@ class SetProject():
 
     def __init__(self, NIMB_tmp, stats, project, projects):
         if project in DEFAULT.project_ids:
-            print('this is default name of a project used by NIMB. It has pre-defined classification files')
+            self.populate_default_project()
         fname_groups = projects[project]['fname_groups']
         self.stats = self.set_project(NIMB_tmp, stats, project, fname_groups)
 
 
     def set_project(self, NIMB_tmp, stats, project, fname_groups):
-        if fname_groups == 'default':
-            fname_groups = self.setup_default_fname_group()
         fname_dir = path.splitext(fname_groups)[0].replace('(','').replace(')','')
         for key in stats['STATS_PATHS']:
             if 'nimb_tmp' in stats['STATS_PATHS'][key]:
@@ -42,9 +48,9 @@ class SetProject():
                     stats['STATS_PATHS'][key] = path.join(NIMB_tmp, 'projects', project, fname_dir, 'stats', new_ending).replace(sep, '/')
         return stats
 
-    def setup_default_fname_group(self):
-        fname_groups_def = get_yes_no('    file with groups is missing.\n\
-        do you want to use the default file for groups? (y/n)')
+    def populate_default_project(self):
+        print('this is default name of a project used by NIMB. It has pre-defined classification files\
+            and uses files downloaded from source website')
         if fname_groups_def == 1:
             return DEFAULT.default_tab_name
 
@@ -71,7 +77,7 @@ class Get_Vars():
         if path.exists(path.join(self.credentials_home, 'projects.json')):
             projects_user      = load_json(path.join(self.credentials_home, 'projects.json'))
             self.projects      = self.chk_projects(projects_user)
-            self.project_ids   = self.get_projects_ids()
+            self.project_ids   = get_projects_ids(self.projects)
             all_loc_vars       = self.get_all_locations_vars(self.projects['LOCATION'], self.credentials_home)
             self.location_vars = self.chk_location_vars(all_loc_vars)
             stats_user         = load_json(path.join(self.credentials_home, 'stats.json'))
@@ -83,7 +89,7 @@ class Get_Vars():
             shutil.copy(path.join(path.dirname(path.abspath(__file__)), 'remote1.json'), path.join(self.credentials_home, 'remote1.json'))
             shutil.copy(path.join(path.dirname(path.abspath(__file__)), 'stats.json'), path.join(self.credentials_home, 'stats.json'))
             self.projects = load_json(path.join(self.credentials_home, 'projects.json'))
-            self.project_ids   = self.get_projects_ids()
+            self.project_ids   = get_projects_ids(self.projects)
             self.location_vars = self.get_default_vars(self.projects)
             self.stats_vars = load_json(path.join(self.credentials_home, 'stats.json'))
         # print('local user is: '+self.location_vars['local']['USER']['user'])
@@ -214,13 +220,6 @@ class Get_Vars():
             if project not in projects_user:
                 projects_user[project] = default_project['project1']
         return projects_user
-
-
-    def get_projects_ids(self):
-        """
-        :return: ids of all projects
-        """
-        return [i for i in self.projects.keys() if i not in ('EXPLANATION', 'LOCATION')]
 
 
     def chk_location_vars(self, all_loc_vars):
