@@ -248,11 +248,10 @@ def get_parameters(projects):
 
 def main():
     """
-        projects: parameters of all projects from credentials_path/projects.json
         params  : from parameters defined by user, process, project
+        projects: parameters of all projects from credentials_path/projects.json
     """
     all_vars        = Get_Vars()
-    projects        = all_vars.projects
     project_ids     = all_vars.project_ids
     all_vars.params = get_parameters(project_ids)
     project         = all_vars.params.project
@@ -260,6 +259,7 @@ def main():
         print(f'    no project was defined - working with project in first position: {project}')
 
     NIMB_tmp        = all_vars.location_vars['local']['NIMB_PATHS']['NIMB_tmp']
+    projects        = all_vars.projects
     all_vars.stats_vars = SetProject(NIMB_tmp,
                                      all_vars.stats_vars,
                                      project,

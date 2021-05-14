@@ -33,6 +33,8 @@ class SetProject():
             self.populate_default_project()
         fname_groups = projects[project]['fname_groups']
         self.stats = self.set_project(NIMB_tmp, stats, project, fname_groups)
+        # self.projects      = load_json(path.join(self.credentials_home, 'projects.json'))
+
 
 
     def set_project(self, NIMB_tmp, stats, project, fname_groups):
@@ -88,10 +90,10 @@ class Get_Vars():
             shutil.copy(path.join(path.dirname(path.abspath(__file__)), 'local.json'), path.join(self.credentials_home, 'local.json'))
             shutil.copy(path.join(path.dirname(path.abspath(__file__)), 'remote1.json'), path.join(self.credentials_home, 'remote1.json'))
             shutil.copy(path.join(path.dirname(path.abspath(__file__)), 'stats.json'), path.join(self.credentials_home, 'stats.json'))
-            self.projects = load_json(path.join(self.credentials_home, 'projects.json'))
+            self.projects      = load_json(path.join(self.credentials_home, 'projects.json'))
             self.project_ids   = get_projects_ids(self.projects)
             self.location_vars = self.get_default_vars(self.projects)
-            self.stats_vars = load_json(path.join(self.credentials_home, 'stats.json'))
+            self.stats_vars    = load_json(path.join(self.credentials_home, 'stats.json'))
         # print('local user is: '+self.location_vars['local']['USER']['user'])
 
 
