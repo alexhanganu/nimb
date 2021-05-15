@@ -29,11 +29,15 @@ class SetProject():
 
 
     def __init__(self, NIMB_tmp, stats, project, projects):
+        # self.credentials_home = _get_credentials_home()
+        # self.projects      = load_json(path.join(self.credentials_home, 'projects.json'))
+        self.projects = projects
         if project in DEFAULT.project_ids:
             self.populate_default_project()
-        fname_groups = projects[project]['fname_groups']
+        # else:
+        #     self.chk_project_vars()
+        fname_groups = self.projects[project]['fname_groups']
         self.stats = self.set_project(NIMB_tmp, stats, project, fname_groups)
-        # self.projects      = load_json(path.join(self.credentials_home, 'projects.json'))
 
 
 
@@ -55,6 +59,28 @@ class SetProject():
             and uses files downloaded from source website')
         if fname_groups_def == 1:
             return DEFAULT.default_tab_name
+
+    def chk_project_vars(self):
+        """
+        check if variables are defined in json
+        :param config_file: path to configuration json file
+        :return: new version, populated with missing values
+        """
+        default_project = load_json(path.join(path.dirname(path.abspath(__file__)), 'projects.json'))
+
+        update = False
+        for Project in get_projects_ids(self.projects):
+            for subkey in default_project["project1"]:
+                if subkey not in self.projects[Project]:
+                    print('adding missing subkey {} to project: {}'.format(subkey, Project))
+                    self.projects[Project][subkey] = default_project["project1"][subkey]
+                    update = True
+                if isinstance(subkey, list):
+                    if not isinstance(self.projects[Project][subkey], list):
+                        print('types are different {}'.format(subkey))
+        if update:
+            self.projects['EXPLANATION'] = default_project['EXPLANATION']
+            save_json(self.projects, path.join(self.credentials_home, 'projects.json'))
 
 
 
