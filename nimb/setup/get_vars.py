@@ -29,7 +29,12 @@ class Get_Vars():
 
         # if not path.exists(path.join(self.credentials_home, 'projects.json')):
         #     self.define_credentials()
-        # self.projects      = load_json(path.join(self.credentials_home, 'projects.json'))
+        # self.set_projects()
+        # self.chk_project_vars()
+        # stats_user         = load_json(path.join(self.credentials_home, 'stats.json'))
+        # self.stats_vars    = self.chk_stats(stats_user)
+        # all_loc_vars       = self.get_all_locations_vars(self.projects['LOCATION'], self.credentials_home)
+        # self.location_vars = self.chk_location_vars(all_loc_vars)
 
 
         if path.exists(path.join(self.credentials_home, 'projects.json')):
@@ -56,60 +61,26 @@ class Get_Vars():
 
     def get_projects_ids(self):
         """retrieve projects_ids"""
+        # self.projects      = load_json(path.join(self.credentials_home, 'projects.json'))
+        # for project in DEFAULT.project_ids:
+        #     if project not in self.projects:
+        #         self.projects[project] = default_project['project1']
+
         return [i for i in self.projects.keys() if i not in ('EXPLANATION', 'LOCATION')]
 
 
-    def chk_projects(self, projects_user):
-        """
-        check if variables are defined in json
-        :param config_file: path to configuration json file
-        :return: new version, populated with missing values
-        """
-        default_project = load_json(path.join(path.dirname(path.abspath(__file__)), 'projects.json'))
+    def get_vars(self, params = list()):
+        self.params = params
+        
 
-        update = False
-        all_projects = [i for i in projects_user.keys() if i not in ('EXPLANATION', 'LOCATION', 'PROJECTS')]
-        for Project in all_projects:
-            for subkey in default_project["project1"]:
-                if subkey not in projects_user[Project]:
-                    print('adding missing subkey {} to project: {}'.format(subkey, Project))
-                    projects_user[Project][subkey] = default_project["project1"][subkey]
-                    update = True
-                if isinstance(subkey, list):
-                    if not isinstance(projects_user[Project][subkey], list):
-                        print('types are different {}'.format(subkey))
-        if update:
-            projects_user['EXPLANATION'] = default_project['EXPLANATION']
-            save_json(projects_user, path.join(self.credentials_home, 'projects.json'))
-        for project in DEFAULT.project_ids:
-            if project not in projects_user:
-                projects_user[project] = default_project['project1']
-        return projects_user
 
-    def chk_project_vars(self):
-        """
-        check if variables are defined in json
-        :param config_file: path to configuration json file
-        :return: new version, populated with missing values
-        """
-        default_project = load_json(path.join(path.dirname(path.abspath(__file__)), 'projects.json'))
-
-        update = False
-        for Project in self.get_projects_ids():
-            for subkey in default_project["project1"]:
-                if subkey not in self.projects[Project]:
-                    print('adding missing subkey {} to project: {}'.format(subkey, Project))
-                    self.projects[Project][subkey] = default_project["project1"][subkey]
-                    update = True
-                if isinstance(subkey, list):
-                    if not isinstance(self.projects[Project][subkey], list):
-                        print('types are different {}'.format(subkey))
-        if update:
-            self.projects['EXPLANATION'] = default_project['EXPLANATION']
-            save_json(self.projects, path.join(self.credentials_home, 'projects.json'))
+    def set_projects(self):
+        """retrieve projects_ids"""
+        self.projects = load_json(path.join(self.credentials_home, 'projects.json'))
         for project in DEFAULT.project_ids:
             if project not in self.projects:
                 self.projects[project] = default_project['project1']
+        self.project_ids = [i for i in self.projects.keys() if i not in ('EXPLANATION', 'LOCATION')]
 
 
     def get_all_locations_vars(self, all_locations, path_files):
@@ -127,19 +98,13 @@ class Get_Vars():
         d_all_vars = self.get_all_locations_vars(projects['LOCATION'], path.dirname(path.abspath(__file__)))
         d_all_vars['local'] = self.setup_default_local_nimb(d_all_vars['local'])
         save_json(d_all_vars['local'], path.join(self.credentials_home, 'local.json'))
-        # self.save_json('local.json', d_all_vars['local'], self.credentials_home)
         print('PROJECTS AND VARIABLES ARE NOT DEFINED. check: '+self.credentials_home)
         return d_all_vars
 
 
-    def verify_local_user(self, user):
-        user_local = _get_username()
-        return user_local
-
-
     def change_username(self, data):
         user = data['local']['USER']['user']
-        user_local = self.verify_local_user(user)
+        user_local = _get_username()
         if user_local != user:
             print('changing username')
             data['local']['USER']['user'] = user_local
@@ -149,10 +114,6 @@ class Get_Vars():
             data['local']['FREESURFER']["FS_SUBJECTS_DIR"] = data['local']['FREESURFER']["FS_SUBJECTS_DIR"].replace(user, user_local)
             data['local']['FREESURFER']["export_FreeSurfer_cmd"] = data['local']['FREESURFER']["export_FreeSurfer_cmd"].replace(user, user_local)
         return data
-
-    # def save_json(self, file, data, dst):
-    #     with open(path.join(dst, file), 'w') as jf:
-    #         json.dump(data, jf, indent=4)
 
 
     def setup_default_local_nimb(self, data):
@@ -206,6 +167,108 @@ class Get_Vars():
             return DEFAULT.default_tab_name
 
 
+    def set_stats(self):
+        '''sets the stats folders for the chosedn project
+        '''
+        # NIMB_tmp     = 
+        # stats        = 
+        # project      = 
+        # fname_groups =
+        fname_dir    = path.splitext(fname_groups)[0].replace('(','').replace(')','')
+        for key in stats['STATS_PATHS']:
+            if 'nimb_tmp' in stats['STATS_PATHS'][key]:
+                if key == "FS_GLM_dir":
+                    stats['STATS_PATHS'][key] = path.join(NIMB_tmp, 'projects', project, fname_dir, 'fs_glm').replace(sep, '/')
+                elif key == "STATS_HOME":
+                    stats['STATS_PATHS'][key] = path.join(NIMB_tmp, 'projects', project, fname_dir, 'stats').replace(sep, '/')
+                else:
+                    new_ending = stats['STATS_PATHS'][key].replace(sep, '/').split('/')[-1]
+                    stats['STATS_PATHS'][key] = path.join(NIMB_tmp, 'projects', project, fname_dir, 'stats', new_ending).replace(sep, '/')
+        return stats
+
+
+    def chk_projects(self, projects_user):
+        """
+        check if variables are defined in json
+        :param config_file: path to configuration json file
+        :return: new version, populated with missing values
+        """
+        default_project = load_json(path.join(path.dirname(path.abspath(__file__)), 'projects.json'))
+
+        update = False
+        all_projects = [i for i in projects_user.keys() if i not in ('EXPLANATION', 'LOCATION', 'PROJECTS')]
+        for Project in all_projects:
+            for subkey in default_project["project1"]:
+                if subkey not in projects_user[Project]:
+                    print('adding missing subkey {} to project: {}'.format(subkey, Project))
+                    projects_user[Project][subkey] = default_project["project1"][subkey]
+                    update = True
+                if isinstance(subkey, list):
+                    if not isinstance(projects_user[Project][subkey], list):
+                        print('types are different {}'.format(subkey))
+        if update:
+            projects_user['EXPLANATION'] = default_project['EXPLANATION']
+            save_json(projects_user, path.join(self.credentials_home, 'projects.json'))
+        for project in DEFAULT.project_ids:
+            if project not in projects_user:
+                projects_user[project] = default_project['project1']
+        return projects_user
+
+
+    def chk_project_vars(self):
+        """
+        check if variables are defined in json
+        :param config_file: path to configuration json file
+        :return: new version, populated with missing values
+        """
+        default_project = load_json(path.join(path.dirname(path.abspath(__file__)), 'projects.json'))
+
+        update = False
+        for Project in self.get_projects_ids():
+            for subkey in default_project["project1"]:
+                if subkey not in self.projects[Project]:
+                    print('adding missing subkey {} to project: {}'.format(subkey, Project))
+                    self.projects[Project][subkey] = default_project["project1"][subkey]
+                    update = True
+                if isinstance(subkey, list):
+                    if not isinstance(self.projects[Project][subkey], list):
+                        print('types are different {}'.format(subkey))
+        if update:
+            self.projects['EXPLANATION'] = default_project['EXPLANATION']
+            save_json(self.projects, path.join(self.credentials_home, 'projects.json'))
+        for project in DEFAULT.project_ids:
+            if project not in self.projects:
+                self.projects[project] = default_project['project1']
+
+
+    def chk_stats(self, stats_user):
+        """
+        check if variables are defined in json
+        :param config_file: path to configuration json file
+        :return: new version, populated with missing values
+        """
+        self.default_stats = load_json(path.join(path.dirname(path.abspath(__file__)), 'stats.json'))
+
+        update = False
+        for key in [i for i in self.default_stats.keys() if 'EXPLANATION' not in i]:
+            if key not in stats_user:
+                print('adding missing key {} to stats'.format(key))
+                stats_user[key] = self.default_stats[key]
+                update = True
+            for subkey in self.default_stats[key]:
+                if subkey not in stats_user[key]:
+                    print('adding missing subkey {} to stats group: {}'.format(subkey, key))
+                    stats_user[key][subkey] = self.default_stats[key][subkey]
+                    update = True
+                if isinstance(subkey, list):
+                    if not isinstance(stats_user[key][subkey], list):
+                        print('    types are different {}'.format(subkey))
+        if update:
+            stats_user['EXPLANATION'] = self.default_stats['EXPLANATION']
+            save_json(stats_user, path.join(self.credentials_home, 'stats.json'))
+        return stats_user
+
+
     def chk_location_vars(self, all_loc_vars):
         self.default_local = load_json(path.join(path.dirname(path.abspath(__file__)), 'local.json'))
 
@@ -248,54 +311,6 @@ class Get_Vars():
             print(f"path NIMB_HOME is missing at: {NIMB_HOME}")
 
 
-    def chk_stats(self, stats_user):
-        """
-        check if variables are defined in json
-        :param config_file: path to configuration json file
-        :return: new version, populated with missing values
-        """
-        self.default_stats = load_json(path.join(path.dirname(path.abspath(__file__)), 'stats.json'))
-
-        update = False
-        for key in [i for i in self.default_stats.keys() if 'EXPLANATION' not in i]:
-            if key not in stats_user:
-                print('adding missing key {} to stats'.format(key))
-                stats_user[key] = self.default_stats[key]
-                update = True
-            for subkey in self.default_stats[key]:
-                if subkey not in stats_user[key]:
-                    print('adding missing subkey {} to stats group: {}'.format(subkey, key))
-                    stats_user[key][subkey] = self.default_stats[key][subkey]
-                    update = True
-                if isinstance(subkey, list):
-                    if not isinstance(stats_user[key][subkey], list):
-                        print('    types are different {}'.format(subkey))
-        if update:
-            stats_user['EXPLANATION'] = self.default_stats['EXPLANATION']
-            save_json(stats_user, path.join(self.credentials_home, 'stats.json'))
-        return stats_user
-
-
-    def set_stats(self):
-        '''sets the stats folders for the chosedn project
-        '''
-        # NIMB_tmp     = 
-        # stats        = 
-        # project      = 
-        # fname_groups =
-        fname_dir    = path.splitext(fname_groups)[0].replace('(','').replace(')','')
-        for key in stats['STATS_PATHS']:
-            if 'nimb_tmp' in stats['STATS_PATHS'][key]:
-                if key == "FS_GLM_dir":
-                    stats['STATS_PATHS'][key] = path.join(NIMB_tmp, 'projects', project, fname_dir, 'fs_glm').replace(sep, '/')
-                elif key == "STATS_HOME":
-                    stats['STATS_PATHS'][key] = path.join(NIMB_tmp, 'projects', project, fname_dir, 'stats').replace(sep, '/')
-                else:
-                    new_ending = stats['STATS_PATHS'][key].replace(sep, '/').split('/')[-1]
-                    stats['STATS_PATHS'][key] = path.join(NIMB_tmp, 'projects', project, fname_dir, 'stats', new_ending).replace(sep, '/')
-        return stats
-
-
     def define_credentials(self):
         self.new_credentials_home = get_userdefined_paths('credentials', self.credentials_home, "nimb")
         if self.new_credentials_home != self.credentials_home:
@@ -330,11 +345,6 @@ class SetLocation():
             new_loc = load_json(path.join(self.credentials_home, 'remote1.json'))
             new_loc['USER']['user']= self.username
             save_json(new_loc, path.join(self.credentials_home, location+'.json'))
-            # self.save_json(location+'.json', new_loc, self.credentials_home)
-
-    # def save_json(self, file, data, dst):
-    #     with open(path.join(dst, file), 'w') as jf:
-    #         json.dump(data, jf, indent=4)
 
 
 
