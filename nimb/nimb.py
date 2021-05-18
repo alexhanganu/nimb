@@ -256,7 +256,7 @@ def main():
     project     = params.project
     print(f'    project is: {project}')
 
-    all_vars    = Get_Vars()
+    all_vars    = Get_Vars(params)
     all_vars.params = params
 
     NIMB_tmp    = all_vars.location_vars['local']['NIMB_PATHS']['NIMB_tmp']
@@ -265,6 +265,7 @@ def main():
                                      all_vars.stats_vars,
                                      project,
                                      projects).stats
+    
     app = NIMB(all_vars)
     return app.run()
 

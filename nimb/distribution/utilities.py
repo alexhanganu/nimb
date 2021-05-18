@@ -37,8 +37,7 @@ def load_json(file_abspath):
 
 
 def save_json(data, file_abspath, ensure_ascii = False):
-    print(data)
-    print(file_abspath)
+    print(f'    saving new file: {file_abspath}')
     with open(file_abspath, 'w') as f:
         json.dump(data, f, indent=4)
 
