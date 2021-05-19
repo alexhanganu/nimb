@@ -29,7 +29,6 @@ class NIMB(object):
         self.project      = all_vars.params.project
         self.fix_spaces   = all_vars.params.fix_spaces
         self.project_vars = all_vars.projects[self.project]
-        self.stats_vars   = all_vars.stats_vars
         self.locations    = all_vars.location_vars
         self.vars_local   = self.locations['local']
         self.NIMB_HOME    = self.vars_local['NIMB_PATHS']['NIMB_HOME']
@@ -37,6 +36,7 @@ class NIMB(object):
         self.logger       = Log(self.NIMB_tmp, self.vars_local['FREESURFER']['freesurfer_version']).logger
         self.schedule     = Scheduler(self.vars_local)
         self.py_run_cmd   = self.vars_local['PROCESSING']["python3_run_cmd"]
+        # self.stats_vars   = all_vars.stats_vars
 
 
     def run(self):
@@ -97,7 +97,8 @@ class NIMB(object):
                 if PROCESSED_FS_DIR:
                     self.vars_local['PROCESSING']['processing_env']  = "tmux" #probably works with slurm, must be checked
                     schedule = Scheduler(self.vars_local)
-                    dir_4stats = self.stats_vars["STATS_PATHS"]["STATS_HOME"]
+                    dir_4stats = self.project_vars['STATS_PATHS']["STATS_HOME"]
+                    # dir_4stats = self.stats_vars["STATS_PATHS"]["STATS_HOME"]
                     cmd = f'{self.py_run_cmd} fs_stats2table.py -project {self.project} -stats_dir {dir_4stats}'
                     cd_cmd = 'cd {}'.format(path.join(self.NIMB_HOME, 'processing', 'freesurfer'))
                     schedule.submit_4_processing(cmd, 'fs_stats','get_stats', cd_cmd)
@@ -107,7 +108,8 @@ class NIMB(object):
             '''checks that all subjects are present in the SUBJECTS_DIR folder that will be used for GLM analysis,
                 sends cmd to batch to initiate FreeSurfer GLM running script
             '''
-            fs_glm_dir   = self.stats_vars["STATS_PATHS"]["FS_GLM_dir"]
+            fs_glm_dir   = self.project_vars['STATS_PATHS']["FS_GLM_dir"]
+            # fs_glm_dir   = self.stats_vars["STATS_PATHS"]["FS_GLM_dir"]
             fname_groups = self.project_vars['fname_groups']
             if DistributionReady(self.all_vars).chk_if_ready_for_fs_glm():
                 GLM_file_path, GLM_dir = DistributionHelper(self.all_vars).prep_4fs_glm(fs_glm_dir,
@@ -257,15 +259,16 @@ def main():
     print(f'    project is: {project}')
 
     all_vars    = Get_Vars(params)
-    all_vars.params = params
 
-    NIMB_tmp    = all_vars.location_vars['local']['NIMB_PATHS']['NIMB_tmp']
-    projects    = all_vars.projects
-    all_vars.stats_vars = SetProject(NIMB_tmp,
-                                     all_vars.stats_vars,
-                                     project,
-                                     projects).stats
-    
+    # all_vars.params = params
+    # NIMB_tmp    = all_vars.location_vars['local']['NIMB_PATHS']['NIMB_tmp']
+    # projects    = all_vars.projects
+    # print(all_vars.stats_vars['STATS_PATHS'])
+    # all_vars.stats_vars = SetProject(NIMB_tmp,
+    #                                  all_vars.stats_vars,
+    #                                  project,
+    #                                  projects).stats
+
     app = NIMB(all_vars)
     return app.run()
 
