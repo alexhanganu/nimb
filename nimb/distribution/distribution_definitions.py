@@ -5,7 +5,8 @@ class DEFAULT(object):
     project_ids      = {'loni_ppmi':{
                             "dcm2bids_config":'dcm2bids_config_ppmi.json',
                             "f_source"       : "Magnetic_Resonance_Imaging.csv",
-                            "id_col"         : "PATNO"
+                            "id_col"         : "PATNO",
+                            "dir_from_source": "PPMI",
                                     }#,
                            # 'loni_adni':{
                            #         },
@@ -18,6 +19,18 @@ class DEFAULT(object):
     fname_fs_all_stats   = "fs_all_stats"
     fname_func_all_stats = "func_all_stats"
     fname_other_stats    = "stats_other"
+
+    stats_dirs      = {
+                    "FS_GLM_dir"              :'fs_glm',
+                    "STATS_HOME"              :'stats',
+                    "features"                :'stats/features',
+                    "anova"                   :'stats/anova',
+                    "simp_lin_reg_dir"        :'stats/simp_lin_reg_dir',
+                    "laterality_dir"          :'stats/laterality_dir',
+                    "predict_dir"             :'stats/predict_dir',
+                    "logistic_regression_dir" :'stats/logistic_regression_dir',
+                    "linreg_moderation_dir"   :'stats/linreg_moderation_dir',
+                        }
 
 
 def get_keys_processed(key):

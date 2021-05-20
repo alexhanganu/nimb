@@ -30,9 +30,9 @@ def get_userdefined_paths(path_name, old_path, add2path):
         new_path = old_path
         print('current {} is located at: {}'.format(path_name, old_path))
         if 'n' in input('do you want to keep this path for the {}? (y/n)'.format(path_name)):
-            user_path = input('please provide a new path where the {}  will be installed: '.format(path_name))
+            user_path = input('please provide a new path that exists and where the {} will be installed: '.format(path_name))
             while not path.exists(user_path):
-                user_path = input('path does not exist. Please provide a new path where {} will be installed: '.format(path_name))
+                user_path = input('path does not exist. \n    Please provide a new path where {} will be installed: '.format(path_name))
             new_path = path.join(user_path, add2path)
         print('new path is: {}'.format(new_path))
         return new_path

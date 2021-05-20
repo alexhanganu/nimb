@@ -1,14 +1,14 @@
 {
 "STATS_PATHS": {
-       "FS_GLM_dir"             : "~/nimb_tmp/projects/fs_glm",
-       "STATS_HOME"             : "~/nimb_tmp/projects/stats",
-       "features"               : "~/nimb_tmp/projects/stats/features",
-       "anova"                  : "~/nimb_tmp/projects/stats/anova",
-       "simp_lin_reg_dir"       : "~/nimb_tmp/projects/stats/simple_lin_regression",
-       "laterality_dir"         : "~/nimb_tmp/projects/stats/laterality",
-       "predict_dir"            : "~/nimb_tmp/projects/stats/predict",
-       "logistic_regression_dir": "~/nimb_tmp/projects/stats/logistic_regression",
-       "linreg_moderation_dir"  : "~/nimb_tmp/projects/stats/linreg_moderation"
+       "FS_GLM_dir"             : "default",
+       "STATS_HOME"             : "default",
+       "features"               : "default",
+       "anova"                  : "default",
+       "simp_lin_reg_dir"       : "default",
+       "laterality_dir"         : "default",
+       "predict_dir"            : "default",
+       "logistic_regression_dir": "default",
+       "linreg_moderation_dir"  : "default"
    },
 "STATS_PARAMS": {
        "prediction_vars"        : {"pca_threshold":0.5, "skf_NUM_ITER": 150, "NUM_ITER": 10, "nr_threads" : 15},

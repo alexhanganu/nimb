@@ -1,12 +1,5 @@
 """
         - local.json - def-supervisor is not changed in the SBATCH command
-        - check that miniconda is installed (is_miniconda_installed). If not:
-            - if False: check that local.json-NIMB_PATHS- miniconda_path has permission to install.
-                - If True: initiate distribution. setup_minicoda.py
-            - If True: check that all miniconda modules are installed.
-                    - if False: initiate distribution. setup_minicoda.py
-        - check that source FREESURFER_HOME is a valid command
-        - chk on local/remote ifa bash command is failed (like wget, curl)
 """
 import os, sys
 import shutil
@@ -18,7 +11,9 @@ from distribution.utilities import ErrorMessages, makedir_ifnot_exist
 from sys import platform
 from setup.interminal_setup import get_yes_no
 
+
 class DistributionReady():
+
     def __init__(self, all_vars):
 
         self.credentials_home = all_vars.credentials_home # NIMB_HOME/credentials_paths.py
@@ -27,6 +22,7 @@ class DistributionReady():
         self.proj_vars        = all_vars.projects[all_vars.params.project] # credentials_home/project.json
         self.NIMB_HOME        = self.locations["local"]["NIMB_PATHS"]["NIMB_HOME"]
         self.NIMB_tmp         = self.locations["local"]["NIMB_PATHS"]["NIMB_tmp"]
+
 
     def check_ready(self):
         """
@@ -71,6 +67,8 @@ class DistributionReady():
         # if not is_ENV_defined("$FREESURFER_HOME"):
             # print("$FREESURFER_HOME is not defined")
             # return False
+
+
     def chk_if_modules_are_installed(self, module_list):
         '''
         scripts checks that modules are installed inside the python environement
@@ -93,6 +91,7 @@ class DistributionReady():
             installed = False
         return installed, miss
 
+
     def get_user_paths_from_terminal(self):
         """
         using terminal to ask for user inputs of variable.
@@ -103,6 +102,7 @@ class DistributionReady():
         # 2. set the variable from inputs
         # 3. modify other variables
         pass
+
 
     def setting_up_local_computer(self):
         if platform.startswith('linux'):
@@ -116,12 +116,14 @@ class DistributionReady():
             print("This platform is not supported")
             exit()
 
+
     def setting_up_local_linux_with_freesurfer(self):
         """
         install miniconda and require library
         :return:
         """
         setup_miniconda(self.locations['local']['NIMB_PATHS']['conda_home'])
+
 
     def classify_ready(self):
         ready = True
@@ -137,7 +139,8 @@ class DistributionReady():
                 ready = False
                 break
         return ready
-        
+
+
     def fs_ready(self):
         if self.locations['local']['FREESURFER']['FreeSurfer_install'] == 1:
             print('FreeSurfer is set to be installed on local computer')
@@ -153,6 +156,7 @@ class DistributionReady():
         else:
             return False
 
+
     def fs_chk_fsaverage_ready(self, SUBJECTS_DIR):
         self.fs_fsaverage_copy(SUBJECTS_DIR)
         if not os.path.exists(os.path.join(SUBJECTS_DIR,'fsaverage', 'xhemi')):
@@ -161,10 +165,12 @@ class DistributionReady():
         else:
             return True
 
+
     def fs_fsaverage_copy(self, SUBJECTS_DIR):
         if not os.path.exists(os.path.join(SUBJECTS_DIR, 'fsaverage', 'xhemi')):
             fsaverage_path = os.path.join(self.locations['local']['FREESURFER']['FREESURFER_HOME'], "subjects", "fsaverage")
             shutil.copytree(fsaverage_path, os.path.join(SUBJECTS_DIR, 'fsaverage'))
+
 
     def check_freesurfer_ready(self):
         """
@@ -180,6 +186,7 @@ class DistributionReady():
             ready =  True
         return ready
 
+
     def chk_if_ready_for_fs_glm(self):
         ready = True
         modules_list = ['pandas', 'xlrd', 'openpyxl', 'pathlib']
@@ -189,7 +196,8 @@ class DistributionReady():
         else:
             ready = False
         return ready     
-        
+
+
     def chk_if_ready_for_stats(self):
         """will check if xlsx file for project is provided
            if all variables are provided
@@ -206,4 +214,3 @@ class DistributionReady():
             print(f'group file is missing. Please check file: {self.credentials_home}/nimb/projects.json')
             ready = False
         return ready
-

@@ -13,9 +13,9 @@
     "fname_fs_all_stats"     : "default",
     "fname_func_all_stats"   : "default",
     "fname_other_stats"      : "default",
-    "group_param"            : "education",
-    "regression_param"       : ["age"],
-    "variables_for_glm"      : ["age", "education"],
+    "group_param"            : "default",
+    "regression_param"       : ["default"],
+    "variables_for_glm"      : ["default", "default2"],
     "other_params"           : [],
     "dcm2bids_config"        : "default",
     "prediction_target"      : []

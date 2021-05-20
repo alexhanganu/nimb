@@ -47,7 +47,6 @@ class MakeBIDS_subj2process():
         log.info("classification of new subjects is running ...")
 
     def run(self):
-        print('inside running')
         ls_subj_in_DirSubjects = listdir(self.DIR_SUBJECTS)
         if self.file_nimb_classified in ls_subj_in_DirSubjects:
             ls_subj_in_DirSubjects.remove(self.file_nimb_classified)

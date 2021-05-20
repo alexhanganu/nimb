@@ -16,7 +16,6 @@ except ImportError:
 
 class DistributionHelper():
 
-
     def __init__(self, all_vars):
 
         self.all_vars         = all_vars
@@ -186,8 +185,8 @@ class DistributionHelper():
 
 
     def get_subj_2classify(self):
-        new_subj = self.locations["local"]["NIMB_PATHS"]["NIMB_NEW_SUBJECTS"]
-        bids_cred = self.proj_vars['SOURCE_BIDS_DIR']
+        new_subj    = self.locations["local"]["NIMB_PATHS"]["NIMB_NEW_SUBJECTS"]
+        bids_cred   = self.proj_vars['SOURCE_BIDS_DIR']
         source_subj = self.proj_vars['SOURCE_SUBJECTS_DIR']
         SUBJ_2Classify = ''
         if os.listdir(new_subj):

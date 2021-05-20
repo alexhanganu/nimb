@@ -38,14 +38,21 @@ class DCM2BIDS_helper():
           (4) redo run() up to repeat_lim
     """
 
-    def __init__(self, proj_vars, project, repeat_lim = 10):
-        self.proj_vars  = proj_vars
-        self.project    = project    #project item in projects.json
-        self.run_stt        = 1
-        self.repeat_lim = repeat_lim
+    def __init__(self, proj_vars,
+                       project,
+                       DICOM_DIR    = 'default',
+                       dir_2classfy = 'default',
+                       repeat_lim = 10):
+
+        self.proj_vars       = proj_vars
+        self.project         = project    #project item in projects.json
+        self.run_stt         = 1
+        self.repeat_lim      = repeat_lim
         self.repeat_updating = 0
-        self.DICOM_DIR  = self.get_SUBJ_DIR()
-        self.OUTPUT_DIR = self.chk_dir(self.proj_vars['SOURCE_BIDS_DIR'][1])
+        self.DICOM_DIR       = DICOM_DIR
+        if DICOM_DIR == 'default':
+            self.DICOM_DIR   = self.get_SUBJ_DIR()
+        self.OUTPUT_DIR      = self.chk_dir(self.proj_vars['SOURCE_BIDS_DIR'][1])
 
 
     def run(self, subjid = 'none'):

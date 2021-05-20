@@ -104,11 +104,12 @@ class Get_Vars():
             if project not in self.projects:
                 self.projects[project] = dict()
         if self.params and self.project in DEFAULT.project_ids:
-            print('this is default name of a project used by NIMB. It has pre-defined classification files\
-                and uses files downloaded from source website')
-            self.projects[self.project] = default_project[DEFAULT.default_project]
-            for key in DEFAULT.project_ids[self.project]:
-                self.projects[self.project][key] = DEFAULT.project_ids[self.project][key]
+            if not self.projects[self.project]:
+                print('    this is default name of a project used by NIMB. It has pre-defined classification files\
+                    and uses files downloaded from source website')
+                self.projects[self.project] = default_project[DEFAULT.default_project]
+                for key in DEFAULT.project_ids[self.project]:
+                    self.projects[self.project][key] = DEFAULT.project_ids[self.project][key]
 
 
     def set_stats(self):
@@ -138,19 +139,11 @@ class Get_Vars():
                     if not isinstance(self.projects[self.project][key][subkey], list):
                         print('    types are different {}'.format(subkey))
 
-        if 'nimb_tmp' in self.projects[self.project]['STATS_PATHS']["FS_GLM_dir"]:
-            new_key = path.join(NIMB_tmp, 'projects', self.project, fname_dir, 'fs_glm').replace(sep, '/')
-            self.projects[self.project]['STATS_PATHS']["FS_GLM_dir"] = new_key
-            update = True
-        if 'nimb_tmp' in self.projects[self.project]['STATS_PATHS']["STATS_HOME"]:
-            new_key = path.join(NIMB_tmp, 'projects', self.project, fname_dir, 'stats').replace(sep, '/')
-            self.projects[self.project]['STATS_PATHS'][key] = new_key
-            update = True
-        for key in [i for i in self.projects[self.project]['STATS_PATHS'] if i not in ("FS_GLM_dir", "STATS_HOME")]:
-            if 'nimb_tmp' in self.projects[self.project]['STATS_PATHS'][key]:
-                new_ending = self.projects[self.project]['STATS_PATHS'][key].replace(sep, '/').split('/')[-1]
-                new_key = path.join(NIMB_tmp, 'projects', self.project, fname_dir, 'stats', new_ending).replace(sep, '/')
-                self.projects[self.project]['STATS_PATHS'][key] = new_key
+        for _dir in DEFAULT.stats_dirs:
+            if 'default' in self.projects[self.project]['STATS_PATHS'][_dir]:
+                new_key = path.join(NIMB_tmp, 'projects', self.project, fname_dir,
+                    DEFAULT.stats_dirs[_dir]).replace(sep, '/')
+                self.projects[self.project]['STATS_PATHS'][_dir] = new_key
                 update = True
         return update
 
@@ -365,13 +358,19 @@ class SetProject():
 
     def set_project(self, NIMB_tmp, stats, project, fname_groups):
         fname_dir = path.splitext(fname_groups)[0].replace('(','').replace(')','')
-        for key in stats['STATS_PATHS']:
-            if 'nimb_tmp' in stats['STATS_PATHS'][key]:
-                if key == "FS_GLM_dir":
-                    stats['STATS_PATHS'][key] = path.join(NIMB_tmp, 'projects', project, fname_dir, 'fs_glm').replace(sep, '/')
-                elif key == "STATS_HOME":
-                    stats['STATS_PATHS'][key] = path.join(NIMB_tmp, 'projects', project, fname_dir, 'stats').replace(sep, '/')
-                else:
-                    new_ending = stats['STATS_PATHS'][key].replace(sep, '/').split('/')[-1]
-                    stats['STATS_PATHS'][key] = path.join(NIMB_tmp, 'projects', project, fname_dir, 'stats', new_ending).replace(sep, '/')
+        for _dir in DEFAULT.stats_dirs:
+            if 'default' in stats['STATS_PATHS'][_dir]:
+                new_key = path.join(NIMB_tmp, 'projects', project, fname_dir,
+                    DEFAULT.stats_dirs[_dir]).replace(sep, '/')
+                stats['STATS_PATHS'][_dir] = new_key
+
+        # for key in stats['STATS_PATHS']:
+        #     if 'nimb_tmp' in stats['STATS_PATHS'][key]:
+        #         if key == "FS_GLM_dir":
+        #             stats['STATS_PATHS'][key] = path.join(NIMB_tmp, 'projects', project, fname_dir, 'fs_glm').replace(sep, '/')
+        #         elif key == "STATS_HOME":
+        #             stats['STATS_PATHS'][key] = path.join(NIMB_tmp, 'projects', project, fname_dir, 'stats').replace(sep, '/')
+        #         else:
+        #             new_ending = stats['STATS_PATHS'][key].replace(sep, '/').split('/')[-1]
+        #             stats['STATS_PATHS'][key] = path.join(NIMB_tmp, 'projects', project, fname_dir, 'stats', new_ending).replace(sep, '/')
         return stats
