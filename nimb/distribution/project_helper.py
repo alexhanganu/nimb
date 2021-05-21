@@ -7,7 +7,7 @@ from stats.db_processing import Table
 from distribution.distribution_helper import  DistributionHelper
 from distribution.utilities import save_json, makedir_ifnot_exist
 from distribution.distribution_definitions import get_keys_processed, DEFAULT
-from classification.dcm2bids_helper import DCM2BIDS_helper
+from classification.classify_bids import MakeBIDS_subj2process
 from setup.interminal_setup import get_userdefined_paths, get_yes_no
 
 
@@ -111,18 +111,27 @@ class ProjectManager:
         src_dir = self.project_vars['SOURCE_SUBJECTS_DIR']
         if len(os.listdir(src_dir)) > 0:
             for _dir in src_dir:
-                DICOM_DIR, ls_dir_4bids2dcm = self.get_dir_with_raw_MR_data(src_dir, _dir)
+                DICOM_DIR, ls_dir_4bids2dcm, rm_if_done = self.get_dir_with_raw_MR_data(src_dir, _dir)
             for dir_ready in ls_dir_4bids2dcm:
-                DCM2BIDS_helper(self.project_vars,
-                                self.project,
-                                DICOM_DIR = DICOM_DIR,
-                                dir_2classfy = dir_ready)
+                MakeBIDS_subj2process(DICOM_DIR,
+                                    self.local_vars["NIMB_PATHS"]["NIMB_tmp"],
+                                    self.all_vars.params.fix_spaces,
+                                    self.local_vars['FREESURFER']['multiple_T1_entries'],
+                                    self.local_vars['FREESURFER']['flair_t2_add']).run()
+            if rm_if_done:
+                os.remove(DICOM_DIR)
+
+                # from classification.dcm2bids_helper import DCM2BIDS_helper
+                # DCM2BIDS_helper(self.project_vars,
+                #                 self.project,
+                #                 DICOM_DIR = DICOM_DIR,
+                #                 dir_2classfy = dir_ready)
 
 
     def get_dir_with_raw_MR_data(self, src_dir, _dir):
         if _dir endswith('.zip'):
-            dir_2extract = os.path.join(self.local_vars["NIMB_PATHS"]"NIMB_tmp", 'tmp_dcm2bids')
-            tmp_err_dir  = os.path.join(self.local_vars["NIMB_PATHS"]"NIMB_tmp", 'tmp_err_dcm2bids')
+            dir_2extract = os.path.join(self.local_vars["NIMB_PATHS"]["NIMB_tmp"], 'tmp_dcm2bids')
+            tmp_err_dir  = os.path.join(self.local_vars["NIMB_PATHS"]["NIMB_tmp"], 'tmp_err_dcm2bids')
             makedir_ifnot_exist(dir_2extract)
             makedir_ifnot_exist(tmp_err_dir)
             self.archive(
@@ -133,10 +142,12 @@ class ProjectManager:
             if self.project in DEFAULT.project_ids:
                 dir_2extract = os.path.join(dir_2extract, DEFAULT.project_ids[self.project]["dir_from_source"])
             ls_dir_4bids2dcm = os.listdir(dir_2extract)
+            rm_if_done       = True
         elif os.path.isdir(os.path.join(src_dir, _dir))
             dir_2extract = src_dir
             ls_dir_4bids2dcm = list(_dir)
-        return dir_2extract, ls_dir_4bids2dcm
+            rm_if_done   = False
+        return dir_2extract, ls_dir_4bids2dcm, rm_if_done
 
 
     def prep_dirs(self, ls_dirs):
