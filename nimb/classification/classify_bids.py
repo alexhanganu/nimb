@@ -23,7 +23,7 @@ import time, json
 import logging
 
 from .classify_definitions import mr_modalities, BIDS_types, mr_types_2exclude
-from .utils import get_path, save_json
+from .utils import get_path, save_json, load_json
 
 
 log = logging.getLogger(__name__)
@@ -33,12 +33,16 @@ class MakeBIDS_subj2process():
     def __init__(self, DIR_SUBJECTS,
                 NIMB_tmp,
                 fix_spaces,
+                ls_subjects = False,
+                update = False,
                 multiple_T1_entries = False,
                 flair_t2_add = False):
         self.DIR_SUBJECTS = DIR_SUBJECTS
-        self.NIMB_tmp  = NIMB_tmp
+        self.NIMB_tmp     = NIMB_tmp
+        self.ls_subjects  = ls_subjects
+        self.update       = update
         self.multiple_T1_entries  = multiple_T1_entries
-        self.flair_t2_add  = flair_t2_add
+        self.flair_t2_add = flair_t2_add
         self.MR_type_default = 't1'
         self.file_nimb_classified = "nimb_classified"
         self.fix_spaces = fix_spaces
@@ -47,10 +51,17 @@ class MakeBIDS_subj2process():
         log.info("classification of new subjects is running ...")
 
     def run(self):
-        ls_subj_in_DirSubjects = listdir(self.DIR_SUBJECTS)
-        if self.file_nimb_classified in ls_subj_in_DirSubjects:
-            ls_subj_in_DirSubjects.remove(self.file_nimb_classified)
-        for self.subject in ls_subj_in_DirSubjects:
+        if self.ls_subjects:
+            print('one subject classifying')
+            ls_subj_2_classify = self.ls_subjects
+        else:
+            ls_subj_2_classify = listdir(self.DIR_SUBJECTS)
+        if self.file_nimb_classified in ls_subj_2_classify:
+            ls_subj_2_classify.remove(self.file_nimb_classified)
+            if update:
+                self.d_subjects = load_json(self.file_nimb_classified)
+
+        for self.subject in ls_subj_2_classify:
 #            print(self.subject)
             self.d_subjects[self.subject] = {}
             path_2mris = self._get_MR_paths(path.join(self.DIR_SUBJECTS, self.subject))

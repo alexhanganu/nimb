@@ -1,7 +1,6 @@
 {
 "USER":{
     "user"                    : "user1",
-    "users_list"              : [],
     "supervisor_account"      : ""
         },
 "NIMB_PATHS": {
@@ -29,6 +28,7 @@
     "python3_run_cmd"         : "python",
     "archive_processed"       : 1,
     "submit_cmd"              : "sbatch",
+    "supervisor_account"      : "",
     "SUBMIT"                  : 1
               },
 "FREESURFER": {

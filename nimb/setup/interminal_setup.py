@@ -1,7 +1,8 @@
 #20200915
 
-from setup import database
+import os
 from os import path
+from setup import database
 
 class term_setup():
     def __init__(self, remote):
@@ -27,15 +28,22 @@ class term_setup():
 
 
 def get_userdefined_paths(path_name, old_path, add2path):
-        new_path = old_path
-        print('current {} is located at: {}'.format(path_name, old_path))
-        if 'n' in input('do you want to keep this path for the {}? (y/n)'.format(path_name)):
-            user_path = input('please provide a new path that exists and where the {} will be installed: '.format(path_name))
-            while not path.exists(user_path):
-                user_path = input('path does not exist. \n    Please provide a new path where {} will be installed: '.format(path_name))
-            new_path = path.join(user_path, add2path)
-        print('new path is: {}'.format(new_path))
-        return new_path
+        print(f'current {path_name} is located at: {old_path}')
+        get_new = False
+
+        if os.path.exists(old_path):
+            keep = input('do you want to keep this path ? (y/n)')
+            if 'y' in keep:
+                return old_path
+            else:
+                get_new = True
+        if get_new or not os.path.exists(old_path):
+            user_path = input('please provide a new existing path where the {} folder will be created: '.format(path_name))
+            while not os.path.exists(user_path):
+                user_path = input('path does not exist. \n    Please provide a new EXISTING path where the {} folder will be created: '.format(path_name))
+            new_path = os.path.join(user_path, add2path)
+            print('new path is: {}'.format(new_path))
+            return new_path
 
 def get_yes_no(q):
     if 'y' in input(q):

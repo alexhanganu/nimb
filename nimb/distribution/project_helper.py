@@ -108,63 +108,69 @@ class ProjectManager:
         from distribution.manage_archive import ZipArchiveManagement as archive
         self.archive = archive
 
-        src_dir = self.project_vars['SOURCE_SUBJECTS_DIR']
-        if len(os.listdir(src_dir)) > 0:
-            for _dir in src_dir:
-                DICOM_DIR, ls_dir_4bids2dcm, rm_if_done = self.get_dir_with_raw_MR_data(src_dir, _dir)
-            for dir_ready in ls_dir_4bids2dcm:
-                MakeBIDS_subj2process(DICOM_DIR,
-                                    self.local_vars["NIMB_PATHS"]["NIMB_tmp"],
-                                    self.all_vars.params.fix_spaces,
-                                    self.local_vars['FREESURFER']['multiple_T1_entries'],
-                                    self.local_vars['FREESURFER']['flair_t2_add']).run()
-            if rm_if_done:
-                os.remove(DICOM_DIR)
-
-                # from classification.dcm2bids_helper import DCM2BIDS_helper
-                # DCM2BIDS_helper(self.project_vars,
-                #                 self.project,
-                #                 DICOM_DIR = DICOM_DIR,
-                #                 dir_2classfy = dir_ready)
+        src_dir = self.project_vars['SOURCE_SUBJECTS_DIR'][1]
+        ls_source_dirs = os.listdir(src_dir)[:2]
+        if len(ls_source_dirs) > 0:
+            for _dir in ls_source_dirs:
+                DICOM_DIR, ls_dir_4bids2dcm = self.get_dir_with_raw_MR_data(src_dir, _dir)
+                print(ls_dir_4bids2dcm)
+                # for dir_ready in ls_dir_4bids2dcm:
+                #     MakeBIDS_subj2process(DICOM_DIR,
+                #                         self.local_vars["NIMB_PATHS"]["NIMB_tmp"],
+                #                         self.all_vars.params.fix_spaces,
+                                        # ls_subjects = ls_dir_4bids2dcm,
+                                        # update = True
+                #                         self.local_vars['FREESURFER']['multiple_T1_entries'],
+                #                         self.local_vars['FREESURFER']['flair_t2_add']).run()
+                    # from classification.dcm2bids_helper import DCM2BIDS_helper
+                    # DCM2BIDS_helper(self.project_vars,
+                    #                 self.project,
+                    #                 DICOM_DIR = DICOM_DIR,
+                    #                 dir_2classfy = dir_ready)
 
 
     def get_dir_with_raw_MR_data(self, src_dir, _dir):
-        if _dir endswith('.zip'):
-            dir_2extract = os.path.join(self.local_vars["NIMB_PATHS"]["NIMB_tmp"], 'tmp_dcm2bids')
+        if _dir.endswith('.zip'):
+            dir_2extract = self.local_vars["NIMB_PATHS"]["NIMB_NEW_SUBJECTS"]
             tmp_err_dir  = os.path.join(self.local_vars["NIMB_PATHS"]["NIMB_tmp"], 'tmp_err_dcm2bids')
             makedir_ifnot_exist(dir_2extract)
             makedir_ifnot_exist(tmp_err_dir)
+            ls_initial = self.get_content(dir_2extract)
+            if self.project in DEFAULT.project_ids:
+                chemin_2chk = os.path.join(dir_2extract, DEFAULT.project_ids[self.project]["dir_from_source"])
+                if os.path.exists(chemin_2chk):
+                    ls_initial = self.get_content(chemin_2chk)
             self.archive(
                 os.path.join(src_dir, _dir),
                 path2xtrct = dir_2extract,
                 path_err   = tmp_err_dir,
                 )
             if self.project in DEFAULT.project_ids:
-                dir_2extract = os.path.join(dir_2extract, DEFAULT.project_ids[self.project]["dir_from_source"])
-            ls_dir_4bids2dcm = os.listdir(dir_2extract)
-            rm_if_done       = True
-        elif os.path.isdir(os.path.join(src_dir, _dir))
+                if os.path.exists(chemin_2chk):
+                    dir_2extract = chemin_2chk
+            ls_dir_4bids2dcm = [i for i in os.listdir(dir_2extract) if i not in ls_initial]
+        elif os.path.isdir(os.path.join(src_dir, _dir)):
             dir_2extract = src_dir
             ls_dir_4bids2dcm = list(_dir)
-            rm_if_done   = False
-        return dir_2extract, ls_dir_4bids2dcm, rm_if_done
+        return dir_2extract, ls_dir_4bids2dcm
+
+
+    def get_content(self, path2chk):
+        return os.listdir(path2chk)
 
 
     def prep_dirs(self, ls_dirs):
         ''' define dirs required for BIDS classification
         '''
-        print('    it is expected that SOURCE_SUBJECTS_DIR contains archived (zip) files or unarchived folders with MRI data')
-        update = False
+        print('    it is expected that SOURCE_SUBJECTS_DIR contains unarchived folders or archived (zip) files with MRI data')
         for _dir2chk in ls_dirs:
             _dir = self.project_vars[_dir2chk][1]
-            if not os.path.exists(_dir2chk):
+            if not os.path.exists(_dir):
                 self.project_vars[_dir2chk][0] = 'local'
                 self.project_vars[_dir2chk][1] = get_userdefined_paths(f'{_dir2chk} folder', _dir, '')
-                update = True
-        if update:
-            from setup.get_credentials_home import _get_credentials_home
-            self.all_vars.projects[self.project] = self.project_vars
-            save_json(self.all_vars.projects, os.path.join(_get_credentials_home(), 'projects.json'))
+                from setup.get_credentials_home import _get_credentials_home
+                self.all_vars.projects[self.project] = self.project_vars
+                save_json(self.all_vars.projects, os.path.join(_get_credentials_home(), 'projects.json'))
 
 
     def get_ids_all(self):
@@ -205,11 +211,11 @@ class ProjectManager:
 
 
     def make_reading_dirs(self):
-        SOURCE_BIDS_DIR       = self.project_vars['SOURCE_BIDS_DIR']
-        SOURCE_SUBJECTS_DIR   = self.project_vars['SOURCE_SUBJECTS_DIR']
-        PROCESSED_FS_DIR      = self.project_vars['PROCESSED_FS_DIR']
-        PROCESSED_NILEARN_DIR = self.project_vars['PROCESSED_NILEARN_DIR']
-        PROCESSED_DIPY_DIR    = self.project_vars['PROCESSED_DIPY_DIR']
+        SOURCE_BIDS_DIR       = self.project_vars['SOURCE_BIDS_DIR'][1]
+        SOURCE_SUBJECTS_DIR   = self.project_vars['SOURCE_SUBJECTS_DIR'][1]
+        PROCESSED_FS_DIR      = self.project_vars['PROCESSED_FS_DIR'][1]
+        PROCESSED_NILEARN_DIR = self.project_vars['PROCESSED_NILEARN_DIR'][1]
+        PROCESSED_DIPY_DIR    = self.project_vars['PROCESSED_DIPY_DIR'][1]
         self.keys2chk = {
             'src': SOURCE_SUBJECTS_DIR,
             'fs': PROCESSED_FS_DIR,

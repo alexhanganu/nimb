@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import os
 from os import path, system, sep, makedirs
 import shutil
 import json
@@ -27,36 +28,14 @@ class Get_Vars():
         self.credentials_home = _get_credentials_home()
         self.params           = params
 
-        # if not path.exists(path.join(self.credentials_home, 'projects.json')):
-        #     self.define_credentials()
-        # self.set_projects()
-        # self.location_vars = self.get_all_locations_vars(self.projects['LOCATION'], self.credentials_home)
-        # self.chk_location_vars()
-        # self.chk_project_vars()
-        # self.stats_vars    = load_json(path.join(self.credentials_home, 'stats.json'))
-        # self.chk_stats()
-
-
-        if path.exists(path.join(self.credentials_home, 'projects.json')):
-            self.projects      = load_json(path.join(self.credentials_home, 'projects.json'))
-            self.project_ids   = self.get_projects_ids()
-            self.location_vars = self.get_all_locations_vars(self.projects['LOCATION'], self.credentials_home)
-            self.stats_vars    = load_json(path.join(self.credentials_home, 'stats.json'))
-            if params:
-                self.project   = self.params.project
-                self.chk_location_vars()
-                self.chk_project_vars()
-                self.chk_stats()
-        else:
-            self.define_credentials()
-            shutil.copy(path.join(path.dirname(path.abspath(__file__)), 'remote1.json'), path.join(self.credentials_home, 'remote1.json'))
-            shutil.copy(path.join(path.dirname(path.abspath(__file__)), 'projects.json'), path.join(self.credentials_home, 'projects.json'))
-            self.projects      = load_json(path.join(self.credentials_home, 'projects.json'))
-            self.project_ids   = self.get_projects_ids()
-            shutil.copy(path.join(path.dirname(path.abspath(__file__)), 'local.json'), path.join(self.credentials_home, 'local.json'))
-            shutil.copy(path.join(path.dirname(path.abspath(__file__)), 'stats.json'), path.join(self.credentials_home, 'stats.json'))
-            self.location_vars = self.get_default_vars(self.projects)
-            self.stats_vars    = load_json(path.join(self.credentials_home, 'stats.json'))
+        self.set_projects()
+        if self.params:
+            self.project   = self.params.project
+            self.populate_default_project()
+            self.get_all_locations_vars()
+            self.chk_location_vars()
+            self.chk_project_vars()
+            self.chk_stats()
 
 
     def get_projects_ids(self):
@@ -68,38 +47,63 @@ class Get_Vars():
 
     def set_projects(self):
         """retrieve projects_ids"""
-        self.projects   = load_json(path.join(self.credentials_home, 'projects.json'))
-        self.populate_default_project()
-        self.project_ids = [i for i in self.projects.keys() if i not in ('EXPLANATION', 'LOCATION')]
+        file = os.path.join(self.credentials_home, 'projects.json')
+        default = False
+        if not self.chk_if_defined('projects'):
+            self.define_credentials()
+            default = True
+            shutil.copy(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'projects.json'), file)
+            shutil.copy(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'stats.json'),
+                        os.path.join(self.credentials_home, 'stats.json'))
+            print(f'    CHECK PROJECTS AND VARIABLES in: {self.credentials_home}')
+        self.projects    = self.load_file('projects', default = default)
+        self.stats_vars  = load_json(path.join(self.credentials_home, 'stats.json'))
+        self.project_ids = self.get_projects_ids()
 
 
-    def get_all_locations_vars(self, all_locations, path_files):
-        d_all_vars = dict()
-        for location in all_locations:
+    def load_file(self, file, default = False):
+        if default:
+            return load_json(os.path.join(os.path.dirname(os.path.abspath(__file__)), f'{file}.json'))
+        else:
+            return load_json(os.path.join(self.credentials_home, f'{file}.json'))
+
+
+    def chk_if_defined(self, file):
+        return os.path.exists(os.path.join(self.credentials_home, f'{file}.json'))
+
+
+    def get_all_locations_vars(self):
+        if not self.chk_if_defined('local'):
+            self.setup_default_local_nimb()
+        self.location_vars    = dict()
+        for location in self.projects['LOCATION']:
             try:
-                d_all_vars[location] = load_json(path.join(path_files, location+'.json'))
+                self.location_vars[location] = self.load_file(location)
             except Exception as e:
                 print(e)
-        d_all_vars = self.change_username(d_all_vars)
-        return d_all_vars
+        self.change_username()
 
 
-    def change_username(self, data):
-        user = data['local']['USER']['user']
+    def change_username(self):
+        local_vars = self.location_vars['local']
+        user = local_vars['USER']['user']
         user_local = _get_username()
         if user_local != user:
             print('    changing username')
-            data['local']['USER']['user'] = user_local
-            for variable in data['local']['NIMB_PATHS']:
-                data['local']['NIMB_PATHS'][variable] = data['local']['NIMB_PATHS'][variable].replace(user, user_local)
-            data['local']['FREESURFER']["FREESURFER_HOME"] = data['local']['FREESURFER']["FREESURFER_HOME"].replace(user, user_local)
-            data['local']['FREESURFER']["FS_SUBJECTS_DIR"] = data['local']['FREESURFER']["FS_SUBJECTS_DIR"].replace(user, user_local)
-            data['local']['FREESURFER']["export_FreeSurfer_cmd"] = data['local']['FREESURFER']["export_FreeSurfer_cmd"].replace(user, user_local)
-        return data
+            local_vars['USER']['user'] = user_local
+            NIMB_PATHS = local_vars['NIMB_PATHS']
+            FS_PATHS   = local_vars['FREESURFER']
+            for var in NIMB_PATHS:
+                NIMB_PATHS[var] = NIMB_PATHS[var].replace(user, user_local)
+            for var in ("FREESURFER_HOME", "FS_SUBJECTS_DIR", "export_FreeSurfer_cmd"):
+                FS_PATHS[var] = FS_PATHS[var].replace(user, user_local)
+            local_vars['NIMB_PATHS'] = NIMB_PATHS
+            local_vars['FREESURFER'] = FS_PATHS
+        self.location_vars['local'] = local_vars
 
 
     def populate_default_project(self):
-        default_project = load_json(path.join(path.dirname(path.abspath(__file__)), 'projects.json'))
+        default_project = self.load_file('projects', default = True)
         for project in DEFAULT.project_ids:
             if project not in self.projects:
                 self.projects[project] = dict()
@@ -116,7 +120,7 @@ class Get_Vars():
         '''sets the stats folders for the chosedn project
         '''
         update = False
-        default_stats   = load_json(path.join(path.dirname(path.abspath(__file__)), 'stats.json'))
+        default_stats = self.load_file('stats', default = True)
 
         print('    setting stats')
         NIMB_tmp     = self.location_vars['local']['NIMB_PATHS']['NIMB_tmp']
@@ -156,10 +160,9 @@ class Get_Vars():
         """
         update = False
         if self.params:
-            self.populate_default_project()
             update = self.set_stats()
 
-        default_project = load_json(path.join(path.dirname(path.abspath(__file__)), 'projects.json'))
+        default_project = self.load_file('projects', default = True)
         for subkey in default_project[DEFAULT.default_project]:
             if subkey not in self.projects[self.project]:
                 print('adding missing subkey {} to project: {}'.format(subkey, self.project))
@@ -183,7 +186,7 @@ class Get_Vars():
         :param config_file: path to configuration json file
         :return: new version, populated with missing values
         """
-        default_stats = load_json(path.join(path.dirname(path.abspath(__file__)), 'stats.json'))
+        default_stats = self.load_file('stats', default = True)
 
         update_stats = False
         for key in [i for i in default_stats.keys() if 'EXPLANATION' not in i]:
@@ -205,7 +208,7 @@ class Get_Vars():
 
 
     def chk_location_vars(self):
-        default_local = load_json(path.join(path.dirname(path.abspath(__file__)), 'local.json'))
+        default_local = self.load_file('local', default = True)
 
         update = False
         for location in self.location_vars:
@@ -248,73 +251,86 @@ class Get_Vars():
     def define_credentials(self):
         self.new_credentials_home = get_userdefined_paths('credentials', self.credentials_home, "nimb")
         if self.new_credentials_home != self.credentials_home:
+            self.credentials_home = self.new_credentials_home
             try:
                 with open(path.join(path.dirname(path.abspath(__file__)), 'credentials_path.py'), 'w') as f:
                     f.write('credentials_home=\"'+self.credentials_home+'\"')
             except Exception as e:
                 print(e)
 
-        # shutil.copy(path.join(path.dirname(path.abspath(__file__)), 'stats.json'), path.join(self.new_credentials_home, 'stats.json'))
-        shutil.copy(path.join(path.dirname(path.abspath(__file__)), 'remote1.json'), path.join(self.new_credentials_home, 'remote1.json'))
-        shutil.copy(path.join(path.dirname(path.abspath(__file__)), 'projects.json'), path.join(self.new_credentials_home, 'projects.json'))
-        self.projects      = load_json(path.join(self.new_credentials_home, 'projects.json'))
 
-        d_all_vars = self.get_all_locations_vars(self.projects['LOCATION'], path.dirname(path.abspath(__file__)))
-        d_all_vars['local'] = self.setup_default_local_nimb(d_all_vars['local'])
-        save_json(d_all_vars['local'], path.join(self.new_credentials_home, 'local.json'))
-        print('PROJECTS AND VARIABLES ARE NOT DEFINED. check: '+self.credentials_home)
+    def setup_default_local_nimb(self):
+        shutil.copy(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'local.json'),
+                    os.path.join(self.credentials_home, 'remote1.json'))
 
+        local_vars = self.load_file('local', default = True)
+        local_vars['USER']['user'] = _get_username()
 
-    def get_default_vars(self, projects): #2 be removed
-        d_all_vars = self.get_all_locations_vars(projects['LOCATION'], path.dirname(path.abspath(__file__)))
-        d_all_vars['local'] = self.setup_default_local_nimb(d_all_vars['local'])
-        save_json(d_all_vars['local'], path.join(self.credentials_home, 'local.json'))
-        print('PROJECTS AND VARIABLES ARE NOT DEFINED. check: '+self.credentials_home)
-        return d_all_vars
-
-
-    def setup_default_local_nimb(self, data):
-        NIMB_HOME = path.abspath(path.join(path.dirname(__file__), '..'))
+        '''setting NIMB paths'''
+        NIMB_PATHS = local_vars['NIMB_PATHS']
+        NIMB_HOME = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
         print('NIMB_HOME is: ', NIMB_HOME)
-        data['NIMB_PATHS']['NIMB_HOME']               = NIMB_HOME
-        new_NIMB_tmp = get_userdefined_paths('NIMB temporary folder nimb_tmp', path.join(NIMB_HOME.replace('/nimb/nimb', ''), 'nimb_tmp'), 'nimb_tmp')
+        NIMB_PATHS['NIMB_HOME']               = NIMB_HOME
+        new_NIMB_tmp = get_userdefined_paths('NIMB temporary folder nimb_tmp',
+                                            os.path.join(NIMB_HOME.replace('/nimb/nimb', ''), 'nimb_tmp'),
+                                            'nimb_tmp')
         if not path.exists(new_NIMB_tmp):
             makedirs(new_NIMB_tmp)
-        data['NIMB_PATHS']['NIMB_tmp']                = new_NIMB_tmp
-        data['NIMB_PATHS']['NIMB_NEW_SUBJECTS']       = path.join(new_NIMB_tmp, 'nimb_new_subjects')
-        data['NIMB_PATHS']['NIMB_PROCESSED_FS']       = path.join(new_NIMB_tmp, 'nimb_processed_fs')
-        data['NIMB_PATHS']['NIMB_PROCESSED_FS_error'] = path.join(new_NIMB_tmp, 'nimb_processed_fs_error')
-        new_miniconda_path = get_userdefined_paths('miniconda3 folder', path.join(NIMB_HOME.replace('/nimb/nimb', ''), 'miniconda3'), 'miniconda3')
-        data['NIMB_PATHS']['miniconda_home']          = new_miniconda_path
-        data['NIMB_PATHS']['miniconda_python_run']    = path.join(new_miniconda_path,'bin','python3.7').replace(path.expanduser("~"),"~")
-        new_freesurfer_path = get_userdefined_paths('FreeSurfer folder', path.join(NIMB_HOME.replace('/nimb/nimb', ''), 'freesurfer'), 'freesurfer')
-        if not path.exists(new_freesurfer_path):
-            FreeSurfer_install = get_yes_no('do you want to install FreeSurfer at the provided location {}? (y/n)'.format(new_freesurfer_path))
-            data['FREESURFER']['FreeSurfer_install']      = FreeSurfer_install
+        NIMB_PATHS['NIMB_tmp']                = new_NIMB_tmp
+        NIMB_PATHS['NIMB_NEW_SUBJECTS']       = os.path.join(new_NIMB_tmp, 'nimb_new_subjects')
+        NIMB_PATHS['NIMB_PROCESSED_FS']       = os.path.join(new_NIMB_tmp, 'nimb_processed_fs')
+        NIMB_PATHS['NIMB_PROCESSED_NILEARN']  = os.path.join(new_NIMB_tmp, 'nimb_processed_nilearn')
+        NIMB_PATHS['NIMB_PROCESSED_DIPY']     = os.path.join(new_NIMB_tmp, 'nimb_processed_dipy')
+        NIMB_PATHS['NIMB_PROCESSED_FS_error'] = os.path.join(new_NIMB_tmp, 'nimb_processed_fs_error')
+
+        new_miniconda_path = get_userdefined_paths('miniconda3 folder',
+                                                os.path.join(NIMB_HOME.replace('/nimb/nimb', ''), 'miniconda3'),
+                                                'miniconda3')
+        NIMB_PATHS['conda_home']              = new_miniconda_path
+        NIMB_PATHS['miniconda_python_run']    = os.path.join(new_miniconda_path,
+                                                            'bin',
+                                                            'python3.7').replace(os.path.expanduser("~"),"~")
+        local_vars['NIMB_PATHS'] = NIMB_PATHS
+
+        '''setting FREESURFER paths'''
+        new_freesurfer_path = get_userdefined_paths('FreeSurfer folder',
+                                                    os.path.join(NIMB_HOME.replace('/nimb/nimb', ''),'freesurfer'),
+                                                    'freesurfer')
+        FS_PATHS   = local_vars['FREESURFER']
+        FS_PATHS['FREESURFER_HOME']       = new_freesurfer_path
+        FS_PATHS['FS_SUBJECTS_DIR']       = os.path.join(new_freesurfer_path, 'subjects')
+        FS_PATHS['export_FreeSurfer_cmd'] = "export FREESURFER_HOME="+new_freesurfer_path
+        if not os.path.exists(new_freesurfer_path):
+            FreeSurfer_install = get_yes_no(f'do you want to install FreeSurfer at the provided location {new_freesurfer_path}? (y/n)')
+            FS_PATHS['FreeSurfer_install']     = FreeSurfer_install
             if FreeSurfer_install == 1:
                 freesurfer_license = get_FS_license()
-                data['FREESURFER']['freesurfer_license']  = freesurfer_license
+                FS_PATHS['freesurfer_license'] = freesurfer_license
         else:
-            data['FREESURFER']['FreeSurfer_install']      = 1
-        data['FREESURFER']['FREESURFER_HOME']         = new_freesurfer_path
-        data['FREESURFER']['FS_SUBJECTS_DIR']         = path.join(new_freesurfer_path, 'subjects')
-        data['FREESURFER']['export_FreeSurfer_cmd']   = "export FREESURFER_HOME="+new_freesurfer_path
+            FS_PATHS['FreeSurfer_install']     = 1
+        local_vars['FREESURFER'] = FS_PATHS
+
+        '''setting PROCESSING paths'''
         environ = get_yes_no("Will this account use slurm or tmux for processing ? (y/n; y=slurm/ n=tmux)")
         if environ == 1:
-            data['PROCESSING']['processing_env']      = 'slurm'
+            local_vars['PROCESSING']['processing_env']      = 'slurm'
             supervisor = input("For some slurm environments a supervisor account is required. Please type supervisor account name or leave blank:")
             if supervisor:
                 print('supervisor account name is: {}'.format(supervisor))
-                data['USER']['supervisor_account']       = str(supervisor)
-                data['PROCESSING']['text4_scheduler'][1] = data['PROCESSING']['text4_scheduler'][1].replace('def-supervisor',supervisor)
+                local_vars['USER']['supervisor_account']       = str(supervisor)
+                local_vars['PROCESSING']['supervisor_account'] = str(supervisor)
+                local_vars['PROCESSING']['text4_scheduler'][1] = local_vars['PROCESSING']['text4_scheduler'][1].replace('def-supervisor',supervisor)
             else:
                 print('supervisor account not provided')
-                data['USER']['supervisor_account']       = ''
-                data['PROCESSING']['text4_scheduler'].remove(data['PROCESSING']['text4_scheduler'][1])
+                local_vars['USER']['supervisor_account']       = ''
+                local_vars['PROCESSING']['supervisor_account'] = ''
+                local_vars['PROCESSING']['text4_scheduler'].remove(local_vars['PROCESSING']['text4_scheduler'][1])
         else:
             print('environment for processing is: {}'.format(environ))
-            data['PROCESSING']['processing_env']      = 'tmux'
-        return data
+            local_vars['PROCESSING']['processing_env']      = 'tmux'
+        save_json(local_vars, os.path.join(self.credentials_home, 'local.json'))
+        self.get_all_locations_vars()
+
 
 
 
@@ -364,6 +380,7 @@ class SetProject():
                     DEFAULT.stats_dirs[_dir]).replace(sep, '/')
                 stats['STATS_PATHS'][_dir] = new_key
 
+        '''old version'''
         # for key in stats['STATS_PATHS']:
         #     if 'nimb_tmp' in stats['STATS_PATHS'][key]:
         #         if key == "FS_GLM_dir":
