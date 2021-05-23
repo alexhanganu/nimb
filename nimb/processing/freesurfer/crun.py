@@ -451,14 +451,17 @@ def run(varslocal, logger):
     db = cdb.Get_DB(NIMB_HOME, NIMB_tmp, process_order)
 
     log.info('NEW SUBJECTS searching:')
-    db = cdb.Update_DB_new_subjects_and_SUBJECTS_DIR(NIMB_tmp, db, vars_freesurfer)
+    db = cdb.Update_DB_new_subjects_and_SUBJECTS_DIR(NIMB_tmp,
+                                                    db,
+                                                    vars_freesurfer,
+                                                    DEFAULT)
     cdb.Update_DB(db, NIMB_tmp)
     active_subjects = check_active_tasks(db)
 
     # extracting 40 minutes from the maximum time for the batch to run
     # since it is expected that less then 35 minutes will be required for the pipeline to perform all the steps
     # while the batch is running, and start new batch
-    max_batch_running = time.strftime('%H:%M:%S',time.localtime(time.mktime(time.strptime(vars_processing["batch_walltime"],"%H:%M:%S"))-2400))
+    max_batch_running = time.strftime('%H:%M:%S',time.localtime(time.mktime(time.strptime(vars_processing["batch_walltime"],"%H:%M:%S")) - 2400))
 
     while active_subjects >0 and time.strftime("%H:%M:%S",time.gmtime(time_elapsed)) < max_batch_running:
         count_run += 1
@@ -466,7 +469,10 @@ def run(varslocal, logger):
         log.info('elapsed time: '+time.strftime("%H:%M",time.gmtime(time_elapsed))+' max walltime: '+vars_processing["batch_walltime"][:-6])
         if count_run % 5 == 0:
             log.info('NEW SUBJECTS searching:')
-            db = cdb.Update_DB_new_subjects_and_SUBJECTS_DIR(NIMB_tmp, db, vars_freesurfer)
+            db = cdb.Update_DB_new_subjects_and_SUBJECTS_DIR(NIMB_tmp,
+                                                            db,
+                                                            vars_freesurfer,
+                                                            DEFAULT)
             cdb.Update_DB(db, NIMB_tmp)
         loop_run()
 
@@ -506,11 +512,13 @@ if __name__ == "__main__":
 
     from setup.get_vars import Get_Vars
     from distribution.logger import Log
+    from distribution.distribution_definitions import DEFAULT
     getvars = Get_Vars()
     vars_local = getvars.location_vars['local']
     # Log(vars_local['NIMB_PATHS']['NIMB_tmp'],
     #     vars_local['FREESURFER']['freesurfer_version'])
-    logger = Log(vars_local['NIMB_PATHS']['NIMB_tmp'], self.vars_local['FREESURFER']['freesurfer_version']).logger
+    logger = Log(vars_local['NIMB_PATHS']['NIMB_tmp'],
+                 vars_local['FREESURFER']['freesurfer_version']).logger
 
     from processing.schedule_helper import Scheduler, get_jobs_status
 

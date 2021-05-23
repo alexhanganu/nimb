@@ -12,7 +12,7 @@ Kim Phuong Pham
 5) create the BIDS json file that will be used by NIMB for processing
 6)
 '''
-
+import os
 from os import path, listdir, getenv, walk, system, sep
 from collections import defaultdict
 from sys import platform
@@ -24,6 +24,8 @@ import logging
 
 from .classify_definitions import mr_modalities, BIDS_types, mr_types_2exclude
 from .utils import get_path, save_json, load_json
+from  distribution.distribution_definitions import DEFAULT
+
 
 
 log = logging.getLogger(__name__)
@@ -32,11 +34,12 @@ log.setLevel(logging.DEBUG)
 class MakeBIDS_subj2process():
     def __init__(self, DIR_SUBJECTS,
                 NIMB_tmp,
-                fix_spaces,
                 ls_subjects = False,
+                fix_spaces = False,
                 update = False,
                 multiple_T1_entries = False,
                 flair_t2_add = False):
+
         self.DIR_SUBJECTS = DIR_SUBJECTS
         self.NIMB_tmp     = NIMB_tmp
         self.ls_subjects  = ls_subjects
@@ -44,11 +47,13 @@ class MakeBIDS_subj2process():
         self.multiple_T1_entries  = multiple_T1_entries
         self.flair_t2_add = flair_t2_add
         self.MR_type_default = 't1'
-        self.file_nimb_classified = "nimb_classified"
+        self.file_nimb_classified = os.path.join(self.DIR_SUBJECTS,
+                                                DEFAULT.f_nimb_classified)# "nimb_classified")
         self.fix_spaces = fix_spaces
         self.d_subjects = dict()
         self.spaces_in_paths = list()
         log.info("classification of new subjects is running ...")
+
 
     def run(self):
         if self.ls_subjects:
@@ -56,10 +61,14 @@ class MakeBIDS_subj2process():
             ls_subj_2_classify = self.ls_subjects
         else:
             ls_subj_2_classify = listdir(self.DIR_SUBJECTS)
+
+        if os.path.exists(self.file_nimb_classified):
+            if self.update:
+                print('updating file with ids')
+                self.d_subjects = load_json(self.file_nimb_classified)
+            os.remove(self.file_nimb_classified)
         if self.file_nimb_classified in ls_subj_2_classify:
             ls_subj_2_classify.remove(self.file_nimb_classified)
-            if update:
-                self.d_subjects = load_json(self.file_nimb_classified)
 
         for self.subject in ls_subj_2_classify:
 #            print(self.subject)
@@ -79,6 +88,7 @@ class MakeBIDS_subj2process():
                 d_BIDS_structure = self.make_BIDS_structure(d_ses_MR_types)
 #                print(d_BIDS_structure)
                 self.d_subjects[self.subject] = d_BIDS_structure
+                log.info("    saving classification file")
                 save_json(self.d_subjects, path.join(self.DIR_SUBJECTS, self.file_nimb_classified))
         log.info("classification of new subjects is complete")
         if self.multiple_T1_entries == 1:
@@ -95,6 +105,7 @@ class MakeBIDS_subj2process():
         else:
             return False
 
+
     def chk_spaces(self):
         if self.spaces_in_paths:
             f_paths_spaces = path.join(self.NIMB_tmp,'paths_with_spaces.json')
@@ -102,6 +113,7 @@ class MakeBIDS_subj2process():
             log.info('ATTENTION: ERR: paths of {} subjects have spaces and will not be processed by FreeSurfer'.format(len(self.spaces_in_paths)))
             log.info('ATTENTION: paths with spaces can be found here: {}'.format(f_paths_spaces))
             log.info('ATTENTION: nimb can change spaces to underscores when adding the parameter: -fix-spaces; example: python nimb.py -process classify -project Project -fix-spaces')
+
 
     def _get_MR_paths(self, path2subj):
         if '.zip' in path2subj:
@@ -114,6 +126,7 @@ class MakeBIDS_subj2process():
             path_2mris = []
         return path_2mris
 
+
     def chk_if_ziparchive(self, file):
         from distribution.manage_archive import ZipArchiveManagement
         unzip = ZipArchiveManagement(file)
@@ -121,6 +134,7 @@ class MakeBIDS_subj2process():
             return unzip.zip_file_content()
         else:
             return []
+
 
     def get_paths2dcm_files_from_ls(self, ls_content):
         ls_paths = list()
@@ -159,12 +173,14 @@ class MakeBIDS_subj2process():
                     break
         return ls
 
+
     def validate_if_date(self, date_text):
         try:
             date = dt.datetime.strptime(date_text, '%Y-%m-%d_%H_%M_%S.%f')
             return True
         except ValueError:
             return False
+
 
     def get_ls_sessions(self, ls):
         # add types
@@ -188,6 +204,7 @@ class MakeBIDS_subj2process():
             if not d_paths:
                 d_paths[date].append(mr_path)
         return ls_sessions, d_paths
+
     
     def classify_by_sessions(self, ls):
         d = {}
@@ -210,6 +227,7 @@ class MakeBIDS_subj2process():
                     d[ses_name].append(ses)
         return d
 
+
     def make_dict_sessions_with_paths(self, d_paths, d_sessions):
         d_ses_paths = {}
 
@@ -227,6 +245,7 @@ class MakeBIDS_subj2process():
                             d_ses_paths[ses].append(chemin)
         return d_ses_paths
 
+
     def get_MR_types(self, path_subj_to_files):
         mr_found = False
         for mr_type in mr_modalities:
@@ -241,6 +260,7 @@ class MakeBIDS_subj2process():
             return res
         else:
             return 'none'
+
 
     def classify_by_MR_types(self, dict_sessions_paths):
         d_ses_MR_types = {}
@@ -269,6 +289,7 @@ class MakeBIDS_subj2process():
 
         return ls_subjects
 
+
     def subjects_nodcm(self, ls_all_raw_subjects):
         ls_subjects = list()
         for folder in ls_all_raw_subjects:
@@ -277,6 +298,7 @@ class MakeBIDS_subj2process():
                     ls_subjects.append(folder)
                     break
         return ls_subjects
+
 
     def subj_no_t1(self, ls_all_raw_subjects):
         ls_subjects = list()
@@ -293,6 +315,7 @@ class MakeBIDS_subj2process():
                         ls_subjects.append(folder)
         return ls_subjects
 
+
     def make_BIDS_structure(self, d_ses_MR_types):
         d_BIDS_structure = {}
         for ses in d_ses_MR_types:
@@ -307,6 +330,7 @@ class MakeBIDS_subj2process():
                         break
         return d_BIDS_structure
 
+
     def check_spaces(self, ls_paths2chk):
         for path2chk in ls_paths2chk:
             if ' ' in path2chk:
@@ -319,6 +343,7 @@ class MakeBIDS_subj2process():
                     ls_paths2chk.append(new_path)
                     log.info('new path is: {}'.format(new_path))
         return ls_paths2chk
+
 
     def spaces_in_path_change(self, path2chk):
         path2chk_split = path2chk.split(sep)

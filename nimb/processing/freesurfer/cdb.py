@@ -58,10 +58,13 @@ def get_ls_subjids_in_long_dirs(db):
     return lsall
 
 
-def Update_DB_new_subjects_and_SUBJECTS_DIR(NIMB_tmp, db, vars_freesurfer):
+def Update_DB_new_subjects_and_SUBJECTS_DIR(NIMB_tmp,
+                                            db,
+                                            vars_freesurfer,
+                                            DEFAULT):
     db = chk_subj_in_SUBJECTS_DIR(NIMB_tmp, db, vars_freesurfer)
     db = chk_subjects2fs_file(NIMB_tmp, db, vars_freesurfer)
-    db = chk_new_subjects_json_file(NIMB_tmp, db, vars_freesurfer)
+    db = chk_new_subjects_json_file(NIMB_tmp, db, vars_freesurfer, DEFAULT)
     return db
 
 
@@ -103,7 +106,7 @@ def chk_subjects2fs_file(NIMB_tmp, db, vars_freesurfer):
     return db
 
 
-def chk_new_subjects_json_file(NIMB_tmp, db, vars_freesurfer):
+def chk_new_subjects_json_file(NIMB_tmp, db, vars_freesurfer, DEFAULT):
 
     def ls_from_subj2fs(NIMB_tmp, f_subj2fs):
         ls_subjids = list()
@@ -122,7 +125,7 @@ def chk_new_subjects_json_file(NIMB_tmp, db, vars_freesurfer):
     from fs_checker import FreeSurferChecker
     chk = FreeSurferChecker(vars_freesurfer)
 
-    f_new_subjects = path.join(NIMB_tmp,"new_subjects.json")
+    f_new_subjects = path.join(NIMB_tmp, DEFAULT.f_subjects2proc)#"new_subjects.json")
     if path.isfile(f_new_subjects):
         import json
         with open(f_new_subjects) as jfile:

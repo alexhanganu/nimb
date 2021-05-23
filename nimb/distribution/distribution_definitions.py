@@ -21,16 +21,19 @@ class DEFAULT(object):
     fname_other_stats    = "stats_other"
 
     stats_dirs      = {
-                    "FS_GLM_dir"              :'fs_glm',
-                    "STATS_HOME"              :'stats',
-                    "features"                :'stats/features',
-                    "anova"                   :'stats/anova',
-                    "simp_lin_reg_dir"        :'stats/simp_lin_reg_dir',
-                    "laterality_dir"          :'stats/laterality_dir',
-                    "predict_dir"             :'stats/predict_dir',
-                    "logistic_regression_dir" :'stats/logistic_regression_dir',
-                    "linreg_moderation_dir"   :'stats/linreg_moderation_dir',
+                    "FS_GLM_dir"             :'fs_glm',
+                    "STATS_HOME"             :'stats',
+                    "features"               :'stats/features',
+                    "anova"                  :'stats/anova',
+                    "simp_lin_reg_dir"       :'stats/simp_lin_reg_dir',
+                    "laterality_dir"         :'stats/laterality_dir',
+                    "predict_dir"            :'stats/predict_dir',
+                    "logistic_regression_dir":'stats/logistic_regression_dir',
+                    "linreg_moderation_dir"  :'stats/linreg_moderation_dir',
                         }
+    f_nimb_classified = 'nimb_classified.json'
+    f_subjects2proc   = 'new_subjects.json'
+    f_ids             = 'f_ids.json'
 
 
 def get_keys_processed(key):

@@ -27,9 +27,13 @@ class term_setup():
             self.cluster[self.remote][key] = False
 
 
-def get_userdefined_paths(path_name, old_path, add2path):
+def get_userdefined_paths(path_name, old_path, add2path, create = False):
         print(f'current {path_name} is located at: {old_path}')
         get_new = False
+        if create:
+            create_located = "created"
+        else:
+            create_located = "located"
 
         if os.path.exists(old_path):
             keep = input('do you want to keep this path ? (y/n)')
@@ -38,9 +42,11 @@ def get_userdefined_paths(path_name, old_path, add2path):
             else:
                 get_new = True
         if get_new or not os.path.exists(old_path):
-            user_path = input('please provide a new existing path where the {} folder will be created: '.format(path_name))
+            ask_1 = f'    please provide a new EXISTING path where the {path_name} folder will be {create_located}: '
+            err_miss = f'        path does not exist. \n'
+            user_path = input(ask_1)
             while not os.path.exists(user_path):
-                user_path = input('path does not exist. \n    Please provide a new EXISTING path where the {} folder will be created: '.format(path_name))
+                user_path = input(f'{err_miss} {ask_1}')
             new_path = os.path.join(user_path, add2path)
             print('new path is: {}'.format(new_path))
             return new_path
@@ -54,6 +60,6 @@ def get_yes_no(q):
 def get_FS_license():
     license = list()
     for q in ['email', "1st license nr", "2nd license space-star-letter code", "3rd license space-letter code"]:
-        res = input('Please provide FreeSurfer license {}: '.format(q))
+        res = input('    Please provide FreeSurfer license {}: '.format(q))
         license.append(res)
     return license

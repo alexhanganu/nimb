@@ -29,10 +29,10 @@ class Get_Vars():
         self.params           = params
 
         self.set_projects()
+        self.get_all_locations_vars()
         if self.params:
             self.project   = self.params.project
             self.populate_default_project()
-            self.get_all_locations_vars()
             self.chk_location_vars()
             self.chk_project_vars()
             self.chk_stats()
