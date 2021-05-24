@@ -12,7 +12,6 @@ log = logging.getLogger(__name__)
 
 def Get_DB(NIMB_HOME, NIMB_tmp, process_order):
 
-    dbjson = dict()
     db_json_file = path.join(NIMB_tmp, 'db.json')
 
     log.info("Database file db.json located at: {}".format(NIMB_tmp))
