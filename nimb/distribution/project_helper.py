@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 
+test = False
+nr_participants_for_testing = 2
+
 import os
 import pandas as pd
 
@@ -40,18 +43,20 @@ class ProjectManager:
         self.project            = all_vars.params.project
         self.project_vars       = all_vars.projects[self.project]
         self.bids_id_col        = self.project_vars['id_col']
-        self.f_ids_name         = self.local_vars["NIMB_PATHS"]['file_ids_processed']
         self.NIMB_tmp           = self.local_vars["NIMB_PATHS"]["NIMB_tmp"]
 
         # self.f_ids_proc_path  = os.path.join(self.materials_DIR,
         #                                      local_vars["NIMB_PATHS"]['file_ids_processed'])
 
         self.path_stats_dir     = all_vars.projects[self.project]["STATS_PATHS"]["STATS_HOME"]
+        self.materials_dir_pt   = all_vars.projects[self.project]["materials_DIR"][1]
+        self.f_ids_name         = self.local_vars["NIMB_PATHS"]['file_ids_processed']
         self.f_ids_abspath      = os.path.join(self.path_stats_dir, self.f_ids_name)
         self.archive_type       = '.zip'
         self.tab                = Table()
         self.distrib_hlp        = DistributionHelper(self.all_vars)
         self.df_f_groups        = self.get_df_f_groups()
+        self.DICOM_DIR          = self.project_vars["SOURCE_SUBJECTS_DIR"]
 
 
     def get_df_f_groups(self):
@@ -73,6 +78,8 @@ class ProjectManager:
         df[self.bids_id_col] = ''
         self.tab.save_df(df,
             os.path.join(self.path_stats_dir, DEFAULT.default_tab_name))
+        self.tab.save_df(df,
+            os.path.join(self.materials_dir_pt, DEFAULT.default_tab_name))
         self.project_vars['fname_groups']   = DEFAULT.default_tab_name
         self.all_vars.projects[self.project]['fname_groups'] = DEFAULT.default_tab_name
         from setup.get_credentials_home import _get_credentials_home
@@ -90,7 +97,7 @@ class ProjectManager:
         """
         print(f'    running pipeline for project: {self.project}')
         self.get_ids_bids()
-        _ids_all = self.get_ids_all()
+        self.get_ids_all()
 
 
     def get_ids_bids(self):
@@ -103,8 +110,22 @@ class ProjectManager:
         """
         if self.df_grid_ok:
             self._ids_bids = list(self.df_f_groups[self.bids_id_col])
+            self.chk_missing_participants()
         else:
             self.prep_4dcm2bids_classification()
+
+
+    def chk_missing_participants(self):
+        print('    ids present: ',self._ids_bids)
+        self.get_ids_all()
+        if not self._ids_all:
+            if self.get_ids_classified():
+                self.populate_f_ids_from_nimb_classified()
+            else:
+                self.prep_4dcm2bids_classification()
+        else:
+            print('    file with all ids is missing')
+
 
 
     def prep_4dcm2bids_classification(self):
@@ -116,6 +137,8 @@ class ProjectManager:
 
         src_dir = self.project_vars['SOURCE_SUBJECTS_DIR'][1]
         ls_source_dirs = os.listdir(src_dir)
+        if test:
+            ls_source_dirs = os.listdir(src_dir)[:nr_participants_for_testing]
         if len(ls_source_dirs) > 0:
             for _dir in ls_source_dirs:
                 self.DICOM_DIR, ls_dir_4bids2dcm = self.get_dir_with_raw_MR_data(src_dir, _dir)
@@ -132,9 +155,26 @@ class ProjectManager:
                     #                 self.project,
                     #                 DICOM_DIR = self.DICOM_DIR,
                     #                 dir_2classfy = dir_ready)
+
+            self.get_ids_classified()
             self.populate_grid()
         else:
             print(f'    folder with source subjects {src_dir} is empty')
+
+
+    def get_ids_classified(self):
+        src_subjects_dir = self.project_vars["SOURCE_SUBJECTS_DIR"][1]
+        new_subjects_dir = self.local_vars["NIMB_PATHS"]["NIMB_NEW_SUBJECTS"]
+        f_class_abspath_in_src = os.path.join(src_subjects_dir, DEFAULT.f_nimb_classified)
+        f_class_abspath_in_new = os.path.join(new_subjects_dir, DEFAULT.f_nimb_classified)
+
+        if os.path.exists(f_class_abspath_in_src):
+            self._ids_classified = load_json(f_class_abspath_in_src)
+        elif os.path.exists(f_class_abspath_in_new):
+            self._ids_classified = load_json(f_class_abspath_in_new)
+        else:
+            print('    file with nimb classified is missing')
+            self._ids_classified = dict()
 
 
     def populate_grid(self):
@@ -142,9 +182,7 @@ class ProjectManager:
         # popualte
         df = self.get_df_f_groups()
         print(df.columns)
-        f_nimb_classified_abspath = os.path.join(self.DICOM_DIR, DEFAULT.f_nimb_classified)
-        if os.path.exists(f_nimb_classified_abspath):
-            self._ids_classified = load_json(f_nimb_classified_abspath)
+        if self._ids_classified:
             self.populate_f_ids_from_nimb_classified()
 
             print(self.bids_ids_new)
@@ -159,13 +197,24 @@ class ProjectManager:
             # self.tab.save_df(df,
             #     os.path.join(self.path_stats_dir, self.project_vars['fname_groups']))
             self.send_2processing()
+        else:
+            print('   file with nimb classified is missing')
 
 
     def send_2processing(self):
         f_new_subjects = os.path.join(self.NIMB_tmp, DEFAULT.f_subjects2proc)
         save_json(self._ids_classified, f_new_subjects)
-        print('    NIMB ready to initiate FreeSurfer processing with command:\n\
-                   python3 nimb.py -process freesurfer')
+        print('    NIMB initiates processing of data.\n\
+                NIMB ready to initiate FreeSurfer processing with command:\n\
+               python3 nimb.py -process freesurfer')
+
+        from processing.schedule_helper import Scheduler
+        schedule = Scheduler(self.local_vars)
+        python_run = self.local_vars["PROCESSING"]["python3_run_cmd"]
+        NIMB_HOME  = self.local_vars["NIMB_PATHS"]["NIMB_HOME"]
+        cd_cmd   = f'cd {os.path.join(NIMB_HOME, "processing")}'
+        cmd      = f'{python_run} processing_run.py -project {self.project}'
+        schedule.submit_4_processing(cmd, 'nimb_processing','run', cd_cmd)
 
 
     def get_dir_with_raw_MR_data(self, src_dir, _dir):
@@ -219,9 +268,9 @@ class ProjectManager:
             extract bids ids from the file groups provided by user
         """
         if self.f_ids_in_dir(self.path_stats_dir):
-            return load_json(os.path.join(self.path_stats_dir, self.f_ids_name))
+            self._ids_all = load_json(os.path.join(self.path_stats_dir, self.f_ids_name))
         else:
-            return dict()
+            self._ids_all = dict()
 
 
     def f_ids_in_dir(self, path_2groups_f):
@@ -298,24 +347,25 @@ class ProjectManager:
 
 
     def populate_f_ids_from_nimb_classified(self):
-        f_ids = self.get_ids_all()
-        self.bids_ids_new = dict()
+        self.get_ids_all()
+        self.bids_ids_new = list()
+        print(self._ids_classified)
         for src_id in self._ids_classified:
-            for session in _ids_classified[src_id]:
+            for session in self._ids_classified[src_id]:
                 bids_id = f'{src_id}_{session}'
                 self.bids_ids_new.append(bids_id)
 
-                if bids_id not in f_ids:
-                    f_ids[bids_id] = dict()
-                f_ids[bids_id][get_keys_processed('src')] = src_id
-        self.create_file_ids(f_ids)
+                if bids_id not in self._ids_all:
+                    self._ids_all[bids_id] = dict()
+                self._ids_all[bids_id][get_keys_processed('src')] = src_id
+        self.create_file_ids(self._ids_all)
 
 
     def populate_ids_all_from_remote(self, _ids, bids_id):
         '''
         fs_processed_col = 'path_freesurfer711'
         irm_source_col = 'path_source'
-        df = pd.read_csv(path.join(self.projects[self.project_name]['materials_DIR'], self.projects[self.proj>
+        df = pd.read_csv(path.join(self.materials_dir_pt, self.projects[self.proj>
         ls_miss = df[irm_source_col].tolist()
         remote_loc = self.get_processing_location('freesurfer')
         remote_loc = remote_loc[0]
@@ -357,4 +407,5 @@ class ProjectManager:
 
     def create_file_ids(self, _ids):
         print('creating file with groups {}'.format(self.f_ids_abspath))
-        self.save_json(_ids, self.f_ids_abspath)
+        save_json(_ids, self.f_ids_abspath)
+        save_json(_ids, os.path.join(self.materials_dir_pt, self.f_ids_name))

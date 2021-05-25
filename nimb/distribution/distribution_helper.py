@@ -176,12 +176,15 @@ class DistributionHelper():
 
 
     def get_local_remote_dir(self, dir_data):
-        if dir_data[0] == 'local':
-            print('working folder is: {}'.format(dir_data[1]))
-            return dir_data[1]
+        location    = dir_data[0]
+        dir_abspath = dir_data[1]
+        print(f'folder {dir_abspath} is located on a remote: {location}')
+        if location == 'local':
+            if not os.path.exists(dir_abspath):
+                makedir_ifnot_exist(dir_abspath)
+            return True, dir_abspath, 'local'
         else:
-            print('folder {} is located on a remote: {}'.format(dir_data[1], dir_data[0]))
-            return False
+            return False, dir_abspath, location
 
 
     def get_subj_2classify(self):
@@ -207,16 +210,17 @@ class DistributionHelper():
 
 
     def get_files_for_stats(self, path_2copy_files, list_of_files):
-        location = self.proj_vars['materials_DIR'][0]
-        materials_dir_path = self.proj_vars['materials_DIR'][1]
-        if location == 'local':
+        local, materials_dir_path, location = self.get_local_remote_dir(self.proj_vars["materials_DIR"])
+        if local:
             for file in list_of_files:
                 path2file = os.path.join(materials_dir_path, file)
                 if os.path.exists(path2file):
                     print(f'    copying files: {file} to: {path_2copy_files}')
                     shutil.copy(path2file, path_2copy_files)
+                else:
+                    print(f'    file: {file} absent in path: {path2file}')
         else:
-            print('nimb must access the remote computer: {}'.format(location))
+            print('    nimb must access the remote computer: {}'.format(location))
             from distribution import SSHHelper
             SSHHelper.download_files_from_server(location, materials_dir_path, path_2copy_files, list_of_files)
         if os.path.exists(os.path.join(path_2copy_files, list_of_files[-1])):
@@ -278,8 +282,8 @@ class DistributionHelper():
                 return False
         '''
         dir_4stats       = makedir_ifnot_exist(self.all_vars.stats_vars["STATS_PATHS"]["STATS_HOME"])
-        PROCESSED_FS_DIR = self.get_local_remote_dir(self.proj_vars["PROCESSED_FS_DIR"])
-        if PROCESSED_FS_DIR:
+        local, PROCESSED_FS_DIR, _ = self.get_local_remote_dir(self.proj_vars["PROCESSED_FS_DIR"])
+        if local:
             fname_groups     = self.proj_vars['fname_groups']
             f_ids_processed_name = self.locations["local"]["NIMB_PATHS"]['file_ids_processed']
             if not self.get_files_for_stats(dir_4stats,

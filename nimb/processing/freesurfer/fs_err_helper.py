@@ -151,6 +151,10 @@ def fs_find_error(subjid, SUBJECTS_DIR, NIMB_tmp, process, fs_version):
                     log.info('        ERROR: files have mismatched dimension, repeat registration will be performed')
                     error = 'regdim'
                     break
+                elif 'ERROR: input(s) cannot have multiple frames!' in line:
+                    log.info('        ERROR: orig.mgz file has multiple frames. Cannot continue')
+                    error = 'regframes'
+                    break
                 elif 'ERROR: cannot find' in line:
                     log.info('        ERROR: cannot find files')
                     error = 'cannotfind'

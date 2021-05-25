@@ -31,9 +31,9 @@ def get_userdefined_paths(path_name, old_path, add2path, create = False):
         print(f'current {path_name} is located at: {old_path}')
         get_new = False
         if create:
-            create_located = "created"
+            create_located = "will be created"
         else:
-            create_located = "located"
+            create_located = "is located"
 
         if os.path.exists(old_path):
             keep = input('do you want to keep this path ? (y/n)')
@@ -42,7 +42,7 @@ def get_userdefined_paths(path_name, old_path, add2path, create = False):
             else:
                 get_new = True
         if get_new or not os.path.exists(old_path):
-            ask_1 = f'    please provide a new EXISTING path where the {path_name} folder will be {create_located}: '
+            ask_1 = f'    please provide an EXISTING path where the {path_name} folder {create_located}: '
             err_miss = f'        path does not exist. \n'
             user_path = input(ask_1)
             while not os.path.exists(user_path):

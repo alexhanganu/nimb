@@ -326,35 +326,46 @@ def long_check_groups(_id):
     cdb.Update_DB(db, NIMB_tmp)
 
 
-
 def move_processed_subjects(subject, db_source, new_name):
+    # moving the file with mr parameters, created with mri_info
     file_mrparams = path.join(NIMB_tmp, 'mriparams', '{}_mrparams'.format(subject))
     if path.isfile(file_mrparams):
         shutil.move(file_mrparams, path.join(SUBJECTS_DIR, subject, 'stats'))
+
+    # copying the processed folder to the temporary nimb storage folder
     log.info('    {} copying from {}'.format(subject, db_source))
-    size_src = sum(f.stat().st_size for f in Path(path.join(SUBJECTS_DIR, subject)).glob('**/*') if f.is_file())
-    shutil.copytree(path.join(SUBJECTS_DIR, subject), path.join(vars_nimb["NIMB_PROCESSED_FS"], subject))
-    size_dst = sum(f.stat().st_size for f in Path(path.join(vars_nimb["NIMB_PROCESSED_FS"], subject)).glob('**/*') if f.is_file())
+    _dir_store = vars_nimb["NIMB_PROCESSED_FS"]
+    cp_src_path = path.join(SUBJECTS_DIR, subject)
+    cp_dst_path = path.join(_dir_store, subject)
+    shutil.copytree(cp_src_path, cp_dst_path)
+
+    # extracting the initial size of the folder to copy, to verify with the copied size
+    # if both sizes are similar, source is removed
+    # if a new name due to error - was assigned, folder is renamed
+    # if user requested archiving - archiving is performed.
+    size_src = sum(f.stat().st_size for f in Path(cp_src_path).glob('**/*') if f.is_file())
+    size_dst = sum(f.stat().st_size for f in Path(cp_dst_path).glob('**/*') if f.is_file())
     if size_src == size_dst:
         db['PROCESSED'][db_source].remove(subject)
         cdb.Update_DB(db, NIMB_tmp)
-        shutil.rmtree(path.join(SUBJECTS_DIR, subject))
+        shutil.rmtree(cp_src_path)
+        if new_name:
+            log.info('        renaming {} to {}, moving to {}'.format(subject, new_name, vars_nimb["NIMB_PROCESSED_FS_error"]))
+            _dir_store = vars_nimb["NIMB_PROCESSED_FS_error"]
+            subject    = new_name
+            cp_dst_err = path.join(_dir_store, subject)
+            shutil.move(cp_dst_path, cp_dst_err)
         if vars_processing["archive_processed"] == 1:
             log.info('        archiving ...')
-            # chdir(vars_nimb["NIMB_PROCESSED_FS"])
-            # system('zip -r -q -m {}.zip {}'.format(subject, subject))
-            cd_cmd = 'cd {}'.format(vars_nimb["NIMB_PROCESSED_FS"])
+            cd_cmd = 'cd {}'.format(_dir_store)
             cmd = 'zip -r -q -m {}.zip {}'.format(subject, subject)
             schedule.submit_4_processing(cmd,'nimb','archiving', cd_cmd,
                                         activate_fs = False,
                                         python_load = False)
-        if new_name:
-            log.info('        renaming {} to {}, moving to {}'.format(subject, new_name, vars_nimb["NIMB_PROCESSED_FS_error"]))
-            shutil.move(path.join(vars_nimb["NIMB_PROCESSED_FS"], '{}.zip'.format(subject)),
-                        path.join(vars_nimb["NIMB_PROCESSED_FS_error"], '{}.zip'.format(new_name)))
     else:
         log.info('        ERROR in moving, not moved correctly {} {}'.format(str(size_src), str(size_dst)))
         shutil.rmtree(path.join(vars_nimb["NIMB_PROCESSED_FS"], subject))
+
 
 def loop_run():
     cdb.Update_DB(db, NIMB_tmp)
