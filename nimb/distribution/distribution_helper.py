@@ -3,10 +3,10 @@ import os
 import sys
 import shutil
 
-from distribution.utilities import ErrorMessages, makedir_ifnot_exist
+from distribution.utilities import save_json, ErrorMessages, makedir_ifnot_exist
 from distribution.setup_miniconda import setup_miniconda
 from distribution.setup_freesurfer import SETUP_FREESURFER
-from setup.interminal_setup import get_yes_no
+from setup.interminal_setup import get_yes_no, get_userdefined_paths, term_setup
 from setup import interminal_setup
 try:
     from setup import guitk_setup
@@ -21,7 +21,8 @@ class DistributionHelper():
         self.all_vars         = all_vars
         self.credentials_home = all_vars.credentials_home # NIMB_HOME/credentials_paths.py
         self.locations        = all_vars.location_vars # credentials_home/local.json + remotes.json
-        self.proj_vars        = all_vars.projects[all_vars.params.project]
+        self.project          = all_vars.params.project
+        self.proj_vars        = all_vars.projects[self.project]
         self.NIMB_HOME        = self.locations["local"]["NIMB_PATHS"]["NIMB_HOME"]
         self.NIMB_tmp         = self.locations["local"]["NIMB_PATHS"]["NIMB_tmp"]
 
@@ -82,7 +83,7 @@ class DistributionHelper():
         from setup.term_questionnaire import PyInqQuest
         chosen_loc = list()
         if len(self.locations_4process) == 0:
-                loc = interminal_setup.term_setup('none').credentials
+                loc = term_setup('none').credentials
                 chosen_loc.append(loc)
         else:
             pass
@@ -175,13 +176,24 @@ class DistributionHelper():
         pass
 
 
-    def get_local_remote_dir(self, dir_data):
+    def get_local_remote_dir(self, dir_data, _dir = 'None'):
         location    = dir_data[0]
         dir_abspath = dir_data[1]
-        print(f'folder {dir_abspath} is located on a remote: {location}')
+        print(f'folder {dir_abspath} is located on: {location}')
         if location == 'local':
             if not os.path.exists(dir_abspath):
+                dir_abspath = get_userdefined_paths(f'{_dir} folder',
+                                                    dir_abspath, '', create = False)
                 makedir_ifnot_exist(dir_abspath)
+                if _dir != 'None':
+                    from setup.get_credentials_home import _get_credentials_home
+                    if _dir in self.all_vars.projects[self.project]:
+                        self.all_vars.projects[self.project][_dir][1] = dir_abspath
+                        save_json(self.all_vars.projects, os.path.join(_get_credentials_home(), 'projects.json'))
+                    else:
+                        print('    folder to change is not located in the projects.json variables')
+                else:
+                    print('    Folder to change is not defined, cannot create a new one.')
             return True, dir_abspath, 'local'
         else:
             return False, dir_abspath, location
@@ -210,7 +222,8 @@ class DistributionHelper():
 
 
     def get_files_for_stats(self, path_2copy_files, list_of_files):
-        local, materials_dir_path, location = self.get_local_remote_dir(self.proj_vars["materials_DIR"])
+        local, materials_dir_path, location = self.get_local_remote_dir(self.proj_vars["materials_DIR"],
+                                                                        _dir = "materials_DIR")
         if local:
             for file in list_of_files:
                 path2file = os.path.join(materials_dir_path, file)
