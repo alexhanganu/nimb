@@ -181,11 +181,9 @@ class ProjectManager:
         # get grid
         # popualte
         df = self.get_df_f_groups()
-        print(df.columns)
         if self._ids_classified:
             self.populate_f_ids_from_nimb_classified()
 
-            print(self.bids_ids_new)
             for bids_id in self.bids_ids_new:
                 if bids_id not in df[self.bids_id_col]:
                     df.loc[-1] = df.columns.values
@@ -193,7 +191,6 @@ class ProjectManager:
                         df.at[-1, col] = ''
                     df.at[-1, self.bids_id_col] = bids_id
                     df.index = range(len(df[self.bids_id_col]))
-            print(df[self.bids_id_col])
             # self.tab.save_df(df,
             #     os.path.join(self.path_stats_dir, self.project_vars['fname_groups']))
             self.send_2processing()
@@ -349,7 +346,7 @@ class ProjectManager:
     def populate_f_ids_from_nimb_classified(self):
         self.get_ids_all()
         self.bids_ids_new = list()
-        print(self._ids_classified)
+        # print(self._ids_classified)
         for src_id in self._ids_classified:
             for session in self._ids_classified[src_id]:
                 bids_id = f'{src_id}_{session}'

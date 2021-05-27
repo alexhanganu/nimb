@@ -65,8 +65,8 @@ class FilePerFSVersion:
         self.log       = {
             'recon'     :{'7':'recon-all.log',                       '6':'recon-all.log'},
             'autorecon1':{'7':'recon-all.log',                       '6':'recon-all.log'},
-            'autorecon1':{'7':'recon-all.log',                       '6':'recon-all.log'},
-            'autorecon1':{'7':'recon-all.log',                       '6':'recon-all.log'},
+            'autorecon2':{'7':'recon-all.log',                       '6':'recon-all.log'},
+            'autorecon3':{'7':'recon-all.log',                       '6':'recon-all.log'},
             'qcache'    :{'7':'recon-all.log',                       '6':'recon-all.log'},
             'bs'        :{'7':'brainstem-substructures-T1.log',      '6':'brainstem-structures.log'},
             'hip'       :{'7':'hippocampal-subfields-T1.log',        '6':'hippocampal-subfields-T1.log'},
@@ -88,10 +88,10 @@ class FilePerFSVersion:
                         }
         self.hemi = {'lh':'lh.', 'rh':'rh.', 'lhrh':''}
         self.fs_ver = FreeSurferVersion(freesurfer_version).fs_ver()
-    
+
     def log_f(self, process):
         return path.join('scripts', self.log[process][self.fs_ver])
-        
+
     def stats_f(self, process, dir, hemi='lhrh'):
         file = '{}{}'.format(self.hemi[hemi], self.stats_files[dir][process][self.fs_ver])
         return path.join(dir, file)
@@ -302,8 +302,8 @@ all_data = {
     'CortexDK':{
         'two_hemi':True,
         'files':{'L':('lh.aparc.stats',),'R':('rh.aparc.stats',),},
-        'parameters' : {'GrayVol' :'Vol',      'ThickAvg':'Thick',    'SurfArea':'Area', 
-                        'NumVert' :'VertexNum','ThickStd':'ThickStd', 'FoldInd' :'FoldInd',  
+        'parameters' : {'GrayVol' :'Vol',      'ThickAvg':'Thick',    'SurfArea':'Area',
+                        'NumVert' :'VertexNum','ThickStd':'ThickStd', 'FoldInd' :'FoldInd',
                         'MeanCurv':'Curv',     'GausCurv':'CurvGaus', 'CurvInd' :'CurvInd'},
         'header':{'bankssts':'temporal_superior_sulcus_bank','caudalanteriorcingulate':'cingulate_anterior_caudal','caudalmiddlefrontal':'frontal_middle_caudal',
             'cuneus':'occipital_cuneus','entorhinal':'temporal_entorhinal','fusiform':'temporal_fusiform','inferiorparietal':'parietal_inferior',
@@ -573,7 +573,7 @@ def get_names_of_structures():
     for val in segmentations_header:
         name_structures.append(segmentations_header[val])
     for val in parc_DK_header:
-        name_structures.append(parc_DK_header[val]) 
+        name_structures.append(parc_DK_header[val])
     for val in brstem_hip_header['all']:
         name_structures.append(brstem_hip_header['all'][val])
     for val in parc_DS_header:
@@ -676,7 +676,7 @@ class RReplace():
         e.g.: frontal_middle_caudal_ThickL_DK, where DK stands for Desikan and DS stands for Destrieux
         extracts roi name and measurement
         combines roi with contralateral roi
-    Args: feature to 
+    Args: feature to
     Return: {'feature_name':('Left-corresponding-feature', 'Right-corresponding-feature')}
     '''
 
@@ -778,7 +778,7 @@ def get_fs_rois_lateralized(atlas, meas = None):
 #     for val in segmentations_header:
 #         name_structures.append(segmentations_header[val])
 #     for val in parc_DK_header:
-#         name_structures.append(parc_DK_header[val]) 
+#         name_structures.append(parc_DK_header[val])
 #     for val in brstem_hip_header['all']:
 #         name_structures.append(brstem_hip_header['all'][val])
 #     for val in parc_DS_header:

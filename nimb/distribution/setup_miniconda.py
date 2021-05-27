@@ -49,10 +49,10 @@ def setup_miniconda(conda_home, NIMB_HOME):
     is_command_ran_sucessfully(
         'curl {} -o miniconda3.sh'.format(install_miniconda3))
     system('chmod +x miniconda3.sh')
-    system('./miniconda3.sh -b -p ' + path.join(conda_home,"miniconda3"))
+    system('./miniconda3.sh -b -p ' + conda_home)
     # remove('miniconda3.sh')
-    cmd = 'export PATH=' + path.join(conda_home,'miniconda3') + '/bin:$PATH >> $HOME/.bashrc'
-    cmd = """echo  'export PATH="{0}/bin:$PATH"' >> $HOME/.bashrc""".format(path.join(conda_home,'miniconda3'))
+    cmd = 'export PATH=' + conda_home + '/bin:$PATH >> $HOME/.bashrc'
+    cmd = """echo  'export PATH="{0}/bin:$PATH"' >> $HOME/.bashrc""".format(conda_home)
     print(cmd)
     print("*"*10)
     system(cmd)
@@ -64,7 +64,7 @@ def setup_miniconda(conda_home, NIMB_HOME):
     print('FINISHED Installing miniconda3')
 
 def install_conda_module(conda_home, NIMB_HOME, module):
-    conda_bin = path.join(conda_home,'miniconda3/bin/conda')
+    conda_bin = path.join(conda_home,'bin/conda')
     forge_list = ['dcm2bids', 'dcm2niix', 'dipy', 'nilearn', 'submitit']
     print('installing module: {}'.format(module))
     if module not in forge_list:
