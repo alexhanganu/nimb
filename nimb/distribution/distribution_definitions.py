@@ -34,6 +34,12 @@ class DEFAULT(object):
     f_nimb_classified = 'nimb_classified.json'
     f_subjects2proc   = 'new_subjects.json'
     f_ids             = 'f_ids.json'
+    f_running_fs      = 'running_'
+    f_running_process = 'processing_running_'
+
+    process_db_name   = "processing_db.json"
+    fs_db_name        = "db.json"
+
 
 
 def get_keys_processed(key):

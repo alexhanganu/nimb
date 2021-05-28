@@ -421,7 +421,7 @@ def Count_TimeSleep():
     return time2sleep
 
 def Update_running(NIMB_tmp, cmd):
-    file = path.join(NIMB_tmp, 'running_')
+    file = path.join(NIMB_tmp, DEFAULT.f_running_fs)
     if cmd == 1:
         if path.isfile('{}0'.format(file)):
             rename('{}0'.format(file), '{}1'.format(file))

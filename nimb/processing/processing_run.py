@@ -1,6 +1,8 @@
 #!/bin/python
 # 2020.09.10
 
+# uncomment lines: 89, 120, 156
+
 import os
 from os import path, system, chdir, environ, rename, listdir
 import time
@@ -18,44 +20,34 @@ class RUNProcessing:
     def __init__(self, all_vars, logger):
 
         #defining working variables
-        global db, schedule, log, vars_local, vars_processing#, chk, vars_freesurfer, fs_ver, vars_nimb, NIMB_HOME, NIMB_tmp, SUBJECTS_DIR, max_walltime, process_order, processing_env
-
         project     = all_vars.params.project
-        vars_local  = all_vars.location_vars['local']
-        vars_processing = vars_local["PROCESSING"]
-        log         = logger #logging.getLogger(__name__)
+        self.vars_local  = all_vars.location_vars['local']
+        vars_processing = self.vars_local["PROCESSING"]
+        self.log         = logger #logging.getLogger(__name__)
 
         # defining files and paths
+        self.NIMB_tmp    = self.vars_local['NIMB_PATHS']['NIMB_tmp']
+        self.NIMB_HOME   = self.vars_local["NIMB_PATHS"]["NIMB_HOME"]
         materials_dir_pt = all_vars.projects[project]["materials_DIR"][1]
-
-
-    #     vars_freesurfer = vars_local["FREESURFER"]
-    #     vars_nimb       = vars_local["NIMB_PATHS"]
-    #     processing_env  = vars_local["PROCESSING"]["processing_env"]
-
-    #     NIMB_HOME       = vars_nimb["NIMB_HOME"]
-    #     NIMB_tmp        = vars_nimb["NIMB_tmp"]
-    #     max_walltime    = vars_processing["max_walltime"]
-    #     SUBJECTS_DIR    = vars_freesurfer["FS_SUBJECTS_DIR"]
-    #     fs_ver          = FreeSurferVersion(vars_freesurfer["freesurfer_version"]).fs_ver()
-    #     chk             = FreeSurferChecker(vars_freesurfer)
-        schedule        = Scheduler(vars_local)
+        self.f_running   = os.path.join(self.NIMB_tmp, DEFAULT.f_running_process)
+        self.start_fs_processing = False
+        self.schedule     = Scheduler(self.vars_local)
 
         t0           = time.time()
         time_elapsed = 0
         count_run    = 0
 
-        log.info('    processing pipeline started')
-        self.update_running(NIMB_tmp, 1)
+        self.log.info('    processing pipeline started')
+        self.update_running(1)
 
-        log.info('    processing database reading')
-        DBc = DB(all_vars)
-        db = DBc.get_db()
+        self.log.info('    processing database reading')
+        self.DBc = DB(all_vars)
+        self.db = self.DBc.get_db()
 
-        log.info('    NEW SUBJECTS searching:')    
-        db = DBc.update_db_new_subjects(db)
+        self.log.info('    NEW SUBJECTS searching:')    
+        self.db = self.DBc.update_db_new_subjects(self.db)
 
-    #     DBc.update_db(db, NIMB_tmp)
+    #     self.DBc.update_db(db, NIMB_tmp)
 
         # extracting 40 minutes from the maximum time for the batch to run
         # since it is expected that less then 35 minutes will be required for the pipeline to perform all the steps
@@ -65,22 +57,19 @@ class RUNProcessing:
 
         while len_all_running >0 and time.strftime("%H:%M:%S",time.gmtime(time_elapsed)) < max_batch_running:
             count_run += 1
-            log.info('restarting run, '+str(count_run))
+            self.log.info('restarting run, '+str(count_run))
             time_elapsed_strftime = time.strftime("%H:%M",time.gmtime(time_elapsed))
             batch_time_hm = vars_processing["batch_walltime"][:-6]
-            log.info(f'elapsed time: {time_elapsed_strftime}; max walltime: {batch_time_hm}')
+            self.log.info(f'elapsed time: {time_elapsed_strftime}; max walltime: {batch_time_hm}')
     #         if count_run % 5 == 0:
-    #             log.info('NEW SUBJECTS searching:')
-    #             db = DBc.Update_DB_new_subjects_and_SUBJECTS_DIR(NIMB_tmp,
-    #                                                             db,
-    #                                                             vars_freesurfer,
-    #                                                             DEFAULT)
-    #             DBc.update_db(db, NIMB_tmp)
+    #             self.log.info('    NEW SUBJECTS searching:')
+    #             self.db = self.DBc.update_db_new_subjects(self.db)
+    #             self.DBc.update_db(self.db, NIMB_tmp)
             self.loop_run()
 
             time_to_sleep, len_all_running = self.count_timesleep()
             next_run_time = str(time.strftime("%H:%M",time.localtime(time.time()+time_to_sleep)))
-            log.info('\n\nWAITING. \nNext run at: '+next_run_time)
+            self.log.info('\n\nWAITING. \nNext run at: '+next_run_time)
 
             time_elapsed = time.time() - t0
 
@@ -90,214 +79,82 @@ class RUNProcessing:
             _, len_all_running = self.count_timesleep()
 
         if len_all_running == 0:
-            self.update_running(NIMB_tmp, 0)
-            log.info('ALL TASKS FINISHED')
+            self.update_running(0)
+            self.log.info('ALL TASKS FINISHED')
         else:
-            python_run = self.local_vars["PROCESSING"]["python3_run_cmd"]
-            NIMB_HOME  = self.local_vars["NIMB_PATHS"]["NIMB_HOME"]
-            cd_cmd     = f'cd {os.path.join(NIMB_HOME, "processing")}'
-            cmd        = f'{python_run} processing_run.py -project {project}'
-            log.info(f'    Sending new processing batch to scheduler with cd_cmd: {cd_cmd} ')
-    #         schedule.submit_4_processing(cmd, 'nimb_processing','run', cd_cmd)
+            self.python_run = self.local_vars["PROCESSING"]["python3_run_cmd"]
+            cd_cmd     = f'cd {os.path.join(self.NIMB_HOME, "processing")}'
+            cmd        = f'{self.python_run} processing_run.py -project {project}'
+            self.log.info(f'    Sending new processing batch to scheduler with cd_cmd: {cd_cmd} ')
+#         self.schedule.submit_4_processing(cmd, 'nimb_processing','run', cd_cmd)
 
 
-
-    def update_running(self, NIMB_tmp, cmd):
-        file = path.join(NIMB_tmp, 'processing_running_')
-        if cmd == 1:
-            if path.isfile('{}0'.format(file)):
-                rename('{}0'.format(file), '{}1'.format(file))
-            else:
-                open('{}1'.format(file), 'w').close()
-        else:
-            if path.isfile('{}1'.format(file)):
-                rename('{}1'.format(file), '{}0'.format(file))
-
-
-    def count_timesleep(self):
-        time2sleep = 36000 # 600 minutes
-        len_running_fs = len(list(db['PROCESS_FS'].keys()))
-        len_running_nl = len(list(db['PROCESS_NL'].keys()))
-        len_running_dp = len(list(db['PROCESS_DP'].keys()))
-        len_all_running = len_running_fs + len_running_nl + len_running_dp
-        log.info('    running: '+str(len_all_running))
-        if len_running_nl > 0:
-            time2sleep = 1800 # 30 minutes
-        elif len_running_dp > 0:
-            time2sleep = 3600 # 60 minutes
-        return time2sleep, len_all_running
 
     def loop_run(self):
-        print('inside the loop')
-        # DBc.update_db(db, NIMB_tmp)
-        # # scheduler_jobs = get_jobs_status(vars_local["USER"]["user"]) #2RM
-        # scheduler_jobs = schedule.get_jobs_status(vars_local["USER"]["user"], db['RUNNING_JOBS'])
+        print('    starting the processing loop')
+        fs_db = self.get_db("fs")
+        ls_subj_in_fs_db = list()
+        for ls_bids_ids in fs_db["LONG_DIRS"].values():
+            ls_subj_in_fs_db = ls_subj_in_fs_db + ls_bids_ids
 
-        # for process in process_order[::-1]:
-        #     if len(db['RUNNING'][process])>0:
-        #         running(process, scheduler_jobs)
-        #     if len(db['DO'][process])>0:
-        #         do(process)
+        ls_fs_subjects = list(self.db["PROCESS_FS"].keys())
+        ls_2process_with_fs = list()
+        for subjid in ls_fs_subjects:
+            if self.db['PROCESS_FS'][subjid] == 'local':
+                if subjid not in ls_subj_in_fs_db:
+                    ls_2process_with_fs.append(subjid)
 
-        # for process in process_order:
-        #     check_error(scheduler_jobs, process)
+        print(len(ls_subj_in_fs_db))
+        print(len(ls_2process_with_fs))
 
-        # log.info('CHECKING subjects')
-        # ls_long_dirs = list()
-        # for key in db['LONG_DIRS']:
-        #     ls_long_dirs.append(key)
-
-        # for _id in ls_long_dirs:
-        #     long_check_groups(_id)
+        self.update_fs_processing(ls_2process_with_fs)
+        self.chk_start_processing()
 
 
-        # log.info('MOVING the processed')
-        # for subject in db['PROCESSED']['cp2local'][::-1]:
-        #     move_processed_subjects(subject, 'cp2local', '')
-
-
-    def Get_status_for_subjid_in_queue(self, running_jobs, subjid, scheduler_jobs):
-        if subjid in running_jobs:
-            job_id = str(running_jobs[subjid])
-            if job_id in scheduler_jobs:
-               status = scheduler_jobs[job_id][1]
+    def chk_start_processing(self):
+        if self.start_fs_processing:
+            f_fs_running = os.path.join(self.NIMB_tmp, f'{DEFAULT.f_running_fs}0')
+            if os.path.exists(f_fs_running):
+                path_2cd = os.path.join(self.NIMB_HOME, 'processing', 'freesurfer')
+                cd_cmd = f"cd {path_2cd}"
+                cmd = f'{self.python_run} crun.py'
+#                self.schedule.submit_4_processing(cmd, 'nimb','run', cd_cmd,
+#                                                activate_fs = False,
+#                                                python_load = True)
             else:
-               status = 'none'
-        else:
-            running_jobs, status = try_to_infer_jobid(running_jobs, subjid, scheduler_jobs)
-            job_id = '0'
-        return running_jobs, status, job_id
+                print(f'    file {f_fs_running} is missing')
+
+    def get_db(self, app):
+        if app == "fs":
+            db_app = os.path.join(self.NIMB_tmp, DEFAULT.fs_db_name)
+            return load_json(db_app)
 
 
-    def try_to_infer_jobid(self, running_jobs, subjid, scheduler_jobs):
-        probable_jobids = [i for i in scheduler_jobs if scheduler_jobs[i][0] in subjid]
-        if probable_jobids:
-            log.info('            job_id for subject {} inferred, probable jobids: {}'.format(subjid, str(probable_jobids[0])))
-            if len(probable_jobids)>1:
-                running_jobs[subjid] = 0
+    def update_fs_processing(self, ls_2process_with_fs):
+        update = False
+        if ls_2process_with_fs:
+            new_subjects_dir = self.vars_local['NIMB_PATHS']['NIMB_NEW_SUBJECTS']
+
+            f_classif_in_src = os.path.join(new_subjects_dir, DEFAULT.f_nimb_classified)
+            f_new_subjects   = os.path.join(self.NIMB_tmp, DEFAULT.f_subjects2proc)
+
+            if os.path.exists(f_classif_in_src):
+                classif_subjects = load_json(f_classif_in_src)
+                update = True
+            if os.path.exists(f_new_subjects):
+                new_subjects = load_json(f_new_subjects)
             else:
-                running_jobs[subjid] = probable_jobids[0]
-            return running_jobs, 'PD'
-        else:
-            return running_jobs, 'none'
-
-
-    def running(self, process, scheduler_jobs):
-        ACTION = 'RUNNING'
-        log.info('{} {}'.format(ACTION, process))
-        lsr = db[ACTION][process].copy()
-        for subjid in lsr:
-            db['RUNNING_JOBS'], status, job_id = Get_status_for_subjid_in_queue(db['RUNNING_JOBS'], subjid, scheduler_jobs)
-            if status == 'none':
-                db[ACTION][process].remove(subjid)
-                if subjid in db['RUNNING_JOBS']:
-                    db['RUNNING_JOBS'].pop(subjid, None)
-                if vars_freesurfer["base_name"] in subjid:
-                    log.info('    reading {}, {} is long or base '.format(process, subjid))
-                    chk
-                    if chk.IsRunning_chk(subjid) or not chk.checks_from_runfs('recon', subjid):
-                    # if fs_checker.chkIsRunning(SUBJECTS_DIR, subjid) or not fs_checker.checks_from_runfs(SUBJECTS_DIR, 'recon', subjid, vars_freesurfer["freesurfer_version"], vars_freesurfer["masks"]):  #2RM
-                            log.info('    {}, {} -> ERROR, IsRunning or not all files created'.format(subjid, process))
-                            db['ERROR_QUEUE'][subjid] = schedule.get_time_end_of_walltime(process) #str(format(datetime.now()+timedelta(hours=datetime.strptime(Get_walltime(process), '%H:%M:%S').hour), "%Y%m%d_%H%M"))  #2RM
-                            db['PROCESSED']['error_recon'].append(subjid)
-                else:
-                    if not chk.IsRunning_chk(subjid) and chk.checks_from_runfs(process, subjid):
-                    # if not fs_checker.chkIsRunning(SUBJECTS_DIR, subjid) and fs_checker.checks_from_runfs(SUBJECTS_DIR, process, subjid, vars_freesurfer["freesurfer_version"], vars_freesurfer["masks"]):  #2RM
-                        if process != process_order[-1]:
-                            next_process = process_order[process_order.index(process)+1]
-                            if not chk.checks_from_runfs(next_process, subjid):
-                            # if not fs_checker.checks_from_runfs(SUBJECTS_DIR, next_process, subjid, vars_freesurfer["freesurfer_version"], vars_freesurfer["masks"]):  #2RM
-                                db['DO'][next_process].append(subjid)
-                                log.info('    {}, {} {} -> DO {}'.format(subjid, ACTION, process, next_process))
-                                if processing_env == 'tmux':
-                                    schedule.kill_tmux_session(job_id)
-                            else:
-                                db[ACTION][next_process].append(subjid)
-                                log.info('    {}, {} {} -> {} {}'.format(subjid, ACTION, process, ACTION, next_process))
-                        else:
-                            log.info('    {} processing DONE'.format(subjid))
-                    else:
-                        log.info('    {}, {} -> ERROR; IsRunning, status= {}'.format(subjid, process, status))
-                        db['ERROR_QUEUE'][subjid] = schedule.get_time_end_of_walltime(process) #str(format(datetime.now()+timedelta(hours=datetime.strptime(Get_walltime(process), '%H:%M:%S').hour), "%Y%m%d_%H%M")) #2RM
-                        db['PROCESSED']['error_'+process].append(subjid)
-        db[ACTION][process].sort()
-        DBc.update_db(db, NIMB_tmp)
-
-
-    def move_processed_subjects(self, subject, db_source, new_name):
-        file_mrparams = path.join(NIMB_tmp, 'mriparams', '{}_mrparams'.format(subject))
-        if path.isfile(file_mrparams):
-            shutil.move(file_mrparams, path.join(SUBJECTS_DIR, subject, 'stats'))
-        log.info('    {} copying from {}'.format(subject, db_source))
-        size_src = sum(f.stat().st_size for f in Path(path.join(SUBJECTS_DIR, subject)).glob('**/*') if f.is_file())
-        shutil.copytree(path.join(SUBJECTS_DIR, subject), path.join(vars_nimb["NIMB_PROCESSED_FS"], subject))
-        size_dst = sum(f.stat().st_size for f in Path(path.join(vars_nimb["NIMB_PROCESSED_FS"], subject)).glob('**/*') if f.is_file())
-        if size_src == size_dst:
-            db['PROCESSED'][db_source].remove(subject)
-            DBc.update_db(db, NIMB_tmp)
-            shutil.rmtree(path.join(SUBJECTS_DIR, subject))
-            if vars_processing["archive_processed"] == 1:
-                log.info('        archiving ...')
-                # chdir(vars_nimb["NIMB_PROCESSED_FS"])
-                # system('zip -r -q -m {}.zip {}'.format(subject, subject))
-                cd_cmd = 'cd {}'.format(vars_nimb["NIMB_PROCESSED_FS"])
-                cmd = 'zip -r -q -m {}.zip {}'.format(subject, subject)
-                schedule.submit_4_processing(cmd,'nimb','archiving', cd_cmd,
-                                            activate_fs = False,
-                                            python_load = False)
-            if new_name:
-                log.info('        renaming {} to {}, moving to {}'.format(subject, new_name, vars_nimb["NIMB_PROCESSED_FS_error"]))
-                shutil.move(path.join(vars_nimb["NIMB_PROCESSED_FS"], '{}.zip'.format(subject)),
-                            path.join(vars_nimb["NIMB_PROCESSED_FS_error"], '{}.zip'.format(new_name)))
-        else:
-            log.info('        ERROR in moving, not moved correctly {} {}'.format(str(size_src), str(size_dst)))
-            shutil.rmtree(path.join(vars_nimb["NIMB_PROCESSED_FS"], subject))
-
-
-    def add_2processing(self):
-        self.log.info('    adding subjects for processing')
-
-        ls_SUBJECTS_in_long_dirs_processed = get_ls_subjids_in_long_dirs(db)
-        from fs_checker import FreeSurferChecker
-        chk = FreeSurferChecker(vars_freesurfer)
-
-        f_new_subjects = path.join(NIMB_tmp, DEFAULT.f_subjects2proc)#"new_subjects.json")
-        if path.isfile(f_new_subjects):
-            import json
-            with open(f_new_subjects) as jfile:
-                data = json.load(jfile)
-            for _id in data:
-                if not chk.checks_from_runfs('registration', _id):
-                    for ses in data[_id]:
-                        if 'anat' in data[_id][ses]:
-                            if 't1' in data[_id][ses]['anat']:
-                                if data[_id][ses]['anat']['t1']:
-                                    subjid = _id+'_'+ses
-                                    db['REGISTRATION'][subjid] = dict()
-                                    db['REGISTRATION'][subjid]['anat'] = data[_id][ses]['anat']
-                                    log.info('        '+subjid+' added to database from new_subjects.json')
-                                    db = add_subjid_2_DB(NIMB_tmp, subjid, _id, ses, db, ls_SUBJECTS_in_long_dirs_processed)
-                                else:
-                                    db['PROCESSED']['error_registration'].append(subjid)
-                                    log.info('ERROR: '+_id+' was read and but was not added to database')
-            rename(f_new_subjects, path.join(NIMB_tmp,'znew_subjects_registered_to_db_'+time.strftime("%Y%m%d_%H%M",time.localtime(time.time()))+'.json'))
-            self.log.info('        new subjects were added from the new_subjects.json file')
-        return db
-
-
-    def get_registration_files(self, subjid, db, nimb_dir, NIMB_tmp, flair_t2_add):
-            log.info('    '+subjid+' reading registration files')
-            t1_ls_f = db['REGISTRATION'][subjid]['anat']['t1']
-            flair_ls_f = 'none'
-            t2_ls_f = 'none'
-            if 'flair' in db['REGISTRATION'][subjid]['anat'] and flair_t2_add == 1:
-                if db['REGISTRATION'][subjid]['anat']['flair']:
-                    flair_ls_f = db['REGISTRATION'][subjid]['anat']['flair']
-            if 't2' in db['REGISTRATION'][subjid]['anat'] and flair_t2_add == 1:
-                if db['REGISTRATION'][subjid]['anat']['t2'] and flair_ls_f == 'none':
-                    t2_ls_f = db['REGISTRATION'][subjid]['anat']['t2']
-            self.log.info('        from db[\'REGISTRATION\']')
-            return t1_ls_f, flair_ls_f, t2_ls_f
+                new_subjects = dict()
+            if update:
+                for subjid in ls_2process_with_fs:
+                    print(f'    adding subjects {subjid} for fs_new_subjects')
+                    _id, ses = self.DBc.get_id_ses(subjid)
+                    print(_id, ses)
+                    new_subjects[_id] = {ses: {'anat': {}}}
+                    new_subjects[_id][ses]['anat'] = classif_subjects[_id][ses]['anat']
+                print(f'    saving file new_subjects at: {f_new_subjects}')
+#                save_json(new_subjects, f_new_subjects)
+                self.start_fs_processing = True
 
 
     def check_that_all_files_are_accessible(self, ls):
@@ -305,6 +162,32 @@ class RUNProcessing:
             if not path.exists(file):
                 ls.remove(file)
         return ls
+
+
+    def count_timesleep(self):
+        time2sleep = 36000 # 600 minutes
+        len_running_fs = len(list(self.db['PROCESS_FS'].keys()))
+        len_running_nl = len(list(self.db['PROCESS_NL'].keys()))
+        len_running_dp = len(list(self.db['PROCESS_DP'].keys()))
+
+        len_all_running = len_running_fs + len_running_nl + len_running_dp
+        self.log.info('    running: '+str(len_all_running))
+        if len_running_nl > 0:
+            time2sleep = 1800 # 30 minutes
+        elif len_running_dp > 0:
+            time2sleep = 3600 # 60 minutes
+        return time2sleep, len_all_running
+
+
+    def update_running(self, cmd):
+        if cmd == 1:
+            if path.isfile(f'{self.f_running}0'):
+                rename(f'{self.f_running}0', f'{self.f_running}1')
+            else:
+                open(f'{self.f_running}1', 'w').close()
+        else:
+            if path.isfile(f'{self.f_running}1'):
+                rename(f'{self.f_running}1', f'{self.f_running}0')
 
 
 
@@ -316,8 +199,8 @@ class DB:
         self.project  = all_vars.params.project
         vars_nimb     = all_vars.location_vars['local']['NIMB_PATHS']
         self.NIMB_tmp = vars_nimb['NIMB_tmp']
-        df_f_name = 'processing_db.json'
-        self.db_f = os.path.join(self.NIMB_tmp, df_f_name)
+        self.db_f = os.path.join(self.NIMB_tmp, DEFAULT.process_db_name)
+        self.ses  = all_vars.location_vars['local']['FREESURFER']["long_name"]
 
 
     def get_db(self):
@@ -403,7 +286,6 @@ class DB:
         '''populating the database with subjects
         if subjects have the corresponding files for analysis
         '''
-        self.ses = all_vars.location_vars['local']['FREESURFER']["long_name"]
         _id, ses = self.get_id_ses(bids_id)
         # print(_id, ses)
         fs_key = get_keys_processed('fs')
@@ -416,18 +298,21 @@ class DB:
         # populating
         if not self._ids_all[bids_id][fs_key]:
             if 'anat' in self._ids_classified[_id][ses]:
-                # print('    ready to add to FS processing')
-                self.db['PROCESS_FS'][bids_id] = 'local'
+                if 't1' in self._ids_classified[_id][ses]['anat']:
+                    # print('    ready to add to FS processing')
+                    self.db['PROCESS_FS'][bids_id] = 'local'
         if not self._ids_all[bids_id][nl_key]:
             if 'anat' in self._ids_classified[_id][ses] and \
                 'func' in self._ids_classified[_id][ses]:
-                # print('    ready to add to NILEARN processing')
-                self.db['PROCESS_NL'][bids_id] = 'local'
+                if 't1' in self._ids_classified[_id][ses]['anat']:
+                    # print('    ready to add to NILEARN processing')
+                    self.db['PROCESS_NL'][bids_id] = 'local'
         if not self._ids_all[bids_id][dp_key]:
             if 'anat' in self._ids_classified[_id][ses] and \
                 'dwi' in self._ids_classified[_id][ses]:
-                # print('    ready to add to DIPY processing')
-                self.db['PROCESS_DP'][bids_id] = 'local'
+                if 't1' in self._ids_classified[_id][ses]['anat']:
+                    # print('    ready to add to DIPY processing')
+                    self.db['PROCESS_DP'][bids_id] = 'local'
         self.update_db()
 
 
