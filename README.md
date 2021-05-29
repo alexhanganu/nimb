@@ -1,9 +1,34 @@
 NeuroImaging My Brain = NIMB (Pipeline for Automated Structural, Funcitonal resting state and Diffusion MRI analysis wih FreeSurfer, Nilear and Dipy)
 
-cd nimb/nimb
+* PPMI/ADNI:
+    * processing is automated for these databases. Download the MRIs from the LONI website (the zip file contains a folder names PPMI or ADNI). put this zip file in the folder that will be used to read the source data (NIMB_SOURCE).
 
-Processes:
-* Module *CLASSIFIER*: ("$NIMB_HOME/classification"; currently works only on the computer that has the processing app installed)
+    * use commands:
+
+        ** python3 nimb.py -process run -project loni_ppmi
+        ** python3 nimb.py -process run -project loni_adni
+
+    * nimb will ask for a new BIDS folder, materials folder, and others. nimb will install freesurfer (if not installed; will ask for freesurfer license) and will perform the processing of all data.
+
+* For individual projects use the commands:
+    * to classify the MRI data:
+        ** python3 nimb.py -process classify
+    * if the new_subject.json is created (based on the classified file nimb_classifier.json), freesurfer processing can be started:
+        ** python3 nimb.py -process freesurfer
+    * data post-processed with freesurfer can be used to extract the freesurfer stats:
+        ** python3 nimb.py -process fs-get-stats -project PROJECTS_NAME
+    * once MR data is processed with freesurfer and a file with groups is provided, the freesurfer glm analysis can be performed:
+        ** python3 nimb.py -process fs-glm
+        ** alternatively: cd $NIMB_HOME/processing/freesurfer python3 fs_glm_runglm.py)
+    * after the freesurfer-GLM is performed, images can be extracted ONLY on a computer that allows screen exportation. Image is saved using freesurfer tkmedit and freeview:
+        ** python3 nimb.py -process fs-gl-image
+        ** alternatively: cd $NIMB_HOME/processing/freesurfer python3 fs_glm_extract_images.py)
+    * once an xlsx/csv file is provided, that includes the groups and data, stats can be performed:
+        ** python3 nimb.py -process run_stats -projets PROJECT_NAME
+
+
+SPECIFICATIONS::
+* Module *CLASSIFIER*: ("$NIMB_HOME/classification")
     * cmd: python nimb.py -process classify
     * takes the content of the $NIMB_tmp/new_subjects or any other user-defined folder
     * verifies the voxel parameters of all T1 and (using FreeSurfer's mri_info):
@@ -22,7 +47,7 @@ Processes:
     * saves the dictionary as $NIMB_HOME/tmp/new_subjects.json
 
 
-* Module *PROCESSING* : (works on the computer that has the processing app installed) (folder "$NIMB_HOME/processing")
+* Module *PROCESSING* :
     * reads the $NIMB_tmp/new_subjects.json file:
         * if analysis is performed with slurm scheduler:
             ** creates the corresponding batches (#NIMB_HOME/processing/schedule_helper.py)
@@ -57,15 +82,6 @@ Processes:
         * uses DWI data, applies dipy pipeline to extract Straford-based ROI track connecvity values.
     * if user wants the data archived:
         ** archives with zip the each subject in the $PROCESSED_NIMB/processed_fs folder
-
-
-* Module *GUI* (nimb.py, exe.pyw): ((NOT READY, requires more adjustments)
-    * cmd: python nimb.py -process ready
-    * takes the variables and files provided by the user ($NIMB_HOME/setup/credentials_path/nimb/local.json; ../projects/json)
-    * stores the credentials for remote connections to the sqlite database ($NIMB_HOME/setup/credentials_path/nimb/db);
-    * initiates the *DISTRIBUTION* module (in the GUI or the terminal command: "nimb process")
-    * if a file is provided that has the groups and the names of the subjects:
-        ** initiates the *STATS* module
 
 
 * Module *DISTRIBUTION* : (works on the local computer as GUI or terminal or on the remote computer in the terminal) (folder "$NIMB_HOME/distribution") (NOT READY, requires more adjustments)
@@ -171,5 +187,6 @@ freesurfer_version    = '7.1.1' # default is 7 (for 7.1.1) but pipeline should a
 process_order         = ['registration','autorecon1','autorecon2','autorecon3','brstem','hip','tha','qcache'] #list of processing steps in FreeSurfer. For FreeSurfer version lower thatn 7, "tha" must be remove; Instead of autorecon1, autorecon2 and autorecon3, the commmand "recon" can be used (which will use the command 'recon-all' for freesurfer processing), but it will take more time for processing and this can be limited by the scheduler
 
 
-works on ADNI, PPMI, NACC, CIMAQ, CaPRI data. For individual data requires adjustments for the creation of the new_subjects.json file
+works on ADNI, PPMI, NACC, CIMAQ, CaPRI data.
+For individual data requires adjustments in order to create the classifed new_subjects.json file
 

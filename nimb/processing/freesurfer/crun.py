@@ -8,7 +8,7 @@ import shutil
 import logging
 import cdb, fs_err_helper, fs_checker
 from fs_checker import FreeSurferChecker
-from fs_definitions import FreeSurferVersion
+from fs_definitions import FreeSurferVersion, process_order
 
 environ['TZ'] = 'US/Eastern'
 time.tzset()
@@ -445,7 +445,7 @@ def run(varslocal, logger):
     NIMB_tmp        = vars_nimb["NIMB_tmp"]
     max_walltime    = vars_processing["max_walltime"]
     SUBJECTS_DIR    = vars_freesurfer["FS_SUBJECTS_DIR"]
-    process_order   = vars_freesurfer["process_order"]
+    # process_order   = vars_freesurfer["process_order"] #importing from fs_definitions
     fs_ver          = FreeSurferVersion(vars_freesurfer["freesurfer_version"]).fs_ver()
     log             = logger #logging.getLogger(__name__)
     chk             = FreeSurferChecker(vars_freesurfer)

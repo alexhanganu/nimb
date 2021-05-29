@@ -76,10 +76,6 @@ class NIMB(object):
                     schedule.submit_4_processing(cmd, 'nimb_stats','run', cd_cmd)
 
 
-        # FreeSurfer related codes: "freesurfer"   - performs preprocessing
-        #							"fs-get-stats" - extracts statistical data an an xls/ xlsx/ csv file
-        # 							"fs-glm"       - performs FreeSurfer GLM analysis with mri_glm_fit
-        # 							"fs-glm-image" - extracts the images for significant results after the GLM
         if self.process == 'freesurfer':
             if not DistributionReady(self.all_vars).fs_ready():
                 print("FreeSurfer is not ready or freesurfer_install is set to 0. Please check the configuration files.")
@@ -181,20 +177,6 @@ class NIMB(object):
             ProjectManager(self.all_vars).run()
 
 
-        if self.process == 'check-new':
-            print('checking for new subject to be processed')
-            DistributionHelper(self.all_vars).check_new()
-
-
-        if self.process == 'fs-get-masks':
-            if DistributionReady(self.all_vars).fs_ready():
-                print('running mask extraction')
-                cmd = '{} run_masks.py -project {}'.format(self.py_run_cmd, self.project)
-                cd_cmd = 'cd '+path.join(self.NIMB_HOME, 'processing', 'freesurfer')
-                self.schedule.submit_4_processing(cmd, 'fs','run_masks', cd_cmd)
-        return 1
-
-
 def get_parameters(projects):
     """get parameters for nimb"""
     parser = argparse.ArgumentParser(
@@ -210,25 +192,20 @@ def get_parameters(projects):
     parser.add_argument(
         "-process", required=False,
         default='ready',
-        choices = ['ready', 'run', 'check-new',
-                    'classify', 'classify_dcm2bids',
-                    'freesurfer', 'nilearn', 'dipy',
-                    'fs-glm', 'fs-glm-image',
-                    'fs-get-stats', 'run-stats',
-                    'fs-get-masks'],
-        help="ready (verifies that nimb is ready)\
-        freesurfer (start FreeSurfer pipeline), \
-            classify (classify MRIs) \
-            fs-glm (perform freesurfer mri_glmfit GLM analsysis), \
-            fs-glm-images (extracts images after FS GLM analysis, using Freeview and TKsurfer. Requires export screen),\
-            fs-get-stats (extract freesurfer stats from subjid/stats/* to an excel file), \
-            run-stats (perform statistical analysis),\
-            run (NOT READY. runs a project),\
-            check-new (NOT READY. verfies for new subjects if processed),\
-            classify_bids (NOT READY. performs classification of MRI data according to BIDS structure, using UNF-Montreal/DCM2BIDS),\
-            nilearn (NOT READY. performs resting state functional analysis, extract ROI z-Fisher correlational values),\
-            dipy (NOT READY. performs DWI analysis with dipy. extracts ROI HARDI statistics),\
-            fs-get-masks (NOT READY. extract ROI masks based on FreeSurfer parameters)"
+        choices = ['ready', 'run',
+                    'freesurfer', 'fs-glm', 'fs-glm-image', 'fs-get-stats',
+                    'run-stats','classify',
+                     'nilearn', 'dipy'],
+        help="ready (verifies that nimb is ready), \
+                run (runs a project),\
+                freesurfer (perform processing with FreeSurfer), \
+                fs-glm (perform freesurfer mri_glmfit GLM analsysis), \
+                fs-glm-image (extracts images after FS GLM analysis, using Freeview and TKsurfer. Requires export screen),\
+                fs-get-stats (extract freesurfer stats from subjid/stats/* to an excel file), \
+                run-stats (perform statistical analysis),\
+                classify (classify MRIs), \
+                nilearn (NOT READY. performs resting state functional analysis, extract ROI z-Fisher correlational values),\
+                dipy (NOT READY. performs DWI analysis with dipy. extracts ROI HARDI statistics)"
     )
 
     parser.add_argument(
@@ -239,9 +216,18 @@ def get_parameters(projects):
     )
 
     parser.add_argument(
+        "-do", required=False,
+        choices = ['fs-get-stats', 'fs-get-masks', 'check-new'],
+        help="fs-get-masks (NOT READY. extract ROI masks based on FreeSurfer parameters), \
+                fs-get-stats (extract freesurfer stats from subjid/stats/* to an excel file)\
+                check-new (NOT READY. verfies for new subjects if processed)",
+    )
+
+    parser.add_argument(
         "-fix-spaces", required=False,
         action='store_true',
-        help="paths that contain spaces will not be read by FreeSurfer. This parameter will tell nimb to change spaces to underscores during the classification",
+        help="paths that contain spaces will not be read by FreeSurfer. \
+            This parameter will tell nimb to change spaces to underscores during the classification",
     )
 
     params = parser.parse_args()
@@ -259,15 +245,6 @@ def main():
     print(f'    project is: {project}')
 
     all_vars    = Get_Vars(params)
-
-    # all_vars.params = params
-    # NIMB_tmp    = all_vars.location_vars['local']['NIMB_PATHS']['NIMB_tmp']
-    # projects    = all_vars.projects
-    # print(all_vars.stats_vars['STATS_PATHS'])
-    # all_vars.stats_vars = SetProject(NIMB_tmp,
-    #                                  all_vars.stats_vars,
-    #                                  project,
-    #                                  projects).stats
 
     app = NIMB(all_vars)
     return app.run()

@@ -114,14 +114,13 @@ def fs_find_error(subjid, SUBJECTS_DIR, NIMB_tmp, process, fs_version):
     error = ''
     print('                identifying THE error')
     files = fs_definitions.FilePerFSVersion(fs_version)
-    log_file = path.join(SUBJECTS_DIR, subjid, files.log_f(process))
     if process == 'brstem':
-        file_2read = log_file
+        log_file = path.join(SUBJECTS_DIR, subjid, files.log_f('bs'))
     else:
-        file_2read = path.join(SUBJECTS_DIR, subjid,'scripts','recon-all.log')
+        log_file = path.join(SUBJECTS_DIR, subjid, files.log_f(process))
     try:
-        if path.exists(file_2read):
-            f = open(file_2read,'r').readlines()
+        if path.exists(log_file):
+            f = open(log_file,'r').readlines()
             for line in reversed(f):
                 if  'ERROR: MultiRegistration::loadMovables: images have different voxel sizes.' in line:
                     log.info('        ERROR: Voxel size is different, Multiregistration is not supported; consider registration with less entries')
@@ -176,7 +175,7 @@ def fs_find_error(subjid, SUBJECTS_DIR, NIMB_tmp, process, fs_version):
                     error = 'matlab'
                     break                    
         else:
-            log.info('        ERROR: {} not in {}'.format(file_2read, path.join(SUBJECTS_DIR, subjid, 'scripts')))
+            log.info('        ERROR: {} not in {}'.format(log_file, path.join(SUBJECTS_DIR, subjid, 'scripts')))
     except FileNotFoundError as e:
         print(e)
         log.info('    {}: {}'.format(subjid, str(e)))
@@ -185,8 +184,8 @@ def fs_find_error(subjid, SUBJECTS_DIR, NIMB_tmp, process, fs_version):
 
 
 def solve_error(subjid, error, SUBJECTS_DIR, NIMB_tmp):
-    file_2read = path.join(SUBJECTS_DIR,subjid,'scripts','recon-all.log')
-    f = open(file_2read,'r').readlines()
+    log_file = path.join(SUBJECTS_DIR, subjid, files.log_f('recon'))
+    f = open(log_file,'r').readlines()
     if error == "Curvature":
         for line in reversed(f):
             if 'error: MRISreadCurvature:' in line:

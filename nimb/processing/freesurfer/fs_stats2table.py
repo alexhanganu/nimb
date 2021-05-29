@@ -83,6 +83,9 @@ def chk_if_all_stats_present(_SUBJECT, stats_dir_path, miss = dict()):
 import time
 date = str(time.strftime('%Y%m%d', time.localtime()))
 
+
+
+
 class FSStats2Table:
     '''extract stats of subjects to table
     Args:
@@ -121,6 +124,7 @@ class FSStats2Table:
         self.miss = dict()
         self.run()
 
+
     def run(self):
         '''
         runs the pipeline to extract FreeSurfer stats to excel file
@@ -147,6 +151,7 @@ class FSStats2Table:
         self.save_missing()
         self.make_one_sheet()
 
+
     def get_bs_hip_amy_tha(self, stats_dir_path, _SUBJECT):
         '''Extracting Brainstem,  Hippocampus, Amygdala, Thalamus'''
         print('    Brainstem,  Hippocampus, Amygdala, Thalamus running')
@@ -168,6 +173,7 @@ class FSStats2Table:
                 df.rename(columns=lambda ROI: brstem_hip_header['all'][ROI], inplace=True)
                 df.to_excel(self.writer,sheet_name=sheet,startcol=0, startrow=0, header=True, index=True)
                 self.sheetnames.append(sheet)
+
 
     def get_segmentations(self, stats_dir_path, _SUBJECT):
         '''Extracting SEGMENTATIONS'''
@@ -205,6 +211,7 @@ class FSStats2Table:
                     self.sheetnames.append(sheetName)
         else:
             logger.info('    ERROR {} is missing\n'.format(file_with_stats))
+
 
     def get_parcelations(self, stats_dir_path, _SUBJECT):
         '''Extracting PARCELLATIONS Desikan'''
@@ -257,6 +264,7 @@ class FSStats2Table:
                         df2.to_excel(self.writer,sheet_name=sheetName,startcol=0, startrow=0, header=True, index=True)
                         self.sheetnames.append(sheetName)
 
+
     def get_parcelations_destrieux(self, stats_dir_path, _SUBJECT):
         '''Extracting PARCELLATIONS Destrieux'''
         logger.info('        Destrieux')
@@ -289,6 +297,7 @@ class FSStats2Table:
                         df2.rename(columns=lambda ROI: parc_DS_header[ROI], inplace=True)
                         df2.to_excel(self.writer,sheet_name=sheetName,startcol=0, startrow=0, header=True, index=True)
                         self.sheetnames.append(sheetName)
+
 
     def get_parcelations_desikan_wm(self, stats_dir_path, _SUBJECT):
         '''Extracting PARCELLATIONS Desikan WhiteMatter'''
@@ -323,6 +332,7 @@ class FSStats2Table:
                         df2.to_excel(self.writer,sheet_name=sheetName,startcol=0, startrow=0, header=True, index=True)
                         self.sheetnames.append(sheetName)
 
+
     def read_BS_HIP_AMY_THA_v12_v21(self, file, _SUBJECT):
         logger.info(file)
         content=open(file,'r').readlines()
@@ -331,6 +341,7 @@ class FSStats2Table:
         else:
             d_data = {i.split(' ')[-2]:i.split(' ')[-1].strip('\n') for i in content}
         return pd.DataFrame(d_data, index=[_SUBJECT])
+
 
     def read_BS_HIP_v10(self, file, _SUBJECT):
         df=pd.read_table(file)
@@ -343,6 +354,7 @@ class FSStats2Table:
         del df['col']
         return df.transpose()
 
+
     def get_ending_dswm(self, str):
         if str == 'wm-lh':
             ending = 'L'
@@ -354,11 +366,13 @@ class FSStats2Table:
             ending = 'R'
         return ending
 
+
     def save_missing(self):
         if self.miss:
             f_miss = self.get_path(self.stats_DIR, 'subjects_with_missing_files.json')
             logger.info('ERROR: some subjects are missing the required files. Check file: {}'.format(f_miss))
             self.save_json(self.miss, f_miss)
+
 
     def make_one_sheet(self):
         if self.big_file:
@@ -371,8 +385,10 @@ class FSStats2Table:
                 file_name = self.stats_files["fname_fs_subcort_vol"]
                 fs_utils.create_file_with_only_subcort_volumes(file_name, file_type)
 
+
     def get_path(self, link1, link2):
         return path.join(link1, link2).replace(sep, '/')
+
 
     def save_json(self, d, f):
         with open(f, 'w') as jf:

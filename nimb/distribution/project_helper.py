@@ -8,6 +8,7 @@ import pandas as pd
 
 from stats.db_processing import Table
 from distribution.distribution_helper import  DistributionHelper
+from distribution.distribution_ready import DistributionReady
 from distribution.utilities import load_json, save_json, makedir_ifnot_exist
 from distribution.distribution_definitions import get_keys_processed, DEFAULT
 from classification.classify_bids import MakeBIDS_subj2process
@@ -55,6 +56,7 @@ class ProjectManager:
         self.archive_type       = '.zip'
         self.tab                = Table()
         self.distrib_hlp        = DistributionHelper(self.all_vars)
+        self.distrib_ready      = DistributionReady(self.all_vars)
         self.df_f_groups        = self.get_df_f_groups()
         self.DICOM_DIR          = self.project_vars["SOURCE_SUBJECTS_DIR"]
 
@@ -96,8 +98,21 @@ class ProjectManager:
             stats
         """
         print(f'    running pipeline for project: {self.project}')
-        self.get_ids_bids()
-        self.get_ids_all()
+        do_task = self.all_vars.params.do
+        if do_task == 'fs-get-stats':
+            self.get_stats_fs()
+        elif do_task == 'fs-get-masks':
+            self.get_masks()
+        elif do_task == 'check-new':
+            self.check_new()
+
+        # self.get_ids_bids()
+        # self.get_ids_all()
+
+
+    def check_new(self):
+        print('checking for new subject to be processed')
+        self.distrib_hlp.check_new()
 
 
     def get_ids_bids(self):
@@ -193,25 +208,52 @@ class ProjectManager:
                     df.index = range(len(df[self.bids_id_col]))
             # self.tab.save_df(df,
             #     os.path.join(self.path_stats_dir, self.project_vars['fname_groups']))
-            self.send_2processing()
+            f_new_subjects = os.path.join(self.NIMB_tmp, DEFAULT.f_subjects2proc)
+            save_json(self._ids_classified, f_new_subjects)
+            print('    NIMB initiates processing of data')
+            self.send_2processing('process')
         else:
             print('   file with nimb classified is missing')
 
 
-    def send_2processing(self):
-        f_new_subjects = os.path.join(self.NIMB_tmp, DEFAULT.f_subjects2proc)
-        save_json(self._ids_classified, f_new_subjects)
-        print('    NIMB initiates processing of data.\n\
-                NIMB ready to initiate FreeSurfer processing with command:\n\
-               python3 nimb.py -process freesurfer')
+    def get_stats_fs(self):
+        if self.distrib_ready.chk_if_ready_for_stats():
+            PROCESSED_FS_DIR = self.distrib_hlp.prep_4fs_stats()
+            if PROCESSED_FS_DIR:
+                print('    ready to extract stats from project helper')
+        #         self.send_2processing('fs-get-stats')
 
+
+    def get_masks(self):
+        if self.distrib_ready.fs_ready():
+            print('running mask extraction')
+            # self.send_2processing('fs-get-masks')
+
+
+    def send_2processing(self, task):
         from processing.schedule_helper import Scheduler
-        schedule = Scheduler(self.local_vars)
         python_run = self.local_vars["PROCESSING"]["python3_run_cmd"]
         NIMB_HOME  = self.local_vars["NIMB_PATHS"]["NIMB_HOME"]
-        cd_cmd   = f'cd {os.path.join(NIMB_HOME, "processing")}'
-        cmd      = f'{python_run} processing_run.py -project {self.project}'
-        schedule.submit_4_processing(cmd, 'nimb_processing','run', cd_cmd)
+        if task == 'process':
+            schedule = Scheduler(self.local_vars)
+            cd_cmd   = f'cd {os.path.join(NIMB_HOME, "processing")}'
+            cmd      = f'{python_run} processing_run.py -project {self.project}'
+            process_type = 'nimb_processing'
+            subproc = 'run'
+        if task == 'fs-get-stats':
+            self.local_vars['PROCESSING']['processing_env']  = "tmux" #must be checked if works with slurm
+            schedule = Scheduler(self.local_vars)
+            dir_4stats = self.project_vars['STATS_PATHS']["STATS_HOME"]
+            cd_cmd   = f'cd {os.path.join(NIMB_HOME, "processing", "freesurfer")}'
+            cmd      = f'{python_run} fs_stats2table.py -project {self.project} -stats_dir {dir_4stats}'
+            process_type = 'fs_stats'
+            subproc = 'get_stats'
+        if task == 'fs-get-masks':
+            cd_cmd   = f'cd {os.path.join(NIMB_HOME, "processing", "freesurfer")}'
+            cmd      = f'{python_run} run_masks.py -project {self.project}'
+            process_type = 'fs'
+            subproc = 'run_masks'
+        self.schedule.submit_4_processing(cmd, process_type, subproc, cd_cmd)
 
 
     def get_dir_with_raw_MR_data(self, src_dir, _dir):
