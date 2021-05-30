@@ -20,7 +20,7 @@ class RUNProcessing:
     def __init__(self, all_vars, logger):
 
         #defining working variables
-        project     = all_vars.params.project
+        self.project     = all_vars.params.project
         self.vars_local  = all_vars.location_vars['local']
         vars_processing = self.vars_local["PROCESSING"]
         self.log         = logger #logging.getLogger(__name__)
@@ -28,7 +28,7 @@ class RUNProcessing:
         # defining files and paths
         self.NIMB_tmp    = self.vars_local['NIMB_PATHS']['NIMB_tmp']
         self.NIMB_HOME   = self.vars_local["NIMB_PATHS"]["NIMB_HOME"]
-        materials_dir_pt = all_vars.projects[project]["materials_DIR"][1]
+        materials_dir_pt = all_vars.projects[self.project]["materials_DIR"][1]
         self.f_running   = os.path.join(self.NIMB_tmp, DEFAULT.f_running_process)
         self.start_fs_processing = False
         self.schedule     = Scheduler(self.vars_local)
@@ -84,10 +84,9 @@ class RUNProcessing:
         else:
             self.python_run = self.local_vars["PROCESSING"]["python3_run_cmd"]
             cd_cmd     = f'cd {os.path.join(self.NIMB_HOME, "processing")}'
-            cmd        = f'{self.python_run} processing_run.py -project {project}'
+            cmd        = f'{self.python_run} processing_run.py -project {self.project}'
             self.log.info(f'    Sending new processing batch to scheduler with cd_cmd: {cd_cmd} ')
 #         self.schedule.submit_4_processing(cmd, 'nimb_processing','run', cd_cmd)
-
 
 
     def loop_run(self):
@@ -108,26 +107,33 @@ class RUNProcessing:
         print(len(ls_2process_with_fs))
 
         self.update_fs_processing(ls_2process_with_fs)
-        self.chk_start_processing()
-
-
-    def chk_start_processing(self):
         if self.start_fs_processing:
-            f_fs_running = os.path.join(self.NIMB_tmp, f'{DEFAULT.f_running_fs}0')
-            if os.path.exists(f_fs_running):
-                path_2cd = os.path.join(self.NIMB_HOME, 'processing', 'freesurfer')
-                cd_cmd = f"cd {path_2cd}"
-                cmd = f'{self.python_run} crun.py'
-#                self.schedule.submit_4_processing(cmd, 'nimb','run', cd_cmd,
-#                                                activate_fs = False,
-#                                                python_load = True)
-            else:
-                print(f'    file {f_fs_running} is missing')
+            self.chk_start_processing()
+        self.chk_subj_if_processed()
+
 
     def get_db(self, app):
         if app == "fs":
             db_app = os.path.join(self.NIMB_tmp, DEFAULT.fs_db_name)
             return load_json(db_app)
+
+
+    def chk_subj_if_processed(self):
+        ls_fs_subjects = list(self.db["PROCESS_FS"].keys())
+        d_id_bids_to_fs_proc = dict() # {bids_id : fs_processed_id.zip}
+        _dir_fs_processed = self.local_vars["FREESURFER"]["NIMB_PROCESSED_FS"]
+        for subjid in ls_fs_subjects:
+            subj_processed = f'{subjid}.zip'
+            if self.db['PROCESS_FS'][subjid] == 'local':
+                if subj_processed in os.path.listdir(_dir_fs_processed):
+                    d_id_bids_to_fs_proc[subjid] = subj_processed
+        _dir_store = all_vars.projects[self.project]["PROCESSED_FS_DIR"][1]
+        for subjid in d_id_bids_to_fs_proc:
+            subj_processed = d_id_bids_to_fs_proc[subjid]
+            src = os.path.join(_dir_fs_processed, subj_processed)
+            dst = os.path.join(_dir_store, subj_processed)
+            print(f'    moving {subj_processed} from {src} to storage folder: {dst}')
+            # shutil.move(src, dst)
 
 
     def update_fs_processing(self, ls_2process_with_fs):
@@ -148,6 +154,8 @@ class RUNProcessing:
             if update:
                 for subjid in ls_2process_with_fs:
                     print(f'    adding subjects {subjid} for fs_new_subjects')
+#                    if check_that_all_files_are_accessible(ls_files):
+#                        add_to_new_subjects
                     _id, ses = self.DBc.get_id_ses(subjid)
                     print(_id, ses)
                     new_subjects[_id] = {ses: {'anat': {}}}
@@ -162,6 +170,19 @@ class RUNProcessing:
             if not path.exists(file):
                 ls.remove(file)
         return ls
+
+
+    def chk_start_processing(self):
+        f_fs_running = os.path.join(self.NIMB_tmp, f'{DEFAULT.f_running_fs}0')
+        if os.path.exists(f_fs_running):
+            path_2cd = os.path.join(self.NIMB_HOME, 'processing', 'freesurfer')
+            cd_cmd = f"cd {path_2cd}"
+            cmd = f'{self.python_run} crun.py'
+#                self.schedule.submit_4_processing(cmd, 'nimb','run', cd_cmd,
+#                                                activate_fs = False,
+#                                                python_load = True)
+        else:
+            print(f'    file {f_fs_running} is missing')
 
 
     def count_timesleep(self):
