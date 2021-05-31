@@ -20,10 +20,11 @@ class RUNProcessing:
     def __init__(self, all_vars, logger):
 
         #defining working variables
-        self.project     = all_vars.params.project
-        self.vars_local  = all_vars.location_vars['local']
-        vars_processing = self.vars_local["PROCESSING"]
-        self.log         = logger #logging.getLogger(__name__)
+        self.project      = all_vars.params.project
+        self.project_vars = all_vars.projects[self.project]
+        self.vars_local   = all_vars.location_vars['local']
+        vars_processing   = self.vars_local["PROCESSING"]
+        self.log          = logger #logging.getLogger(__name__)
 
         # defining files and paths
         self.NIMB_tmp    = self.vars_local['NIMB_PATHS']['NIMB_tmp']
@@ -127,13 +128,24 @@ class RUNProcessing:
             if self.db['PROCESS_FS'][subjid] == 'local':
                 if subj_processed in os.path.listdir(_dir_fs_processed):
                     d_id_bids_to_fs_proc[subjid] = subj_processed
-        _dir_store = all_vars.projects[self.project]["PROCESSED_FS_DIR"][1]
+        _dir_store = self.project_vars["PROCESSED_FS_DIR"][1]
         for subjid in d_id_bids_to_fs_proc:
             subj_processed = d_id_bids_to_fs_proc[subjid]
             src = os.path.join(_dir_fs_processed, subj_processed)
             dst = os.path.join(_dir_store, subj_processed)
             print(f'    moving {subj_processed} from {src} to storage folder: {dst}')
+            self.update_project_data()
             # shutil.move(src, dst)
+
+
+    def update_project_data(self):
+        '''update f_ids
+        '''
+        f_ids_name       = self.vars_local["NIMB_PATHS"]['file_ids_processed']
+        new_subjects_dir = self.vars_local["NIMB_PATHS"]["NIMB_NEW_SUBJECTS"]
+        path_stats_dir   = self.project_vars["STATS_PATHS"]["STATS_HOME"]
+        f_ids_abspath    = os.path.join(path_stats_dir, f_ids_name)
+        self._ids_all    = load_json(f_ids_abspath)
 
 
     def update_fs_processing(self, ls_2process_with_fs):
