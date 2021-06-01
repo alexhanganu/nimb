@@ -123,22 +123,25 @@ class RUNProcessing:
         ls_fs_subjects = list(self.db["PROCESS_FS"].keys())
         d_id_bids_to_fs_proc = dict() # {bids_id : fs_processed_id.zip}
         _dir_fs_processed = self.local_vars["FREESURFER"]["NIMB_PROCESSED_FS"]
-        for subjid in ls_fs_subjects:
-            subj_processed = f'{subjid}.zip'
-            if self.db['PROCESS_FS'][subjid] == 'local':
+        for bids_id in ls_fs_subjects:
+            subj_processed = f'{bids_id}.zip'
+            if self.db['PROCESS_FS'][bids_id] == 'local':
                 if subj_processed in os.path.listdir(_dir_fs_processed):
-                    d_id_bids_to_fs_proc[subjid] = subj_processed
+                    d_id_bids_to_fs_proc[bids_id] = subj_processed
+            else:
+                remote = self.db['PROCESS_FS'][bids_id]
+                print(f'    {bids_id} is on being processed on the remote: {remote}')
         _dir_store = self.project_vars["PROCESSED_FS_DIR"][1]
-        for subjid in d_id_bids_to_fs_proc:
-            subj_processed = d_id_bids_to_fs_proc[subjid]
+        for bids_id in d_id_bids_to_fs_proc:
+            subj_processed = d_id_bids_to_fs_proc[bids_id]
             src = os.path.join(_dir_fs_processed, subj_processed)
             dst = os.path.join(_dir_store, subj_processed)
             print(f'    moving {subj_processed} from {src} to storage folder: {dst}')
-            self.update_project_data()
             # shutil.move(src, dst)
+            self.update_project_data(bids_id)
 
 
-    def update_project_data(self):
+    def update_project_data(self, bids_id):
         '''update f_ids
         '''
         f_ids_name       = self.vars_local["NIMB_PATHS"]['file_ids_processed']
