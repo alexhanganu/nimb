@@ -120,6 +120,7 @@ class RUNProcessing:
 
 
     def chk_subj_if_processed(self):
+        app = 'fs'
         ls_fs_subjects = list(self.db["PROCESS_FS"].keys())
         d_id_bids_to_fs_proc = dict() # {bids_id : fs_processed_id.zip}
         _dir_fs_processed = self.local_vars["FREESURFER"]["NIMB_PROCESSED_FS"]
@@ -138,17 +139,24 @@ class RUNProcessing:
             dst = os.path.join(_dir_store, subj_processed)
             print(f'    moving {subj_processed} from {src} to storage folder: {dst}')
             # shutil.move(src, dst)
-            self.update_project_data(bids_id)
+            self.update_project_data(bids_id, subj_processed, app)
 
 
-    def update_project_data(self, bids_id):
+    def update_project_data(self, bids_id, subj_processed, app):
         '''update f_ids
         '''
         f_ids_name       = self.vars_local["NIMB_PATHS"]['file_ids_processed']
         new_subjects_dir = self.vars_local["NIMB_PATHS"]["NIMB_NEW_SUBJECTS"]
         path_stats_dir   = self.project_vars["STATS_PATHS"]["STATS_HOME"]
         f_ids_abspath    = os.path.join(path_stats_dir, f_ids_name)
+        id_all_key = get_keys_processed(app)
+
         self._ids_all    = load_json(f_ids_abspath)
+        if id_all_key not in self._ids_all[bids_id]:
+            self._ids_all[bids_id][id_all_key] = ''
+        self._ids_all[bids_id][id_all_key] = subj_processed
+        print(f'    saving new updated version of f_ids.json at: {f_ids_abspath}')
+        save_json(self._ids_all, f_ids_abspath)
 
 
     def update_fs_processing(self, ls_2process_with_fs):
