@@ -80,8 +80,9 @@ class RUNProcessing:
             _, len_all_running = self.count_timesleep()
 
         if len_all_running == 0:
-            self.update_running(0)
-            self.log.info('ALL TASKS FINISHED')
+                self.update_running(0)
+                self.log.info('ALL TASKS FINISHED')
+                ProjectManager(all_vars).get_stats_fs()
         else:
             self.python_run = self.local_vars["PROCESSING"]["python3_run_cmd"]
             cd_cmd     = f'cd {os.path.join(self.NIMB_HOME, "processing")}'
@@ -407,6 +408,7 @@ if __name__ == "__main__":
     from distribution.logger import Log
     from distribution.distribution_definitions import DEFAULT, get_keys_processed
     from distribution.utilities import load_json, save_json, makedir_ifnot_exist
+    from distribution.project_helper import  ProjectManager
     from processing import processing_db as proc_db
     from processing.schedule_helper import Scheduler, get_jobs_status
     from stats.db_processing import Table
