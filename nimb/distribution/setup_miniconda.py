@@ -2,12 +2,11 @@
 # coding: utf-8
 # 2020.08.13
 
-import sys
 
-print(sys.version)
 from os import path, chdir, system, remove, makedirs
-import subprocess
 from os.path import expanduser
+import sys
+import subprocess
 
 install_miniconda3 = "https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh"
 

@@ -173,7 +173,7 @@ def fs_find_error(subjid, SUBJECTS_DIR, NIMB_tmp, process, fs_version):
                 elif 'freesurfer/bin/segmentSubject: error while loading shared libraries:' in line:
                     log.info('        ERROR: MATLAB: shared libraries cannot be opened. Try to reinstall Matlab or search for this error on freesurfer mailing list: https://www.mail-archive.com/freesurfer@nmr.mgh.harvard.edu/')
                     error = 'matlab'
-                    break                    
+                    break
         else:
             log.info('        ERROR: {} not in {}'.format(log_file, path.join(SUBJECTS_DIR, subjid, 'scripts')))
     except FileNotFoundError as e:

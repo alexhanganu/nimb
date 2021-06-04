@@ -7,9 +7,9 @@ class DEFAULT(object):
                             "f_source"       : "Magnetic_Resonance_Imaging.csv",
                             "id_col"         : "PATNO",
                             "dir_from_source": "PPMI",
-                                    }#,
-                           # 'loni_adni':{
-                           #         },
+                                    },
+                           'loni_adni':{
+                                   },
                         }
 
     default_tab_name = 'default.csv'
