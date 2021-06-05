@@ -59,6 +59,7 @@ class ProjectManager:
         self.distrib_ready      = DistributionReady(self.all_vars)
         self.df_f_groups        = self.get_df_f_groups()
         self.DICOM_DIR          = self.project_vars["SOURCE_SUBJECTS_DIR"]
+        self._ids_all           = dict()
 
 
     def get_df_f_groups(self):
@@ -67,8 +68,10 @@ class ProjectManager:
         dir_4stats       = makedir_ifnot_exist(self.path_stats_dir)
         if self.distrib_hlp.get_files_for_stats(dir_4stats,
                                                 [f_groups,]):
+            f_grid = os.path.join(dir_4stats, f_groups)
+            print(f'    file with groups is present: {f_grid}')
             self.df_grid_ok = True
-            return self.tab.get_df(os.path.join(dir_4stats, f_groups))
+            return self.tab.get_df(f_grid)
         else:
             self.df_grid_ok = False
             return self.make_default_grid()
@@ -106,8 +109,8 @@ class ProjectManager:
         elif do_task == 'check-new':
             self.check_new()
 
-        # self.get_ids_bids()
-        # self.get_ids_all()
+        self.get_ids_bids()
+        self.get_ids_all()
 
 
     def check_new(self):
@@ -125,22 +128,21 @@ class ProjectManager:
         """
         if self.df_grid_ok:
             self._ids_bids = list(self.df_f_groups[self.bids_id_col])
+            print(f'    list of ids that are present: {self._ids_bids}')
+            print(f'    checking for missing participants')
             self.chk_missing_participants()
         else:
             self.prep_4dcm2bids_classification()
 
 
     def chk_missing_participants(self):
-        print('    ids present: ',self._ids_bids)
         self.get_ids_all()
         if not self._ids_all:
+            print(f'    file with ids is missing: {self._ids_all}')
             if self.get_ids_classified():
                 self.populate_f_ids_from_nimb_classified()
             else:
                 self.prep_4dcm2bids_classification()
-        else:
-            print('    file with all ids is missing')
-
 
 
     def prep_4dcm2bids_classification(self):
@@ -308,8 +310,6 @@ class ProjectManager:
         """
         if self.f_ids_in_dir(self.path_stats_dir):
             self._ids_all = load_json(os.path.join(self.path_stats_dir, self.f_ids_name))
-        else:
-            self._ids_all = dict()
 
 
     def f_ids_in_dir(self, path_2groups_f):
