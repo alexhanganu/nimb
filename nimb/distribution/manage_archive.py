@@ -3,7 +3,7 @@ if processed data is stored as zip archived
 script extracts of specific folders
 """
 
-from os import path, makedirs, listdir, sep
+import os
 import zipfile
 import shutil
 
@@ -11,7 +11,7 @@ class ZipArchiveManagement():
 
     def __init__(self, zip_file_path, path2xtrct = False, path_err = False, dirs2xtrct = list(), log=True):
         self.zip_f_path = zip_file_path
-        self.zip_file   = path.split(self.zip_f_path)[-1]
+        self.zip_file   = os.path.split(self.zip_f_path)[-1]
         self.path2xtrct = path2xtrct
         self.dirs2xtrct = dirs2xtrct
         self.path_err   = path_err
@@ -37,10 +37,19 @@ class ZipArchiveManagement():
         return self.zip_file_open.namelist()
 
     def xtrct_all(self):
+        print('    extracting all content')
+        extracted = False
         try:
             self.zip_file_open.extractall(self.path2xtrct)
+            extracted = False
         except Exception as e:
             print(e)
+        if not extracted:
+            try:
+                print('    trying to use system unzip:')
+                os.system(f'unzip -o {self.zip_f_path} -d {self.path2xtrct}')
+            except Exception as e:
+                print(e)
 
     def xtrct_dirs(self, pattern):
         for val in self.zip_file_content():
@@ -55,11 +64,11 @@ class ZipArchiveManagement():
         if self.log:
             print("extracting: {} to {}".format(self.zip_f_path, self.path2xtrct))
         if self.dirs2xtrct:
-            for folder in [path.join(self.zip_file.strip('.zip'), i).replace(sep,'/') for i in self.dirs2xtrct]:
+            for folder in [os.path.join(self.zip_file.strip('.zip'), i).replace(os.sep,'/') for i in self.dirs2xtrct]:
                 self.xtrct_dirs(pattern = folder)
         else:
             self.xtrct_all()
 
     def move_error(self):
         shutil.move(self.zip_f_path, self.path_err)
-        shutil.move(path.join(self.path_err, self.zip_file), path.join(self.path_err, 'errzip_'+self.zip_file))
+        shutil.move(os.path.join(self.path_err, self.zip_file), os.path.join(self.path_err, 'errzip_'+self.zip_file))

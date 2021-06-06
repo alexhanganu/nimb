@@ -4,6 +4,7 @@ test = False
 nr_participants_for_testing = 2
 
 import os
+import shutil
 import pandas as pd
 
 from stats.db_processing import Table
@@ -153,9 +154,12 @@ class ProjectManager:
         self.archive = archive
 
         src_dir = self.project_vars['SOURCE_SUBJECTS_DIR'][1]
-        ls_source_dirs = os.listdir(src_dir)
+        ls_source_dirs = self.get_content(src_dir)
+        print(f'   there are {len(self.get_content(src_dir))} \
+            file found in {src_dir} \
+            that are expected to contain MRI data for the project {self.project}')
         if test:
-            ls_source_dirs = os.listdir(src_dir)[:nr_participants_for_testing]
+            ls_source_dirs = self.get_content(src_dir)[:nr_participants_for_testing]
         if len(ls_source_dirs) > 0:
             for _dir in ls_source_dirs:
                 self.DICOM_DIR, ls_dir_4bids2dcm = self.get_dir_with_raw_MR_data(src_dir, _dir)
@@ -259,33 +263,53 @@ class ProjectManager:
 
 
     def get_dir_with_raw_MR_data(self, src_dir, _dir):
-        if _dir.endswith('.zip'):
-            dir_2extract = self.local_vars["NIMB_PATHS"]["NIMB_NEW_SUBJECTS"]
-            tmp_err_dir  = os.path.join(self.NIMB_tmp, 'tmp_err_dcm2bids')
-            makedir_ifnot_exist(dir_2extract)
-            makedir_ifnot_exist(tmp_err_dir)
-            ls_initial = self.get_content(dir_2extract)
-            if self.project in DEFAULT.project_ids:
-                chemin_2chk = os.path.join(dir_2extract, DEFAULT.project_ids[self.project]["dir_from_source"])
-                if os.path.exists(chemin_2chk):
-                    ls_initial = self.get_content(chemin_2chk)
-            self.archive(
-                os.path.join(src_dir, _dir),
-                path2xtrct = dir_2extract,
-                path_err   = tmp_err_dir,
-                )
-            if self.project in DEFAULT.project_ids:
-                if os.path.exists(chemin_2chk):
-                    dir_2extract = chemin_2chk
-            ls_dir_4bids2dcm = [i for i in os.listdir(dir_2extract) if i not in ls_initial]
-        elif os.path.isdir(os.path.join(src_dir, _dir)):
-            dir_2extract = src_dir
-            ls_dir_4bids2dcm = list(_dir)
-        return dir_2extract, ls_dir_4bids2dcm
+        if os.path.isdir(os.path.join(src_dir, _dir)):
+            return src_dir, list(_dir)
+        elif _dir.endswith('.zip'):
+            self.dir_new_subjects = self.local_vars["NIMB_PATHS"]["NIMB_NEW_SUBJECTS"]
+            ls_initial = self.get_content(self.dir_new_subjects)
+            self.extract_from_archive(src_dir, _dir)
+            ls_dir_4bids2dcm = [i for i in self.get_content(self.dir_new_subjects) if i not in ls_initial]
+            return self.dir_new_subjects, ls_dir_4bids2dcm
 
 
     def get_content(self, path2chk):
         return os.listdir(path2chk)
+
+
+    def extract_from_archive(self, src_dir, _dir):
+        tmp_err_dir  = os.path.join(self.NIMB_tmp, 'tmp_err_classification')
+        makedir_ifnot_exist(tmp_err_dir)
+        dir_2extract = self.dir_new_subjects
+        tmp_dir_2extract = ''
+        if self.project in DEFAULT.project_ids:
+            tmp_dir_2extract = os.path.join(self.NIMB_tmp, 'tmp_dir_2extract')
+            makedir_ifnot_exist(tmp_dir_2extract)
+            dir_2extract = tmp_dir_2extract
+        self.archive(
+            os.path.join(src_dir, _dir),
+            path2xtrct = dir_2extract,
+            path_err   = tmp_err_dir)
+        if tmp_dir_2extract:
+            project_dir = os.path.join(tmp_dir_2extract,
+                                        DEFAULT.project_ids[self.project]["dir_from_source"])
+            if os.path.exists(project_dir):
+                print(f'    this is default project;\
+                    the corresponding default folder was created in: {project_dir}')
+                ls_content = self.get_content(project_dir)
+                for _dir in ls_content:
+                    nr_left_2cp = len(ls_content[ls_content.index(_dir):])
+                    print(f'    number of folder left to copy: {nr_left_2cp}')
+                    src = os.path.join(project_dir, _dir)
+                    dst = os.path.join(self.dir_new_subjects, _dir)
+                    print(f'    copying folder: {src} to {dst}')
+                    shutil.copytree(src, dst)
+            else:
+                print(f'    the expected folder: {project_dir} is missing')
+            print(f'    removing temporary folder: {tmp_dir_2extract}')
+            shutil.rmtree(tmp_dir_2extract, ignore_errors=True)
+        if len(self.get_content(tmp_err_dir)) == 0:
+            shutil.rmtree(tmp_err_dir, ignore_errors=True)
 
 
     def prep_dirs(self, ls_dirs):
@@ -356,7 +380,7 @@ class ProjectManager:
         for key in self.keys2chk:
             dir2chk = self.keys2chk[key]
             if os.path.exists(dir2chk):
-                self.content_dirs[key] = os.listdir(dir2chk)
+                self.content_dirs[key] = self.get_content(dir2chk)
 
 
     def populate_ids_all(self, _ids, bids_id):
