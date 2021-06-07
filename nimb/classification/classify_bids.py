@@ -48,7 +48,7 @@ class MakeBIDS_subj2process():
         self.flair_t2_add = flair_t2_add
         self.MR_type_default = 't1'
         self.file_nimb_classified = os.path.join(self.DIR_SUBJECTS,
-                                                DEFAULT.f_nimb_classified)# "nimb_classified")
+                                                DEFAULT.f_nimb_classified)
         self.fix_spaces = fix_spaces
         self.d_subjects = dict()
         self.spaces_in_paths = list()
@@ -110,9 +110,12 @@ class MakeBIDS_subj2process():
         if self.spaces_in_paths:
             f_paths_spaces = path.join(self.NIMB_tmp,'paths_with_spaces.json')
             save_json(self.spaces_in_paths, f_paths_spaces)
-            log.info('ATTENTION: ERR: paths of {} subjects have spaces and will not be processed by FreeSurfer'.format(len(self.spaces_in_paths)))
-            log.info('ATTENTION: paths with spaces can be found here: {}'.format(f_paths_spaces))
-            log.info('ATTENTION: nimb can change spaces to underscores when adding the parameter: -fix-spaces; example: python nimb.py -process classify -project Project -fix-spaces')
+            len_spaces = len(self.spaces_in_paths)
+            log.info(f'    ATTENTION: ERR: paths of {len_spaces} subjects have spaces \
+                and will not be processed by FreeSurfer')
+            log.info(f'    ATTENTION: paths with spaces can be found here: {f_paths_spaces}')
+            log.info('    ATTENTION: nimb can change spaces to underscores when adding the parameter: -fix-spaces; \
+                example: python nimb.py -process classify -project Project -fix-spaces')
 
 
     def _get_MR_paths(self, path2subj):
@@ -273,9 +276,9 @@ class MakeBIDS_subj2process():
                         d_ses_MR_types[ses][mr_type] = list()
                     d_ses_MR_types[ses][mr_type].append(mr_path)
                 elif self.MR_type_default not in d_ses_MR_types[ses]:
-                    log.info('ATENTION: cannot define MRI type. Considering as T1w: {}'.format(mr_path))
-                    d_ses_MR_types[ses][self.MR_type_default] = list()
-                    d_ses_MR_types[ses][self.MR_type_default].append(mr_path)
+                    log.info('ATENTION: cannot define MRI type: {}'.format(mr_path))
+                    # d_ses_MR_types[ses][self.MR_type_default] = list()
+                    # d_ses_MR_types[ses][self.MR_type_default].append(mr_path)
                 else:
                     log.info(mr_type, mr_path, 'none')
         return d_ses_MR_types

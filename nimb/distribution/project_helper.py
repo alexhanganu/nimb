@@ -216,7 +216,8 @@ class ProjectManager:
             #     os.path.join(self.path_stats_dir, self.project_vars['fname_groups']))
             f_new_subjects = os.path.join(self.NIMB_tmp, DEFAULT.f_subjects2proc)
             save_json(self._ids_classified, f_new_subjects)
-            print('    NIMB initiates processing of data')
+            print('    NIMB ready to initiate processing of data')
+            print(f'    please check file with classified MRI data: {f_new_subjects}')
             self.send_2processing('process')
         else:
             print('   file with nimb classified is missing')
@@ -259,7 +260,8 @@ class ProjectManager:
             cmd      = f'{python_run} run_masks.py -project {self.project}'
             process_type = 'fs'
             subproc = 'run_masks'
-        self.schedule.submit_4_processing(cmd, process_type, subproc, cd_cmd)
+        print('    sending to scheduler')
+        schedule.submit_4_processing(cmd, process_type, subproc, cd_cmd)
 
 
     def get_dir_with_raw_MR_data(self, src_dir, _dir):

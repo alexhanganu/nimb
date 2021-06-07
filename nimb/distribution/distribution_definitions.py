@@ -3,12 +3,18 @@ class DEFAULT(object):
 
     default_project  = 'project1'
     project_ids      = {'loni_ppmi':{
-                            "dcm2bids_config":'dcm2bids_config_ppmi.json',
+                            "dcm2bids_config": "dcm2bids_config_ppmi.json",
                             "f_source"       : "Magnetic_Resonance_Imaging.csv",
                             "id_col"         : "PATNO",
                             "dir_from_source": "PPMI",
+                            'date_format'    : "%Y-%m-%d_%H_%M_%S.%f",
                                     },
-                           'loni_adni':{
+                        'loni_adni':{
+                            "dcm2bids_config": "dcm2bids_config_adni.json",
+                            "f_source"       : "Magnetic_Resonance_Imaging.csv",
+                            "id_col"         : "PATNO",
+                            "dir_from_source": "ADNI",
+                            'date_format'    : "%Y-%m-%d_%H_%M_%S.%f",
                                    },
                         }
 
