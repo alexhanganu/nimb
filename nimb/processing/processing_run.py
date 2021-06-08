@@ -98,12 +98,21 @@ class RUNProcessing:
         for ls_bids_ids in fs_db["LONG_DIRS"].values():
             ls_subj_in_fs_db = ls_subj_in_fs_db + ls_bids_ids
 
-        ls_fs_subjects = list(self.db["PROCESS_FS"].keys())
+        db_key = "PROCESS_FS"
+        ls_fs_subjects = list(self.db[db_key].keys())
         ls_2process_with_fs = list()
         for subjid in ls_fs_subjects:
-            if self.db['PROCESS_FS'][subjid] == 'local':
+            if self.db[db_key][subjid] == 'local':
                 if subjid not in ls_subj_in_fs_db:
                     ls_2process_with_fs.append(subjid)
+
+        db_key = "PROCESS_NL"
+        ls_nl_subjects = list(self.db[db_key].keys())
+        ls_2process_with_nl = list()
+        for subjid in ls_nl_subjects:
+            if self.db[db_key][subjid] == 'local':
+                if subjid not in ls_subj_in_fs_db:
+                    ls_2process_with_nl.append(subjid)
 
         print(len(ls_subj_in_fs_db))
         print(len(ls_2process_with_fs))
