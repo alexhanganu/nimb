@@ -106,13 +106,26 @@ class RUNProcessing:
                 if subjid not in ls_subj_in_fs_db:
                     ls_2process_with_fs.append(subjid)
 
+        # NOT READ, no link
         db_key = "PROCESS_NL"
         ls_nl_subjects = list(self.db[db_key].keys())
         ls_2process_with_nl = list()
         for subjid in ls_nl_subjects:
             if self.db[db_key][subjid] == 'local':
+                # MUST change this part because NL and DP don't have a db now
                 if subjid not in ls_subj_in_fs_db:
                     ls_2process_with_nl.append(subjid)
+
+
+        # NOT READ, no link
+        db_key = "PROCESS_DP"
+        ls_dp_subjects = list(self.db[db_key].keys())
+        ls_2process_with_dp = list()
+        for subjid in ls_dp_subjects:
+            if self.db[db_key][subjid] == 'local':
+                # MUST change this part because NL and DP don't have a db now
+                if subjid not in ls_subj_in_fs_db:
+                    ls_2process_with_dp.append(subjid)
 
         print(len(ls_subj_in_fs_db))
         print(len(ls_2process_with_fs))
