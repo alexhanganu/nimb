@@ -200,7 +200,7 @@ class ProjectManager:
 
     def populate_grid(self):
         # get grid
-        # popualte
+        # populate
         df = self.get_df_f_groups()
         if self._ids_classified:
             self.populate_f_ids_from_nimb_classified()
@@ -214,10 +214,10 @@ class ProjectManager:
                     df.index = range(len(df[self.bids_id_col]))
             # self.tab.save_df(df,
             #     os.path.join(self.path_stats_dir, self.project_vars['fname_groups']))
-            f_new_subjects = os.path.join(self.NIMB_tmp, DEFAULT.f_subjects2proc)
-            save_json(self._ids_classified, f_new_subjects)
+            # f_new_subjects = os.path.join(self.NIMB_tmp, DEFAULT.f_subjects2proc)
+            # save_json(self._ids_classified, f_new_subjects)
             print('    NIMB ready to initiate processing of data')
-            print(f'    please check file with classified MRI data: {f_new_subjects}')
+            # print(f'    please check file with classified MRI data: {f_new_subjects}')
             self.send_2processing('process')
         else:
             print('   file with nimb classified is missing')
@@ -301,7 +301,7 @@ class ProjectManager:
                 ls_content = self.get_content(project_dir)
                 for _dir in ls_content:
                     nr_left_2cp = len(ls_content[ls_content.index(_dir):])
-                    print(f'    number of folder left to copy: {nr_left_2cp}')
+                    print(f'    number of folders left to copy: {nr_left_2cp}')
                     src = os.path.join(project_dir, _dir)
                     dst = os.path.join(self.dir_new_subjects, _dir)
                     print(f'    copying folder: {src} to {dst}')

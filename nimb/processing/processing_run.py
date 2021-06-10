@@ -32,7 +32,8 @@ class RUNProcessing:
         materials_dir_pt = all_vars.projects[self.project]["materials_DIR"][1]
         self.f_running   = os.path.join(self.NIMB_tmp, DEFAULT.f_running_process)
         self.start_fs_processing = False
-        self.schedule     = Scheduler(self.vars_local)
+        self.python_run  = self.vars_local["PROCESSING"]["python3_run_cmd"]
+        self.schedule    = Scheduler(self.vars_local)
 
         t0           = time.time()
         time_elapsed = 0
@@ -84,7 +85,6 @@ class RUNProcessing:
                 self.log.info('ALL TASKS FINISHED')
                 ProjectManager(all_vars).get_stats_fs()
         else:
-            self.python_run = self.local_vars["PROCESSING"]["python3_run_cmd"]
             cd_cmd     = f'cd {os.path.join(self.NIMB_HOME, "processing")}'
             cmd        = f'{self.python_run} processing_run.py -project {self.project}'
             self.log.info(f'    Sending new processing batch to scheduler with cd_cmd: {cd_cmd} ')
@@ -199,7 +199,7 @@ class RUNProcessing:
                 new_subjects = dict()
             if update:
                 for subjid in ls_2process_with_fs:
-                    print(f'    adding subjects {subjid} for fs_new_subjects')
+                    print(f'    adding subject {subjid} for fs_new_subjects')
 #                    if check_that_all_files_are_accessible(ls_files):
 #                        add_to_new_subjects
                     _id, ses = self.DBc.get_id_ses(subjid)
@@ -207,7 +207,7 @@ class RUNProcessing:
                     new_subjects[_id] = {ses: {'anat': {}}}
                     new_subjects[_id][ses]['anat'] = classif_subjects[_id][ses]['anat']
                 print(f'    saving file new_subjects at: {f_new_subjects}')
-#                save_json(new_subjects, f_new_subjects)
+               save_json(new_subjects, f_new_subjects)
                 self.start_fs_processing = True
 
 
