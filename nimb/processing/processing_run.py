@@ -19,6 +19,7 @@ class RUNProcessing:
 
     def __init__(self, all_vars, logger):
 
+        print('    initiating processing of data')
         #defining working variables
         self.project      = all_vars.params.project
         self.project_vars = all_vars.projects[self.project]
@@ -142,11 +143,16 @@ class RUNProcessing:
             return load_json(db_app)
 
 
+#   File "processing_run.py", line 154, in chk_subj_if_processed
+#     if subj_processed in os.path.listdir(_dir_fs_processed):
+# AttributeError: module 'posixpath' has no attribute 'listdir'
+
+
     def chk_subj_if_processed(self):
         app = 'fs'
         ls_fs_subjects = list(self.db["PROCESS_FS"].keys())
         d_id_bids_to_fs_proc = dict() # {bids_id : fs_processed_id.zip}
-        _dir_fs_processed = self.local_vars["FREESURFER"]["NIMB_PROCESSED_FS"]
+        _dir_fs_processed = self.vars_local["NIMB_PATHS"]["NIMB_PROCESSED_FS"]
         for bids_id in ls_fs_subjects:
             subj_processed = f'{bids_id}.zip'
             if self.db['PROCESS_FS'][bids_id] == 'local':
@@ -207,7 +213,7 @@ class RUNProcessing:
                     new_subjects[_id] = {ses: {'anat': {}}}
                     new_subjects[_id][ses]['anat'] = classif_subjects[_id][ses]['anat']
                 print(f'    saving file new_subjects at: {f_new_subjects}')
-               save_json(new_subjects, f_new_subjects)
+                save_json(new_subjects, f_new_subjects)
                 self.start_fs_processing = True
 
 
