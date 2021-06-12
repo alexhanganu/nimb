@@ -143,11 +143,6 @@ class RUNProcessing:
             return load_json(db_app)
 
 
-#   File "processing_run.py", line 154, in chk_subj_if_processed
-#     if subj_processed in os.path.listdir(_dir_fs_processed):
-# AttributeError: module 'posixpath' has no attribute 'listdir'
-
-
     def chk_subj_if_processed(self):
         app = 'fs'
         ls_fs_subjects = list(self.db["PROCESS_FS"].keys())
@@ -156,7 +151,7 @@ class RUNProcessing:
         for bids_id in ls_fs_subjects:
             subj_processed = f'{bids_id}.zip'
             if self.db['PROCESS_FS'][bids_id] == 'local':
-                if subj_processed in os.path.listdir(_dir_fs_processed):
+                if subj_processed in os.listdir(_dir_fs_processed):
                     d_id_bids_to_fs_proc[bids_id] = subj_processed
             else:
                 remote = self.db['PROCESS_FS'][bids_id]
