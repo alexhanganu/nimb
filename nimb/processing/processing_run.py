@@ -163,6 +163,7 @@ class RUNProcessing:
             dst = os.path.join(_dir_store, subj_processed)
             print(f'    moving {subj_processed} from {src} to storage folder: {dst}')
             # shutil.move(src, dst)
+            self.db = self.DBc.rm_from_db(bids_id, app, self.db)
             self.update_project_data(bids_id, subj_processed, app)
 
 
@@ -269,6 +270,7 @@ class DB:
         self.NIMB_tmp = vars_nimb['NIMB_tmp']
         self.db_f = os.path.join(self.NIMB_tmp, DEFAULT.process_db_name)
         self.ses  = all_vars.location_vars['local']['FREESURFER']["long_name"]
+        self.apps = ('FS', 'NL', 'DP')
 
 
     def get_db(self):
@@ -288,8 +290,7 @@ class DB:
             db['REGISTRATION'] = {}
             db['PROJECTS'] = {}
             db['PROCESSED'] = {"cp2storage": [], "error":[]}
-            apps = ('FS', 'NL', 'DP')
-            for app in apps:
+            for app in self.apps:
                 db[f'PROCESS_{app}'] = {}
         return db
 
@@ -382,6 +383,33 @@ class DB:
                     # print('    ready to add to DIPY processing')
                     self.db['PROCESS_DP'][bids_id] = 'local'
         self.update_db()
+
+
+    def rm_from_db(self, bids_id, app, db):
+        self.db = db
+        rm = True
+        update = False
+        if app == "fs":
+            if bids_id in db['PROCESS_FS']:
+                db['PROCESS_FS'].pop(bids_id, None)
+                update = True
+            else:
+                print(f'    {bids_id} not in db PROCESS_FS')
+        for app in self.apps:
+            if bids_id in db[f'PROCESS_{app}']:
+                rm = False
+                print(f'    {bids_id} is present in PROCESS_{app}')
+                break
+        if rm:
+            if bids_id in db['PROJECTS'][self.project]:
+                db['PROJECTS'][self.project].pop(bids_id, None)
+                update = True
+            else:
+                print(f'    {bids_id} not in db PROJECTS')
+
+        if update:
+            self.update_db()
+        return self.db
 
 
     def update_db(self):
