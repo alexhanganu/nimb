@@ -1,5 +1,4 @@
 # %%
-import processing.nilearn.nl_helper as hp
 from nilearn import image
 import matplotlib.pyplot as plt
 from sys import platform
@@ -10,8 +9,9 @@ class RUNProcessingNL:
 
     def __init__(self, all_vars):
         self.all_vars = all_vars
+        self.project = all_vars.params.project
+        print(self.project)
 
-        pass
 
 
     # #load file
@@ -81,11 +81,12 @@ if __name__ == "__main__":
     from distribution.utilities import load_json, save_json
     from distribution.distribution_definitions import DEFAULT
     from processing.schedule_helper import Scheduler, get_jobs_status
+    from processing.nilearn import nl_helper as hp
 
-    all_vars     = Get_Vars()
-    projects     = all_vars.projects
-    project_ids  = all_vars.project_ids
+    project_ids = Get_Vars().get_projects_ids()
     params       = get_parameters(project_ids)
+    project     = params.project
+    all_vars    = Get_Vars(params)
 
     # vars_local = all_vars.location_vars['local']
     # NIMB_tmp   = vars_local['NIMB_PATHS']['NIMB_tmp']
