@@ -8,6 +8,9 @@ from os import path, system, chdir, environ, rename, listdir
 import time
 import shutil
 import json
+import argparse
+import sys
+import logging
 
 environ['TZ'] = 'US/Eastern'
 time.tzset()
@@ -264,13 +267,17 @@ class RUNProcessing:
 class DB:
 
     def __init__(self, all_vars):
-        self.log      = logger #logging.getLogger(__name__)
+        try:
+            self.log      = logger #logging.getLogger(__name__)
+        except Exception as e:
+            self.log      = logging.getLogger(__name__)
         self.project  = all_vars.params.project
         vars_nimb     = all_vars.location_vars['local']['NIMB_PATHS']
         self.NIMB_tmp = vars_nimb['NIMB_tmp']
         self.db_f = os.path.join(self.NIMB_tmp, DEFAULT.process_db_name)
         self.ses  = all_vars.location_vars['local']['FREESURFER']["long_name"]
         self.apps = ('FS', 'NL', 'DP')
+        # self.db   = self.get_db()
 
 
     def get_db(self):
@@ -319,6 +326,11 @@ class DB:
             self._ids_classified = load_json(f_classif_in_src)
         else:
             print(f'    file with nimb classified ids is MISSING in: {new_subjects_dir}')
+
+
+    def get_bids_ids_per_app(self, app):
+        self.db   = self.get_db()
+        return list(self.db[f"PROCESS_{app}"].keys())
 
 
     def update_db_new_subjects(self, db):
@@ -447,9 +459,6 @@ if __name__ == "__main__":
     except ImportError as e:
         print('please install pathlib')
         sys.exit(e)
-    import argparse
-    import sys
-    import logging
 
     top = Path(__file__).resolve().parents[1]
     sys.path.append(str(top))

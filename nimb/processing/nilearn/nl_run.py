@@ -11,7 +11,11 @@ class RUNProcessingNL:
         self.all_vars = all_vars
         self.project = all_vars.params.project
         print(self.project)
-
+        bids_ids = ()
+        # vars_local = all_vars.location_vars['local']
+        # NIMB_tmp   = vars_local['NIMB_PATHS']['NIMB_tmp']
+        # fs_ver = vars_local['FREESURFER']['freesurfer_version']
+        # logger = Log(NIMB_tmp, fs_ver).logger
 
 
     # #load file
@@ -84,14 +88,10 @@ if __name__ == "__main__":
     from processing.nilearn import nl_helper as hp
 
     project_ids = Get_Vars().get_projects_ids()
-    params       = get_parameters(project_ids)
+    params      = get_parameters(project_ids)
     project     = params.project
     all_vars    = Get_Vars(params)
 
-    # vars_local = all_vars.location_vars['local']
-    # NIMB_tmp   = vars_local['NIMB_PATHS']['NIMB_tmp']
-    # logger = Log(NIMB_tmp,
-    #             vars_local['FREESURFER']['freesurfer_version']).logger
-    RUNProcessingNL(all_vars)#, logger)
+    RUNProcessingNL(all_vars)
 
 
