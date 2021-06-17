@@ -1,7 +1,6 @@
 # %%
 from nilearn import image
-import matplotlib.pyplot as plt
-from sys import platform
+# import matplotlib.pyplot as plt
 import os
 # %%
 
@@ -11,11 +10,13 @@ class RUNProcessingNL:
         self.all_vars = all_vars
         self.project = all_vars.params.project
         print(self.project)
+        self.get_subjects()
         bids_ids = ()
-        # vars_local = all_vars.location_vars['local']
-        # NIMB_tmp   = vars_local['NIMB_PATHS']['NIMB_tmp']
+        vars_local = all_vars.location_vars['local']
+        self.NIMB_tmp   = vars_local['NIMB_PATHS']['NIMB_tmp']
+        self.db_nl = dict()
         # fs_ver = vars_local['FREESURFER']['freesurfer_version']
-        # logger = Log(NIMB_tmp, fs_ver).logger
+        # logger = Log(self.NIMB_tmp, fs_ver).logger
 
 
     # #load file
@@ -45,6 +46,23 @@ class RUNProcessingNL:
     # #%%
     # destrieux = hp.Destrieux_Atlas()
     # destrieux.extract_correlation(im_bold1, output_loc, 'left_hemi_corr.csv', 'right_hemi_corr.csv')
+
+    def get_subjects(self):
+        f_new_subjects = os.path.join(self.NIMB_tmp, DEFAULT.f_subjects2proc)
+        f_db_proc = os.path.join(self.NIMB_tmp, DEFAULT.process_db_name)
+        ls_subj_nl = list()
+        if os.path.isfile(f_db_proc):
+            with open(f_db_proc) as f_open:
+                db_proc = json.load(f_open)
+                ls_subj_nl = list(db_proc[f"PROCESS_NL"].keys())
+        if os.path.isfile(f_new_subjects):
+            with open(f_new_subjects) as f_open:
+                new_subj = json.load(f_open)
+        if ls_subj_nl:
+            print(ls_subj_nl)
+            for bids_id in ls_subj_nl:
+                print(bids_id)
+                # self.db_nl[bids_id] = new_subj
 
 
 
