@@ -103,6 +103,10 @@ class ProjectManager:
         """
         print(f'    running pipeline for project: {self.project}')
         do_task = self.all_vars.params.do
+        if do_task == 'fs-glm':
+            self.run_fs_glm()
+        if do_task == 'fs-glm-image':
+            self.run_fs_glm(image = True)            
         if do_task == 'fs-get-stats':
             self.get_stats_fs()
         elif do_task == 'fs-get-masks':
@@ -221,6 +225,40 @@ class ProjectManager:
             self.send_2processing('process')
         else:
             print('   file with nimb classified is missing')
+
+
+    def run_fs_glm(self, image = False):
+        '''
+        REQUIRES ADJUSTMENT
+        '''
+        fs_glm_dir   = self.project_vars['STATS_PATHS']["FS_GLM_dir"]
+        # fs_glm_dir   = self.stats_vars["STATS_PATHS"]["FS_GLM_dir"]
+        fname_groups = self.project_vars['fname_groups']
+        if DistributionReady(self.all_vars).chk_if_ready_for_fs_glm():
+            GLM_file_path, GLM_dir = DistributionHelper(self.all_vars).prep_4fs_glm(fs_glm_dir,
+                                                                        fname_groups)
+            FS_SUBJECTS_DIR = self.vars_local['FREESURFER']['FS_SUBJECTS_DIR']
+            DistributionReady(self.all_vars).fs_chk_fsaverage_ready(FS_SUBJECTS_DIR)
+            if GLM_file_path:
+                print('    GLM file path is:',GLM_file_path)
+                self.vars_local['PROCESSING']['processing_env']  = "tmux"
+                schedule_fsglm = Scheduler(self.vars_local)
+                cd_cmd = 'cd {}'.format(path.join(self.NIMB_HOME, 'processing', 'freesurfer'))
+                cmd = f'{self.py_run_cmd} fs_glm_runglm.py -project {self.project} -glm_dir {GLM_dir}'
+                schedule_fsglm.submit_4_processing(cmd, 'fs_glm','run_glm', cd_cmd)
+        if not "export_screen" in self.vars_local['FREESURFER']:
+            print("PLEASE check that you can export your screen or you can run screen-based applications. \
+                                This is necessary for Freeview and Tksurfer. \
+                                Check the variable: export_screen in file {}".format(
+                                    "credentials_path.py/nimb/local.json"))
+        elif self.vars_local['FREESURFER']["export_screen"] == 0:
+            print("Current environment is not ready to export screen. Please define a compute where the screen can \
+                                be used for FreeSurfer Freeview and tksurfer")
+        if DistributionReady(self.all_vars).fs_ready():
+            print('before running the script, remember to source $FREESURFER_HOME')
+            cmd = '{} fs_glm_extract_images.py -project {}'.format(self.py_run_cmd, self.project)
+            cd_cmd = 'cd '+path.join(self.NIMB_HOME, 'processing', 'freesurfer')
+            self.schedule.submit_4_processing(cmd, 'fs_glm','extract_images', cd_cmd)
 
 
     def get_stats_fs(self):

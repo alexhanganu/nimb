@@ -15,29 +15,37 @@ from fs_definitions import hemi, FSGLMParams
 
 class SaveGLMimages():
 
-    def __init__(self, vars_local, stats_vars):
-        self.PATHglm           = stats_vars["STATS_PATHS"]["FS_GLM_dir"]
+    def __init__(self, all_vars):
+
+        project = all_vars.params.project
+        self.vars_fs           = all_vars.location_vars['local']["FREESURFER"]
+        self.PATHglm           = all_vars.projects[project]["STATS_PATHS"]["FS_GLM_dir"]
         self.param             = FSGLMParams(self.PATHglm)
-        print(self.PATHglm)
         self.PATHglm_glm       = self.param.PATHglm_glm
         self.hemispheres       = hemi
         self.mcz_sim_direction = self.param.mcz_sim_direction
         self.f_with_cmds       = path.join(self.PATHglm, 'fv.cmd')
 
         self.fdr_thresh        = 3.0 #p = 0.001
-        self.mc_cache_thresh   = vars_local["FREESURFER"]["GLM_MCz_cache"]
+        self.mc_cache_thresh   = self.vars_fs["GLM_MCz_cache"]
         self.mc_img_thresh     = 1.3 #p = 0.05
+        print('    extracting glm images to: ', self.PATHglm)
+
 
     def run(self):
         if path.exists(self.param.sig_fdr_json):
             print('reading images for FDR significant results')
             self.read_fdr_images()
+        else:
+            print('    folder with glm results is missing at:', self.param.sig_fdr_json)
         if path.exists(self.param.sig_mc_json):
             print('reding images with MC-z corrected results')
             self.read_mc_images()
-        elif path.exists(self.param.files_for_glm):
-            print('reading images after FreeSurfer GLM analysis')
-            self.read_glm_subdirs()
+        else:
+            print('    folder with glm results is missing at:', self.param.sig_mc_json)
+        # elif path.exists(self.param.files_for_glm):
+        #     print('reading images after FreeSurfer GLM analysis')
+        #     self.read_glm_subdirs()
 
         # cleaning unnecessary files:
         if path.exists(self.f_with_cmds):
@@ -82,9 +90,9 @@ class SaveGLMimages():
             for fsgd_file in files_glm[fsgd_type]['fsgd']:
                 fsgd_f_unix = path.join(self.PATHglm, 'fsgd_unix', '{}_unix.fsgd'.format(fsgd_file.replace('.fsgd','')))
                 for hemi in hemispheres:
-                    for meas in vars_local["FREESURFER"]["GLM_measurements"]:
+                    for meas in self.vars_fs["GLM_measurements"]:
                         mcz_meas = self.param.GLM_MCz_meas_codes[meas]
-                        for thresh in vars_local["FREESURFER"]["GLM_thresholds"]:
+                        for thresh in self.vars_fs["GLM_thresholds"]:
                             analysis_name = '{}.{}.{}.fwhm{}'.format(fsgd_file.replace('.fsgd',''), meas, hemi, str(thresh))
                             glmdir = path.join(self.PATHglm_glm, analysis_name)
                             for contrast_file in files_glm[fsgd_type]['mtx']:
@@ -206,14 +214,10 @@ if __name__ == '__main__':
     from setup.get_vars import Get_Vars, SetProject
     from distribution.utilities import load_json, write_txt
 
-    all_vars   = Get_Vars()
-    project    = get_parameters(all_vars.project_ids).project
-    vars_local = all_vars.location_vars['local']
-    NIMB_tmp   = vars_local['NIMB_PATHS']['NIMB_tmp']
-    stats_vars = SetProject(NIMB_tmp,
-                            all_vars.stats_vars,
-                            project,
-                            all_vars.projects).stats
+    project_ids = Get_Vars().get_projects_ids()
 
-    print('extracting glm images')
-    SaveGLMimages(vars_local, stats_vars).run()
+    all_vars   = Get_Vars()
+    params     = get_parameters(project_ids)
+    all_vars    = Get_Vars(params)
+
+    SaveGLMimages(all_vars).run()

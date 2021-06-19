@@ -11,16 +11,23 @@ except ImportError:
     from fs_definitions import hemi, FSGLMParams, GLMcontrasts
 
 
+
 class PerformGLM():
-    def __init__(self, PATHglm, FREESURFER_HOME, SUBJECTS_DIR,
-                                measurements, thresholds,
-                                GLM_MCz_thresh, sig_fdr_thresh):
-        self.SUBJECTS_DIR          = SUBJECTS_DIR
-        self.PATHglm               = PATHglm
-        self.FREESURFER_HOME       = FREESURFER_HOME
-        self.sig_fdr_thresh        = sig_fdr_thresh
-        self.mc_cache_thresh       = GLM_MCz_thresh
+
+    def __init__(self, all_vars, PATHglm, sig_fdr_thresh = 3.0):
+        '''
+        sig_fdr_thresh at 3.0 corresponds to p = 0.001; for p=0.05 use value 1.3, but it should be used ONLY for visualisation.
+        '''
+
+        vars_fs                    = all_vars.location_vars['local']["FREESURFER"]
+        self.FREESURFER_HOME       = vars_fs["FREESURFER_HOME"]
+        self.SUBJECTS_DIR          = vars_fs["FS_SUBJECTS_DIR"]
+        self.measurements          = vars_fs["GLM_measurements"]
+        self.thresholds            = vars_fs["GLM_thresholds"]
+        self.mc_cache_thresh       = vars_fs["GLM_MCz_cache"]
         param                      = FSGLMParams(PATHglm)
+        self.PATHglm               = PATHglm
+        self.sig_fdr_thresh        = sig_fdr_thresh
 
         self.PATHglm_glm           = param.PATHglm_glm
         self.PATH_img              = param.PATH_img
@@ -59,16 +66,16 @@ class PerformGLM():
                 print(e)
                 sys.exit(f'    file {param.files_for_glm} is missing')
 
-        print('    subjects are located in: {}'.format(SUBJECTS_DIR))
+        print('    subjects are located in: {}'.format(self.SUBJECTS_DIR))
         for group in subjects_per_group:
             for subject in subjects_per_group[group]:
-                if subject not in listdir(SUBJECTS_DIR):
+                if subject not in listdir(self.SUBJECTS_DIR):
                     print(f' subject is missing from FreeSurfer Subjects folder: {subject}')
                     RUN = False
                 else:
                     RUN = True
         if RUN:
-            self.run_loop(files_glm, measurements, thresholds)
+            self.run_loop(files_glm)
             if self.err_preproc:
                 save_json(self.err_preproc, self.err_mris_preproc_file)
                 # with open(self.err_mris_preproc_file, 'w') as jf:
@@ -88,14 +95,14 @@ class PerformGLM():
         else:
             sys.exit('some subjects are missing from the freesurfer folder')
 
-    def run_loop(self, files_glm, measurements, thresholds):
+    def run_loop(self, files_glm):
         print('performing GLM analysis using mri_glmfit')
         for fsgd_type in files_glm:
             for fsgd_file in files_glm[fsgd_type]['fsgd']:
                 fsgd_f_unix = path.join(self.PATHglm,'fsgd',fsgd_file.replace('.fsgd','')+'_unix.fsgd')
                 for hemi in self.hemispheres:
-                    for meas in measurements:
-                        for thresh in thresholds:
+                    for meas in self.measurements:
+                        for thresh in self.thresholds:
                             self.RUN_GLM(fsgd_type, files_glm, fsgd_file,
                                          fsgd_f_unix, hemi, meas, thresh)
 
@@ -427,7 +434,6 @@ if __name__ == "__main__":
     GLM_DIR      = params.glm_dir
 
     fs_start_cmd = initiate_fs_from_sh(all_vars.location_vars['local'])
-    sig_fdr_thresh= 3.0 #p = 0.001; for p=0.05 use value 1.3, but it should be used ONLY for visualisation.
 
     print('please initiate freesurfer using the command: \n    {}'.format(fs_start_cmd))
     try:
@@ -436,10 +442,4 @@ if __name__ == "__main__":
         print(e)
         print('please initiate freesurfer using the command: \n    {}'.format(fs_start_cmd))
 
-    PerformGLM(GLM_DIR,
-               vars_local["FREESURFER"]["FREESURFER_HOME"],
-               vars_local["FREESURFER"]["FS_SUBJECTS_DIR"],
-               vars_local["FREESURFER"]["GLM_measurements"],
-               vars_local["FREESURFER"]["GLM_thresholds"],
-               vars_local["FREESURFER"]["GLM_MCz_cache"],
-               sig_fdr_thresh)
+    PerformGLM(all_vars, GLM_DIR, sig_fdr_thresh = 3.0)

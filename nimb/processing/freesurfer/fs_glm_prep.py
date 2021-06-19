@@ -12,7 +12,11 @@ import linecache
 from setup.interminal_setup import get_yes_no
 from stats.db_processing import Table
 from distribution.utilities import save_json
-from fs_definitions import hemi, GLMcontrasts
+try:
+    from fs_definitions import hemi, GLMcontrasts
+except ModuleNotFoundError:
+    print('exception ModuleNotFoundError for fs_definitions was triggered')
+    from processing.freesurfer.fs_definitions import hemi, GLMcontrasts
 
 try:
     import pandas as pd

@@ -31,9 +31,10 @@ class RUNProcessingNL:
                 new_subj = json.load(f_open)
         if ls_subj_nl:
             print(ls_subj_nl)
-            for bids_id in ls_subj_nl:
-                print(bids_id)
-                # self.db_nl[bids_id] = new_subj
+            for subj_id in ls_subj_nl:
+                print(subj_id)
+                self.db_nl[subj_id] = new_subj[subj_id]
+        print(self.db_nl)
 
 
     def run_connectivity_analysis(self):
