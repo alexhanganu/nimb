@@ -124,25 +124,36 @@ def chk_new_subjects_json_file(NIMB_tmp, db, vars_freesurfer, DEFAULT):
     from fs_checker import FreeSurferChecker
     chk = FreeSurferChecker(vars_freesurfer)
 
-    f_new_subjects = path.join(NIMB_tmp, DEFAULT.f_subjects2proc)#"new_subjects.json")
+    f_new_subjects = path.join(NIMB_tmp, DEFAULT.f_subjects2proc)
     if path.isfile(f_new_subjects):
         import json
         with open(f_new_subjects) as jfile:
-            data = json.load(jfile)
-        for _id in data:
-            if not chk.checks_from_runfs('registration', _id):
-                for ses in data[_id]:
-                    if 'anat' in data[_id][ses]:
-                        if 't1' in data[_id][ses]['anat']:
-                            if data[_id][ses]['anat']['t1']:
-                                subjid = _id+'_'+ses
-                                db['REGISTRATION'][subjid] = dict()
-                                db['REGISTRATION'][subjid]['anat'] = data[_id][ses]['anat']
-                                log.info('        '+subjid+' added to database from new_subjects.json')
-                                db = add_subjid_2_DB(NIMB_tmp, subjid, _id, ses, db, ls_SUBJECTS_in_long_dirs_processed)
-                            else:
-                                db['PROCESSED']['error_registration'].append(subjid)
-                                log.info('ERROR: '+_id+' was read and but was not added to database')
+            new_subjects = json.load(jfile)
+        for subjid in new_subjects:
+            if not chk.checks_from_runfs('registration', subjid):
+                if 'anat' in new_subjects[subjid]:
+                    if 't1' in new_subjects[subjid]['anat']:
+                        if new_subjects[subjid]['anat']['t1']:
+                            db['REGISTRATION'][subjid] = dict()
+                            db['REGISTRATION'][subjid]['anat'] = new_subjects[subjid]['anat']
+                            log.info('        '+subjid+' added to database from new_subjects.json')
+                            db = add_subjid_2_DB(NIMB_tmp, subjid, db, ls_SUBJECTS_in_long_dirs_processed)
+                        else:
+                            db['PROCESSED']['error_registration'].append(subjid)
+                            log.info('ERROR: '+subjid+' was read and but was not added to database')
+                #THIS IS THE OLD VERSION OF READING THE FILE WITH NEW_SUBJECTS
+                # for ses in new_subjects[_id]:
+                #     if 'anat' in new_subjects[_id][ses]:
+                #         if 't1' in new_subjects[_id][ses]['anat']:
+                #             if new_subjects[_id][ses]['anat']['t1']:
+                #                 subjid = _id+'_'+ses
+                #                 db['REGISTRATION'][subjid] = dict()
+                #                 db['REGISTRATION'][subjid]['anat'] = new_subjects[_id][ses]['anat']
+                #                 log.info('        '+subjid+' added to database from new_subjects.json')
+                #                 db = add_subjid_2_DB(NIMB_tmp, subjid, _id, ses, db, ls_SUBJECTS_in_long_dirs_processed)
+                #             else:
+                #                 db['PROCESSED']['error_registration'].append(subjid)
+                #                 log.info('ERROR: '+_id+' was read and but was not added to database')
         rename(f_new_subjects, path.join(NIMB_tmp,'znew_subjects_registered_to_db_'+time.strftime("%Y%m%d_%H%M",time.localtime(time.time()))+'.json'))
         log.info('        new subjects were added from the new_subjects.json file')
     return db

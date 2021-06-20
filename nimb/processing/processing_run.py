@@ -209,8 +209,12 @@ class RUNProcessing:
 #                        add_to_new_subjects
                     _id, ses = self.DBc.get_id_ses(subjid)
                     print(_id, ses)
-                    new_subjects[_id] = {ses: {'anat': {}}}
-                    new_subjects[_id][ses]['anat'] = classif_subjects[_id][ses]['anat']
+                    new_subjects[subjid]         = {'anat': {}}
+                    new_subjects[subjid]['anat'] = classif_subjects[_id][ses]['anat']
+
+                    # changing the structure of f_ids to subject id, not bids_id
+                    # new_subjects[_id] = {ses: {'anat': {}}}
+                    # new_subjects[_id][ses]['anat'] = classif_subjects[_id][ses]['anat']
                 print(f'    saving file new_subjects at: {f_new_subjects}')
                 save_json(new_subjects, f_new_subjects)
                 self.start_fs_processing = True

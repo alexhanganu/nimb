@@ -1,5 +1,6 @@
 {
-    "subjid_ses-1": {
+    "sub_52006": {
+        "ses-01": {
             "anat": {
                 "t1": [
                     "/PATH_TO_MRI_T1_file_for_dicom_is_the_first_file.dcm",
@@ -26,4 +27,5 @@
                 ]
             }
         }
+    }
 }

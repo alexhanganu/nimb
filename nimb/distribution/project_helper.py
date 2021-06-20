@@ -218,10 +218,7 @@ class ProjectManager:
                     df.index = range(len(df[self.bids_id_col]))
             # self.tab.save_df(df,
             #     os.path.join(self.path_stats_dir, self.project_vars['fname_groups']))
-            # f_new_subjects = os.path.join(self.NIMB_tmp, DEFAULT.f_subjects2proc)
-            # save_json(self._ids_classified, f_new_subjects)
             print('    NIMB ready to initiate processing of data')
-            # print(f'    please check file with classified MRI data: {f_new_subjects}')
             self.send_2processing('process')
         else:
             print('   file with nimb classified is missing')
