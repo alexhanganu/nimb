@@ -11,6 +11,8 @@ class RUNProcessingNL:
         self.project  = all_vars.params.project
         vars_local    = all_vars.location_vars['local']
         self.NIMB_tmp = vars_local['NIMB_PATHS']['NIMB_tmp']
+        self.output_loc = vars_local['NIMB_PATHS']['NIMB_PROCESSED_NILEARN']
+
         self.db_nl    = dict()
         # fs_ver = vars_local['FREESURFER']['freesurfer_version']
         # logger = Log(self.NIMB_tmp, fs_ver).logger
@@ -33,38 +35,38 @@ class RUNProcessingNL:
             print(ls_subj_nl)
             for subj_id in ls_subj_nl:
                 print(subj_id)
-                self.db_nl[subj_id] = new_subj[subj_id]
+                self.db_nl[subj_id] = new_subj[subj_id]["func"]
         print(self.db_nl)
 
 
     def run_connectivity_analysis(self):
-        # #load file
-
-        # im_bold1 = image.load_img("P001_run1_bold.nii.gz")
-        # output_loc = "D:/PROGRAMMING/Alex/nilearn/001PD/corr"
-
-        # #%%
         # #initialize
-        # harvard = hp.Havard_Atlas()
-        # #%%
-        # conn = harvard.extract_connectivity_zFisher(im_bold1, output_loc, "connectivity.csv")
-        # #%%
-        # #extract label for ploting
-        # rois_labels = harvard.extract_label_rois(im_bold1)[0]
-        # #print(rois_labels[1:])
-        # #plot
-        # fig = plt.figure(figsize=(11,10))
-        # plt.imshow(conn, interpolation='None', cmap='RdYlBu_r')
-        # plt.yticks(range(len(rois_labels)), rois_labels[0:]);
-        # plt.xticks(range(len(rois_labels)), rois_labels[0:], rotation=90);
-        # plt.title('Parcellation correlation matrix')
-        # plt.colorbar();
-        # img_name = os.path.join(output_loc,"corr_harvard.png")
-        # plt.savefig(img_name)
+        harvard   = nl_helper.Havard_Atlas()
+        destrieux = nl_helper.Destrieux_Atlas()
 
-        # #%%
-        # destrieux = hp.Destrieux_Atlas()
-        # destrieux.extract_correlation(im_bold1, output_loc, 'left_hemi_corr.csv', 'right_hemi_corr.csv')
+        #load file
+        for subj_id in self.db_nl:
+            if "rsfmri" in self.db_nl[subj_id]:
+                rs_img = self.db_nl[subj_id]["rsfmri"][0] #!!! might include multiple files
+                im_bold1 = image.load_img(rs_img)#"run1_bold.nii.gz"
+
+                # conn = harvard.extract_connectivity_zFisher(im_bold1, self.output_loc, "connectivity.csv")
+                # #%%
+                # #extract label for ploting
+                # rois_labels = harvard.extract_label_rois(im_bold1)[0]
+                # #print(rois_labels[1:])
+                # #plot
+                # fig = plt.figure(figsize=(11,10))
+                # plt.imshow(conn, interpolation='None', cmap='RdYlBu_r')
+                # plt.yticks(range(len(rois_labels)), rois_labels[0:]);
+                # plt.xticks(range(len(rois_labels)), rois_labels[0:], rotation=90);
+                # plt.title('Parcellation correlation matrix')
+                # plt.colorbar();
+                # img_name = os.path.join(self.output_loc,"corr_harvard.png")
+                # plt.savefig(img_name)
+
+                # #%%
+                # destrieux.extract_correlation(im_bold1, self.output_loc, 'left_hemi_corr.csv', 'right_hemi_corr.csv')
 
 
 
@@ -105,7 +107,7 @@ if __name__ == "__main__":
     from distribution.utilities import load_json, save_json
     from distribution.distribution_definitions import DEFAULT
     from processing.schedule_helper import Scheduler, get_jobs_status
-    from processing.nilearn import nl_helper as hp
+    from processing.nilearn import nl_helper
 
     project_ids = Get_Vars().get_projects_ids()
     params      = get_parameters(project_ids)
