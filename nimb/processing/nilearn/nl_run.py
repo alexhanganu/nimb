@@ -50,23 +50,26 @@ class RUNProcessingNL:
                 rs_img = self.db_nl[subj_id]["rsfmri"][0] #!!! might include multiple files
                 im_bold1 = image.load_img(rs_img)#"run1_bold.nii.gz"
 
-                # conn = harvard.extract_connectivity_zFisher(im_bold1, self.output_loc, "connectivity.csv")
-                # #%%
-                # #extract label for ploting
-                # rois_labels = harvard.extract_label_rois(im_bold1)[0]
-                # #print(rois_labels[1:])
-                # #plot
-                # fig = plt.figure(figsize=(11,10))
-                # plt.imshow(conn, interpolation='None', cmap='RdYlBu_r')
-                # plt.yticks(range(len(rois_labels)), rois_labels[0:]);
-                # plt.xticks(range(len(rois_labels)), rois_labels[0:], rotation=90);
-                # plt.title('Parcellation correlation matrix')
-                # plt.colorbar();
-                # img_name = os.path.join(self.output_loc,"corr_harvard.png")
-                # plt.savefig(img_name)
+                # conn_h = harvard.extract_connectivity_zFisher(im_bold1, self.output_loc, "connectivity.csv")
+                # rois_labels = harvard.extract_label_rois(im_bold1)[0] #extract label for ploting
+                # conn_d = destrieux.extract_correlation(im_bold1, self.output_loc, 'left_hemi_corr.csv', 'right_hemi_corr.csv')
+                # self.plot_connectivity(conn_h, rois_labels)
 
-                # #%%
-                # destrieux.extract_correlation(im_bold1, self.output_loc, 'left_hemi_corr.csv', 'right_hemi_corr.csv')
+
+    def plot_connectivity(self, connectivity, rois_labels):
+        # #print(rois_labels[1:])
+
+        # #plot
+        # fig = plt.figure(figsize=(11,10))
+        # plt.imshow(connectivity, interpolation='None', cmap='RdYlBu_r')
+        # plt.yticks(range(len(rois_labels)), rois_labels[0:]);
+        # plt.xticks(range(len(rois_labels)), rois_labels[0:], rotation=90);
+        # plt.title('Parcellation correlation matrix')
+        # plt.colorbar();
+        # img_name = os.path.join(self.output_loc,"corr_harvard.png")
+        # plt.savefig(img_name)
+
+        # #%%
 
 
 
