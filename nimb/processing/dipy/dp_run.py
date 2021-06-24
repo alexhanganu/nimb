@@ -25,7 +25,8 @@ from dipy.tracking.streamline import Streamlines
 
 
 class SampleConnDipy:
-    def __init__(self):
+
+    def __init__(self, all_vars):
         hardi_fname, hardi_bval_fname, hardi_bvec_fname = get_fnames('stanford_hardi')
         label_fname = get_fnames('stanford_labels')
         t1_fname = get_fnames('stanford_t1')
@@ -86,7 +87,8 @@ class SampleConnDipy:
         
 
 class DiffusionConnectivity:
-    def __init__(self):
+
+    def __init__(self, all_vars):
     
         data, affine, img = load_nifti("nilearn/pdmci059/dwi/pdmci059BT2_DTI_64_dir.nii.gz", return_img=True)
         fn_bval = 'nilearn/pdmci059/dwi/pdmci059BT2_DTI_64_dir.bval'
@@ -276,6 +278,34 @@ class DiffusionConnectivity:
         plt.colorbar();
 
 
+
+if __name__ == "__main__":
+
+    import argparse
+    import sys
+    try:
+        from pathlib import Path
+    except ImportError as e:
+        print('please install pathlib')
+        sys.exit(e)
+
+    top = Path(__file__).resolve().parents[2]
+    sys.path.append(str(top))
+
+    from setup.get_vars import Get_Vars
+    from distribution.logger import Log
+    from distribution.utilities import load_json, save_json
+    from distribution.distribution_definitions import DEFAULT
+    from processing.schedule_helper import Scheduler, get_jobs_status
+    from processing.nilearn import nl_helper
+
+    project_ids = Get_Vars().get_projects_ids()
+    params      = get_parameters(project_ids)
+    project     = params.project
+    all_vars    = Get_Vars(params)
+
+    SampleConnDipy(all_vars)
+    DiffusionConnectivity(all_vars)
 
 
 
