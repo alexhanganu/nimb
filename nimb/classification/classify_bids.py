@@ -89,7 +89,7 @@ class MakeBIDS_subj2process():
 #                print(d_BIDS_structure)
                 self.d_subjects[self.subject] = d_BIDS_structure
                 log.info("    saving classification file")
-                save_json(self.d_subjects, path.join(self.DIR_SUBJECTS, self.file_nimb_classified))
+                save_json(self.d_subjects, self.file_nimb_classified)
         log.info("classification of new subjects is complete")
         if self.multiple_T1_entries == 1:
             from classification.get_mr_params import verify_MRIs_for_similarity
@@ -97,10 +97,8 @@ class MakeBIDS_subj2process():
         else:
             self.d_subjects = self.keep_only1_T1(self.d_subjects)
 
-        f_new_subjects = path.join(self.NIMB_tmp,'new_subjects.json')
-        save_json(self.d_subjects, f_new_subjects)
         self.chk_spaces()
-        if path.exists(path.join(self.NIMB_tmp, f_new_subjects)):
+        if path.exists(self.file_nimb_classified):
             return True
         else:
             return False
