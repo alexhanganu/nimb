@@ -1,8 +1,5 @@
-# %%
 from nilearn import image
-# import matplotlib.pyplot as plt
 import os
-# %%
 
 class RUNProcessingNL:
 
@@ -25,12 +22,12 @@ class RUNProcessingNL:
         f_db_proc = os.path.join(self.NIMB_tmp, DEFAULT.process_db_name)
         ls_subj_nl = list()
         if os.path.isfile(f_db_proc):
-            with open(f_db_proc) as f_open:
-                db_proc = json.load(f_open)
-                ls_subj_nl = list(db_proc[f"PROCESS_NL"].keys())
+            print('    reading processing database')
+            db_proc = load_json(f_db_proc)
+            ls_subj_nl = list(db_proc[f"PROCESS_NL"].keys())
         if os.path.isfile(f_new_subjects):
-            with open(f_new_subjects) as f_open:
-                new_subj = json.load(f_open)
+            print('    reading new subjects to process')
+            new_subj = load_json(f_new_subjects)
         if ls_subj_nl:
             print(ls_subj_nl)
             for subj_id in ls_subj_nl:
@@ -57,19 +54,19 @@ class RUNProcessingNL:
 
 
     def plot_connectivity(self, connectivity, rois_labels):
-        # #print(rois_labels[1:])
+        #plot
+        print(rois_labels[1:])
+        import matplotlib.pyplot as plt
 
-        # #plot
-        # fig = plt.figure(figsize=(11,10))
-        # plt.imshow(connectivity, interpolation='None', cmap='RdYlBu_r')
-        # plt.yticks(range(len(rois_labels)), rois_labels[0:]);
-        # plt.xticks(range(len(rois_labels)), rois_labels[0:], rotation=90);
-        # plt.title('Parcellation correlation matrix')
-        # plt.colorbar();
-        # img_name = os.path.join(self.output_loc,"corr_harvard.png")
-        # plt.savefig(img_name)
+        fig = plt.figure(figsize=(11,10))
+        plt.imshow(connectivity, interpolation='None', cmap='RdYlBu_r')
+        plt.yticks(range(len(rois_labels)), rois_labels[0:]);
+        plt.xticks(range(len(rois_labels)), rois_labels[0:], rotation=90);
+        plt.title('Parcellation correlation matrix')
+        plt.colorbar();
+        img_name = os.path.join(self.output_loc,"corr_harvard.png")
+        plt.savefig(img_name)
 
-        # #%%
 
 
 
