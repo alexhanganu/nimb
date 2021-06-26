@@ -12,7 +12,7 @@ from distribution.distribution_helper import  DistributionHelper
 from distribution.distribution_ready import DistributionReady
 from distribution.utilities import load_json, save_json, makedir_ifnot_exist
 from distribution.distribution_definitions import get_keys_processed, DEFAULT
-from classification.classify_bids import MakeBIDS_subj2process
+from classification.classify_2nimb_bids import MakeBIDS_subj2process
 from setup.interminal_setup import get_userdefined_paths, get_yes_no
 
 

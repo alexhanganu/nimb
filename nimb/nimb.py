@@ -54,7 +54,7 @@ class NIMB(object):
             else:
                 SUBJ_2Classify = DistributionHelper(self.all_vars).get_subj_2classify()
                 if SUBJ_2Classify:
-                    from classification.classify_bids import MakeBIDS_subj2process
+                    from classification.classify_2nimb_bids import MakeBIDS_subj2process
                     return MakeBIDS_subj2process(SUBJ_2Classify,
                                          self.NIMB_tmp,
                                          self.fix_spaces,

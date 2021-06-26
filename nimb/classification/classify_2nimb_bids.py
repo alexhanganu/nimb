@@ -13,21 +13,16 @@ Kim Phuong Pham
 6)
 '''
 import os
-from os import path, listdir, getenv, walk, system, sep
 from collections import defaultdict
-from sys import platform
 import shutil
-
 import datetime as dt
-import time, json
-import logging
 
 from .classify_definitions import mr_modalities, BIDS_types, mr_types_2exclude
-from .utils import get_path, save_json, load_json
 from  distribution.distribution_definitions import DEFAULT
+from distribution.utilities import get_path, save_json, load_json
+# from .utils import save_json, load_json #get_path
 
-
-
+import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
@@ -60,7 +55,7 @@ class MakeBIDS_subj2process():
             print('one subject classifying')
             ls_subj_2_classify = self.ls_subjects
         else:
-            ls_subj_2_classify = listdir(self.DIR_SUBJECTS)
+            ls_subj_2_classify = os.listdir(self.DIR_SUBJECTS)
 
         if os.path.exists(self.file_nimb_classified):
             if self.update:
@@ -73,7 +68,7 @@ class MakeBIDS_subj2process():
         for self.subject in ls_subj_2_classify:
 #            print(self.subject)
             self.d_subjects[self.subject] = {}
-            path_2mris = self._get_MR_paths(path.join(self.DIR_SUBJECTS, self.subject))
+            path_2mris = self._get_MR_paths(os.path.join(self.DIR_SUBJECTS, self.subject))
             if path_2mris:
                 ls_MR_paths = self.exclude_MR_types(path_2mris)
 #                print("ls_MR_paths: ", ls_MR_paths)
@@ -90,7 +85,7 @@ class MakeBIDS_subj2process():
                 self.d_subjects[self.subject] = d_BIDS_structure
                 log.info("    saving classification file")
                 save_json(self.d_subjects, self.file_nimb_classified)
-        log.info("classification of new subjects is complete")
+        log.info(f"classification of new subjects is complete, file located at: {self.file_nimb_classified}")
         if self.multiple_T1_entries == 1:
             from classification.get_mr_params import verify_MRIs_for_similarity
             self.d_subjects = verify_MRIs_for_similarity(self.d_subjects, self.NIMB_tmp, self.flair_t2_add)
@@ -98,7 +93,7 @@ class MakeBIDS_subj2process():
             self.d_subjects = self.keep_only1_T1(self.d_subjects)
 
         self.chk_spaces()
-        if path.exists(self.file_nimb_classified):
+        if os.path.exists(self.file_nimb_classified):
             return True
         else:
             return False
@@ -106,7 +101,7 @@ class MakeBIDS_subj2process():
 
     def chk_spaces(self):
         if self.spaces_in_paths:
-            f_paths_spaces = path.join(self.NIMB_tmp,'paths_with_spaces.json')
+            f_paths_spaces = os.path.join(self.NIMB_tmp,'paths_with_spaces.json')
             save_json(self.spaces_in_paths, f_paths_spaces)
             len_spaces = len(self.spaces_in_paths)
             log.info(f'    ATTENTION: ERR: paths of {len_spaces} subjects have spaces \
@@ -120,7 +115,7 @@ class MakeBIDS_subj2process():
         if '.zip' in path2subj:
             content = self.chk_if_ziparchive(path2subj)
             path_2mris = self.get_paths2dcm_files_from_ls(content)
-        elif path.isdir(path2subj):
+        elif os.path.isdir(path2subj):
             path_2mris = self.get_paths2dcm_files(path2subj)
         else:
             log.info('{} not a dir and not a .zip file'.format(str(path2subj)))
@@ -141,7 +136,7 @@ class MakeBIDS_subj2process():
         ls_paths = list()
         for val in ls_content:
             if 'dcm' in val or '.nii' in val:
-                path_mri = path.dirname(val)
+                path_mri = os.path.dirname(val)
                 if path_mri not in ls_paths:
                     ls_paths.append(path_mri)
         return ls_paths
@@ -152,7 +147,7 @@ class MakeBIDS_subj2process():
         search the path to the .dcm or .nii file
         '''
         ls_paths = list()
-        for root, dirs, files in walk(path_root):
+        for root, dirs, files in os.walk(path_root):
             for file in sorted(files):
                 if file.endswith('.dcm'):
                     dir_src = get_path(root, file)
@@ -285,7 +280,7 @@ class MakeBIDS_subj2process():
     def subjects_less_f(self, limit, ls_all_raw_subjects):
         ls_subjects = list()
         for folder in ls_all_raw_subjects:
-            if len([f for f in listdir(SUBJECTS_DIR_RAW+folder)])<limit:
+            if len([f for f in os.listdir(SUBJECTS_DIR_RAW+folder)])<limit:
                 ls_subjects.append(folder)
 
         return ls_subjects
@@ -294,7 +289,7 @@ class MakeBIDS_subj2process():
     def subjects_nodcm(self, ls_all_raw_subjects):
         ls_subjects = list()
         for folder in ls_all_raw_subjects:
-            for file in listdir(SUBJECTS_DIR_RAW+folder):
+            for file in os.listdir(SUBJECTS_DIR_RAW+folder):
                 if not file.endswith('.dcm'):
                     ls_subjects.append(folder)
                     break
@@ -347,16 +342,16 @@ class MakeBIDS_subj2process():
 
 
     def spaces_in_path_change(self, path2chk):
-        path2chk_split = path2chk.split(sep)
+        path2chk_split = path2chk.split(os.sep)
         paths_with_spaces = [i for i in path2chk_split if ' ' in i]
         for path_with_space in paths_with_spaces:
             subdir_ix = path2chk_split.index(path_with_space)
-            path2keep = sep.join(path2chk_split[:subdir_ix])
-            old_path_with_space = path.join(path2keep, path_with_space)
-            new_path_no_space   = path.join(path2keep, path_with_space.replace(' ','_'))
+            path2keep = os.sep.join(path2chk_split[:subdir_ix])
+            old_path_with_space = os.path.join(path2keep, path_with_space)
+            new_path_no_space   = os.path.join(path2keep, path_with_space.replace(' ','_'))
             log.info('moving {} TO:\n     {}'.format(old_path_with_space, new_path_no_space))
             shutil.move(old_path_with_space, new_path_no_space)
-            new_path = path.join(new_path_no_space, sep.join(path2chk_split[subdir_ix+1:]))
+            new_path = os.path.join(new_path_no_space, os.sep.join(path2chk_split[subdir_ix+1:]))
         return new_path
 
 

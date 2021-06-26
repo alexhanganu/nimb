@@ -1,7 +1,7 @@
 """
 this module contains frequently used commands
 """
-
+import os
 from os import makedirs, path, sep
 import json
 from collections import OrderedDict
@@ -40,6 +40,7 @@ def save_json(data, file_abspath, ensure_ascii = False):
     print(f'    saving new file: {file_abspath}')
     with open(file_abspath, 'w') as f:
         json.dump(data, f, indent=4)
+    os.system('chmod 777 {}'.format(file_abspath))
 
 
 def write_txt(file_abspath, lines, write_type = 'w'):
