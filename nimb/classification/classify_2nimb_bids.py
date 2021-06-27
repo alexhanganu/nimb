@@ -17,8 +17,9 @@ from collections import defaultdict
 import shutil
 import datetime as dt
 
-from .classify_definitions import mr_modalities, BIDS_types, mr_types_2exclude
-from  distribution.distribution_definitions import DEFAULT
+from classification.classify_definitions import mr_modalities, BIDS_types, mr_types_2exclude
+from classification.dcm2bids_helper import DCM2BIDS_helper
+from distribution.distribution_definitions import DEFAULT
 from distribution.utilities import get_path, save_json, load_json
 # from .utils import save_json, load_json #get_path
 
@@ -94,6 +95,7 @@ class MakeBIDS_subj2process():
 
         self.chk_spaces()
         if os.path.exists(self.file_nimb_classified):
+            DCM2BIDS_helper()
             return True
         else:
             return False

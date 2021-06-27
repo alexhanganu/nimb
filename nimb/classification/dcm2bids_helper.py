@@ -8,7 +8,7 @@ Alexandru Hanganu
 1) tries to use dcm2bids app to create the bids folder structures
 3) tries to create the config files and update the configurations
 """
-
+import os
 from os import path, system, makedirs, listdir
 import shutil
 import json
@@ -17,16 +17,17 @@ import time
 import logging
 logger = logging.getLogger(__name__)
 logging.basicConfig(format='%(asctime)s %(module)s %(levelname)s: %(message)s')
-# logger.setLevel(logging.INFO)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
+# logger.setLevel(logging.DEBUG)
 
 try:
-    import coloredlogs, logging
+    import coloredlogs
     coloredlogs.install()
 except:
     print("no colorlog")
 
 from classification.classify_definitions import BIDS_types, mr_modalities
+
 
 class DCM2BIDS_helper():
     """

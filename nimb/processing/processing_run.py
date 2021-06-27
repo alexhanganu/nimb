@@ -22,7 +22,6 @@ class RUNProcessing:
 
     def __init__(self, all_vars, logger):
 
-        print('    initiating processing of data')
         #defining working variables
         self.project      = all_vars.params.project
         self.project_vars = all_vars.projects[self.project]
@@ -96,7 +95,7 @@ class RUNProcessing:
 
 
     def loop_run(self):
-        print('    starting the processing loop')
+        self.log.info('    starting the processing loop')
         fs_db = self.get_db("fs")
         ls_subj_in_fs_db = list()
         for ls_bids_ids in fs_db["LONG_DIRS"].values():
@@ -131,8 +130,8 @@ class RUNProcessing:
                 if subjid not in ls_subj_in_fs_db:
                     ls_2process_with_dp.append(subjid)
 
-        print(len(ls_subj_in_fs_db))
-        print(len(ls_2process_with_fs))
+        self.log.info(len(ls_subj_in_fs_db))
+        self.log.info(len(ls_2process_with_fs))
 
         self.update_fs_processing(ls_2process_with_fs)
         if self.start_fs_processing:
@@ -158,13 +157,13 @@ class RUNProcessing:
                     d_id_bids_to_fs_proc[bids_id] = subj_processed
             else:
                 remote = self.db['PROCESS_FS'][bids_id]
-                print(f'    {bids_id} is on being processed on the remote: {remote}')
+                self.log.info(f'    {bids_id} is on being processed on the remote: {remote}')
         _dir_store = self.project_vars["PROCESSED_FS_DIR"][1]
         for bids_id in d_id_bids_to_fs_proc:
             subj_processed = d_id_bids_to_fs_proc[bids_id]
             src = os.path.join(_dir_fs_processed, subj_processed)
             dst = os.path.join(_dir_store, subj_processed)
-            print(f'    moving {subj_processed} from {src} to storage folder: {dst}')
+            self.log.info(f'    moving {subj_processed} from {src} to storage folder: {dst}')
             # shutil.move(src, dst)
             self.db = self.DBc.rm_from_db(bids_id, app, self.db)
             self.update_project_data(bids_id, subj_processed, app)
@@ -183,7 +182,7 @@ class RUNProcessing:
         if id_all_key not in self._ids_all[bids_id]:
             self._ids_all[bids_id][id_all_key] = ''
         self._ids_all[bids_id][id_all_key] = subj_processed
-        print(f'    saving new updated version of f_ids.json at: {f_ids_abspath}')
+        self.log.info(f'    saving new updated version of f_ids.json at: {f_ids_abspath}')
         save_json(self._ids_all, f_ids_abspath)
 
 
@@ -204,18 +203,17 @@ class RUNProcessing:
                 new_subjects = dict()
             if update:
                 for subjid in ls_2process_with_fs:
-                    print(f'    adding subject {subjid} for fs_new_subjects')
+                    self.log.info(f'    adding subject {subjid} for fs_new_subjects')
 #                    if check_that_all_files_are_accessible(ls_files):
 #                        add_to_new_subjects
                     _id, ses = self.DBc.get_id_ses(subjid)
-                    print(_id, ses)
-                    new_subjects[subjid]         = {'anat': {}}
-                    new_subjects[subjid]['anat'] = classif_subjects[_id][ses]['anat']
+                    self.log.info(_id, ses)
+                    new_subjects[subjid] = classif_subjects[_id][ses]
 
                     # changing the structure of f_ids to subject id, not bids_id
                     # new_subjects[_id] = {ses: {'anat': {}}}
                     # new_subjects[_id][ses]['anat'] = classif_subjects[_id][ses]['anat']
-                print(f'    saving file new_subjects at: {f_new_subjects}')
+                self.log.info(f'    saving file new_subjects at: {f_new_subjects}')
                 save_json(new_subjects, f_new_subjects)
                 self.start_fs_processing = True
 
@@ -237,7 +235,7 @@ class RUNProcessing:
 #                                                activate_fs = False,
 #                                                python_load = True)
         else:
-            print(f'    file {f_fs_running} is missing')
+            self.log.info(f'    file {f_fs_running} is missing')
 
 
     def count_timesleep(self):
@@ -329,7 +327,7 @@ class DB:
         if os.path.exists(f_classif_in_src):
             self._ids_classified = load_json(f_classif_in_src)
         else:
-            print(f'    file with nimb classified ids is MISSING in: {new_subjects_dir}')
+            self.log.info(f'    file with nimb classified ids is MISSING in: {new_subjects_dir}')
 
 
     def get_bids_ids_per_app(self, app):
@@ -344,7 +342,7 @@ class DB:
             self.db['PROJECTS'][self.project] = list(self._ids_all.keys())
             self.populate_db()
         else:
-            print(f'{self.project} is already registered in the database')
+            self.log.info(f'{self.project} is already registered in the database')
         return self.db
 
 
@@ -372,7 +370,7 @@ class DB:
         if subjects have the corresponding files for analysis
         '''
         _id, ses = self.get_id_ses(bids_id)
-        # print(_id, ses)
+        # self.log.info(_id, ses)
         fs_key = get_keys_processed('fs')
         nl_key = get_keys_processed('nilearn')
         dp_key = get_keys_processed('dipy')
@@ -384,19 +382,19 @@ class DB:
         if not self._ids_all[bids_id][fs_key]:
             if 'anat' in self._ids_classified[_id][ses]:
                 if 't1' in self._ids_classified[_id][ses]['anat']:
-                    # print('    ready to add to FS processing')
+                    # self.log.info('    ready to add to FS processing')
                     self.db['PROCESS_FS'][bids_id] = 'local'
         if not self._ids_all[bids_id][nl_key]:
             if 'anat' in self._ids_classified[_id][ses] and \
                 'func' in self._ids_classified[_id][ses]:
                 if 't1' in self._ids_classified[_id][ses]['anat']:
-                    # print('    ready to add to NILEARN processing')
+                    # self.log.info('    ready to add to NILEARN processing')
                     self.db['PROCESS_NL'][bids_id] = 'local'
         if not self._ids_all[bids_id][dp_key]:
             if 'anat' in self._ids_classified[_id][ses] and \
                 'dwi' in self._ids_classified[_id][ses]:
                 if 't1' in self._ids_classified[_id][ses]['anat']:
-                    # print('    ready to add to DIPY processing')
+                    # self.log.info('    ready to add to DIPY processing')
                     self.db['PROCESS_DP'][bids_id] = 'local'
         self.update_db()
 
@@ -410,18 +408,18 @@ class DB:
                 db['PROCESS_FS'].pop(bids_id, None)
                 update = True
             else:
-                print(f'    {bids_id} not in db PROCESS_FS')
+                self.log.info(f'    {bids_id} not in db PROCESS_FS')
         for app in self.apps:
             if bids_id in db[f'PROCESS_{app}']:
                 rm = False
-                print(f'    {bids_id} is present in PROCESS_{app}')
+                self.log.info(f'    {bids_id} is present in PROCESS_{app}')
                 break
         if rm:
             if bids_id in db['PROJECTS'][self.project]:
                 db['PROJECTS'][self.project].pop(bids_id, None)
                 update = True
             else:
-                print(f'    {bids_id} not in db PROJECTS')
+                self.log.info(f'    {bids_id} not in db PROJECTS')
 
         if update:
             self.update_db()
