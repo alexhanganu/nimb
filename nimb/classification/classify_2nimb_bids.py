@@ -95,7 +95,6 @@ class MakeBIDS_subj2process():
 
         self.chk_spaces()
         if os.path.exists(self.file_nimb_classified):
-            DCM2BIDS_helper()
             return True
         else:
             return False

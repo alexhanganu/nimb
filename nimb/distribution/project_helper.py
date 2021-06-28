@@ -106,7 +106,7 @@ class ProjectManager:
         if do_task == 'fs-glm':
             self.run_fs_glm()
         if do_task == 'fs-glm-image':
-            self.run_fs_glm(image = True)            
+            self.run_fs_glm(image = True)
         if do_task == 'fs-get-stats':
             self.get_stats_fs()
         elif do_task == 'fs-get-masks':
@@ -175,11 +175,12 @@ class ProjectManager:
                                         True,
                                         self.local_vars['FREESURFER']['multiple_T1_entries'],
                                         self.local_vars['FREESURFER']['flair_t2_add']).run()
-                    # from classification.dcm2bids_helper import DCM2BIDS_helper
-                    # DCM2BIDS_helper(self.project_vars,
-                    #                 self.project,
-                    #                 DICOM_DIR = self.DICOM_DIR,
-                    #                 dir_2classfy = dir_ready)
+                    print('running dcm2bids classification')
+                    from classification.dcm2bids_helper import DCM2BIDS_helper
+                    DCM2BIDS_helper(self.project_vars,
+                                    self.project,
+                                    DICOM_DIR = self.DICOM_DIR,
+                                    dir_2classfy = dir_ready)
 
             self.get_ids_classified()
             self.populate_grid()
