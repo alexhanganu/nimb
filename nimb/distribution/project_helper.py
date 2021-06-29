@@ -63,36 +63,6 @@ class ProjectManager:
         self._ids_all           = dict()
 
 
-    def get_df_f_groups(self):
-        self.df_grid_ok = False
-        f_groups = self.project_vars['fname_groups']
-        dir_4stats       = makedir_ifnot_exist(self.path_stats_dir)
-        if self.distrib_hlp.get_files_for_stats(dir_4stats,
-                                                [f_groups,]):
-            f_grid = os.path.join(dir_4stats, f_groups)
-            print(f'    file with groups is present: {f_grid}')
-            self.df_grid_ok = True
-            return self.tab.get_df(f_grid)
-        else:
-            self.df_grid_ok = False
-            return self.make_default_grid()
-
-
-    def make_default_grid(self):
-        print('here',self.path_stats_dir)
-        df = self.tab.get_clean_df()
-        df[self.bids_id_col] = ''
-        self.tab.save_df(df,
-            os.path.join(self.path_stats_dir, DEFAULT.default_tab_name))
-        self.tab.save_df(df,
-            os.path.join(self.materials_dir_pt, DEFAULT.default_tab_name))
-        self.project_vars['fname_groups']   = DEFAULT.default_tab_name
-        self.all_vars.projects[self.project]['fname_groups'] = DEFAULT.default_tab_name
-        from setup.get_credentials_home import _get_credentials_home
-        save_json(self.all_vars.projects, os.path.join(_get_credentials_home(), 'projects.json'))
-        return df
-
-
     def run(self):
         """
             will run the whole project starting with the file provided in the projects.json -> group
@@ -123,33 +93,9 @@ class ProjectManager:
         self.distrib_hlp.check_new()
 
 
-    def get_ids_bids(self):
-        """
-            extract bids ids from the file groups provided by user
-            !! ATTENTION - bids_id must also comprise the session name
-            as defined in the sessions folder of BIDS structure
-            current abbreviation is ses_00; this variable must be changed
-            to allow users to define it
-        """
-        if self.df_grid_ok:
-            self._ids_bids = list(self.df_f_groups[self.bids_id_col])
-            print(f'    list of ids that are present: {self._ids_bids}')
-            print(f'    checking for missing participants')
-            self.chk_missing_participants()
-        else:
-            self.prep_4dcm2bids_classification()
-
-
-    def chk_missing_participants(self):
-        self.get_ids_all()
-        if not self._ids_all:
-            print(f'    file with ids is missing: {self._ids_all}')
-            if self.get_ids_classified():
-                self.populate_f_ids_from_nimb_classified()
-            else:
-                self.prep_4dcm2bids_classification()
-
-
+    '''
+    CLASSIFICATION related scripts
+    '''
     def prep_4dcm2bids_classification(self):
         self.prep_dirs(["SOURCE_BIDS_DIR",
                     "SOURCE_SUBJECTS_DIR"])
@@ -188,43 +134,9 @@ class ProjectManager:
             print(f'    folder with source subjects {src_dir} is empty')
 
 
-    def get_ids_classified(self):
-        src_subjects_dir = self.project_vars["SOURCE_SUBJECTS_DIR"][1]
-        new_subjects_dir = self.local_vars["NIMB_PATHS"]["NIMB_NEW_SUBJECTS"]
-        f_class_abspath_in_src = os.path.join(src_subjects_dir, DEFAULT.f_nimb_classified)
-        f_class_abspath_in_new = os.path.join(new_subjects_dir, DEFAULT.f_nimb_classified)
-
-        if os.path.exists(f_class_abspath_in_src):
-            self._ids_classified = load_json(f_class_abspath_in_src)
-        elif os.path.exists(f_class_abspath_in_new):
-            self._ids_classified = load_json(f_class_abspath_in_new)
-        else:
-            print('    file with nimb classified is missing')
-            self._ids_classified = dict()
-
-
-    def populate_grid(self):
-        # get grid
-        # populate
-        df = self.get_df_f_groups()
-        if self._ids_classified:
-            self.populate_f_ids_from_nimb_classified()
-
-            for bids_id in self.bids_ids_new:
-                if bids_id not in df[self.bids_id_col]:
-                    df.loc[-1] = df.columns.values
-                    for col in df.columns.tolist():
-                        df.at[-1, col] = ''
-                    df.at[-1, self.bids_id_col] = bids_id
-                    df.index = range(len(df[self.bids_id_col]))
-            # self.tab.save_df(df,
-            #     os.path.join(self.path_stats_dir, self.project_vars['fname_groups']))
-            print('    NIMB ready to initiate processing of data')
-            self.send_2processing('process')
-        else:
-            print('   file with nimb classified is missing')
-
-
+    '''
+    PROCESSING related scripts
+    '''
     def run_fs_glm(self, image = False):
         '''
         REQUIRES ADJUSTMENT
@@ -367,7 +279,7 @@ class ProjectManager:
 
 
     def get_ids_all(self):
-        """ 
+        """
             extract bids ids from the file groups provided by user
         """
         if self.f_ids_in_dir(self.path_stats_dir):
@@ -447,6 +359,51 @@ class ProjectManager:
         return _ids
 
 
+    '''
+    ID related scripts
+    '''
+    def get_ids_bids(self):
+        """
+            extract bids ids from the file groups provided by user
+            !! ATTENTION - bids_id must also comprise the session name
+            as defined in the sessions folder of BIDS structure
+            current abbreviation is ses_00; this variable must be changed
+            to allow users to define it
+        """
+        if self.df_grid_ok:
+            self._ids_bids = list(self.df_f_groups[self.bids_id_col])
+            print(f'    list of ids that are present: {self._ids_bids}')
+            print(f'    checking for missing participants')
+            self.chk_missing_participants()
+        else:
+            self.prep_4dcm2bids_classification()
+
+
+    def chk_missing_participants(self):
+        self.get_ids_all()
+        if not self._ids_all:
+            print(f'    file with ids is missing: {self._ids_all}')
+            if self.get_ids_classified():
+                self.populate_f_ids_from_nimb_classified()
+            else:
+                self.prep_4dcm2bids_classification()
+
+
+    def get_ids_classified(self):
+        src_subjects_dir = self.project_vars["SOURCE_SUBJECTS_DIR"][1]
+        new_subjects_dir = self.local_vars["NIMB_PATHS"]["NIMB_NEW_SUBJECTS"]
+        f_class_abspath_in_src = os.path.join(src_subjects_dir, DEFAULT.f_nimb_classified)
+        f_class_abspath_in_new = os.path.join(new_subjects_dir, DEFAULT.f_nimb_classified)
+
+        if os.path.exists(f_class_abspath_in_src):
+            self._ids_classified = load_json(f_class_abspath_in_src)
+        elif os.path.exists(f_class_abspath_in_new):
+            self._ids_classified = load_json(f_class_abspath_in_new)
+        else:
+            print('    file with nimb classified is missing')
+            self._ids_classified = dict()
+
+
     def populate_f_ids_from_nimb_classified(self):
         self.get_ids_all()
         self.bids_ids_new = list()
@@ -460,6 +417,67 @@ class ProjectManager:
                     self._ids_all[bids_id] = dict()
                 self._ids_all[bids_id][get_keys_processed('src')] = src_id
         self.create_file_ids(self._ids_all)
+
+
+    def create_file_ids(self, _ids):
+        print('creating file with groups {}'.format(self.f_ids_abspath))
+        save_json(_ids, self.f_ids_abspath)
+        save_json(_ids, os.path.join(self.materials_dir_pt, self.f_ids_name))
+
+
+    '''
+    GRID related scripts
+    '''
+    def populate_grid(self):
+        # get grid
+        # populate
+        df = self.get_df_f_groups()
+        if self._ids_classified:
+            self.populate_f_ids_from_nimb_classified()
+
+            for bids_id in self.bids_ids_new:
+                if bids_id not in df[self.bids_id_col]:
+                    df.loc[-1] = df.columns.values
+                    for col in df.columns.tolist():
+                        df.at[-1, col] = ''
+                    df.at[-1, self.bids_id_col] = bids_id
+                    df.index = range(len(df[self.bids_id_col]))
+            # self.tab.save_df(df,
+            #     os.path.join(self.path_stats_dir, self.project_vars['fname_groups']))
+            print('    NIMB ready to initiate processing of data')
+            self.send_2processing('process')
+        else:
+            print('   file with nimb classified is missing')
+
+
+    def get_df_f_groups(self):
+        self.df_grid_ok = False
+        f_groups = self.project_vars['fname_groups']
+        dir_4stats       = makedir_ifnot_exist(self.path_stats_dir)
+        if self.distrib_hlp.get_files_for_stats(dir_4stats,
+                                                [f_groups,]):
+            f_grid = os.path.join(dir_4stats, f_groups)
+            print(f'    file with groups is present: {f_grid}')
+            self.df_grid_ok = True
+            return self.tab.get_df(f_grid)
+        else:
+            self.df_grid_ok = False
+            return self.make_default_grid()
+
+
+    def make_default_grid(self):
+        print('here',self.path_stats_dir)
+        df = self.tab.get_clean_df()
+        df[self.bids_id_col] = ''
+        self.tab.save_df(df,
+            os.path.join(self.path_stats_dir, DEFAULT.default_tab_name))
+        self.tab.save_df(df,
+            os.path.join(self.materials_dir_pt, DEFAULT.default_tab_name))
+        self.project_vars['fname_groups']   = DEFAULT.default_tab_name
+        self.all_vars.projects[self.project]['fname_groups'] = DEFAULT.default_tab_name
+        from setup.get_credentials_home import _get_credentials_home
+        save_json(self.all_vars.projects, os.path.join(_get_credentials_home(), 'projects.json'))
+        return df
 
 
     def populate_ids_all_from_remote(self, _ids, bids_id):
@@ -504,9 +522,3 @@ class ProjectManager:
 
         # return _ids
         pass
-
-
-    def create_file_ids(self, _ids):
-        print('creating file with groups {}'.format(self.f_ids_abspath))
-        save_json(_ids, self.f_ids_abspath)
-        save_json(_ids, os.path.join(self.materials_dir_pt, self.f_ids_name))
