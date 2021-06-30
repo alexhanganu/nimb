@@ -83,6 +83,9 @@ class ProjectManager:
             self.get_masks()
         elif do_task == 'check-new':
             self.check_new()
+        elif do_task == 'classify-dcm2bids':
+            print('    initiating dcm2bids classification')
+
 
         self.get_ids_bids()
         self.get_ids_all()
