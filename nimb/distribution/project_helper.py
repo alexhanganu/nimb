@@ -84,7 +84,7 @@ class ProjectManager:
         elif do_task == 'check-new':
             self.check_new()
         elif do_task == 'classify-dcm2bids':
-            print('    initiating dcm2bids classification')
+            self.classify_with_dcm2bids()
 
 
         self.get_ids_bids()
@@ -124,17 +124,33 @@ class ProjectManager:
                                         True,
                                         self.local_vars['FREESURFER']['multiple_T1_entries'],
                                         self.local_vars['FREESURFER']['flair_t2_add']).run()
-                    print('running dcm2bids classification')
-                    from classification.dcm2bids_helper import DCM2BIDS_helper
-                    DCM2BIDS_helper(self.project_vars,
-                                    self.project,
-                                    DICOM_DIR = self.DICOM_DIR,
-                                    dir_2classfy = dir_ready)
+#                    print('running dcm2bids classification')
+#                    from classification.dcm2bids_helper import DCM2BIDS_helper
+#                    DCM2BIDS_helper(self.project_vars,
+#                                    self.project,
+#                                    DICOM_DIR = self.DICOM_DIR,
+#                                    dir_2classfy = dir_ready)
 
             self.get_ids_classified()
             self.populate_grid()
         else:
             print(f'    folder with source subjects {src_dir} is empty')
+
+
+    def classify_with_dcm2bids(self):
+        '''
+        must read one subject from the nimb_classified.json file
+        for each subject:
+            for each session:
+                initiate the dcm2bids classification
+        '''
+        print('    started dcm2bids classification')
+        from classification.dcm2bids_helper import DCM2BIDS_helper
+
+        DCM2BIDS_helper(self.project_vars,
+                        self.project,
+                        DICOM_DIR = self.DICOM_DIR,
+                        dir_2classfy = dir_ready)
 
 
     '''
