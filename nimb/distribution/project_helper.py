@@ -83,8 +83,8 @@ class ProjectManager:
             self.get_masks()
         elif do_task == 'check-new':
             self.check_new()
-        elif do_task == 'classify-dcm2bids':
-            self.classify_with_dcm2bids()
+        elif do_task == 'classify':
+            self.prep_4dcm2bids_classification()
 
 
         self.get_ids_bids()
@@ -100,23 +100,38 @@ class ProjectManager:
     CLASSIFICATION related scripts
     '''
     def prep_4dcm2bids_classification(self):
+        src_dir = self.project_vars['SOURCE_SUBJECTS_DIR'][1]
+        ls_source_dirs = self.get_content(src_dir)
+        print(f'   there are {len(self.get_content(src_dir))} files found in {src_dir} \
+            expected to contain MRI data for project {self.project}')
+        if test:
+            ls_source_dirs = self.get_content(src_dir)[:nr_participants_for_testing]
+
         self.prep_dirs(["SOURCE_BIDS_DIR",
                     "SOURCE_SUBJECTS_DIR"])
 
-        from distribution.manage_archive import ZipArchiveManagement as archive
-        self.archive = archive
-
-        src_dir = self.project_vars['SOURCE_SUBJECTS_DIR'][1]
-        ls_source_dirs = self.get_content(src_dir)
-        print(f'   there are {len(self.get_content(src_dir))} \
-            file found in {src_dir} \
-            that are expected to contain MRI data for the project {self.project}')
-        if test:
-            ls_source_dirs = self.get_content(src_dir)[:nr_participants_for_testing]
         if len(ls_source_dirs) > 0:
+            from distribution.manage_archive import ZipArchiveManagement as archive
+            self.archive = archive
             for _dir in ls_source_dirs:
-                self.DICOM_DIR, ls_dir_4bids2dcm = self.get_dir_with_raw_MR_data(src_dir, _dir)
-                for dir_ready in ls_dir_4bids2dcm:
+                archived, archive_type = self.is_archive(_dir)
+                if archived:
+                    content = self.archive(os.path.join(src_dir, _dir)).content
+                else:
+                    content = list(_dir)
+                '''
+                classify first by content
+                get the nimb_classified.json
+                for each subject:
+                    for each session:
+                        initiate dcm2bids
+                        populate new_subjects.json with dcm2bids versions
+                        if dcm2bids not efficient:
+                            populate new_subjects with raw DCM
+                '''
+
+                self.DICOM_DIR, _ = self.get_dir_with_raw_MR_data(src_dir, _dir)
+                for dir_ready in content:
                     MakeBIDS_subj2process(self.DICOM_DIR,
                                         self.NIMB_tmp,
                                         ls_dir_4bids2dcm,
@@ -124,12 +139,6 @@ class ProjectManager:
                                         True,
                                         self.local_vars['FREESURFER']['multiple_T1_entries'],
                                         self.local_vars['FREESURFER']['flair_t2_add']).run()
-#                    print('running dcm2bids classification')
-#                    from classification.dcm2bids_helper import DCM2BIDS_helper
-#                    DCM2BIDS_helper(self.project_vars,
-#                                    self.project,
-#                                    DICOM_DIR = self.DICOM_DIR,
-#                                    dir_2classfy = dir_ready)
 
             self.get_ids_classified()
             self.populate_grid()
@@ -138,19 +147,70 @@ class ProjectManager:
 
 
     def classify_with_dcm2bids(self):
-        '''
-        must read one subject from the nimb_classified.json file
-        for each subject:
-            for each session:
-                initiate the dcm2bids classification
-        '''
         print('    started dcm2bids classification')
         from classification.dcm2bids_helper import DCM2BIDS_helper
-
         DCM2BIDS_helper(self.project_vars,
                         self.project,
                         DICOM_DIR = self.DICOM_DIR,
                         dir_2classfy = dir_ready)
+
+
+    def get_dir_with_raw_MR_data(self, src_dir, _dir):
+        if os.path.isdir(os.path.join(src_dir, _dir)):
+            return src_dir, list(_dir)
+        elif _dir.endswith('.zip'):
+            self.dir_new_subjects = self.local_vars["NIMB_PATHS"]["NIMB_NEW_SUBJECTS"]
+            ls_initial = self.get_content(self.dir_new_subjects)
+            self.extract_from_archive(src_dir, _dir)
+            ls_dir_4bids2dcm = [i for i in self.get_content(self.dir_new_subjects) if i not in ls_initial]
+            return self.dir_new_subjects, ls_dir_4bids2dcm
+
+
+    def extract_from_archive(self, src_dir, _dir):
+        tmp_err_dir  = os.path.join(self.NIMB_tmp, 'tmp_err_classification')
+        makedir_ifnot_exist(tmp_err_dir)
+        dir_2extract = self.dir_new_subjects
+        tmp_dir_2extract = ''
+        if self.project in DEFAULT.project_ids:
+            tmp_dir_2extract = os.path.join(self.NIMB_tmp, 'tmp_dir_2extract')
+            makedir_ifnot_exist(tmp_dir_2extract)
+            dir_2extract = tmp_dir_2extract
+        self.archive(
+            os.path.join(src_dir, _dir),
+            path2xtrct = dir_2extract,
+            path_err   = tmp_err_dir)
+        if tmp_dir_2extract:
+            project_dir = os.path.join(tmp_dir_2extract,
+                                        DEFAULT.project_ids[self.project]["dir_from_source"])
+            if os.path.exists(project_dir):
+                print(f'    this is default project;\
+                    the corresponding default folder was created in: {project_dir}')
+                ls_content = self.get_content(project_dir)
+                for _dir in ls_content:
+                    nr_left_2cp = len(ls_content[ls_content.index(_dir):])
+                    print(f'    number of folders left to copy: {nr_left_2cp}')
+                    src = os.path.join(project_dir, _dir)
+                    dst = os.path.join(self.dir_new_subjects, _dir)
+                    print(f'    copying folder: {src} to {dst}')
+                    shutil.copytree(src, dst)
+            else:
+                print(f'    the expected folder: {project_dir} is missing')
+            print(f'    removing temporary folder: {tmp_dir_2extract}')
+            shutil.rmtree(tmp_dir_2extract, ignore_errors=True)
+        if len(self.get_content(tmp_err_dir)) == 0:
+            shutil.rmtree(tmp_err_dir, ignore_errors=True)
+
+
+    def is_archive(self, file):
+        archive_types = ('.zip', '.gz', '.tar.gz')
+        archived = False
+        archive_type = 'none'
+        for ending in archive_types:
+            if file.endswith(ending):
+                archived = True
+                archive_type = ending
+                break
+        return archived, archive_type
 
 
     '''
@@ -231,54 +291,11 @@ class ProjectManager:
         schedule.submit_4_processing(cmd, process_type, subproc, cd_cmd)
 
 
-    def get_dir_with_raw_MR_data(self, src_dir, _dir):
-        if os.path.isdir(os.path.join(src_dir, _dir)):
-            return src_dir, list(_dir)
-        elif _dir.endswith('.zip'):
-            self.dir_new_subjects = self.local_vars["NIMB_PATHS"]["NIMB_NEW_SUBJECTS"]
-            ls_initial = self.get_content(self.dir_new_subjects)
-            self.extract_from_archive(src_dir, _dir)
-            ls_dir_4bids2dcm = [i for i in self.get_content(self.dir_new_subjects) if i not in ls_initial]
-            return self.dir_new_subjects, ls_dir_4bids2dcm
 
 
     def get_content(self, path2chk):
         return os.listdir(path2chk)
 
-
-    def extract_from_archive(self, src_dir, _dir):
-        tmp_err_dir  = os.path.join(self.NIMB_tmp, 'tmp_err_classification')
-        makedir_ifnot_exist(tmp_err_dir)
-        dir_2extract = self.dir_new_subjects
-        tmp_dir_2extract = ''
-        if self.project in DEFAULT.project_ids:
-            tmp_dir_2extract = os.path.join(self.NIMB_tmp, 'tmp_dir_2extract')
-            makedir_ifnot_exist(tmp_dir_2extract)
-            dir_2extract = tmp_dir_2extract
-        self.archive(
-            os.path.join(src_dir, _dir),
-            path2xtrct = dir_2extract,
-            path_err   = tmp_err_dir)
-        if tmp_dir_2extract:
-            project_dir = os.path.join(tmp_dir_2extract,
-                                        DEFAULT.project_ids[self.project]["dir_from_source"])
-            if os.path.exists(project_dir):
-                print(f'    this is default project;\
-                    the corresponding default folder was created in: {project_dir}')
-                ls_content = self.get_content(project_dir)
-                for _dir in ls_content:
-                    nr_left_2cp = len(ls_content[ls_content.index(_dir):])
-                    print(f'    number of folders left to copy: {nr_left_2cp}')
-                    src = os.path.join(project_dir, _dir)
-                    dst = os.path.join(self.dir_new_subjects, _dir)
-                    print(f'    copying folder: {src} to {dst}')
-                    shutil.copytree(src, dst)
-            else:
-                print(f'    the expected folder: {project_dir} is missing')
-            print(f'    removing temporary folder: {tmp_dir_2extract}')
-            shutil.rmtree(tmp_dir_2extract, ignore_errors=True)
-        if len(self.get_content(tmp_err_dir)) == 0:
-            shutil.rmtree(tmp_err_dir, ignore_errors=True)
 
 
     def prep_dirs(self, ls_dirs):

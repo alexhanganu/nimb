@@ -20,6 +20,8 @@ class ZipArchiveManagement():
             self.zip_file_open = self.read_zip()
             if self.path2xtrct:
                 self.extract_archive()
+            else:
+                self.content = self.zip_file_content()
 
     def chk_if_zipfile(self):
         if not zipfile.is_zipfile(self.zip_f_path):
