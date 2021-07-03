@@ -111,37 +111,63 @@ class ProjectManager:
                     "SOURCE_SUBJECTS_DIR"])
 
         if len(ls_source_dirs) > 0:
-            from distribution.manage_archive import ZipArchiveManagement as archive
-            self.archive = archive
             for _dir in ls_source_dirs:
-                archived, archive_type = self.is_archive(_dir)
-                if archived:
-                    content = self.archive(os.path.join(src_dir, _dir)).content
-                else:
-                    content = list(_dir)
-                '''
-                classify first by content
-                get the nimb_classified.json
-                for each subject:
-                    for each session:
-                        initiate dcm2bids
-                        populate new_subjects.json with dcm2bids versions
-                        if dcm2bids not efficient:
-                            populate new_subjects with raw DCM
-                '''
-
-                self.DICOM_DIR, _ = self.get_dir_with_raw_MR_data(src_dir, _dir)
-                for dir_ready in content:
-                    MakeBIDS_subj2process(self.DICOM_DIR,
+                print(f'   classifying folder: {_dir}')
+                MakeBIDS_subj2process(src_dir,
                                         self.NIMB_tmp,
-                                        ls_dir_4bids2dcm,
+                                        [_dir,],
                                         self.all_vars.params.fix_spaces,
                                         True,
                                         self.local_vars['FREESURFER']['multiple_T1_entries'],
                                         self.local_vars['FREESURFER']['flair_t2_add']).run()
 
-            self.get_ids_classified()
-            self.populate_grid()
+                '''
+                classify all dirs and sessions, create nimb_classified.json
+                for archived, create file: nimb_classified_archived.json,
+                    that includes classifications by archived file
+
+                    start checking presence of subject_session in bids folder
+                if is_archive:
+                    create nimb_classified.json for that archive
+                    start checking presence of subject_session in bids folder
+                    if subject_session is absent:
+                        extract from archive specific subject_session
+                        start dcm2bids for subject_session
+
+                def check_preesnce_of_subject_session_if_bids_folder:
+                    for each subject:
+                        for each session:
+                            if subjects_session not in bids folder:
+                                return False
+                def check_is_subject_session_in_grid:
+                        if subject_session not in grid:
+                            add subject_session to be processed
+                            populate new_subjects.json with dcm2bids versions
+                            if dcm2bids not efficient:
+                                populate new_subjects with raw DCM
+                '''
+
+#            from distribution.manage_archive import ZipArchiveManagement as archive
+#            self.archive = archive
+#            for _dir in ls_source_dirs:
+#                archived, archive_type = self.is_archive(_dir)
+#                if archived:
+#                    content = self.archive(os.path.join(src_dir, _dir)).content
+#                else:
+#                    content = list(_dir)
+
+#                self.DICOM_DIR, _ = self.get_dir_with_raw_MR_data(src_dir, _dir)
+#                for dir_ready in content:
+#                    MakeBIDS_subj2process(self.DICOM_DIR,
+#                                        self.NIMB_tmp,
+#                                        ls_dir_4bids2dcm,
+#                                        self.all_vars.params.fix_spaces,
+#                                        True,
+#                                        self.local_vars['FREESURFER']['multiple_T1_entries'],
+#                                        self.local_vars['FREESURFER']['flair_t2_add']).run()
+
+#            self.get_ids_classified()
+#            self.populate_grid()
         else:
             print(f'    folder with source subjects {src_dir} is empty')
 
