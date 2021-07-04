@@ -14,7 +14,7 @@ from distribution.utilities import load_json, save_json, makedir_ifnot_exist
 from distribution.distribution_definitions import get_keys_processed, DEFAULT
 from classification.classify_2nimb_bids import MakeBIDS_subj2process
 from setup.interminal_setup import get_userdefined_paths, get_yes_no
-
+from distribution.manage_archive import is_archive, ZipArchiveManagement
 
 # 2ADD:
 # chk that group file includes all variables defined in the projects.json file
@@ -54,7 +54,6 @@ class ProjectManager:
         self.materials_dir_pt   = all_vars.projects[self.project]["materials_DIR"][1]
         self.f_ids_name         = self.local_vars["NIMB_PATHS"]['file_ids_processed']
         self.f_ids_abspath      = os.path.join(self.path_stats_dir, self.f_ids_name)
-        self.archive_type       = '.zip'
         self.tab                = Table()
         self.distrib_hlp        = DistributionHelper(self.all_vars)
         self.distrib_ready      = DistributionReady(self.all_vars)
@@ -147,12 +146,11 @@ class ProjectManager:
                                 populate new_subjects with raw DCM
                 '''
 
-#            from distribution.manage_archive import ZipArchiveManagement as archive
-#            self.archive = archive
+
 #            for _dir in ls_source_dirs:
-#                archived, archive_type = self.is_archive(_dir)
+#                archived, archive_type = is_archive(_dir)
 #                if archived:
-#                    content = self.archive(os.path.join(src_dir, _dir)).content
+#                    content = ZipArchiveManagement(os.path.join(src_dir, _dir)).content
 #                else:
 #                    content = list(_dir)
 
@@ -201,7 +199,7 @@ class ProjectManager:
             tmp_dir_2extract = os.path.join(self.NIMB_tmp, 'tmp_dir_2extract')
             makedir_ifnot_exist(tmp_dir_2extract)
             dir_2extract = tmp_dir_2extract
-        self.archive(
+        ZipArchiveManagement(
             os.path.join(src_dir, _dir),
             path2xtrct = dir_2extract,
             path_err   = tmp_err_dir)
@@ -225,18 +223,6 @@ class ProjectManager:
             shutil.rmtree(tmp_dir_2extract, ignore_errors=True)
         if len(self.get_content(tmp_err_dir)) == 0:
             shutil.rmtree(tmp_err_dir, ignore_errors=True)
-
-
-    def is_archive(self, file):
-        archive_types = ('.zip', '.gz', '.tar.gz')
-        archived = False
-        archive_type = 'none'
-        for ending in archive_types:
-            if file.endswith(ending):
-                archived = True
-                archive_type = ending
-                break
-        return archived, archive_type
 
 
     '''

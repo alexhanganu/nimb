@@ -21,6 +21,8 @@ from classification.classify_definitions import mr_modalities, BIDS_types, mr_ty
 from classification.dcm2bids_helper import DCM2BIDS_helper
 from distribution.distribution_definitions import DEFAULT
 from distribution.utilities import get_path, save_json, load_json
+from distribution.manage_archive import is_archive, ZipArchiveManagement
+
 # from .utils import save_json, load_json #get_path
 
 import logging
@@ -70,6 +72,7 @@ class MakeBIDS_subj2process():
 #            print(self.subject)
             self.d_subjects[self.subject] = {}
             path_2mris = self._get_MR_paths(os.path.join(self.DIR_SUBJECTS, self.subject))
+
             if path_2mris:
                 ls_MR_paths = self.exclude_MR_types(path_2mris)
 #                print("ls_MR_paths: ", ls_MR_paths)
@@ -113,24 +116,30 @@ class MakeBIDS_subj2process():
 
 
     def _get_MR_paths(self, path2subj):
-        if '.zip' in path2subj:
-            content = self.chk_if_ziparchive(path2subj)
-            path_2mris = self.get_paths2dcm_files_from_ls(content)
+        path_2mris = []
+        if is_archive(path2subj):
+            print('    tmp: this is an archived file')
+            archiver = ZipArchiveManagement(file)
+            if archiver.chk_if_zipfile():
+                content = archiver.zip_file_content()
+                path_2mris = self.get_paths2dcm_files_from_ls(content)
+#        if '.zip' in path2subj:
+#            print('    tmp: this is an archived file')
+#            content = self.chk_if_ziparchive(path2subj)
+#            path_2mris = self.get_paths2dcm_files_from_ls(content)
         elif os.path.isdir(path2subj):
             path_2mris = self.get_paths2dcm_files(path2subj)
         else:
             log.info('{} not a dir and not a .zip file'.format(str(path2subj)))
-            path_2mris = []
         return path_2mris
 
 
-    def chk_if_ziparchive(self, file):
-        from distribution.manage_archive import ZipArchiveManagement
-        unzip = ZipArchiveManagement(file)
-        if unzip.chk_if_zipfile():
-            return unzip.zip_file_content()
-        else:
-            return []
+#    def chk_if_ziparchive(self, file):
+#        archiver = ZipArchiveManagement(file)
+#        if archiver.chk_if_zipfile():
+#            return archiver.zip_file_content()
+#        else:
+#            return []
 
 
     def get_paths2dcm_files_from_ls(self, ls_content):
@@ -160,7 +169,7 @@ class MakeBIDS_subj2process():
                     break
         return ls_paths
 
-        
+
     def exclude_MR_types(self, ls):
         ls_iter = ls.copy()
         for mr_path in ls_iter:
@@ -202,7 +211,7 @@ class MakeBIDS_subj2process():
                 d_paths[date].append(mr_path)
         return ls_sessions, d_paths
 
-    
+
     def classify_by_sessions(self, ls):
         d = {}
         oneday = dt.timedelta(days=1)

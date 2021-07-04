@@ -2,10 +2,23 @@
 if processed data is stored as zip archived
 script extracts of specific folders
 """
+archive_types = ('.zip', '.gz', '.tar.gz')
 
 import os
 import zipfile
 import shutil
+
+
+def is_archive(file):
+    archived = False
+    archive_type = 'none'
+    for ending in archive_types:
+        if file.endswith(ending):
+            archived = True
+            archive_type = ending
+            break
+    return archived, archive_type
+
 
 class ZipArchiveManagement():
 
@@ -74,3 +87,4 @@ class ZipArchiveManagement():
     def move_error(self):
         shutil.move(self.zip_f_path, self.path_err)
         shutil.move(os.path.join(self.path_err, self.zip_file), os.path.join(self.path_err, 'errzip_'+self.zip_file))
+
