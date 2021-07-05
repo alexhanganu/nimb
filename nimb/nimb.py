@@ -217,7 +217,7 @@ def get_parameters(projects):
 
     parser.add_argument(
         "-do", required=False,
-        choices = ['fs-get-stats', 'fs-get-masks', 'check-new', 'classify'],
+        choices = ['fs-get-stats', 'fs-get-masks', 'check-new', 'classify', 'classify-dcm2bids'],
         help="fs-get-masks (NOT READY. extract ROI masks based on FreeSurfer parameters), \
                 fs-get-stats (extract freesurfer stats from subjid/stats/* to an excel file)\
                 check-new (NOT READY. verfies for new subjects if processed)",

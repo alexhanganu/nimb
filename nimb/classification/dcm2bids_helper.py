@@ -39,11 +39,12 @@ class DCM2BIDS_helper():
           (4) redo run() up to repeat_lim
     """
 
-    def __init__(self, proj_vars,
-                       project,
-                       DICOM_DIR    = 'default',
-                       dir_2classfy = 'default',
-                       repeat_lim = 10):
+    def __init__(self,
+		        proj_vars,
+                project,
+                nimb_classified = dict(),
+                DICOM_DIR    = 'default',
+                repeat_lim = 10):
 
         self.proj_vars       = proj_vars
         self.project         = project    #project item in projects.json
@@ -56,8 +57,15 @@ class DCM2BIDS_helper():
         self.OUTPUT_DIR      = self.chk_dir(self.proj_vars['SOURCE_BIDS_DIR'][1])
 
 
-    def run(self, subjid = 'none'):
+    def run(self, bids_id = 'none', ses = 'none'):
         #run dcm2bids:
+        '''
+            if nimb_classified.json[bids_id][archived]:
+                extract from archive specific subject_session
+                start dcm2bids for subject_session
+        '''
+        print(f'classifying for id: {bids_id} for session: {ses}')
+
         if self.run_stt == 1:
             self.config_file = self.get_config_file()
             print("config_file", self.config_file)

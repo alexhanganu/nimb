@@ -13,6 +13,7 @@ from distribution.distribution_ready import DistributionReady
 from distribution.utilities import load_json, save_json, makedir_ifnot_exist
 from distribution.distribution_definitions import get_keys_processed, DEFAULT
 from classification.classify_2nimb_bids import MakeBIDS_subj2process
+from classification.dcm2bids_helper import DCM2BIDS_helper
 from setup.interminal_setup import get_userdefined_paths, get_yes_no
 from distribution.manage_archive import is_archive, ZipArchiveManagement
 
@@ -84,7 +85,8 @@ class ProjectManager:
             self.check_new()
         elif do_task == 'classify':
             self.prep_4dcm2bids_classification()
-
+        elif do_task == 'classify-dcm2bids':
+            self.classify_with_dcm2bids()
 
         self.get_ids_bids()
         self.get_ids_all()
@@ -110,59 +112,26 @@ class ProjectManager:
                     "SOURCE_SUBJECTS_DIR"])
 
         if len(ls_source_dirs) > 0:
+            multi_T1     = self.local_vars['FREESURFER']['multiple_T1_entries']
+            add_flair_t2 = self.local_vars['FREESURFER']['flair_t2_add']
+            fix_spaces   = self.all_vars.params.fix_spaces
             for _dir in ls_source_dirs:
                 print(f'   classifying folder: {_dir}')
-                MakeBIDS_subj2process(src_dir,
-                                        self.NIMB_tmp,
-                                        [_dir,],
-                                        self.all_vars.params.fix_spaces,
-                                        True,
-                                        self.local_vars['FREESURFER']['multiple_T1_entries'],
-                                        self.local_vars['FREESURFER']['flair_t2_add']).run()
-
-                '''
-                classify all dirs and sessions, create nimb_classified.json
-                for archived, create file: nimb_classified_archived.json,
-                    that includes classifications by archived file
-
-                    start checking presence of subject_session in bids folder
-                if is_archive:
-                    create nimb_classified.json for that archive
-                    start checking presence of subject_session in bids folder
-                    if subject_session is absent:
-                        extract from archive specific subject_session
-                        start dcm2bids for subject_session
-
-                def check_preesnce_of_subject_session_if_bids_folder:
-                    for each subject:
-                        for each session:
-                            if subjects_session not in bids folder:
-                                return False
-                def check_is_subject_session_in_grid:
+                is_classified, nimb_classified = MakeBIDS_subj2process(self.project,
+                                                                src_dir, self.NIMB_tmp, [_dir,],
+                                                                fix_spaces, True,
+                                                                multi_T1, add_flair_t2).run()
+                if is_classified:
+                    self.classify_with_dcm2bids(nimb_classified)
+                    '''
+                    def check_is_subject_session_in_grid:
                         if subject_session not in grid:
                             add subject_session to be processed
                             populate new_subjects.json with dcm2bids versions
                             if dcm2bids not efficient:
                                 populate new_subjects with raw DCM
-                '''
+                    '''
 
-
-#            for _dir in ls_source_dirs:
-#                archived, archive_type = is_archive(_dir)
-#                if archived:
-#                    content = ZipArchiveManagement(os.path.join(src_dir, _dir)).content
-#                else:
-#                    content = list(_dir)
-
-#                self.DICOM_DIR, _ = self.get_dir_with_raw_MR_data(src_dir, _dir)
-#                for dir_ready in content:
-#                    MakeBIDS_subj2process(self.DICOM_DIR,
-#                                        self.NIMB_tmp,
-#                                        ls_dir_4bids2dcm,
-#                                        self.all_vars.params.fix_spaces,
-#                                        True,
-#                                        self.local_vars['FREESURFER']['multiple_T1_entries'],
-#                                        self.local_vars['FREESURFER']['flair_t2_add']).run()
 
 #            self.get_ids_classified()
 #            self.populate_grid()
@@ -170,13 +139,43 @@ class ProjectManager:
             print(f'    folder with source subjects {src_dir} is empty')
 
 
-    def classify_with_dcm2bids(self):
-        print('    started dcm2bids classification')
-        from classification.dcm2bids_helper import DCM2BIDS_helper
-        DCM2BIDS_helper(self.project_vars,
-                        self.project,
-                        DICOM_DIR = self.DICOM_DIR,
-                        dir_2classfy = dir_ready)
+    def id_is_bids_converted(self, bids_id, ses):
+        bids_location = self.project_vars['SOURCE_BIDS_DIR'][0]
+        bids_convert = False
+        if bids_location == 'local':
+            bids_abspath = self.project_vars['SOURCE_BIDS_DIR'][1]
+            ls_bids_converted = os.listdir(bids_abspath)
+            if bids_id not in ls_bids_converted:
+                bids_convert = True
+            elif ses not in os.listdir(os.path.join(bids_abspath, bids_id)):
+                bids_convert = True
+        else:
+            print(f'    bids folder located remotely: {bids_location}')
+        return bids_convert
+
+
+    def classify_with_dcm2bids(self, nimb_classified = False):
+        if not nimb_classified:
+            src_dir = self.project_vars['SOURCE_SUBJECTS_DIR'][1]
+            try:
+                nimb_classified = load_json(os.path.join(
+                    src_dir,
+                    DEFAULT.f_nimb_classified))
+            except Exception as e:
+                print(e)
+                print('    nimb_classified file cannot be found at: {src_dir}')
+
+        if nimb_classified:
+            for bids_id in nimb_classified:
+                for ses in nimb_classified[bids_id]:
+                    bids_convert = self.id_is_bids_converted(bids_id, ses)
+                    print(f'    must convert to BIDS: {bids_convert}')
+                    if bids_convert:
+                        print(f'    started dcm2bids classification for id: {bids_id} session: {ses}')
+                        DCM2BIDS_helper(self.project_vars,
+                                        self.project,
+                                        nimb_classified = nimb_classified[bids_id][ses],
+                                        DICOM_DIR = self.DICOM_DIR).run(bids_id, ses)
 
 
     def get_dir_with_raw_MR_data(self, src_dir, _dir):

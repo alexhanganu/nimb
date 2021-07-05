@@ -1,26 +1,29 @@
 #!/bin/python
-
-'''
-1) read folder/archive_file with subjects
-3) extract paths for the anat/func/dwi MRIs
-4) classify according to BIDS classification
-5) create the BIDS-based nimb_classified.json file
-6) nimb_classified.json is used by NIMB for processing
-
+"""
 authors:
 Alexandru Hanganu
 Kim Phuong Pham
-'''
+"""
 
+'''
+1) read the folder with subjects
+3) extract paths for the anat MRIs
+4) classify according to BIDS classification
+5) create the BIDS json file that will be used by NIMB for processing
+6)
+'''
 import os
 from collections import defaultdict
 import shutil
 import datetime as dt
 
 from classification.classify_definitions import mr_modalities, BIDS_types, mr_types_2exclude
+from classification.dcm2bids_helper import DCM2BIDS_helper
 from distribution.distribution_definitions import DEFAULT
 from distribution.utilities import get_path, save_json, load_json
 from distribution.manage_archive import is_archive, ZipArchiveManagement
+
+# from .utils import save_json, load_json #get_path
 
 import logging
 log = logging.getLogger(__name__)
@@ -28,7 +31,7 @@ log.setLevel(logging.DEBUG)
 
 class MakeBIDS_subj2process():
     def __init__(self, project,
-                MAIN_DIR,
+                DIR_SUBJECTS,
                 NIMB_tmp,
                 ls_subjects = False,
                 fix_spaces = False,
@@ -36,136 +39,108 @@ class MakeBIDS_subj2process():
                 multiple_T1_entries = False,
                 flair_t2_add = False):
 
-        self.MAIN_DIR     = MAIN_DIR
+        self.DIR_SUBJECTS = DIR_SUBJECTS
         self.NIMB_tmp     = NIMB_tmp
-        self.project      = project
-        self.ls_dirs      = ls_subjects
+        self.ls_subjects  = ls_subjects
         self.update       = update
-        self.multiple_T1  = multiple_T1_entries
+        self.multiple_T1_entries  = multiple_T1_entries
         self.flair_t2_add = flair_t2_add
         self.MR_type_default = 't1'
-        self.fix_spaces   = fix_spaces
+        self.file_nimb_classified = os.path.join(self.DIR_SUBJECTS,
+                                                DEFAULT.f_nimb_classified)
+        self.fix_spaces = fix_spaces
+        self.d_subjects = dict()
         self.spaces_in_paths = list()
-        self.main         = dict()
         log.info("classification of new subjects is running ...")
 
 
     def run(self):
-        self.dir_2classify = self.get_dirs2classify()
-        for self._dir in self.dir_2classify:
-            self.archived = False
-            dir_abspath = os.path.join(self.MAIN_DIR, self._dir)
-            self.main = self.get_dict_4classification(dir_abspath)
-            paths_2mris = self._get_MR_paths(dir_abspath)
-
-            if paths_2mris:
-                if self.archived:
-                    bids_ids = self.get_bids_ids(paths_2mris)
-                    for bids_id in bids_ids:
-                        # self.main[bids_id] = dict()
-                        paths_2classify    = self.get_content_per_bids_id(paths_2mris, bids_id)
-                        BIDS_classifed     = self.classify_2bids(paths_2classify)
-                        self.main[bids_id] = BIDS_classifed
-                        self.main[bids_id]['archived'] = str(dir_abspath)
-                else:
-                    # self.main[self._dir] = dict()
-                    paths_2classify = paths_2mris
-                    BIDS_classifed = self.classify_2bids(paths_2classify)
-                    self.main[self._dir] = BIDS_classifed
-                    self.main[self._dir]['archived'] = ''
-                log.info("    saving classification file")
-                save_json(self.main, self.f_nimb_classified)
-            else:
-                log.info(f'    there are no file or folders in the provided path to read: {dir_abspath}')
-        log.info(f"classification of new subjects is complete, file located at: {self.f_nimb_classified}")
-        if self.multiple_T1 == 1:
-            from classification.get_mr_params import verify_MRIs_for_similarity
-            self.main = verify_MRIs_for_similarity(self.main, self.NIMB_tmp, self.flair_t2_add)
+        if self.ls_subjects:
+            print('one subject classifying')
+            ls_subj_2_classify = self.ls_subjects
         else:
-            self.main = self.keep_only1_T1()
+            ls_subj_2_classify = os.listdir(self.DIR_SUBJECTS)
 
-        self.chk_spaces()
-        if os.path.exists(self.f_nimb_classified):
-            return True, self.main
-        else:
-            return False, self.main
-
-
-    def get_bids_ids(self, content):
-        bids_ids = list()
-        for chemin in content:
-            chemin2rd = chemin.split('/')
-            if self.project in DEFAULT.project_ids:
-                dir2rm = DEFAULT.project_ids[self.project]["dir_from_source"]
-                if dir2rm in chemin2rd:
-                    chemin2rd.remove(dir2rm)
-                else:
-                    print(f'    in path: {chemin2rd} there is no expected default dir: {dir2rm}')
-            bids_id = chemin2rd[0]
-            if bids_id not in bids_ids:
-                bids_ids.append(bids_id)
-        return bids_ids
-
-
-    def get_content_per_bids_id(self, content, bids_id):
-        return [i for i in content if bids_id in i]
-
-
-    def classify_2bids(self, paths_2classify):
-        ls_MR_paths = self.exclude_MR_types(paths_2classify)
-#        print("ls_MR_paths: ", ls_MR_paths)
-        ls_sessions, d_paths = self.get_ls_sessions(ls_MR_paths)
-#        print(ls_sessions)
-        d_sessions = self.classify_by_sessions(ls_sessions)
-#        print(d_sessions)
-        dict_sessions_paths = self.make_dict_sessions_with_paths(d_paths, d_sessions)
-#        print(dict_sessions_paths)
-        d_ses_MR_types = self.classify_by_MR_types(dict_sessions_paths)
-#        print(d_ses_MR_types)
-
-        return self.make_BIDS_structure(d_ses_MR_types)
-
-
-    def _get_MR_paths(self, dir_abspath):
-        self.bids_id = self._dir
-        if os.path.isdir(dir_abspath):
-            return self.get_paths2dcm_files(dir_abspath)
-        if is_archive(dir_abspath):
-            print('    tmp: this is an archived file')
-            self.archived = True
-        if self.archived:
-            archiver = ZipArchiveManagement(dir_abspath)
-            if archiver.chk_if_zipfile():
-                content = archiver.zip_file_content()
-                return self.get_paths2dcm_files_from_ls(content)
-        else:
-            log.info('{} not a dir and not an archive'.format(str(dir_abspath)))
-            return []
-
-
-    def get_dict_4classification(self, dir_abspath):
-        main = dict()
-        self.f_nimb_classified = os.path.join(self.MAIN_DIR,
-                                            DEFAULT.f_nimb_classified)
-
-        # remove nimb_classified file from list of files in MAIN_DIR
-        if self.f_nimb_classified in self.dir_2classify:
-            self.dir_2classify.remove(self.f_nimb_classified)
-
-        # update the existing file ?
-        if os.path.exists(self.f_nimb_classified):
+        if os.path.exists(self.file_nimb_classified):
             if self.update:
                 print('updating file with ids')
-                main = load_json(self.f_nimb_classified)
-            os.remove(self.f_nimb_classified)
-        return main
+                self.d_subjects = load_json(self.file_nimb_classified)
+            os.remove(self.file_nimb_classified)
+        if self.file_nimb_classified in ls_subj_2_classify:
+            ls_subj_2_classify.remove(self.file_nimb_classified)
 
+        for self.subject in ls_subj_2_classify:
+#            print(self.subject)
+            self.d_subjects[self.subject] = {}
+            path_2mris = self._get_MR_paths(os.path.join(self.DIR_SUBJECTS, self.subject))
 
-    def get_dirs2classify(self):
-        if self.ls_dirs:
-            return self.ls_dirs
+            if path_2mris:
+                ls_MR_paths = self.exclude_MR_types(path_2mris)
+#                print("ls_MR_paths: ", ls_MR_paths)
+                ls_sessions, d_paths = self.get_ls_sessions(ls_MR_paths)
+#                print(ls_sessions)
+                d_sessions = self.classify_by_sessions(ls_sessions)
+#                print(d_sessions)
+                dict_sessions_paths = self.make_dict_sessions_with_paths(d_paths, d_sessions)
+#                print(dict_sessions_paths)
+                d_ses_MR_types = self.classify_by_MR_types(dict_sessions_paths)
+#                print(d_ses_MR_types)
+                d_BIDS_structure = self.make_BIDS_structure(d_ses_MR_types)
+#                print(d_BIDS_structure)
+                self.d_subjects[self.subject] = d_BIDS_structure
+                log.info("    saving classification file")
+                save_json(self.d_subjects, self.file_nimb_classified)
+        log.info(f"classification of new subjects is complete, file located at: {self.file_nimb_classified}")
+        if self.multiple_T1_entries == 1:
+            from classification.get_mr_params import verify_MRIs_for_similarity
+            self.d_subjects = verify_MRIs_for_similarity(self.d_subjects, self.NIMB_tmp, self.flair_t2_add)
         else:
-            return os.listdir(self.MAIN_DIR)
+            self.d_subjects = self.keep_only1_T1(self.d_subjects)
+
+        self.chk_spaces()
+        if os.path.exists(self.file_nimb_classified):
+            return True
+        else:
+            return False
+
+
+    def chk_spaces(self):
+        if self.spaces_in_paths:
+            f_paths_spaces = os.path.join(self.NIMB_tmp,'paths_with_spaces.json')
+            save_json(self.spaces_in_paths, f_paths_spaces)
+            len_spaces = len(self.spaces_in_paths)
+            log.info(f'    ATTENTION: ERR: paths of {len_spaces} subjects have spaces \
+                and will not be processed by FreeSurfer')
+            log.info(f'    ATTENTION: paths with spaces can be found here: {f_paths_spaces}')
+            log.info('    ATTENTION: nimb can change spaces to underscores when adding the parameter: -fix-spaces; \
+                example: python nimb.py -process classify -project Project -fix-spaces')
+
+
+    def _get_MR_paths(self, path2subj):
+        path_2mris = []
+        if is_archive(path2subj):
+            print('    tmp: this is an archived file')
+            archiver = ZipArchiveManagement(file)
+            if archiver.chk_if_zipfile():
+                content = archiver.zip_file_content()
+                path_2mris = self.get_paths2dcm_files_from_ls(content)
+#        if '.zip' in path2subj:
+#            print('    tmp: this is an archived file')
+#            content = self.chk_if_ziparchive(path2subj)
+#            path_2mris = self.get_paths2dcm_files_from_ls(content)
+        elif os.path.isdir(path2subj):
+            path_2mris = self.get_paths2dcm_files(path2subj)
+        else:
+            log.info('{} not a dir and not a .zip file'.format(str(path2subj)))
+        return path_2mris
+
+
+#    def chk_if_ziparchive(self, file):
+#        archiver = ZipArchiveManagement(file)
+#        if archiver.chk_if_zipfile():
+#            return archiver.zip_file_content()
+#        else:
+#            return []
 
 
     def get_paths2dcm_files_from_ls(self, ls_content):
@@ -200,7 +175,7 @@ class MakeBIDS_subj2process():
         ls_iter = ls.copy()
         for mr_path in ls_iter:
             for ex_type in mr_types_2exclude:
-                if ex_type.lower() in mr_path.replace(self.MAIN_DIR,"").lower():
+                if ex_type.lower() in mr_path.replace(self.DIR_SUBJECTS,"").lower():
                     ls.remove(mr_path)
                     break
         return ls
@@ -282,7 +257,7 @@ class MakeBIDS_subj2process():
         mr_found = False
         for mr_type in mr_modalities:
             for mr_name in mr_modalities[mr_type]:
-                if mr_name.lower() in path_subj_to_files.lower() and mr_name.lower() not in self._dir.lower():
+                if mr_name.lower() in path_subj_to_files.lower() and mr_name.lower() not in self.subject.lower():
                     mr_found = True
                     res = mr_type
                     break
@@ -299,7 +274,7 @@ class MakeBIDS_subj2process():
         for ses in dict_sessions_paths:
             d_ses_MR_types[ses] = {}
             for mr_path in dict_sessions_paths[ses]:
-                mr_type = self.get_MR_types(mr_path.replace(self.MAIN_DIR,""))
+                mr_type = self.get_MR_types(mr_path.replace(self.DIR_SUBJECTS,""))
                 if mr_type != 'none':
                     if mr_type not in d_ses_MR_types[ses]:
                         d_ses_MR_types[ses][mr_type] = list()
@@ -391,24 +366,13 @@ class MakeBIDS_subj2process():
         return new_path
 
 
-    def keep_only1_T1(self):
-        for subject in self.main:
-            for session in self.main[subject]:
-                if 'anat' in self.main[subject][session] and 't1' in self.main[subject][session]['anat']:
-                    self.main[subject][session]['anat']['t1'] = self.main[subject][session]['anat']['t1'][:1]
-                    if 'flair' in self.main[subject][session]['anat']:
-                        self.main[subject][session]['anat'].pop('flair', None)
-                    if 't2' in self.main[subject][session]['anat']:
-                        self.main[subject][session]['anat'].pop('t2', None)
-
-
-    def chk_spaces(self):
-        if self.spaces_in_paths:
-            f_paths_spaces = os.path.join(self.NIMB_tmp,'paths_with_spaces.json')
-            save_json(self.spaces_in_paths, f_paths_spaces)
-            len_spaces = len(self.spaces_in_paths)
-            log.info(f'    ATTENTION: ERR: paths of {len_spaces} subjects have spaces \
-                and will not be processed by FreeSurfer')
-            log.info(f'    ATTENTION: paths with spaces can be found here: {f_paths_spaces}')
-            log.info('    ATTENTION: nimb can change spaces to underscores when adding the parameter: -fix-spaces; \
-                example: python nimb.py -process classify -project Project -fix-spaces')
+    def keep_only1_T1(self, d_subjects):
+        for subject in d_subjects:
+            for session in d_subjects[subject]:
+                if 'anat' in d_subjects[subject][session] and 't1' in d_subjects[subject][session]['anat']:
+                    d_subjects[subject][session]['anat']['t1'] = d_subjects[subject][session]['anat']['t1'][:1]
+                    if 'flair' in d_subjects[subject][session]['anat']:
+                        d_subjects[subject][session]['anat'].pop('flair', None)
+                    if 't2' in d_subjects[subject][session]['anat']:
+                        d_subjects[subject][session]['anat'].pop('t2', None)
+        return d_subjects
