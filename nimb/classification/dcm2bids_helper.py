@@ -2,6 +2,7 @@
 """
 authors:
 Alexandru Hanganu
+Kim Phuong Pham
 """
 
 """
@@ -40,22 +41,23 @@ class DCM2BIDS_helper():
     """
 
     def __init__(self,
-		        proj_vars,
+		proj_vars,
                 project,
-                nimb_classified = dict(),
+                nimb_classified_per_id = dict(),
                 DICOM_DIR    = 'default',
                 repeat_lim = 10):
 
         self.proj_vars       = proj_vars
         self.project         = project    #project item in projects.json
-        self.run_stt         = 1
+        self.id_classified   = nimb_classified_per_id
+        self.run_stt         = 0
         self.repeat_lim      = repeat_lim
         self.repeat_updating = 0
         self.DICOM_DIR       = DICOM_DIR
         if DICOM_DIR == 'default':
             self.DICOM_DIR   = self.get_SUBJ_DIR()
         self.OUTPUT_DIR      = self.chk_dir(self.proj_vars['SOURCE_BIDS_DIR'][1])
-
+        self.archived        = False
 
     def run(self, bids_id = 'none', ses = 'none'):
         #run dcm2bids:
@@ -64,7 +66,16 @@ class DCM2BIDS_helper():
                 extract from archive specific subject_session
                 start dcm2bids for subject_session
         '''
-        print(f'classifying for id: {bids_id} for session: {ses}')
+        print(f'    classifying for id: {bids_id} for session: {ses}')
+        print(f'        nimb_classified data are: {self.id_classified}')
+        if self.id_classified['archived']:
+            self.archived = True
+        for mr_type in self.id_classified[ses]:
+            print(f'        working with mr type: {mr_type}')
+            ls_mr_data = self.id_classified[ses][mr_type]
+            path2mr = self.get_path_2mr(ls_mr_data)
+
+
 
         if self.run_stt == 1:
             self.config_file = self.get_config_file()
@@ -103,6 +114,13 @@ class DCM2BIDS_helper():
             # else:
             #     return
 
+
+    def get_path_2mr(self, ls_mr_data):
+        if self.archived:
+            path_2archive = self.id_classified['archived']
+            print(f'        archive located at: {path_2archive}')
+        else:
+            return ls_mr_data
 
 
     def get_sub(self):

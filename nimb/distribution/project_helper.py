@@ -174,7 +174,7 @@ class ProjectManager:
                         print(f'    started dcm2bids classification for id: {bids_id} session: {ses}')
                         DCM2BIDS_helper(self.project_vars,
                                         self.project,
-                                        nimb_classified = nimb_classified[bids_id][ses],
+                                        nimb_classified_per_id = nimb_classified[bids_id],
                                         DICOM_DIR = self.DICOM_DIR).run(bids_id, ses)
 
 
