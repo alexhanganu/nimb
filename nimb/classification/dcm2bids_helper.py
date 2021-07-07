@@ -28,7 +28,7 @@ except:
     print("no colorlog")
 
 from classification.classify_definitions import BIDS_types, mr_modalities
-
+from distribution.manage_archive import is_archive, ZipArchiveManagement
 
 class DCM2BIDS_helper():
     """
@@ -45,6 +45,7 @@ class DCM2BIDS_helper():
                 project,
                 nimb_classified_per_id = dict(),
                 DICOM_DIR    = 'default',
+                tmp_dir      = 'none',
                 repeat_lim = 10):
 
         self.proj_vars       = proj_vars
@@ -56,6 +57,7 @@ class DCM2BIDS_helper():
         self.DICOM_DIR       = DICOM_DIR
         if DICOM_DIR == 'default':
             self.DICOM_DIR   = self.get_SUBJ_DIR()
+        self.tmp_dir         = tmp_dir
         self.OUTPUT_DIR      = self.chk_dir(self.proj_vars['SOURCE_BIDS_DIR'][1])
         self.archived        = False
 
@@ -119,8 +121,47 @@ class DCM2BIDS_helper():
         if self.archived:
             path_2archive = self.id_classified['archived']
             print(f'        archive located at: {path_2archive}')
+            if is_archive(path_2archive):
+                print('is archive')
         else:
             return ls_mr_data
+
+
+    def extract_from_archive(self, src_dir, _dir):
+        if self.tmp_dir == 'none':
+            self.tmp_dir = src_dir
+#        tmp_err_dir  = os.path.join(self.NIMB_tmp, 'tmp_err_classification')
+#        makedir_ifnot_exist(tmp_err_dir)
+        dir_2extract = self.dir_new_subjects
+        tmp_dir_2extract = ''
+        if self.project in DEFAULT.project_ids:
+            tmp_dir_2extract = os.path.join(self.NIMB_tmp, 'tmp_dir_2extract')
+            makedir_ifnot_exist(tmp_dir_2extract)
+            dir_2extract = tmp_dir_2extract
+        ZipArchiveManagement(
+            os.path.join(src_dir, _dir),
+            path2xtrct = dir_2extract,
+            path_err   = tmp_err_dir)
+        if tmp_dir_2extract:
+            project_dir = os.path.join(tmp_dir_2extract,
+                                        DEFAULT.project_ids[self.project]["dir_from_source"])
+            if os.path.exists(project_dir):
+                print(f'    this is default project;\
+                    the corresponding default folder was created in: {project_dir}')
+                ls_content = self.get_content(project_dir)
+                for _dir in ls_content:
+                    nr_left_2cp = len(ls_content[ls_content.index(_dir):])
+                    print(f'    number of folders left to copy: {nr_left_2cp}')
+                    src = os.path.join(project_dir, _dir)
+                    dst = os.path.join(self.dir_new_subjects, _dir)
+                    print(f'    copying folder: {src} to {dst}')
+                    shutil.copytree(src, dst)
+            else:
+                print(f'    the expected folder: {project_dir} is missing')
+            print(f'    removing temporary folder: {tmp_dir_2extract}')
+            shutil.rmtree(tmp_dir_2extract, ignore_errors=True)
+        if len(self.get_content(tmp_err_dir)) == 0:
+            shutil.rmtree(tmp_err_dir, ignore_errors=True)
 
 
     def get_sub(self):
