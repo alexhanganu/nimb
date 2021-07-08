@@ -123,13 +123,16 @@ class DCM2BIDS_helper():
             print(f'        archive located at: {path_2archive}')
             if is_archive(path_2archive):
                 print('is archive')
+                return self.extract_from_archive(path_2archive)
+            else:
+                return ''
         else:
             return ls_mr_data
 
 
-    def extract_from_archive(self, src_dir, _dir):
+    def extract_from_archive(self, archive_abspath):
         if self.tmp_dir == 'none':
-            self.tmp_dir = src_dir
+            self.tmp_dir = os.path.dirname(archive_abspath)
 #        tmp_err_dir  = os.path.join(self.NIMB_tmp, 'tmp_err_classification')
 #        makedir_ifnot_exist(tmp_err_dir)
         dir_2extract = self.dir_new_subjects
@@ -162,6 +165,7 @@ class DCM2BIDS_helper():
             shutil.rmtree(tmp_dir_2extract, ignore_errors=True)
         if len(self.get_content(tmp_err_dir)) == 0:
             shutil.rmtree(tmp_err_dir, ignore_errors=True)
+        return self.tmp_dir
 
 
     def get_sub(self):
