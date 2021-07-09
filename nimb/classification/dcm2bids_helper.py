@@ -72,11 +72,15 @@ class DCM2BIDS_helper():
         print(f'        nimb_classified data are: {self.id_classified}')
         if self.id_classified['archived']:
             self.archived = True
-        for mr_type in self.id_classified[ses]:
-            print(f'        working with mr type: {mr_type}')
-            ls_mr_data = self.id_classified[ses][mr_type]
-            path2mr = self.get_path_2mr(ls_mr_data)
-
+        for BIDS_type in BIDS_types:
+            if BIDS_type in self.id_classified[ses]:
+                for mr_modality in BIDS_types[BIDS_type]:
+                    if mr_modality in self.id_classified[ses][BIDS_type]:
+                       paths_2mr_data = self.id_classified[ses][BIDS_type][mr_modality]
+                       for path2mr_ in paths_2mr_data:
+                            print(f'        convertin mr type: {BIDS_type}')
+                            path2mr = self.get_path_2mr(path2mr_)
+        print(f'    dcm files located in: {path2mr}')
 
 
         if self.run_stt == 1:
@@ -117,55 +121,36 @@ class DCM2BIDS_helper():
             #     return
 
 
-    def get_path_2mr(self, ls_mr_data):
+    def get_path_2mr(self, path2mr_):
         if self.archived:
             path_2archive = self.id_classified['archived']
             print(f'        archive located at: {path_2archive}')
             if is_archive(path_2archive):
                 print('is archive')
-                return self.extract_from_archive(path_2archive)
+                return self.extract_from_archive(path_2archive,
+                                                 path2mr_)
             else:
                 return ''
         else:
             return ls_mr_data
 
 
-    def extract_from_archive(self, archive_abspath):
+    def extract_from_archive(self, archive_abspath, path2mr_):
         if self.tmp_dir == 'none':
             self.tmp_dir = os.path.dirname(archive_abspath)
-#        tmp_err_dir  = os.path.join(self.NIMB_tmp, 'tmp_err_classification')
-#        makedir_ifnot_exist(tmp_err_dir)
-        dir_2extract = self.dir_new_subjects
-        tmp_dir_2extract = ''
-        if self.project in DEFAULT.project_ids:
-            tmp_dir_2extract = os.path.join(self.NIMB_tmp, 'tmp_dir_2extract')
-            makedir_ifnot_exist(tmp_dir_2extract)
-            dir_2extract = tmp_dir_2extract
-        ZipArchiveManagement(
-            os.path.join(src_dir, _dir),
-            path2xtrct = dir_2extract,
-            path_err   = tmp_err_dir)
-        if tmp_dir_2extract:
-            project_dir = os.path.join(tmp_dir_2extract,
-                                        DEFAULT.project_ids[self.project]["dir_from_source"])
-            if os.path.exists(project_dir):
-                print(f'    this is default project;\
-                    the corresponding default folder was created in: {project_dir}')
-                ls_content = self.get_content(project_dir)
-                for _dir in ls_content:
-                    nr_left_2cp = len(ls_content[ls_content.index(_dir):])
-                    print(f'    number of folders left to copy: {nr_left_2cp}')
-                    src = os.path.join(project_dir, _dir)
-                    dst = os.path.join(self.dir_new_subjects, _dir)
-                    print(f'    copying folder: {src} to {dst}')
-                    shutil.copytree(src, dst)
-            else:
-                print(f'    the expected folder: {project_dir} is missing')
-            print(f'    removing temporary folder: {tmp_dir_2extract}')
-            shutil.rmtree(tmp_dir_2extract, ignore_errors=True)
-        if len(self.get_content(tmp_err_dir)) == 0:
-            shutil.rmtree(tmp_err_dir, ignore_errors=True)
-        return self.tmp_dir
+        tmp_dir_xtract = os.path.join(self.tmp_dir, 'tmp_for_classification')
+        tmp_dir_err    = os.path.join(self.tmp_dir, 'tmp_for_classification_err')
+        print(f'    extracting data: {path2mr_}')
+#        makedir_ifnot_exist(tmp_dir_xtract)
+#        makedir_ifnot_exist(tmp_dir_err)
+#        ZipArchiveManagement(
+#            os.path.join(archive_abspath, ),
+#            path2xtrct = tmp_dir_xtract,
+#            path_err   = tmp_dir_err
+#            dirs2xtrct = [])
+#        if len(self.get_content(tmp_dir_err)) == 0:
+#            shutil.rmtree(tmp_dir_err, ignore_errors=True)
+        return tmp_dir_xtract
 
 
     def get_sub(self):

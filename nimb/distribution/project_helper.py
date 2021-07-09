@@ -167,7 +167,8 @@ class ProjectManager:
 
         if nimb_classified:
             for bids_id in nimb_classified:
-                for ses in nimb_classified[bids_id]:
+                ls_sessions = [i for i in nimb_classified[bids_id] if i not in ('archived',)]
+                for ses in ls_sessions:
                     bids_convert = self.id_is_bids_converted(bids_id, ses)
                     print(f'    must convert to BIDS: {bids_convert}')
                     if bids_convert:
@@ -175,7 +176,8 @@ class ProjectManager:
                         DCM2BIDS_helper(self.project_vars,
                                         self.project,
                                         nimb_classified_per_id = nimb_classified[bids_id],
-                                        DICOM_DIR = self.DICOM_DIR).run(bids_id, ses)
+                                        DICOM_DIR = self.DICOM_DIR,
+                                        tmp_dir = self.NIMB_tmp).run(bids_id, ses)
 
 
     def get_dir_with_raw_MR_data(self, src_dir, _dir):
