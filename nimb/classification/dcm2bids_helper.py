@@ -10,7 +10,7 @@ Kim Phuong Pham
 3) tries to create the config files and update the configurations
 """
 import os
-from os import path, system, makedirs, listdir
+#from os import path#, system#, makedirs#, listdir
 import shutil
 import json
 import time
@@ -29,6 +29,7 @@ except:
 
 from classification.classify_definitions import BIDS_types, mr_modalities
 from distribution.manage_archive import is_archive, ZipArchiveManagement
+from distribution.utilities import makedir_ifnot_exist
 
 class DCM2BIDS_helper():
     """
@@ -104,15 +105,15 @@ class DCM2BIDS_helper():
                     # print(self.DICOM_DIR, subj_name,self.OUTPUT_DIR)
                     # --clobber: Overwrite output if it exists
                     # ----forceDcm2niix: Overwrite previous temporary dcm2niix output if it exists
-                    sub_dir = path.join(self.DICOM_DIR, self.SUBJ_NAME)
-                    return_value = system('dcm2bids -d {} -p {} -c {} -o {}'.format(sub_dir, self.SUBJ_NAME, self.config_file, self.OUTPUT_DIR))
+                    sub_dir = os.path.join(self.DICOM_DIR, self.SUBJ_NAME)
+                    return_value = os.system('dcm2bids -d {} -p {} -c {} -o {}'.format(sub_dir, self.SUBJ_NAME, self.config_file, self.OUTPUT_DIR))
                     # the tempo subj dir contains remaining unconvert files
                     # Calculate the return value code
                     return_value = int(bin(return_value).replace("0b", "").rjust(16, '0')[:8], 2)
                     if return_value != 0:# failed
-                        system('dcm2bids -d {} -p {} -c {} -o {}'.format(sub_dir, self.SUBJ_NAME, self.config_file,
+                        os.system('dcm2bids -d {} -p {} -c {} -o {}'.format(sub_dir, self.SUBJ_NAME, self.config_file,
                                                                          self.OUTPUT_DIR))
-                    self.sub_SUBJDIR = path.join(self.OUTPUT_DIR, 'tmp_dcm2bids', 'sub-{}'.format(self.SUBJ_NAME))
+                    self.sub_SUBJDIR = os.path.join(self.OUTPUT_DIR, 'tmp_dcm2bids', 'sub-{}'.format(self.SUBJ_NAME))
                     print("kptest_sub_dir:", self.sub_SUBJDIR)
                     self.chk_if_processed()
                     print("/"*40)
@@ -141,22 +142,22 @@ class DCM2BIDS_helper():
         tmp_dir_xtract = os.path.join(self.tmp_dir, 'tmp_for_classification')
         tmp_dir_err    = os.path.join(self.tmp_dir, 'tmp_for_classification_err')
         print(f'    extracting data: {path2mr_}')
-#        makedir_ifnot_exist(tmp_dir_xtract)
-#        makedir_ifnot_exist(tmp_dir_err)
-#        ZipArchiveManagement(
-#            os.path.join(archive_abspath, ),
-#            path2xtrct = tmp_dir_xtract,
-#            path_err   = tmp_dir_err
-#            dirs2xtrct = [])
-#        if len(self.get_content(tmp_dir_err)) == 0:
-#            shutil.rmtree(tmp_dir_err, ignore_errors=True)
+        makedir_ifnot_exist(tmp_dir_xtract)
+        makedir_ifnot_exist(tmp_dir_err)
+        ZipArchiveManagement(
+            archive_abspath,
+            path2xtrct = tmp_dir_xtract,
+            path_err   = tmp_dir_err,
+            dirs2xtrct = [path2mr_])
+        if len(os.listdir(tmp_dir_err)) == 0:
+            shutil.rmtree(tmp_dir_err, ignore_errors=True)
         return tmp_dir_xtract
 
 
     def get_sub(self):
         """Get list of all file names in the input dir """
         try:
-            list_files = listdir(self.DICOM_DIR)
+            list_files = os.listdir(self.DICOM_DIR)
             return list_files
         except Exception as e:
             print(e)
@@ -167,12 +168,12 @@ class DCM2BIDS_helper():
         """Get the dcm2bids_config_{project_name}.json.
            If not exist, get dcm2bids_config_default.json
         """
-        config_file = path.join(self.OUTPUT_DIR,
+        config_file = os.path.join(self.OUTPUT_DIR,
                              'dcm2bids_config_{}.json'.format(self.project))
-        if path.exists(config_file):
+        if os.path.exists(config_file):
             return config_file
         else:
-            shutil.copy(path.join(path.dirname(path.abspath(__file__)), 'dcm2bids','dcm2bids_config_default.json'),
+            shutil.copy(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dcm2bids','dcm2bids_config_default.json'),
                         config_file)
             return config_file
 
@@ -185,7 +186,7 @@ class DCM2BIDS_helper():
         # self.chk_dir(self.sub_SUBJDIR)
         # Read all .nii in subjdir and move to appropriate folder
         print("*********Convert remaining folder",self.sub_SUBJDIR)
-        if [i for i in listdir(self.sub_SUBJDIR) if '.nii.gz' in i]:
+        if [i for i in os.listdir(self.sub_SUBJDIR) if '.nii.gz' in i]:
             print("remaining nii in ", self.sub_SUBJDIR)
             if self.repeat_updating < self.repeat_lim:
                 self.get_sidecar()
@@ -202,14 +203,14 @@ class DCM2BIDS_helper():
     def get_sidecar(self): # not correct - need to modify
         """...."""
         print("get_sidecar") # list of sidecar
-        list_sidecar = [i for i in listdir(self.sub_SUBJDIR) if '.json' in i]
+        list_sidecar = [i for i in os.listdir(self.sub_SUBJDIR) if '.json' in i]
         sidecar = list_sidecar[0]
         print("sidecar:", list_sidecar)
         print(">>>>"*20)
         # for sidecar in list_sidecar:
-        print(path.join(self.sub_SUBJDIR, sidecar))
+        print(os.path.join(self.sub_SUBJDIR, sidecar))
         print(">>>>" * 20)
-        self.sidecar_content = self.get_json_content(path.join(self.sub_SUBJDIR, sidecar))
+        self.sidecar_content = self.get_json_content(os.path.join(self.sub_SUBJDIR, sidecar))
         # data_Type, modality, criterion = self.classify_mri()
         list_critera = self.classify_mri()
         print(list_critera)
@@ -297,11 +298,11 @@ class DCM2BIDS_helper():
 
     def run_helper(self):
         """...."""
-        helper_dir = path.join(self.OUTPUT_DIR, 'tmp_dcm2bids', 'helper')
-        system('dcm2bids_helper -d {} -o {}'.format(self.DICOM_DIR, self.OUTPUT_DIR))
+        helper_dir = os.path.join(self.OUTPUT_DIR, 'tmp_dcm2bids', 'helper')
+        os.system('dcm2bids_helper -d {} -o {}'.format(self.DICOM_DIR, self.OUTPUT_DIR))
         # read the .json file and add parameters in the config file
-        self.sidecar_content = open(path.join(helper_dir,
-                      [i for i in listdir(path.join()) if '.json' in i][0]), 'r').readlines()
+        self.sidecar_content = open(os.path.join(helper_dir,
+                      [i for i in os.listdir(os.path.join()) if '.json' in i][0]), 'r').readlines()
         return self.sidecar_content
 
 
@@ -341,7 +342,7 @@ class DCM2BIDS_helper():
     def get_SUBJ_DIR(self):
         """Get the path of DICOM_DIR"""
         DICOM_DIR = self.proj_vars['SOURCE_SUBJECTS_DIR'][1]
-        if path.exists(DICOM_DIR):
+        if os.path.exists(DICOM_DIR):
             return DICOM_DIR
         else:
             print('    path is invalid: {}'.format(DICOM_DIR))
@@ -349,13 +350,13 @@ class DCM2BIDS_helper():
 
 
     def rm_dir(self, DIR):
-        system('rm -r {}'.format(DIR))
+        os.system('rm -r {}'.format(DIR))
 
 
     def chk_dir(self, location):
         """Check if a directory exists. If not, create a directory"""
         print(location)
-        if not path.exists(location):
-            makedirs(location)
+        if not os.path.exists(location):
+            os.makedirs(location)
         return location
 
