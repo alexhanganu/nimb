@@ -166,7 +166,10 @@ class ProjectManager:
                 print('    nimb_classified file cannot be found at: {src_dir}')
 
         if nimb_classified:
-            for bids_id in nimb_classified:
+            ls_bids_ids = [i for i in nimb_classified]
+            if test:
+                ls_bids_ids = [i for i in nimb_classified][:nr_participants_for_testing]
+            for bids_id in ls_bids_ids:
                 ls_sessions = [i for i in nimb_classified[bids_id] if i not in ('archived',)]
                 for ses in ls_sessions:
                     bids_convert = self.id_is_bids_converted(bids_id, ses)

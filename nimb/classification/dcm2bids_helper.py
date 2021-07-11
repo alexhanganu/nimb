@@ -69,8 +69,8 @@ class DCM2BIDS_helper():
                 extract from archive specific subject_session
                 start dcm2bids for subject_session
         '''
-        print(f'    classifying for id: {bids_id} for session: {ses}')
-        print(f'        nimb_classified data are: {self.id_classified}')
+        print(f'        classifying for id: {bids_id} for session: {ses}')
+#        print(f'        nimb_classified data are: {self.id_classified}')
         if self.id_classified['archived']:
             self.archived = True
         for BIDS_type in BIDS_types:
@@ -79,9 +79,9 @@ class DCM2BIDS_helper():
                     if mr_modality in self.id_classified[ses][BIDS_type]:
                        paths_2mr_data = self.id_classified[ses][BIDS_type][mr_modality]
                        for path2mr_ in paths_2mr_data:
-                            print(f'        convertin mr type: {BIDS_type}')
+                            print(f'        converting mr type: {BIDS_type}')
                             path2mr = self.get_path_2mr(path2mr_)
-        print(f'    dcm files located in: {path2mr}')
+        print(f'            dcm files located in: {path2mr}')
 
 
         if self.run_stt == 1:
@@ -127,7 +127,7 @@ class DCM2BIDS_helper():
             path_2archive = self.id_classified['archived']
             print(f'        archive located at: {path_2archive}')
             if is_archive(path_2archive):
-                print('is archive')
+                print('        is archive')
                 return self.extract_from_archive(path_2archive,
                                                  path2mr_)
             else:
@@ -141,14 +141,14 @@ class DCM2BIDS_helper():
             self.tmp_dir = os.path.dirname(archive_abspath)
         tmp_dir_xtract = os.path.join(self.tmp_dir, 'tmp_for_classification')
         tmp_dir_err    = os.path.join(self.tmp_dir, 'tmp_for_classification_err')
-        print(f'    extracting data: {path2mr_}')
+#        print(f'            extracting data: {path2mr_}')
         makedir_ifnot_exist(tmp_dir_xtract)
         makedir_ifnot_exist(tmp_dir_err)
         ZipArchiveManagement(
             archive_abspath,
             path2xtrct = tmp_dir_xtract,
             path_err   = tmp_dir_err,
-            dirs2xtrct = [path2mr_])
+            dirs2xtrct = [path2mr_,])
         if len(os.listdir(tmp_dir_err)) == 0:
             shutil.rmtree(tmp_dir_err, ignore_errors=True)
         return tmp_dir_xtract
