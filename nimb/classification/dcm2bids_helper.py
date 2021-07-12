@@ -71,6 +71,8 @@ class DCM2BIDS_helper():
         '''
         print(f'        classifying for id: {bids_id} for session: {ses}')
 #        print(f'        nimb_classified data are: {self.id_classified}')
+        self.bids_id = bids_id
+        self.ses     = ses
         if self.id_classified['archived']:
             self.archived = True
         for BIDS_type in BIDS_types:
@@ -80,46 +82,41 @@ class DCM2BIDS_helper():
                        paths_2mr_data = self.id_classified[ses][BIDS_type][mr_modality]
                        for path2mr_ in paths_2mr_data:
                             print(f'        converting mr type: {BIDS_type}')
-                            path2mr = self.get_path_2mr(path2mr_)
-        print(f'            dcm files located in: {path2mr}')
+                            abs_path2mr = self.get_path_2mr(path2mr_)
+                            self.run_dcm2bids(abs_path2mr)
+#        print(f'            dcm files located in: {path2mr}')
 
-
+    def run_dcm2bids(self, abs_path2mr):
         if self.run_stt == 1:
             self.config_file = self.get_config_file()
-            print("config_file", self.config_file)
-            logger.fatal("configggg")
-            list_subj = self.get_sub()
-            print("kp_list_subj:", list_subj)
-            if list_subj != None:
-                 # for subj_name in list_subj[0]:
-            # subj_name =  "Vasculaire_CAS235_MM4"
-            # self.SUBJ_NAME = self.get_sub()[0]
-            #         self.SUBJ_NAME = subj_name
-                    self.SUBJ_NAME = 'PPMI_3301'
-                    print("*"*50)
-                    print("kptest_subjectdir:", self.SUBJ_NAME)
-                    print("*" * 50)
-                    # with each subject create temporary directory for Dcm2niix
-                    # self.chk_dir(self.sub_SUBJDIR)
-                    # Run the dcm2bids aself.SUBJ_NAMEpp
-                    # print(self.DICOM_DIR, subj_name,self.OUTPUT_DIR)
-                    # --clobber: Overwrite output if it exists
-                    # ----forceDcm2niix: Overwrite previous temporary dcm2niix output if it exists
-                    sub_dir = os.path.join(self.DICOM_DIR, self.SUBJ_NAME)
-                    return_value = os.system('dcm2bids -d {} -p {} -c {} -o {}'.format(sub_dir, self.SUBJ_NAME, self.config_file, self.OUTPUT_DIR))
-                    # the tempo subj dir contains remaining unconvert files
-                    # Calculate the return value code
-                    return_value = int(bin(return_value).replace("0b", "").rjust(16, '0')[:8], 2)
-                    if return_value != 0:# failed
-                        os.system('dcm2bids -d {} -p {} -c {} -o {}'.format(sub_dir, self.SUBJ_NAME, self.config_file,
-                                                                         self.OUTPUT_DIR))
-                    self.sub_SUBJDIR = os.path.join(self.OUTPUT_DIR, 'tmp_dcm2bids', 'sub-{}'.format(self.SUBJ_NAME))
-                    print("kptest_sub_dir:", self.sub_SUBJDIR)
-                    self.chk_if_processed()
-                    print("/"*40)
-
-            # else:
-            #     return
+            print("*"*50)
+            print("        config_file is: ", self.config_file)
+#            self.SUBJ_NAME = self.bids_id
+            print("        bids id:", self.bids_id)
+            print("*" * 50)
+            # with each subject create temporary directory for Dcm2niix
+            # self.chk_dir(self.sub_SUBJDIR)
+            # Run the dcm2bids aself.SUBJ_NAMEpp
+            # print(self.DICOM_DIR, subj_name,self.OUTPUT_DIR)
+            # --clobber: Overwrite output if it exists
+            # ----forceDcm2niix: Overwrite previous temporary dcm2niix output if it exists
+#            sub_dir = os.path.join(self.DICOM_DIR, self.bids_id)
+            return_value = os.system('dcm2bids -d {} -p {} -s {} -c {} -o {}'.format(
+                                                                                    abs_path2mr,
+                                                                                    self.bids_id,
+                                                                                    self.ses,
+                                                                                    self.config_file,
+                                                                                    self.OUTPUT_DIR))
+            # the tempo subj dir contains remaining unconvert files
+            # Calculate the return value code
+            return_value = int(bin(return_value).replace("0b", "").rjust(16, '0')[:8], 2)
+            if return_value != 0:# failed
+                os.system('dcm2bids -d {} -p {} -c {} -o {}'.format(abs_path2mr, self.bids_id, self.config_file,
+                                                                 self.OUTPUT_DIR))
+            self.sub_SUBJDIR = os.path.join(self.OUTPUT_DIR, 'tmp_dcm2bids', 'sub-{}'.format(self.bids_id))
+            print("kptest_sub_dir:", self.sub_SUBJDIR)
+#            self.chk_if_processed()
+            print("/"*40)
 
 
     def get_path_2mr(self, path2mr_):
@@ -152,16 +149,6 @@ class DCM2BIDS_helper():
         if len(os.listdir(tmp_dir_err)) == 0:
             shutil.rmtree(tmp_dir_err, ignore_errors=True)
         return tmp_dir_xtract
-
-
-    def get_sub(self):
-        """Get list of all file names in the input dir """
-        try:
-            list_files = os.listdir(self.DICOM_DIR)
-            return list_files
-        except Exception as e:
-            print(e)
-            return
 
 
     def get_config_file(self):

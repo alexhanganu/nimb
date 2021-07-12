@@ -52,14 +52,16 @@ class NIMB(object):
                 ErrorMessages.error_classify()
                 sys.exit()
             else:
-                SUBJ_2Classify = DistributionHelper(self.all_vars).get_subj_2classify()
-                if SUBJ_2Classify:
+                dir_with_subj_2classify = DistributionHelper(self.all_vars).get_subj_2classify()
+                if dir_with_subj_2classify:
                     from classification.classify_2nimb_bids import MakeBIDS_subj2process
-                    return MakeBIDS_subj2process(SUBJ_2Classify,
+                    return MakeBIDS_subj2process(self.project,
+                                         dir_with_subj_2classify,
                                          self.NIMB_tmp,
-                                         self.fix_spaces,
-                                         self.vars_local['FREESURFER']['multiple_T1_entries'],
-                                         self.vars_local['FREESURFER']['flair_t2_add']).run()
+                                         fix_spaces = self.fix_spaces,
+                                         update = True,
+                                         multiple_T1_entries = self.vars_local['FREESURFER']['multiple_T1_entries'],
+                                         flair_t2_add = self.vars_local['FREESURFER']['flair_t2_add']).run()
 
 
         if self.process == 'run-stats':

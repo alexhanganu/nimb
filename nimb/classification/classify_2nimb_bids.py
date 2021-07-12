@@ -5,7 +5,8 @@
 3) extract paths for the anat/func/dwi MRIs
 4) classify according to BIDS classification
 5) create the BIDS-based nimb_classified.json file
-6) nimb_classified.json is used by NIMB for processing
+6) nimb_classified.json is used by NIMB for dcm2bids conversion
+7) and for creating the new_subjects.json for processing
 
 authors:
 Alexandru Hanganu
@@ -118,12 +119,12 @@ class MakeBIDS_subj2process():
 #        print(ls_sessions)
         d_sessions = self.classify_by_sessions(ls_sessions)
 #        print(d_sessions)
-        dict_sessions_paths = self.make_dict_sessions_with_paths(d_paths, d_sessions)
-#        print(dict_sessions_paths)
-        d_ses_MR_types = self.classify_by_MR_types(dict_sessions_paths)
+        d_ses_paths, d_ses_params = self.make_dict_sessions_with_paths(d_paths, d_sessions)
+#        print(d_ses_paths)
+        d_ses_MR_types = self.classify_by_MR_types(d_ses_paths)
 #        print(d_ses_MR_types)
 
-        return self.make_BIDS_structure(d_ses_MR_types)
+        return self.make_BIDS_structure(d_ses_MR_types, d_ses_params)
 
 
     def _get_MR_paths(self, dir_abspath):
@@ -261,21 +262,25 @@ class MakeBIDS_subj2process():
 
 
     def make_dict_sessions_with_paths(self, d_paths, d_sessions):
-        d_ses_paths = {}
+        d_ses_paths  = {}
+        d_ses_params = {}
 
         for ses in d_sessions:
-            d_ses_paths[ses] = list()
+            d_ses_paths[ses]  = list()
+            d_ses_params[ses] = list()
             if d_sessions[ses]:
                 for date in d_sessions[ses]:
                     for chemin in d_paths[date]:
                         if chemin not in d_ses_paths[ses]:
                             d_ses_paths[ses].append(chemin)
+                            d_ses_params[ses].append(date)
             else:
                 for key in d_paths:
                     for chemin in d_paths[key]:
                         if chemin not in d_ses_paths[ses]:
                             d_ses_paths[ses].append(chemin)
-        return d_ses_paths
+                            d_ses_params[ses].append(key)
+        return d_ses_paths, d_ses_params
 
 
     def get_MR_types(self, path_subj_to_files):
@@ -294,11 +299,11 @@ class MakeBIDS_subj2process():
             return 'none'
 
 
-    def classify_by_MR_types(self, dict_sessions_paths):
+    def classify_by_MR_types(self, d_ses_paths):
         d_ses_MR_types = {}
-        for ses in dict_sessions_paths:
+        for ses in d_ses_paths:
             d_ses_MR_types[ses] = {}
-            for mr_path in dict_sessions_paths[ses]:
+            for mr_path in d_ses_paths[ses]:
                 mr_type = self.get_MR_types(mr_path.replace(self.MAIN_DIR,""))
                 if mr_type != 'none':
                     if mr_type not in d_ses_MR_types[ses]:
@@ -348,7 +353,7 @@ class MakeBIDS_subj2process():
         return ls_subjects
 
 
-    def make_BIDS_structure(self, d_ses_MR_types):
+    def make_BIDS_structure(self, d_ses_MR_types, d_ses_params):
         d_BIDS_structure = {}
         for ses in d_ses_MR_types:
             d_BIDS_structure[ses] = {}
@@ -360,6 +365,7 @@ class MakeBIDS_subj2process():
                         ls_paths = self.check_spaces(d_ses_MR_types[ses][modalityLabel])
                         d_BIDS_structure[ses][dataType][modalityLabel] = ls_paths
                         break
+            d_BIDS_structure[ses]['ses-params'] = d_ses_params[ses]
         return d_BIDS_structure
 
 
