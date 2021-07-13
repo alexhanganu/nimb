@@ -168,10 +168,12 @@ class NIMB(object):
                                                 python_load = True)
 
 
-        if self.process == 'classify_dcm2bids':
-            print("initiating dcm2bids transformation for project: {}".format(self.project))
-            from classification.dcm2bids_helper import DCM2BIDS_helper
-            return DCM2BIDS_helper(self.project_vars, self.project).run()
+        if self.process == 'classify-dcm2bids':
+            dir_with_subj_2classify = DistributionHelper(self.all_vars).get_subj_2classify()
+            if dir_with_subj_2classify:
+                print("initiating dcm2bids transformation for project: {}".format(self.project))
+                from classification.dcm2bids_helper import DCM2BIDS_helper
+                return DCM2BIDS_helper(self.project_vars, self.project, DICOM_DIR = dir_with_subj_2classify).run()
 
 
         if self.process == 'run':
@@ -196,7 +198,7 @@ def get_parameters(projects):
         default='ready',
         choices = ['ready', 'run',
                     'freesurfer', 'fs-glm', 'fs-glm-image', 'fs-get-stats',
-                    'run-stats','classify',
+                    'run-stats','classify', 'classify-dcm2bids',
                      'nilearn', 'dipy'],
         help="ready (verifies that nimb is ready), \
                 run (runs a project),\

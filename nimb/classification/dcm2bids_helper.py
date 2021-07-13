@@ -10,10 +10,10 @@ Kim Phuong Pham
 3) tries to create the config files and update the configurations
 """
 import os
-#from os import path#, system#, makedirs#, listdir
 import shutil
 import json
 import time
+import sys
 
 import logging
 logger = logging.getLogger(__name__)
@@ -29,7 +29,8 @@ except:
 
 from classification.classify_definitions import BIDS_types, mr_modalities
 from distribution.manage_archive import is_archive, ZipArchiveManagement
-from distribution.utilities import makedir_ifnot_exist
+from distribution.utilities import makedir_ifnot_exist, load_json, save_json
+from distribution.distribution_definitions import DEFAULT
 
 class DCM2BIDS_helper():
     """
@@ -62,6 +63,7 @@ class DCM2BIDS_helper():
         self.OUTPUT_DIR      = self.chk_dir(self.proj_vars['SOURCE_BIDS_DIR'][1])
         self.archived        = False
 
+
     def run(self, bids_id = 'none', ses = 'none'):
         #run dcm2bids:
         '''
@@ -69,31 +71,56 @@ class DCM2BIDS_helper():
                 extract from archive specific subject_session
                 start dcm2bids for subject_session
         '''
-        print(f'        classifying for id: {bids_id} for session: {ses}')
-#        print(f'        nimb_classified data are: {self.id_classified}')
+        print(f'        folder with subjects is: {self.DICOM_DIR}')
         self.bids_id = bids_id
         self.ses     = ses
+        if self.id_classified:
+            self.start_stepwise_choice()
+        else:
+            self.nimb_classified = dict()
+            try:
+                self.nimb_classified = load_json(os.path.join(self.DICOM_DIR, DEFAULT.f_nimb_classified))
+            except Exception as e:
+                print(f'        could not load the nimb_classified file at: {self.DICOM_DIR}')
+                sys.exit(0)
+        if self.nimb_classified:
+            self.bids_ids = list(self.nimb_classified.keys())
+            for self.bids_id in self.bids_ids[:1]: # !!!!!!!!!!!!!this is for testing
+                self.id_classified = self.nimb_classified[self.bids_id]
+                for self.ses in [i for i in self.id_classified if i not in ('archived',)]:
+                    self.start_stepwise_choice()
+
+
+    def start_stepwise_choice(self):
+        print(f'        classifying for id: {self.bids_id} for session: {self.ses}')
+#        print(f'        nimb_classified data are: {self.id_classified}')
         if self.id_classified['archived']:
             self.archived = True
         for BIDS_type in BIDS_types:
-            if BIDS_type in self.id_classified[ses]:
+            if BIDS_type in self.id_classified[self.ses]:
                 for mr_modality in BIDS_types[BIDS_type]:
-                    if mr_modality in self.id_classified[ses][BIDS_type]:
-                       paths_2mr_data = self.id_classified[ses][BIDS_type][mr_modality]
+                    if mr_modality in self.id_classified[self.ses][BIDS_type] and mr_modality == 'anat':# !!!!!!!!!!!!!!anat is used to adjust the script
+                       paths_2mr_data = self.id_classified[self.ses][BIDS_type][mr_modality]
                        for path2mr_ in paths_2mr_data:
                             print(f'        converting mr type: {BIDS_type}')
+#                            print(f'            dcm files located in: {path2mr}')
                             abs_path2mr = self.get_path_2mr(path2mr_)
                             self.run_dcm2bids(abs_path2mr)
-#        print(f'            dcm files located in: {path2mr}')
+
 
     def run_dcm2bids(self, abs_path2mr):
-        if self.run_stt == 1:
+        if self.run_stt == 0:
             self.config_file = self.get_config_file()
             print("*"*50)
             print("        config_file is: ", self.config_file)
-#            self.SUBJ_NAME = self.bids_id
             print("        bids id:", self.bids_id)
             print("*" * 50)
+            return_value = os.system('dcm2bids -d {} -p {} -s {} -c {} -o {}'.format(
+                                                                                    abs_path2mr,
+                                                                                    self.bids_id,
+                                                                                    self.ses,
+                                                                                    self.config_file,
+                                                                                    self.OUTPUT_DIR))
             # with each subject create temporary directory for Dcm2niix
             # self.chk_dir(self.sub_SUBJDIR)
             # Run the dcm2bids aself.SUBJ_NAMEpp
@@ -101,21 +128,16 @@ class DCM2BIDS_helper():
             # --clobber: Overwrite output if it exists
             # ----forceDcm2niix: Overwrite previous temporary dcm2niix output if it exists
 #            sub_dir = os.path.join(self.DICOM_DIR, self.bids_id)
-            return_value = os.system('dcm2bids -d {} -p {} -s {} -c {} -o {}'.format(
-                                                                                    abs_path2mr,
-                                                                                    self.bids_id,
-                                                                                    self.ses,
-                                                                                    self.config_file,
-                                                                                    self.OUTPUT_DIR))
             # the tempo subj dir contains remaining unconvert files
             # Calculate the return value code
+            print('return value is: ',return_value)
             return_value = int(bin(return_value).replace("0b", "").rjust(16, '0')[:8], 2)
             if return_value != 0:# failed
-                os.system('dcm2bids -d {} -p {} -c {} -o {}'.format(abs_path2mr, self.bids_id, self.config_file,
+                os.system('dcm2bids -d {} -p {} -s {} -c {} -o {}'.format(abs_path2mr, self.bids_id, self.ses, self.config_file,
                                                                  self.OUTPUT_DIR))
             self.sub_SUBJDIR = os.path.join(self.OUTPUT_DIR, 'tmp_dcm2bids', 'sub-{}'.format(self.bids_id))
-            print("kptest_sub_dir:", self.sub_SUBJDIR)
-#            self.chk_if_processed()
+            print("        subject located in:", self.sub_SUBJDIR)
+            self.chk_if_processed()
             print("/"*40)
 
 
@@ -128,9 +150,10 @@ class DCM2BIDS_helper():
                 return self.extract_from_archive(path_2archive,
                                                  path2mr_)
             else:
+                print(f'        file: {path_2archive} does not seem to be an archive')
                 return ''
         else:
-            return ls_mr_data
+            return path2mr_
 
 
     def extract_from_archive(self, archive_abspath, path2mr_):
@@ -174,30 +197,30 @@ class DCM2BIDS_helper():
         # Read all .nii in subjdir and move to appropriate folder
         print("*********Convert remaining folder",self.sub_SUBJDIR)
         if [i for i in os.listdir(self.sub_SUBJDIR) if '.nii.gz' in i]:
-            print("remaining nii in ", self.sub_SUBJDIR)
+            print("        remaining nii in ", self.sub_SUBJDIR)
             if self.repeat_updating < self.repeat_lim:
                 self.get_sidecar()
-                print('removing folder tmp_dcm2bids/sub')
+                print('        removing folder tmp_dcm2bids/sub')
                 # self.rm_dir(self.sub_SUBJDIR)
                 self.repeat_updating += 1
-                print('re-renning dcm2bids')
+                print('    re-renning dcm2bids')
                 self.run(self.SUBJ_NAME)
         else:
-            print("case2")
+            print("        case2")
             self.rm_dir(self.sub_SUBJDIR)
 
 
     def get_sidecar(self): # not correct - need to modify
         """...."""
-        print("get_sidecar") # list of sidecar
+        print("    getting sidecar") # list of sidecar
         list_sidecar = [i for i in os.listdir(self.sub_SUBJDIR) if '.json' in i]
         sidecar = list_sidecar[0]
-        print("sidecar:", list_sidecar)
+        print("    sidecar: ", list_sidecar, sidecar)
         print(">>>>"*20)
         # for sidecar in list_sidecar:
         print(os.path.join(self.sub_SUBJDIR, sidecar))
         print(">>>>" * 20)
-        self.sidecar_content = self.get_json_content(os.path.join(self.sub_SUBJDIR, sidecar))
+        self.sidecar_content = load_json(os.path.join(self.sub_SUBJDIR, sidecar))
         # data_Type, modality, criterion = self.classify_mri()
         list_critera = self.classify_mri()
         print(list_critera)
@@ -243,7 +266,7 @@ class DCM2BIDS_helper():
         """
         """..If sidecar criterion exist in config.."""
         print ("chk_if_in_config")
-        self.config = self.get_json_content(self.config_file)
+        self.config = load_json(self.config_file)
         print(self.sidecar_content.keys())
         print("++" * 20)
         # print(self.config['descriptions'])
@@ -322,9 +345,9 @@ class DCM2BIDS_helper():
             json.dump(data, f, indent = 4)
 
 
-    def get_json_content(self, file):
-        with open(file, 'r') as f:
-            return json.load(f)
+#    def get_json_content(self, file):
+#        with open(file, 'r') as f:
+#            return json.load(f)
 
     def get_SUBJ_DIR(self):
         """Get the path of DICOM_DIR"""
