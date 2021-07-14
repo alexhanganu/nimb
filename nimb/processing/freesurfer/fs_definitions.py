@@ -131,11 +131,11 @@ class FSGLMParams:
 
 GLMcontrasts = {
         "contrasts" : {
-            'g1v1':{'slope.mtx'         :['0 1',        't-test with the slope>0 being positive; is the slope equal to 0? does the correlation between thickness and variable differ from zero ?',],},
-            'g2v0':{'group.diff.mtx'    :['1 -1',       't-test with Group1>Group2 being positive; is there a difference between the group intercepts? Is there a difference between groups?',],},
-            'g2v1':{'group.diff.mtx'    :['1 -1 0 0',   't-test with Group1>Group2 being positive; is there a difference between the group intercepts? Is there a difference between groups regressing out the effect of age?',],
-                    'group-x-var.mtx'   :['0 0 1 -1',   't-test with Group1>Group2 being positive; is there a difference between the group age slopes? Note: this is an interaction between group and age. does the average thickness differ between control and patient',],
-                    'g1g2.var.mtx'      :['0 0 0.5 0.5','t-test with (Group1+Group2)/2 > 0 being positive (red/yellow). If mean < 0, then it will be displayed in blue/cyan; does mean of group age slope differ from 0? Is there an average affect of age regressing out the effect of group?',],}
+            'g1v1':{'slope.mtx'         :['0 1',        't-test with the slope>0 being positive; is the slope equal to 0? does the correlation between thickness and variable differ from zero ? contrast: 0 1',],},
+            'g2v0':{'group.diff.mtx'    :['1 -1',       't-test with Group1>Group2 being positive; is there a difference between the group intercepts? Is there a difference between groups? contrast 1 -1',],},
+            'g2v1':{'group.diff.mtx'    :['1 -1 0 0',   't-test with Group1>Group2 being positive; is there a difference between the group intercepts? Is there a difference between groups regressing out the effect of VARiable? Is there a difference between groups when the VARiable has the value 0? contrast 1 -1 0 0',],
+                    'group-x-var.mtx'   :['0 0 1 -1',   't-test with Group1>Group2 being positive; is there a difference between the group VARiable slopes? Note: this is an interaction between group and VARiable. contrast 0 0 1 -1',],
+                    'g1g2.var.mtx'      :['0 0 0.5 0.5','t-test with (Group1+Group2)/2 > 0 being positive; Does mean of group VARiable slope differ from 0? Is there an average affect of VARiable regressing out the effect of group? contrast 0 0 0.5 0.5; If mean > 0 color is red/yellow, if mean < 0 color is blue/cyan',],}
                             },
         "dods_doss" : {
             'g1v1':[       'dods',],
@@ -156,7 +156,7 @@ GLMcontrasts = {
             'g1v0':['dods',],
             'g1v2':['dods',],}
                 }
-
+# https://surfer.nmr.mgh.harvard.edu/fswiki/Fsgdf2G2V
 
 BS_Hip_Tha_stats_f = {
     'Brainstem':('mri/brainstemSsVolumes.v10.txt','stats/brainstem.v12.stats','stats/aseg.brainstem.volume.stats'),

@@ -97,9 +97,9 @@ class DCM2BIDS_helper():
         if self.id_classified['archived']:
             self.archived = True
         for BIDS_type in BIDS_types:
-            if BIDS_type in self.id_classified[self.ses]:
+            if BIDS_type in self.id_classified[self.ses] and BIDS_type == 'anat':  # !!!!!!!!!!!!!!anat is used to adjust the script
                 for mr_modality in BIDS_types[BIDS_type]:
-                    if mr_modality in self.id_classified[self.ses][BIDS_type] and mr_modality == 'anat':# !!!!!!!!!!!!!!anat is used to adjust the script
+                    if mr_modality in self.id_classified[self.ses][BIDS_type]:
                        paths_2mr_data = self.id_classified[self.ses][BIDS_type][mr_modality]
                        for path2mr_ in paths_2mr_data:
                             print(f'        converting mr type: {BIDS_type}')
@@ -132,10 +132,10 @@ class DCM2BIDS_helper():
             # Calculate the return value code
             print('return value is: ',return_value)
             return_value = int(bin(return_value).replace("0b", "").rjust(16, '0')[:8], 2)
-            if return_value != 0:# failed
+            if return_value != 0: # failed
                 os.system('dcm2bids -d {} -p {} -s {} -c {} -o {}'.format(abs_path2mr, self.bids_id, self.ses, self.config_file,
                                                                  self.OUTPUT_DIR))
-            self.sub_SUBJDIR = os.path.join(self.OUTPUT_DIR, 'tmp_dcm2bids', 'sub-{}'.format(self.bids_id))
+            self.sub_SUBJDIR = os.path.join(self.OUTPUT_DIR, 'tmp_dcm2bids', f'sub-{self.bids_id}_{self.ses}')
             print("        subject located in:", self.sub_SUBJDIR)
             self.chk_if_processed()
             print("/"*40)
@@ -323,7 +323,7 @@ class DCM2BIDS_helper():
         type = 'anat'
         modality = 'T1w'
 
-        self.config = self.get_json_content(self.config_file)
+        self.config = load_json(self.config_file)
         list_criteria = set()
         for des in self.config['descriptions']:
             criterion = list(des['criteria'].keys())[0]
