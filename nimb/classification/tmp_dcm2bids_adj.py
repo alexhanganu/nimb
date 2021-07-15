@@ -18,55 +18,58 @@ class DCM2BIDS_helper():
         self.ses             = 'ses-01'
         self.bids_id         = params.id
         self.project         = params.project
+        self.abs_path2mr     = params.abspathmr
         self.config_file     = self.get_config_file()
 
     def run(self, bids_id = 'none', ses = 'none'):
-#        self.run_dcm2bids(abs_path2mr)
         self.sub_SUBJDIR = os.path.join(self.OUTPUT_DIR, 'tmp_dcm2bids', f'sub-{self.bids_id}_{self.ses}')
+        self.BIDS_type = "anat"
+        self.mr_modality = "t1"
+#        self.run_dcm2bids(self.abs_path2mr)
         self.chk_if_processed()
 
 
-    def update_config(self): #, data_Type, modality, criterion): # to modify
+    def update_config(self):
         """....."""
+        self.add_criterion = False
+        self.config   = load_json(self.config_file)
+        data_Type     = self.BIDS_type
+        modality      = mr_modality_nimb_2_dcm2bids[self.mr_modality]
+        criterion1    = 'SeriesDescription'
+        sidecar_crit1 = self.sidecar_content[criterion1]
+
         self.config = load_json(self.config_file)
-        data_Type, modality, criterion, sidecar_value = self.get_criterion_2chk()
-        # if criterion in sidecar not = criterion in config -> add new des
+        list_criteria = list()
         for des in self.config['descriptions']:
-            if data_Type in des['dataType'] and \
-                modality in des['modalityLabel']:
-                if criterion in des['criteria']:
-                    if not sidecar_value == des['criteria'][criterion]:
-                        print ("    updating config with value: ", sidecar_value)
-                        new_des = {
-                           'dataType': data_Type,
-                           'modalityLabel' : modality,
-                           'criteria':{criterion:  sidecar_value}}
-                        self.update = True
-                else:
-                    print('    criterion is missing: ', criterion)
+            if des['dataType'] == data_Type and \
+                des["modalityLabel"] == modality:
+                list_criteria.append(des)
+        if len(list_criteria) > 0:
+            print('    there is at least one configuration with dataType: ', data_Type)
+            for des in list_criteria[::-1]:
+                if criterion1 in des['criteria']:
+                    if des['criteria'][criterion1] == sidecar_crit1:
+                        print('        sidecar is present in the config file. Add another sidecar criterion in the dcm2bids_helper.py script')
+                        self.add_criterion = True
+                        sys.exit(0)
+                    else:
+                        list_criteria.remove(des)
+        if len(list_criteria) > 0:
+            print('    cannot find a correct sidecar location. Please add more parameters.')
+        if len(list_criteria) == 0 and 'MPRAGE' in sidecar_crit1: # !!!!!!!!!!!!!!!!!!!to rm MPRAGE condition
+            print ("    updating config with value: ", sidecar_crit1)
+            new_des = {
+               'dataType': data_Type,
+               'modalityLabel' : modality,
+               'criteria':{criterion1:  sidecar_crit1}}
+            self.config['descriptions'].append(new_des)
+            self.update = True
+
         if self.update:
             self.run_stt = 0
-            self.config['descriptions'].append(new_des)
-            self.save_json(self.config, self.config_file)
+            save_json(self.config, self.config_file)
         else:
-           print('criterion {} present in config file'.format(criterion))
-
-
-    def get_criterion_2chk(self):
-        criterion     = 'SeriesDescription'
-        # print(self.sidecar_content.keys())
-        sidecar_value = self.sidecar_content[criterion]
-        data_Type     = 'anat'
-        modality      = 'T1w'
-        return data_Type, modality, criterion, sidecar_value
-        # self.config = load_json(self.config_file)
-        # list_criteria = set()
-        # for des in self.config['descriptions']:
-        #     data_Type = des['dataType']
-        #     modality = des["modalityLabel"]
-        #     criterion = list(des['criteria'].keys())[0]
-        #     list_criteria.add((data_Type, modality, criterion))
-        # return list_criteria
+           print('criterion {} present in config file'.format(criterion1))
 
 
     def chk_if_processed(self):
@@ -84,9 +87,10 @@ class DCM2BIDS_helper():
                 if self.update:
                     print('        removing folder tmp_dcm2bids/sub')
                     self.repeat_updating += 1
+                    self.rm_dir(self.sub_SUBJDIR)
                     print('    re-renning dcm2bids')
-    #                self.rm_dir(self.sub_SUBJDIR)
-    #                self.run(self.SUBJ_NAME)
+                    self.run_dcm2bids(self.abs_path2mr)
+                    #self.run(self.SUBJ_NAME)
         else:
             print("        case2")
 #            self.rm_dir(self.sub_SUBJDIR)
@@ -161,6 +165,9 @@ def get_parameters():
         "-project", required=False,
     )
 
+    parser.add_argument(
+        "-abspathmr", required=False,
+    )
 
     params = parser.parse_args()
     return params
@@ -170,7 +177,7 @@ if __name__ == "__main__":
     from pathlib import Path
     top = Path(__file__).resolve().parents[1]
     sys.path.append(str(top))
-    from classification.classify_definitions import BIDS_types, mr_modalities
+    from classification.classify_definitions import BIDS_types, mr_modalities, mr_modality_nimb_2_dcm2bids
     from distribution.utilities import makedir_ifnot_exist, load_json, save_json
     from distribution.distribution_definitions import DEFAULT
 

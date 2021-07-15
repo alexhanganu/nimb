@@ -27,7 +27,7 @@ try:
 except:
     print("no colorlog")
 
-from classification.classify_definitions import BIDS_types, mr_modalities
+from classification.classify_definitions import BIDS_types, mr_modalities, mr_modality_nimb_2_dcm2bids
 from distribution.manage_archive import is_archive, ZipArchiveManagement
 from distribution.utilities import makedir_ifnot_exist, load_json, save_json
 from distribution.distribution_definitions import DEFAULT
@@ -106,6 +106,9 @@ class DCM2BIDS_helper():
 #                            print(f'            dcm files located in: {path2mr}')
                             abs_path2mr = self.get_path_2mr(path2mr_)
                             self.run_dcm2bids(abs_path2mr)
+                            self.sub_SUBJDIR = os.path.join(self.OUTPUT_DIR, 'tmp_dcm2bids', f'sub-{self.bids_id}_{self.ses}')
+                            print("        subject located in:", self.sub_SUBJDIR)
+                            self.chk_if_processed()
 
 
     def run_dcm2bids(self, abs_path2mr):
@@ -135,9 +138,6 @@ class DCM2BIDS_helper():
             if return_value != 0: # failed
                 os.system('dcm2bids -d {} -p {} -s {} -c {} -o {}'.format(abs_path2mr, self.bids_id, self.ses, self.config_file,
                                                                  self.OUTPUT_DIR))
-            self.sub_SUBJDIR = os.path.join(self.OUTPUT_DIR, 'tmp_dcm2bids', f'sub-{self.bids_id}_{self.ses}')
-            print("        subject located in:", self.sub_SUBJDIR)
-            self.chk_if_processed()
             print("/"*40)
 
 

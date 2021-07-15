@@ -20,3 +20,10 @@ BIDS_types = {'anat':['t1','flair','t2', 'swi', 'pd'],
               'func':['bold',],
               'fmap':['fmap',]
                 }
+
+mr_modality_nimb_2_dcm2bids ={
+            "t1": "T1w",
+            "t2": "T2w",
+            "flair": "FLAIR",
+            "dwi": "dwi",
+                             }
