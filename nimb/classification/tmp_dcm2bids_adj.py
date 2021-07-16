@@ -9,24 +9,67 @@ logger.setLevel(logging.INFO)
 class DCM2BIDS_helper():
 
     def __init__(self, params,
+                nimb_classified_per_id = dict(),
                 repeat_lim = 2):
 
+        self.project         = params.project
+        self.id_classified   = nimb_classified_per_id
         self.run_stt         = 0
         self.repeat_lim      = repeat_lim
         self.repeat_updating = 0
-        self.OUTPUT_DIR      = params.dir
-        self.ses             = 'ses-01'
-        self.bids_id         = params.id
-        self.project         = params.project
-        self.abs_path2mr     = params.abspathmr
-        self.config_file     = self.get_config_file()
+        self.DICOM_DIR       = params.abspathmr
+        self.OUTPUT_DIR      = params.o
+
 
     def run(self, bids_id = 'none', ses = 'none'):
-        self.sub_SUBJDIR = os.path.join(self.OUTPUT_DIR, 'tmp_dcm2bids', f'sub-{self.bids_id}_{self.ses}')
-        self.BIDS_type = "anat"
-        self.mr_modality = "t1"
-#        self.run_dcm2bids(self.abs_path2mr)
-        self.chk_if_processed()
+       #run dcm2bids:
+        '''
+            if nimb_classified.json[bids_id][archived]:
+                extract from archive specific subject_session
+                start dcm2bids for subject_session
+        '''
+        print(f'        folder with subjects is: {self.DICOM_DIR}')
+        self.bids_id = bids_id
+        self.ses     = ses
+        if self.id_classified:
+            self.start_stepwise_choice()
+        else:
+            self.nimb_classified = dict()
+            try:
+                self.nimb_classified = load_json(os.path.join(self.DICOM_DIR, DEFAULT.f_nimb_classified))
+            except Exception as e:
+                print(f'        could not load the nimb_classified file at: {self.DICOM_DIR}')
+                sys.exit(0)
+        if self.nimb_classified:
+            self.bids_ids = list(self.nimb_classified.keys())
+            for self.bids_id in self.bids_ids[:1]:                             # !TESTING: !!!!!!!!!!!!this is for testing
+                self.id_classified = self.nimb_classified[self.bids_id]
+                for self.ses in [i for i in self.id_classified if i not in ('archived',)]:
+                    self.start_stepwise_choice()
+
+
+    def start_stepwise_choice(self):
+        print(f'        classifying for id: {self.bids_id} for session: {self.ses}')
+#        print(f'        nimb_classified data are: {self.id_classified}')
+        if self.id_classified['archived']:
+            self.archived = True
+        for BIDS_type in BIDS_types:
+            if BIDS_type in self.id_classified[self.ses] and BIDS_type == 'anat':  # TESTING!!!!!!!!!!!!!!anat is used to adjust the script
+                for mr_modality in BIDS_types[BIDS_type]:
+                    if mr_modality in self.id_classified[self.ses][BIDS_type]:
+                       paths_2mr_data = self.id_classified[self.ses][BIDS_type][mr_modality]
+                       for path2mr_ in paths_2mr_data:
+                            print(f'        converting mr type: {BIDS_type}')
+#                            print(f'            dcm files located in: {path2mr}')
+                            self.abs_path2mr = self.get_path_2mr(path2mr_)
+                            self.sub_SUBJDIR = os.path.join(self.OUTPUT_DIR, 'tmp_dcm2bids', f'sub-{self.bids_id}_{self.ses}')
+                            self.run_dcm2bids()
+                            if os.path.exists(self.sub_SUBJDIR) and \
+                                len(os.listdir(self.sub_SUBJDIR)) > 0:
+                                print("        subject located in:", self.sub_SUBJDIR)
+                                self.chk_if_processed()
+                            else:
+                                print('    conversion did not generate files')
 
 
     def update_config(self):
@@ -38,7 +81,6 @@ class DCM2BIDS_helper():
         criterion1    = 'SeriesDescription'
         sidecar_crit1 = self.sidecar_content[criterion1]
 
-        self.config = load_json(self.config_file)
         list_criteria = list()
         for des in self.config['descriptions']:
             if des['dataType'] == data_Type and \
@@ -89,14 +131,15 @@ class DCM2BIDS_helper():
                     self.repeat_updating += 1
                     self.rm_dir(self.sub_SUBJDIR)
                     print('    re-renning dcm2bids')
-                    self.run_dcm2bids(self.abs_path2mr)
-                    #self.run(self.SUBJ_NAME)
+                    self.run_dcm2bids()
+                    print('    looping to another chk_if_processed')
+                    self.chk_if_processed()
         else:
             print("        case2")
-#            self.rm_dir(self.sub_SUBJDIR)
+#            self.rm_dir(self.sub_SUBJDIR) # TESTING !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
 
 
-    def run_dcm2bids(self, abs_path2mr):
+    def run_dcm2bids(self):
         if self.run_stt == 0:
             self.config_file = self.get_config_file()
             print("*"*50)
@@ -104,7 +147,7 @@ class DCM2BIDS_helper():
             print("        bids id:", self.bids_id)
             print("*" * 50)
             return_value = os.system('dcm2bids -d {} -p {} -s {} -c {} -o {}'.format(
-                                                                                    abs_path2mr,
+                                                                                    self.abs_path2mr,
                                                                                     self.bids_id,
                                                                                     self.ses,
                                                                                     self.config_file,
@@ -112,11 +155,8 @@ class DCM2BIDS_helper():
             print('return value is: ',return_value)
 #            return_value = int(bin(return_value).replace("0b", "").rjust(16, '0')[:8], 2)
 #            if return_value != 0:# failed
-#                os.system('dcm2bids -d {} -p {} -s {} -c {} -o {}'.format(abs_path2mr, self.bids_id, self.ses, self.config_file,
+#                os.system('dcm2bids -d {} -p {} -s {} -c {} -o {}'.format(self.abs_path2mr, self.bids_id, self.ses, self.config_file,
 #                                                                 self.OUTPUT_DIR))
-#            self.sub_SUBJDIR = os.path.join(self.OUTPUT_DIR, 'tmp_dcm2bids', 'sub-{}'.format(self.bids_id))
-            print("        subject located in:", self.sub_SUBJDIR)
-            self.chk_if_processed()
             print("/"*40)
 
 
@@ -132,6 +172,22 @@ class DCM2BIDS_helper():
             return config_file
         else:
             print('config file is missing')
+
+
+    def get_path_2mr(self, path2mr_):
+        if self.archived:
+            path_2archive = self.id_classified['archived']
+            print(f'        archive located at: {path_2archive}')
+            if is_archive(path_2archive):
+                print('        is archive')
+                return self.extract_from_archive(path_2archive,
+                                                 path2mr_)
+            else:
+                print(f'        file: {path_2archive} does not seem to be an archive')
+                return ''
+        else:
+            return path2mr_
+
 
 #    def run_helper(self):
 #        """SCRIPT is probably not required"""
@@ -154,19 +210,23 @@ def get_parameters():
     )
 
     parser.add_argument(
-        "-dir", required=False,
+        "-o", required=True,
+        help="output folder of bids classified files",
     )
 
     parser.add_argument(
-        "-id", required=False,
+        "-project", required=True,
     )
 
     parser.add_argument(
-        "-project", required=False,
+        "-abspathmr", required=True,
+        help="absolute path to MR data to be classified",
     )
 
     parser.add_argument(
-        "-abspathmr", required=False,
+        "-rep", required=False,
+        default=5,
+        help="number of repetitions to use to retry the dcm2bids classification, default is 5",
     )
 
     params = parser.parse_args()
@@ -182,7 +242,7 @@ if __name__ == "__main__":
     from distribution.distribution_definitions import DEFAULT
 
     params      = get_parameters()
-    DCM2BIDS_helper(params, repeat_lim = 10).run()
+    DCM2BIDS_helper(params, repeat_lim = params.rep).run()
 
 
 
