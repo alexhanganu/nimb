@@ -16,7 +16,7 @@ mr_modalities = {'flair' :['flair',],
                 }
 
 BIDS_types = {'anat':['t1','flair','t2', 'swi', 'pd'],
-              'dwi' :['dwi','bval','bvec'],
+              'dwi' :['dwi',],#'bval','bvec'],
               'func':['bold',],
               'fmap':['fmap',]
                 }
@@ -26,4 +26,5 @@ mr_modality_nimb_2_dcm2bids ={
             "t2": "T2w",
             "flair": "FLAIR",
             "dwi": "dwi",
+            "bold": "bold",
                              }
