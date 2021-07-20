@@ -27,7 +27,7 @@ class DCM2BIDS_tester():
         self.repeat_updating = 0
         self.DICOM_DIR       = params.abspathmr
         self.tmp_dir         = 'none'
-        self.OUTPUT_DIR      = self.makedir_ifnot_exist(params.o)
+        self.OUTPUT_DIR      = makedir_ifnot_exist(params.o)
         self.archived        = False
 
 

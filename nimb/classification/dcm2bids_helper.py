@@ -53,6 +53,7 @@ class DCM2BIDS_helper():
         if DICOM_DIR == 'default':
             self.DICOM_DIR   = self.get_SUBJ_DIR()
         self.tmp_dir         = tmp_dir
+#        self.OUTPUT_DIR      = makedir_ifnot_exist(self.proj_vars['SOURCE_BIDS_DIR'][1])
         self.OUTPUT_DIR      = self.chk_dir(self.proj_vars['SOURCE_BIDS_DIR'][1])
         self.archived        = False
 
