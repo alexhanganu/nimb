@@ -103,10 +103,11 @@ class DCM2BIDS_helper():
                             self.run_dcm2bids()
                             if os.path.exists(self.sub_SUBJDIR) and \
                                 len(os.listdir(self.sub_SUBJDIR)) > 0:
-                                print("        subject located in:", self.sub_SUBJDIR)
+                                print('    conversion did not find corresponding values in the configuration file')
+                                print("        temporary converted subject located in:", self.sub_SUBJDIR)
                                 self.chk_if_processed()
                             else:
-                                print('    conversion did not generate files')
+                                print('    dcm2bids conversion DONE')
 
 
     def run_dcm2bids(self):
