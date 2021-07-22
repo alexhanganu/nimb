@@ -23,9 +23,9 @@ class DCM2BIDS_tester():
         self.project         = params.project
         self.id_classified   = dict()
         self.run_stt         = 0
-        self.repeat_lim      = repeat_lim
+        self.repeat_lim      = int(repeat_lim)
         self.repeat_updating = 0
-        self.DICOM_DIR       = params.abspathmr
+        self.DICOM_DIR       = params.src
         self.tmp_dir         = 'none'
         self.OUTPUT_DIR      = makedir_ifnot_exist(params.o)
         self.archived        = False
@@ -57,19 +57,36 @@ class DCM2BIDS_tester():
                 for self.ses in [i for i in self.id_classified if i not in ('archived',)]:
                     self.start_stepwise_choice()
 
+    '''
+    PLAN:
+    rm dcm2bids_config_loni_ppmi.json file
+    run conversion of one anat, for 1 subject
+    chk how the config is updated
+    chk that is run repeated and conversion is done
+
+    rm dcm2bids_config_loni_ppmi
+    rerun conversion for all anat
+    re-chk previous
+
+    rm dcm2bids_config
+    run as in (1) for func
+
+    rm dcm2bids_config
+    run as in (1) for dwi
+    '''
 
     def start_stepwise_choice(self):
         print(f'        classifying for id: {self.bids_id} for session: {self.ses}')
 #        print(f'        nimb_classified data are: {self.id_classified}')
         if self.id_classified['archived']:
             self.archived = True
-        for BIDS_type in BIDS_types:
-            if BIDS_type in self.id_classified[self.ses] and BIDS_type == 'anat':  # TESTING!!!!!!!!!!!!!!anat is used to adjust the script
-                for mr_modality in BIDS_types[BIDS_type]:
-                    if mr_modality in self.id_classified[self.ses][BIDS_type]:
-                       paths_2mr_data = self.id_classified[self.ses][BIDS_type][mr_modality]
+        for self.data_Type in BIDS_types:
+            if self.data_Type in self.id_classified[self.ses] and self.data_Type == 'anat':  # TESTING!!!!!!!!!!!!!!anat is used to adjust the script
+                for self.mr_modality in BIDS_types[self.data_Type]:
+                    if self.mr_modality in self.id_classified[self.ses][self.data_Type]:
+                       paths_2mr_data = self.id_classified[self.ses][self.data_Type][self.mr_modality]
                        for path2mr_ in paths_2mr_data:
-                            print(f'        converting mr type: {BIDS_type}')
+                            print(f'        converting mr type: {self.data_Type}')
 #                            print(f'            dcm files located in: {path2mr}')
                             self.abs_path2mr = self.get_path_2mr(path2mr_)
                             self.sub_SUBJDIR = os.path.join(self.OUTPUT_DIR, 'tmp_dcm2bids', f'sub-{self.bids_id}_{self.ses}')
@@ -112,7 +129,7 @@ class DCM2BIDS_tester():
           - if not converted, update config file based on sidecar params (update_config())
           - redo run() up to repeat_lim
         """
-        print("*********Convert remaining folder",self.sub_SUBJDIR)
+        print("        Convert remaining folder",self.sub_SUBJDIR)
         ls_niigz_files = [i for i in os.listdir(self.sub_SUBJDIR) if '.nii.gz' in i]
         if ls_niigz_files:
             print("        remaining nii in ", self.sub_SUBJDIR)
@@ -163,18 +180,17 @@ class DCM2BIDS_tester():
         """....."""
         self.add_criterion = False
         self.config   = load_json(self.config_file)
-        data_Type     = self.BIDS_type
         modality      = mr_modality_nimb_2_dcm2bids[self.mr_modality]
         criterion1    = 'SeriesDescription'
         sidecar_crit1 = self.sidecar_content[criterion1]
 
         list_criteria = list()
         for des in self.config['descriptions']:
-            if des['dataType'] == data_Type and \
+            if des['dataType'] == self.data_Type and \
                 des["modalityLabel"] == modality:
                 list_criteria.append(des)
         if len(list_criteria) > 0:
-            print('    there is at least one configuration with dataType: ', data_Type)
+            print('    there is at least one configuration with dataType: ', self.data_Type)
             for des in list_criteria[::-1]:
                 if criterion1 in des['criteria']:
                     if des['criteria'][criterion1] == sidecar_crit1:
@@ -188,7 +204,7 @@ class DCM2BIDS_tester():
         if len(list_criteria) == 0:
             print ("    updating config with value: ", sidecar_crit1)
             new_des = {
-               'dataType': data_Type,
+               'dataType': self.data_Type,
                'modalityLabel' : modality,
                'criteria':{criterion1:  sidecar_crit1}}
             self.config['descriptions'].append(new_des)
@@ -407,17 +423,17 @@ def get_parameters():
     )
 
     parser.add_argument(
+        "-src", required=True,
+        help="absolute path to MR data to be classified",
+    )
+
+    parser.add_argument(
         "-o", required=True,
         help="output folder of bids classified files",
     )
 
     parser.add_argument(
         "-project", required=True,
-    )
-
-    parser.add_argument(
-        "-abspathmr", required=True,
-        help="absolute path to MR data to be classified",
     )
 
     parser.add_argument(

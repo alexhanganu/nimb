@@ -90,13 +90,13 @@ class DCM2BIDS_helper():
 #        print(f'        nimb_classified data are: {self.id_classified}')
         if self.id_classified['archived']:
             self.archived = True
-        for BIDS_type in BIDS_types:
-            if BIDS_type in self.id_classified[self.ses]:
-                for mr_modality in BIDS_types[BIDS_type]:
-                    if mr_modality in self.id_classified[self.ses][BIDS_type]:
-                       paths_2mr_data = self.id_classified[self.ses][BIDS_type][mr_modality]
+        for self.data_Type in BIDS_types:
+            if self.data_Type in self.id_classified[self.ses]:
+                for self.mr_modality in BIDS_types[self.data_Type]:
+                    if self.mr_modality in self.id_classified[self.ses][self.data_Type]:
+                       paths_2mr_data = self.id_classified[self.ses][self.data_Type][self.mr_modality]
                        for path2mr_ in paths_2mr_data:
-                            print(f'        converting mr type: {BIDS_type}')
+                            print(f'        converting mr type: {self.data_Type}')
 #                            print(f'            dcm files located in: {path2mr}')
                             self.abs_path2mr = self.get_path_2mr(path2mr_)
                             self.sub_SUBJDIR = os.path.join(self.OUTPUT_DIR, 'tmp_dcm2bids', f'sub-{self.bids_id}_{self.ses}')
@@ -168,18 +168,17 @@ class DCM2BIDS_helper():
         """....."""
         self.add_criterion = False
         self.config   = load_json(self.config_file)
-        data_Type     = self.BIDS_type
         modality      = mr_modality_nimb_2_dcm2bids[self.mr_modality]
         criterion1    = 'SeriesDescription'
         sidecar_crit1 = self.sidecar_content[criterion1]
 
         list_criteria = list()
         for des in self.config['descriptions']:
-            if des['dataType'] == data_Type and \
+            if des['dataType'] == self.data_Type and \
                 des["modalityLabel"] == modality:
                 list_criteria.append(des)
         if len(list_criteria) > 0:
-            print('    there is at least one configuration with dataType: ', data_Type)
+            print('    there is at least one configuration with dataType: ', self.data_Type)
             for des in list_criteria[::-1]:
                 if criterion1 in des['criteria']:
                     if des['criteria'][criterion1] == sidecar_crit1:
@@ -193,7 +192,7 @@ class DCM2BIDS_helper():
         if len(list_criteria) == 0:
             print ("    updating config with value: ", sidecar_crit1)
             new_des = {
-               'dataType': data_Type,
+               'dataType': self.data_Type,
                'modalityLabel' : modality,
                'criteria':{criterion1:  sidecar_crit1}}
             self.config['descriptions'].append(new_des)
