@@ -113,10 +113,6 @@ class DCM2BIDS_helper():
     def run_dcm2bids(self):
         if self.run_stt == 0:
             self.config_file = self.get_config_file()
-            print("*"*50)
-            print("        config_file is: ", self.config_file)
-            print("        bids id:", self.bids_id)
-            print("*" * 50)
             return_value = os.system('dcm2bids -d {} -p {} -s {} -c {} -o {}'.format(
                                                                                     self.abs_path2mr,
                                                                                     self.bids_id,
@@ -160,8 +156,9 @@ class DCM2BIDS_helper():
                     print('    looping to another chk_if_processed')
                     self.chk_if_processed()
         else:
-            print("        case2")
-            self.rm_dir(self.sub_SUBJDIR)
+            print('    dcm2bids conversion DONE')
+            if os.path.exists(self.sub_SUBJDIR):
+                self.rm_dir(self.sub_SUBJDIR)
 
 
     def update_config(self):
@@ -212,7 +209,9 @@ class DCM2BIDS_helper():
         config_file = os.path.join(self.OUTPUT_DIR,
                              f'dcm2bids_config_{self.project}.json')
         if os.path.exists(config_file):
-            print("        Config file: ",config_file)
+            print("*"*50)
+            print("        config_file is: ", config_file)
+            print("*" * 50)
             return config_file
         else:
             shutil.copy(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dcm2bids','dcm2bids_config_default.json'),
