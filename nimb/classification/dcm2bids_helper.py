@@ -86,28 +86,30 @@ class DCM2BIDS_helper():
 
 
     def start_stepwise_choice(self):
-        print(f'        classifying for id: {self.bids_id} for session: {self.ses}')
-#        print(f'        nimb_classified data are: {self.id_classified}')
+        print(f'\n\n        classifying for id: {self.bids_id} for session: {self.ses}')
         if self.id_classified['archived']:
             self.archived = True
         for self.data_Type in BIDS_types:
-            if self.data_Type in self.id_classified[self.ses]:
+            if self.data_Type in self.id_classified[self.ses] and self.data_Type == 'anat':  # TESTING!!!!!!!!!!!!!!anat is used to adjust the script
                 for self.mr_modality in BIDS_types[self.data_Type]:
                     if self.mr_modality in self.id_classified[self.ses][self.data_Type]:
-                       paths_2mr_data = self.id_classified[self.ses][self.data_Type][self.mr_modality]
-                       for path2mr_ in paths_2mr_data:
-                            print(f'        converting mr type: {self.data_Type}')
-#                            print(f'            dcm files located in: {path2mr}')
-                            self.abs_path2mr = self.get_path_2mr(path2mr_)
-                            self.sub_SUBJDIR = os.path.join(self.OUTPUT_DIR, 'tmp_dcm2bids', f'sub-{self.bids_id}_{self.ses}')
-                            self.run_dcm2bids()
-                            if os.path.exists(self.sub_SUBJDIR) and \
-                                len(os.listdir(self.sub_SUBJDIR)) > 0:
-                                print('    conversion did not find corresponding values in the configuration file')
-                                print("        temporary converted subject located in:", self.sub_SUBJDIR)
-                                self.chk_if_processed()
-                            else:
-                                print('    dcm2bids conversion DONE')
+                        paths_2mr_data = self.id_classified[self.ses][self.data_Type][self.mr_modality]
+                        if len(paths_2mr_data) > 1:
+                            print(f'    there are more than 1 MRI of type: {self.mr_modality} in the source folder.')
+                            print(f'        dcm2bids CANNOT save multiple versions of the same MR type in the same session.')
+                            print(f'        ONLY the first MR version will be used')
+                        path2mr_ = paths_2mr_data[0]
+                        print(f'        converting mr type: {self.data_Type}')
+                        self.abs_path2mr = self.get_path_2mr(path2mr_)
+                        self.sub_SUBJDIR = os.path.join(self.OUTPUT_DIR, 'tmp_dcm2bids', f'sub-{self.bids_id}_{self.ses}')
+                        self.run_dcm2bids()
+                        if os.path.exists(self.sub_SUBJDIR) and \
+                            len(os.listdir(self.sub_SUBJDIR)) > 0:
+                            print('    conversion did not find corresponding values in the configuration file')
+                            print("        temporary converted subject located in:", self.sub_SUBJDIR)
+                            self.chk_if_processed()
+                        else:
+                            print('    dcm2bids conversion DONE')
 
 
     def run_dcm2bids(self):
@@ -136,7 +138,6 @@ class DCM2BIDS_helper():
           - if not converted, update config file based on sidecar params (update_config())
           - redo run() up to repeat_lim
         """
-        print("*********Convert remaining folder",self.sub_SUBJDIR)
         ls_niigz_files = [i for i in os.listdir(self.sub_SUBJDIR) if '.nii.gz' in i]
         if ls_niigz_files:
             print("        remaining nii in ", self.sub_SUBJDIR)
@@ -148,7 +149,7 @@ class DCM2BIDS_helper():
                     self.sidecar_content = load_json(os.path.join(self.sub_SUBJDIR, sidecar))
                     self.update_config()
                 if self.update:
-                    print('        removing folder tmp_dcm2bids/sub')
+                    print('        removing folder: ', self.sub_SUBJDIR)
                     self.repeat_updating += 1
                     self.rm_dir(self.sub_SUBJDIR)
                     print('    re-renning dcm2bids')
