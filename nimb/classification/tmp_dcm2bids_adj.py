@@ -79,12 +79,13 @@ class DCM2BIDS_tester():
         if self.id_classified['archived']:
             self.archived = True
         for self.data_Type in BIDS_types:
-            if self.data_Type in self.id_classified[self.ses] and self.data_Type == 'anat':  # TESTING!!!!!!!!!!!!!!anat is used to adjust the script
-                for self.mr_modality in BIDS_types[self.data_Type]:
-                    if self.mr_modality in self.id_classified[self.ses][self.data_Type]:
-                        paths_2mr_data = self.id_classified[self.ses][self.data_Type][self.mr_modality]
+            if self.data_Type in self.id_classified[self.ses] and self.data_Type == 'func': # 'dwi'  # TESTING!!!!!!!!!!!!!!anat is used to adjust the script
+                for modalityLabel in BIDS_types[self.data_Type]:
+                    self.modalityLabel      = mr_modality_nimb_2_dcm2bids[modalityLabel]
+                    if self.modalityLabel in self.id_classified[self.ses][self.data_Type]:
+                        paths_2mr_data = self.id_classified[self.ses][self.data_Type][self.modalityLabel]
                         if len(paths_2mr_data) > 1:
-                            print(f'    there are more than 1 MRI of type: {self.mr_modality} in the source folder.')
+                            print(f'    there are more than 1 MRI of type: {self.modalityLabel} in the source folder.')
                             print(f'        dcm2bids CANNOT save multiple versions of the same MR type in the same session.')
                             print(f'        ONLY the first MR version will be used')
                         path2mr_ = paths_2mr_data[0]
@@ -156,14 +157,13 @@ class DCM2BIDS_tester():
         """....."""
         self.add_criterion = False
         self.config   = load_json(self.config_file)
-        modality      = mr_modality_nimb_2_dcm2bids[self.mr_modality]
         criterion1    = 'SeriesDescription'
         sidecar_crit1 = self.sidecar_content[criterion1]
 
         list_criteria = list()
         for des in self.config['descriptions']:
             if des['dataType'] == self.data_Type and \
-                des["modalityLabel"] == modality:
+                des["modalityLabel"] == self.modalityLabel:
                 list_criteria.append(des)
         if len(list_criteria) > 0:
             print('    there is at least one configuration with dataType: ', self.data_Type)
@@ -181,7 +181,7 @@ class DCM2BIDS_tester():
             print ("        updating config with value: ", sidecar_crit1)
             new_des = {
                'dataType': self.data_Type,
-               'modalityLabel' : modality,
+               'modalityLabel' : self.modalityLabel,
                'criteria':{criterion1:  sidecar_crit1}}
             self.config['descriptions'].append(new_des)
             self.update = True

@@ -16,7 +16,7 @@ mr_modalities = {'flair' :['flair',],
                 }
 
 BIDS_types = {'anat':['t1','flair','t2', 'swi', 'pd'],
-              'dwi' :['dwi',],#'bval','bvec'],
+              'dwi' :['dwi','bval','bvec'],
               'func':['bold',],
               'fmap':['fmap',]
                 }
