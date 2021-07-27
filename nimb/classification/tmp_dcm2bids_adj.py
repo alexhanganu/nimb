@@ -56,36 +56,19 @@ class DCM2BIDS_tester():
                 for self.ses in [i for i in self.id_classified if i not in ('archived',)]:
                     self.start_stepwise_choice()
 
-    '''
-    PLAN:
-    rm dcm2bids_config_loni_ppmi.json file
-    run conversion of one anat, for 1 subject
-    chk how the config is updated
-    chk that is run repeated and conversion is done
-
-    rm dcm2bids_config_loni_ppmi
-    rerun conversion for all anat
-    re-chk previous
-
-    rm dcm2bids_config
-    run as in (1) for func
-
-    rm dcm2bids_config
-    run as in (1) for dwi
-    '''
 
     def start_stepwise_choice(self):
         print(f'\n\n        classifying for id: {self.bids_id} for session: {self.ses}')
         if self.id_classified['archived']:
             self.archived = True
         for self.data_Type in BIDS_types:
-            if self.data_Type in self.id_classified[self.ses] and self.data_Type == 'func': # 'dwi'  # TESTING!!!!!!!!!!!!!!anat is used to adjust the script
+            if self.data_Type in self.id_classified[self.ses]:
                 for modalityLabel in BIDS_types[self.data_Type]:
-                    self.modalityLabel      = mr_modality_nimb_2_dcm2bids[modalityLabel]
-                    if self.modalityLabel in self.id_classified[self.ses][self.data_Type]:
-                        paths_2mr_data = self.id_classified[self.ses][self.data_Type][self.modalityLabel]
+                    if modalityLabel in self.id_classified[self.ses][self.data_Type]:
+                        paths_2mr_data = self.id_classified[self.ses][self.data_Type][modalityLabel]
+                        self.modalityLabel = mr_modality_nimb_2_dcm2bids[modalityLabel] # changing to dcm2bids type modality_label
                         if len(paths_2mr_data) > 1:
-                            print(f'    there are more than 1 MRI of type: {self.modalityLabel} in the source folder.')
+                            print(f'    NOTE: there are more than 1 MRI of type: {self.modalityLabel} in the source folder.')
                             print(f'        dcm2bids CANNOT save multiple versions of the same MR type in the same session.')
                             print(f'        ONLY the first MR version will be used')
                         path2mr_ = paths_2mr_data[0]

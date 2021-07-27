@@ -27,7 +27,7 @@ import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-class MakeBIDS_subj2process():
+class Classify2_NIMB_BIDS():
     def __init__(self, project,
                 MAIN_DIR,
                 NIMB_tmp,

@@ -54,8 +54,8 @@ class NIMB(object):
             else:
                 dir_with_subj_2classify = DistributionHelper(self.all_vars).get_subj_2classify()
                 if dir_with_subj_2classify:
-                    from classification.classify_2nimb_bids import MakeBIDS_subj2process
-                    return MakeBIDS_subj2process(self.project,
+                    from classification.classify_2nimb_bids import Classify2_NIMB_BIDS
+                    return Classify2_NIMB_BIDS(self.project,
                                          dir_with_subj_2classify,
                                          self.NIMB_tmp,
                                          fix_spaces = self.fix_spaces,

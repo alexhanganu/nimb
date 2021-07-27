@@ -12,7 +12,7 @@ from distribution.distribution_helper import  DistributionHelper
 from distribution.distribution_ready import DistributionReady
 from distribution.utilities import load_json, save_json, makedir_ifnot_exist
 from distribution.distribution_definitions import get_keys_processed, DEFAULT
-from classification.classify_2nimb_bids import MakeBIDS_subj2process
+from classification.classify_2nimb_bids import Classify2_NIMB_BIDS
 from classification.dcm2bids_helper import DCM2BIDS_helper
 from setup.interminal_setup import get_userdefined_paths, get_yes_no
 from distribution.manage_archive import is_archive, ZipArchiveManagement
@@ -23,6 +23,14 @@ from distribution.manage_archive import is_archive, ZipArchiveManagement
 # chk if stats were performed. If not - ask if stats are requested.
 # if not - ask if FreeSurfer processing is requested by the user. Default - no.
 
+
+'''
+MUST BE ADAPTED according this this understanding:
+ID description:
+project_id: ID provided by the user in a grid file.
+nimb_id   : ID based on provided MR data, nimb_id name does NOT include the session; e.g.: ID1
+bids_id   : ID after using the dcm2bids conversion; it includes the session; e.g.: sub-ID1_ses-1
+'''
 
 class ProjectManager:
     '''
@@ -117,7 +125,7 @@ class ProjectManager:
             fix_spaces   = self.all_vars.params.fix_spaces
             for _dir in ls_source_dirs:
                 print(f'   classifying folder: {_dir}')
-                is_classified, nimb_classified = MakeBIDS_subj2process(self.project,
+                is_classified, nimb_classified = Classify2_NIMB_BIDS(self.project,
                                                                 src_dir, self.NIMB_tmp, [_dir,],
                                                                 fix_spaces, True,
                                                                 multi_T1, add_flair_t2).run()
@@ -166,21 +174,21 @@ class ProjectManager:
                 print('    nimb_classified file cannot be found at: {src_dir}')
 
         if nimb_classified:
-            ls_bids_ids = [i for i in nimb_classified]
+            ls_nimb_ids = [i for i in nimb_classified]
             if test:
-                ls_bids_ids = [i for i in nimb_classified][:nr_participants_for_testing]
-            for bids_id in ls_bids_ids:
-                ls_sessions = [i for i in nimb_classified[bids_id] if i not in ('archived',)]
+                ls_nimb_ids = [i for i in nimb_classified][:nr_participants_for_testing]
+            for nimb_id in ls_nimb_ids:
+                ls_sessions = [i for i in nimb_classified[nimb_id] if i not in ('archived',)]
                 for ses in ls_sessions:
-                    bids_convert = self.id_is_bids_converted(bids_id, ses)
+                    bids_convert = self.id_is_bids_converted(nimb_id, ses)
                     print(f'    must convert to BIDS: {bids_convert}')
                     if bids_convert:
-                        print(f'    started dcm2bids classification for id: {bids_id} session: {ses}')
+                        print(f'    started dcm2bids classification for id: {nimb_id} session: {ses}')
                         DCM2BIDS_helper(self.project_vars,
                                         self.project,
-                                        nimb_classified_per_id = nimb_classified[bids_id],
+                                        nimb_classified_per_id = nimb_classified[nimb_id],
                                         DICOM_DIR = self.DICOM_DIR,
-                                        tmp_dir = self.NIMB_tmp).run(bids_id, ses)
+                                        tmp_dir = self.NIMB_tmp).run(nimb_id, ses)
 
 
     def get_dir_with_raw_MR_data(self, src_dir, _dir):
@@ -307,11 +315,8 @@ class ProjectManager:
         schedule.submit_4_processing(cmd, process_type, subproc, cd_cmd)
 
 
-
-
     def get_content(self, path2chk):
         return os.listdir(path2chk)
-
 
 
     def prep_dirs(self, ls_dirs):
