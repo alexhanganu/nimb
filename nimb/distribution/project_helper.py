@@ -28,8 +28,8 @@ from distribution.manage_archive import is_archive, ZipArchiveManagement
 MUST BE ADAPTED according this this understanding:
 ID description:
 project_id: ID provided by the user in a grid file.
-nimb_id   : ID based on provided MR data, nimb_id name does NOT include the session; e.g.: ID1
-bids_id   : ID after using the dcm2bids conversion; it includes the session; e.g.: sub-ID1_ses-1
+nimb_id   : ID based on provided MR data, nimb_id name does NOT include the session; e.g.: ID1 (e.g., in PPMI nimb_id = 3378)
+bids_id   : ID after using the dcm2bids conversion; it includes the session; e.g.: sub-ID1_ses-1 (e.g., in PPMI nimb_id = 3378_ses-1)
 '''
 
 class ProjectManager:
@@ -147,19 +147,19 @@ class ProjectManager:
             print(f'    folder with source subjects {src_dir} is empty')
 
 
-    def id_is_bids_converted(self, bids_id, ses):
-        bids_location = self.project_vars['SOURCE_BIDS_DIR'][0]
-        bids_convert = False
-        if bids_location == 'local':
-            bids_abspath = self.project_vars['SOURCE_BIDS_DIR'][1]
-            ls_bids_converted = os.listdir(bids_abspath)
-            if bids_id not in ls_bids_converted:
-                bids_convert = True
-            elif ses not in os.listdir(os.path.join(bids_abspath, bids_id)):
-                bids_convert = True
+    def id_is_bids_converted(self, nimb_id, ses):
+        bids_dir_location = self.project_vars['SOURCE_BIDS_DIR'][0]
+        convert_2bids = False
+        if bids_dir_location == 'local':
+            bids_dir_abspath = self.project_vars['SOURCE_BIDS_DIR'][1]
+            ls_bids_converted = os.listdir(bids_dir_abspath)
+            if nimb_id not in ls_bids_converted:
+                convert_2bids = True
+            elif ses not in os.listdir(os.path.join(bids_dir_abspath, nimb_id)):
+                convert_2bids = True
         else:
-            print(f'    bids folder located remotely: {bids_location}')
-        return bids_convert
+            print(f'    bids folder located remotely: {bids_dir_location}')
+        return convert_2bids
 
 
     def classify_with_dcm2bids(self, nimb_classified = False):
@@ -180,15 +180,22 @@ class ProjectManager:
             for nimb_id in ls_nimb_ids:
                 ls_sessions = [i for i in nimb_classified[nimb_id] if i not in ('archived',)]
                 for ses in ls_sessions:
-                    bids_convert = self.id_is_bids_converted(nimb_id, ses)
-                    print(f'    must convert to BIDS: {bids_convert}')
-                    if bids_convert:
-                        print(f'    started dcm2bids classification for id: {nimb_id} session: {ses}')
-                        DCM2BIDS_helper(self.project_vars,
-                                        self.project,
-                                        nimb_classified_per_id = nimb_classified[nimb_id],
-                                        DICOM_DIR = self.DICOM_DIR,
-                                        tmp_dir = self.NIMB_tmp).run(nimb_id, ses)
+                    convert_2bids = self.id_is_bids_converted(nimb_id, ses)
+                    print(f'    must convert to BIDS: {convert_2bids}')
+                    if convert_2bids:
+                        bids_id = self.convert_with_dcm2bids(nimb_id,
+                                                            ses,
+                                                            nimb_classified[nimb_id])
+                        print(f'        bids_id is: {bids_id}')
+
+
+    def convert_with_dcm2bids(self, nimb_id, ses, nimb_classified_per_id):
+        print(f'    started dcm2bids classification for id: {nimb_id} session: {ses}')
+        return DCM2BIDS_helper(self.project_vars,
+                        self.project,
+                        nimb_classified_per_id = nimb_classified_per_id,
+                        DICOM_DIR = self.DICOM_DIR,
+                        tmp_dir = self.NIMB_tmp).run(nimb_id, ses)
 
 
     def get_dir_with_raw_MR_data(self, src_dir, _dir):

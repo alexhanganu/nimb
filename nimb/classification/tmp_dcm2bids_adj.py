@@ -30,16 +30,17 @@ class DCM2BIDS_tester():
         self.OUTPUT_DIR      = makedir_ifnot_exist(params.o)
         self.archived        = False
 
-    def run(self, bids_id = 'none', ses = 'none'):
-       #run dcm2bids:
+    def run(self, nimb_id = 'none', ses = 'none'):
+        #run dcm2bids:
         '''
-            if nimb_classified.json[bids_id][archived]:
+            if nimb_classified.json[nimb_id][archived]:
                 extract from archive specific subject_session
                 start dcm2bids for subject_session
         '''
         print(f'        folder with subjects is: {self.DICOM_DIR}')
-        self.bids_id = bids_id
+        self.nimb_id = nimb_id
         self.ses     = ses
+        self.bids_id = f'sub-{self.nimb_id}_{self.ses}'
         if self.id_classified:
             self.start_stepwise_choice()
         else:
@@ -50,15 +51,19 @@ class DCM2BIDS_tester():
                 print(f'        could not load the nimb_classified file at: {self.DICOM_DIR}')
                 sys.exit(0)
         if self.nimb_classified:
-            self.bids_ids = list(self.nimb_classified.keys())
-            for self.bids_id in self.bids_ids:
-                self.id_classified = self.nimb_classified[self.bids_id]
+            self.nimb_ids = list(self.nimb_classified.keys())
+            for self.nimb_id in self.nimb_ids:
+                self.id_classified = self.nimb_classified[self.nimb_id]
                 for self.ses in [i for i in self.id_classified if i not in ('archived',)]:
                     self.start_stepwise_choice()
+        if nimb_id != 'none':
+            return self.bids_id
+        else:
+            return 'none'
 
 
     def start_stepwise_choice(self):
-        print(f'\n\n        classifying for id: {self.bids_id} for session: {self.ses}')
+        print(f'\n\n        classifying for id: {self.bids_id}')
         if self.id_classified['archived']:
             self.archived = True
         for self.data_Type in BIDS_types:
@@ -74,7 +79,7 @@ class DCM2BIDS_tester():
                         path2mr_ = paths_2mr_data[0]
                         print(f'        converting mr type: {self.data_Type}')
                         self.abs_path2mr = self.get_path_2mr(path2mr_)
-                        self.sub_SUBJDIR = os.path.join(self.OUTPUT_DIR, 'tmp_dcm2bids', f'sub-{self.bids_id}_{self.ses}')
+                        self.sub_SUBJDIR = os.path.join(self.OUTPUT_DIR, 'tmp_dcm2bids', self.bids_id)
                         self.run_dcm2bids()
                         if os.path.exists(self.sub_SUBJDIR) and \
                             len(os.listdir(self.sub_SUBJDIR)) > 0:
@@ -90,21 +95,20 @@ class DCM2BIDS_tester():
             self.config_file = self.get_config_file()
             return_value = os.system('dcm2bids -d {} -p {} -s {} -c {} -o {}'.format(
                                                                                     self.abs_path2mr,
-                                                                                    self.bids_id,
+                                                                                    self.nimb_id,
                                                                                     self.ses,
                                                                                     self.config_file,
                                                                                     self.OUTPUT_DIR))
+            # Calculate the return value code
             return_value = int(bin(return_value).replace("0b", "").rjust(16, '0')[:8], 2)
-            print("*" * 50)
-            print('    return value is: ',return_value)
+            print('return value is: ',return_value)
             if return_value != 0: # failed
-                print('    first try failed; re-reunning dcm2bids')
                 os.system('dcm2bids -d {} -p {} -s {} -c {} -o {}'.format(self.abs_path2mr,
-                                                                        self.bids_id,
+                                                                        self.nimb_id,
                                                                         self.ses,
                                                                         self.config_file,
                                                                         self.OUTPUT_DIR))
-                print("/"*40)
+            print("/"*40)
 
 
     def chk_if_processed(self):
