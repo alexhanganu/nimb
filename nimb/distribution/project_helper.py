@@ -28,8 +28,13 @@ from distribution.manage_archive import is_archive, ZipArchiveManagement
 MUST BE ADAPTED according this this understanding:
 ID description:
 project_id: ID provided by the user in a grid file.
-nimb_id   : ID based on provided MR data, nimb_id name does NOT include the session; e.g.: ID1 (e.g., in PPMI nimb_id = 3378)
-bids_id   : ID after using the dcm2bids conversion; it includes the session; e.g.: sub-ID1_ses-1 (e.g., in PPMI nimb_id = 3378_ses-1)
+            project_id = ID1 (in PPMI nimb_id = 3378)
+nimb_id   : ID based on provided MR data, 
+            nimb_id name does NOT include the session; 
+            e.g. ID1 (in PPMI nimb_id = 3378)
+bids_id   : ID after using the dcm2bids conversion;
+            it includes the session;
+            e.g.: sub-ID1_ses-1 (in PPMI nimb_id = 3378_ses-1)
 '''
 
 class ProjectManager:
@@ -139,7 +144,6 @@ class ProjectManager:
                             if dcm2bids not efficient:
                                 populate new_subjects with raw DCM
                     '''
-
 
 #            self.get_ids_classified()
 #            self.populate_grid()

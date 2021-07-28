@@ -33,6 +33,14 @@ class DCM2BIDS_helper():
     algo: (1) convert (run()), (2) check if any unconverted (chk_if_processed()),
           (3) if not converted, try to create the config file (update_config())
           (4) redo run() up to repeat_lim
+
+    ID description:
+    nimb_id   : ID based on provided MR data, 
+                nimb_id name does NOT include the session; 
+                e.g. ID1 (in PPMI nimb_id = 3378)
+    bids_id   : ID after using the dcm2bids conversion;
+                it includes the session;
+                e.g.: sub-ID1_ses-1 (in PPMI nimb_id = 3378_ses-1)
     """
 
     def __init__(self,
@@ -66,10 +74,10 @@ class DCM2BIDS_helper():
                 start dcm2bids for subject_session
         '''
         print(f'        folder with subjects is: {self.DICOM_DIR}')
-        self.nimb_id = nimb_id
-        self.ses     = ses
-        self.bids_id = f'sub-{self.nimb_id}_{self.ses}'
         if self.id_classified:
+            self.nimb_id = nimb_id
+            self.ses     = ses
+            self.bids_id = self.make_bids_id()
             self.start_stepwise_choice()
         else:
             self.nimb_classified = dict()
@@ -83,11 +91,16 @@ class DCM2BIDS_helper():
             for self.nimb_id in self.nimb_ids:
                 self.id_classified = self.nimb_classified[self.nimb_id]
                 for self.ses in [i for i in self.id_classified if i not in ('archived',)]:
+                    self.bids_id = self.make_bids_id()
                     self.start_stepwise_choice()
         if nimb_id != 'none':
             return self.bids_id
         else:
             return 'none'
+
+
+    def make_bids_id(self):
+        return f'sub-{self.nimb_id}_{self.ses}'
 
 
     def start_stepwise_choice(self):
