@@ -17,6 +17,7 @@ def plot_simple(vals, xlabel, ylabel, path_to_save_file):
     plt.ylabel(ylabel)
     plt.savefig(path_to_save_file)
 
+
 def plot_features(df): #written by Lynn Valeyry Verty, adapted by Alex Hanganu
     plt.figure(figsize=(20, 10))
     plt.pcolor(df, cmap = 'bwr')
@@ -26,7 +27,12 @@ def plot_features(df): #written by Lynn Valeyry Verty, adapted by Alex Hanganu
     plt.title('All Parameters', loc='center')
     plt.show()
 
-def Make_plot_group_difference(df, param_features, group_col, groups, PATH_2plots):
+
+def Make_plot_group_difference(df,
+                                param_features,
+                                group_col,
+                                groups,
+                                PATH_2plots):
     for param_y in param_features:
         for feat in param_features[param_y]:
             df_group = pd.DataFrame({'group':df[group_col],\
@@ -44,9 +50,11 @@ def Make_plot_group_difference(df, param_features, group_col, groups, PATH_2plot
             group_plot.figure.savefig(path.join(PATH_2plots, fig_name))
             plt.close()
 
-def Make_Plot_Regression(df, param_features, group_col,
-                         PATH_2plots):
 
+def Make_Plot_Regression(df,
+                        param_features,
+                        group_col,
+                        PATH_2plots):
     for param_y in param_features:
         for feat in param_features[param_y]:
             df_plot = pd.DataFrame({

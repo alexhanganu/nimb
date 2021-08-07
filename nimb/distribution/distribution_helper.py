@@ -263,10 +263,11 @@ class DistributionHelper():
            get group file (provided by user)
            return final stats_grid_file that will be used for statistical analysis
         """
-        dir_4stats       = makedir_ifnot_exist(self.all_vars.stats_vars["STATS_PATHS"]["STATS_HOME"])
+        dir_4stats       = makedir_ifnot_exist(self.proj_vars["STATS_PATHS"]["STATS_HOME"])
         fname_groups     = self.proj_vars['fname_groups']
         file_other_stats = []
-        file_names = self.all_vars.stats_vars["STATS_FILES"]
+        file_names = self.proj_vars["STATS_FILES"]
+        print(file_names)
         for file in ["fname_fs_all_stats", "fname_func_all_stats", "fname_other_stats"]:
             file_name = self.proj_vars[file]
             if file_name:
@@ -294,7 +295,7 @@ class DistributionHelper():
             else:
                 return False
         '''
-        dir_4stats       = makedir_ifnot_exist(self.all_vars.stats_vars["STATS_PATHS"]["STATS_HOME"])
+        dir_4stats       = makedir_ifnot_exist(self.proj_vars["STATS_PATHS"]["STATS_HOME"])
         local, PROCESSED_FS_DIR, _ = self.get_local_remote_dir(self.proj_vars["PROCESSED_FS_DIR"])
         if local:
             fname_groups     = self.proj_vars['fname_groups']

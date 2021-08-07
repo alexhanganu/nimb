@@ -9,11 +9,10 @@ from distribution import utilities
 
 
 class MakeGrid:
-    def __init__(self, project_vars, stats_vars):
+    def __init__(self, project_vars):
         self.project_vars  = project_vars
-        self.stats_vars    = stats_vars
-        self.file_names    = stats_vars["STATS_FILES"]
-        self.stats_HOME    = self.stats_vars["STATS_PATHS"]["STATS_HOME"]
+        self.file_names    = self.project_vars["STATS_FILES"]
+        self.stats_HOME    = self.project_vars["STATS_PATHS"]["STATS_HOME"]
         self.id_col        = project_vars['id_col']
         self.group_col     = project_vars['group_col']
         self.vars_4stats   = project_vars['variables_for_glm']

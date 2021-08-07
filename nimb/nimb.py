@@ -73,8 +73,9 @@ class NIMB(object):
                 if fname_groups:
                     self.vars_local['PROCESSING']['processing_env']  = "tmux" #probably works with slurm, must be checked
                     schedule = Scheduler(self.vars_local)
+                    step_stats = self.all_vars.params.step
                     cd_cmd = 'cd {}'.format(path.join(self.NIMB_HOME, 'stats'))
-                    cmd = f'{self.py_run_cmd} stats_helper.py -project {self.project}'
+                    cmd = f'{self.py_run_cmd} stats_helper.py -project {self.project} -step {step_stats}'
                     schedule.submit_4_processing(cmd, 'nimb_stats','run', cd_cmd)
 
 
@@ -232,6 +233,23 @@ def get_parameters(projects):
         action='store_true',
         help="paths that contain spaces will not be read by FreeSurfer. \
             This parameter will tell nimb to change spaces to underscores during the classification",
+    )
+
+    parser.add_argument(
+        "-step", required=True,
+        default='00',
+        choices = ['00', '0', '01', '02', '03', '04', '05', '052'],
+        help="choices for statistical analysis:\
+                00 = run all steps; \
+                0  = make groups; \
+                01 = run ttests demographics; \
+                02 = run anova; \
+                03 = run simple linear regresison; \
+                04 = run logistic regression \
+                05 = run prediction with RF SKF \
+                052= run prediction with RF LOO \
+                06 = run linear regression moderation \
+                07 = run laterality analysis ",
     )
 
     params = parser.parse_args()
