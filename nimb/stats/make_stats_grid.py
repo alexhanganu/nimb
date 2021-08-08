@@ -22,7 +22,7 @@ class MakeGrid:
         self.preproc       = Preprocess(utilities)
         self.thresh_rm_col = 0.25
         self.cp2materials  = []
-        self.grid_file     = path.join(self.stats_HOME, "grid.csv")
+        self.grid_file     = path.join(self.stats_HOME, self.project_vars["fname_groups"])#"grid.csv")
 
 
     def grid(self):
