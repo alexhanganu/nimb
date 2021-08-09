@@ -283,19 +283,19 @@ class Get_Vars():
         NIMB_PATHS['NIMB_PROCESSED_DIPY']     = os.path.join(new_NIMB_tmp, 'nimb_processed_dipy')
         NIMB_PATHS['NIMB_PROCESSED_FS_error'] = os.path.join(new_NIMB_tmp, 'nimb_processed_fs_error')
 
-        new_miniconda_path = get_userdefined_paths('miniconda3 folder',
-                                                os.path.join(NIMB_HOME.replace('/nimb/nimb', ''), 'miniconda3'),
-                                                'miniconda3')
-        NIMB_PATHS['conda_home']              = new_miniconda_path
-        NIMB_PATHS['miniconda_python_run']    = os.path.join(new_miniconda_path,
-                                                            'bin',
-                                                            'python3.7').replace(os.path.expanduser("~"),"~")
-        local_vars['NIMB_PATHS'] = NIMB_PATHS
 
         '''setting FREESURFER paths'''
         new_freesurfer_path = get_userdefined_paths('FreeSurfer folder',
                                                     os.path.join(NIMB_HOME.replace('/nimb/nimb', ''),'freesurfer'),
                                                     'freesurfer')
+
+        new_conda_path = new_freesurfer_path.replace("freesurfer", "conda3")
+        NIMB_PATHS['conda_home']              = new_conda_path
+        NIMB_PATHS['miniconda_python_run']    = os.path.join(new_conda_path,
+                                                            'bin',
+                                                            'python3.7').replace(os.path.expanduser("~"),"~")
+        local_vars['NIMB_PATHS'] = NIMB_PATHS
+
         FS_PATHS   = local_vars['FREESURFER']
         FS_PATHS['FREESURFER_HOME']       = new_freesurfer_path
         FS_PATHS['FS_SUBJECTS_DIR']       = os.path.join(new_freesurfer_path, 'subjects')

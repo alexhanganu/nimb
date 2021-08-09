@@ -25,6 +25,13 @@ class DEFAULT(object):
     fname_fs_all_stats   = "fs_all_stats"
     fname_func_all_stats = "func_all_stats"
     fname_other_stats    = "stats_other"
+    fname_fs_per_param   = "stats_FreeSurfer_per_param"
+    fname_fs_subcort_vol = "stats_FreeSurfer_subcortical"
+    fname_NaNcor         = "stats_NaNcor"
+    fname_eTIVcor        = "stats_eTIVcor"
+    fname_Outcor         = "stats_Outcor"
+    file_type            = "csv"
+
 
     stats_dirs      = {
                     "FS_GLM_dir"             :'fs_glm',

@@ -5,7 +5,6 @@ script creates the final grid file for statistical analysis
 from os import path
 from .db_processing import Table
 from stats.preprocessing import Preprocess
-from distribution import utilities
 
 
 class MakeGrid:
@@ -19,7 +18,7 @@ class MakeGrid:
         self.miss_val_file = path.join(self.stats_HOME, "missing_values.json")
         self.file2save_out = path.join(self.stats_HOME, "outliers.json")
         self.tab           = Table()
-        self.preproc       = Preprocess(utilities)
+        self.preproc       = Preprocess()
         self.thresh_rm_col = 0.25
         self.cp2materials  = []
         self.grid_file     = path.join(self.stats_HOME, self.project_vars["fname_groups"])#"grid.csv")

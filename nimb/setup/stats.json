@@ -12,7 +12,6 @@
    },
 "STATS_PARAMS": {
        "prediction_vars"        : {"pca_threshold":0.5, "skf_NUM_ITER": 150, "NUM_ITER": 10, "nr_threads" : 15},
-
        "cor_methods"            : ["pearson","spearman","kendall"],
        "cor_level_chosen"       : ["STRONG","MODERATE","WEAK"]
    },
@@ -21,6 +20,7 @@
        "fname_fs_all_stats"     : "stats_FreeSurfer",
        "fname_fs_subcort_vol"   : "stats_FreeSurfer_subcortical",
        "fname_func_all_stats"   : "stats_Nilearn",
+       "fname_other_stats"      : "default",
        "fname_NaNcor"           : "stats_NaNcor",
        "fname_eTIVcor"          : "stats_eTIVcor",
        "fname_Outcor"           : "stats_Outcor",
@@ -46,6 +46,7 @@
        "fname_NaNcor"           : "name of the file where all values were checked for missing values (nan); missing values are changed to column mean",
        "fname_eTIVcor"          : "name of the file with FreeSurfer stats in which subcortical volumes were corrected for estimated Total Intracranial Volume (eTIV",
        "fname_Outcor"           : "name of the file where all values were checked for outliers; outliers are changed to column mean",
+       "fname_other_stats": "name of the file located in materials_DIR that has additional stats on one sheet that need to be added to the file fname_groups",
        "file_type"              : "xlsx (default), xslx, csv - type of file that user want to use to save the final stats results"
    }
 }

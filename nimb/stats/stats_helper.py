@@ -25,7 +25,7 @@ class RUN_stats():
         print('    variables to analyse: {:<50}'.format(str(self.project_vars['variables_for_glm'])))
 
         self.tab = Table()
-        self.preproc = preprocessing.Preprocess(utilities)
+        self.preproc = preprocessing.Preprocess()
         self.df_user_stats, self.df_final_grid,\
             self.df_adjusted,\
             self.cols_X,\
@@ -44,16 +44,18 @@ class RUN_stats():
         self.use_features            = False
         self.feature_algo            = 'PCA' #'RFE'
 
-         for group in ['all',]+self.groups: #'all' stands for all groups
+        for group in ['all',]+self.groups: #'all' stands for all groups
             df_X, y_labeled, X_scaled, df_clin_group = self.get_X_data_per_group_all_groups(group)
             df_with_features, features, features_rfe_and_rank_df = self.get_features_df_per_group(group, X_scaled, y_labeled, df_X)
 
             if group == 'all':
+                self.params_y = self.project_vars['variables_for_glm']
+
                 # STEP run general stats
                 if step2run == "STEP_stats_ttest":
                     from stats.stats_stats import ttest_do
 
-                    variables = self.project_vars['variables_for_glm']+df_X.columns.tolist()
+                    variables = self.params_y+df_X.columns.tolist()
                     dir_2save = varia.get_dir(path.join(self.dir_stats_home, group))
                     ttest_res = ttest_do(self.tab.join_dfs(df_clin_group, df_X),
                                             self.group_col,
@@ -66,32 +68,30 @@ class RUN_stats():
                 if step2run == "STEP_Anova":
                     from stats.stats_models import ANOVA_do
                     print('performing ANOVA')
-                    sig_cols = ANOVA_do(self.df_final_grid,
-                                       self.project_vars['variables_for_glm'], features,
-                                       varia.get_dir(self.stats_paths['anova']),
-                                       p_thresh = 0.05, intercept_thresh = 0.05).sig_cols
+                    sig_cols = self.run_anova(features, 0.05, 0.05)
 
-                if step2run == "STEP_SimpLinReg": ## requires Anova to be True !!!!!! must change  and remove ANOVA limitation
-                    print('performing Simple Linear Regression based on ANOVA significant columns')
+                if step2run == "STEP_SimpLinReg":
+                    print('performing Simple Linear Regression on all columns')
                     from stats.plotting import Make_Plot_Regression, Make_plot_group_difference
                     dir_2save = varia.get_dir(self.stats_paths['simp_lin_reg_dir'])
+                    param_features = self.run_anova(features, 1.0, 1.0)
                     Make_Plot_Regression(self.df_final_grid,
-                                         sig_cols,
+                                         param_features,
                                          self.group_col,
                                          dir_2save)
                     dir_2save = varia.get_dir(self.stats_paths['anova'])
                     Make_plot_group_difference(self.df_final_grid,
-                                               sig_cols,
+                                               param_features,
                                                self.group_col, 
                                                self.groups,
                                                dir_2save)
 
                     # from stats.stats_groups_anova import RUN_GroupAnalysis_ANOVA_SimpleLinearRegression
                     # dir_2save = varia.get_dir(path.join(self.dir_stats_home,
-                    #                                     f'{self.stats_paths['anova']}_{group}'))
+                    #                                     self.stats_paths['anova']+"_"+group))
                     # RUN_GroupAnalysis_ANOVA_SimpleLinearRegression(self.df_final_grid,
                     #                                         groups,
-                    #                                         self.project_vars['variables_for_glm'],
+                    #                                         self.params_y,
                     #                                         self.project_vars['other_params'],
                     #                                         dir_2save,
                     #                                         self.group_col,
@@ -102,7 +102,7 @@ class RUN_stats():
                     from stats import stats_LogisticRegression
                     print('performing Logistic Regression for all groups')
                     dir_2save = varia.get_dir(path.join(self.dir_stats_home,
-                                                        f'{self.stats_paths['logistic_regression_dir']}_{group}'))
+                                                        self.stats_paths['logistic_regression_dir']+"_"+group))
                     stats_LogisticRegression.Logistic_Regression(X_scaled,
                                                                 y_labeled,
                                                                 self.group_col,
@@ -173,9 +173,22 @@ class RUN_stats():
         print('running descriptive statistics')
 
 
+    def run_anova(self, features, p_thresh, intercept_thresh):
+        from stats.stats_models import ANOVA_do
+        dir_2save = varia.get_dir(self.stats_paths['anova'])
+        return ANOVA_do(self.df_final_grid,
+                       self.params_y,
+                       features,
+                       dir_2save,
+                       p_thresh = p_thresh,
+                       intercept_thresh = intercept_thresh).sig_cols
+
+
+
     def get_X_data_per_group_all_groups(self, group):
     # extract X_scaled values for the brain parameters
         predicted_target = self.project_vars["prediction_target"]
+        print(f"    predicted target column is: {predicted_target}")
         if not predicted_target:
             predicted_target = self.group_col
         if group == 'all':
@@ -258,7 +271,7 @@ def get_parameters(projects):
     )
 
     parser.add_argument(
-        "-project", required=False,
+        "-project", required=True,
         default=projects[0],
         choices = projects,
         help="names of projects located in credentials_path.py/nimb/projects.json -> PROJECTS",
@@ -267,7 +280,7 @@ def get_parameters(projects):
     parser.add_argument(
         "-step", required=True,
         default='00',
-        choices = ['00', '0', '01', '02', '03', '04', '05', '052'],
+        choices = ['00', '0', '01', '02', '03', '04', '05', '052', '06', '07'],
         help="choices for statistical analysis:\
                 00 = run all steps; \
                 0  = make groups; \
