@@ -54,6 +54,7 @@ class ANOVA_do():
         self.ls_cols4anova = ls_cols4anova
         self.sig_cols      = dict()
         self.tab           = Table()
+        self.print_not_FS  = print_not_FS
         self.fs_struc_meas = fs_definitions.GetFSStructureMeasurement()
         self.run_anova(p_thresh, intercept_thresh, path2save)
 
@@ -71,7 +72,7 @@ class ANOVA_do():
             for col in self.ls_cols4anova:
                 y = np.array(self.df[col])
                 data_tmp = pd.DataFrame({'x':x,col:y})
-                model = ols(col+" ~ x", data_tmp).fit()
+                model = ols(col+" ~ x", data = data_tmp).fit()
                 if model.pvalues.Intercept < p_thresh and model.pvalues.x < intercept_thresh:
                     measurement, structure, ls_err = self.fs_struc_meas.get(col, ls_err)
                     if param_y not in self.sig_cols:
@@ -87,7 +88,7 @@ class ANOVA_do():
             self.tab.save_df_tocsv(df_result_list, path.join(path2save, f'anova_per_significance_{param_y}.csv'))
             self.tab.save_df_tocsv(df_result, path.join(path2save, f'anova_per_structure_{param_y}.csv'))
         save_json(self.sig_cols, path.join(path2save, f'anova_significant_features.json'))
-        if print_not_FS:
+        if self.print_not_FS:
             print('NOT freesurfer structures: ', ls_err)
 
     def populate_df(self, df, idx, cols_vals):

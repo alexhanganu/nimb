@@ -24,9 +24,10 @@ class DEFAULT(object):
     group_col            = "group"
     fname_fs_all_stats   = "fs_all_stats"
     fname_func_all_stats = "func_all_stats"
+    fname_diff_all_stats = "diff_all_stats"
     fname_other_stats    = "stats_other"
-    fname_fs_per_param   = "stats_FreeSurfer_per_param"
-    fname_fs_subcort_vol = "stats_FreeSurfer_subcortical"
+    fname_fs_per_param   = "stats_fs_per_param"
+    fname_fs_subcort_vol = "stats_fs_subcortical"
     fname_NaNcor         = "stats_NaNcor"
     fname_eTIVcor        = "stats_eTIVcor"
     fname_Outcor         = "stats_Outcor"
@@ -38,11 +39,11 @@ class DEFAULT(object):
                     "STATS_HOME"             :'stats',
                     "features"               :'stats/features',
                     "anova"                  :'stats/anova',
-                    "simp_lin_reg_dir"       :'stats/simp_lin_reg_dir',
-                    "laterality_dir"         :'stats/laterality_dir',
-                    "predict_dir"            :'stats/predict_dir',
-                    "logistic_regression_dir":'stats/logistic_regression_dir',
-                    "linreg_moderation_dir"  :'stats/linreg_moderation_dir',
+                    "simp_lin_reg_dir"       :'stats/simp_lin_reg',
+                    "laterality_dir"         :'stats/laterality',
+                    "predict_dir"            :'stats/prediction',
+                    "logistic_regression_dir":'stats/logistic_regression',
+                    "linreg_moderation_dir"  :'stats/linreg_moderation',
                         }
     f_nimb_classified = 'nimb_classified.json'
     f_nimb_classified_archive = 'nimb_classified_archive.json'
@@ -67,3 +68,9 @@ def get_keys_processed(key):
         return 'dipy'
     else:
         return 'none'
+'''
+fname_NaNcor: file-name after correcting for NaNs or missing values
+fname_eTIVcor: file-name after correcting for eTIV
+fname_Outcor: file-name after correcting for outliers
+
+'''

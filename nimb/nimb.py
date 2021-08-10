@@ -237,19 +237,20 @@ def get_parameters(projects):
 
     parser.add_argument(
         "-step", required=True,
-        default='00',
-        choices = ['00', '0', '01', '02', '03', '04', '05', '052'],
+        default='all',
+        choices = ['all', 'groups', 'ttest', 'anova', 'simplinreg',
+                    'logreg', 'predskf', 'predloo', 'linregmod', 'laterality'],
         help="choices for statistical analysis:\
-                00 = run all steps; \
-                0  = make groups; \
-                01 = run ttests demographics; \
-                02 = run anova; \
-                03 = run simple linear regresison; \
-                04 = run logistic regression \
-                05 = run prediction with RF SKF \
-                052= run prediction with RF LOO \
-                06 = run linear regression moderation \
-                07 = run laterality analysis ",
+                all        = run all steps; \
+                groups     = make groups; \
+                ttest      = run ttests demographics; \
+                anova      = run anova; \
+                simplinreg = run simple linear regresison; \
+                logreg     = run logistic regression \
+                predskf    = run prediction with RF SKF \
+                predloo    = run prediction with RF LOO \
+                linregmod  = run linear regression moderation \
+                laterality = run laterality analysis ",
     )
 
     params = parser.parse_args()
