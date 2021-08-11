@@ -3,9 +3,10 @@ import os
 import sys
 import shutil
 
-from distribution.utilities import save_json, ErrorMessages, makedir_ifnot_exist
+from distribution.utilities import save_json, ErrorMessages, makedir_ifnot_exist, get_path
 from distribution.setup_miniconda import setup_miniconda
 from distribution.setup_freesurfer import SETUP_FREESURFER
+from distribution.distribution_definitions import DEFAULT
 from setup.interminal_setup import get_yes_no, get_userdefined_paths, term_setup
 from setup import interminal_setup
 try:
@@ -296,28 +297,40 @@ class DistributionHelper():
         '''
         dir_4stats       = makedir_ifnot_exist(self.proj_vars["STATS_PATHS"]["STATS_HOME"])
         local, PROCESSED_FS_DIR, _ = self.get_local_remote_dir(self.proj_vars["PROCESSED_FS_DIR"])
+        subjects =  os.listdir(PROCESSED_FS_DIR)
+
         if local:
             fname_groups     = self.proj_vars['fname_groups']
             f_ids_processed_name = self.locations["local"]["NIMB_PATHS"]['file_ids_processed']
-            if not self.get_files_for_stats(dir_4stats,
+            if self.get_files_for_stats(dir_4stats,
                                 [fname_groups, f_ids_processed_name]):
-                sys.exit()
-    #     '''
-    #     checks if subject is archived
-    #     extract the "stats" folder of the subject
-    #     '''
-    #     sub_path = self.get_path(self.NIMB_PROCESSED_FS, sub)
-    #     if not os.path.isdir(sub_path):
-    #         if sub.endswith('zip'):
-    #             print('Must extract folder {} for each subject to destination {}'.format('stats', sub_path))
-    #             ZipArchiveManagement(sub_path, 
-    #                                 path2xtrct = self.NIMB_tmp, path_err = False,
-    #                                 dirs2xtrct = [self.dir_stats,], log=True)
-    #             time.sleep(1)
-    #             sub = sub.replace('.zip','')
-    #             return self.get_path(self.NIMB_tmp, sub), sub
-    #     else:
-    #         return sub_path, sub
+                subjects = ProjectManager(self.all_vars).get_ids_all()
+        return self.extract_stats_from_archive(subjects, PROCESSED_FS_DIR)
+
+
+    def extract_stats_from_archive(self, subjects, PROCESSED_FS_DIR):
+        '''
+        checks if subjects are list() are archived
+        extract the "stats" folder of the subject
+        '''
+        from .manage_archive import is_archive, ZipArchiveManagement
+        archived = list()
+        for sub in subjects:
+            path_2sub = get_path(PROCESSED_FS_DIR, sub)
+            if not os.path.isdir(path_2sub):
+                if is_archive(sub):
+                    archived.append(path_2sub)
+
+        if archived:
+            dirs2extract = ['stats',]
+            tmp_dir = os.path.join(self.NIMB_tmp, DEFAULT.nimb_tmp_dir)
+            makedir_ifnot_exist(tmp_dir)
+            PROCESSED_FS_DIR = tmp_dir
+            for path_2sub in archived:
+                        print('Must extract folder {} for each subject to destination {}'.format('stats', path_2sub))
+                        ZipArchiveManagement(path_2sub, 
+                                            path2xtrct = tmp_dir, path_err = False,
+                                            dirs2xtrct = dirs2extract, log=True)
         return PROCESSED_FS_DIR
 
 
@@ -335,11 +348,11 @@ class DistributionHelper():
         if os.path.exists(f_GLM_group) and os.path.exists(f_ids_processed):
             from processing.freesurfer.fs_glm_prep import CheckIfReady4GLM
             ready, miss_ls = CheckIfReady4GLM(self.locations["local"]['NIMB_PATHS'], 
-                                                    self.locations["local"]['FREESURFER'], 
-                                                    self.proj_vars, 
-                                                    f_ids_processed, 
-                                                    f_GLM_group,
-                                                    FS_GLM_dir).chk_if_subjects_ready()
+                                                self.locations["local"]['FREESURFER'], 
+                                                self.proj_vars, 
+                                                f_ids_processed, 
+                                                f_GLM_group,
+                                                FS_GLM_dir).chk_if_subjects_ready()
             print(f'variables used for GLM are: {self.proj_vars["variables_for_glm"]}')
             print(f'    ID columns is: {self.proj_vars["id_col"]}')
             print(f'    Group column is: {self.proj_vars["group_col"]}')

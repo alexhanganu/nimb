@@ -19,6 +19,7 @@ class DEFAULT(object):
                         }
 
     default_tab_name = 'default.csv'
+    nimb_tmp_dir     = 'nimb_tmp_dir'
     BIDS_DIR_name    = 'bids'
 
     group_col            = "group"

@@ -219,7 +219,7 @@ class ProjectManager:
         dir_2extract = self.dir_new_subjects
         tmp_dir_2extract = ''
         if self.project in DEFAULT.project_ids:
-            tmp_dir_2extract = os.path.join(self.NIMB_tmp, 'tmp_dir_2extract')
+            tmp_dir_2extract = os.path.join(self.NIMB_tmp, DEFAULT.nimb_tmp_dir)
             makedir_ifnot_exist(tmp_dir_2extract)
             dir_2extract = tmp_dir_2extract
         ZipArchiveManagement(

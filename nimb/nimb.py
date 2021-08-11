@@ -97,8 +97,8 @@ class NIMB(object):
                     self.vars_local['PROCESSING']['processing_env']  = "tmux" #probably works with slurm, must be checked
                     schedule = Scheduler(self.vars_local)
                     dir_4stats = self.project_vars['STATS_PATHS']["STATS_HOME"]
-                    # dir_4stats = self.stats_vars["STATS_PATHS"]["STATS_HOME"]
-                    cmd = f'{self.py_run_cmd} fs_stats2table.py -project {self.project} -stats_dir {dir_4stats}'
+                    dir_with_fs_stats = PROCESSED_FS_DIR
+                    cmd = f'{self.py_run_cmd} fs_stats2table.py -project {self.project} -stats_dir {dir_4stats} -dir_fs_stats {dir_with_fs_stats}'
                     cd_cmd = 'cd {}'.format(path.join(self.NIMB_HOME, 'processing', 'freesurfer'))
                     schedule.submit_4_processing(cmd, 'fs_stats','get_stats', cd_cmd)
 
@@ -236,7 +236,7 @@ def get_parameters(projects):
     )
 
     parser.add_argument(
-        "-step", required=True,
+        "-step", required=False,
         default='all',
         choices = ['all', 'groups', 'ttest', 'anova', 'simplinreg',
                     'logreg', 'predskf', 'predloo', 'linregmod', 'laterality'],

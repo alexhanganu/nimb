@@ -4,19 +4,24 @@ Extract the stats data for all subjects located in a folder, to 2/3 excel files
 
 Args:
     PATHstats = path of the folder where the final excel files will be saved
-    NIMB_PROCESSED_FS = path to the folder where the FreeSurfer processed subjects are located. These can be 
-                        raw folders, or zip archived folders (with .zip as ending)
+    NIMB_PROCESSED_FS = path to the folder where the FreeSurfer processed subjects are located.
+                        These must be un-archived folders, if script is run directly, 
+                        or can be zip archived folders (with .zip as ending) if script is run through nimb.py
     data_only_volumes = True or False, is user wants an additional file to constructed that will include only subcortical volumes
 Return:
     an excel file with all subjects and all parameters, per sheets
     one big excel file with all parameters on one sheet
 '''
+from os import path, listdir, sep, system
+import sys
+import argparse
 
-from os import path, listdir, sep
 import pandas as pd
 import numpy as np
 import xlsxwriter, xlrd
 import json
+import time
+
 from fs_definitions import (BS_Hip_Tha_stats_f, brstem_hip_header,
                              segmentation_parameters,
                              segmentations_header, parc_parameters,
@@ -26,6 +31,18 @@ from fs_definitions import (BS_Hip_Tha_stats_f, brstem_hip_header,
 import logging
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
+
+archive_types = ('.zip', '.gz', '.tar.gz')
+
+def is_archive(file):
+    archived = False
+    archive_type = 'none'
+    for ending in archive_types:
+        if file.endswith(ending):
+            archived = True
+            archive_type = ending
+            break
+    return archived, archive_type
 
 
 def chk_if_all_stats_present(_SUBJECT, stats_dir_path, miss = dict()):
@@ -46,42 +63,45 @@ def chk_if_all_stats_present(_SUBJECT, stats_dir_path, miss = dict()):
         return d
 
     ready = True
-    for sheet in BS_Hip_Tha_stats_f:
-        try:
-            file_with_stats = [i for i in BS_Hip_Tha_stats_f[sheet] if path.exists(path.join(stats_dir_path.replace('/stats',''),i))][0]
-            if not file_with_stats:
-                logger.info('missing: {}'.format(sheet))
+
+    archived, _ = is_archive(_SUBJECT)
+    if archived:
+        logger.info(f'subject: {_SUBJECT} is archived. Please run through nimb.py -process fs-get-stats')
+        ready = False
+    else:
+        for sheet in BS_Hip_Tha_stats_f:
+            try:
+                file_with_stats = [i for i in BS_Hip_Tha_stats_f[sheet] if path.exists(path.join(stats_dir_path.replace('/stats',''),i))][0]
+                if not file_with_stats:
+                    logger.info('missing: {}'.format(sheet))
+                    ready = False
+                    miss = add_2dict(miss, _SUBJECT, sheet)
+            except Exception as e:
+                logger.info(e)
                 ready = False
                 miss = add_2dict(miss, _SUBJECT, sheet)
-        except Exception as e:
-            logger.info(e)
-            ready = False
-            miss = add_2dict(miss, _SUBJECT, sheet)
-    if not path.exists(path.join(stats_dir_path, 'aseg.stats')):
-            logger.info('missing: aseg.stats')
-            ready = False
-            miss = add_2dict(miss, _SUBJECT, 'VolSeg')
-    for hemisphere in parc_DK_f2rd:
-        file_with_stats = parc_DK_f2rd[hemisphere]
+        if not path.exists(path.join(stats_dir_path, 'aseg.stats')):
+                logger.info('missing: aseg.stats')
+                ready = False
+                miss = add_2dict(miss, _SUBJECT, 'VolSeg')
+        for hemisphere in parc_DK_f2rd:
+            file_with_stats = parc_DK_f2rd[hemisphere]
+            if not path.isfile(path.join(stats_dir_path,file_with_stats)):
+                logger.info('missing: {}'.format(file_with_stats))
+                ready = False
+                miss = add_2dict(miss, _SUBJECT, file_with_stats)
+        for hemisphere in parc_DS_f2rd:
+            file_with_stats = parc_DS_f2rd[hemisphere]
+            if not path.isfile(path.join(stats_dir_path,file_with_stats)):
+                logger.info('missing: {}'.format(file_with_stats))
+                ready = False
+                miss = add_2dict(miss, _SUBJECT, file_with_stats)
+        file_with_stats = 'wmparc.stats'
         if not path.isfile(path.join(stats_dir_path,file_with_stats)):
-            logger.info('missing: {}'.format(file_with_stats))
-            ready = False
-            miss = add_2dict(miss, _SUBJECT, file_with_stats)
-    for hemisphere in parc_DS_f2rd:
-        file_with_stats = parc_DS_f2rd[hemisphere]
-        if not path.isfile(path.join(stats_dir_path,file_with_stats)):
-            logger.info('missing: {}'.format(file_with_stats))
-            ready = False
-            miss = add_2dict(miss, _SUBJECT, file_with_stats)
-    file_with_stats = 'wmparc.stats'
-    if not path.isfile(path.join(stats_dir_path,file_with_stats)):
-            ready = False
-            miss = add_2dict(miss, _SUBJECT, file_with_stats)
-            logger.info('missing: {}'.format(file_with_stats))
+                ready = False
+                miss = add_2dict(miss, _SUBJECT, file_with_stats)
+                logger.info('missing: {}'.format(file_with_stats))
     return ready, miss
-
-import time
-date = str(time.strftime('%Y%m%d', time.localtime()))
 
 
 
@@ -106,12 +126,14 @@ class FSStats2Table:
                     new_date = True):
         self.ls_subjects       = ls_subjects
         self.stats_DIR         = stats_DIR
-        self.PATH2subjects     = project_vars["PROCESSED_FS_DIR"][1]
+        self.project_vars      = project_vars
+        self.PATH2subjects     = self.project_vars["PROCESSED_FS_DIR"][1]
         self.stats_files       = stats_files
         fname_fs_per_param     = stats_files["fname_fs_per_param"]
         self.big_file          = big_file
         self.data_only_volumes = data_only_volumes
         if new_date:
+            date = str(time.strftime('%Y%m%d', time.localtime()))
             file_name          = f"{fname_fs_per_param}_{date}.xlsx"
         else:
             file_name          = f"{fname_fs_per_param}.xlsx"
@@ -119,7 +141,7 @@ class FSStats2Table:
         self.dir_stats         = 'stats'
         if not ls_subjects:
             self.ls_subjects = sorted(listdir(self.PATH2subjects))
-            logger.info(f'    Extracting stats for subjects located in folder: {PATH2subjects}')
+            logger.info(f'    Extracting stats for subjects located in folder: {self.PATH2subjects}')
 
         self.miss = dict()
         self.run()
@@ -135,7 +157,7 @@ class FSStats2Table:
 
         for sub in self.ls_subjects:
             subs_left = len(self.ls_subjects[self.ls_subjects.index(sub):])
-            logger.info(f'reading: {sub}; left: {subs_left}')
+            logger.info(f'reading: {sub}; left: {subs_left}')                
             path_2sub        = self.get_path(self.PATH2subjects, sub)
             stats_dir_path   = self.get_path(path_2sub, self.dir_stats)
             ready, self.miss = chk_if_all_stats_present(sub, stats_dir_path, self.miss)
@@ -340,6 +362,15 @@ class FSStats2Table:
             d_data = {i.split(' ')[-1].strip('\n'):i.split(' ')[-2] for i in content[1:]}
         else:
             d_data = {i.split(' ')[-2]:i.split(' ')[-1].strip('\n') for i in content}
+            print(d_data)
+            if 'by' in d_data:
+                d_data.pop('by', None)
+            if list(d_data.keys())[0] not in brstem_hip_header['all']:
+                print('changing keys and values')
+                new_d_data = dict()
+                for key in d_data:
+                    new_d_data[d_data[key]] = key
+            d_data = new_d_data
         return pd.DataFrame(d_data, index=[_SUBJECT])
 
 
@@ -376,6 +407,7 @@ class FSStats2Table:
 
     def make_one_sheet(self):
         if self.big_file:
+            _id_col = self.project_vars["id_col"]
             from fs_stats_utils import FSStatsUtils
             fs_utils = FSStatsUtils(self.dataf, self.stats_DIR, _id_col, self.sheetnames)
             file_type = self.stats_files["file_type"]
@@ -395,7 +427,7 @@ class FSStats2Table:
             json.dump(d, jf, indent=4)
 
 
-def get_parameters(projects, default_stats_dir):
+def get_parameters(projects):
     """get parameters for nimb"""
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter
@@ -410,8 +442,14 @@ def get_parameters(projects, default_stats_dir):
 
     parser.add_argument(
         "-stats_dir", required=False,
-        default=default_stats_dir,
-        help="path to GLM folder",
+        default='home',
+        help="path to save stats files",
+    )
+
+    parser.add_argument(
+        "-dir_fs_stats", required=False,
+        default='default',
+        help="path to folder with FreeSurfer subjects/stats",
     )
 
     params = parser.parse_args()
@@ -420,9 +458,6 @@ def get_parameters(projects, default_stats_dir):
 
 if __name__ == "__main__":
 
-    import sys
-    from os import system
-    import argparse
     try:
         from pathlib import Path
     except ImportError as e:
@@ -434,11 +469,20 @@ if __name__ == "__main__":
     sys.path.append(str(top))
 
     from setup.get_vars import Get_Vars
-    getvars           = Get_Vars()
-    vars_stats        = getvars.stats_vars
-    default_stats_dir = vars_stats["STATS_PATHS"]["STATS_HOME"]
-    if "STATS_FILES" in vars_stats:
-        stats_files   = vars_stats["STATS_FILES"]
+
+    project_ids = Get_Vars().get_projects_ids()
+    params      = get_parameters(project_ids)
+    all_vars    = Get_Vars(params)
+    project_vars  = all_vars.projects[params.project]
+
+    if params.stats_dir == 'home':
+        all_vars.params.stats_dir = project_vars["STATS_PATHS"]["STATS_HOME"]
+    if params.dir_fs_stats != 'default':
+        project_vars["PROCESSED_FS_DIR"][1] = params.dir_fs_stats
+    ls_subjects   = []
+
+    if "STATS_FILES" in project_vars:
+        stats_files   = project_vars["STATS_FILES"]
     else:
         stats_files   = {
        "fname_fs_per_param"     : "stats_FreeSurfer_per_param",
@@ -446,15 +490,19 @@ if __name__ == "__main__":
        "fname_fs_subcort_vol"   : "stats_FreeSurfer_subcortical",
        "file_type"              : "xlsx"}
 
-    projects      = getvars.projects
-    all_projects  = [i for i in projects.keys() if 'EXPLANATION' not in i and 'LOCATION' not in i]
-    params        = get_parameters(all_projects, default_stats_dir)
-    project_vars  = projects[params.project]
-    ls_subjects   = []
-    stats_DIR     = params.stats_dir
+    # getvars           = Get_Vars()
+    # vars_stats        = getvars.stats_vars
+    # default_stats_dir = vars_stats["STATS_PATHS"]["STATS_HOME"]
+
+    # projects      = getvars.projects
+    # all_projects  = [i for i in projects.keys() if 'EXPLANATION' not in i and 'LOCATION' not in i]
+    # params        = get_parameters(all_projects, default_stats_dir)
+    # project_vars  = projects[params.project]
+    # ls_subjects   = []
+    # stats_DIR     = params.stats_dir
 
     FSStats2Table(ls_subjects,
-                    stats_DIR,
+                    all_vars.params.stats_dir,
                     project_vars,
                     stats_files,
                     big_file = True,
