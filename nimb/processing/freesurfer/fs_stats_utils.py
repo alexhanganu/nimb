@@ -7,14 +7,23 @@ import json
 import logging
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
+from fs_definitions import all_data, cols_per_measure_per_atlas
 
 
 class FSStatsUtils:
-    def __init__(self, dataf, stats_DIR, _id_col, sheetnames):
+    def __init__(self,
+                dataf,
+                stats_DIR,
+                _id_col,
+                sheetnames,
+                sheet_subcort,
+                Table):
         self.dataf      = dataf
         self.sheetnames = sheetnames
         self.stats_DIR  = stats_DIR
         self._id        = _id_col
+        self.subcort    = sheet_subcort
+        self.tab        = Table()
         self.f_errors   = self.get_path(stats_DIR, 'subjects_with_missing_values.json')
 
     def create_file_with_only_subcort_volumes(self, file_name, file_type):
@@ -30,7 +39,7 @@ class FSStatsUtils:
             frames = (df_concat, df2)
             df_concat = pd.concat(frames, axis=1, sort=True)
 
-        df_segmentations = pd.read_excel(self.dataf, engine = 'openpyxl', sheet_name='VolSeg')
+        df_segmentations = pd.read_excel(self.dataf, engine = 'openpyxl', sheet_name=self.subcort)
         frame_final = (df_concat, df_segmentations['eTIV'])
         df_concat = pd.concat(frame_final,axis=1, sort=True)
         df_concat.index.name = self._id
@@ -46,7 +55,7 @@ class FSStatsUtils:
         logger.info('CREATING file with Subcortical Volumes - VERSION 2, must be checked')
 
         all_df = dict()
-        df_segmentations = pd.read_excel(self.dataf, engine = 'openpyxl', sheet_name='VolSeg')
+        df_segmentations = pd.read_excel(self.dataf, engine = 'openpyxl', sheet_name=self.subcort)
 
         for sheet in self.sheetnames[0:5]:
             df = pd.read_excel(self.dataf, engine = 'openpyxl', sheet_name=sheet)
@@ -73,15 +82,14 @@ class FSStatsUtils:
             frames = (df_concat, df2)
             df_concat = pd.concat(frames, axis=1, sort=True)
 
-        df_segmentations = pd.read_excel(self.dataf, engine = 'openpyxl', sheet_name='VolSeg', index_col = 0)
+        df_segmentations = pd.read_excel(self.dataf, engine = 'openpyxl', sheet_name=self.subcort, index_col = 0)
         frame_final = (df_concat, df_segmentations['eTIV'])
         df_concat = pd.concat(frame_final, axis=1, sort=True)
         df_concat.index.name = self._id
 
         path_2filename   = self.get_path(self.stats_DIR, f"{file_name}.{file_type}")
-        writer = pd.ExcelWriter(path_2filename, engine='xlsxwriter')
-        df_concat.to_excel(writer, 'stats')
-        writer.save()
+        print(path_2filename)
+        self.tab.save_df(df_concat, path_2filename, sheet_name = 'stats')
         logger.info('FINISHED creating One file for all subjects')
         self.check_nan(df_concat)
 

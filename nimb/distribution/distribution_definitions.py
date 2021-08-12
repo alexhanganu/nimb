@@ -57,7 +57,6 @@ class DEFAULT(object):
     fs_db_name        = "db.json"
 
 
-
 def get_keys_processed(key):
     if key == 'src':
         return 'source'
