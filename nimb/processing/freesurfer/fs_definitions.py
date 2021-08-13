@@ -2,50 +2,8 @@
 # 2020.09.04
 from os import path
 
-
-processes_recon   = ["autorecon1",
-                     "autorecon2",
-                     "autorecon3",
-                     "qcache"]
-processes_subcort = ["brstem","hip","tha"]
-process_order = ["registration",]+processes_recon+processes_subcort
-
 hemi = ['lh','rh']
 
-suggested_times = {
-        'registration':'01:00:00',
-        'recon'       :'30:00:00',
-        'autorecon1'  :'05:00:00',
-        'autorecon2'  :'12:00:00',
-        'autorecon3'  :'12:00:00',
-        'recbase'     :'30:00:00',
-        'reclong'     :'23:00:00',
-        'qcache'      :'03:00:00',
-        'brstem'      :'03:00:00',
-        'hip'         :'03:00:00',
-        'tha'         :'03:00:00',
-        'masks'       :'12:00:00',
-        'archiving'   :'01:00:00',
-        }
-
-IsRunning_files = ['IsRunning.lh+rh',
-                   'IsRunningBSsubst',
-                   'IsRunningHPsubT1.lh+rh',
-                   'IsRunningThalamicNuclei_mainFreeSurferT1']
-
-# must check for all files: https://surfer.nmr.mgh.harvard.edu/fswiki/ReconAllDevTable
-f_autorecon = {
-        1:['mri/nu.mgz','mri/orig.mgz','mri/brainmask.mgz',],
-        2:['stats/lh.curv.stats','stats/rh.curv.stats',],
-        3:['stats/aseg.stats','stats/wmparc.stats',]
-        }
-files_created = {
-    'recon-all' : ['mri/wmparc.mgz',],
-    'autorecon1': ['mri/nu.mgz','mri/orig.mgz','mri/brainmask.mgz',],
-    'autorecon2': ['stats/lh.curv.stats','stats/rh.curv.stats',],
-    'autorecon3': ['stats/aseg.stats','stats/wmparc.stats',],
-    'qcache'    : ['surf/rh.w-g.pct.mgh.fsaverage.mgh', 'surf/lh.thickness.fwhm10.fsaverage.mgh']
-}
 
 class FreeSurferVersion:
     def __init__(self, freesurfer_version):
@@ -61,7 +19,7 @@ class FreeSurferVersion:
 class FilePerFSVersion:
     def __init__(self, freesurfer_version):
         # self.fs_ver    = freesurfer_version
-        self.processes = ['bs', 'hip', 'amy', 'tha']
+        self.processes = ['Subcort', 'DK', 'DKT', 'DS', 'WMDK', 'bs', 'hip', 'amy', 'tha']
         self.log       = {
             'recon'     :{'7':'recon-all.log',                       '6':'recon-all.log'},
             'autorecon1':{'7':'recon-all.log',                       '6':'recon-all.log'},
@@ -74,27 +32,45 @@ class FilePerFSVersion:
                           }
         self.stats_files = {
             'stats': {
-                'bs'   :{'7':'brainstem.v12.stats'   ,              '6':'brainstem.v10.stats',},
-                'hip'  :{'7':'hipposubfields.T1.v21.stats',         '6':'hipposubfields.T1.v10.stats',},
-                'amy'  :{'7':'amygdalar-nuclei.T1.v21.stats',       '6':'',},
-                'tha'  :{'7':'thalamic-nuclei.v12.T1.stats',        '6':'',}
+                'Subcort':{'7':'aseg.stats',                      '6':'aseg.stats',},
+                'DK'     :{'7':'aparc.stats',                     '6':'aparc.stats',},
+                'DKT'    :{'7':'aparc.DKTatlas.stats',            '6':'aparc.DKTatlas.stats',},
+                'DS'     :{'7':'aparc.a2009s.stats',              '6':'aparc.a2009s.stats',},
+                'WMDK'   :{'7':'wmparc.stats',                    '6':'',},
+                'bs'     :{'7':'brainstem.v12.stats',             '6':'brainstem.v10.stats',},
+                'hip'    :{'7':'hipposubfields.T1.v21.stats',     '6':'hipposubfields.T1.v10.stats',},
+                'amy'    :{'7':'amygdalar-nuclei.T1.v21.stats',   '6':'',},
+                'tha'    :{'7':'thalamic-nuclei.v12.T1.stats',    '6':'',}
+                },
+            'stats_old': {
+                'bs'   :{'7':'aseg.brainstem.volume.stats',       '6':'aseg.brainstem.volume.stats',},
+                'hip'  :{'7':'aseg.hippo.lh.volume.stats',        '6':'aseg.hippo.lh.volume.stats',},
+                'amy'  :{'7':'amygdalar-nuclei.lh.T1.v21.stats',  '6':'',},
+                'tha'  :{'7':'thalamic-nuclei.lh.v12.T1.stats',   '6':'',}
                 },
             'mri': {
-                'bs'   :{'7':'brainstemSsVolumes.v12.txt',          '6':'brainstemSsVolumes.v10',},
-                'hip'  :{'7':'hippoSfVolumes-T1.v21.txt',           '6':'hippoSfVolumes-T1.v10.txt',},
-                'amy'  :{'7':'amygNucVolumes-T1.v21.txt',           '6':'',},
-                'tha'  :{'7':'ThalamicNuclei.v12.T1.volumes.txt',   '6':'',}
+                'bs'   :{'7':'brainstemSsVolumes.v12.txt',        '6':'brainstemSsVolumes.v10',},
+                'hip'  :{'7':'hippoSfVolumes-T1.v21.txt',         '6':'hippoSfVolumes-T1.v10.txt',},
+                'amy'  :{'7':'amygNucVolumes-T1.v21.txt',         '6':'',},
+                'tha'  :{'7':'ThalamicNuclei.v12.T1.volumes.txt', '6':'',}
                 }
                         }
         self.hemi = {'lh':'lh.', 'rh':'rh.', 'lhrh':''}
         self.fs_ver = FreeSurferVersion(freesurfer_version).fs_ver()
 
+    def stats_f(self, process, _dir, hemi='lhrh'):
+        hemi_ = self.hemi[hemi]
+        f_4process = self.stats_files[_dir][process][self.fs_ver]
+        file = f'{hemi_}{f_4process}'
+        if _dir == 'stats_old' and process != 'bs':
+            file = f'{f_4process}'
+            _dir = 'stats'
+            if hemi == 'rh':
+                file = file.replace('lh', 'rh')
+        return path.join(_dir, file)
+
     def log_f(self, process):
         return path.join('scripts', self.log[process][self.fs_ver])
-
-    def stats_f(self, process, dir, hemi='lhrh'):
-        file = '{}{}'.format(self.hemi[hemi], self.stats_files[dir][process][self.fs_ver])
-        return path.join(dir, file)
 
 
 class GLMVars:
@@ -158,53 +134,62 @@ GLMcontrasts = {
                 }
 # https://surfer.nmr.mgh.harvard.edu/fswiki/Fsgdf2G2V
 
-BS_Hip_Tha_stats_f = {
-    'Brainstem':('mri/brainstemSsVolumes.v10.txt','stats/brainstem.v12.stats','stats/aseg.brainstem.volume.stats'),
-    'HIPL'     :('mri/hippoSfVolumes-T1.v10.txt','stats/lh.hipposubfields.T1.v21.stats','stats/aseg.hippo.lh.volume.stats'),
-    'HIPR'     :('mri/hippoSfVolumes-T1.v10.txt','stats/rh.hipposubfields.T1.v21.stats','stats/aseg.hippo.rh.volume.stats'),
-    'AMYL'     :('stats/amygdalar-nuclei.lh.T1.v21.stats',),
-    'AMYR'     :('stats/amygdalar-nuclei.rh.T1.v21.stats',),
-    'THAL'     :('stats/thalamic-nuclei.lh.v12.T1.stats',),
-    'THAR'     :('stats/thalamic-nuclei.rh.v12.T1.stats',)}
+processes_recon   = ["autorecon1",
+                     "autorecon2",
+                     "autorecon3",
+                     "qcache"]
+processes_subcort = ["brstem","hip","tha"]
+process_order = ["registration",]+processes_recon+processes_subcort
 
 
-BrStem_Hip_f2rd_stats={'Brainstem':'aseg.brainstem.volume.stats','HIPL':'aseg.hippo.lh.volume.stats',
-                 'HIPR':'aseg.hippo.rh.volume.stats'}
-BrStem_Hip_f2rd={'Brainstem':'brainstemSsVolumes.v10.txt','HIPL':'lh.hippoSfVolumes-T1.v10.txt',
-                 'HIPR':'rh.hippoSfVolumes-T1.v10.txt'}
-parc_DK_f2rd ={'L':'lh.aparc.stats','R':'rh.aparc.stats'}
-parc_DS_f2rd ={'L':'lh.aparc.a2009s.stats','R':'rh.aparc.a2009s.stats'}
+suggested_times = {
+        'registration':'01:00:00',
+        'recon'       :'30:00:00',
+        'autorecon1'  :'05:00:00',
+        'autorecon2'  :'12:00:00',
+        'autorecon3'  :'12:00:00',
+        'recbase'     :'30:00:00',
+        'reclong'     :'23:00:00',
+        'qcache'      :'03:00:00',
+        'brstem'      :'03:00:00',
+        'hip'         :'03:00:00',
+        'tha'         :'03:00:00',
+        'masks'       :'12:00:00',
+        'archiving'   :'01:00:00',
+        }
 
+IsRunning_files = ['IsRunning.lh+rh',
+                   'IsRunningBSsubst',
+                   'IsRunningHPsubT1.lh+rh',
+                   'IsRunningThalamicNuclei_mainFreeSurferT1']
 
-columns_main_DK_order = ('VolSeg','VolL_DK', 'VolR_DK', 'ThickL_DK', 'ThickR_DK', 'AreaL_DK', 'AreaR_DK', 'CurvL_DK', 'CurvR_DK',
-                     'NumVertL_DK','NumVertR_DK','FoldIndL_DK','FoldIndR_DK', 'CurvIndL_DK', 'CurvIndR_DK',
-                     'CurvGausL_DK','CurvGausR_DK', 'VolSegWM_DK',
-                     'ThickStdL_DS',  'ThickStdR_DS', 'eTIV')
-columns_main_DS_order = ('VolL_DS', 'VolR_DS','ThickL_DS', 'ThickR_DS', 'AreaL_DS', 'AreaR_DS', 'CurvL_DS', 'CurvR_DS',
-                     'NumVertL_DS', 'NumVertR_DS', 'FoldIndL_DS','FoldIndR_DS','CurvIndL_DS','CurvIndR_DS',
-                     'CurvGausL_DS','CurvGausR_DS',
-                      'ThickStdL_DS',  'ThickStdR_DS',)
-columns_secondary_order = ('VolSegWM_DK','VolSegNVoxels', 'VolSegnormMean', 'VolSegnormStdDev', 'VolSegnormMin',
-                     'NumVertL_DS', 'ThickStdL_DS', 'CurvIndL_DS', 'FoldIndL_DS', 'NumVertR_DS', 'ThickStdR_DS',
-                     'CurvGausR_DS', 'CurvIndR_DS', 'FoldIndR_DS', 'VolSegWMNVoxels_DK', 'VolSegWMnormMean_DK',
-                     'VolSegWMnormStdDev_DK', 'VolSegWMnormMin_DK', 'VolSegWMnormMax_DK', 'VolSegWMnormRange_DK')
-
+# must check for all files: https://surfer.nmr.mgh.harvard.edu/fswiki/ReconAllDevTable
+f_autorecon = {
+        1:['mri/nu.mgz','mri/orig.mgz','mri/brainmask.mgz',],
+        2:['stats/lh.curv.stats','stats/rh.curv.stats',],
+        3:['stats/aseg.stats','stats/wmparc.stats',]}
+files_created = {
+    'recon-all' : ['mri/wmparc.mgz',],
+    'autorecon1': ['mri/nu.mgz','mri/orig.mgz','mri/brainmask.mgz',],
+    'autorecon2': ['stats/lh.curv.stats','stats/rh.curv.stats',],
+    'autorecon3': ['stats/aseg.stats','stats/wmparc.stats',],
+    'qcache'    : ['surf/rh.w-g.pct.mgh.fsaverage.mgh', 'surf/lh.thickness.fwhm10.fsaverage.mgh']}
 
 
 all_data = {
-    'atlases':['BS','HIP','AMY','THA','Subcort', 'CortexDK','CortexDKT','CortexDS', 'WMDK'],
+    'atlases':['bs','hip','amy','tha','Subcort', 'CortexDK','CortexDKT','CortexDS', 'WMDK'],
     "atlas_params" : {
-                'BS' : {
-                    'atlas_param':'BS',
+                'bs' : {
+                    'atlas_param':'bs',
                     'atlas_name' :'Brainstem segmentations'},
-                'HIP' : {
-                    'atlas_param':'HIP',
+                'hip' : {
+                    'atlas_param':'hip',
                     'atlas_name' :'Hippocampus segmentations'},
-                'AMY' : {
-                    'atlas_param':'AMY',
+                'amy' : {
+                    'atlas_param':'amy',
                     'atlas_name' :'Amygdala segmentations'},
-                'THA' : {
-                    'atlas_param':'THA',
+                'tha' : {
+                    'atlas_param':'tha',
                     'atlas_name' :'Thalamus segmentations'},
                 'Subcort' : {
                     'atlas_param':'Subcort',
@@ -222,72 +207,177 @@ all_data = {
                     'atlas_param':'WMDK',
                     'atlas_name' :'White Matter subcortical segmentations based on Desikan atlas'},
                },
-    # 'atlas_ending':{'Brainstem':'_BS',     'HIP':'_HIP', 'AMY'     :'_AMY', 'THA'     :'_THA',
-    #                 'Subcort'  :'_Subcort', 'CortexDK':'_DK',  'CortexDS':'_DS'},
-    'BS':{
+    'bs':{
         'two_hemi':False,
-        'two_hemi_two_files':False,
-        'files':{'Brainstem_stats':'stats/aseg.brainstem.volume.stats',
-                 'Brainstem_mri':'mri/brainstemSsVolumes.v10.txt',},
-        'parameters' : {'Brainstem':'Vol',},
-        'header':{'Medulla':'medulla','Pons':'pons','SCP':'scp','Midbrain':'midbrain',
-                'Whole_brainstem':'wholeBrainstem',}},
-    'HIP':{
+        'hemi' : ['lhrh'],
+        'parameters' : {'Vol':'Vol'},
+        'header':['Medulla','Pons','SCP','Midbrain','Whole_brainstem',]},
+    'hip':{
         'two_hemi':True,
-        'two_hemi_two_files':True,
-        'files':{'HIPL_stats':'stats/aseg.hippo.lh.volume.stats',
-                 'HIPL_mri':'mri/rh.hippoSfVolumes-T1.v10.txt',
-                 'HIPR_stats':'stats/aseg.hippo.rh.volume.stats',
-                 'HIPR_mri':'mri/rh.hippoSfVolumes-T1.v10.txt',},
-        'parameters' : {'HIPL':'Vol','HIPR':'Vol',},
-        'header':{
-            'Hippocampal_tail':'hippocampal-tail',
-            'subiculum':'subiculum','subiculum-body':'subiculum-body','subiculum-head':'subiculum-head',
-            'CA1':'ca1','CA1-body':'ca1-body','CA1-head':'ca1-head','hippocampal-fissure':'fissureHippocampal',
-            'presubiculum':'presubiculum','presubiculum-body':'presubiculum-body','presubiculum-head':'presubiculum-head',
-            'parasubiculum':'parasubiculum',
-            'molecular_layer_HP':'molecularLayerHP','molecular_layer_HP-head':'molecularLayerHP-head','molecular_layer_HP-body':'molecularLayerHP-body',
-            'GC-ML-DG':'gcmldg','GC-ML-DG-body':'gcmldg-body','GC-ML-DG-head':'gcmldg-head',
-            'CA3':'ca3','CA3-body':'ca3-body','CA3-head':'ca3-head',
-            'CA4':'ca4','CA4-body':'ca4-body','CA4-head':'ca4-head',
-            'fimbria':'fimbria','HATA':'hata','Whole_hippocampal_body':'wholeHippocampus-body','Whole_hippocampal_head':'wholeHippocampus-head',
-            'Whole_hippocampus':'wholeHippocampus',}},
-    'AMY':{
+        'hemi' : ['lh','rh'],
+        'parameters' : {'Vol':'Vol'},
+        'header':['Hippocampal_tail','subiculum', 'subiculum-body', 'subiculum-head', 'CA1',
+                'CA1-body', 'CA1-head', 'hippocampal-fissure',
+                'presubiculum','presubiculum-body','presubiculum-head','parasubiculum','molecular_layer_HP',
+                'molecular_layer_HP-head','molecular_layer_HP-body','GC-ML-DG','GC-ML-DG-body', 'GC-ML-DG-head'
+                'CA3', 'CA3-body', 'CA3-head', 'CA4', 'CA4-body', 'CA4-head', 'fimbria','HATA','Whole_hippocampus',
+                'Whole_hippocampal_body', 'Whole_hippocampal_head']},
+    'amy':{
         'two_hemi':True,
-        'two_hemi_two_files':True,
-        'files':{'AMYL_stats':'stats/amygdalar-nuclei.lh.T1.v21.stats',
-                 'AMYL_mri':'',
-                 'AMYR_stats':'stats/amygdalar-nuclei.rh.T1.v21.stats',
-                 'AMYR_mri':'',},
-        'parameters' : {'AMYL':'Vol','AMYR':'Vol',},
-        'header': {
-            'Lateral-nucleus': 'Lateral-nucleus', 'Basal-nucleus': 'Basal-nucleus', 'Accessory-Basal-nucleus': 'Accessory-Basal-nucleus',
-            'Anterior-amygdaloid-area-AAA': 'Anterior-amygdaloid-area-AAA', 'Central-nucleus': 'Central-nucleus',
-            'Medial-nucleus': 'Medial-nucleus', 'Cortical-nucleus': 'Cortical-nucleus',
-            'Corticoamygdaloid-transitio': 'Corticoamygdaloid-transitio', 'Paralaminar-nucleus': 'Paralaminar-nucleus',
-            'Whole_amygdala': 'WholeAmygdala',}},
-    'THA':{
+        'hemi' : ['lh','rh'],
+        'parameters' : {'Vol':'Vol'},
+        'header': ['Lateral-nucleus', 'Basal-nucleus', 'Accessory-Basal-nucleus', 'Anterior-amygdaloid-area-AAA',
+                    'Central-nucleus', 'Medial-nucleus', 'Cortical-nucleus', 'Corticoamygdaloid-transitio',
+                    'Paralaminar-nucleus', 'Whole_amygdala']},
+    'tha':{
         'two_hemi':True,
-        'two_hemi_two_files':True,
-        'files':{'THAL_stats':'stats/thalamic-nuclei.lh.v12.T1.stats',
-                 'THAL_mri':'',
-                 'THAR_stats':'stats/thalamic-nuclei.rh.v12.T1.stats',
-                 'THAR_mri':'',},
-        'parameters' : {'THAL':'Vol','THAR':'Vol',},
-        'header': {
-            'AV': 'AV', 'CeM': 'CeM', 'CL': 'CL', 'CM': 'CM', 'LD': 'LD', 'LGN': 'LGN', 'LP': 'LP', 'L-Sg': 'L-Sg',
-            'MDl':'MDl', 'MDm': 'MDm', 'MGN': 'MGN', 'MV(Re)': 'MV(Re)', 'Pc': 'Pc', 'Pf': 'Pf', 'Pt': 'Pt', 'PuA': 'PuA',
-            'PuI':'PuI', 'PuL': 'PuL', 'PuM': 'PuM', 'VA': 'VA', 'VAmc': 'VAmc', 'VLa': 'VLa', 'VLp': 'VLp', 'VM': 'VM',
-            'VPL':'VPL', 'Whole_thalamus': 'WholeThalamus'}},
+        'hemi' : ['lh','rh'],
+        'parameters' : {'Vol':'Vol'},
+        'header': ['AV', 'CeM', 'CL', 'CM', 'LD', 'LGN', 'LP', 'L-Sg', 'MDl', 'MDm', 'MGN', 'MV(Re)', 'Pc', 'Pf', 'Pt',
+                    'PuA', 'PuI', 'PuL', 'PuM', 'VA', 'VAmc', 'VLa', 'VLp', 'VM', 'VPL', 'Whole_thalamus']},
     'Subcort':{
         'two_hemi':False,
-        'two_hemi_two_files':False,
-        'files':{'LR':'aseg.stats',},
+        'hemi' : ['lhrh'],
         'parameters' : {'Volume_mm3':'Vol',         'NVoxels'    :'VolVoxNum',
                         'normMean'  :'VolMeanNorm', 'normStdDev':'VolStdNorm',
                         'normMin'   :'VolMinNorm',  'normMax'   :'VolMaxNorm',
                         'normRange' :'VolRangeNorm'},
-        'header':{
+        'header':['Left-Thalamus-Proper', 'Right-Thalamus-Proper', 'Left-Thalamus', 'Right-Thalamus', 'Left-Caudate',
+                'Right-Caudate', 'Left-Putamen', 'Right-Putamen', 'Left-Pallidum', 'Right-Pallidum', 'Left-Hippocampus',
+                'Right-Hippocampus', 'Left-Amygdala', 'Right-Amygdala', 'Left-Accumbens-area',
+                'Right-Accumbens-area', 'Left-Lateral-Ventricle', 'Right-Lateral-Ventricle',
+                'Left-Inf-Lat-Vent', 'Right-Inf-Lat-Vent', 'Left-Cerebellum-White-Matter',
+                'Right-Cerebellum-White-Matter', 'Left-Cerebellum-Cortex', 'Right-Cerebellum-Cortex',
+                'Left-VentralDC', 'Right-VentralDC', 'Left-vessel', 'Right-vessel', 'Left-choroid-plexus',
+                'Right-choroid-plexus', 'Left-WM-hypointensities', 'Right-WM-hypointensities', 'Left-non-WM-hypointensities',
+                'Right-non-WM-hypointensities', 'lhCortexVol', 'rhCortexVol', 'lhCerebralWhiteMatterVol',
+                'rhCerebralWhiteMatterVol', 'lhSurfaceHoles', 'rhSurfaceHoles', '3rd-Ventricle',
+                '4th-Ventricle', '5th-Ventricle', 'VentricleChoroidVol', 'Brain-Stem', 'CSF', 'Optic-Chiasm',
+                'CC_Posterior', 'CC_Mid_Posterior', 'CC_Central', 'CC_Mid_Anterior', 'CC_Anterior', 'CortexVol',
+                'SubCortGrayVol', 'TotalGrayVol', 'BrainSegVol', 'BrainSegVolNotVent', 'BrainSegVolNotVentSurf',
+                'BrainSegVol-to-eTIV', 'CerebralWhiteMatterVol', 'SupraTentorialVol', 'SupraTentorialVolNotVent',
+                'SupraTentorialVolNotVentVox', 'WM-hypointensities', 'non-WM-hypointensities', 'SurfaceHoles',
+                'MaskVol', 'MaskVol-to-eTIV', 'eTIV']},
+
+    'CortexDK':{
+        'two_hemi':True,
+        'hemi' : ['lh','rh'],
+        'parameters' : {
+                'GrayVol' :'Vol',
+                'ThickAvg':'Thick',
+                'SurfArea':'Area',
+                'NumVert' :'VertexNum',
+                'ThickStd':'ThickStd', 
+                'FoldInd' :'FoldInd',
+                'MeanCurv':'Curv',
+                'GausCurv':'CurvGaus',
+                'CurvInd' :'CurvInd'},
+        'header':['bankssts', 'caudalanteriorcingulate', 'caudalmiddlefrontal', 'cuneus', 'entorhinal', 'fusiform',
+                'inferiorparietal', 'inferiortemporal', 'isthmuscingulate', 'lateraloccipital', 'lateralorbitofrontal',
+                'lingual', 'medialorbitofrontal', 'middletemporal', 'parahippocampal', 'paracentral', 'parsopercularis',
+                'parsorbitalis', 'parstriangularis', 'pericalcarine', 'postcentral', 'posteriorcingulate', 'precentral',
+                'precuneus', 'rostralanteriorcingulate', 'rostralmiddlefrontal', 'superiorfrontal', 'superiorparietal',
+                'superiortemporal', 'supramarginal', 'frontalpole', 'temporalpole', 'transversetemporal', 'insula',
+                'Cortex_MeanThickness', 'Cortex_WhiteSurfArea', 'Cortex_CortexVol', 'Cortex_NumVert', 'UnsegmentedWhiteMatter']},
+    'CortexDKT':{
+        'two_hemi':True,
+        'hemi' : ['lh','rh'],
+        'parameters' : {
+                'GrayVol' :'Vol',
+                'ThickAvg':'Thick',
+                'SurfArea':'Area',
+                'NumVert' :'VertexNum',
+                'ThickStd':'ThickStd', 
+                'FoldInd' :'FoldInd',
+                'MeanCurv':'Curv',
+                'GausCurv':'CurvGaus',
+                'CurvInd' :'CurvInd'},
+        'header':['caudalanteriorcingulate', 'caudalmiddlefrontal', 'cuneus', 'entorhinal', 'fusiform', 'inferiorparietal',
+                'inferiortemporal', 'isthmuscingulate', 'lateraloccipital', 'lateralorbitofrontal', 'lingual', 'medialorbitofrontal',
+                'middletemporal', 'parahippocampal', 'paracentral', 'parsopercularis', 'parsorbitalis', 'parstriangularis',
+                'pericalcarine', 'postcentral', 'posteriorcingulate', 'precentral', 'precuneus', 'rostralanteriorcingulate',
+                'rostralmiddlefrontal', 'superiorfrontal', 'superiorparietal', 'superiortemporal', 'supramarginal',
+                'transversetemporal', 'insula', 'Cortex_MeanThickness', 'Cortex_WhiteSurfArea', 'Cortex_CortexVol',
+                'Cortex_NumVert', 'UnsegmentedWhiteMatter']},
+    'CortexDS':{
+        'two_hemi':True,
+        'hemi' : ['lh','rh'],
+        'parameters' : {
+                'GrayVol' :'Vol',
+                'ThickAvg':'Thick',
+                'SurfArea':'Area',
+                'NumVert' :'VertexNum',
+                'ThickStd':'ThickStd', 
+                'FoldInd' :'FoldInd',
+                'MeanCurv':'Curv',
+                'GausCurv':'CurvGaus',
+                'CurvInd' :'CurvInd'},
+        'header':['G&S_frontomargin', 'G_and_S_frontomargin', 'G&S_occipital_inf', 'G_and_S_occipital_inf', 'G&S_paracentral',
+                'G_and_S_paracentral', 'G&S_subcentral', 'G_and_S_subcentral', 'G&S_transv_frontopol', 'G_and_S_transv_frontopol',
+                'G&S_cingul-Ant', 'G_and_S_cingul-Ant', 'G&S_cingul-Mid-Ant', 'G_and_S_cingul-Mid-Ant', 'G&S_cingul-Mid-Post',
+                'G_and_S_cingul-Mid-Post', 'G_cingul-Post-dorsal', 'G_cingul-Post-ventral', 'G_cuneus', 'G_front_inf-Opercular',
+                'G_front_inf-Orbital', 'G_front_inf-Triangul', 'G_front_middle', 'G_front_sup', 'G_Ins_lg_and_S_cent_ins',
+                'G_insular_short', 'G_occipital_middle', 'G_occipital_sup', 'G_oc-temp_lat-fusifor', 'G_oc-temp_med-Lingual',
+                'G_oc-temp_med-Parahip', 'G_orbital', 'G_pariet_inf-Angular', 'G_pariet_inf-Supramar', 'G_parietal_sup',
+                'G_postcentral', 'G_precentral', 'G_precuneus', 'G_rectus', 'G_subcallosal', 'G_temp_sup-G_T_transv',
+                'G_temp_sup-Lateral', 'G_temp_sup-Plan_polar', 'G_temp_sup-Plan_tempo', 'G_temporal_inf', 'G_temporal_middle',
+                'Lat_Fis-ant-Horizont', 'Lat_Fis-ant-Vertical', 'Lat_Fis-post', 'Pole_occipital', 'Pole_temporal', 'S_calcarine',
+                'S_central', 'S_cingul-Marginalis', 'S_circular_insula_ant', 'S_circular_insula_inf', 'S_circular_insula_sup',
+                'S_collat_transv_ant', 'S_collat_transv_post', 'S_front_inf', 'S_front_middle', 'S_front_sup', 'S_interm_prim-Jensen',
+                'S_intrapariet_and_P_trans', 'S_oc_middle_and_Lunatus', 'S_oc_sup_and_transversal', 'S_occipital_ant', 'S_oc-temp_lat',
+                'S_oc-temp_med_and_Lingual', 'S_orbital_lateral', 'S_orbital_med-olfact', 'S_orbital-H_Shaped', 'S_parieto_occipital',
+                'S_pericallosal', 'S_postcentral', 'S_precentral-inf-part', 'S_precentral-sup-part', 'S_suborbital', 'S_subparietal',
+                'S_temporal_inf', 'S_temporal_sup', 'S_temporal_transverse', 'Cortex_MeanThickness', 'Cortex_WhiteSurfArea',
+                'Cortex_CortexVol', 'Cortex_NumVert', 'UnsegmentedWhiteMatter']},
+    'WMDK':{
+        'two_hemi':False,
+        'hemi' : ['lhrh'],
+        'parameters' : {'Volume_mm3':'Vol',         'NVoxels'    :'VolVoxNum',
+                        'normMean'  :'VolMeanNorm', 'normStdDev':'VolStdNorm',
+                        'normMin'   :'VolMinNorm',  'normMax'   :'VolMaxNorm',
+                        'normRange' :'VolRangeNorm'},
+        'header':['wm-lh-bankssts', 'wm-lh-caudalanteriorcingulate', 'wm-lh-caudalmiddlefrontal', 'wm-lh-cuneus',
+                'wm-lh-entorhinal', 'wm-lh-fusiform', 'wm-lh-inferiorparietal', 'wm-lh-inferiortemporal',
+                'wm-lh-isthmuscingulate', 'wm-lh-lateraloccipital', 'wm-lh-lateralorbitofrontal', 'wm-lh-lingual',
+                'wm-lh-medialorbitofrontal', 'wm-lh-middletemporal', 'wm-lh-parahippocampal', 'wm-lh-paracentral',
+                'wm-lh-parsopercularis', 'wm-lh-parsorbitalis', 'wm-lh-parstriangularis', 'wm-lh-pericalcarine',
+                'wm-lh-postcentral', 'wm-lh-posteriorcingulate', 'wm-lh-precentral', 'wm-lh-precuneus',
+                'wm-lh-rostralanteriorcingulate', 'wm-lh-rostralmiddlefrontal', 'wm-lh-superiorfrontal',
+                'wm-lh-superiorparietal', 'wm-lh-superiortemporal', 'wm-lh-supramarginal', 'wm-lh-frontalpole',
+                'wm-lh-temporalpole', 'wm-lh-transversetemporal', 'wm-lh-insula', 'wm-rh-bankssts',
+                'wm-rh-caudalanteriorcingulate', 'wm-rh-caudalmiddlefrontal', 'wm-rh-cuneus', 'wm-rh-entorhinal',
+                'wm-rh-fusiform', 'wm-rh-inferiorparietal', 'wm-rh-inferiortemporal', 'wm-rh-isthmuscingulate',
+                'wm-rh-lateraloccipital', 'wm-rh-lateralorbitofrontal', 'wm-rh-lingual', 'wm-rh-medialorbitofrontal',
+                'wm-rh-middletemporal', 'wm-rh-parahippocampal', 'wm-rh-paracentral', 'wm-rh-parsopercularis',
+                'wm-rh-parsorbitalis', 'wm-rh-parstriangularis', 'wm-rh-pericalcarine', 'wm-rh-postcentral',
+                'wm-rh-posteriorcingulate', 'wm-rh-precentral', 'wm-rh-precuneus', 'wm-rh-rostralanteriorcingulate',
+                'wm-rh-rostralmiddlefrontal', 'wm-rh-superiorfrontal', 'wm-rh-superiorparietal', 'wm-rh-superiortemporal',
+                'wm-rh-supramarginal', 'wm-rh-frontalpole', 'wm-rh-temporalpole', 'wm-rh-transversetemporal',
+                'wm-rh-insula', 'Left-UnsegmentedWhiteMatter', 'Right-UnsegmentedWhiteMatter']},
+    'header_fs2nimb':{'Medulla':'medulla','Pons':'pons','SCP':'scp','Midbrain':'midbrain',
+                'Whole_brainstem':'wholeBrainstem',
+                'Hippocampal_tail':'hippocampal-tail',
+                'subiculum':'subiculum','subiculum-body':'subiculum-body','subiculum-head':'subiculum-head',
+                'CA1':'ca1','CA1-body':'ca1-body','CA1-head':'ca1-head','hippocampal-fissure':'fissureHippocampal',
+                'presubiculum':'presubiculum','presubiculum-body':'presubiculum-body','presubiculum-head':'presubiculum-head',
+                'parasubiculum':'parasubiculum',
+                'molecular_layer_HP':'molecularLayerHP','molecular_layer_HP-head':'molecularLayerHP-head',
+                'molecular_layer_HP-body':'molecularLayerHP-body',
+                'GC-ML-DG':'gcmldg','GC-ML-DG-body':'gcmldg-body','GC-ML-DG-head':'gcmldg-head',
+                'CA3':'ca3','CA3-body':'ca3-body','CA3-head':'ca3-head',
+                'CA4':'ca4','CA4-body':'ca4-body','CA4-head':'ca4-head',
+                'fimbria':'fimbria','HATA':'hata','Whole_hippocampal_body':'wholeHippocampus-body',
+                'Whole_hippocampal_head':'wholeHippocampus-head',
+                'Whole_hippocampus':'wholeHippocampus',
+                'Lateral-nucleus': 'Lateral-nucleus', 'Basal-nucleus': 'Basal-nucleus', 'Accessory-Basal-nucleus': 'Accessory-Basal-nucleus',
+                'Anterior-amygdaloid-area-AAA': 'Anterior-amygdaloid-area-AAA', 'Central-nucleus': 'Central-nucleus',
+                'Medial-nucleus': 'Medial-nucleus', 'Cortical-nucleus': 'Cortical-nucleus',
+                'Corticoamygdaloid-transitio': 'Corticoamygdaloid-transitio', 'Paralaminar-nucleus': 'Paralaminar-nucleus',
+                'Whole_amygdala': 'WholeAmygdala',
+                'AV': 'AV', 'CeM': 'CeM', 'CL': 'CL', 'CM': 'CM', 'LD': 'LD', 'LGN': 'LGN', 'LP': 'LP', 'L-Sg': 'L-Sg',
+                'MDl':'MDl', 'MDm': 'MDm', 'MGN': 'MGN', 'MV(Re)': 'MV(Re)', 'Pc': 'Pc', 'Pf': 'Pf', 'Pt': 'Pt', 'PuA': 'PuA',
+                'PuI':'PuI', 'PuL': 'PuL', 'PuM': 'PuM', 'VA': 'VA', 'VAmc': 'VAmc', 'VLa': 'VLa', 'VLp': 'VLp', 'VM': 'VM',
+                'VPL':'VPL', 'Whole_thalamus': 'WholeThalamus',
                 'Left-Thalamus-Proper'        :'thalamusProper_lh',        'Right-Thalamus-Proper'        :'thalamusProper_rh',
                 'Left-Thalamus'               :'thalamusL',                'Right-Thalamus'               :'thalamusR',
                 'Left-Caudate'                :'caudate_lh',               'Right-Caudate'                :'caudate_rh',
@@ -331,24 +421,7 @@ all_data = {
                 'SurfaceHoles'               :'surfaceHoles',
                 'MaskVol'                    :'volMask',
                 'MaskVol-to-eTIV'            :'volMasktoeTIV',
-                'eTIV'                       :'eTIV'
-                }},
-
-    'CortexDK':{
-        'two_hemi':True,
-        'two_hemi_two_files':True,
-        'files':{'L':'lh.aparc.stats','R':'rh.aparc.stats',},
-        'parameters' : {
-                'GrayVol' :'Vol',
-                'ThickAvg':'Thick',
-                'SurfArea':'Area',
-                'NumVert' :'VertexNum',
-                'ThickStd':'ThickStd', 
-                'FoldInd' :'FoldInd',
-                'MeanCurv':'Curv',
-                'GausCurv':'CurvGaus',
-                'CurvInd' :'CurvInd'},
-        'header':{
+                'eTIV'                       :'eTIV',
                 'bankssts':'temporal_superior_sulcus_bank',
                 'caudalanteriorcingulate':'cingulate_anterior_caudal',
                 'caudalmiddlefrontal':'frontal_middle_caudal',
@@ -387,72 +460,8 @@ all_data = {
                 'Cortex_WhiteSurfArea':'cortex_area',
                 'Cortex_CortexVol':'cortex_vol',
                 'Cortex_NumVert':'cortex_numvert',
-                'UnsegmentedWhiteMatter':'WMUnsegmented',}},
-    'CortexDKT':{
-        'two_hemi':True,
-        'two_hemi_two_files':True,
-        'files':{'L':'lh.aparc.DKTatlas.stats','R':'rh.aparc.DKTatlas.stats',},
-        'parameters' : {
-                'GrayVol' :'Vol',
-                'ThickAvg':'Thick',
-                'SurfArea':'Area',
-                'NumVert' :'VertexNum',
-                'ThickStd':'ThickStd', 
-                'FoldInd' :'FoldInd',
-                'MeanCurv':'Curv',
-                'GausCurv':'CurvGaus',
-                'CurvInd' :'CurvInd'},
-        'header':{'caudalanteriorcingulate':'cingulate_anterior_caudal',
-                  'caudalmiddlefrontal':'frontal_middle_caudal',
-                  'cuneus':'occipital_cuneus',
-                  'entorhinal':'temporal_entorhinal',
-                  'fusiform':'temporal_fusiform',
-                  'inferiorparietal':'parietal_inferior',
-                  'inferiortemporal':'temporal_inferior',
-                  'isthmuscingulate':'cingulate_isthmus',
-                  'lateraloccipital':'occipital_lateral',
-                  'lateralorbitofrontal':'frontal_orbitolateral',
-                  'lingual':'occipital_lingual',
-                  'medialorbitofrontal':'frontal_orbitomedial',
-                  'middletemporal':'temporal_middle',
-                  'parahippocampal':'temporal_parahippocampal',
-                  'paracentral':'frontal_paracentral',
-                  'parsopercularis':'frontal_parsopercularis',
-                  'parsorbitalis':'frontal_parsorbitalis',
-                  'parstriangularis':'frontal_parstriangularis',
-                  'pericalcarine':'occipital_pericalcarine',
-                  'postcentral':'parietal_postcentral',
-                  'posteriorcingulate':'cingulate_posterior',
-                  'precentral':'frontal_precentral',
-                  'precuneus':'parietal_precuneus',
-                  'rostralanteriorcingulate':'cingulate_anterior_rostral',
-                  'rostralmiddlefrontal':'frontal_middle_rostral',
-                  'superiorfrontal':'frontal_superior',
-                  'superiorparietal':'parietal_superior',
-                  'superiortemporal':'temporal_superior',
-                  'supramarginal':'parietal_supramarginal',
-                  'transversetemporal':'temporal_transverse',
-                  'insula':'insula',
-                  'Cortex_MeanThickness':'cortex_thickness',
-                  'Cortex_WhiteSurfArea':'cortex_area',
-                  'Cortex_CortexVol':'cortex_vol',
-                  'Cortex_NumVert':'cortex_numvert',
-                  'UnsegmentedWhiteMatter':'WMUnsegmented',}},
-    'CortexDS':{
-        'two_hemi':True,
-        'two_hemi_two_files':True,
-        'files':{'L':'lh.aparc.a2009s.stats','R':'rh.aparc.a2009s.stats',},
-        'parameters' : {
-                'GrayVol' :'Vol',
-                'ThickAvg':'Thick',
-                'SurfArea':'Area',
-                'NumVert' :'VertexNum',
-                'ThickStd':'ThickStd', 
-                'FoldInd' :'FoldInd',
-                'MeanCurv':'Curv',
-                'GausCurv':'CurvGaus',
-                'CurvInd' :'CurvInd'},
-        'header':{'G&S_frontomargin': 'frontal_margin_GS',
+                'UnsegmentedWhiteMatter':'WMUnsegmented',
+                'G&S_frontomargin': 'frontal_margin_GS',
                 'G_and_S_frontomargin': 'frontal_margin_GS',
                 'G&S_occipital_inf': 'occipital_inf_GS',
                 'G_and_S_occipital_inf': 'occipital_inf_GS',
@@ -533,61 +542,11 @@ all_data = {
                 'S_subparietal': 'parietal_subparietal_Sulc',
                 'S_temporal_inf': 'temporal_inf_Sulc',
                 'S_temporal_sup': 'temporal_sup_Sulc',
-                'S_temporal_transverse': 'temporal_transverse_Sulc',
-                'Cortex_MeanThickness':'cortex_thickness',
-                'Cortex_WhiteSurfArea':'cortex_area',
-                'Cortex_CortexVol':'cortex_vol',
-                'Cortex_NumVert':'cortex_numvert',
-                'UnsegmentedWhiteMatter':'WMUnsegmented',}},
-    'WMDK':{
-        'two_hemi':False,
-        'two_hemi_two_files':False,
-        'files':{'LR':'wmparc.stats',},
-        'parameters' : {'Volume_mm3':'Vol',         'NVoxels'    :'VolVoxNum',
-                        'normMean'  :'VolMeanNorm', 'normStdDev':'VolStdNorm',
-                        'normMin'   :'VolMinNorm',  'normMax'   :'VolMaxNorm',
-                        'normRange' :'VolRangeNorm'},
-        'header':{                'bankssts':'temporal_superior_sulcus_bank',
-                'caudalanteriorcingulate':'cingulate_anterior_caudal',
-                'caudalmiddlefrontal':'frontal_middle_caudal',
-                'cuneus':'occipital_cuneus',
-                'entorhinal':'temporal_entorhinal',
-                'fusiform':'temporal_fusiform',
-                'inferiorparietal':'parietal_inferior',
-                'inferiortemporal':'temporal_inferior',
-                'isthmuscingulate':'cingulate_isthmus',
-                'lateraloccipital':'occipital_lateral',
-                'lateralorbitofrontal':'frontal_orbitolateral',
-                'lingual':'occipital_lingual',
-                'medialorbitofrontal':'frontal_orbitomedial',
-                'middletemporal':'temporal_middle',
-                'parahippocampal':'temporal_parahippocampal',
-                'paracentral':'frontal_paracentral',
-                'parsopercularis':'frontal_parsopercularis',
-                'parsorbitalis':'frontal_parsorbitalis',
-                'parstriangularis':'frontal_parstriangularis',
-                'pericalcarine':'occipital_pericalcarine',
-                'postcentral':'parietal_postcentral',
-                'posteriorcingulate':'cingulate_posterior',
-                'precentral':'frontal_precentral',
-                'precuneus':'parietal_precuneus',
-                'rostralanteriorcingulate':'cingulate_anterior_rostral',
-                'rostralmiddlefrontal':'frontal_middle_rostral',
-                'superiorfrontal':'frontal_superior',
-                'superiorparietal':'parietal_superior',
-                'superiortemporal':'temporal_superior',
-                'supramarginal':'parietal_supramarginal',
-                'frontalpole':'frontal_pole',
-                'temporalpole':'temporal_pole',
-                'transversetemporal':'temporal_transverse',
-                'insula':'insula',
-                'Cortex_MeanThickness':'cortex_thickness',
-                'Cortex_WhiteSurfArea':'cortex_area',
-                'Cortex_CortexVol':'cortex_vol',
-                'Cortex_NumVert':'cortex_numvert',
-                'UnsegmentedWhiteMatter':'WMUnsegmented',}},
+                'S_temporal_transverse': 'temporal_transverse_Sulc'},
+
 }
 
+'''this is used in fs_stats2table to add columns to specific sheets'''
 aparc_file_extra_measures = {
     'SurfArea': 'Cortex_WhiteSurfArea',
     'ThickAvg': 'Cortex_MeanThickness',
@@ -595,6 +554,22 @@ aparc_file_extra_measures = {
     'NumVert' : 'Cortex_NumVert',
 }
 
+BS_Hip_Tha_stats_f = {
+    'Brainstem':('mri/brainstemSsVolumes.v10.txt','stats/brainstem.v12.stats','stats/aseg.brainstem.volume.stats'),
+    'HIPL'     :('mri/hippoSfVolumes-T1.v10.txt','stats/lh.hipposubfields.T1.v21.stats','stats/aseg.hippo.lh.volume.stats'),
+    'HIPR'     :('mri/hippoSfVolumes-T1.v10.txt','stats/rh.hipposubfields.T1.v21.stats','stats/aseg.hippo.rh.volume.stats'),
+    'AMYL'     :('stats/amygdalar-nuclei.lh.T1.v21.stats',),
+    'AMYR'     :('stats/amygdalar-nuclei.rh.T1.v21.stats',),
+    'THAL'     :('stats/thalamic-nuclei.lh.v12.T1.stats',),
+    'THAR'     :('stats/thalamic-nuclei.rh.v12.T1.stats',)}
+
+
+BrStem_Hip_f2rd_stats={'Brainstem':'aseg.brainstem.volume.stats','HIPL':'aseg.hippo.lh.volume.stats',
+                 'HIPR':'aseg.hippo.rh.volume.stats'}
+BrStem_Hip_f2rd={'Brainstem':'brainstemSsVolumes.v10.txt','HIPL':'lh.hippoSfVolumes-T1.v10.txt',
+                 'HIPR':'rh.hippoSfVolumes-T1.v10.txt'}
+parc_DK_f2rd ={'L':'lh.aparc.stats','R':'rh.aparc.stats'}
+parc_DS_f2rd ={'L':'lh.aparc.a2009s.stats','R':'rh.aparc.a2009s.stats'}
 
 brstem_hip_header = {
     'all':{'Medulla':'medulla','Pons':'pons','SCP':'scp','Midbrain':'midbrain',
@@ -625,6 +600,20 @@ brstem_hip_header = {
     'HIPR':['Hippocampal_tail','subiculum','CA1','hippocampal-fissure',
             'presubiculum','parasubiculum','molecular_layer_HP','GC-ML-DG',
             'CA3','CA4','fimbria','HATA','Whole_hippocampus'],}
+
+
+columns_main_DK_order = ('VolSeg','VolL_DK', 'VolR_DK', 'ThickL_DK', 'ThickR_DK', 'AreaL_DK', 'AreaR_DK', 'CurvL_DK', 'CurvR_DK',
+                     'NumVertL_DK','NumVertR_DK','FoldIndL_DK','FoldIndR_DK', 'CurvIndL_DK', 'CurvIndR_DK',
+                     'CurvGausL_DK','CurvGausR_DK', 'VolSegWM_DK',
+                     'ThickStdL_DS',  'ThickStdR_DS', 'eTIV')
+columns_main_DS_order = ('VolL_DS', 'VolR_DS','ThickL_DS', 'ThickR_DS', 'AreaL_DS', 'AreaR_DS', 'CurvL_DS', 'CurvR_DS',
+                     'NumVertL_DS', 'NumVertR_DS', 'FoldIndL_DS','FoldIndR_DS','CurvIndL_DS','CurvIndR_DS',
+                     'CurvGausL_DS','CurvGausR_DS',
+                      'ThickStdL_DS',  'ThickStdR_DS',)
+columns_secondary_order = ('VolSegWM_DK','VolSegNVoxels', 'VolSegnormMean', 'VolSegnormStdDev', 'VolSegnormMin',
+                     'NumVertL_DS', 'ThickStdL_DS', 'CurvIndL_DS', 'FoldIndL_DS', 'NumVertR_DS', 'ThickStdR_DS',
+                     'CurvGausR_DS', 'CurvIndR_DS', 'FoldIndR_DS', 'VolSegWMNVoxels_DK', 'VolSegWMnormMean_DK',
+                     'VolSegWMnormStdDev_DK', 'VolSegWMnormMin_DK', 'VolSegWMnormMax_DK', 'VolSegWMnormRange_DK')
 
 segmentation_parameters = ('Volume_mm3','NVoxels','normMean','normStdDev','normMin','normMax','normRange')
 segmentations_header = {'Left-Lateral-Ventricle':'ventricleLateralL','Left-Inf-Lat-Vent':'ventricleInfLateralL',

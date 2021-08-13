@@ -23,8 +23,9 @@ import json
 import time
 
 from fs_definitions import (all_data, aparc_file_extra_measures,
-                            BS_Hip_Tha_stats_f, brstem_hip_header,
-                            parc_DK_f2rd, parc_DS_f2rd)
+                            BS_Hip_Tha_stats_f,
+                            parc_DK_f2rd, parc_DS_f2rd,
+                            FilePerFSVersion)
 
 import logging
 logger = logging.getLogger(__name__)
@@ -131,6 +132,9 @@ class FSStats2Table:
         self.use_params_nimb   = use_params_nimb
         self.dir_stats         = 'stats'
         self.miss = dict()
+        freesurfer_version     = '7.1.1'
+        self.get_file               = FilePerFSVersion(freesurfer_version)
+
         self.define_file_names(new_date)
         self.run()
 
@@ -180,86 +184,84 @@ class FSStats2Table:
             ready, self.miss = chk_if_all_stats_present(sub, stats_dir_path, self.miss)
             if ready:
                 logger.info('    extracting stats for {}'.format(sub))
-                self.get_bs_hip_amy_tha(stats_dir_path, sub)
-                self.get_segmentations_parcelations(stats_dir_path, sub)
+                self.get_fs_stats_2table(path_2sub, sub)
                 self.row += 1
         self.writer.save()
         self.save_missing()
         self.make_one_sheet()
 
 
-    def get_bs_hip_amy_tha(self, stats_dir_path, _SUBJECT):
-        '''Extracting Brainstem,  Hippocampus, Amygdala, Thalamus'''
-        logger.info('    Brainstem,  Hippocampus, Amygdala, Thalamus running')
-        for atlas_hemi in BS_Hip_Tha_stats_f:
-            file_with_stats = [i for i in BS_Hip_Tha_stats_f[atlas_hemi] if path.exists(path.join(stats_dir_path.replace('/stats',''),i))][0]
-            if file_with_stats:
-                if '.v12' in file_with_stats or '.v21' in file_with_stats:
-                    df = self.read_BS_HIP_AMY_THA_v12_v21(path.join(stats_dir_path.replace('/stats',''),file_with_stats),_SUBJECT)
-                else:
-                    df = self.read_BS_HIP_v10(path.join(stats_dir_path.replace('/stats',''),file_with_stats),_SUBJECT)
-            else:
-                logger.info('    ERROR, '+atlas_hemi+' stats file is missing\n')
-                index_df = brstem_hip_header[atlas_hemi]
-                df=pd.DataFrame(np.repeat('nan',len(index_df)), columns=[_SUBJECT], index=index_df)
-                df=df.T
-            self.add_sheet_2df(df, atlas_hemi, brstem_hip_header['all'], atlas_hemi)
-
-
-    def read_BS_HIP_AMY_THA_v12_v21(self, file, _SUBJECT):
-        content=open(file,'r').readlines()
-        if 'amygdalar-nuclei' in file or 'thalamic-nuclei' in file:
-            d_data = {i.split(' ')[-1].strip('\n'):i.split(' ')[-2] for i in content[1:]}
-        else:
-            d_data = {i.split(' ')[-2]:i.split(' ')[-1].strip('\n') for i in content}
-            if 'by' in d_data:
-                d_data.pop('by', None)
-            if list(d_data.keys())[0] not in brstem_hip_header['all']:
-                new_d_data = dict()
-                for key in d_data:
-                    new_d_data[d_data[key]] = key
-                d_data = new_d_data
-        return pd.DataFrame(d_data, index=[_SUBJECT])
-
-
-    def read_BS_HIP_v10(self, file, _SUBJECT):
-        df=pd.read_table(file)
-        df.loc[-1]=df.columns.values
-        df.index=df.index+1
-        df=df.sort_index()
-        df.columns=['col']
-        df['col'],df[_SUBJECT]=df['col'].str.split(' ',1).str
-        df.index=df['col']
-        del df['col']
-        return df.transpose()
-
-
-    def get_segmentations_parcelations(self, stats_dir_path, _SUBJECT):
+    def get_fs_stats_2table(self, path_2sub, sub):
         '''Extracting SEGMENTATIONS and PARCELLATIONS'''
-        atlases = ('Subcort', 'DK', 'DKT', 'DS', 'WMDK')
+        atlases = ('bs', 'hip', 'amy','tha', 'Subcort', 'DK', 'DKT', 'DS', 'WMDK')
         for atlas  in atlases:
             name = all_data["atlas_params"][atlas]['atlas_name']
             logger.info(f'    Atlas: {name}')
             stats_param = all_data["atlas_params"][atlas]['atlas_param']
             parameters = all_data[stats_param]['parameters']
-            for hemisphere in all_data[stats_param]['files']:
-                file = all_data[stats_param]['files'][hemisphere]
-                f_stats_abspath = path.join(stats_dir_path, file)
+            for hemisphere in all_data[stats_param]['hemi']:
+                file = self.get_file.stats_f(atlas, 'stats', hemisphere)
+                f_stats_abspath = path.join(path_2sub, file)
+                if not self.f_exists(f_stats_abspath, file):
+                    file = self.get_file.stats_f(atlas, 'stats_old', hemisphere)
+                    f_stats_abspath = path.join(path_2sub, file)
+                    logger.info(f'        using old version of {file}')
                 if self.f_exists(f_stats_abspath, file):
                     content = list(open(f_stats_abspath,'r'))
-                    values, extra_measures = self.get_values(atlas, content, stats_param)
-                    df = pd.DataFrame(values[1:], columns=values[0])
-                    for fs_param in parameters:
-                        param = self.define_parameter_for_sheet(parameters, fs_param)
-                        sheetName = param+hemisphere+atlas
-                        if atlas == 'Subcort' and fs_param == 'Volume_mm3':
-                            self.sheet_subcort = sheetName
-                        df2 = pd.DataFrame()
-                        df2[_SUBJECT] = df[fs_param]
-                        df2.index = df['StructName']
-                        df2 = df2.transpose()
-                        df2 = self.populate_extra_measures(df2, content, fs_param, extra_measures, atlas)
-                        self.add_sheet_2df(df2, sheetName, all_data[stats_param]['header'], atlas)
+                    df, extra_measures = self.get_values(atlas, content, file, stats_param, sub)
+                    if len(all_data[stats_param]['parameters']) > 1:
+                        for fs_param in parameters:
+                            param = self.define_parameter_for_sheet(parameters, fs_param)
+                            sheetName = f'{param}_{hemisphere}_{atlas}'
+                            if atlas == 'Subcort' and fs_param == 'Volume_mm3':
+                                self.sheet_subcort = sheetName
+                            df2 = pd.DataFrame()
+                            df2[sub] = df[fs_param]
+                            df2.index = df['StructName']
+                            df2 = df2.transpose()
+                            df2 = self.populate_extra_measures(df2, content, fs_param, extra_measures, atlas)
+                            self.add_sheet_2df(df2, sheetName, all_data["header_fs2nimb"], atlas)
+                    else:
+                        fs_param = list(parameters.keys())[0]
+                        sheetName = f'{fs_param}_{hemisphere}_{atlas}'
+                        self.add_sheet_2df(df, sheetName, all_data["header_fs2nimb"], atlas)
+
+
+    def get_values(self, atlas, content, file_stats, stats_param, sub):
+        if atlas in ('bs', 'hip', 'amy','tha'):
+            if '.v12' in file_stats or '.v21' in file_stats:
+                new_version = False
+                new_files = ('segmentHA_T1.sh', 'segmentThalamicNuclei.sh',
+                    'segmentBS.sh')
+                for file in new_files:
+                    if file in content[0]:
+                        new_version = True
+                if new_version:
+                    values = {i.split(' ')[-1].strip('\n'):i.split(' ')[-2] for i in content[1:]}
+                else:
+                    values = {i.split(' ')[-2]:i.split(' ')[-1].strip('\n') for i in content}
+                if values:
+                    df = pd.DataFrame(values, index=[sub])
+                else:
+                    logger.info(f'    ERROR: file {file} has NO content')
+                    index_df = all_data[stats_param]['header']
+                    df=pd.DataFrame(np.repeat('nan',len(index_df)), columns=[sub], index=index_df)
+                    df=df.T
+            else:
+                df = self.read_BS_HIP_v10(file_stats, sub)
+        else:
+            values_raw = content[content.index([x for x in content if 'ColHeaders' in x][0]):]
+            if not all_data[stats_param]["two_hemi"]:
+                values = [values_raw[0].split()[4:]]
+                for line in values_raw[1:]:
+                    values.append(line.split()[2:])
+            else:
+                values = [values_raw[0].split()[2:]]
+                for line in values_raw[1:]:
+                    values.append(line.split())
+            df = pd.DataFrame(values[1:], columns=values[0])
+        extra_measures = self.get_extra_measures(atlas, content)
+        return df, extra_measures
 
 
     def define_parameter_for_sheet(self, parameters, fs_param):
@@ -269,26 +271,20 @@ class FSStats2Table:
         return param
 
 
-    def get_values(self, atlas, content, stats_param):
-        values_raw = content[content.index([x for x in content if 'ColHeaders' in x][0]):]
-        if not all_data[stats_param]["two_hemi_two_files"]:
-            values = [values_raw[0].split()[4:]]
-            for line in values_raw[1:]:
-                values.append(line.split()[2:])
-        else:
-            values = [values_raw[0].split()[2:]]
-            for line in values_raw[1:]:
-                values.append(line.split())
-        extra_measures = self.get_extra_measures(atlas, content)
-        return values, extra_measures
+    def read_BS_HIP_v10(self, file, sub):
+        '''to read old version FS 6 and older of the brainstem and hippocampus
+        stats file
+        '''
+        df=pd.read_table(file)
+        df.loc[-1]=df.columns.values
+        df.index=df.index+1
+        df=df.sort_index()
+        df.columns=['col']
+        df['col'],df[sub]=df['col'].str.split(' ',1).str
+        df.index=df['col']
+        del df['col']
+        return df.transpose()
 
-
-    def f_exists(self, f_abspath, file):
-        f_exists = True
-        if not path.isfile(f_abspath):
-            f_exists = False
-            logger.info('    ERROR {} is missing\n'.format(file))
-        return f_exists
 
 
     def get_extra_measures(self, atlas, content):
@@ -371,6 +367,14 @@ class FSStats2Table:
         return ending
 
 
+    def f_exists(self, f_abspath, file):
+        f_exists = True
+        if not path.isfile(f_abspath):
+            f_exists = False
+            logger.info(f'        ERROR {file} is missing')
+        return f_exists
+
+
     def save_missing(self):
         if self.miss:
             logger.info('ERROR: some subjects are missing the required files. Check file: {}'.format(self.f_miss))
@@ -398,6 +402,45 @@ class FSStats2Table:
     def save_json(self, d, f):
         with open(f, 'w') as jf:
             json.dump(d, jf, indent=4)
+
+    # OLD SCRIPTS, were adjusted; 
+    # def get_bs_hip_amy_tha(self, stats_dir_path, sub):
+    #     '''Extracting Brainstem,  Hippocampus, Amygdala, Thalamus'''
+    #     logger.info('    Brainstem,  Hippocampus, Amygdala, Thalamus running')
+    #     for atlas_hemi in BS_Hip_Tha_stats_f:
+    #         file_with_stats = [i for i in BS_Hip_Tha_stats_f[atlas_hemi] if path.exists(path.join(stats_dir_path.replace('/stats',''),i))][0]
+    #         if file_with_stats:
+    #             file = path.join(stats_dir_path.replace('/stats',''), file_with_stats)
+    #             if '.v12' in file_with_stats or '.v21' in file_with_stats:
+    #                 df = self.read_BS_HIP_AMY_THA_v12_v21(file, sub)
+    #             else:
+    #                 df = self.read_BS_HIP_v10(file, sub)
+    #         else:
+    #             logger.info('    ERROR, '+atlas_hemi+' stats file is missing\n')
+    #             index_df = brstem_hip_header[atlas_hemi]
+    #             df=pd.DataFrame(np.repeat('nan',len(index_df)), columns=[sub], index=index_df)
+    #             df=df.T
+    #         self.add_sheet_2df(df, atlas_hemi, brstem_hip_header['all'], atlas_hemi)
+
+
+    # def read_BS_HIP_AMY_THA_v12_v21(self, file, sub):
+    #     content=open(file,'r').readlines()
+    #     if 'amygdalar-nuclei' in file or 'thalamic-nuclei' in file:
+    #         d_data = {i.split(' ')[-1].strip('\n'):i.split(' ')[-2] for i in content[1:]}
+    #     else:
+    #         d_data = {i.split(' ')[-2]:i.split(' ')[-1].strip('\n') for i in content}
+    #         if 'by' in d_data:
+    #             d_data.pop('by', None)
+    #         if d_data:
+    #             if list(d_data.keys())[0] not in brstem_hip_header['all']:
+    #                 new_d_data = dict()
+    #                 for key in d_data:
+    #                     new_d_data[d_data[key]] = key
+    #                 d_data = new_d_data
+    #         else:
+    #             logger.info(f'    ERROR: file {file} has NO content')
+    #             d_data = {'nan': 'nan'}
+    #     return pd.DataFrame(d_data, index=[sub])
 
 
 def get_parameters(projects):
