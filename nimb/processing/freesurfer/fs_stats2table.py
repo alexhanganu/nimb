@@ -212,7 +212,7 @@ class FSStats2Table:
                     if len(all_data[stats_param]['parameters']) > 1:
                         for fs_param in parameters:
                             param = self.define_parameter_for_sheet(parameters, fs_param)
-                            sheetName = f'{param}_{hemisphere}_{atlas}'
+                            sheetName = f'{atlas}_{param}_{hemisphere}'
                             if atlas == 'Subcort' and fs_param == 'Volume_mm3':
                                 self.sheet_subcort = sheetName
                             df2 = pd.DataFrame()
