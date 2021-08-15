@@ -77,7 +77,18 @@ class ANOVA_do():
                     measurement, structure, ls_err = self.fs_struc_meas.get(col, ls_err)
                     if param_y not in self.sig_cols:
                         self.sig_cols[param_y] = dict()
-                    self.sig_cols[param_y][col] = {'pvalues':model.pvalues.x, 'intercept': model.pvalues.Intercept, 'meas': measurement, 'struct': structure}
+                    self.sig_cols[param_y][col] = {
+                            'rsquared': model.rsquared,
+                            'rsquared-adjusted': model.rsquared_adj,
+                            'F-statistic': model.fvalue,
+                            'AIC': model.aic,
+                            'BIC': model.bic,
+                            'pvalue_slope':model.pvalues.x,
+                            'pvalue_intercept': model.pvalues.Intercept,
+                            'tvalue_slope':model.tvalues.x,
+                            'tvalue_intercept': model.tvalues.Intercept,
+                            'meas': measurement,
+                            'struct': structure}
                     df_result_list = self.populate_df(df_result_list, ixx, {param_y: structure, 'measure': measurement, 'pvalue': '%.4f'%model.pvalues.x})
                     if structure not in df_result[param_y].tolist():
                         df_result = self.populate_df(df_result, ix, {param_y: structure, measurement: '%.4f'%model.pvalues.x})
