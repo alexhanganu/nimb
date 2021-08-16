@@ -152,6 +152,15 @@ class PerformGLM():
 
     def run_mri_surfcluster(self, glmdir, fsgd_type_contrast, hemi,
                                   contrast, analysis_name, meas, explanation):
+    '''
+    https://surfer.nmr.mgh.harvard.edu/fswiki/FsTutorial/MultipleComparisonsV6.0Perm
+    --glmdir: Specify the same GLM directory
+    --perm: Run a permuation simulation 
+    Vertex-wise/cluster-forming threshold of (13 = p < .05, 2 = p < .01).
+    direction: the sign of analysis ("neg" for negative, "pos" for positive, or "abs" for absolute/unsigned)
+    --cwp 0.05 : Keep clusters that have cluster-wise p-values < 0.05. To see all clusters, set to .999
+    --2spaces : adjust p-values for two hemispheres
+    '''
         path_2contrast = path.join(glmdir, fsgd_type_contrast)
         mcz_meas = self.GLM_MCz_meas_codes[meas]
         for direction in self.mcz_sim_direction:
@@ -180,11 +189,16 @@ class PerformGLM():
                                                         fsgd_type_contrast, contrast, direction,
                                                         cwsig_mc_f, oannot_mc_f)
             else:
-                cmd_header = 'mri_glmfit-sim --glmdir {}'.format(path.join(glmdir, fsgd_type_contrast))
-                cmd_cache  = '--cache {} {}'.format(str(self.mc_cache_thresh), direction)
-                system('{} {} --cwp 0.05 --2spaces'.format(cmd_header, cmd_cache))
+                glmdir_fsgd_contrast = path.join(glmdir, fsgd_type_contrast)
+                cmd_header = f'mri_glmfit-sim --glmdir {glmdir_fsgd_contrast}'
+                cmd_cache  = f'--cache {str(self.mc_cache_thresh)} {direction}'
+                cmd_perm   = f'--perm 1000 1.3 {direction}'
+                cmd_tail   = f'--cwp 0.05 --2spaces'
+                system(f'{cmd_header} {cmd_cache} {cmd_tail}')
                 if self.check_mcz_summary(sum_mc_f):
                     self.cluster_stats_to_file(analysis_name, sum_mc_f, contrast, direction, explanation)
+                system(f'{cmd_header} {cmd_perm} {cmd_tail}')
+
 
     def check_maxvox(self, glmdir, fsgd_type_contrast):
         res = False
