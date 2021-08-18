@@ -76,6 +76,51 @@ class ProjectManager:
         self._ids_all           = dict()
 
 
+    def get_df_f_groups(self):
+        '''reading the file with IDs
+            this file is provided by the user in:
+            ../nimb/projects.json -> fname_groups
+            file is tabular (.csv; .xlsx)
+            if file is not provided or not found:
+            run: self.make_default_grid()
+        '''
+        self.df_grid_ok = False
+        f_groups = self.project_vars['fname_groups']
+        dir_4stats       = makedir_ifnot_exist(self.path_stats_dir)
+        if self.distrib_hlp.get_files_for_stats(dir_4stats,
+                                                [f_groups,]):
+            f_grid = os.path.join(dir_4stats, f_groups)
+            print(f'    file with groups is present: {f_grid}')
+            self.df_grid_ok = True
+            return self.tab.get_df(f_grid)
+        else:
+            self.df_grid_ok = False
+            return self.make_default_grid()
+
+
+    def make_default_grid(self):
+        '''creates the file default.csv
+            that will be located in:
+            ../nimb/projects.json -> materials_DIR -> ['local', 'PATH_2_DIR']
+            ../nimb/projects.json -> STATS_PATHS -> STATS_HOME
+            script will update file projects.json
+        '''
+        print(f'    file with groups is absent; creating default grid file in: {self.path_stats_dir}')
+        df = self.tab.get_clean_df()
+        df[self.bids_id_col] = ''
+        self.tab.save_df(df,
+            os.path.join(self.path_stats_dir, DEFAULT.default_tab_name))
+        self.tab.save_df(df,
+            os.path.join(self.materials_dir_pt, DEFAULT.default_tab_name))
+        self.project_vars['fname_groups']   = DEFAULT.default_tab_name
+        self.all_vars.projects[self.project]['fname_groups'] = DEFAULT.default_tab_name
+        from setup.get_credentials_home import _get_credentials_home
+        credentials_home = _get_credentials_home()
+        print(f'        updating project.json at: {credentials_home}')
+        save_json(self.all_vars.projects, os.path.join(credentials_home, 'projects.json'))
+        return df
+
+
     def run(self):
         """
             will run the whole project starting with the file provided in the projects.json -> group
@@ -439,6 +484,7 @@ class ProjectManager:
             current abbreviation is ses_00; this variable must be changed
             to allow users to define it
         """
+        print(f'    reading IDs for project {self.project}')
         if self.df_grid_ok:
             self._ids_bids = list(self.df_f_groups[self.bids_id_col])
             print(f'    list of ids that are present: {self._ids_bids}')
@@ -517,36 +563,6 @@ class ProjectManager:
             self.send_2processing('process')
         else:
             print('   file with nimb classified is missing')
-
-
-    def get_df_f_groups(self):
-        self.df_grid_ok = False
-        f_groups = self.project_vars['fname_groups']
-        dir_4stats       = makedir_ifnot_exist(self.path_stats_dir)
-        if self.distrib_hlp.get_files_for_stats(dir_4stats,
-                                                [f_groups,]):
-            f_grid = os.path.join(dir_4stats, f_groups)
-            print(f'    file with groups is present: {f_grid}')
-            self.df_grid_ok = True
-            return self.tab.get_df(f_grid)
-        else:
-            self.df_grid_ok = False
-            return self.make_default_grid()
-
-
-    def make_default_grid(self):
-        print('here',self.path_stats_dir)
-        df = self.tab.get_clean_df()
-        df[self.bids_id_col] = ''
-        self.tab.save_df(df,
-            os.path.join(self.path_stats_dir, DEFAULT.default_tab_name))
-        self.tab.save_df(df,
-            os.path.join(self.materials_dir_pt, DEFAULT.default_tab_name))
-        self.project_vars['fname_groups']   = DEFAULT.default_tab_name
-        self.all_vars.projects[self.project]['fname_groups'] = DEFAULT.default_tab_name
-        from setup.get_credentials_home import _get_credentials_home
-        save_json(self.all_vars.projects, os.path.join(_get_credentials_home(), 'projects.json'))
-        return df
 
 
     def populate_ids_all_from_remote(self, _ids, bids_id):
