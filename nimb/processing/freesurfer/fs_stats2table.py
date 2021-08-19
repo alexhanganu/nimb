@@ -149,17 +149,20 @@ class FSStats2Table:
         self.fname_fs_subcort_vol = self.project_vars["STATS_FILES"]["fname_fs_subcort_vol"]
         if self.fname_fs_subcort_vol == 'default':
             self.fname_fs_subcort_vol = DEFAULT.fname_fs_subcort_vol
-        fname_fs_per_param     = self.project_vars["STATS_FILES"]["fname_fs_per_param"]
+        fname_fs_per_param         = self.project_vars["STATS_FILES"]["fname_fs_per_param"]
         if fname_fs_per_param == 'default':
             fname_fs_per_param = DEFAULT.fname_fs_per_param
 
         if new_date:
             date = str(time.strftime('%Y%m%d', time.localtime()))
-            file_name          = f"{fname_fs_per_param}_{date}.xlsx"
+            file_name_nimb_vars = f"{fname_fs_per_param}_{date}.xlsx"
+            file_name_fs_vars   = f'stats_fs_with_fs_var_names_{date}.xlsx'
         else:
-            file_name          = f"{fname_fs_per_param}.xlsx"
+            file_name_nimb_vars = f"{fname_fs_per_param}.xlsx"
+            file_name_fs_vars   = 'stats_fs_with_fs_var_names.xlsx'
 
-        self.dataf             = self.get_path(self.stats_DIR, file_name)
+        self.dataf_fs          = self.get_path(self.stats_DIR, file_name_fs_vars)
+        self.dataf_nimb        = self.get_path(self.stats_DIR, file_name_nimb_vars)
         self.f_miss            = self.get_path(self.stats_DIR,
                                             'subjects_with_missing_files.json')
 
@@ -170,15 +173,19 @@ class FSStats2Table:
         '''
         if not self.ls_subjects:
             self.ls_subjects = sorted(listdir(self.PATH2subjects))
-            logger.info(f'    Extracting stats for subjects located in folder: {self.PATH2subjects}')
+            logger.info(f'Extracting stats for subjects located in folder: {self.PATH2subjects}')
 
-        self.writer=pd.ExcelWriter(self.dataf, engine='xlsxwriter')
-        self.sheetnames = list()
-        self.row=1
+        self.writer_fs   = pd.ExcelWriter(self.dataf_fs,   engine = 'xlsxwriter')
+        self.writer_nimb = pd.ExcelWriter(self.dataf_nimb, engine = 'xlsxwriter')
+        self.sheetnames_fs    = list()
+        self.sheetnames_nimb  = list()
+        self.row = 1
+
+
 
         for sub in self.ls_subjects:
             subs_left = len(self.ls_subjects[self.ls_subjects.index(sub):])
-            logger.info(f'reading: {sub}; left: {subs_left}')
+            logger.info(f'    reading: {sub}; left: {subs_left}')
             path_2sub        = self.get_path(self.PATH2subjects, sub)
             stats_dir_path   = self.get_path(path_2sub, self.dir_stats)
             ready, self.miss = chk_if_all_stats_present(sub, stats_dir_path, self.miss)
@@ -186,7 +193,8 @@ class FSStats2Table:
                 logger.info('    extracting stats for {}'.format(sub))
                 self.get_fs_stats_2table(path_2sub, sub)
                 self.row += 1
-        self.writer.save()
+        self.writer_fs.save()
+        self.writer_nimb.save()
         self.save_missing()
         self.make_one_sheet()
 
@@ -222,8 +230,8 @@ class FSStats2Table:
                             df2 = self.populate_extra_measures(df2, content, fs_param, extra_measures, atlas)
                             self.add_sheet_2df(df2, sheetName, all_data["header_fs2nimb"], atlas)
                     else:
-                        fs_param = list(parameters.keys())[0]
-                        sheetName = f'{fs_param}_{hemisphere}_{atlas}'
+                        param = list(parameters.keys())[0]
+                        sheetName = f'{atlas}_{param}_{hemisphere}'
                         self.add_sheet_2df(df, sheetName, all_data["header_fs2nimb"], atlas)
 
 
@@ -337,8 +345,24 @@ class FSStats2Table:
     def add_sheet_2df(self, df, sheetname, header, atlas):
         '''adding a populated sheet
         '''
-        if sheetname in self.sheetnames:
-            df.to_excel(self.writer,
+        if sheetname in self.sheetnames_fs:
+            df.to_excel(self.writer_fs,
+                        sheet_name=sheetname,
+                        startcol=0,
+                        startrow=self.row,
+                        header=False,
+                        index=True)
+        else:
+            df.to_excel(self.writer_fs,
+                        sheet_name=sheetname,
+                        startcol=0,
+                        startrow=0,
+                        header=True,
+                        index=True)                
+            self.sheetnames_fs.append(sheetname)
+
+        if sheetname in self.sheetnames_nimb:
+            df.to_excel(self.writer_nimb,
                         sheet_name=sheetname,
                         startcol=0,
                         startrow=self.row,
@@ -349,13 +373,13 @@ class FSStats2Table:
                 df.rename(columns=lambda ROI: header[ROI.replace('wm-lh-','').replace('wm-rh-','').replace('Left-','').replace('Right-','')]+self.get_ending_wmdk(ROI[:5]), inplace=True)
             else:
                 df.rename(columns=lambda ROI: header[ROI], inplace=True)
-            df.to_excel(self.writer,
+            df.to_excel(self.writer_nimb,
                         sheet_name=sheetname,
                         startcol=0,
                         startrow=0,
                         header=True,
                         index=True)
-            self.sheetnames.append(sheetname)
+            self.sheetnames_nimb.append(sheetname)
         return df
 
 
@@ -384,10 +408,10 @@ class FSStats2Table:
     def make_one_sheet(self):
         if self.big_file:
             from fs_stats_utils import FSStatsUtils
-            fs_utils = FSStatsUtils(self.dataf,
+            fs_utils = FSStatsUtils(self.dataf_nimb,
                                     self.stats_DIR,
                                     self.project_vars["id_col"],
-                                    self.sheetnames,
+                                    self.sheetnames_nimb,
                                     self.sheet_subcort,
                                     Table)
             fs_utils.create_BIG_data_file(self.fname_fs_all_stats, self.file_type)
