@@ -73,7 +73,7 @@ class DCM2BIDS_helper():
                 extract from archive specific subject_session
                 start dcm2bids for subject_session
         '''
-        print(f'        folder with subjects is: {self.DICOM_DIR}')
+        print(f'{" " *8}folder with subjects is: {self.DICOM_DIR}')
         if self.id_classified:
             self.nimb_id = nimb_id
             self.ses     = ses
@@ -84,7 +84,7 @@ class DCM2BIDS_helper():
             try:
                 self.nimb_classified = load_json(os.path.join(self.DICOM_DIR, DEFAULT.f_nimb_classified))
             except Exception as e:
-                print(f'        could not load the nimb_classified file at: {self.DICOM_DIR}')
+                print(f'{" " *12}  could not load the nimb_classified file at: {self.DICOM_DIR}')
                 sys.exit(0)
         if self.nimb_classified:
             self.nimb_ids = list(self.nimb_classified.keys())
@@ -104,36 +104,39 @@ class DCM2BIDS_helper():
 
 
     def start_stepwise_choice(self):
-        print(f'\n\n        classifying for id: {self.bids_id}')
+        print(f'{" " *8}classifying for id: {self.bids_id}')
         if self.id_classified['archived']:
             self.archived = True
         for self.data_Type in BIDS_types:
             if self.data_Type in self.id_classified[self.ses]:
                 for modalityLabel in BIDS_types[self.data_Type]:
                     if modalityLabel in self.id_classified[self.ses][self.data_Type]:
+                        print(f'{" " *8}{self.data_Type} type is being converted')
                         paths_2mr_data = self.id_classified[self.ses][self.data_Type][modalityLabel]
                         self.modalityLabel = mr_modality_nimb_2_dcm2bids[modalityLabel] # changing to dcm2bids type modality_label
                         if len(paths_2mr_data) > 1:
-                            print(f'    NOTE: there are more than 1 MRI of type: {self.modalityLabel} in the source folder.')
-                            print(f'        dcm2bids CANNOT save multiple versions of the same MR type in the same session.')
-                            print(f'        ONLY the first MR version will be used')
+                            print(f'{" " *12}> NOTE: {self.modalityLabel} types are more than 1')
+                            print(f'{" " *15}> dcm2bids CANNOT save multiple versions of the same MR type in the same session.')
+                            print(f'{" " *15}> using the first version')
                         path2mr_ = paths_2mr_data[0]
-                        print(f'        converting mr type: {self.data_Type}')
                         self.abs_path2mr = self.get_path_2mr(path2mr_)
                         self.sub_SUBJDIR = os.path.join(self.OUTPUT_DIR, 'tmp_dcm2bids', self.bids_id)
                         self.run_dcm2bids()
                         if os.path.exists(self.sub_SUBJDIR) and \
                             len(os.listdir(self.sub_SUBJDIR)) > 0:
-                            print('    conversion did not find corresponding values in the configuration file')
-                            print("        temporary converted subject located in:", self.sub_SUBJDIR)
+                            print(f'{" " *12}> conversion did not find corresponding values in the configuration file')
+                            print(f'{" " *12}> temporary converted: {self.sub_SUBJDIR}')
                             self.chk_if_processed()
                         else:
-                            print('    dcm2bids conversion DONE')
+                            self.cleaning_after_conversion()
 
 
     def run_dcm2bids(self):
         if self.run_stt == 0:
+            print("*" * 80)
             self.config_file = self.get_config_file()
+            print(f'{" " * 12} config file is: {self.config_file}')
+            print(f'{" " *15} archive located at: {self.abs_path2mr}')
             return_value = os.system('dcm2bids -d {} -p {} -s {} -c {} -o {}'.format(
                                                                                     self.abs_path2mr,
                                                                                     self.nimb_id,
@@ -142,14 +145,14 @@ class DCM2BIDS_helper():
                                                                                     self.OUTPUT_DIR))
             # Calculate the return value code
             return_value = int(bin(return_value).replace("0b", "").rjust(16, '0')[:8], 2)
-            print('return value is: ',return_value)
             if return_value != 0: # failed
+                print(f'{" " *12} conversion finished with error')
                 os.system('dcm2bids -d {} -p {} -s {} -c {} -o {}'.format(self.abs_path2mr,
                                                                         self.nimb_id,
                                                                         self.ses,
                                                                         self.config_file,
                                                                         self.OUTPUT_DIR))
-            print("/"*40)
+            print("*" * 80)
 
 
     def chk_if_processed(self):
@@ -159,7 +162,7 @@ class DCM2BIDS_helper():
         """
         ls_niigz_files = [i for i in os.listdir(self.sub_SUBJDIR) if '.nii.gz' in i]
         if ls_niigz_files:
-            print("        remaining nii in ", self.sub_SUBJDIR)
+            print(f'{" " *12}> remaining nii in {self.sub_SUBJDIR}')
             if self.repeat_updating < self.repeat_lim:
                 self.update = False
                 for niigz_f in ls_niigz_files:
@@ -168,17 +171,28 @@ class DCM2BIDS_helper():
                     self.sidecar_content = load_json(os.path.join(self.sub_SUBJDIR, sidecar))
                     self.update_config()
                 if self.update:
-                    print('        removing folder: ', self.sub_SUBJDIR)
+                    print(f'{" " *12} removing folder: {self.sub_SUBJDIR}')
                     self.repeat_updating += 1
                     self.rm_dir(self.sub_SUBJDIR)
-                    print('    re-renning dcm2bids')
+                    print(f'{" " *12} re-renning dcm2bids')
                     self.run_dcm2bids()
-                    print('    looping to another chk_if_processed')
+                    print(f'{" " *12} looping to another chk_if_processed')
                     self.chk_if_processed()
         else:
-            print('    dcm2bids conversion DONE')
-            if os.path.exists(self.sub_SUBJDIR):
-                self.rm_dir(self.sub_SUBJDIR)
+            self.cleaning_after_conversion()
+
+
+    def cleaning_after_conversion(self):
+        print(f'{" " *15} >>>>DCM2BIDS conversion DONE')
+        if os.path.exists(self.sub_SUBJDIR):
+            print(f'{" " *15} removing folder: {self.sub_SUBJDIR}')
+            self.rm_dir(self.sub_SUBJDIR)
+        if os.path.exists(self.abs_path2mr):
+            print(f'{" " *15} removing folder: {self.abs_path2mr}')
+            self.rm_dir(self.abs_path2mr)
+        print('\n')
+
+
 
 
     def update_config(self):
@@ -194,19 +208,19 @@ class DCM2BIDS_helper():
                 des["modalityLabel"] == self.modalityLabel:
                 list_criteria.append(des)
         if len(list_criteria) > 0:
-            print('    there is at least one configuration with dataType: ', self.data_Type)
+            print(f'{" " *12}> there is at least one configuration with dataType: {self.data_Type}')
             for des in list_criteria[::-1]:
                 if criterion1 in des['criteria']:
                     if des['criteria'][criterion1] == sidecar_crit1:
-                        print('        sidecar is present in the config file. Add another sidecar criterion in the dcm2bids_helper.py script')
+                        print(f'{" " *12} sidecar is present in the config file. Add another sidecar criterion in the dcm2bids_helper.py script')
                         self.add_criterion = True
                         sys.exit(0)
                     else:
                         list_criteria.remove(des)
         if len(list_criteria) > 0:
-            print('    cannot find a correct sidecar location. Please add more parameters.')
+            print(f'{" " *12}> cannot find a correct sidecar location. Please add more parameters.')
         if len(list_criteria) == 0:
-            print ("        updating config with value: ", sidecar_crit1)
+            print (f'{" " *12}> updating config with value: {sidecar_crit1}')
             new_des = {
                'dataType': self.data_Type,
                'modalityLabel' : self.modalityLabel,
@@ -218,7 +232,7 @@ class DCM2BIDS_helper():
             self.run_stt = 0
             save_json(self.config, self.config_file)
         else:
-           print('criterion {} present in config file'.format(criterion1))
+           print(f'{" " *12}criterion {criterion1} present in config file')
 
 
     def get_config_file(self):
@@ -228,9 +242,6 @@ class DCM2BIDS_helper():
         config_file = os.path.join(self.OUTPUT_DIR,
                              f'dcm2bids_config_{self.project}.json')
         if os.path.exists(config_file):
-            print("*"*50)
-            print("        config_file is: ", config_file)
-            print("*" * 50)
             return config_file
         else:
             shutil.copy(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dcm2bids','dcm2bids_config_default.json'),
@@ -241,13 +252,12 @@ class DCM2BIDS_helper():
     def get_path_2mr(self, path2mr_):
         if self.archived:
             path_2archive = self.id_classified['archived']
-            print(f'        archive located at: {path_2archive}')
             if is_archive(path_2archive):
-                print('        is archive')
+                print(f'{" " *12} archive located at: {path_2archive}')
                 return self.extract_from_archive(path_2archive,
                                                  path2mr_)
             else:
-                print(f'        file: {path_2archive} does not seem to be an archive')
+                print(f'{" " *12} file: {path_2archive} does not seem to be an archive')
                 return ''
         else:
             return path2mr_
@@ -277,7 +287,7 @@ class DCM2BIDS_helper():
 
     def chk_dir(self, location):
         """Check if a directory exists. If not, create a directory"""
-        print(location)
+        print(f'{" " *12} {location}')
         if not os.path.exists(location):
             os.makedirs(location)
         return location
@@ -289,5 +299,5 @@ class DCM2BIDS_helper():
         if os.path.exists(DICOM_DIR):
             return DICOM_DIR
         else:
-            print('    path is invalid: {}'.format(DICOM_DIR))
+            print(f'{" " *12} path is invalid: {DICOM_DIR}')
             return 'PATH_IS_MISSING'
