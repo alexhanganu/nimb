@@ -86,13 +86,13 @@ class DCM2BIDS_helper():
             except Exception as e:
                 print(f'{" " *12}  could not load the nimb_classified file at: {self.DICOM_DIR}')
                 sys.exit(0)
-        if self.nimb_classified:
-            self.nimb_ids = list(self.nimb_classified.keys())
-            for self.nimb_id in self.nimb_ids:
-                self.id_classified = self.nimb_classified[self.nimb_id]
-                for self.ses in [i for i in self.id_classified if i not in ('archived',)]:
-                    self.bids_id = self.make_bids_id()
-                    self.start_stepwise_choice()
+            if self.nimb_classified:
+                self.nimb_ids = list(self.nimb_classified.keys())
+                for self.nimb_id in self.nimb_ids:
+                    self.id_classified = self.nimb_classified[self.nimb_id]
+                    for self.ses in [i for i in self.id_classified if i not in ('archived',)]:
+                        self.bids_id = self.make_bids_id()
+                        self.start_stepwise_choice()
         if nimb_id != 'none':
             return self.bids_id
         else:

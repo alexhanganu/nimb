@@ -227,20 +227,20 @@ class ProjectManager:
             if test:
                 print(f'        TESTING with {nr_participants_for_testing} participants')
                 ls_nimb_ids = [i for i in nimb_classified][:nr_participants_for_testing]
-            for nimb_id in ls_nimb_ids:
+            for nimb_id in ls_nimb_ids[:1]:#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 ls_sessions = [i for i in nimb_classified[nimb_id] if i not in ('archived',)]
                 for ses in ls_sessions:
                     convert_2bids = self.id_is_bids_converted(nimb_id, ses)
-                    print(f'    must convert to BIDS: {convert_2bids}')
                     if convert_2bids:
-                        bids_id = self.convert_with_dcm2bids(nimb_id,
+                        print('    ready to convert to BIDS')
+                        bids_classified = self.convert_with_dcm2bids(nimb_id,
                                                             ses,
                                                             nimb_classified[nimb_id])
-                        print(f'        bids_id is: {bids_id}')
+                        print(f'        bids_classified is: {bids_classified}')
 
 
     def convert_with_dcm2bids(self, nimb_id, ses, nimb_classified_per_id):
-        print(f'    started dcm2bids classification for id: {nimb_id} session: {ses}')
+        print(f'    starting dcm2bids classification for id: {nimb_id} session: {ses}')
         return DCM2BIDS_helper(self.project_vars,
                         self.project,
                         nimb_classified_per_id = nimb_classified_per_id,

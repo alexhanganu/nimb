@@ -36,8 +36,8 @@ def load_json(file_abspath):
         return json.load(f)
 
 
-def save_json(data, file_abspath, ensure_ascii = False):
-    print(f'    saving new file: {file_abspath}')
+def save_json(data, file_abspath, print_space = 4, ensure_ascii = False):
+    print(f'{" " * print_space}saving new file: {file_abspath}')
     with open(file_abspath, 'w') as f:
         json.dump(data, f, indent=4)
     os.system('chmod 777 {}'.format(file_abspath))
