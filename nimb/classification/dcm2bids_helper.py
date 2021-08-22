@@ -73,6 +73,7 @@ class DCM2BIDS_helper():
                 extract from archive specific subject_session
                 start dcm2bids for subject_session
         '''
+        self.bids_classified = dict()
         print(f'{" " *8}folder with subjects is: {self.DICOM_DIR}')
         if self.id_classified:
             self.nimb_id = nimb_id
@@ -93,14 +94,12 @@ class DCM2BIDS_helper():
                     for self.ses in [i for i in self.id_classified if i not in ('archived',)]:
                         self.bids_id = self.make_bids_id()
                         self.start_stepwise_choice()
-        if nimb_id != 'none':
-            return self.bids_id
-        else:
-            return 'none'
+        return self.bids_classified
 
 
     def make_bids_id(self):
-        return f'sub-{self.nimb_id}_{self.ses}'
+        self.bids_id_dir = f'sub-{self.nimb_id}'
+        return f'{self.bids_id_dir}_{self.ses}'
 
 
     def start_stepwise_choice(self):
@@ -109,11 +108,11 @@ class DCM2BIDS_helper():
             self.archived = True
         for self.data_Type in BIDS_types:
             if self.data_Type in self.id_classified[self.ses]:
-                for modalityLabel in BIDS_types[self.data_Type]:
-                    if modalityLabel in self.id_classified[self.ses][self.data_Type]:
-                        print(f'{" " *8}{self.data_Type} type is being converted')
-                        paths_2mr_data = self.id_classified[self.ses][self.data_Type][modalityLabel]
-                        self.modalityLabel = mr_modality_nimb_2_dcm2bids[modalityLabel] # changing to dcm2bids type modality_label
+                for self.modalityLabel_nimb in BIDS_types[self.data_Type]:
+                    if self.modalityLabel_nimb in self.id_classified[self.ses][self.data_Type]:
+                        print(f'{" " *8}{self.data_Type} type, {self.modalityLabel_nimb} label, is being converted')
+                        paths_2mr_data = self.id_classified[self.ses][self.data_Type][self.modalityLabel_nimb]
+                        self.modalityLabel = mr_modality_nimb_2_dcm2bids[self.modalityLabel_nimb] # changing to dcm2bids type modality_label
                         if len(paths_2mr_data) > 1:
                             print(f'{" " *12}> NOTE: {self.modalityLabel} types are more than 1')
                             print(f'{" " *15}> dcm2bids CANNOT save multiple versions of the same MR type in the same session.')
@@ -129,6 +128,30 @@ class DCM2BIDS_helper():
                             self.chk_if_processed()
                         else:
                             self.cleaning_after_conversion()
+
+
+    def populate_bids_classifed(self):
+        abs_path2_bids_id_dir = os.path.join(self.OUTPUT_DIR, self.bids_id_dir, self.ses, self.data_Type)
+        abs_path2_bids_nii_f = os.path.join(abs_path2_bids_id_dir,
+                                    [i for i in os.listdir(abs_path2_bids_id_dir) if i.endswith('.nii.gz')][0])
+        if self.bids_id not in self.bids_classified:
+            self.bids_classified[self.bids_id] = dict()
+        if self.data_Type not in self.bids_classified[self.bids_id]:
+            self.bids_classified[self.bids_id][self.data_Type] = dict()
+        if self.modalityLabel_nimb not in self.bids_classified[self.bids_id][self.data_Type]:
+            if self.modalityLabel_nimb == 'dwi':
+                abs_path2_bids_bval_f = os.path.join(abs_path2_bids_id_dir,
+                                            [i for i in os.listdir(abs_path2_bids_id_dir) if i.endswith('.bval')][0])
+                abs_path2_bids_bvec_f = os.path.join(abs_path2_bids_id_dir,
+                                            [i for i in os.listdir(abs_path2_bids_id_dir) if i.endswith('.bvec')][0])
+                val = {'dwi' : ['local', abs_path2_bids_nii_f],
+                       'bval': ['local', abs_path2_bids_bval_f],
+                       'bvec': ['local', abs_path2_bids_bvec_f]}
+            else:
+                val = {self.modalityLabel_nimb: ['local', abs_path2_bids_nii_f]}
+            self.bids_classified[self.bids_id][self.data_Type] = val
+        else:
+            print(f'{" " * 12} ERR: modality {self.modalityLabel_nimb} is already present.')
 
 
     def run_dcm2bids(self):
@@ -183,6 +206,7 @@ class DCM2BIDS_helper():
 
 
     def cleaning_after_conversion(self):
+        self.populate_bids_classifed()
         print(f'{" " *15} >>>>DCM2BIDS conversion DONE')
         if os.path.exists(self.sub_SUBJDIR):
             print(f'{" " *15} removing folder: {self.sub_SUBJDIR}')
@@ -230,7 +254,7 @@ class DCM2BIDS_helper():
 
         if self.update:
             self.run_stt = 0
-            save_json(self.config, self.config_file)
+            save_json(self.config, self.config_file, print_space = 12)
         else:
            print(f'{" " *12}criterion {criterion1} present in config file')
 

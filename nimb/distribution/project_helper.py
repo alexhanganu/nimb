@@ -227,7 +227,7 @@ class ProjectManager:
             if test:
                 print(f'        TESTING with {nr_participants_for_testing} participants')
                 ls_nimb_ids = [i for i in nimb_classified][:nr_participants_for_testing]
-            for nimb_id in ls_nimb_ids[:1]:#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            for nimb_id in ls_nimb_ids:
                 ls_sessions = [i for i in nimb_classified[nimb_id] if i not in ('archived',)]
                 for ses in ls_sessions:
                     convert_2bids = self.id_is_bids_converted(nimb_id, ses)

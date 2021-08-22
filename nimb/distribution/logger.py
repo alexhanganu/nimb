@@ -73,3 +73,11 @@ def setup_logging(logLevel, logFile=None):
         handler.setFormatter(formatter)
         handler.setLevel("DEBUG")
         logger.addHandler(handler)
+
+
+class LogLVL:
+
+    lvl1 = " " * 4
+    lvl2 = " " * 8
+    lvl3 = " " * 12
+    lvl4 = " " * 15

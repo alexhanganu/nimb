@@ -253,6 +253,13 @@ def get_parameters(projects):
                 laterality = run laterality analysis ",
     )
 
+    parser.add_argument(
+        "-test", required=False,
+        action='store_true',
+        help="when used, nimb will run only 2 participants",
+    )
+
+
     params = parser.parse_args()
     return params
 
