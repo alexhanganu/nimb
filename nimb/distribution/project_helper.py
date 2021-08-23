@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 
-test = False
-nr_participants_for_testing = 2
 
 import os
 import shutil
@@ -74,6 +72,9 @@ class ProjectManager:
         self.df_f_groups        = self.get_df_f_groups()
         self.DICOM_DIR          = self.project_vars["SOURCE_SUBJECTS_DIR"]
         self._ids_all           = dict()
+
+        self.test               = all_vars.params.test
+        self.nr_for_testing     = 2
 
 
     def get_df_f_groups(self):
@@ -163,8 +164,8 @@ class ProjectManager:
         ls_source_dirs = self.get_content(src_dir)
         print(f'   there are {len(self.get_content(src_dir))} files found in {src_dir} \
             expected to contain MRI data for project {self.project}')
-        if test:
-            ls_source_dirs = self.get_content(src_dir)[:nr_participants_for_testing]
+        if self.test:
+            ls_source_dirs = self.get_content(src_dir)[:self.nr_for_testing]
 
         self.prep_dirs(["SOURCE_BIDS_DIR",
                     "SOURCE_SUBJECTS_DIR"])
@@ -181,17 +182,6 @@ class ProjectManager:
                                                                 multi_T1, add_flair_t2).run()
                 if is_classified:
                     self.classify_with_dcm2bids(nimb_classified)
-                    '''
-                    def check_is_subject_session_in_grid:
-                        if subject_session not in grid:
-                            add subject_session to be processed
-                            populate new_subjects.json with dcm2bids versions
-                            if dcm2bids not efficient:
-                                populate new_subjects with raw DCM
-                    '''
-
-#            self.get_ids_classified()
-#            self.populate_grid()
         else:
             print(f'    folder with source subjects {src_dir} is empty')
 
@@ -224,19 +214,19 @@ class ProjectManager:
 
         if nimb_classified:
             ls_nimb_ids = [i for i in nimb_classified]
-            if test:
-                print(f'        TESTING with {nr_participants_for_testing} participants')
-                ls_nimb_ids = [i for i in nimb_classified][:nr_participants_for_testing]
+            if self.test:
+                print(f'        TESTING with {self.nr_for_testing} participants')
+                ls_nimb_ids = [i for i in nimb_classified][:self.nr_for_testing]
             for nimb_id in ls_nimb_ids:
                 ls_sessions = [i for i in nimb_classified[nimb_id] if i not in ('archived',)]
                 for ses in ls_sessions:
                     convert_2bids = self.id_is_bids_converted(nimb_id, ses)
                     if convert_2bids:
                         print('    ready to convert to BIDS')
-                        bids_classified = self.convert_with_dcm2bids(nimb_id,
+                        self.bids_classified = self.convert_with_dcm2bids(nimb_id,
                                                             ses,
                                                             nimb_classified[nimb_id])
-                        print(f'        bids_classified is: {bids_classified}')
+                        print(f'        bids_classified is: {self.bids_classified}')
 
 
     def convert_with_dcm2bids(self, nimb_id, ses, nimb_classified_per_id):
@@ -495,6 +485,16 @@ class ProjectManager:
 
 
     def chk_missing_participants(self):
+        '''
+        def check_is_subject_session_in_grid:
+            if subject_session not in grid:
+                add subject_session to be processed
+                populate new_subjects.json with dcm2bids versions
+                if dcm2bids not efficient:
+                    populate new_subjects with raw DCM
+            self.get_ids_classified()
+            self.populate_grid()
+        '''
         self.get_ids_all()
         if not self._ids_all:
             print(f'    file with ids is missing: {self._ids_all}')
