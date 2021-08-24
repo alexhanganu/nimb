@@ -14,6 +14,7 @@ from classification.classify_2nimb_bids import Classify2_NIMB_BIDS
 from classification.dcm2bids_helper import DCM2BIDS_helper
 from setup.interminal_setup import get_userdefined_paths, get_yes_no
 from distribution.manage_archive import is_archive, ZipArchiveManagement
+from distribution.logger import LogLVL
 
 # 2ADD:
 # chk that group file includes all variables defined in the projects.json file
@@ -388,6 +389,9 @@ class ProjectManager:
         """
         if self.f_ids_in_dir(self.path_stats_dir):
             self._ids_all = load_json(os.path.join(self.path_stats_dir, self.f_ids_name))
+        else:
+            self._ids_all = dict()
+        # print(f'{LogLVL.lvl1} ids all are: {self._ids_all}')
 
 
     def f_ids_in_dir(self, path_2groups_f):
@@ -477,8 +481,7 @@ class ProjectManager:
         print(f'    reading IDs for project {self.project}')
         if self.df_grid_ok:
             self._ids_bids = list(self.df_f_groups[self.bids_id_col])
-            print(f'    list of ids that are present: {self._ids_bids}')
-            print(f'    checking for missing participants')
+            print(f'{" " * 4}list of ids that are present: {self._ids_bids}')
             self.chk_missing_participants()
         else:
             self.prep_4dcm2bids_classification()
@@ -495,13 +498,26 @@ class ProjectManager:
             self.get_ids_classified()
             self.populate_grid()
         '''
-        self.get_ids_all()
-        if not self._ids_all:
-            print(f'    file with ids is missing: {self._ids_all}')
-            if self.get_ids_classified():
-                self.populate_f_ids_from_nimb_classified()
+        missing_ids = list()
+        self.get_ids_classified()
+        if self._ids_nimb_classified:
+            self.get_ids_all()
+            if self._ids_all:
+                print(f'{LogLVL.lvl1}checking missing participants')
+                # print(f'{LogLVL.lvl1} ids classified: {self._ids_nimb_classified}')
+                # print(f'{LogLVL.lvl1} ids all: {self._ids_all}')
+                ids_all_source = [self._ids_all[i]['source'] for i in self._ids_all.keys()]
+                missing_ids = [i for i in self._ids_nimb_classified.keys() if i not in ids_all_source]
             else:
+                print(f'    file with ids is missing: {self._ids_all}')
+                self.get_ids_classified()
+                self.populate_f_ids_from_nimb_classified()
                 self.prep_4dcm2bids_classification()
+        else:
+            print(f'{LogLVL.lvl1}nimb_classified.json is missing')
+        if missing_ids:
+            print(f'{LogLVL.lvl1}missing ids: {missing_ids}')
+        return missing_ids
 
 
     def get_ids_classified(self):
@@ -511,20 +527,21 @@ class ProjectManager:
         f_class_abspath_in_new = os.path.join(new_subjects_dir, DEFAULT.f_nimb_classified)
 
         if os.path.exists(f_class_abspath_in_src):
-            self._ids_classified = load_json(f_class_abspath_in_src)
+            self._ids_nimb_classified = load_json(f_class_abspath_in_src)
         elif os.path.exists(f_class_abspath_in_new):
-            self._ids_classified = load_json(f_class_abspath_in_new)
+            self._ids_nimb_classified = load_json(f_class_abspath_in_new)
         else:
-            print('    file with nimb classified is missing')
-            self._ids_classified = dict()
+            print(f'{" " * 4} file {DEFAULT.f_nimb_classified} is missing in: {src_subjects_dir} or {new_subjects_dir}')
+            print(f'{" " * 4} must initiate nimb classifier') #!! initiate classify_2nimb_bids.py
+            self._ids_nimb_classified = dict()
 
 
     def populate_f_ids_from_nimb_classified(self):
         self.get_ids_all()
         self.bids_ids_new = list()
-        # print(self._ids_classified)
-        for src_id in self._ids_classified:
-            for session in self._ids_classified[src_id]:
+        print(f'{LogLVL.lvl1} ids classified: {self._ids_nimb_classified}')
+        for src_id in self._ids_nimb_classified:
+            for session in self._ids_nimb_classified[src_id]:
                 bids_id = f'{src_id}_{session}'
                 self.bids_ids_new.append(bids_id)
 
@@ -547,7 +564,7 @@ class ProjectManager:
         # get grid
         # populate
         df = self.get_df_f_groups()
-        if self._ids_classified:
+        if self._ids_nimb_classified:
             self.populate_f_ids_from_nimb_classified()
 
             for bids_id in self.bids_ids_new:
