@@ -24,16 +24,18 @@ from distribution.logger import LogLVL
 
 
 '''
-MUST BE ADAPTED according this this understanding:
+MUST BE ADAPTED according to this understanding:
 ID description:
 project_id: ID provided by the user in a grid file.
             project_id = ID1 (in PPMI nimb_id = 3378)
-nimb_id   : ID based on provided MR data, 
-            nimb_id name does NOT include the session; 
-            e.g. ID1 (in PPMI nimb_id = 3378)
+            problem: these IDs can have multiple sessions inside
+            project_id can be same as bids_id, if edited by the user
+            but it can also be different.
 bids_id   : ID after using the dcm2bids conversion;
-            it includes the session;
-            e.g.: sub-ID1_ses-1 (in PPMI nimb_id = 3378_ses-1)
+            it includes: dcm2bids prefix + project prefix + project_id + session;
+            current dcm2bids prefix = "sub-"
+            e.g., PPMI project prefix can be "PPMI-"
+            bids_id = sub-PPMI-3378_ses-1
 '''
 
 class ProjectManager:
@@ -43,7 +45,7 @@ class ProjectManager:
     - ids are present
     - BIDS is performed, files are present in the BIDS corresponding folders
     -> if not: source for IRM is defined
-    - ids are processed with FreeSurfer/ nilearn, DWI
+    - ids are processed with FreeSurfer/ nilearn/ dipy
     - stats performed
     For missing stages, helper will initiate distribution for the corresponding stage
     Args:
@@ -57,6 +59,7 @@ class ProjectManager:
         self.local_vars         = all_vars.location_vars['local']
         self.project            = all_vars.params.project
         self.project_vars       = all_vars.projects[self.project]
+        self.proj_id_col        = self.project_vars['proj_id_col']
         self.bids_id_col        = self.project_vars['id_col']
         self.NIMB_tmp           = self.local_vars["NIMB_PATHS"]["NIMB_tmp"]
 
@@ -109,6 +112,7 @@ class ProjectManager:
         '''
         print(f'    file with groups is absent; creating default grid file in: {self.path_stats_dir}')
         df = self.tab.get_clean_df()
+        df[self.proj_id_col] = ''
         df[self.bids_id_col] = ''
         self.tab.save_df(df,
             os.path.join(self.path_stats_dir, DEFAULT.default_tab_name))
@@ -405,6 +409,7 @@ class ProjectManager:
     def _ids_file_try2make(self):
         if self.df_grid_ok:
             bids_ids = self.df_f_groups[self.bids_id_col]
+            proj_ids = self.df_f_groups[self.proj_id_col]
 
             if len(bids_ids) > 0:
                 _ids = dict()
@@ -482,7 +487,9 @@ class ProjectManager:
         if self.df_grid_ok:
             self._ids_bids = list(self.df_f_groups[self.bids_id_col])
             print(f'{" " * 4}list of ids that are present: {self._ids_bids}')
-            self.chk_missing_participants()
+            missing_ids = self.chk_missing_participants()
+            if missing_ids:
+                print(f'{LogLVL.lvl1}missing ids: {missing_ids}')
         else:
             self.prep_4dcm2bids_classification()
 
@@ -508,6 +515,7 @@ class ProjectManager:
                 # print(f'{LogLVL.lvl1} ids all: {self._ids_all}')
                 ids_all_source = [self._ids_all[i]['source'] for i in self._ids_all.keys()]
                 missing_ids = [i for i in self._ids_nimb_classified.keys() if i not in ids_all_source]
+
             else:
                 print(f'    file with ids is missing: {self._ids_all}')
                 self.get_ids_classified()
@@ -515,8 +523,8 @@ class ProjectManager:
                 self.prep_4dcm2bids_classification()
         else:
             print(f'{LogLVL.lvl1}nimb_classified.json is missing')
-        if missing_ids:
-            print(f'{LogLVL.lvl1}missing ids: {missing_ids}')
+        # if missing_ids:
+        #     print(f'{LogLVL.lvl1}missing ids: {missing_ids}')
         return missing_ids
 
 
