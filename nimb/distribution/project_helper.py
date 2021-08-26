@@ -11,7 +11,7 @@ from distribution.distribution_ready import DistributionReady
 from distribution.utilities import load_json, save_json, makedir_ifnot_exist
 from distribution.distribution_definitions import get_keys_processed, DEFAULT
 from classification.classify_2nimb_bids import Classify2_NIMB_BIDS
-from classification.dcm2bids_helper import DCM2BIDS_helper
+from classification.dcm2bids_helper import DCM2BIDS_helper, make_bids_id
 from setup.interminal_setup import get_userdefined_paths, get_yes_no
 from distribution.manage_archive import is_archive, ZipArchiveManagement
 from distribution.logger import LogLVL
@@ -26,17 +26,23 @@ from distribution.logger import LogLVL
 '''
 MUST BE ADAPTED according to this understanding:
 ID description:
-project_id: ID provided by the user in a grid file.
-            project_id = ID1 (in PPMI nimb_id = 3378)
-            problem: these IDs can have multiple sessions inside
-            project_id can be same as bids_id, if edited by the user
-            but it can also be different.
-bids_id   : ID after using the dcm2bids conversion;
-            it includes: dcm2bids prefix + project prefix + project_id + session;
+_id_source:  ID as defined in a database.
+            It can be same as project_id, but it is NOT expected
+            that source_id will be used for stats
+            e.g., in PPMI source_id = 3378
+            these IDs are mainly folders of IDs with multiple sessions inside
+_id_bids   : ID after using the dcm2bids conversion;
+            it is automatically created with the make__id_bids function
+            it includes: dcm2bids prefix + source_id + session;
             current dcm2bids prefix = "sub-"
-            e.g., PPMI project prefix can be "PPMI-"
-            bids_id = sub-PPMI-3378_ses-1
+            _id_bids = sub-3378_ses-1
+project_id: ID provided by the user in a grid file.
+            e.g., in PPMI project_id = 3378_session1
+            project_id is expected to be used for stats analysis
+            project_id can be same as _id_bids, if edited by the user
 '''
+
+
 
 class ProjectManager:
     '''
@@ -60,7 +66,7 @@ class ProjectManager:
         self.project            = all_vars.params.project
         self.project_vars       = all_vars.projects[self.project]
         self.proj_id_col        = self.project_vars['proj_id_col']
-        self.bids_id_col        = self.project_vars['id_col']
+        self.col_id_bids        = self.project_vars['id_col']
         self.NIMB_tmp           = self.local_vars["NIMB_PATHS"]["NIMB_tmp"]
 
         # self.f_ids_proc_path  = os.path.join(self.materials_DIR,
@@ -113,7 +119,7 @@ class ProjectManager:
         print(f'    file with groups is absent; creating default grid file in: {self.path_stats_dir}')
         df = self.tab.get_clean_df()
         df[self.proj_id_col] = ''
-        df[self.bids_id_col] = ''
+        df[self.col_id_bids] = ''
         self.tab.save_df(df,
             os.path.join(self.path_stats_dir, DEFAULT.default_tab_name))
         self.tab.save_df(df,
@@ -408,14 +414,14 @@ class ProjectManager:
 
     def _ids_file_try2make(self):
         if self.df_grid_ok:
-            bids_ids = self.df_f_groups[self.bids_id_col]
+            _ids_bids = self.df_f_groups[self.col_id_bids]
             proj_ids = self.df_f_groups[self.proj_id_col]
 
-            if len(bids_ids) > 0:
+            if len(_ids_bids) > 0:
                 _ids = dict()
                 self.make_reading_dirs()
-                for bids_id in bids_ids:
-                    _ids = self.populate_ids_all(_ids, bids_id)
+                for _id_bids in _ids_bids:
+                    _ids = self.populate_ids_all(_ids, _id_bids)
                 self.create_file_ids(_ids)
 
             if os.path.exists(self.f_ids_abspath):
@@ -446,11 +452,11 @@ class ProjectManager:
                 self.content_dirs[key] = self.get_content(dir2chk)
 
 
-    def populate_ids_all(self, _ids, bids_id):
+    def populate_ids_all(self, _ids, _id_bids):
         '''tries to populate the _ids_file with corresponding FreeSurfer processed folder
             f_ids includes only the archived folder names
         Args:
-            _ids: dict() with bids_ids as keys and 'fs': fs_ids as as values
+            _ids: dict() with _ids_bids as keys and 'fs': fs_ids as as values
         Return:
             newly populated dict()
         '''
@@ -459,16 +465,16 @@ class ProjectManager:
         currently - check if dirs are on local
         must add if dirs are on remote
         '''
-        _ids[bids_id] = dict()
+        _ids[_id_bids] = dict()
 
         for key in self.keys2chk:
             dir2chk     = self.keys2chk[key][1]
             content2chk = self.content_dirs[key]
             key_nimb    = get_keys_processed(key)
-            _ids[bids_id][key_nimb] = ''
+            _ids[_id_bids][key_nimb] = ''
             for _dir in content2chk:
-                if bids_id in _dir:
-                    _ids[bids_id][key_nimb] = _dir
+                if _id_bids in _dir:
+                    _ids[_id_bids][key_nimb] = _dir
         return _ids
 
 
@@ -478,23 +484,26 @@ class ProjectManager:
     def get_ids_bids(self):
         """
             extract bids ids from the file groups provided by user
-            !! ATTENTION - bids_id must also comprise the session name
-            as defined in the sessions folder of BIDS structure
-            current abbreviation is ses_00; this variable must be changed
-            to allow users to define it
         """
+        self.missing_ids = list()
         print(f'    reading IDs for project {self.project}')
         if self.df_grid_ok:
-            self._ids_bids = list(self.df_f_groups[self.bids_id_col])
+            self._ids_bids = list(self.df_f_groups[self.col_id_bids])
             print(f'{" " * 4}list of ids that are present: {self._ids_bids}')
-            missing_ids = self.chk_missing_participants()
-            if missing_ids:
-                print(f'{LogLVL.lvl1}missing ids: {missing_ids}')
+            self.get_ids_all()
+            if self._ids_all:
+                self.add_missing_participants()
+            else:
+                print(f'    file with ids is missing: {self._ids_all}')
+                self.populate_f_ids_from_nimb_classified()
+                self.prep_4dcm2bids_classification()
         else:
+            if self.missing_ids:
+                print(f'{LogLVL.lvl1}missing ids: {self.missing_ids}')
             self.prep_4dcm2bids_classification()
 
 
-    def chk_missing_participants(self):
+    def add_missing_participants(self):
         '''
         def check_is_subject_session_in_grid:
             if subject_session not in grid:
@@ -505,27 +514,20 @@ class ProjectManager:
             self.get_ids_classified()
             self.populate_grid()
         '''
-        missing_ids = list()
         self.get_ids_classified()
         if self._ids_nimb_classified:
-            self.get_ids_all()
-            if self._ids_all:
-                print(f'{LogLVL.lvl1}checking missing participants')
-                # print(f'{LogLVL.lvl1} ids classified: {self._ids_nimb_classified}')
-                # print(f'{LogLVL.lvl1} ids all: {self._ids_all}')
-                ids_all_source = [self._ids_all[i]['source'] for i in self._ids_all.keys()]
-                missing_ids = [i for i in self._ids_nimb_classified.keys() if i not in ids_all_source]
-
-            else:
-                print(f'    file with ids is missing: {self._ids_all}')
-                self.get_ids_classified()
-                self.populate_f_ids_from_nimb_classified()
-                self.prep_4dcm2bids_classification()
+            print(f'{LogLVL.lvl1}checking missing participants')
+            # print(f'{LogLVL.lvl1} ids classified: {self._ids_nimb_classified}')
+            # print(f'{LogLVL.lvl1} ids all: {self._ids_all}')
+            ids_all_source = [self._ids_all[i]['source'] for i in self._ids_all.keys()]
+            self.missing_ids = [i for i in self._ids_nimb_classified.keys() if i not in ids_all_source]
+            for _id_src in self.missing_ids:
+                for session in self._ids_nimb_classified[_id_src]:
+                    _id_bids, _ = make_bids_id(_id_src, session)
+                    self._ids_all[_id_bids]['source'] = _id_src
         else:
             print(f'{LogLVL.lvl1}nimb_classified.json is missing')
-        # if missing_ids:
-        #     print(f'{LogLVL.lvl1}missing ids: {missing_ids}')
-        return missing_ids
+        return self.missing_ids
 
 
     def get_ids_classified(self):
@@ -545,17 +547,17 @@ class ProjectManager:
 
 
     def populate_f_ids_from_nimb_classified(self):
-        self.get_ids_all()
-        self.bids_ids_new = list()
+        self._ids_bids_new = list()
         print(f'{LogLVL.lvl1} ids classified: {self._ids_nimb_classified}')
-        for src_id in self._ids_nimb_classified:
-            for session in self._ids_nimb_classified[src_id]:
-                bids_id = f'{src_id}_{session}'
-                self.bids_ids_new.append(bids_id)
+        for _id_src in self._ids_nimb_classified:
+            for session in self._ids_nimb_classified[_id_src]:
+                _id_bids, _ = make_bids_id(_id_src, session)
+                # _id_bids = f'{_id_src}_{session}' #!!!!!!!!!!!!!!!!!!!!!!!!
+                self._ids_bids_new.append(_id_bids)
 
-                if bids_id not in self._ids_all:
-                    self._ids_all[bids_id] = dict()
-                self._ids_all[bids_id][get_keys_processed('src')] = src_id
+                if _id_bids not in self._ids_all:
+                    self._ids_all[_id_bids] = dict()
+                self._ids_all[_id_bids][get_keys_processed('src')] = src_id
         self.create_file_ids(self._ids_all)
 
 
@@ -573,15 +575,16 @@ class ProjectManager:
         # populate
         df = self.get_df_f_groups()
         if self._ids_nimb_classified:
+            self.get_ids_all()
             self.populate_f_ids_from_nimb_classified()
 
-            for bids_id in self.bids_ids_new:
-                if bids_id not in df[self.bids_id_col]:
+            for _id_bids in self._ids_bids_new:
+                if _id_bids not in df[self.col_id_bids]:
                     df.loc[-1] = df.columns.values
                     for col in df.columns.tolist():
                         df.at[-1, col] = ''
-                    df.at[-1, self.bids_id_col] = bids_id
-                    df.index = range(len(df[self.bids_id_col]))
+                    df.at[-1, self.col_id_bids] = _id_bids
+                    df.index = range(len(df[self.col_id_bids]))
             # self.tab.save_df(df,
             #     os.path.join(self.path_stats_dir, self.project_vars['fname_groups']))
             print('    NIMB ready to initiate processing of data')
@@ -590,7 +593,7 @@ class ProjectManager:
             print('   file with nimb classified is missing')
 
 
-    def populate_ids_all_from_remote(self, _ids, bids_id):
+    def populate_ids_all_from_remote(self, _ids, _id_bids):
         '''
         fs_processed_col = 'path_freesurfer711'
         irm_source_col = 'path_source'

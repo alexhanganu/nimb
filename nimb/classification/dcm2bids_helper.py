@@ -25,6 +25,18 @@ from distribution.manage_archive import is_archive, ZipArchiveManagement
 from distribution.utilities import makedir_ifnot_exist, load_json, save_json
 from distribution.distribution_definitions import DEFAULT
 
+
+def make_bids_id(proj_id, session):
+    '''
+    the bids_id created by dcm2bids is specific
+    this script intends to define one bids_id that will be used
+    throughout nimb
+    '''
+    bids_id_dir = f'sub-{proj_id}'
+    bids_id = f'{bids_id_dir}_{session}'
+    return bids_id, bids_id_dir
+
+
 class DCM2BIDS_helper():
     """
     goal: use UNFMontreal/dcm2bids to convert .dcm files to BIDS .nii.gz
@@ -78,7 +90,7 @@ class DCM2BIDS_helper():
         if self.id_classified:
             self.nimb_id = nimb_id
             self.ses     = ses
-            self.bids_id = self.make_bids_id()
+            self.bids_id, self.bids_id_dir = make_bids_id(self.nimb_id, self.ses)
             self.start_stepwise_choice()
         else:
             self.nimb_classified = dict()
@@ -92,14 +104,9 @@ class DCM2BIDS_helper():
                 for self.nimb_id in self.nimb_ids:
                     self.id_classified = self.nimb_classified[self.nimb_id]
                     for self.ses in [i for i in self.id_classified if i not in ('archived',)]:
-                        self.bids_id = self.make_bids_id()
+                        self.bids_id, self.bids_id_dir = make_bids_id(self.nimb_id, self.ses)
                         self.start_stepwise_choice()
         return self.bids_classified
-
-
-    def make_bids_id(self):
-        self.bids_id_dir = f'sub-{self.nimb_id}'
-        return f'{self.bids_id_dir}_{self.ses}'
 
 
     def start_stepwise_choice(self):
