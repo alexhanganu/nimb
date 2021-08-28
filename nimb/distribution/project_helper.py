@@ -27,7 +27,7 @@ from distribution.logger import LogLVL
 MUST BE ADAPTED according to this understanding:
 ID description:
 _id_source:  ID as defined in a database.
-            It can be same as project_id, but it is NOT expected
+            It can be same as _id_project, but it is NOT expected
             that source_id will be used for stats
             e.g., in PPMI source_id = 3378
             these IDs are mainly folders of IDs with multiple sessions inside
@@ -36,10 +36,10 @@ _id_bids   : ID after using the dcm2bids conversion;
             it includes: dcm2bids prefix + source_id + session;
             current dcm2bids prefix = "sub-"
             _id_bids = sub-3378_ses-1
-project_id: ID provided by the user in a grid file.
-            e.g., in PPMI project_id = 3378_session1
-            project_id is expected to be used for stats analysis
-            project_id can be same as _id_bids, if edited by the user
+_id_project: ID provided by the user in a grid file.
+            e.g., in PPMI _id_project = 3378_session1
+            _id_project is expected to be used for stats analysis
+            _id_project can be same as _id_bids, if edited by the user
 '''
 
 
@@ -159,7 +159,8 @@ class ProjectManager:
             self.classify_with_dcm2bids()
 
         self.get_ids_bids()
-        self.get_ids_all()
+        self.process_mri_data()
+        self.extract_statistics()
 
 
     def check_new(self):
@@ -170,6 +171,37 @@ class ProjectManager:
     '''
     ID related scripts
     '''
+
+    def get_ids_bids(self):
+        """
+            extract bids ids from the file groups provided by user
+        ALGO:
+            read grid
+                if grid is missing:
+                    create default grid with cols for id and group as defined by user
+            check _ids_project from grid if they are present in the f_ids.json
+                if not: ?
+                if yes:
+                    are the _ids_proj present in the SOURCE_BIDS_DIR ?
+        """
+        self._ids_missing = list()
+        print(f'    reading IDs for project {self.project}')
+        if self.df_grid_ok:
+            self._ids_bids = list(self.df_f_groups[self.col_id_bids])
+            print(f'{" " * 4}list of ids that are present: {self._ids_bids}')
+            self.get_ids_all()
+            if self._ids_all:
+                self.add_missing_participants()
+            else:
+                print(f'    file with ids is missing: {self._ids_all}')
+                self.populate_f_ids_from_nimb_classified()
+            self.chk_ids_processed()
+        else:
+            if self._ids_missing:
+                print(f'{LogLVL.lvl1}missing ids: {self._ids_missing}')
+            self.prep_4dcm2bids_classification()
+
+
     def get_ids_all(self):
         """
             extract bids ids from the file groups provided by user
@@ -253,28 +285,6 @@ class ProjectManager:
                 if _id_bids in _dir:
                     _ids[_id_bids][key_nimb] = _dir
         return _ids
-
-
-    def get_ids_bids(self):
-        """
-            extract bids ids from the file groups provided by user
-        """
-        self._ids_missing = list()
-        print(f'    reading IDs for project {self.project}')
-        if self.df_grid_ok:
-            self._ids_bids = list(self.df_f_groups[self.col_id_bids])
-            print(f'{" " * 4}list of ids that are present: {self._ids_bids}')
-            self.get_ids_all()
-            if self._ids_all:
-                self.add_missing_participants()
-            else:
-                print(f'    file with ids is missing: {self._ids_all}')
-                self.populate_f_ids_from_nimb_classified()
-            self.chk_ids_processed()
-        else:
-            if self._ids_missing:
-                print(f'{LogLVL.lvl1}missing ids: {self._ids_missing}')
-            self.prep_4dcm2bids_classification()
 
 
     def chk_ids_processed(self):
@@ -385,19 +395,20 @@ class ProjectManager:
             print(f'    folder with source subjects {src_dir} is empty')
 
 
-    def id_is_bids_converted(self, nimb_id, ses):
-        bids_dir_location = self.project_vars['SOURCE_BIDS_DIR'][0]
-        convert_2bids = False
-        if bids_dir_location == 'local':
-            bids_dir_abspath = self.project_vars['SOURCE_BIDS_DIR'][1]
-            ls_bids_converted = os.listdir(bids_dir_abspath)
-            if nimb_id not in ls_bids_converted:
-                convert_2bids = True
-            elif ses not in os.listdir(os.path.join(bids_dir_abspath, nimb_id)):
-                convert_2bids = True
-        else:
-            print(f'    bids folder located remotely: {bids_dir_location}')
-        return convert_2bids
+    def prep_dirs(self, ls_dirs):
+        ''' define dirs required for BIDS classification
+        '''
+        print('    it is expected that SOURCE_SUBJECTS_DIR contains unarchived folders or archived (zip) files with MRI data')
+        for _dir2chk in ls_dirs:
+            _dir = self.project_vars[_dir2chk][1]
+            if not os.path.exists(_dir):
+                self.project_vars[_dir2chk][0] = 'local'
+                self.project_vars[_dir2chk][1] = get_userdefined_paths(f'{_dir2chk} folder',
+                                                                      _dir, '',
+                                                                      create = False)
+                from setup.get_credentials_home import _get_credentials_home
+                self.all_vars.projects[self.project] = self.project_vars
+                save_json(self.all_vars.projects, os.path.join(_get_credentials_home(), 'projects.json'))
 
 
     def classify_with_dcm2bids(self, nimb_classified = False):
@@ -428,6 +439,21 @@ class ProjectManager:
                         print(f'        bids_classified is: {self.bids_classified}')
 
 
+    def id_is_bids_converted(self, nimb_id, ses):
+        bids_dir_location = self.project_vars['SOURCE_BIDS_DIR'][0]
+        convert_2bids = False
+        if bids_dir_location == 'local':
+            bids_dir_abspath = self.project_vars['SOURCE_BIDS_DIR'][1]
+            ls_bids_converted = os.listdir(bids_dir_abspath)
+            if nimb_id not in ls_bids_converted:
+                convert_2bids = True
+            elif ses not in os.listdir(os.path.join(bids_dir_abspath, nimb_id)):
+                convert_2bids = True
+        else:
+            print(f'    bids folder located remotely: {bids_dir_location}')
+        return convert_2bids
+
+
     def convert_with_dcm2bids(self, nimb_id, ses, nimb_classified_per_id):
         print(f'    starting dcm2bids classification for id: {nimb_id} session: {ses}')
         return DCM2BIDS_helper(self.project_vars,
@@ -437,95 +463,15 @@ class ProjectManager:
                         tmp_dir = self.NIMB_tmp).run(nimb_id, ses)
 
 
-    def get_dir_with_raw_MR_data(self, src_dir, _dir):
-        if os.path.isdir(os.path.join(src_dir, _dir)):
-            return src_dir, list(_dir)
-        elif _dir.endswith('.zip'):
-            self.dir_new_subjects = self.local_vars["NIMB_PATHS"]["NIMB_NEW_SUBJECTS"]
-            ls_initial = self.get_content(self.dir_new_subjects)
-            self.extract_from_archive(src_dir, _dir)
-            ls_dir_4bids2dcm = [i for i in self.get_content(self.dir_new_subjects) if i not in ls_initial]
-            return self.dir_new_subjects, ls_dir_4bids2dcm
-
-
-    def extract_from_archive(self, src_dir, _dir):
-        tmp_err_dir  = os.path.join(self.NIMB_tmp, 'tmp_err_classification')
-        makedir_ifnot_exist(tmp_err_dir)
-        dir_2extract = self.dir_new_subjects
-        tmp_dir_2extract = ''
-        if self.project in DEFAULT.project_ids:
-            tmp_dir_2extract = os.path.join(self.NIMB_tmp, DEFAULT.nimb_tmp_dir)
-            makedir_ifnot_exist(tmp_dir_2extract)
-            dir_2extract = tmp_dir_2extract
-        ZipArchiveManagement(
-            os.path.join(src_dir, _dir),
-            path2xtrct = dir_2extract,
-            path_err   = tmp_err_dir)
-        if tmp_dir_2extract:
-            project_dir = os.path.join(tmp_dir_2extract,
-                                        DEFAULT.project_ids[self.project]["dir_from_source"])
-            if os.path.exists(project_dir):
-                print(f'    this is default project;\
-                    the corresponding default folder was created in: {project_dir}')
-                ls_content = self.get_content(project_dir)
-                for _dir in ls_content:
-                    nr_left_2cp = len(ls_content[ls_content.index(_dir):])
-                    print(f'    number of folders left to copy: {nr_left_2cp}')
-                    src = os.path.join(project_dir, _dir)
-                    dst = os.path.join(self.dir_new_subjects, _dir)
-                    print(f'    copying folder: {src} to {dst}')
-                    shutil.copytree(src, dst)
-            else:
-                print(f'    the expected folder: {project_dir} is missing')
-            print(f'    removing temporary folder: {tmp_dir_2extract}')
-            shutil.rmtree(tmp_dir_2extract, ignore_errors=True)
-        if len(self.get_content(tmp_err_dir)) == 0:
-            shutil.rmtree(tmp_err_dir, ignore_errors=True)
+    def get_content(self, path2chk):
+        return os.listdir(path2chk)
 
 
     '''
     PROCESSING related scripts
     '''
-    def run_fs_glm(self, image = False):
-        '''
-        REQUIRES ADJUSTMENT
-        '''
-        fs_glm_dir   = self.project_vars['STATS_PATHS']["FS_GLM_dir"]
-        # fs_glm_dir   = self.stats_vars["STATS_PATHS"]["FS_GLM_dir"]
-        fname_groups = self.project_vars['fname_groups']
-        if DistributionReady(self.all_vars).chk_if_ready_for_fs_glm():
-            GLM_file_path, GLM_dir = DistributionHelper(self.all_vars).prep_4fs_glm(fs_glm_dir,
-                                                                        fname_groups)
-            FS_SUBJECTS_DIR = self.vars_local['FREESURFER']['FS_SUBJECTS_DIR']
-            DistributionReady(self.all_vars).fs_chk_fsaverage_ready(FS_SUBJECTS_DIR)
-            if GLM_file_path:
-                print('    GLM file path is:',GLM_file_path)
-                self.vars_local['PROCESSING']['processing_env']  = "tmux"
-                schedule_fsglm = Scheduler(self.vars_local)
-                cd_cmd = 'cd {}'.format(path.join(self.NIMB_HOME, 'processing', 'freesurfer'))
-                cmd = f'{self.py_run_cmd} fs_glm_runglm.py -project {self.project} -glm_dir {GLM_dir}'
-                schedule_fsglm.submit_4_processing(cmd, 'fs_glm','run_glm', cd_cmd)
-        if not "export_screen" in self.vars_local['FREESURFER']:
-            print("PLEASE check that you can export your screen or you can run screen-based applications. \
-                                This is necessary for Freeview and Tksurfer. \
-                                Check the variable: export_screen in file {}".format(
-                                    "credentials_path.py/nimb/local.json"))
-        elif self.vars_local['FREESURFER']["export_screen"] == 0:
-            print("Current environment is not ready to export screen. Please define a compute where the screen can \
-                                be used for FreeSurfer Freeview and tksurfer")
-        if DistributionReady(self.all_vars).fs_ready():
-            print('before running the script, remember to source $FREESURFER_HOME')
-            cmd = '{} fs_glm_extract_images.py -project {}'.format(self.py_run_cmd, self.project)
-            cd_cmd = 'cd '+path.join(self.NIMB_HOME, 'processing', 'freesurfer')
-            self.schedule.submit_4_processing(cmd, 'fs_glm','extract_images', cd_cmd)
-
-
-    def get_stats_fs(self):
-        if self.distrib_ready.chk_if_ready_for_stats():
-            PROCESSED_FS_DIR = self.distrib_hlp.prep_4fs_stats()
-            if PROCESSED_FS_DIR:
-                print('    ready to extract stats from project helper')
-        #         self.send_2processing('fs-get-stats')
+    def process_mri_data(self):
+        print("checking for processing")
 
 
     def get_masks(self):
@@ -561,24 +507,53 @@ class ProjectManager:
         schedule.submit_4_processing(cmd, process_type, subproc, cd_cmd)
 
 
-    def get_content(self, path2chk):
-        return os.listdir(path2chk)
+    '''
+    EXTRACT STATISTICS related scripts
+    '''
+    def extract_statistics(self):
+        print("extracting statistics")
 
 
-    def prep_dirs(self, ls_dirs):
-        ''' define dirs required for BIDS classification
+    def get_stats_fs(self):
+        if self.distrib_ready.chk_if_ready_for_stats():
+            PROCESSED_FS_DIR = self.distrib_hlp.prep_4fs_stats()
+            if PROCESSED_FS_DIR:
+                print('    ready to extract stats from project helper')
+        #         self.send_2processing('fs-get-stats')
+
+
+    def run_fs_glm(self, image = False):
         '''
-        print('    it is expected that SOURCE_SUBJECTS_DIR contains unarchived folders or archived (zip) files with MRI data')
-        for _dir2chk in ls_dirs:
-            _dir = self.project_vars[_dir2chk][1]
-            if not os.path.exists(_dir):
-                self.project_vars[_dir2chk][0] = 'local'
-                self.project_vars[_dir2chk][1] = get_userdefined_paths(f'{_dir2chk} folder',
-                                                                      _dir, '',
-                                                                      create = False)
-                from setup.get_credentials_home import _get_credentials_home
-                self.all_vars.projects[self.project] = self.project_vars
-                save_json(self.all_vars.projects, os.path.join(_get_credentials_home(), 'projects.json'))
+        REQUIRES ADJUSTMENT
+        '''
+        fs_glm_dir   = self.project_vars['STATS_PATHS']["FS_GLM_dir"]
+        # fs_glm_dir   = self.stats_vars["STATS_PATHS"]["FS_GLM_dir"]
+        fname_groups = self.project_vars['fname_groups']
+        if DistributionReady(self.all_vars).chk_if_ready_for_fs_glm():
+            GLM_file_path, GLM_dir = DistributionHelper(self.all_vars).prep_4fs_glm(fs_glm_dir,
+                                                                        fname_groups)
+            FS_SUBJECTS_DIR = self.vars_local['FREESURFER']['FS_SUBJECTS_DIR']
+            DistributionReady(self.all_vars).fs_chk_fsaverage_ready(FS_SUBJECTS_DIR)
+            if GLM_file_path:
+                print('    GLM file path is:',GLM_file_path)
+                self.vars_local['PROCESSING']['processing_env']  = "tmux"
+                schedule_fsglm = Scheduler(self.vars_local)
+                cd_cmd = 'cd {}'.format(path.join(self.NIMB_HOME, 'processing', 'freesurfer'))
+                cmd = f'{self.py_run_cmd} fs_glm_runglm.py -project {self.project} -glm_dir {GLM_dir}'
+                schedule_fsglm.submit_4_processing(cmd, 'fs_glm','run_glm', cd_cmd)
+        if not "export_screen" in self.vars_local['FREESURFER']:
+            print("PLEASE check that you can export your screen or you can run screen-based applications. \
+                                This is necessary for Freeview and Tksurfer. \
+                                Check the variable: export_screen in file {}".format(
+                                    "credentials_path.py/nimb/local.json"))
+        elif self.vars_local['FREESURFER']["export_screen"] == 0:
+            print("Current environment is not ready to export screen. Please define a compute where the screen can \
+                                be used for FreeSurfer Freeview and tksurfer")
+        if DistributionReady(self.all_vars).fs_ready():
+            print('before running the script, remember to source $FREESURFER_HOME')
+            cmd = '{} fs_glm_extract_images.py -project {}'.format(self.py_run_cmd, self.project)
+            cd_cmd = 'cd '+path.join(self.NIMB_HOME, 'processing', 'freesurfer')
+            self.schedule.submit_4_processing(cmd, 'fs_glm','extract_images', cd_cmd)
 
 
     '''
@@ -649,3 +624,54 @@ class ProjectManager:
 
         # return _ids
         pass
+
+
+
+    """NEXT 2 scripts are probably not needed anymore, as
+    extraction to a temporary folder was integrated integrated into
+    DCM2BIDS_helper
+    """
+    # def get_dir_with_raw_MR_data(self, src_dir, _dir):
+    #     if os.path.isdir(os.path.join(src_dir, _dir)):
+    #         return src_dir, list(_dir)
+    #     elif _dir.endswith('.zip'):
+    #         self.dir_new_subjects = self.local_vars["NIMB_PATHS"]["NIMB_NEW_SUBJECTS"]
+    #         ls_initial = self.get_content(self.dir_new_subjects)
+    #         self.extract_from_archive(src_dir, _dir)
+    #         ls_dir_4bids2dcm = [i for i in self.get_content(self.dir_new_subjects) if i not in ls_initial]
+    #         return self.dir_new_subjects, ls_dir_4bids2dcm
+
+
+    # def extract_from_archive(self, src_dir, _dir):
+    #     tmp_err_dir  = os.path.join(self.NIMB_tmp, 'tmp_err_classification')
+    #     makedir_ifnot_exist(tmp_err_dir)
+    #     dir_2extract = self.dir_new_subjects
+    #     tmp_dir_2extract = ''
+    #     if self.project in DEFAULT.project_ids:
+    #         tmp_dir_2extract = os.path.join(self.NIMB_tmp, DEFAULT.nimb_tmp_dir)
+    #         makedir_ifnot_exist(tmp_dir_2extract)
+    #         dir_2extract = tmp_dir_2extract
+    #     ZipArchiveManagement(
+    #         os.path.join(src_dir, _dir),
+    #         path2xtrct = dir_2extract,
+    #         path_err   = tmp_err_dir)
+    #     if tmp_dir_2extract:
+    #         project_dir = os.path.join(tmp_dir_2extract,
+    #                                     DEFAULT.project_ids[self.project]["dir_from_source"])
+    #         if os.path.exists(project_dir):
+    #             print(f'    this is default project;\
+    #                 the corresponding default folder was created in: {project_dir}')
+    #             ls_content = self.get_content(project_dir)
+    #             for _dir in ls_content:
+    #                 nr_left_2cp = len(ls_content[ls_content.index(_dir):])
+    #                 print(f'    number of folders left to copy: {nr_left_2cp}')
+    #                 src = os.path.join(project_dir, _dir)
+    #                 dst = os.path.join(self.dir_new_subjects, _dir)
+    #                 print(f'    copying folder: {src} to {dst}')
+    #                 shutil.copytree(src, dst)
+    #         else:
+    #             print(f'    the expected folder: {project_dir} is missing')
+    #         print(f'    removing temporary folder: {tmp_dir_2extract}')
+    #         shutil.rmtree(tmp_dir_2extract, ignore_errors=True)
+    #     if len(self.get_content(tmp_err_dir)) == 0:
+    #         shutil.rmtree(tmp_err_dir, ignore_errors=True)
