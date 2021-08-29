@@ -91,7 +91,7 @@ class DEFAULT(object):
                     "linreg_moderation_dir"  :'stats/linreg_moderation',
                         }
     f_nimb_classified = 'nimb_classified.json'
-    f_nimb_classified_archive = 'nimb_classified_archive.json'
+    f_nimb_classified_archive = 'nimb_classified_archive.json' #remove variable ?
     f_subjects2proc   = 'new_subjects.json'
     f_ids             = 'f_ids.json'
     f_running_fs      = 'running_'

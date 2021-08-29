@@ -1,14 +1,16 @@
 {
-    "BIDS_ID_1_session": {
-        "source"     : "source ID or GLM id",
-        "freesurfer" : "ID after FreeSurfer processing.zip",
-        "nilearn"    : "ID after nilearn processing.zip",
-        "dipy"       : "ID after dipy processing.zip"
+    "sub-BIDS_ID_ses-01": {
+        "project"    : "ID_in_file_provided_by_user_for_GLM_analysis.tsv",
+        "source"     : "ID_in_source_dir_or_zip_file",
+        "freesurfer" : "ID_after_freesurfer_processing.zip/nii.gz",
+        "nilearn"    : "ID_after_nilearn_processing.zip/nii.gz",
+        "dipy"       : "ID_after_dipy_processing.zip/nii.gz"
     },
-    "BIDS_ID_2_session": {
-        "source"     : "source ID or GLM id",
-        "freesurfer" : "ID after FreeSurfer processing.zip",
-        "nilearn"    : "ID after nilearn processing.zip",
-        "dipy"       : "ID after dipy processing.zip"
+    "sub-BIDS_ID_ses-02": {
+        "project"    : "ID_in_file_provided_by_user_for_GLM_analysis.tsv",
+        "source"     : "ID_in_source_dir_or_zip_file",
+        "freesurfer" : "ID_after_freesurfer_processing.zip/nii.gz",
+        "nilearn"    : "ID_after_nilearn_processing.zip/nii.gz",
+        "dipy"       : "ID_after_dipy_processing.zip/nii.gz"
     }
 }

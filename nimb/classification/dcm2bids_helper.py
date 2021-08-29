@@ -26,15 +26,30 @@ from distribution.utilities import makedir_ifnot_exist, load_json, save_json
 from distribution.distribution_definitions import DEFAULT
 
 
-def make_bids_id(proj_id, session):
+def make_bids_id(proj_id, session, run = False):
     '''
-    the bids_id created by dcm2bids is specific
-    this script intends to define one bids_id that will be used
-    throughout nimb
+    https://github.com/bids-standard/bids-specification/blob/master/src/02-common-principles.md
+    the _id_bids MUST have the structure: sub_<label>_ses-<label>
+    the "sub-<label>" corresponds to the "subject" because of the "sub-" key.
+
+    if there are multiple runs of the same session, the key "run" is used:
+    "run" is an uninterrupted repetition of data acquisition
+        that has the same acquisition parameters and task
+        (however events can change from run to run
+        due to different subject response or randomized nature of the stimuli).
+        Run is a synonym of a data acquisition.
+        if a subject leaves the scanner, the acquisition must be restarted.
+
+    nimb is using DCM2BIDS and DCM2NIIx to create the corresponding BIDS files and structures
+    this script intends to define one _id_bids that will be used throughout nimb
     '''
-    bids_id_dir = f'sub-{proj_id}'
-    bids_id = f'{bids_id_dir}_{session}'
-    return bids_id, bids_id_dir
+    _id_bids_dir = f'sub-{proj_id}'
+    _id_bids = f'{_id_bids_dir}_{session}'
+    '''must adjust run in the name
+    '''
+    if run:
+        _id_bids = f'{_id_bids_dir}_{session}_{run}'
+    return _id_bids, _id_bids_dir
 
 
 class DCM2BIDS_helper():

@@ -183,6 +183,16 @@ class ProjectManager:
                 if not: ?
                 if yes:
                     are the _ids_proj present in the SOURCE_BIDS_DIR ?
+            f_ids.json:{
+                "_id_bids": {
+                    "project"    : "ID_in_file_provided_by_user_for_GLM_analysis.tsv",
+                    "source"     : "ID_in_source_dir_or_zip_file",
+                    "freesurfer" : "ID_after_freesurfer_processing.zip/nii.gz",
+                    "nilearn"    : "ID_after_nilearn_processing.zip/nii.gz",
+                    "dipy"       : "ID_after_dipy_processing.zip/nii.gz"
+                        }
+                }
+
         """
         self._ids_missing = list()
         print(f'    reading IDs for project {self.project}')
