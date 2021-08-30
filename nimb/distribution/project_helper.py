@@ -179,20 +179,55 @@ class ProjectManager:
             read grid
                 if grid is missing:
                     create default grid with cols for id and group as defined by user
-            check _ids_project from grid if they are present in the f_ids.json
-                if not: ?
-                if yes:
-                    are the _ids_proj present in the SOURCE_BIDS_DIR ?
-            f_ids.json:{
-                "_id_bids": {
-                    "project"    : "ID_in_file_provided_by_user_for_GLM_analysis.tsv",
-                    "source"     : "ID_in_source_dir_or_zip_file",
-                    "freesurfer" : "ID_after_freesurfer_processing.zip/nii.gz",
-                    "nilearn"    : "ID_after_nilearn_processing.zip/nii.gz",
-                    "dipy"       : "ID_after_dipy_processing.zip/nii.gz"
-                        }
-                }
+                    _ids_project = []
+                return _ids_project
 
+            if not exists(f_ids.json):
+                create f_ids.json
+                f_ids.json:{
+                    "_id_bids": {
+                        "project"    : "ID_in_file_provided_by_user_for_GLM_analysis.tsv",
+                        "source"     : "ID_in_source_dir_or_zip_file",
+                        "freesurfer" : "ID_after_freesurfer_processing.zip/nii.gz",
+                        "nilearn"    : "ID_after_nilearn_processing.zip/nii.gz",
+                        "dipy"       : "ID_after_dipy_processing.zip/nii.gz"
+                            }
+                    }
+
+s            for _id_project in _ids_project:
+                _id_bids = get_id_bids(_id_project)
+                if _id_bids:
+                    for APP in _id_bids:
+                        if not APP:
+                            add _id_bids to new_subjects.json for processing
+                    new_subjects.json = True
+
+            get_id_bids(_id_project):
+                if _id_project in f_ids.json:
+                    _id_bids = i from f_ids.json for the _id_project
+                    chk _id_bids in SOURCE_BIDS_DIR and validate BIDS
+                else:
+                    if _id_project has BIDS format:
+                        if _id_project in SOURCE_BIDS_DIR and validate BIDS:
+                        _id_bids = _id_project
+                    else:
+                        _id_bids = classify_2_bids(_id_project)
+                    update f_ids.json with _id_bids for _id_project
+
+            classify_2_bids(_id_project):
+                if not nimb_classified.json exists:
+                    classify_2nimb SOURCE_DIR
+                elif _id_project not in nimb_classified.json:
+                    if _id_project in SOURCE_DIR:
+                        classify_2nimb SOURCE_DIR
+                    else:
+                        update f_ids.json with "source" for _id_project as "missing"
+                else:
+                    _id_bids = classify 2 bids for _id_project
+
+            if new_subjects.json:
+                if ast user if to initiate processing is True:
+                    initiate processing
         """
         self._ids_missing = list()
         print(f'    reading IDs for project {self.project}')
