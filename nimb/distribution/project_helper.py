@@ -65,14 +65,15 @@ class ProjectManager:
         self.local_vars         = all_vars.location_vars['local']
         self.project            = all_vars.params.project
         self.project_vars       = all_vars.projects[self.project]
-        self.proj_id_col        = self.project_vars['proj_id_col']
-        self.col_id_bids        = self.project_vars['id_col']
+        self._ids_project_col   = self.project_vars['proj_id_col']
+        self._ids_bids_col        = self.project_vars['id_col']
         self.NIMB_tmp           = self.local_vars["NIMB_PATHS"]["NIMB_tmp"]
 
         # self.f_ids_proc_path  = os.path.join(self.materials_DIR,
         #                                      local_vars["NIMB_PATHS"]['file_ids_processed'])
 
-        self.path_stats_dir     = all_vars.projects[self.project]["STATS_PATHS"]["STATS_HOME"]
+        self.path_stats_dir     = makedir_ifnot_exist(
+                                    all_vars.projects[self.project]["STATS_PATHS"]["STATS_HOME"])
         self.materials_dir_pt   = all_vars.projects[self.project]["materials_DIR"][1]
         self.f_ids_name         = self.local_vars["NIMB_PATHS"]['file_ids_processed']
         self.f_ids_abspath      = os.path.join(self.path_stats_dir, self.f_ids_name)
@@ -97,16 +98,17 @@ class ProjectManager:
         '''
         self.df_grid_ok = False
         f_groups = self.project_vars['fname_groups']
-        dir_4stats       = makedir_ifnot_exist(self.path_stats_dir)
-        if self.distrib_hlp.get_files_for_stats(dir_4stats,
+        if self.distrib_hlp.get_files_for_stats(self.path_stats_dir,
                                                 [f_groups,]):
-            f_grid = os.path.join(dir_4stats, f_groups)
+            f_grid = os.path.join(self.path_stats_dir, f_groups)
             print(f'    file with groups is present: {f_grid}')
             self.df_grid_ok = True
-            return self.tab.get_df(f_grid)
+            df_grid = self.tab.get_df(f_grid)
         else:
             self.df_grid_ok = False
-            return self.make_default_grid()
+            df_grid = self.make_default_grid()
+        self._ids_project = df_grid[self._ids_project_col]
+        return df_grid
 
 
     def make_default_grid(self):
@@ -118,8 +120,8 @@ class ProjectManager:
         '''
         print(f'    file with groups is absent; creating default grid file in: {self.path_stats_dir}')
         df = self.tab.get_clean_df()
-        df[self.proj_id_col] = ''
-        df[self.col_id_bids] = ''
+        df[self._ids_project_col] = ''
+        df[self._ids_bids_col] = ''
         self.tab.save_df(df,
             os.path.join(self.path_stats_dir, DEFAULT.default_tab_name))
         self.tab.save_df(df,
@@ -158,7 +160,7 @@ class ProjectManager:
         elif do_task == 'classify-dcm2bids':
             self.classify_with_dcm2bids()
 
-        self.get_ids_bids()
+        self.check_processed()
         self.process_mri_data()
         self.extract_statistics()
 
@@ -167,20 +169,15 @@ class ProjectManager:
         print('checking for new subject to be processed')
         self.distrib_hlp.check_new()
 
-
-    '''
-    ID related scripts
-    '''
-
-    def get_ids_bids(self):
+    def check_processed(self):
         """
-            extract bids ids from the file groups provided by user
+        SITUATIONS:
+            only SOURCE_DIR is provided:
+                must populate grid.csv
+            grid.csv and SOURCE_DIR are provided, _id_projects are different
+            grid.csv _id_projects are NOT _id_bids
         ALGO:
-            read grid
-                if grid is missing:
-                    create default grid with cols for id and group as defined by user
-                    _ids_project = []
-                return _ids_project
+            grid and self._ids_project already defined by self.get_df_f_groups()
 
             if not exists(f_ids.json):
                 create f_ids.json
@@ -229,10 +226,21 @@ s            for _id_project in _ids_project:
                 if ast user if to initiate processing is True:
                     initiate processing
         """
+        self.get_ids_bids()
+
+
+    '''
+    ID related scripts
+    '''
+
+    def get_ids_bids(self):
+        """ extract bids ids from the file groups provided by user
+        """
+
         self._ids_missing = list()
         print(f'    reading IDs for project {self.project}')
         if self.df_grid_ok:
-            self._ids_bids = list(self.df_f_groups[self.col_id_bids])
+            self._ids_bids = list(self.df_f_groups[self._ids_bids_col])
             print(f'{" " * 4}list of ids that are present: {self._ids_bids}')
             self.get_ids_all()
             if self._ids_all:
@@ -268,8 +276,8 @@ s            for _id_project in _ids_project:
 
     def _ids_file_try2make(self):
         if self.df_grid_ok:
-            _ids_bids = self.df_f_groups[self.col_id_bids]
-            proj_ids = self.df_f_groups[self.proj_id_col]
+            _ids_bids = self.df_f_groups[self._ids_bids_col]
+            proj_ids = self.df_f_groups[self._ids_project_col]
 
             if len(_ids_bids) > 0:
                 _ids = dict()
@@ -613,12 +621,12 @@ s            for _id_project in _ids_project:
             self.populate_f_ids_from_nimb_classified()
 
             for _id_bids in self._ids_bids_new:
-                if _id_bids not in df[self.col_id_bids]:
+                if _id_bids not in df[self._ids_bids_col]:
                     df.loc[-1] = df.columns.values
                     for col in df.columns.tolist():
                         df.at[-1, col] = ''
-                    df.at[-1, self.col_id_bids] = _id_bids
-                    df.index = range(len(df[self.col_id_bids]))
+                    df.at[-1, self._ids_bids_col] = _id_bids
+                    df.index = range(len(df[self._ids_bids_col]))
             # self.tab.save_df(df,
             #     os.path.join(self.path_stats_dir, self.project_vars['fname_groups']))
             print('    NIMB ready to initiate processing of data')
