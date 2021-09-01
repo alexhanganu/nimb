@@ -16,32 +16,6 @@ from setup.interminal_setup import get_userdefined_paths, get_yes_no
 from distribution.manage_archive import is_archive, ZipArchiveManagement
 from distribution.logger import LogLVL
 
-# 2ADD:
-# chk that group file includes all variables defined in the projects.json file
-# chk that is ready to perform stats
-# chk if stats were performed. If not - ask if stats are requested.
-# if not - ask if FreeSurfer processing is requested by the user. Default - no.
-
-
-'''
-MUST BE ADAPTED according to this understanding:
-ID description:
-_id_source:  ID as defined in a database.
-            It can be same as _id_project, but it is NOT expected
-            that source_id will be used for stats
-            e.g., in PPMI source_id = 3378
-            these IDs are mainly folders of IDs with multiple sessions inside
-_id_bids   : ID after using the dcm2bids conversion;
-            it is automatically created with the make_bids_id function
-            it includes: dcm2bids prefix + source_id + session;
-            current dcm2bids prefix = "sub-"
-            _id_bids = sub-3378_ses-1
-_id_project: ID provided by the user in a grid file.
-            e.g., in PPMI _id_project = 3378_session1
-            _id_project is expected to be used for stats analysis
-            _id_project can be same as _id_bids, if edited by the user
-'''
-
 
 
 class ProjectManager:
@@ -80,9 +54,10 @@ class ProjectManager:
         self.tab                = Table()
         self.distrib_hlp        = DistributionHelper(self.all_vars)
         self.distrib_ready      = DistributionReady(self.all_vars)
-        self.df_f_groups        = self.get_df_f_groups()
         self.DICOM_DIR          = self.project_vars["SOURCE_SUBJECTS_DIR"]
-        self._ids_all           = dict()
+        self.apps_all           = ('freesurfer', 'nilearn', 'dipy')
+        self.get_df_f_groups()
+        self.get_ids_all()
 
         self.test               = all_vars.params.test
         self.nr_for_testing     = 2
@@ -92,7 +67,7 @@ class ProjectManager:
         '''reading the file with IDs
             this file is provided by the user in:
             ../nimb/projects.json -> fname_groups
-            file is tabular (.csv; .xlsx)
+            file is tabular (.tab; .csv; .xlsx)
             if file is not provided or not found:
             run: self.make_default_grid()
         '''
@@ -103,12 +78,11 @@ class ProjectManager:
             f_grid = os.path.join(self.path_stats_dir, f_groups)
             print(f'    file with groups is present: {f_grid}')
             self.df_grid_ok = True
-            df_grid = self.tab.get_df(f_grid)
+            self.df_grid    = self.tab.get_df(f_grid)
         else:
             self.df_grid_ok = False
-            df_grid = self.make_default_grid()
-        self._ids_project = df_grid[self._ids_project_col]
-        return df_grid
+            self.df_grid    = self.make_default_grid()
+        self._ids_project   = self.df_grid[self._ids_project_col]
 
 
     def make_default_grid(self):
@@ -133,6 +107,38 @@ class ProjectManager:
         print(f'        updating project.json at: {credentials_home}')
         save_json(self.all_vars.projects, os.path.join(credentials_home, 'projects.json'))
         return df
+
+
+    def get_ids_all(self):
+        """
+        f_ids.json:{
+            "_id_bids": {
+                "project"    : "ID_in_file_provided_by_user_for_GLM_analysis.tsv",
+                "source"     : "ID_in_source_dir_or_zip_file",
+                "freesurfer" : "ID_after_freesurfer_processing.zip/nii.gz",
+                "nilearn"    : "ID_after_nilearn_processing.zip/nii.gz",
+                "dipy"       : "ID_after_dipy_processing.zip/nii.gz"
+                    }
+            }
+            _id_project: ID provided by the user in a grid file.
+                        e.g., in PPMI _id_project = 3378_session1
+                        _id_project is expected to be used for stats analysis
+                        _id_project can be same as _id_bids, if edited by the user
+            _id_source:  ID as defined in a database.
+                        It can be same as _id_project, but it is NOT expected
+                        that source_id will be used for stats
+                        e.g., in PPMI source_id = 3378
+                        these IDs are mainly folders of IDs with multiple sessions inside
+            _id_bids   : ID after using the dcm2bids conversion;
+                        it is automatically created with the make_bids_id function
+                        it includes: dcm2bids prefix + source_id + session;
+                        current dcm2bids prefix = "sub-"
+                        _id_bids = sub-3378_ses-1
+        """
+        self._ids_all = dict()
+        if self.f_ids_in_dir(self.path_stats_dir):
+            self._ids_all = load_json(os.path.join(self.path_stats_dir, self.f_ids_name))
+        # print(f'{LogLVL.lvl1} ids all are: {self._ids_all}')
 
 
     def run(self):
@@ -178,20 +184,9 @@ class ProjectManager:
             grid.csv _id_projects are NOT _id_bids
         ALGO:
             grid and self._ids_project already defined by self.get_df_f_groups()
+            self._ids_all created by self.get_ids_all()
 
-            if not exists(f_ids.json):
-                create f_ids.json
-                f_ids.json:{
-                    "_id_bids": {
-                        "project"    : "ID_in_file_provided_by_user_for_GLM_analysis.tsv",
-                        "source"     : "ID_in_source_dir_or_zip_file",
-                        "freesurfer" : "ID_after_freesurfer_processing.zip/nii.gz",
-                        "nilearn"    : "ID_after_nilearn_processing.zip/nii.gz",
-                        "dipy"       : "ID_after_dipy_processing.zip/nii.gz"
-                            }
-                    }
-
-s            for _id_project in _ids_project:
+            for _id_project in _ids_project:
                 _id_bids = get_id_bids(_id_project)
                 if _id_bids:
                     for APP in _id_bids:
@@ -226,7 +221,24 @@ s            for _id_project in _ids_project:
                 if ast user if to initiate processing is True:
                     initiate processing
         """
+        self.check_app_processed()
         self.get_ids_bids()
+
+    def check_app_processed(self):
+        for _id_project in _ids_project:
+            _id_bids = "" #self.get_id_bids(_id_project)
+            if _id_bids:
+                for app in self.apps_all:
+                    if not self._ids_all[_id_bids][app]:
+                        self.populate_new_subjects(_id_bids)
+            else:
+                print(f'{LogLVL.lvl1} cannot create _id_bids for _id_project: {_id_project}')
+
+    def populate_new_subjects(self, _id_bids):
+        """ adding new _id_bids to existing new_subjects.json file"""
+        print("adding new _id_bids to existing new_subjects.json file")
+        self.new_subjects = True
+
 
 
     '''
@@ -240,9 +252,8 @@ s            for _id_project in _ids_project:
         self._ids_missing = list()
         print(f'    reading IDs for project {self.project}')
         if self.df_grid_ok:
-            self._ids_bids = list(self.df_f_groups[self._ids_bids_col])
+            self._ids_bids = list(self.df_grid[self._ids_bids_col])
             print(f'{" " * 4}list of ids that are present: {self._ids_bids}')
-            self.get_ids_all()
             if self._ids_all:
                 self.add_missing_participants()
             else:
@@ -255,17 +266,6 @@ s            for _id_project in _ids_project:
             self.prep_4dcm2bids_classification()
 
 
-    def get_ids_all(self):
-        """
-            extract bids ids from the file groups provided by user
-        """
-        if self.f_ids_in_dir(self.path_stats_dir):
-            self._ids_all = load_json(os.path.join(self.path_stats_dir, self.f_ids_name))
-        else:
-            self._ids_all = dict()
-        # print(f'{LogLVL.lvl1} ids all are: {self._ids_all}')
-
-
     def f_ids_in_dir(self, path_2groups_f):
         self.f_ids_abspath = os.path.join(path_2groups_f, self.f_ids_name)
         if os.path.exists(self.f_ids_abspath):
@@ -276,8 +276,8 @@ s            for _id_project in _ids_project:
 
     def _ids_file_try2make(self):
         if self.df_grid_ok:
-            _ids_bids = self.df_f_groups[self._ids_bids_col]
-            proj_ids = self.df_f_groups[self._ids_project_col]
+            _ids_bids    = self.df_grid[self._ids_bids_col]
+            _ids_project = self.df_grid[self._ids_project_col]
 
             if len(_ids_bids) > 0:
                 _ids = dict()
