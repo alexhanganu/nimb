@@ -2,6 +2,7 @@
 
 
 import os
+import sys
 import shutil
 import pandas as pd
 
@@ -11,7 +12,7 @@ from distribution.distribution_ready import DistributionReady
 from distribution.utilities import load_json, save_json, makedir_ifnot_exist
 from distribution.distribution_definitions import get_keys_processed, DEFAULT
 from classification.classify_2nimb_bids import Classify2_NIMB_BIDS
-from classification.dcm2bids_helper import DCM2BIDS_helper, make_bids_id
+from classification.dcm2bids_helper import DCM2BIDS_helper, make_bids_id, is_bids_format
 from setup.interminal_setup import get_userdefined_paths, get_yes_no
 from distribution.manage_archive import is_archive, ZipArchiveManagement
 from distribution.logger import LogLVL
@@ -55,6 +56,7 @@ class ProjectManager:
         self.distrib_hlp        = DistributionHelper(self.all_vars)
         self.distrib_ready      = DistributionReady(self.all_vars)
         self.DICOM_DIR          = self.project_vars["SOURCE_SUBJECTS_DIR"]
+        self.BIDS_DIR           = self.project_vars['SOURCE_BIDS_DIR'][1]
         self.apps_all           = ('freesurfer', 'nilearn', 'dipy')
         self.get_df_f_groups()
         self.get_ids_all()
@@ -197,10 +199,10 @@ class ProjectManager:
             get_id_bids(_id_project):
                 if _id_project in f_ids.json:
                     _id_bids = i from f_ids.json for the _id_project
-                    chk _id_bids in SOURCE_BIDS_DIR and validate BIDS
+                    chk _id_bids in BIDS_DIR and validate BIDS
                 else:
                     if _id_project has BIDS format:
-                        if _id_project in SOURCE_BIDS_DIR and validate BIDS:
+                        if _id_project in BIDS_DIR and validate BIDS:
                         _id_bids = _id_project
                     else:
                         _id_bids = classify_2_bids(_id_project)
@@ -218,7 +220,7 @@ class ProjectManager:
                     _id_bids = classify 2 bids for _id_project
 
             if new_subjects.json:
-                if ast user if to initiate processing is True:
+                if ask OK to initiate processing is True:
                     initiate processing
         """
         self.check_app_processed()
@@ -239,6 +241,53 @@ class ProjectManager:
         print("adding new _id_bids to existing new_subjects.json file")
         self.new_subjects = True
 
+
+    def get_id_bids(self, _id_project):
+        key_id_project = "project"
+        if _id_project in [self._ids_all[i][key_id_project] for i in self._ids_all]:
+            _id_bids_ls = [i for i in self._ids_all if self._ids_all[i][key_id_project] == _id_project]
+            if len(_ids_bids_ls) > 1:
+                print(f'{LogLVL.lvl1}there are multiple _id_bids: {_id_bids_ls}\
+                        that correspond to id {_id_project}')
+                sys.exit(0)
+            else:
+                _id_bids = _ids_bids_ls[0]
+            _, sub_label, _, _ = is_bids_format(_id_bids)
+            if not self.chk_id_bids_in_bids_dir(sub_label):
+                _id_bids = classify_2_bids(_id_project)
+        else:
+            bids_format, sub_label, _, _ = is_bids_format(_id_project)
+            if bids_format:
+                if self.chk_id_bids_in_bids_dir(sub_label)
+                    _id_bids = _id_project
+            else:
+                _id_bids = classify_2_bids(_id_project)
+            self.update_f_ids(_id_bids, "project", _id_project)
+            self.save_f_ids()
+
+
+    def chk_id_bids_in_bids_dir(self, _id_bids_sub_label):
+        print('checing if _id_bids is present in the provided BIDS_DIR')
+        if _id_bids_sub_label in os.listdir(self.BIDS_DIR):
+            print(f'{LogLVL.lvl1}id_bids is present in BIDS_DIR')
+            # if validate BIDS:
+            return True
+        else:
+            print(f'{LogLVL.lvl1}id_bids ABSENT from BIDS_DIR')
+            return False
+
+
+    def classify_2_bids(self, _id_project):
+        print('classifying')
+        # if not nimb_classified.json exists:
+        #     classify_2nimb SOURCE_DIR
+        # elif _id_project not in nimb_classified.json:
+        #     if _id_project in SOURCE_DIR:
+        #         classify_2nimb SOURCE_DIR
+        #     else:
+        #         update f_ids.json with "source" for _id_project as "missing"
+        # else:
+        #     _id_bids = classify 2 bids for _id_project
 
 
     '''
@@ -296,7 +345,6 @@ class ProjectManager:
 
 
     def make_reading_dirs(self):
-        SOURCE_BIDS_DIR       = self.project_vars['SOURCE_BIDS_DIR'][1]
         SOURCE_SUBJECTS_DIR   = self.project_vars['SOURCE_SUBJECTS_DIR'][1]
         PROCESSED_FS_DIR      = self.project_vars['PROCESSED_FS_DIR'][1]
         PROCESSED_NILEARN_DIR = self.project_vars['PROCESSED_NILEARN_DIR'][1]
@@ -338,6 +386,23 @@ class ProjectManager:
                 if _id_bids in _dir:
                     _ids[_id_bids][key_nimb] = _dir
         return _ids
+
+
+    def update_f_ids(self, _id_bids, key, _id_2update):
+        self.must_save_f_ids = False
+        if _id_bids in self._ids_all:
+            self._ids_all[_id_bids][key] = _id_2update
+            self.must_save_f_ids = True
+        else:
+            self._ids_all[_id_bids] = {key : _id_2update}
+            self.must_save_f_ids = True
+
+
+    def save_f_ids(self):
+        if self.must_save_f_ids:
+            save_json(self._ids_all, self.f_ids_abspath)
+
+
 
 
     def chk_ids_processed(self):

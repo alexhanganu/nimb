@@ -52,6 +52,35 @@ def make_bids_id(proj_id, session, run = False):
     return _id_bids, _id_bids_dir
 
 
+def is_bids_format(_id):
+    """
+    check if _id has a BIDS format
+    if True:
+        return True, expected bids folder, session name, run name
+    """
+    bids_format = False
+    ses_format = False
+    sub_format = False
+    if '_run-' in _id_project:
+        run_loc = _id_project.find('run-')
+        run_label = _id_project[run_loc:]
+    if 'ses-' in _id_project:
+        ses_loc = _id_project.find('ses-')
+        ses_label = _id_project[ses_loc:run_loc]
+        ses_format = True
+        if "_" in ses_label[-1]:
+            ses_label = ses_label[:-1]
+    if _id_project.startswith('sub-'):
+        sub_label = _id_project[:ses_loc]
+        sub_format = True
+        if "_" in sub_label[-1]:
+            sub_label = sub_label[:-1]
+    if ses_format and sub_format:
+        bids_format = True
+    return bids_format, sub_label, ses_label, run_label
+
+
+
 class DCM2BIDS_helper():
     """
     goal: use UNFMontreal/dcm2bids to convert .dcm files to BIDS .nii.gz
