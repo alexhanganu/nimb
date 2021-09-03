@@ -224,17 +224,19 @@ class ProjectManager:
                     initiate processing
         """
         self.check_app_processed()
-        self.get_ids_bids()
+        # self.get_ids_bids()
+
 
     def check_app_processed(self):
         for _id_project in self._ids_project:
-            _id_bids = "" #self.get_id_bids(_id_project)
+            _id_bids = self.get_id_bids(_id_project)
             if _id_bids:
                 for app in self.apps_all:
                     if not self._ids_all[_id_bids][app]:
                         self.populate_new_subjects(_id_bids)
             else:
                 print(f'{LogLVL.lvl1} cannot create _id_bids for _id_project: {_id_project}')
+
 
     def populate_new_subjects(self, _id_bids):
         """ adding new _id_bids to existing new_subjects.json file"""
@@ -264,6 +266,7 @@ class ProjectManager:
                 _id_bids = classify_2_bids(_id_project)
             self.update_f_ids(_id_bids, "project", _id_project)
             self.save_f_ids()
+        return _id_bids
 
 
     def chk_id_bids_in_bids_dir(self, _id_bids_sub_label):
@@ -302,12 +305,66 @@ class ProjectManager:
             self.prep_4dcm2bids_classification()
 
 
+    def add_missing_participants(self):
+        '''chk if any _id_src from _ids_nimb_classified
+            are missing from _ids_all[_id_bids]['source']
+            if missing - will add _id_src to _ids_all
+            will populate list() self._ids_missing
+        '''
+        self.get_ids_classified()
+        if self._ids_nimb_classified:
+            print(f'{LogLVL.lvl1}checking missing participants')
+            # print(f'{LogLVL.lvl1} ids classified: {self._ids_nimb_classified}')
+            # print(f'{LogLVL.lvl1} ids all: {self._ids_all}')
+            ids_all_source = [self._ids_all[i]['source'] for i in self._ids_all.keys()]
+            self._ids_missing = [i for i in self._ids_nimb_classified.keys() if i not in ids_all_source]
+            for _id_src in self._ids_missing:
+                for session in self._ids_nimb_classified[_id_src]:
+                    _id_bids, _ = make_bids_id(_id_src, session)
+                    self._ids_all[_id_bids]['source'] = _id_src
+        else:
+            print(f'{LogLVL.lvl1}nimb_classified.json is missing')
+        return self._ids_missing
+
+
+    def populate_f_ids_from_nimb_classified(self):
+        self._ids_bids_new = list()
+        print(f'{LogLVL.lvl1} ids classified: {self._ids_nimb_classified}')
+        for _id_src in self._ids_nimb_classified:
+            for session in self._ids_nimb_classified[_id_src]:
+                _id_bids, _ = make_bids_id(_id_src, session)
+                # _id_bids = f'{_id_src}_{session}' #!!!!!!!!!!!!!!!!!!!!!!!!
+                self._ids_bids_new.append(_id_bids)
+
+                if _id_bids not in self._ids_all:
+                    self._ids_all[_id_bids] = dict()
+                self._ids_all[_id_bids][get_keys_processed('src')] = src_id
+        self.create_file_ids(self._ids_all)
     def f_ids_in_dir(self, path_2groups_f):
         self.f_ids_abspath = os.path.join(path_2groups_f, self.f_ids_name)
         if os.path.exists(self.f_ids_abspath):
             return True
         else:
             return self._ids_file_try2make()
+
+
+    def chk_ids_processed(self):
+            '''
+            def check_is_subject_session_in_grid:
+                if subject_session not in grid:
+                    add subject_session to be processed
+                    populate new_subjects.json with dcm2bids versions
+                    if dcm2bids not efficient:
+                        populate new_subjects with raw DCM
+                self.get_ids_classified()
+                self.populate_grid()
+            '''
+            print(f'{LogLVL.lvl1}checking processed ids')
+            # for _id_bids in self._ids_all:
+            #     for app in self._ids_all[_id_bids]:
+            #         print(app)
+
+            # self.prep_4dcm2bids_classification()
 
 
     def _ids_file_try2make(self):
@@ -389,49 +446,6 @@ class ProjectManager:
             save_json(self._ids_all, self.f_ids_abspath)
 
 
-
-
-    def chk_ids_processed(self):
-            '''
-            def check_is_subject_session_in_grid:
-                if subject_session not in grid:
-                    add subject_session to be processed
-                    populate new_subjects.json with dcm2bids versions
-                    if dcm2bids not efficient:
-                        populate new_subjects with raw DCM
-                self.get_ids_classified()
-                self.populate_grid()
-            '''
-            print(f'{LogLVL.lvl1}checking processed ids')
-            # for _id_bids in self._ids_all:
-            #     for app in self._ids_all[_id_bids]:
-            #         print(app)
-
-            # self.prep_4dcm2bids_classification()
-
-
-    def add_missing_participants(self):
-        '''chk if any _id_src from _ids_nimb_classified
-            are missing from _ids_all[_id_bids]['source']
-            if missing - will add _id_src to _ids_all
-            will populate list() self._ids_missing
-        '''
-        self.get_ids_classified()
-        if self._ids_nimb_classified:
-            print(f'{LogLVL.lvl1}checking missing participants')
-            # print(f'{LogLVL.lvl1} ids classified: {self._ids_nimb_classified}')
-            # print(f'{LogLVL.lvl1} ids all: {self._ids_all}')
-            ids_all_source = [self._ids_all[i]['source'] for i in self._ids_all.keys()]
-            self._ids_missing = [i for i in self._ids_nimb_classified.keys() if i not in ids_all_source]
-            for _id_src in self._ids_missing:
-                for session in self._ids_nimb_classified[_id_src]:
-                    _id_bids, _ = make_bids_id(_id_src, session)
-                    self._ids_all[_id_bids]['source'] = _id_src
-        else:
-            print(f'{LogLVL.lvl1}nimb_classified.json is missing')
-        return self._ids_missing
-
-
     def get_ids_classified(self):
         new_subjects_dir = self.local_vars["NIMB_PATHS"]["NIMB_NEW_SUBJECTS"]
         abspath_nimb_classified_f_srcdata_dir  = os.path.join(self.srcdata_dir, DEFAULT.f_nimb_classified)
@@ -446,21 +460,6 @@ class ProjectManager:
         else:
             self.must_run_classify_2nimb_bids = True
             print(f'{" " * 4} file {DEFAULT.f_nimb_classified} is missing in: {self.srcdata_dir} or {new_subjects_dir}')
-
-
-    def populate_f_ids_from_nimb_classified(self):
-        self._ids_bids_new = list()
-        print(f'{LogLVL.lvl1} ids classified: {self._ids_nimb_classified}')
-        for _id_src in self._ids_nimb_classified:
-            for session in self._ids_nimb_classified[_id_src]:
-                _id_bids, _ = make_bids_id(_id_src, session)
-                # _id_bids = f'{_id_src}_{session}' #!!!!!!!!!!!!!!!!!!!!!!!!
-                self._ids_bids_new.append(_id_bids)
-
-                if _id_bids not in self._ids_all:
-                    self._ids_all[_id_bids] = dict()
-                self._ids_all[_id_bids][get_keys_processed('src')] = src_id
-        self.create_file_ids(self._ids_all)
 
 
     def create_file_ids(self, _ids):
@@ -480,7 +479,6 @@ class ProjectManager:
             is_classified, nimb_classified = self.run_classify_2nimb_bids(_id_project)
             if is_classified:
                 _id_bids = self.classify_with_dcm2bids(nimb_classified)
-
         elif _id_project not in self._ids_nimb_classified:
             if _id_project in SOURCE_DIR:
                 print(f'{" " * 4} must initiate nimb classifier')
@@ -492,8 +490,9 @@ class ProjectManager:
                 f_grid = os.path.join(self.path_stats_dir, self.project_vars['fname_groups'])
                 print(f'{LogLVL.lvl1}must remove id: {_id_project} from file: {f_grid}')
                 self._ids_project.remove(_id_project)
-        # else:
-        #     _id_bids = self.classify_with_dcm2bids(nimb_classified, _id_project)
+        else:
+            _id_bids = self.classify_with_dcm2bids(nimb_classified, _id = _id_project)
+        return _id_bids
 
 
     def prep_4dcm2bids_classification(self):
@@ -544,7 +543,7 @@ class ProjectManager:
                 save_json(self.all_vars.projects, os.path.join(_get_credentials_home(), 'projects.json'))
 
 
-    def classify_with_dcm2bids(self, nimb_classified = False):
+    def classify_with_dcm2bids(self, nimb_classified = False, _id = False):
         if not nimb_classified:
             try:
                 nimb_classified = load_json(os.path.join(
@@ -555,44 +554,49 @@ class ProjectManager:
                 print('    nimb_classified file cannot be found at: {self.srcdata_dir}')
 
         if nimb_classified:
-            ls_nimb_ids = [i for i in nimb_classified]
-            if self.test:
-                print(f'        TESTING with {self.nr_for_testing} participants')
-                ls_nimb_ids = [i for i in nimb_classified][:self.nr_for_testing]
-            for nimb_id in ls_nimb_ids:
-                ls_sessions = [i for i in nimb_classified[nimb_id] if i not in ('archived',)]
+            if _id:
+                ls_ids_2convert_2bids = [_id]
+            else:
+                ls_ids_2convert_2bids = [i for i in nimb_classified]
+                if self.test:
+                    print(f'        TESTING with {self.nr_for_testing} participants')
+                    ls_ids_2convert_2bids = [i for i in nimb_classified][:self.nr_for_testing]
+            for _id_from_nimb_classified in ls_ids_2convert_2bids:
+                ls_sessions = [i for i in nimb_classified[_id_from_nimb_classified] if i not in ('archived',)]
                 for ses in ls_sessions:
-                    convert_2bids = self.id_is_bids_converted(nimb_id, ses)
-                    if convert_2bids:
+                    redy_2convert_2bids = self.id_is_bids_converted(_id_from_nimb_classified, ses)
+                    if redy_2convert_2bids:
                         print('    ready to convert to BIDS')
-                        self.bids_classified = self.convert_with_dcm2bids(nimb_id,
+                        self.bids_classified = self.convert_with_dcm2bids(_id_from_nimb_classified,
                                                             ses,
-                                                            nimb_classified[nimb_id])
+                                                            nimb_classified[_id_from_nimb_classified])
                         print(f'        bids_classified is: {self.bids_classified}')
+        if _id:
+            _id_bids = self.bids_classified[_id]
+            return _id_bids
 
 
-    def id_is_bids_converted(self, nimb_id, ses):
+    def id_is_bids_converted(self, _id_from_nimb_classified, ses):
         bids_dir_location = self.project_vars['SOURCE_BIDS_DIR'][0]
-        convert_2bids = False
+        redy_2convert_2bids = False
         if bids_dir_location == 'local':
-            bids_dir_abspath = self.project_vars['SOURCE_BIDS_DIR'][1]
-            ls_bids_converted = os.listdir(bids_dir_abspath)
-            if nimb_id not in ls_bids_converted:
-                convert_2bids = True
-            elif ses not in os.listdir(os.path.join(bids_dir_abspath, nimb_id)):
-                convert_2bids = True
+            _ids_in_bids_dir = os.listdir(self.BIDS_DIR)
+            if _id_from_nimb_classified not in _ids_in_bids_dir:
+                redy_2convert_2bids = True
+            elif ses not in os.listdir(os.path.join(self.BIDS_DIR, _id_from_nimb_classified)):
+                redy_2convert_2bids = True
         else:
             print(f'    bids folder located remotely: {bids_dir_location}')
-        return convert_2bids
+        return redy_2convert_2bids
 
 
-    def convert_with_dcm2bids(self, nimb_id, ses, nimb_classified_per_id):
-        print(f'    starting dcm2bids classification for id: {nimb_id} session: {ses}')
+    def convert_with_dcm2bids(self, _id_from_nimb_classified, ses, nimb_classified_per_id):
+        print(f'    starting dcm2bids classification for id: {_id_from_nimb_classified} session: {ses}')
         return DCM2BIDS_helper(self.project_vars,
                         self.project,
                         nimb_classified_per_id = nimb_classified_per_id,
                         DICOM_DIR = self.srcdata_dir,
-                        tmp_dir = self.NIMB_tmp).run(nimb_id, ses)
+                        tmp_dir = self.NIMB_tmp).run(_id_from_nimb_classified, ses)
 
 
     def get_content(self, path2chk):
