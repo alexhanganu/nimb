@@ -215,7 +215,7 @@ class ProjectManager:
                     if _id_project in SOURCE_DIR:
                         classify_2nimb SOURCE_DIR
                     else:
-                        update f_ids.json with "source" for _id_project as "missing"
+                        remove _id_project from self._ids_project
                 else:
                     _id_bids = classify 2 bids for _id_project
 
@@ -224,6 +224,9 @@ class ProjectManager:
                     initiate processing
         """
         self.check_app_processed()
+        if self.new_subjects:
+            print(f'{LogLVL.lvl1}must initiate processing')
+
         # self.get_ids_bids()
 
 
@@ -311,7 +314,7 @@ class ProjectManager:
             if missing - will add _id_src to _ids_all
             will populate list() self._ids_missing
         '''
-        self.get_ids_classified()
+        self.get_ids_nimb_classified()
         if self._ids_nimb_classified:
             print(f'{LogLVL.lvl1}checking missing participants')
             # print(f'{LogLVL.lvl1} ids classified: {self._ids_nimb_classified}')
@@ -355,7 +358,7 @@ class ProjectManager:
                     populate new_subjects.json with dcm2bids versions
                     if dcm2bids not efficient:
                         populate new_subjects with raw DCM
-                self.get_ids_classified()
+                self.get_ids_nimb_classified()
                 self.populate_grid()
             '''
             print(f'{LogLVL.lvl1}checking processed ids')
@@ -445,7 +448,7 @@ class ProjectManager:
             save_json(self._ids_all, self.f_ids_abspath)
 
 
-    def get_ids_classified(self):
+    def get_ids_nimb_classified(self):
         new_subjects_dir = self.local_vars["NIMB_PATHS"]["NIMB_NEW_SUBJECTS"]
         abspath_nimb_classified_f_srcdata_dir  = os.path.join(self.srcdata_dir, DEFAULT.f_nimb_classified)
         abspath_nimb_classified_f_new_subj_dir = os.path.join(new_subjects_dir, DEFAULT.f_nimb_classified)
@@ -472,7 +475,7 @@ class ProjectManager:
     '''
     def classify_2_bids(self, _id_project):
         print('classifying to BIDS format')
-        self.get_ids_classified()
+        self.get_ids_nimb_classified()
         if self.must_run_classify_2nimb_bids:
             print(f'{" " * 4} must initiate nimb classifier')
             is_classified, nimb_classified = self.run_classify_2nimb_bids(_id_project)
