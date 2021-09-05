@@ -333,7 +333,6 @@ class ProjectManager:
         for _id_src in self._ids_nimb_classified:
             for session in self._ids_nimb_classified[_id_src]:
                 _id_bids, _ = make_bids_id(_id_src, session)
-                # _id_bids = f'{_id_src}_{session}' #!!!!!!!!!!!!!!!!!!!!!!!!
                 self._ids_bids_new.append(_id_bids)
 
                 if _id_bids not in self._ids_all:
