@@ -10,7 +10,7 @@ from stats.db_processing import Table
 from distribution.distribution_helper import  DistributionHelper
 from distribution.distribution_ready import DistributionReady
 from distribution.utilities import load_json, save_json, makedir_ifnot_exist
-from distribution.distribution_definitions import get_keys_processed, DEFAULT
+from distribution.distribution_definitions import get_keys_processed, DEFAULT, DEFAULTpaths
 from classification.classify_2nimb_bids import Classify2_NIMB_BIDS
 from classification.dcm2bids_helper import DCM2BIDS_helper, make_bids_id, is_bids_format
 from setup.interminal_setup import get_userdefined_paths, get_yes_no
@@ -245,6 +245,20 @@ class ProjectManager:
         """ adding new _id_bids to existing new_subjects.json file"""
         print("adding new _id_bids to existing new_subjects.json file")
         self.new_subjects = True
+        subs_2process = self.get_subs2process()
+        # self._ids_nimb_classified
+
+
+
+    def get_subs2process(self):
+        DEFpaths = DEFAULTpaths(self.NIMB_tmp)
+        f_subj2process = DEFpaths.f_subj2process_abspath
+        if os.path.exists(f_subj2process):
+            print(f'{" " * 4} file with subs to process is: {f_subj2process}')
+            return load_json(f_subj2process)
+        else:
+            print(f'{" " * 4} file with subjects to process is missing; creating empty dictionary')
+            return dict()
 
 
     def get_id_bids(self, _id_project):
