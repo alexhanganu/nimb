@@ -236,29 +236,33 @@ class ProjectManager:
             if _id_bids:
                 for app in self.apps_all:
                     if not self._ids_all[_id_bids][app]:
-                        self.populate_new_subjects(_id_bids)
+                        self.populate_new_subjects(_id_bids, _id_project)
             else:
                 print(f'{LogLVL.lvl1} cannot create _id_bids for _id_project: {_id_project}')
 
 
-    def populate_new_subjects(self, _id_bids):
+    def populate_new_subjects(self, _id_bids, _id_project):
         """ adding new _id_bids to existing new_subjects.json file"""
         print("adding new _id_bids to existing new_subjects.json file")
         self.new_subjects = True
-        subs_2process = self.get_subs2process()
-        # self._ids_nimb_classified
+        self.adj_subs2process(get = True)
+        _, _, ses_label, _ = is_bids_format(_id_bids)
+        self.subs_2process[_id_bids] = self._ids_nimb_classified[_id_project][ses_label]
+        self.adj_subs2process(save = True)
 
 
-
-    def get_subs2process(self):
+    def adj_subs2process(self, get = False, save = False):
         DEFpaths = DEFAULTpaths(self.NIMB_tmp)
         f_subj2process = DEFpaths.f_subj2process_abspath
-        if os.path.exists(f_subj2process):
-            print(f'{" " * 4} file with subs to process is: {f_subj2process}')
-            return load_json(f_subj2process)
-        else:
-            print(f'{" " * 4} file with subjects to process is missing; creating empty dictionary')
-            return dict()
+        if get:
+            if os.path.exists(f_subj2process):
+                print(f'{" " * 4} file with subs to process is: {f_subj2process}')
+                self.subs_2process = load_json(f_subj2process)
+            else:
+                print(f'{" " * 4} file with subjects to process is missing; creating empty dictionary')
+                self.subs_2process = dict()
+        elif save:
+            save_json(self.subs_2process, f_subj2process)
 
 
     def get_id_bids(self, _id_project):
