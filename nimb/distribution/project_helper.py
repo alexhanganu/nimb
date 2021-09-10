@@ -40,8 +40,8 @@ class ProjectManager:
         self.local_vars         = all_vars.location_vars['local']
         self.project            = all_vars.params.project
         self.project_vars       = all_vars.projects[self.project]
-        self._ids_project_col   = self.project_vars['proj_id_col']
-        self._ids_bids_col        = self.project_vars['id_col']
+        self._ids_project_col   = self.project_vars['id_proj_col']
+        self._ids_bids_col      = self.project_vars['id_col']
         self.NIMB_tmp           = self.local_vars["NIMB_PATHS"]["NIMB_tmp"]
 
         # self.f_ids_proc_path  = os.path.join(self.materials_DIR,
