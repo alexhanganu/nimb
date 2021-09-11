@@ -269,6 +269,12 @@ def main():
         params  : from parameters defined by user, process, project
         projects: parameters of all projects from credentials_path/projects.json
     """
+    #check if python2
+    print('Please use python3.5 and up')
+    if sys.version_info <= (3,5):
+        sys.stdout.write("Please use python 3.5")
+        sys.exit(1)
+
     project_ids = Get_Vars().get_projects_ids()
     params      = get_parameters(project_ids)
     project     = params.project

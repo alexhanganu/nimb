@@ -84,6 +84,8 @@ class ProjectManager:
         else:
             self.df_grid_ok = False
             self.df_grid    = self.make_default_grid()
+
+        print(self.df_grid, self.df_grid.columns, self._ids_project_col)
         self._ids_project   = self.df_grid[self._ids_project_col]
 
 
@@ -281,7 +283,7 @@ class ProjectManager:
         else:
             bids_format, sub_label, _, _ = is_bids_format(_id_project)
             if bids_format:
-                if self.chk_id_bids_in_bids_dir(sub_label)
+                if self.chk_id_bids_in_bids_dir(sub_label):
                     _id_bids = _id_project
             else:
                 _id_bids = classify_2_bids(_id_project)
