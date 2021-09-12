@@ -63,6 +63,7 @@ class ProjectManager:
 
         self.test               = all_vars.params.test
         self.nr_for_testing     = 2
+        self.new_subjects       = False
 
 
     def get_df_f_groups(self):
@@ -84,8 +85,6 @@ class ProjectManager:
         else:
             self.df_grid_ok = False
             self.df_grid    = self.make_default_grid()
-
-        print(self.df_grid, self.df_grid.columns, self._ids_project_col)
         self._ids_project   = self.df_grid[self._ids_project_col]
 
 
@@ -170,7 +169,8 @@ class ProjectManager:
         elif do_task == 'classify-dcm2bids':
             self.classify_with_dcm2bids()
 
-        self.check_processed()
+        self.check_ids_from_grid()
+        self.check_new()
         self.process_mri_data()
         self.extract_statistics()
 
@@ -179,7 +179,8 @@ class ProjectManager:
         print('checking for new subject to be processed')
         self.distrib_hlp.check_new()
 
-    def check_processed(self):
+
+    def check_ids_from_grid(self):
         """
         SITUATIONS:
             only SOURCE_DIR is provided:
