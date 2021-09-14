@@ -177,16 +177,72 @@ class ProjectManager:
 
     def check_new(self):
         print('checking for new subject to be processed')
-        self.distrib_hlp.check_new()
+        self.unprocessed = self.is_any_unprocessed()
+
+        print(self.unprocessed)
+       if unprocessed:
+           print('there are {} subjects to be processed'.format(len(self.unprocessed)))
+#            analysis = 'freesurfer'
+#            self.locations_4process = self.get_processing_location(analysis)
+            # tell user the number of machines  ready to perform the analysis (local + remote)
+#            print('there are {} locations ready to perform the {} analysis'.format(len(self.locations_4process), analysis))
+            # Ask if user wants to include only one machine or all of them
+#            if self.get_userdefined_location(): # If user chooses at least one machine for analysis:
+#                print(self.locations_4process)
+                # self.get_subject_data(unprocessed)
+                # self.get_available_space() #- compute available disk space on the local and/or remote 
+#                (where freesurfer_install ==1) for the folder FS_SUBJECTS_DIR and NIMB_PROCESSED_FS ==> get_free_space_remote
+#                if self.get_user_confirmation():
+#                    self.make_processing_database()
+#                    self.run_processing()
+
+
+    def is_any_unprocessed(self):
+        to_be_process = self.get_ls_unprocessed_data()
+        if len(to_be_process) > 1:
+            return True
+        return False
+
+
+    def get_ls_unprocessed_data(self):
+        """
+        get the list of un-processed subject
+        must be absolute path
+        :param SOURCE_SUBJECTS_DIR:
+        :param PROCESSED_FS_DIR:
+        :param project_name: name of the project, cannot be None
+        :return: a list of subject to be processed
+        """
+        print(f'SOURCE_SUBJECTS_DIR is: {self.srcdata_dir},\n\
+            PROCESSED_FS_DIR is: {self.project_vars['PROCESSED_FS_DIR']}')
+        # list_subjects = self._get_ls_subjects('SOURCE_SUBJECTS_DIR')
+        # # if not ls_subj_bids:
+        # #     list_subjects = self._get_source_subj()
+        # list_processed = self._get_ls_subjects('PROCESSED_FS_DIR')
+        # print('there are {} subjects in source, and {} in processed'.format(len(list_subjects), len(list_processed)))
+        # print(len(set(list_subjects) - set(list_processed)))
+        # unprocessed_subject =  [i.strip('.zip') for i in list_subjects if i.strip('.zip') not in list_processed]
+        # self.unprocessed_subject = unprocessed_subject
+        # return unprocessed_subject
+
+        # # self.is_any_unprocessed(self.get_SOURCE_SUBJECTS_DIR()) == modify it
+        # # local version
+        # machine, source_fs = self.get_SOURCE_SUBJECTS_DIR()
+        # _, process_fs = self.get_PROCESSED_FS_DIR()
+        # to_be_processed = []
+        # if machine == "local":
+        # if not self.is_any_unprocessed(source_fs, process_fs): # test this function
+        # #get the list of subjects in SOURCE_SUBJECTS_DIR
+        # to_be_processed = self.get_list_subject_to_be_processed_local_version(source_fs,process_fs)
+
+        # else:# remote version: source is at remote
+        # # go to the remote server to check
+        # host = self.projects['LOCATION'][machine]
+        # to_be_processed = self.get_list_subject_to_be_processed_remote_version(source_fs, process_fs,remote_id)
 
 
     def check_ids_from_grid(self):
         """
-        SITUATIONS:
-            only SOURCE_DIR is provided:
-                must populate grid.csv
-            grid.csv and SOURCE_DIR are provided, _id_projects are different
-            grid.csv _id_projects are NOT _id_bids
         ALGO:
             grid and self._ids_project already defined by self.get_df_f_groups()
             self._ids_all created by self.get_ids_all()
