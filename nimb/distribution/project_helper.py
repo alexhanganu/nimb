@@ -176,12 +176,11 @@ class ProjectManager:
 
 
     def check_new(self):
-        print('checking for new subject to be processed')
-        self.unprocessed = self.is_any_unprocessed()
+        print(f'{LogLVL.lvl1}checking for new subject to be processed')
+        ls_unprocessed = self.get_ls_unprocessed_data()
 
-        print(self.unprocessed)
-       if unprocessed:
-           print('there are {} subjects to be processed'.format(len(self.unprocessed)))
+        if len(ls_unprocessed) > 1:
+           print(f'{LogLVL.lvl2}there are {len(ls_unprocessed)} participants with MRI data to be processed')
 #            analysis = 'freesurfer'
 #            self.locations_4process = self.get_processing_location(analysis)
             # tell user the number of machines  ready to perform the analysis (local + remote)
@@ -197,13 +196,6 @@ class ProjectManager:
 #                    self.run_processing()
 
 
-    def is_any_unprocessed(self):
-        to_be_process = self.get_ls_unprocessed_data()
-        if len(to_be_process) > 1:
-            return True
-        return False
-
-
     def get_ls_unprocessed_data(self):
         """
         get the list of un-processed subject
@@ -213,8 +205,9 @@ class ProjectManager:
         :param project_name: name of the project, cannot be None
         :return: a list of subject to be processed
         """
-        print(f'SOURCE_SUBJECTS_DIR is: {self.srcdata_dir},\n\
-            PROCESSED_FS_DIR is: {self.project_vars['PROCESSED_FS_DIR']}')
+        print(f"{LogLVL.lvl1}SOURCE_SUBJECTS_DIR is: {self.srcdata_dir}")
+        print(f"{LogLVL.lvl1}PROCESSED_FS_DIR is: {self.project_vars['PROCESSED_FS_DIR'][1]}")
+        ls_unprocessed = list()
         # list_subjects = self._get_ls_subjects('SOURCE_SUBJECTS_DIR')
         # # if not ls_subj_bids:
         # #     list_subjects = self._get_source_subj()
@@ -239,6 +232,7 @@ class ProjectManager:
         # # go to the remote server to check
         # host = self.projects['LOCATION'][machine]
         # to_be_processed = self.get_list_subject_to_be_processed_remote_version(source_fs, process_fs,remote_id)
+        return ls_unprocessed
 
 
     def check_ids_from_grid(self):
