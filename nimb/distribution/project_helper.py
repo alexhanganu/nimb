@@ -57,6 +57,7 @@ class ProjectManager:
         self.distrib_ready      = DistributionReady(self.all_vars)
         self.srcdata_dir        = self.project_vars["SOURCE_SUBJECTS_DIR"][1]
         self.BIDS_DIR           = self.project_vars['SOURCE_BIDS_DIR'][1]
+        self.new_subjects_dir   = self.local_vars["NIMB_PATHS"]["NIMB_NEW_SUBJECTS"]
         self.apps_all           = ('freesurfer', 'nilearn', 'dipy')
         self.get_df_f_groups()
         self.get_ids_all()
@@ -208,6 +209,12 @@ class ProjectManager:
         print(f"{LogLVL.lvl1}SOURCE_SUBJECTS_DIR is: {self.srcdata_dir}")
         print(f"{LogLVL.lvl1}PROCESSED_FS_DIR is: {self.project_vars['PROCESSED_FS_DIR'][1]}")
         ls_unprocessed = list()
+        self.get_ids_nimb_classified(self.srcdata_dir)
+        if self._ids_nimb_classified:
+            print(f'{LogLVL.lvl1}nimb_classified is: {self._ids_nimb_classified}')
+        else:
+            print(f'{LogLVL.lvl1}must run classification')
+
         # list_subjects = self._get_ls_subjects('SOURCE_SUBJECTS_DIR')
         # # if not ls_subj_bids:
         # #     list_subjects = self._get_source_subj()
@@ -385,7 +392,7 @@ class ProjectManager:
             if missing - will add _id_src to _ids_all
             will populate list() self._ids_missing
         '''
-        self.get_ids_nimb_classified()
+        self.get_ids_nimb_classified(self.srcdata_dir)
         if self._ids_nimb_classified:
             print(f'{LogLVL.lvl1}checking missing participants')
             # print(f'{LogLVL.lvl1} ids classified: {self._ids_nimb_classified}')
@@ -519,20 +526,23 @@ class ProjectManager:
             save_json(self._ids_all, self.f_ids_abspath)
 
 
-    def get_ids_nimb_classified(self):
-        new_subjects_dir = self.local_vars["NIMB_PATHS"]["NIMB_NEW_SUBJECTS"]
-        abspath_nimb_classified_f_srcdata_dir  = os.path.join(self.srcdata_dir, DEFAULT.f_nimb_classified)
-        abspath_nimb_classified_f_new_subj_dir = os.path.join(new_subjects_dir, DEFAULT.f_nimb_classified)
+    def is_nimb_classified(self, _dir):
+        is_classified = False
+        if os.path.exists(_dir, DEFAULT.f_nimb_classified):
+            is_classified = True
+        return is_classified
 
-        self._ids_nimb_classified = dict()
+
+    def get_ids_nimb_classified(self, _dir):
+        f = DEFAULT.f_nimb_classified
         self.must_run_classify_2nimb_bids = False
-        if os.path.exists(abspath_nimb_classified_f_srcdata_dir):
-            self._ids_nimb_classified = load_json(abspath_nimb_classified_f_srcdata_dir)
-        elif os.path.exists(abspath_nimb_classified_f_new_subj_dir):
-            self._ids_nimb_classified = load_json(abspath_nimb_classified_f_new_subj_dir)
+        self._ids_nimb_classified = dict()
+
+        if self.is_nimb_classified(_dir):
+            self._ids_nimb_classified = load_json(os.path.join(_dir, f))
         else:
             self.must_run_classify_2nimb_bids = True
-            print(f'{" " * 4} file {DEFAULT.f_nimb_classified} is missing in: {self.srcdata_dir} or {new_subjects_dir}')
+            print(f'{LogLVL.lvl1}file {DEFAULT.f_nimb_classified} is missing in: {_dir}')
 
 
     def create_file_ids(self, _ids):
@@ -546,7 +556,7 @@ class ProjectManager:
     '''
     def classify_2_bids(self, _id_project):
         print('classifying to BIDS format')
-        self.get_ids_nimb_classified()
+        self.get_ids_nimb_classified(self.srcdata_dir)
         if self.must_run_classify_2nimb_bids:
             print(f'{" " * 4} must initiate nimb classifier')
             is_classified, nimb_classified = self.run_classify_2nimb_bids(_id_project)
