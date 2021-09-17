@@ -528,7 +528,7 @@ class ProjectManager:
 
     def is_nimb_classified(self, _dir):
         is_classified = False
-        if os.path.exists(_dir, DEFAULT.f_nimb_classified):
+        if os.path.exists(os.path.join(_dir, DEFAULT.f_nimb_classified)):
             is_classified = True
         return is_classified
 
