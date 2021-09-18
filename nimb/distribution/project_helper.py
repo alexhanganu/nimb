@@ -206,40 +206,28 @@ class ProjectManager:
         :param project_name: name of the project, cannot be None
         :return: a list of subject to be processed
         """
-        print(f"{LogLVL.lvl1}SOURCE_SUBJECTS_DIR is: {self.srcdata_dir}")
-        print(f"{LogLVL.lvl1}PROCESSED_FS_DIR is: {self.project_vars['PROCESSED_FS_DIR'][1]}")
+        print(f"{LogLVL.lvl2}SOURCE_SUBJECTS_DIR is: {self.srcdata_dir}")
+        print(f"{LogLVL.lvl2}PROCESSED_FS_DIR is: {self.project_vars['PROCESSED_FS_DIR'][1]}")
         ls_unprocessed = list()
         self.get_ids_nimb_classified(self.srcdata_dir)
         if self._ids_nimb_classified:
-            print(f'{LogLVL.lvl1}nimb_classified is: {self._ids_nimb_classified}')
+            ls_unprocessed = self.get_unprocessed_ids_from_nimb_classified()
         else:
-            print(f'{LogLVL.lvl1}must run classification')
-
-        # list_subjects = self._get_ls_subjects('SOURCE_SUBJECTS_DIR')
-        # # if not ls_subj_bids:
-        # #     list_subjects = self._get_source_subj()
-        # list_processed = self._get_ls_subjects('PROCESSED_FS_DIR')
-        # print('there are {} subjects in source, and {} in processed'.format(len(list_subjects), len(list_processed)))
-        # print(len(set(list_subjects) - set(list_processed)))
-        # unprocessed_subject =  [i.strip('.zip') for i in list_subjects if i.strip('.zip') not in list_processed]
-        # self.unprocessed_subject = unprocessed_subject
-        # return unprocessed_subject
-
-        # # self.is_any_unprocessed(self.get_SOURCE_SUBJECTS_DIR()) == modify it
-        # # local version
-        # machine, source_fs = self.get_SOURCE_SUBJECTS_DIR()
-        # _, process_fs = self.get_PROCESSED_FS_DIR()
-        # to_be_processed = []
-        # if machine == "local":
-        # if not self.is_any_unprocessed(source_fs, process_fs): # test this function
-        # #get the list of subjects in SOURCE_SUBJECTS_DIR
-        # to_be_processed = self.get_list_subject_to_be_processed_local_version(source_fs,process_fs)
-
-        # else:# remote version: source is at remote
-        # # go to the remote server to check
-        # host = self.projects['LOCATION'][machine]
-        # to_be_processed = self.get_list_subject_to_be_processed_remote_version(source_fs, process_fs,remote_id)
+            if self.must_run_classify_2nimb_bids:
+                print(f'{" " * 4} must initiate nimb classifier')
+                is_classified, nimb_classified = self.run_classify_2nimb_bids(_id_project)
         return ls_unprocessed
+
+
+    def get_unprocessed_ids_from_nimb_classified(self):
+        missing = list()
+        # print(f'{LogLVL.lvl1}nimb_classified is: {self._ids_nimb_classified}')
+        for _id_src in self._ids_nimb_classified:
+            for session in self._ids_nimb_classified[_id_src]:
+                _id_bids, _ = make_bids_id(_id_src, session)
+                if _id_bids not in self._ids_all:
+                    missing.append(_id_bids)
+        return missing
 
 
     def check_ids_from_grid(self):
