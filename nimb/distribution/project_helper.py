@@ -215,7 +215,11 @@ class ProjectManager:
         else:
             if self.must_run_classify_2nimb_bids:
                 print(f'{" " * 4} must initiate nimb classifier')
-                is_classified, nimb_classified = self.run_classify_2nimb_bids(_id_project)
+                _dirs_to_classify = os.listdir(self.srcdata_dir)
+                is_classified, nimb_classified = self.run_classify_2nimb_bids(_dirs_to_classify)
+                if is_classified:
+                    self.get_ids_nimb_classified(self.srcdata_dir)
+                    ls_unprocessed = self.get_unprocessed_ids_from_nimb_classified()
         return ls_unprocessed
 
 
