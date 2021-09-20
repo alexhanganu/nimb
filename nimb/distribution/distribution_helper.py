@@ -32,17 +32,12 @@ class DistributionHelper():
         self.git_repo = "https://github.com/alexhanganu/nimb"
 
 
-    # def check_new(self): #moved to project_helper
+    # def distribute_4_processing(self, ls_2b_processed):
     #     """
-    #     check for missing subjects
-    #     if user approves, initiats the processing on local/ remote
+    #     for ls of participants:
+    #       if user approves:
+    #           initiate the processing on local/ remote
     #     """
-    #     from distribution.distribution_check_new import DistributionCheckNew
-    #     unprocessed = DistributionCheckNew(self.proj_vars, self.NIMB_tmp).unprocessed
-    #    unprocessed = ['adni_test1','adni_test2']
-    #    if unprocessed:
-    #        print('there are {} subjects to be processed'.format(len(unprocessed)))
-    #        analysis = 'freesurfer'
     #        self.locations_4process = self.get_processing_location(analysis)
     #         tell user the number of machines  ready to perform the analysis (local + remote)
     #        print('there are {} locations ready to perform the {} analysis'.format(len(self.locations_4process), analysis))

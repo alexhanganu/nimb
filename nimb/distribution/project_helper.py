@@ -182,7 +182,9 @@ class ProjectManager:
 
         if len(ls_unprocessed) > 1:
            print(f'{LogLVL.lvl2}there are {len(ls_unprocessed)} participants with MRI data to be processed')
-#            analysis = 'freesurfer'
+           print(ls_unprocessed)
+           print('creting file with subjects to be processed')
+
 #            self.locations_4process = self.get_processing_location(analysis)
             # tell user the number of machines  ready to perform the analysis (local + remote)
 #            print('there are {} locations ready to perform the {} analysis'.format(len(self.locations_4process), analysis))
@@ -220,6 +222,8 @@ class ProjectManager:
                 if is_classified:
                     self.get_ids_nimb_classified(self.srcdata_dir)
                     ls_unprocessed = self.get_unprocessed_ids_from_nimb_classified()
+                else:
+                    print(f"{LogLVL.lvl2}ERROR: classification 2nimb-bids had an error")
         return ls_unprocessed
 
 
@@ -227,7 +231,8 @@ class ProjectManager:
         missing = list()
         # print(f'{LogLVL.lvl1}nimb_classified is: {self._ids_nimb_classified}')
         for _id_src in self._ids_nimb_classified:
-            for session in self._ids_nimb_classified[_id_src]:
+            ls_sessions = [i for i in  self._ids_nimb_classified[_id_src] if i not in ('archived',)]
+            for session in ls_sessions:
                 _id_bids, _ = make_bids_id(_id_src, session)
                 if _id_bids not in self._ids_all:
                     missing.append(_id_bids)
