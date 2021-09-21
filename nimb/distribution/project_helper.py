@@ -182,8 +182,10 @@ class ProjectManager:
 
         if len(ls_unprocessed) > 1:
            print(f'{LogLVL.lvl2}there are {len(ls_unprocessed)} participants with MRI data to be processed')
-           print(ls_unprocessed)
-           print('creting file with subjects to be processed')
+           print(f'{LogLVL.lvl2}{ls_unprocessed}')
+           print('creating file with subjects to be processed')
+        else:
+           print(f'{LogLVL.lvl2}ALL participants with MRI data were processed')
 
 #            self.locations_4process = self.get_processing_location(analysis)
             # tell user the number of machines  ready to perform the analysis (local + remote)
