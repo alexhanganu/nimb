@@ -182,23 +182,9 @@ class ProjectManager:
 
         if len(ls_unprocessed) > 1:
            print(f'{LogLVL.lvl2}there are {len(ls_unprocessed)} participants with MRI data to be processed')
-           print(f'{LogLVL.lvl2}{ls_unprocessed}')
-           print('creating file with subjects to be processed')
+           self.distrib_hlp.distribute_4_processing(ls_unprocessed)
         else:
            print(f'{LogLVL.lvl2}ALL participants with MRI data were processed')
-
-#            self.locations_4process = self.get_processing_location(analysis)
-            # tell user the number of machines  ready to perform the analysis (local + remote)
-#            print('there are {} locations ready to perform the {} analysis'.format(len(self.locations_4process), analysis))
-            # Ask if user wants to include only one machine or all of them
-#            if self.get_userdefined_location(): # If user chooses at least one machine for analysis:
-#                print(self.locations_4process)
-                # self.get_subject_data(unprocessed)
-                # self.get_available_space() #- compute available disk space on the local and/or remote 
-#                (where freesurfer_install ==1) for the folder FS_SUBJECTS_DIR and NIMB_PROCESSED_FS ==> get_free_space_remote
-#                if self.get_user_confirmation():
-#                    self.make_processing_database()
-#                    self.run_processing()
 
 
     def get_ls_unprocessed_data(self):

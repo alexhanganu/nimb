@@ -137,6 +137,11 @@ class FSStatsUtils:
         print('FINISHED creating file Hippocampus to Cortex ratio')
 
     def create_SurfArea_to_Vol_ratio(self, df_data_big, f_SA_to_Vol_ratio_DK, f_SA_to_Vol_ratio_DS):
+        """
+        this parameter is also an indirect method to add curvature int he analysis.
+        Surface are corrected for Volume is NOT the same as raw Surface Area.
+        The first outlining also the curvature.
+        """
 
         print('CREATING file Surface Area to Volume ratio')
         from a.lib.stats_definitions import all_data, cols_per_measure_per_atlas
@@ -182,6 +187,14 @@ class FSStatsUtils:
                 SurfArea_to_Vol_ratio_DS[col_SA_DS+col_Vol_DS] = df_Surf_DS[col_SA_DS]*100/df_Vol_CORTEX_DS[col_Vol_DS]
         SurfArea_to_Vol_ratio_DS.to_csv(f_SA_to_Vol_ratio_DS)
         print('FINISHED creating file Surface Area to Volume ratio')
+
+
+    def create_Vol_2FoldingIndex_ratio(self):
+        """ create VOlume to Folding index ratio
+        this parameter might correlate with raw Surface Area
+        """
+        print('CREATING file Volume to Folding Index ratio')
+
 
     def check_nan(self, df):
         '''

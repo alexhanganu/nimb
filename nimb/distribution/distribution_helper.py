@@ -9,6 +9,7 @@ from distribution.setup_freesurfer import SETUP_FREESURFER
 from distribution.distribution_definitions import DEFAULT
 from setup.interminal_setup import get_yes_no, get_userdefined_paths, term_setup
 from setup import interminal_setup
+from distribution.logger import LogLVL
 try:
     from setup import guitk_setup
 except ImportError:
@@ -32,24 +33,26 @@ class DistributionHelper():
         self.git_repo = "https://github.com/alexhanganu/nimb"
 
 
-    # def distribute_4_processing(self, ls_2b_processed):
-    #     """
-    #     for ls of participants:
-    #       if user approves:
-    #           initiate the processing on local/ remote
-    #     """
-    #        self.locations_4process = self.get_processing_location(analysis)
-    #         tell user the number of machines  ready to perform the analysis (local + remote)
-    #        print('there are {} locations ready to perform the {} analysis'.format(len(self.locations_4process), analysis))
-    #         Ask if user wants to include only one machine or all of them
-    #        if self.get_userdefined_location(): # If user chooses at least one machine for analysis:
-    #            print(self.locations_4process)
-    #             self.get_subject_data(unprocessed)
-    #             self.get_available_space() #- compute available disk space on the local and/or remote 
-    #            (where freesurfer_install ==1) for the folder FS_SUBJECTS_DIR and NIMB_PROCESSED_FS ==> get_free_space_remote
-    #            if self.get_user_confirmation():
-    #                self.make_processing_database()
-    #                self.run_processing()
+    def distribute_4_processing(self, ls_2b_processed = list()):
+        """
+        for ls of participants:
+          if user approves:
+              initiate the processing on local/ remote
+        """
+        print(f'{LogLVL.lvl2}{ls_2b_processed}')
+        print('creating file with subjects to be processed')
+        # self.locations_4process = self.get_processing_location(analysis)
+        # tell user the number of machines  ready to perform the analysis (local + remote)
+        # print('there are {} locations ready to perform the {} analysis'.format(len(self.locations_4process), analysis))
+        # Ask if user wants to include only one machine or all of them
+        # if self.get_userdefined_location(): # If user chooses at least one machine for analysis:
+        #    print(self.locations_4process)
+        #     self.get_subject_data(unprocessed)
+        #     self.get_available_space() #- compute available disk space on the local and/or remote 
+        #    (where freesurfer_install ==1) for the folder FS_SUBJECTS_DIR and NIMB_PROCESSED_FS ==> get_free_space_remote
+        #    if self.get_user_confirmation():
+        #        self.make_processing_database()
+        #        self.run_processing()
 
 
     def get_processing_location(self, app):
