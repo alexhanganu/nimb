@@ -58,7 +58,7 @@ class ProjectManager:
         self.srcdata_dir        = self.project_vars["SOURCE_SUBJECTS_DIR"][1]
         self.BIDS_DIR           = self.project_vars['SOURCE_BIDS_DIR'][1]
         self.new_subjects_dir   = self.local_vars["NIMB_PATHS"]["NIMB_NEW_SUBJECTS"]
-        self.apps_all           = ('freesurfer', 'nilearn', 'dipy')
+        self.apps_all           = DEFAULT.apps_all
         self.get_df_f_groups()
         self.get_ids_all()
 
@@ -119,9 +119,9 @@ class ProjectManager:
             "_id_bids": {
                 "project"    : "ID_in_file_provided_by_user_for_GLM_analysis.tsv",
                 "source"     : "ID_in_source_dir_or_zip_file",
-                "freesurfer" : "ID_after_freesurfer_processing.zip/nii.gz",
-                "nilearn"    : "ID_after_nilearn_processing.zip/nii.gz",
-                "dipy"       : "ID_after_dipy_processing.zip/nii.gz"
+                "freesurfer" : "ID_after_freesurfer_processing.zip",
+                "nilearn"    : "ID_after_nilearn_processing.zip",
+                "dipy"       : "ID_after_dipy_processing.zip"
                     }
             }
             _id_project: ID provided by the user in a grid file.

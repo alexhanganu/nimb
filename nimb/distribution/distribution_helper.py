@@ -41,7 +41,8 @@ class DistributionHelper():
         """
         print(f'{LogLVL.lvl2}{ls_2b_processed}')
         print('creating file with subjects to be processed')
-        # self.locations_4process = self.get_processing_location(analysis)
+        self.get_processing_location()
+        print(f'{LogLVL.lvl2}{self.locations_4process}')
         # tell user the number of machines  ready to perform the analysis (local + remote)
         # print('there are {} locations ready to perform the {} analysis'.format(len(self.locations_4process), analysis))
         # Ask if user wants to include only one machine or all of them
@@ -55,18 +56,21 @@ class DistributionHelper():
         #        self.run_processing()
 
 
-    def get_processing_location(self, app):
+    def get_processing_location(self):
         """
         if freesurfer_install ==1 on local or remote
         :param app as for freesurfer, nilearn, dipy
         :return locations as list
         """
-        loc = list()
-        if app == 'freesurfer':
-            for location in self.locations:
-                if self.locations[location]["FREESURFER"]["FreeSurfer_install"] == 1:
-                    loc.append(location)
-        return loc
+        apps_all = DEFAULT.apps_all
+        self.locations_4process = list()
+
+        for app in apps_all:
+            if app == 'freesurfer':
+                for location in self.locations:
+                    if self.locations[location]["FREESURFER"]["FreeSurfer_install"] == 1:
+                        self.locations_4process.append(location)
+        return self.locations_4process
 
 
     def get_userdefined_location(self):

@@ -3,6 +3,8 @@ import os
 class DEFAULT(object):
     """ Default values """
 
+    apps_all         = ('freesurfer', 'nilearn', 'dipy')
+
     default_project  = 'project1'
     project_ids      = {'loni_ppmi':{
                             "dcm2bids_config": "dcm2bids_config_loni_ppmi.json",
