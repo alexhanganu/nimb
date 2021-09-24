@@ -4,6 +4,11 @@ class DEFAULT(object):
     """ Default values """
 
     apps_all         = ('freesurfer', 'nilearn', 'dipy')
+    apps_keys        = {"src"    :"source",
+                        "fs"     :"freesurfer",
+                        "nilearn":"nilearn",
+                        "dipy"   :"dipy",
+                        }
 
     default_project  = 'project1'
     project_ids      = {'loni_ppmi':{
@@ -113,6 +118,8 @@ class DEFAULTpaths:
 
 
 def get_keys_processed(key):
+    keys_all = DEFAULT.apps_keys
+    print(keys_all)
     if key == 'src':
         return 'source'
     elif key == 'fs':
