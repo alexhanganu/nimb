@@ -9,6 +9,10 @@ class DEFAULT(object):
                         "nilearn":"nilearn",
                         "dipy"   :"dipy",
                         }
+    apps_instal_param= {"freesurfer":"FreeSurfer_install",
+                        "nilearn"   :"nilearn_install",
+                        "dipy"      :"dipy_install",
+                        }
 
     default_project  = 'project1'
     project_ids      = {'loni_ppmi':{

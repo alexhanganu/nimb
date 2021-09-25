@@ -51,6 +51,14 @@
     "freesurfer_license"      : ["email", "00000", " *ABCDEFGHIJKL", " ABCDEFGHIJKLM"],
     "export_screen"           : 0
      },
+"DIPY": {
+    "dipy_install"            : 1,
+    "export_screen"           : 0
+     },
+"NILEARN": {
+    "nilearn_install"         : 1,
+    "export_screen"           : 0
+     },
 "EXPLANATION": {
     "user"                    : "username to access the remote computer. Password will be asked by nimb and stored in sqlite",
     "users_list"              : "if the number of users on the remote computer are more than 1, can be: ['user1','user2']",

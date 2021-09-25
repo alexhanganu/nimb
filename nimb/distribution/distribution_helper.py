@@ -30,7 +30,7 @@ class DistributionHelper():
 
         # setup folder
         self.setup_folder = "../setup"
-        self.git_repo = "https://github.com/alexhanganu/nimb"
+        self.git_repo     = "https://github.com/alexhanganu/nimb"
 
 
     def distribute_4_processing(self, ls_2b_processed = list()):
@@ -40,20 +40,32 @@ class DistributionHelper():
               initiate the processing on local/ remote
         """
         print(f'{LogLVL.lvl2}{ls_2b_processed}')
-        print('creating file with subjects to be processed')
         self.get_processing_location()
         print(f'{LogLVL.lvl2}{self.locations_4process}')
-        # tell user the number of machines  ready to perform the analysis (local + remote)
-        # print('there are {} locations ready to perform the {} analysis'.format(len(self.locations_4process), analysis))
+        # for app in self.locations_4process:
+        #     print(f'{LogLVL.lvl2}locations expected for processing: {app}: {self.locations_4process[app]}')
+        #     for location in self.locations_4process[app]:
+        #         app_storage_dir = self.locations[location][app.upper()][f'{app.upper()}_HOME']
+        #         self.get_available_space(location, app_storage_dir)
         # Ask if user wants to include only one machine or all of them
-        # if self.get_userdefined_location(): # If user chooses at least one machine for analysis:
-        #    print(self.locations_4process)
-        #     self.get_subject_data(unprocessed)
-        #     self.get_available_space() #- compute available disk space on the local and/or remote 
-        #    (where freesurfer_install ==1) for the folder FS_SUBJECTS_DIR and NIMB_PROCESSED_FS ==> get_free_space_remote
-        #    if self.get_user_confirmation():
-        #        self.make_processing_database()
-        #        self.run_processing()
+        print(f'{LogLVL.lvl3}!!!!processing will continue ONLY on local. still in TESTING phase')
+        location = 'local'
+        app = 'freesurfer'
+        app_storage_dir = self.locations[location][app.upper()]['FS_SUBJECTS_DIR']
+        # self.get_available_space(location, app_storage_dir)
+        # self.get_subject_data_volume(unprocessed)
+        # self.get_available_space(location, NIMB_NEW_SUBJECTS)
+        # if self.get_user_confirmation():
+        self.make_f_subjects_2b_processed(location)
+        #    self.make_processing_database()
+        #    self.run_processing()
+
+
+    def make_f_subjects_2b_processed(self, location):
+        NIMB_tmp = self.locations[location]['NIMB_PATHS']['NIMB_tmp']
+        f_abspath = os.path.join(NIMB_tmp, DEFAULT.f_subjects2proc)
+        print(f'{LogLVL.lvl2}creating file: {f_abspath}')
+
 
 
     def get_processing_location(self):
@@ -63,13 +75,14 @@ class DistributionHelper():
         :return locations as list
         """
         apps_all = DEFAULT.apps_all
-        self.locations_4process = list()
+        self.locations_4process = dict()
 
         for app in apps_all:
-            if app == 'freesurfer':
-                for location in self.locations:
-                    if self.locations[location]["FREESURFER"]["FreeSurfer_install"] == 1:
-                        self.locations_4process.append(location)
+            self.locations_4process[app] = list()
+            param_install = DEFAULT.apps_instal_param[app]
+            for location in self.locations:
+                if self.locations[location][app.upper()][param_install] == 1:
+                    self.locations_4process[app].append(location)
         return self.locations_4process
 
 
@@ -98,7 +111,7 @@ class DistributionHelper():
             return False
 
 
-    def get_subject_data(self, unprocessed):
+    def get_subject_data_volume(self, unprocessed):
         """
         it is expected that
         for each subject to be processed (in unprocessed):
@@ -111,9 +124,9 @@ class DistributionHelper():
 
 
     # @staticmethod
-    def get_available_space(self):
+    def get_available_space(self, location):
         """
-        1. get the available space on each remote chosen by the user to perform the processing
+        1. get the available space on each location
         :param self.locations_4process:
         :return: dict volume for each location in the NEW_SUBJECTS dir
         """
