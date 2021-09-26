@@ -48,7 +48,7 @@ class DistributionHelper():
         #         app_storage_dir = self.locations[location][app.upper()][f'{app.upper()}_HOME']
         #         self.get_available_space(location, app_storage_dir)
         # Ask if user wants to include only one machine or all of them
-        print(f'{LogLVL.lvl3}!!!!processing will continue ONLY on local. still in TESTING phase')
+        print(f'{LogLVL.lvl3}!!!!processing will continue ONLY on local. still TESTING')
         location = 'local'
         app = 'freesurfer'
         app_storage_dir = self.locations[location][app.upper()]['FS_SUBJECTS_DIR']
@@ -56,15 +56,17 @@ class DistributionHelper():
         # self.get_subject_data_volume(unprocessed)
         # self.get_available_space(location, NIMB_NEW_SUBJECTS)
         # if self.get_user_confirmation():
-        self.make_f_subjects_2b_processed(location)
+        self.make_f_subjects_2b_processed(location, ls_2b_processed)
         #    self.make_processing_database()
         #    self.run_processing()
 
 
-    def make_f_subjects_2b_processed(self, location):
+    def make_f_subjects_2b_processed(self, location, ls_2b_processed):
         NIMB_tmp = self.locations[location]['NIMB_PATHS']['NIMB_tmp']
         f_abspath = os.path.join(NIMB_tmp, DEFAULT.f_subjects2proc)
         print(f'{LogLVL.lvl2}creating file: {f_abspath}')
+        for _id in ls_2b_processed:
+            print(_id)
 
 
 
