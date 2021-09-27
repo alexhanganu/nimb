@@ -33,13 +33,13 @@ class DistributionHelper():
         self.git_repo     = "https://github.com/alexhanganu/nimb"
 
 
-    def distribute_4_processing(self, ls_2b_processed = list()):
+    def distribute_4_processing(self, unprocessed_d = dict()):
         """
         for ls of participants:
           if user approves:
               initiate the processing on local/ remote
         """
-        print(f'{LogLVL.lvl2}{ls_2b_processed}')
+        print(f'{LogLVL.lvl2}{unprocessed_d}')
         self.get_processing_location()
         print(f'{LogLVL.lvl2}{self.locations_4process}')
         # for app in self.locations_4process:
@@ -56,16 +56,16 @@ class DistributionHelper():
         # self.get_subject_data_volume(unprocessed)
         # self.get_available_space(location, NIMB_NEW_SUBJECTS)
         # if self.get_user_confirmation():
-        self.make_f_subjects_2b_processed(location, ls_2b_processed)
+        self.make_f_subjects_2b_processed(location, unprocessed_d)
         #    self.make_processing_database()
         #    self.run_processing()
 
 
-    def make_f_subjects_2b_processed(self, location, ls_2b_processed):
+    def make_f_subjects_2b_processed(self, location, unprocessed_d):
         NIMB_tmp = self.locations[location]['NIMB_PATHS']['NIMB_tmp']
         f_abspath = os.path.join(NIMB_tmp, DEFAULT.f_subjects2proc)
         print(f'{LogLVL.lvl2}creating file: {f_abspath}')
-        for _id in ls_2b_processed:
+        for _id in unprocessed_d:
             print(_id)
 
 

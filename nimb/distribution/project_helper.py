@@ -178,11 +178,11 @@ class ProjectManager:
 
     def check_new(self):
         print(f'{LogLVL.lvl1}checking for new subject to be processed')
-        ls_unprocessed = self.get_ls_unprocessed_data()
-
-        if len(ls_unprocessed) > 1:
-           print(f'{LogLVL.lvl2}there are {len(ls_unprocessed)} participants with MRI data to be processed')
-           self.distrib_hlp.distribute_4_processing(ls_unprocessed)
+        self.unprocessed_d = dict()
+        self.get_ls_unprocessed_data()
+        if len(self.unprocessed_d) > 1:
+           print(f'{LogLVL.lvl2}there are {len(self.unprocessed_d)} participants with MRI data to be processed')
+           self.distrib_hlp.distribute_4_processing(self.unprocessed_d)
         else:
            print(f'{LogLVL.lvl2}ALL participants with MRI data were processed')
 
@@ -198,10 +198,9 @@ class ProjectManager:
         """
         print(f"{LogLVL.lvl2}SOURCE_SUBJECTS_DIR is: {self.srcdata_dir}")
         print(f"{LogLVL.lvl2}PROCESSED_FS_DIR is: {self.project_vars['PROCESSED_FS_DIR'][1]}")
-        ls_unprocessed = list()
         self.get_ids_nimb_classified(self.srcdata_dir)
         if self._ids_nimb_classified:
-            ls_unprocessed = self.get_unprocessed_ids_from_nimb_classified()
+            self.get_unprocessed_ids_from_nimb_classified()
         else:
             if self.must_run_classify_2nimb_bids:
                 print(f'{" " * 4} must initiate nimb classifier')
@@ -209,22 +208,19 @@ class ProjectManager:
                 is_classified, nimb_classified = self.run_classify_2nimb_bids(_dirs_to_classify)
                 if is_classified:
                     self.get_ids_nimb_classified(self.srcdata_dir)
-                    ls_unprocessed = self.get_unprocessed_ids_from_nimb_classified()
+                    self.get_unprocessed_ids_from_nimb_classified()
                 else:
                     print(f"{LogLVL.lvl2}ERROR: classification 2nimb-bids had an error")
-        return ls_unprocessed
 
 
     def get_unprocessed_ids_from_nimb_classified(self):
-        missing = list()
         # print(f'{LogLVL.lvl1}nimb_classified is: {self._ids_nimb_classified}')
         for _id_src in self._ids_nimb_classified:
             ls_sessions = [i for i in  self._ids_nimb_classified[_id_src] if i not in ('archived',)]
             for session in ls_sessions:
                 _id_bids, _ = make_bids_id(_id_src, session)
                 if _id_bids not in self._ids_all:
-                    missing.append(_id_bids)
-        return missing
+                    self.unprocessed_d[_id_bids] = self._ids_nimb_classified[_id_src][session]
 
 
     def check_ids_from_grid(self):
