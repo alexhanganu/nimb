@@ -221,6 +221,9 @@ class ProjectManager:
                 _id_bids, _ = make_bids_id(_id_src, session)
                 if _id_bids not in self._ids_all:
                     self.unprocessed_d[_id_bids] = self._ids_nimb_classified[_id_src][session]
+                    if "archived" in self._ids_nimb_classified[_id_src]:
+                        archive = self._ids_nimb_classified[_id_src]["archived"]
+                        self.unprocessed_d[_id_bids]["archived"] = archive
 
 
     def check_ids_from_grid(self):

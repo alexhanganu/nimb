@@ -39,9 +39,9 @@ class DistributionHelper():
           if user approves:
               initiate the processing on local/ remote
         """
-        print(f'{LogLVL.lvl2}{unprocessed_d}')
+        # print(f'{LogLVL.lvl2}{unprocessed_d}')
         self.get_processing_location()
-        print(f'{LogLVL.lvl2}{self.locations_4process}')
+        print(f'{LogLVL.lvl2}locations for processing are: {self.locations_4process}')
         # for app in self.locations_4process:
         #     print(f'{LogLVL.lvl2}locations expected for processing: {app}: {self.locations_4process[app]}')
         #     for location in self.locations_4process[app]:
@@ -65,8 +65,18 @@ class DistributionHelper():
         NIMB_tmp = self.locations[location]['NIMB_PATHS']['NIMB_tmp']
         f_abspath = os.path.join(NIMB_tmp, DEFAULT.f_subjects2proc)
         print(f'{LogLVL.lvl2}creating file: {f_abspath}')
-        for _id in unprocessed_d:
-            print(_id)
+        for _id_bids in unprocessed_d:
+            print(_id_bids)
+            print(unprocessed_d[_id_bids])
+                if "archived" in unprocessed_d[_id_bids]:
+                    print("file is archived: ", unprocessed_d[_id_bids]["archived"])
+                    for BIDS_type in unprocessed_d[_id_bids]:
+                        for mr_modality in unprocessed_d[_id_bids][BIDS_type]:
+                            for path_old in unprocessed_d[_id_bids][BIDS_type][mr_modality]:
+                                new_path = ""
+                    #extracting from archive
+                    #creating new path
+                    #populating unprocessed
 
 
 
