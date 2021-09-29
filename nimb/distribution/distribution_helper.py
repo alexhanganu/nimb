@@ -41,14 +41,15 @@ class DistributionHelper():
         """
         # print(f'{LogLVL.lvl2}{unprocessed_d}')
         self.get_processing_location()
-        print(f'{LogLVL.lvl2}locations for processing are: {self.locations_4process}')
+        print(f'{LogLVL.lvl2}locations for processing are: ')
+        print(f'{LogLVL.lvl3}{self.locations_4process}')
         # for app in self.locations_4process:
         #     print(f'{LogLVL.lvl2}locations expected for processing: {app}: {self.locations_4process[app]}')
         #     for location in self.locations_4process[app]:
         #         app_storage_dir = self.locations[location][app.upper()][f'{app.upper()}_HOME']
         #         self.get_available_space(location, app_storage_dir)
         # Ask if user wants to include only one machine or all of them
-        print(f'{LogLVL.lvl3}!!!!processing will continue ONLY on local. still TESTING')
+        print(f'{LogLVL.lvl2}!!!!processing will continue ONLY on local. still TESTING')
         location = 'local'
         app = 'freesurfer'
         app_storage_dir = self.locations[location][app.upper()]['FS_SUBJECTS_DIR']
@@ -66,17 +67,20 @@ class DistributionHelper():
         f_abspath = os.path.join(NIMB_tmp, DEFAULT.f_subjects2proc)
         print(f'{LogLVL.lvl2}creating file: {f_abspath}')
         for _id_bids in unprocessed_d:
+            print("\n","#" *50)
             print(_id_bids)
             print(unprocessed_d[_id_bids])
-                if "archived" in unprocessed_d[_id_bids]:
-                    print("file is archived: ", unprocessed_d[_id_bids]["archived"])
-                    for BIDS_type in unprocessed_d[_id_bids]:
-                        for mr_modality in unprocessed_d[_id_bids][BIDS_type]:
-                            for path_old in unprocessed_d[_id_bids][BIDS_type][mr_modality]:
-                                new_path = ""
-                    #extracting from archive
-                    #creating new path
-                    #populating unprocessed
+            if "archived" in unprocessed_d[_id_bids]:
+                print("file is archived: ", unprocessed_d[_id_bids]["archived"])
+                for BIDS_type in [i for i in unprocessed_d[_id_bids] if i not in ("archived",)]:
+                    for mr_modality in unprocessed_d[_id_bids][BIDS_type]:
+                        for path_old in unprocessed_d[_id_bids][BIDS_type][mr_modality]:
+                            print(path_old)
+                            # new_path = ""
+            print("#" *50)
+                #extracting from archive
+                #creating new path
+                #populating unprocessed
 
 
 
