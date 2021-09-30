@@ -324,6 +324,7 @@ class DCM2BIDS_helper():
             return config_file
 
 
+    # must adapt this and next defs to the ones from distribution_helper
     def get_path_2mr(self, path2mr_):
         if self.archived:
             path_2archive = self.id_classified['archived']

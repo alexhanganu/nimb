@@ -109,4 +109,3 @@ class ZipArchiveManagement():
     def move_error(self):
         shutil.move(self.zip_f_path, self.path_err)
         shutil.move(os.path.join(self.path_err, self.zip_file), os.path.join(self.path_err, 'errzip_'+self.zip_file))
-

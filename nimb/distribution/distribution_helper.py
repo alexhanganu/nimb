@@ -7,6 +7,7 @@ from distribution.utilities import save_json, ErrorMessages, makedir_ifnot_exist
 from distribution.setup_miniconda import setup_miniconda
 from distribution.setup_freesurfer import SETUP_FREESURFER
 from distribution.distribution_definitions import DEFAULT
+from distribution.manage_archive import get_path_2mr
 from setup.interminal_setup import get_yes_no, get_userdefined_paths, term_setup
 from setup import interminal_setup
 from distribution.logger import LogLVL
@@ -63,24 +64,33 @@ class DistributionHelper():
 
 
     def make_f_subjects_2b_processed(self, location, unprocessed_d):
-        NIMB_tmp = self.locations[location]['NIMB_PATHS']['NIMB_tmp']
-        f_abspath = os.path.join(NIMB_tmp, DEFAULT.f_subjects2proc)
+        NIMB_tmp_loc = self.locations[location]['NIMB_PATHS']['NIMB_tmp']
+        f_abspath = os.path.join(NIMB_tmp_loc, DEFAULT.f_subjects2proc)
         print(f'{LogLVL.lvl2}creating file: {f_abspath}')
         for _id_bids in unprocessed_d:
-            print("\n","#" *50)
-            print(_id_bids)
+            unprocessed_d[_id_bids] = self.adjust_paths_2data(NIMB_tmp_loc,
+                                                    unprocessed_d[_id_bids])
             print(unprocessed_d[_id_bids])
-            if "archived" in unprocessed_d[_id_bids]:
-                print("file is archived: ", unprocessed_d[_id_bids]["archived"])
-                for BIDS_type in [i for i in unprocessed_d[_id_bids] if i not in ("archived",)]:
-                    for mr_modality in unprocessed_d[_id_bids][BIDS_type]:
-                        for path_old in unprocessed_d[_id_bids][BIDS_type][mr_modality]:
-                            print(path_old)
-                            # new_path = ""
-            print("#" *50)
-                #extracting from archive
-                #creating new path
-                #populating unprocessed
+
+
+    def adjust_paths_2data(self, NIMB_tmp_loc, _id_bids_data):
+        print("\n","#" *50)
+        print(_id_bids_data)
+        if "archived" in _id_bids_data:
+            self.archived = True
+            print("file is archived: ", _id_bids_data["archived"])
+        for BIDS_type in [i for i in _id_bids_data if i not in ("archived",)]:
+            for mr_modality in _id_bids_data[BIDS_type]:
+                for path_old in _id_bids_data[BIDS_type][mr_modality]:
+                    print(path_old)
+                    get_path_2mr(path_old,
+                                _id_bids_data["archived"],
+                                self.NIMB_tmp)
+                    # creating new path
+                    # new_path = ""
+                    # populating unprocessed
+        print("#" *50)
+        return _id_bids_data
 
 
 
