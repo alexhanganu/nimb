@@ -7,7 +7,7 @@ from distribution.utilities import save_json, ErrorMessages, makedir_ifnot_exist
 from distribution.setup_miniconda import setup_miniconda
 from distribution.setup_freesurfer import SETUP_FREESURFER
 from distribution.distribution_definitions import DEFAULT
-from distribution.manage_archive import get_path_2mr
+from distribution.manage_archive import ZipArchiveManagement
 from setup.interminal_setup import get_yes_no, get_userdefined_paths, term_setup
 from setup import interminal_setup
 from distribution.logger import LogLVL
@@ -83,7 +83,7 @@ class DistributionHelper():
             for mr_modality in _id_bids_data[BIDS_type]:
                 for path_old in _id_bids_data[BIDS_type][mr_modality]:
                     print(path_old)
-                    get_path_2mr(path_old,
+                    self.get_path_2mr(path_old,
                                 _id_bids_data["archived"],
                                 self.NIMB_tmp)
                     # creating new path
@@ -92,6 +92,35 @@ class DistributionHelper():
         print("#" *50)
         return _id_bids_data
 
+
+
+    def get_path_2mr(self, path2mr_, path_2archive, tmp_dir = "none"):
+        if is_archive(path_2archive):
+            print(f'{" " *12} archive located at: {path_2archive}')
+            if tmp_dir == 'none':
+                tmp_dir = os.path.dirname(path_2archive)
+            return extract_from_archive(path_2archive,
+                                             path2mr_,
+                                             tmp_dir)
+        else:
+            print(f'{" " *12} file: {path_2archive} does not seem to be an archive')
+            return ''
+
+
+    def extract_from_archive(self, archive_abspath, path2mr_, tmp_dir):
+        tmp_dir_xtract = os.path.join(tmp_dir, 'tmp_for_classification')
+        tmp_dir_err    = os.path.join(tmp_dir, 'tmp_for_classification_err')
+        makedir_ifnot_exist(tmp_dir_xtract)
+        makedir_ifnot_exist(tmp_dir_err)
+    #        print(f'            extracting data: {path2mr_}')
+        ZipArchiveManagement(
+            archive_abspath,
+            path2xtrct = tmp_dir_xtract,
+            path_err   = tmp_dir_err,
+            dirs2xtrct = [path2mr_,])
+        if len(os.listdir(tmp_dir_err)) == 0:
+            shutil.rmtree(tmp_dir_err, ignore_errors=True)
+        return tmp_dir_xtract
 
 
     def get_processing_location(self):
