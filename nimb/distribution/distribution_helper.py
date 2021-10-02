@@ -7,7 +7,7 @@ from distribution.utilities import save_json, ErrorMessages, makedir_ifnot_exist
 from distribution.setup_miniconda import setup_miniconda
 from distribution.setup_freesurfer import SETUP_FREESURFER
 from distribution.distribution_definitions import DEFAULT
-from distribution.manage_archive import ZipArchiveManagement
+from distribution.manage_archive import ZipArchiveManagement, is_archive
 from setup.interminal_setup import get_yes_no, get_userdefined_paths, term_setup
 from setup import interminal_setup
 from distribution.logger import LogLVL
@@ -71,6 +71,7 @@ class DistributionHelper():
             unprocessed_d[_id_bids] = self.adjust_paths_2data(NIMB_tmp_loc,
                                                     unprocessed_d[_id_bids])
             print(unprocessed_d[_id_bids])
+        save_json(unprocessed_d, f_abspath)
 
 
     def adjust_paths_2data(self, NIMB_tmp_loc, _id_bids_data):
@@ -78,17 +79,18 @@ class DistributionHelper():
         print(_id_bids_data)
         if "archived" in _id_bids_data:
             self.archived = True
-            print("file is archived: ", _id_bids_data["archived"])
+            print("file is archived: ", _id_bids_data["archived"],"\n")
         for BIDS_type in [i for i in _id_bids_data if i not in ("archived",)]:
             for mr_modality in _id_bids_data[BIDS_type]:
-                for path_old in _id_bids_data[BIDS_type][mr_modality]:
-                    print(path_old)
-                    self.get_path_2mr(path_old,
+                path_src_all = _id_bids_data[BIDS_type][mr_modality]
+                for path_src in path_src_all:
+                    print("path_src is:",path_src,"\n")
+                    new_path = self.get_path_2mr(path_src,
                                 _id_bids_data["archived"],
                                 self.NIMB_tmp)
-                    # creating new path
-                    # new_path = ""
-                    # populating unprocessed
+                    print(new_path)
+                    path_src_all[path_src_all.index(path_src)] = new_path
+                _id_bids_data[BIDS_type][mr_modality] = path_src_all
         print("#" *50)
         return _id_bids_data
 
@@ -99,11 +101,14 @@ class DistributionHelper():
             print(f'{" " *12} archive located at: {path_2archive}')
             if tmp_dir == 'none':
                 tmp_dir = os.path.dirname(path_2archive)
-            return extract_from_archive(path_2archive,
+            return self.extract_from_archive(path_2archive,
                                              path2mr_,
                                              tmp_dir)
+        elif os.path.isdir(path2mr_):
+            print(f'{" " *12} folder is unarchived: {path2mr_} ')
         else:
             print(f'{" " *12} file: {path_2archive} does not seem to be an archive')
+            print(f'{" " *12} path: {path2mr_} is NOT a folder')
             return ''
 
 
@@ -260,7 +265,8 @@ class DistributionHelper():
                     from setup.get_credentials_home import _get_credentials_home
                     if _dir in self.all_vars.projects[self.project]:
                         self.all_vars.projects[self.project][_dir][1] = dir_abspath
-                        save_json(self.all_vars.projects, os.path.join(_get_credentials_home(), 'projects.json'))
+                        abs_path_projects = os.path.join(_get_credentials_home(), 'projects.json')
+                        save_json(self.all_vars.projects, abs_path_projects)
                     else:
                         print('    folder to change is not located in the projects.json variables')
                 else:
