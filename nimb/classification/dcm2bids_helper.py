@@ -26,61 +26,6 @@ from distribution.utilities import makedir_ifnot_exist, load_json, save_json
 from distribution.distribution_definitions import DEFAULT
 
 
-def make_bids_id(proj_id, session, run = False):
-    '''
-    https://github.com/bids-standard/bids-specification/blob/master/src/02-common-principles.md
-    the _id_bids MUST have the structure: sub_<label>_ses-<label>
-    the "sub-<label>" corresponds to the "subject" because of the "sub-" key.
-
-    if there are multiple runs of the same session, the key "run" is used:
-    "run" is an uninterrupted repetition of data acquisition
-        that has the same acquisition parameters and task
-        (however events can change from run to run
-        due to different subject response or randomized nature of the stimuli).
-        Run is a synonym of a data acquisition.
-        if a subject leaves the scanner, the acquisition must be restarted.
-
-    nimb is using DCM2BIDS and DCM2NIIx to create the corresponding BIDS files and structures
-    this script intends to define one _id_bids that will be used throughout nimb
-    '''
-    _id_bids_dir = f'sub-{proj_id}'
-    _id_bids = f'{_id_bids_dir}_{session}'
-    '''must adjust run in the name
-    '''
-    if run:
-        _id_bids = f'{_id_bids_dir}_{session}_{run}'
-    return _id_bids, _id_bids_dir
-
-
-def is_bids_format(_id):
-    """
-    check if _id has a BIDS format
-    if True:
-        return True, expected bids folder, session name, run name
-    """
-    bids_format = False
-    ses_format = False
-    sub_format = False
-    if '_run-' in _id_project:
-        run_loc = _id_project.find('run-')
-        run_label = _id_project[run_loc:]
-    if 'ses-' in _id_project:
-        ses_loc = _id_project.find('ses-')
-        ses_label = _id_project[ses_loc:run_loc]
-        ses_format = True
-        if "_" in ses_label[-1]:
-            ses_label = ses_label[:-1]
-    if _id_project.startswith('sub-'):
-        sub_label = _id_project[:ses_loc]
-        sub_format = True
-        if "_" in sub_label[-1]:
-            sub_label = sub_label[:-1]
-    if ses_format and sub_format:
-        bids_format = True
-    return bids_format, sub_label, ses_label, run_label
-
-
-
 class DCM2BIDS_helper():
     """
     goal: use UNFMontreal/dcm2bids to convert .dcm files to BIDS .nii.gz
@@ -102,14 +47,12 @@ class DCM2BIDS_helper():
     def __init__(self,
 		        proj_vars,
                 project,
-                nimb_classified_per_id = dict(),
                 DICOM_DIR    = 'default',
                 tmp_dir      = 'none',
                 repeat_lim = 10):
 
         self.proj_vars       = proj_vars
         self.project         = project
-        self.id_classified   = nimb_classified_per_id
         self.run_stt         = 0
         self.repeat_lim      = repeat_lim
         self.repeat_updating = 0
@@ -122,19 +65,23 @@ class DCM2BIDS_helper():
         self.archived        = False
 
 
-    def run(self, nimb_id = 'none', ses = 'none'):
+    def run(self,
+        nimb_id = 'none',
+        ses = 'none',
+        nimb_classified_per_id = dict()):
         #run dcm2bids:
         '''
             if nimb_classified.json[nimb_id][archived]:
                 extract from archive specific subject_session
                 start dcm2bids for subject_session
         '''
+        self.id_classified   = nimb_classified_per_id
         self.bids_classified = dict()
         print(f'{" " *8}folder with subjects is: {self.DICOM_DIR}')
         if self.id_classified:
             self.nimb_id = nimb_id
             self.ses     = ses
-            self.bids_id, self.bids_id_dir = make_bids_id(self.nimb_id, self.ses)
+            self.bids_id, self.bids_id_dir = self.make_bids_id(self.nimb_id, self.ses)
             self.start_stepwise_choice()
         else:
             self.nimb_classified = dict()
@@ -148,7 +95,7 @@ class DCM2BIDS_helper():
                 for self.nimb_id in self.nimb_ids:
                     self.id_classified = self.nimb_classified[self.nimb_id]
                     for self.ses in [i for i in self.id_classified if i not in ('archived',)]:
-                        self.bids_id, self.bids_id_dir = make_bids_id(self.nimb_id, self.ses)
+                        self.bids_id, self.bids_id_dir = self.make_bids_id(self.nimb_id, self.ses)
                         self.start_stepwise_choice()
         return self.bids_classified
 
@@ -268,8 +215,6 @@ class DCM2BIDS_helper():
         print('\n')
 
 
-
-
     def update_config(self):
         """....."""
         self.add_criterion = False
@@ -322,6 +267,85 @@ class DCM2BIDS_helper():
             shutil.copy(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dcm2bids','dcm2bids_config_default.json'),
                         config_file)
             return config_file
+
+
+    def get_path_2rawdata(self,
+                        sub_label,
+                        ses_label,
+                        BIDS_type,
+                        mr_modality):
+        sub_rawdata_dir = os.path.join(self.OUTPUT_DIR, sub_label)
+        if os.path.exists(sub_rawdata_dir):
+            # verify if BIDS classificaiton OK
+            sub_ses_bidstyps_dir = os.path.join(sub_rawdata_dir, ses_label, BIDS_type)
+            if os.path.exists(sub_ses_bidstyps_dir):
+                print("OK")
+                print("searching modality:", mr_modality)
+                print(os.listdir(sub_ses_bidstyps_dir))
+            else:
+                print("something is missing:")
+                print(os.listdir(os.path.join(sub_rawdata_dir, ses_label)))
+                print(os.listdir(sub_ses_bidstyps_dir))
+        return "path_2rawdata"
+
+
+    def make_bids_id(self, proj_id, session, run = False):
+        '''
+        https://github.com/bids-standard/bids-specification/blob/master/src/02-common-principles.md
+        the _id_bids MUST have the structure: sub_<label>_ses-<label>
+        the "sub-<label>" corresponds to the "subject" because of the "sub-" key.
+
+        if there are multiple runs of the same session, the key "run" is used:
+        "run" is an uninterrupted repetition of data acquisition
+            that has the same acquisition parameters and task
+            (however events can change from run to run
+            due to different subject response or randomized nature of the stimuli).
+            Run is a synonym of a data acquisition.
+            if a subject leaves the scanner, the acquisition must be restarted.
+
+        nimb is using DCM2BIDS and DCM2NIIx to create the corresponding BIDS files and structures
+        this script intends to define one _id_bids that will be used throughout nimb
+        '''
+        _id_bids_dir = f'sub-{proj_id}'
+        _id_bids = f'{_id_bids_dir}_{session}'
+        '''must adjust run in the name
+        '''
+        if run:
+            _id_bids = f'{_id_bids_dir}_{session}_{run}'
+        return _id_bids, _id_bids_dir
+
+
+    def is_bids_format(self, _id):
+        """
+        check if _id has a BIDS format
+        if True:
+            return True, expected bids folder, session name, run name
+        """
+        bids_format = False
+        ses_format  = False
+        sub_format  = False
+        run_label   = ""
+        if '_run-' in _id:
+            has_run = True
+            run_loc = _id.find('run-')
+            run_label = _id[run_loc:]
+        if 'ses-' in _id:
+            ses_loc = _id.find('ses-')
+            if run_label:
+                ses_label = _id[ses_loc:run_loc]
+            else:
+                ses_label = _id[ses_loc:]
+            ses_format = True
+            if "_" in ses_label[-1]:
+                ses_label = ses_label[:-1]
+        if _id.startswith('sub-'):
+            sub_label = _id[:ses_loc]
+            sub_format = True
+            if "_" in sub_label[-1]:
+                sub_label = sub_label[:-1]
+        if ses_format and sub_format:
+            bids_format = True
+        return bids_format, sub_label, ses_label, run_label
 
 
     # must adapt this and next defs to the ones from distribution_helper
@@ -377,3 +401,60 @@ class DCM2BIDS_helper():
         else:
             print(f'{" " *12} path is invalid: {DICOM_DIR}')
             return 'PATH_IS_MISSING'
+
+
+def make_bids_id(proj_id, session, run = False):
+    '''
+    https://github.com/bids-standard/bids-specification/blob/master/src/02-common-principles.md
+    the _id_bids MUST have the structure: sub_<label>_ses-<label>
+    the "sub-<label>" corresponds to the "subject" because of the "sub-" key.
+
+    if there are multiple runs of the same session, the key "run" is used:
+    "run" is an uninterrupted repetition of data acquisition
+        that has the same acquisition parameters and task
+        (however events can change from run to run
+        due to different subject response or randomized nature of the stimuli).
+        Run is a synonym of a data acquisition.
+        if a subject leaves the scanner, the acquisition must be restarted.
+
+    nimb is using DCM2BIDS and DCM2NIIx to create the corresponding BIDS files and structures
+    this script intends to define one _id_bids that will be used throughout nimb
+    '''
+    _id_bids_dir = f'sub-{proj_id}'
+    _id_bids = f'{_id_bids_dir}_{session}'
+    '''must adjust run in the name
+    '''
+    if run:
+        _id_bids = f'{_id_bids_dir}_{session}_{run}'
+    return _id_bids, _id_bids_dir
+
+
+def is_bids_format(_id):
+    """
+    check if _id has a BIDS format
+    if True:
+        return True, expected bids folder, session name, run name
+    """
+    bids_format = False
+    ses_format  = False
+    sub_format  = False
+    run_loc     = int("-1")
+    run_label   = ""
+    if '_run-' in _id:
+        run_loc = _id.find('run-')
+        run_label = _id[run_loc:]
+    if 'ses-' in _id:
+        ses_loc = _id.find('ses-')
+        ses_label = _id[ses_loc:run_loc]
+        ses_format = True
+        if "_" in ses_label[-1]:
+            ses_label = ses_label[:-1]
+    if _id.startswith('sub-'):
+        sub_label = _id[:ses_loc]
+        sub_format = True
+        if "_" in sub_label[-1]:
+            sub_label = sub_label[:-1]
+    if ses_format and sub_format:
+        bids_format = True
+    return bids_format, sub_label, ses_label, run_label
+

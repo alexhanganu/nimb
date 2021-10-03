@@ -79,16 +79,16 @@ class DistributionHelper():
         print(_id_bids_data)
         if "archived" in _id_bids_data:
             self.archived = True
-            print("file is archived: ", _id_bids_data["archived"],"\n")
+            print(f'{LogLVL.lvl2}file is archived: {_id_bids_data["archived"]}\n')
         for BIDS_type in [i for i in _id_bids_data if i not in ("archived",)]:
             for mr_modality in _id_bids_data[BIDS_type]:
                 path_src_all = _id_bids_data[BIDS_type][mr_modality]
                 for path_src in path_src_all:
-                    print("path_src is:",path_src,"\n")
+                    print(f"{LogLVL.lvl2}path_src is: {path_src}\n")
                     new_path = self.get_path_2mr(path_src,
                                 _id_bids_data["archived"],
                                 self.NIMB_tmp)
-                    print(new_path)
+                    print(f"{LogLVL.lvl2}new path is: {new_path}\n")
                     path_src_all[path_src_all.index(path_src)] = new_path
                 _id_bids_data[BIDS_type][mr_modality] = path_src_all
         print("#" *50)
@@ -117,7 +117,6 @@ class DistributionHelper():
         tmp_dir_err    = os.path.join(tmp_dir, 'tmp_for_classification_err')
         makedir_ifnot_exist(tmp_dir_xtract)
         makedir_ifnot_exist(tmp_dir_err)
-    #        print(f'            extracting data: {path2mr_}')
         ZipArchiveManagement(
             archive_abspath,
             path2xtrct = tmp_dir_xtract,

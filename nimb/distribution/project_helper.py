@@ -12,11 +12,9 @@ from distribution.distribution_ready import DistributionReady
 from distribution.utilities import load_json, save_json, makedir_ifnot_exist
 from distribution.distribution_definitions import get_keys_processed, DEFAULT, DEFAULTpaths
 from classification.classify_2nimb_bids import Classify2_NIMB_BIDS
-from classification.dcm2bids_helper import DCM2BIDS_helper, make_bids_id, is_bids_format
+from classification.dcm2bids_helper import DCM2BIDS_helper 
 from setup.interminal_setup import get_userdefined_paths, get_yes_no
-from distribution.manage_archive import is_archive, ZipArchiveManagement
 from distribution.logger import LogLVL
-
 
 
 class ProjectManager:
@@ -58,6 +56,10 @@ class ProjectManager:
         self.srcdata_dir        = self.project_vars["SOURCE_SUBJECTS_DIR"][1]
         self.BIDS_DIR           = self.project_vars['SOURCE_BIDS_DIR'][1]
         self.new_subjects_dir   = self.local_vars["NIMB_PATHS"]["NIMB_NEW_SUBJECTS"]
+        self.dcm2bids           = DCM2BIDS_helper(self.project_vars,
+                                                self.project,
+                                                DICOM_DIR = self.srcdata_dir,
+                                                tmp_dir = self.NIMB_tmp)
         self.apps_all           = DEFAULT.apps_all
         self.get_df_f_groups()
         self.get_ids_all()
@@ -181,10 +183,26 @@ class ProjectManager:
         self.unprocessed_d = dict()
         self.get_ls_unprocessed_data()
         if len(self.unprocessed_d) > 1:
-           print(f'{LogLVL.lvl2}there are {len(self.unprocessed_d)} participants with MRI data to be processed')
-           self.distrib_hlp.distribute_4_processing(self.unprocessed_d)
+            self.change_paths_2rawdata()
+            print(f'{LogLVL.lvl2}there are {len(self.unprocessed_d)} participants with MRI data to be processed')
+            # self.distrib_hlp.distribute_4_processing(self.unprocessed_d)
         else:
            print(f'{LogLVL.lvl2}ALL participants with MRI data were processed')
+
+
+    def change_paths_2rawdata(self):
+        print(self._ids_all)
+        print(self.unprocessed_d)
+        for _id_bids in self.unprocessed_d:
+            _id_bids_data = self.unprocessed_d[_id_bids]
+            _, sub_label, ses_label, _ = self.dcm2bids.is_bids_format(_id_bids)
+            for BIDS_type in [i for i in _id_bids_data if i not in ("archived",)]:
+                for mr_modality in _id_bids_data[BIDS_type]:
+                    path_2rawdata = self.dcm2bids.get_path_2rawdata(sub_label,
+                                                        ses_label,
+                                                        BIDS_type,
+                                                        mr_modality)
+                    print(path_2rawdata)
 
 
     def get_ls_unprocessed_data(self):
@@ -218,7 +236,7 @@ class ProjectManager:
         for _id_src in self._ids_nimb_classified:
             ls_sessions = [i for i in  self._ids_nimb_classified[_id_src] if i not in ('archived',)]
             for session in ls_sessions:
-                _id_bids, _ = make_bids_id(_id_src, session)
+                _id_bids, _ = self.dcm2bids.make_bids_id(_id_src, session)
                 if _id_bids not in self._ids_all:
                     self.unprocessed_d[_id_bids] = self._ids_nimb_classified[_id_src][session]
                     if "archived" in self._ids_nimb_classified[_id_src]:
@@ -290,7 +308,7 @@ class ProjectManager:
         print("adding new _id_bids to existing new_subjects.json file")
         self.new_subjects = True
         self.adj_subs2process(get = True)
-        _, _, ses_label, _ = is_bids_format(_id_bids)
+        _, _, ses_label, _ = self.dcm2bids.is_bids_format(_id_bids)
         self.subs_2process[_id_bids] = self._ids_nimb_classified[_id_project][ses_label]
         self.adj_subs2process(save = True)
 
@@ -319,11 +337,11 @@ class ProjectManager:
                 sys.exit(0)
             else:
                 _id_bids = _ids_bids_ls[0]
-            _, sub_label, _, _ = is_bids_format(_id_bids)
+            _, sub_label, _, _ = self.dcm2bids.is_bids_format(_id_bids)
             if not self.chk_id_bids_in_bids_dir(sub_label):
                 _id_bids = classify_2_bids(_id_project)
         else:
-            bids_format, sub_label, _, _ = is_bids_format(_id_project)
+            bids_format, sub_label, _, _ = self.dcm2bids.is_bids_format(_id_project)
             if bids_format:
                 if self.chk_id_bids_in_bids_dir(sub_label):
                     _id_bids = _id_project
@@ -385,7 +403,7 @@ class ProjectManager:
             self._ids_missing = [i for i in self._ids_nimb_classified.keys() if i not in ids_all_source]
             for _id_src in self._ids_missing:
                 for session in self._ids_nimb_classified[_id_src]:
-                    _id_bids, _ = make_bids_id(_id_src, session)
+                    _id_bids, _ = self.dcm2bids.make_bids_id(_id_src, session)
                     self._ids_all[_id_bids]['source'] = _id_src
         else:
             print(f'{LogLVL.lvl1}nimb_classified.json is missing')
@@ -397,7 +415,7 @@ class ProjectManager:
         print(f'{LogLVL.lvl1} ids classified: {self._ids_nimb_classified}')
         for _id_src in self._ids_nimb_classified:
             for session in self._ids_nimb_classified[_id_src]:
-                _id_bids, _ = make_bids_id(_id_src, session)
+                _id_bids, _ = self.dcm2bids.make_bids_id(_id_src, session)
                 self._ids_bids_new.append(_id_bids)
 
                 if _id_bids not in self._ids_all:
@@ -659,11 +677,9 @@ class ProjectManager:
 
     def convert_with_dcm2bids(self, _id_from_nimb_classified, ses, nimb_classified_per_id):
         print(f'    starting dcm2bids classification for id: {_id_from_nimb_classified} session: {ses}')
-        return DCM2BIDS_helper(self.project_vars,
-                        self.project,
-                        nimb_classified_per_id = nimb_classified_per_id,
-                        DICOM_DIR = self.srcdata_dir,
-                        tmp_dir = self.NIMB_tmp).run(_id_from_nimb_classified, ses)
+        return self.dcm2bids.run(_id_from_nimb_classified,
+                                ses,
+                                nimb_classified_per_id)
 
 
     def get_content(self, path2chk):
@@ -827,54 +843,3 @@ class ProjectManager:
 
         # return _ids
         pass
-
-
-
-    """NEXT 2 scripts are probably not needed anymore, as
-    extraction to a temporary folder was integrated integrated into
-    DCM2BIDS_helper
-    """
-    # def get_dir_with_raw_MR_data(self, src_dir, _dir):
-    #     if os.path.isdir(os.path.join(src_dir, _dir)):
-    #         return src_dir, list(_dir)
-    #     elif _dir.endswith('.zip'):
-    #         self.dir_new_subjects = self.local_vars["NIMB_PATHS"]["NIMB_NEW_SUBJECTS"]
-    #         ls_initial = self.get_content(self.dir_new_subjects)
-    #         self.extract_from_archive(src_dir, _dir)
-    #         ls_dir_4bids2dcm = [i for i in self.get_content(self.dir_new_subjects) if i not in ls_initial]
-    #         return self.dir_new_subjects, ls_dir_4bids2dcm
-
-
-    # def extract_from_archive(self, src_dir, _dir):
-    #     tmp_err_dir  = os.path.join(self.NIMB_tmp, 'tmp_err_classification')
-    #     makedir_ifnot_exist(tmp_err_dir)
-    #     dir_2extract = self.dir_new_subjects
-    #     tmp_dir_2extract = ''
-    #     if self.project in DEFAULT.project_ids:
-    #         tmp_dir_2extract = os.path.join(self.NIMB_tmp, DEFAULT.nimb_tmp_dir)
-    #         makedir_ifnot_exist(tmp_dir_2extract)
-    #         dir_2extract = tmp_dir_2extract
-    #     ZipArchiveManagement(
-    #         os.path.join(src_dir, _dir),
-    #         path2xtrct = dir_2extract,
-    #         path_err   = tmp_err_dir)
-    #     if tmp_dir_2extract:
-    #         project_dir = os.path.join(tmp_dir_2extract,
-    #                                     DEFAULT.project_ids[self.project]["dir_from_source"])
-    #         if os.path.exists(project_dir):
-    #             print(f'    this is default project;\
-    #                 the corresponding default folder was created in: {project_dir}')
-    #             ls_content = self.get_content(project_dir)
-    #             for _dir in ls_content:
-    #                 nr_left_2cp = len(ls_content[ls_content.index(_dir):])
-    #                 print(f'    number of folders left to copy: {nr_left_2cp}')
-    #                 src = os.path.join(project_dir, _dir)
-    #                 dst = os.path.join(self.dir_new_subjects, _dir)
-    #                 print(f'    copying folder: {src} to {dst}')
-    #                 shutil.copytree(src, dst)
-    #         else:
-    #             print(f'    the expected folder: {project_dir} is missing')
-    #         print(f'    removing temporary folder: {tmp_dir_2extract}')
-    #         shutil.rmtree(tmp_dir_2extract, ignore_errors=True)
-    #     if len(self.get_content(tmp_err_dir)) == 0:
-    #         shutil.rmtree(tmp_err_dir, ignore_errors=True)

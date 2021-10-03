@@ -174,7 +174,9 @@ class NIMB(object):
             if dir_with_subj_2classify:
                 print("initiating dcm2bids transformation for project: {}".format(self.project))
                 from classification.dcm2bids_helper import DCM2BIDS_helper
-                return DCM2BIDS_helper(self.project_vars, self.project, DICOM_DIR = dir_with_subj_2classify).run()
+                return DCM2BIDS_helper(self.project_vars,
+                                    self.project,
+                                    DICOM_DIR = dir_with_subj_2classify).run()
 
 
         if self.process == 'run':
