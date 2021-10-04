@@ -60,8 +60,8 @@ class DCM2BIDS_helper():
         if DICOM_DIR == 'default':
             self.DICOM_DIR   = self.get_SUBJ_DIR()
         self.tmp_dir         = tmp_dir
-#        self.OUTPUT_DIR      = makedir_ifnot_exist(self.proj_vars['SOURCE_BIDS_DIR'][1])
-        self.OUTPUT_DIR      = self.chk_dir(self.proj_vars['SOURCE_BIDS_DIR'][1])
+        self.OUTPUT_DIR      = makedir_ifnot_exist(self.proj_vars['SOURCE_BIDS_DIR'][1])
+        # self.OUTPUT_DIR      = self.chk_dir(self.proj_vars['SOURCE_BIDS_DIR'][1])
         self.archived        = False
 
 
@@ -275,18 +275,23 @@ class DCM2BIDS_helper():
                         BIDS_type,
                         mr_modality):
         sub_rawdata_dir = os.path.join(self.OUTPUT_DIR, sub_label)
+        path_2rawdata = ""
         if os.path.exists(sub_rawdata_dir):
             # verify if BIDS classificaiton OK
-            sub_ses_bidstyps_dir = os.path.join(sub_rawdata_dir, ses_label, BIDS_type)
-            if os.path.exists(sub_ses_bidstyps_dir):
-                print("OK")
-                print("searching modality:", mr_modality)
-                print(os.listdir(sub_ses_bidstyps_dir))
+            sub_ses_bidstype_dir = os.path.join(sub_rawdata_dir, ses_label, BIDS_type)
+            if os.path.exists(sub_ses_bidstype_dir):
+                lsdir = os.listdir(sub_ses_bidstype_dir)
+                # print("searching modality:", mr_modality)
+                # print(os.listdir(sub_ses_bidstype_dir))
+                bids_mr_modality = mr_modality_nimb_2_dcm2bids[mr_modality]
+                niigz_f = [i for i in lsdir if '.nii.gz' in i and bids_mr_modality in i]
+                if niigz_f:
+                    path_2rawdata = os.path.join(sub_ses_bidstype_dir, niigz_f[0])
             else:
                 print("something is missing:")
                 print(os.listdir(os.path.join(sub_rawdata_dir, ses_label)))
-                print(os.listdir(sub_ses_bidstyps_dir))
-        return "path_2rawdata"
+                print(os.listdir(sub_ses_bidstype_dir))
+        return path_2rawdata
 
 
     def make_bids_id(self, proj_id, session, run = False):
@@ -325,22 +330,21 @@ class DCM2BIDS_helper():
         ses_format  = False
         sub_format  = False
         run_label   = ""
+        run_loc = _id.find('run-')
+        ses_loc = _id.find('ses-')
         if '_run-' in _id:
-            has_run = True
-            run_loc = _id.find('run-')
             run_label = _id[run_loc:]
         if 'ses-' in _id:
-            ses_loc = _id.find('ses-')
+            ses_format = True
             if run_label:
                 ses_label = _id[ses_loc:run_loc]
             else:
                 ses_label = _id[ses_loc:]
-            ses_format = True
             if "_" in ses_label[-1]:
                 ses_label = ses_label[:-1]
         if _id.startswith('sub-'):
-            sub_label = _id[:ses_loc]
             sub_format = True
+            sub_label = _id[:ses_loc]
             if "_" in sub_label[-1]:
                 sub_label = sub_label[:-1]
         if ses_format and sub_format:

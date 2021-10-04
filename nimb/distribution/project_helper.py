@@ -202,7 +202,13 @@ class ProjectManager:
                                                         ses_label,
                                                         BIDS_type,
                                                         mr_modality)
-                    print(path_2rawdata)
+                    if path_2rawdata:
+                        print(path_2rawdata, self.BIDS_DIR)
+                    else:
+                        print(f"{LogLVL.lvl2}{_id_bids} has no rawdata folder")
+                        _id_project = self._ids_all[_id_bids]["project"]
+                        _id_bids = self.classify_with_dcm2bids(self._ids_nimb_classified,
+                                                                _id = _id_project)
 
 
     def get_ls_unprocessed_data(self):
