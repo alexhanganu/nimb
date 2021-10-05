@@ -185,7 +185,7 @@ class ProjectManager:
         if len(self.unprocessed_d) > 1:
             self.change_paths_2rawdata()
             print(f'{LogLVL.lvl2}there are {len(self.unprocessed_d)} participants with MRI data to be processed')
-            # self.distrib_hlp.distribute_4_processing(self.unprocessed_d)
+            self.distrib_hlp.distribute_4_processing(self.unprocessed_d)
         else:
            print(f'{LogLVL.lvl2}ALL participants with MRI data were processed')
 
@@ -195,20 +195,23 @@ class ProjectManager:
         print(self.unprocessed_d)
         for _id_bids in self.unprocessed_d:
             _id_bids_data = self.unprocessed_d[_id_bids]
-            _, sub_label, ses_label, _ = self.dcm2bids.is_bids_format(_id_bids)
             for BIDS_type in [i for i in _id_bids_data if i not in ("archived",)]:
                 for mr_modality in _id_bids_data[BIDS_type]:
+                    _, sub_label, ses_label, _ = self.dcm2bids.is_bids_format(_id_bids)
+                    path_2rawdata = os.path.join(self.BIDS_DIR, sub_label, ses_label, BIDS_type)
+                    if not os.path.exists(path_2rawdata):
+                        print(f"{LogLVL.lvl2}{_id_bids} has no rawdata folder")
+                        _id_project = self._ids_all[_id_bids]["project"]
+                        _id_bids = self.classify_with_dcm2bids(self._ids_nimb_classified,
+                                                                _id = _id_project)
+
+                    _, sub_label, ses_label, _ = self.dcm2bids.is_bids_format(_id_bids)
                     path_2rawdata = self.dcm2bids.get_path_2rawdata(sub_label,
                                                         ses_label,
                                                         BIDS_type,
                                                         mr_modality)
                     if path_2rawdata:
-                        print(path_2rawdata, self.BIDS_DIR)
-                    else:
-                        print(f"{LogLVL.lvl2}{_id_bids} has no rawdata folder")
-                        _id_project = self._ids_all[_id_bids]["project"]
-                        _id_bids = self.classify_with_dcm2bids(self._ids_nimb_classified,
-                                                                _id = _id_project)
+                        self.unprocessed_d[_id_bids][BIDS_type][mr_modality] = [path_2rawdata,]
 
 
     def get_ls_unprocessed_data(self):

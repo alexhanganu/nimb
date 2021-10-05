@@ -77,17 +77,18 @@ class DistributionHelper():
     def adjust_paths_2data(self, NIMB_tmp_loc, _id_bids_data):
         print("\n","#" *50)
         print(_id_bids_data)
-        if "archived" in _id_bids_data:
-            self.archived = True
-            print(f'{LogLVL.lvl2}file is archived: {_id_bids_data["archived"]}\n')
         for BIDS_type in [i for i in _id_bids_data if i not in ("archived",)]:
             for mr_modality in _id_bids_data[BIDS_type]:
                 path_src_all = _id_bids_data[BIDS_type][mr_modality]
                 for path_src in path_src_all:
                     print(f"{LogLVL.lvl2}path_src is: {path_src}\n")
+                    path_2archive = ""
+                    if "archived" in _id_bids_data:
+                        print(f'{LogLVL.lvl2}file is archived: {_id_bids_data["archived"]}\n')
+                        path_2archive = _id_bids_data["archived"]
                     new_path = self.get_path_2mr(path_src,
-                                _id_bids_data["archived"],
-                                self.NIMB_tmp)
+                                                path_2archive,
+                                                self.NIMB_tmp)
                     print(f"{LogLVL.lvl2}new path is: {new_path}\n")
                     path_src_all[path_src_all.index(path_src)] = new_path
                 _id_bids_data[BIDS_type][mr_modality] = path_src_all
@@ -97,18 +98,20 @@ class DistributionHelper():
 
 
     def get_path_2mr(self, path2mr_, path_2archive, tmp_dir = "none"):
-        if is_archive(path_2archive):
-            print(f'{" " *12} archive located at: {path_2archive}')
+        if os.path.isdir(path2mr_) and os.path.exists(path2mr_):
+            print(f'{LogLVL.lvl3} folder is unarchived: {path2mr_} and')
+            print(f'{LogLVL.lvl3} folder exists')
+            return path2mr_
+        elif is_archive(path_2archive):
+            print(f'{LogLVL.lvl3} archive located at: {path_2archive}')
             if tmp_dir == 'none':
                 tmp_dir = os.path.dirname(path_2archive)
             return self.extract_from_archive(path_2archive,
                                              path2mr_,
                                              tmp_dir)
-        elif os.path.isdir(path2mr_):
-            print(f'{" " *12} folder is unarchived: {path2mr_} ')
         else:
-            print(f'{" " *12} file: {path_2archive} does not seem to be an archive')
-            print(f'{" " *12} path: {path2mr_} is NOT a folder')
+            print(f'{LogLVL.lvl3} file: {path_2archive} does not seem to be an archive')
+            print(f'{LogLVL.lvl3} path: {path2mr_} is NOT a folder')
             return ''
 
 
