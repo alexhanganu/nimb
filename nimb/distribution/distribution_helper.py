@@ -7,6 +7,7 @@ from distribution.utilities import save_json, ErrorMessages, makedir_ifnot_exist
 from distribution.setup_miniconda import setup_miniconda
 from distribution.setup_freesurfer import SETUP_FREESURFER
 from distribution.distribution_definitions import DEFAULT
+from processing.schedule_helper import Scheduler
 from distribution.manage_archive import ZipArchiveManagement, is_archive
 from setup.interminal_setup import get_yes_no, get_userdefined_paths, term_setup
 from setup import interminal_setup
@@ -59,14 +60,17 @@ class DistributionHelper():
         # self.get_available_space(location, NIMB_NEW_SUBJECTS)
         # if self.get_user_confirmation():
         self.make_f_subjects_2b_processed(location, unprocessed_d)
-        #    self.make_processing_database()
-        #    self.run_processing()
+        py_run_cmd   = self.locations["local"]['PROCESSING']["python3_run_cmd"]
+        cmd = f'{py_run_cmd} processing_run.py -project {self.project}'
+        cd_cmd = f'cd {os.path.join(self.NIMB_HOME, "processing")}'
+        Scheduler(self.locations["local"]).submit_4_processing(cmd, 'processing','run', cd_cmd)
 
 
     def make_f_subjects_2b_processed(self, location, unprocessed_d):
         NIMB_tmp_loc = self.locations[location]['NIMB_PATHS']['NIMB_tmp']
         f_abspath = os.path.join(NIMB_tmp_loc, DEFAULT.f_subjects2proc)
         print(f'{LogLVL.lvl2}creating file: {f_abspath}')
+        # print(unprocessed_d)
         for _id_bids in unprocessed_d:
             unprocessed_d[_id_bids] = self.adjust_paths_2data(NIMB_tmp_loc,
                                                     unprocessed_d[_id_bids])
@@ -75,32 +79,32 @@ class DistributionHelper():
 
 
     def adjust_paths_2data(self, NIMB_tmp_loc, _id_bids_data):
-        print("\n","#" *50)
-        print(_id_bids_data)
-        for BIDS_type in [i for i in _id_bids_data if i not in ("archived",)]:
-            for mr_modality in _id_bids_data[BIDS_type]:
+        # print("\n","#" *50)
+        # print(_id_bids_data)
+        for BIDS_type in _id_bids_data:
+            path_2archive = ""
+            mr_modalities = [i for i in _id_bids_data[BIDS_type] if i not in ("archived",)]
+            if "archived" in _id_bids_data[BIDS_type]:
+                print(f'{LogLVL.lvl2}{BIDS_type} is archived: {_id_bids_data[BIDS_type]["archived"]}\n')
+                path_2archive = _id_bids_data[BIDS_type]["archived"]
+            for mr_modality in mr_modalities:
                 path_src_all = _id_bids_data[BIDS_type][mr_modality]
                 for path_src in path_src_all:
-                    print(f"{LogLVL.lvl2}path_src is: {path_src}\n")
-                    path_2archive = ""
-                    if "archived" in _id_bids_data:
-                        print(f'{LogLVL.lvl2}file is archived: {_id_bids_data["archived"]}\n')
-                        path_2archive = _id_bids_data["archived"]
+                    # print(f"{LogLVL.lvl2}path_src is: {path_src}\n")
                     new_path = self.get_path_2mr(path_src,
                                                 path_2archive,
                                                 self.NIMB_tmp)
-                    print(f"{LogLVL.lvl2}new path is: {new_path}\n")
+                    # print(f"{LogLVL.lvl2}new path is: {new_path}\n")
                     path_src_all[path_src_all.index(path_src)] = new_path
                 _id_bids_data[BIDS_type][mr_modality] = path_src_all
-        print("#" *50)
+        # print("#" *50)
         return _id_bids_data
 
 
 
     def get_path_2mr(self, path2mr_, path_2archive, tmp_dir = "none"):
-        if os.path.isdir(path2mr_) and os.path.exists(path2mr_):
-            print(f'{LogLVL.lvl3} folder is unarchived: {path2mr_} and')
-            print(f'{LogLVL.lvl3} folder exists')
+        if os.path.exists(path2mr_):
+            # print(f'{LogLVL.lvl3} file is unarchived: {path2mr_} and exists')
             return path2mr_
         elif is_archive(path_2archive):
             print(f'{LogLVL.lvl3} archive located at: {path_2archive}')
@@ -213,45 +217,6 @@ class DistributionHelper():
         continue_processing = False
         # print("Remote server has {0}MB free, it can stored {1} subjects".format(free_space, len(to_be_process_subject)))
         return continue_processing
-
-
-    def make_processing_database(self):
-        """
-                - create distrib-DATABASE (track files) ~/nimb/project-name_status.json:
-            - ACTION = notprocessed:[], copied2process:[]
-            - LOCATION = local:[], remote_name1:[], remote_name_n:[]
-            add each subjects to:
-            - distrib-DATABASE[ACTION][notprocessed].append(subject)
-            - distrib-DATABASE[LOCATION][local/remote_name].append(subject)
-        - populating rule:
-            - continue populating until the volume of subjects + volume of estimated processed subjects 
-                (900Mb per subject) is less then 75% of the available disk space
-            - populate local.json - NIMB_PATHS - NIMB_NEW_SUBJECTS based on populating rule
-            - If there are more than one computer ready to perform freesurfer:
-                - send archived subjects to each of them based on the estimated time required to process 
-                    one subject and choose the methods that would deliver the lowest estimated time to process.
-            - once copied to the NIMB_NEW_SUBJECTS:
-                - add subject to distrib-DATABSE → LOCATION → remote_name
-                - move subject in distrib-DATABASE → ACTION notprocessed → copied2process
-        """
-        # to_be_process_subject = DiskspaceUtility.get_subject_upto_size(free_space, to_be_process_subject)
-        # return [os.path.join(SOURCE_SUBJECTS_DIR,subject) for subject in to_be_process_subject] # full path
-        pass
-
-
-    def run_processing(self):
-        """
-            - after all subjects are copied to the NIMB_NEW_SUBJECTS folder: initiate the 
-                classifier on the local/remote computer with keys: cd $NIMB_HOME && python nimb.py -process classify
-            - wait for the answer; If True and new_subjects.json file was created:
-            - start the -process freesurfer
-            - after each 2 hours check the local/remote NIMB_PROCESSED_FS and NIMB_PROCESSED_FS_ERROR folders. 
-                If not empty: mv (or copy/rm) to the path provided in the ~/nimb/projects.json → project → local 
-                    or remote $PROCESSED_FS_DIR folder
-            - if SOURCE_BIDS_DIR is provided: moves the processed subjects to 
-                corresponding SOURCE_BIDS_DIR/subject/session/processed_fs folder
-        """
-        pass
 
 
     def get_local_remote_dir(self, dir_data, _dir = 'None'):

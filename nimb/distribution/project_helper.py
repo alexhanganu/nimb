@@ -191,11 +191,12 @@ class ProjectManager:
 
 
     def change_paths_2rawdata(self):
-        print(self._ids_all)
-        print(self.unprocessed_d)
         for _id_bids in self.unprocessed_d:
             _id_bids_data = self.unprocessed_d[_id_bids]
-            for BIDS_type in [i for i in _id_bids_data if i not in ("archived",)]:
+            if "archived" in _id_bids_data:
+                archive = _id_bids_data["archived"]
+                _id_bids_data.pop("archived", None)
+            for BIDS_type in _id_bids_data:# [i for i in _id_bids_data if i not in ("archived",)]:
                 for mr_modality in _id_bids_data[BIDS_type]:
                     _, sub_label, ses_label, _ = self.dcm2bids.is_bids_format(_id_bids)
                     path_2rawdata = os.path.join(self.BIDS_DIR, sub_label, ses_label, BIDS_type)
@@ -212,6 +213,10 @@ class ProjectManager:
                                                         mr_modality)
                     if path_2rawdata:
                         self.unprocessed_d[_id_bids][BIDS_type][mr_modality] = [path_2rawdata,]
+                    elif archive:
+                        self.unprocessed_d[_id_bids][BIDS_type]["archived"] = archive
+                    else:
+                        print(f"{LogLVL.lvl2}raw data is missing and file is not archived")
 
 
     def get_ls_unprocessed_data(self):
