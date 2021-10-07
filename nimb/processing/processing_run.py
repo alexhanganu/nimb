@@ -18,6 +18,24 @@ time.tzset()
 
 
 
+#         - after each 2 hours check the local/remote NIMB_PROCESSED_FS and NIMB_PROCESSED_FS_ERROR folders. 
+#             If not empty: mv (or copy/rm) to the path provided in the ~/nimb/projects.json → project → local 
+#                 or remote $PROCESSED_FS_DIR folder
+#         - if SOURCE_BIDS_DIR is provided: moves the processed subjects to 
+#             corresponding SOURCE_BIDS_DIR/subject/session/processed_fs folder
+#     - populating rule:
+#         - continue populating until the volume of subjects + volume of estimated processed subjects 
+#             (900Mb per subject) is less then 75% of the available disk space
+#         - populate local.json - NIMB_PATHS - NIMB_NEW_SUBJECTS based on populating rule
+#         - If there are more than one computer ready to perform freesurfer:
+#             - send archived subjects to each of them based on the estimated time required to process 
+#                 one subject and choose the methods that would deliver the lowest estimated time to process.
+#         - once copied to the NIMB_NEW_SUBJECTS:
+#             - add subject to distrib-DATABSE → LOCATION → remote_name
+#             - move subject in distrib-DATABASE → ACTION notprocessed → copied2process
+#     # to_be_process_subject = DiskspaceUtility.get_subject_upto_size(free_space, to_be_process_subject)
+
+
 class RUNProcessing:
 
     def __init__(self, all_vars, logger):
@@ -52,13 +70,17 @@ class RUNProcessing:
         self.log.info('    NEW SUBJECTS searching:')    
         self.db = self.DBc.update_db_new_subjects(self.db)
 
-    #     self.DBc.update_db(db, NIMB_tmp)
+
+        self.DBc.update_db(self.db)
 
         # extracting 40 minutes from the maximum time for the batch to run
         # since it is expected that less then 35 minutes will be required for the pipeline to perform all the steps
         # while the batch is running, and start new batch
-        max_batch_running = time.strftime('%H:%M:%S',time.localtime(time.mktime(time.strptime(vars_processing["batch_walltime"],"%H:%M:%S")) - 2400))
+        time_batchwalltime = time.strptime(vars_processing["batch_walltime"],"%H:%M:%S")
+        time_extracted = time.mktime(time_batchwalltime) - 2400
+        max_batch_running = time.strftime('%H:%M:%S',time.localtime(time_extracted))
         _, len_all_running = self.count_timesleep()
+        print(max_batch_running, len_all_running)
 
         while len_all_running >0 and time.strftime("%H:%M:%S",time.gmtime(time_elapsed)) < max_batch_running:
             count_run += 1
@@ -69,8 +91,8 @@ class RUNProcessing:
     #         if count_run % 5 == 0:
     #             self.log.info('    NEW SUBJECTS searching:')
     #             self.db = self.DBc.update_db_new_subjects(self.db)
-    #             self.DBc.update_db(self.db, NIMB_tmp)
-            self.loop_run()
+    #             self.DBc.update_db(self.db)
+            # self.loop_run()
 
             time_to_sleep, len_all_running = self.count_timesleep()
             next_run_time = str(time.strftime("%H:%M",time.localtime(time.time()+time_to_sleep)))
@@ -96,7 +118,7 @@ class RUNProcessing:
 
     def loop_run(self):
         self.log.info('    starting the processing loop')
-        fs_db = self.get_db("fs")
+        fs_db = load_json(os.path.join(self.NIMB_tmp, DEFAULT.fs_db_name))
         ls_subj_in_fs_db = list()
         for ls_bids_ids in fs_db["LONG_DIRS"].values():
             ls_subj_in_fs_db = ls_subj_in_fs_db + ls_bids_ids
@@ -139,12 +161,6 @@ class RUNProcessing:
         self.chk_subj_if_processed()
 
 
-    def get_db(self, app):
-        if app == "fs":
-            db_app = os.path.join(self.NIMB_tmp, DEFAULT.fs_db_name)
-            return load_json(db_app)
-
-
     def chk_subj_if_processed(self):
         app = 'fs'
         ls_fs_subjects = list(self.db["PROCESS_FS"].keys())
@@ -176,7 +192,7 @@ class RUNProcessing:
         new_subjects_dir = self.vars_local["NIMB_PATHS"]["NIMB_NEW_SUBJECTS"]
         path_stats_dir   = self.project_vars["STATS_PATHS"]["STATS_HOME"]
         f_ids_abspath    = os.path.join(path_stats_dir, f_ids_name)
-        id_all_key = get_keys_processed(app)
+        id_all_key       = DEFAULT.apps_keys[app]
 
         self._ids_all    = load_json(f_ids_abspath)
         if id_all_key not in self._ids_all[bids_id]:
@@ -240,16 +256,11 @@ class RUNProcessing:
 
     def count_timesleep(self):
         time2sleep = 36000 # 600 minutes
-        len_running_fs = len(list(self.db['PROCESS_FS'].keys()))
-        len_running_nl = len(list(self.db['PROCESS_NL'].keys()))
-        len_running_dp = len(list(self.db['PROCESS_DP'].keys()))
-
-        len_all_running = len_running_fs + len_running_nl + len_running_dp
+        len_all_running = 0
+        for app in DEFAULT.apps_per_type.values():
+            len_app_running = len(list(self.db[f'PROCESS_{app}'].keys()))
+            len_all_running = len_all_running + len_app_running
         self.log.info('    running: '+str(len_all_running))
-        if len_running_nl > 0:
-            time2sleep = 1800 # 30 minutes
-        elif len_running_dp > 0:
-            time2sleep = 3600 # 60 minutes
         return time2sleep, len_all_running
 
 
@@ -265,43 +276,6 @@ class RUNProcessing:
 
 
 
-# def run_processing(self):
-#     """
-#         - after all subjects are copied to the NIMB_NEW_SUBJECTS folder: initiate the 
-#             classifier on the local/remote computer with keys: cd $NIMB_HOME && python nimb.py -process classify
-#         - wait for the answer; If True and new_subjects.json file was created:
-#         - start the -process freesurfer
-#         - after each 2 hours check the local/remote NIMB_PROCESSED_FS and NIMB_PROCESSED_FS_ERROR folders. 
-#             If not empty: mv (or copy/rm) to the path provided in the ~/nimb/projects.json → project → local 
-#                 or remote $PROCESSED_FS_DIR folder
-#         - if SOURCE_BIDS_DIR is provided: moves the processed subjects to 
-#             corresponding SOURCE_BIDS_DIR/subject/session/processed_fs folder
-#     """
-#     pass
-
-# def make_processing_database(self):
-#     """
-#             - create distrib-DATABASE (track files) ~/nimb/project-name_status.json:
-#         - ACTION = notprocessed:[], copied2process:[]
-#         - LOCATION = local:[], remote_name1:[], remote_name_n:[]
-#         add each subjects to:
-#         - distrib-DATABASE[ACTION][notprocessed].append(subject)
-#         - distrib-DATABASE[LOCATION][local/remote_name].append(subject)
-#     - populating rule:
-#         - continue populating until the volume of subjects + volume of estimated processed subjects 
-#             (900Mb per subject) is less then 75% of the available disk space
-#         - populate local.json - NIMB_PATHS - NIMB_NEW_SUBJECTS based on populating rule
-#         - If there are more than one computer ready to perform freesurfer:
-#             - send archived subjects to each of them based on the estimated time required to process 
-#                 one subject and choose the methods that would deliver the lowest estimated time to process.
-#         - once copied to the NIMB_NEW_SUBJECTS:
-#             - add subject to distrib-DATABSE → LOCATION → remote_name
-#             - move subject in distrib-DATABASE → ACTION notprocessed → copied2process
-#     """
-#     # to_be_process_subject = DiskspaceUtility.get_subject_upto_size(free_space, to_be_process_subject)
-#     # return [os.path.join(SOURCE_SUBJECTS_DIR,subject) for subject in to_be_process_subject] # full path
-#     pass
-
 
 class DB:
 
@@ -310,17 +284,25 @@ class DB:
             self.log      = logger #logging.getLogger(__name__)
         except Exception as e:
             self.log      = logging.getLogger(__name__)
-        self.project  = all_vars.params.project
-        vars_nimb     = all_vars.location_vars['local']['NIMB_PATHS']
-        self.NIMB_tmp = vars_nimb['NIMB_tmp']
-        self.db_f = os.path.join(self.NIMB_tmp, DEFAULT.process_db_name)
-        self.ses  = all_vars.location_vars['local']['FREESURFER']["long_name"]
-        self.apps = ('FS', 'NL', 'DP')
+        self.project      = all_vars.params.project
+        self.project_vars = all_vars.projects[self.project]
+        vars_nimb         = all_vars.location_vars['local']['NIMB_PATHS']
+        self.NIMB_tmp     = vars_nimb['NIMB_tmp']
+        self.db_f         = os.path.join(self.NIMB_tmp, DEFAULT.process_db_name)
+        self.apps         = DEFAULT.apps_per_type.values()
+        self.srcdata_dir  = self.project_vars["SOURCE_SUBJECTS_DIR"][1]
+        self.distrib_hlp  = DistributionHelper(all_vars)
+        self.dcm2bids     = DCM2BIDS_helper(self.project_vars,
+                                        self.project,
+                                        DICOM_DIR = self.srcdata_dir,
+                                        tmp_dir = self.NIMB_tmp)
+        self.ses      = all_vars.location_vars['local']['FREESURFER']["long_name"]
         # self.db   = self.get_db()
 
 
     def get_db(self):
         '''
+        Create database for processing
         PROJECTS  : {'project_name: [subj1, subj2]'}
         PROCESS_FS: {'subj1': 'local', 'subj2': 'remote1', 'subj3': 'remote2'}
         PROCESS_NL: {'subj1': 'local', 'subj2': 'remote1', 'subj3': 'remote2'}
@@ -341,99 +323,40 @@ class DB:
         return db
 
 
-    def get_ids(self, all_vars):
-        '''extract list of subjects to process
-        -> it is expected that f_ids is located in the materials_dir
-            and will be copied to the stats folder
-        -> it is expected that nimb_classified file is located in the
-            NIMB_tmp/nimb_new_subjects folder
-        '''
-        distrib_hlp      = DistributionHelper(all_vars)
-        vars_local       = all_vars.location_vars['local']
-        f_ids_name       = vars_local["NIMB_PATHS"]['file_ids_processed']
-        new_subjects_dir = vars_local["NIMB_PATHS"]["NIMB_NEW_SUBJECTS"]
-        path_stats_dir   = all_vars.projects[self.project]["STATS_PATHS"]["STATS_HOME"]
-
-        f_ids_abspath    = os.path.join(path_stats_dir, f_ids_name)
-        f_classif_in_src = os.path.join(new_subjects_dir, DEFAULT.f_nimb_classified)
-        self._ids_all         = dict()
-        self._ids_classified  = dict()
-
-        if distrib_hlp.get_files_for_stats(path_stats_dir, [f_ids_name,]):
-            self._ids_all        = load_json(f_ids_abspath)
-        if os.path.exists(f_classif_in_src):
-            self._ids_classified = load_json(f_classif_in_src)
-        else:
-            self.log.info(f'    file with nimb classified ids is MISSING in: {new_subjects_dir}')
-
-
-    def get_bids_ids_per_app(self, app):
-        self.db   = self.get_db()
-        return list(self.db[f"PROCESS_{app}"].keys())
-
-
     def update_db_new_subjects(self, db):
+        '''
+        populating the processing database with ids
+        from the file DEFAULT.f_subjects2process
+        '''
         self.db = db
-        if self.project not in db['PROJECTS']:
-            self.get_ids(all_vars)
-            self.db['PROJECTS'][self.project] = list(self._ids_all.keys())
-            self.populate_db()
+        print(self.db)
+
+        self._ids2process  = dict()
+        f_subjects2proc = os.path.join(self.NIMB_tmp, DEFAULT.f_subjects2proc)
+        if os.path.exists(f_subjects2proc):
+            self._ids2process = load_json(f_subjects2proc)
         else:
-            self.log.info(f'{self.project} is already registered in the database')
-        return self.db
+            self.log.info(f'    file with with subjects to process is MISSING in: {self.NIMB_tmp}')
 
-
-    def populate_db(self):
-        for bids_id in self._ids_all:
-            if self._ids_all[bids_id][get_keys_processed('src')]:
-                self.add_2db(bids_id)
-
-
-    def get_id_ses(self, bids_id):
-        '''extract the _id and the session
-        from the provided bids_id
-        based on the used defined session abbreviation'''
-        _id = bids_id
-        if self.ses in bids_id:
-            ses = bids_id[bids_id.find(self.ses):]
-            _id = bids_id.replace(f'_{ses}','')
-        else:
-            ses = f'{self.ses}01'
-        return _id, ses
-
-
-    def add_2db(self, bids_id):
         '''populating the database with subjects
         if subjects have the corresponding files for analysis
         '''
-        _id, ses = self.get_id_ses(bids_id)
-        # self.log.info(_id, ses)
-        fs_key = get_keys_processed('fs')
-        nl_key = get_keys_processed('nilearn')
-        dp_key = get_keys_processed('dipy')
-        for key in (fs_key, nl_key, dp_key):
-            if key not in self._ids_all[bids_id]:
-                self._ids_all[bids_id][key] = ''
-
-        # populating
-        if not self._ids_all[bids_id][fs_key]:
-            if 'anat' in self._ids_classified[_id][ses]:
-                if 't1' in self._ids_classified[_id][ses]['anat']:
-                    # self.log.info('    ready to add to FS processing')
-                    self.db['PROCESS_FS'][bids_id] = 'local'
-        if not self._ids_all[bids_id][nl_key]:
-            if 'anat' in self._ids_classified[_id][ses] and \
-                'func' in self._ids_classified[_id][ses]:
-                if 't1' in self._ids_classified[_id][ses]['anat']:
-                    # self.log.info('    ready to add to NILEARN processing')
-                    self.db['PROCESS_NL'][bids_id] = 'local'
-        if not self._ids_all[bids_id][dp_key]:
-            if 'anat' in self._ids_classified[_id][ses] and \
-                'dwi' in self._ids_classified[_id][ses]:
-                if 't1' in self._ids_classified[_id][ses]['anat']:
-                    # self.log.info('    ready to add to DIPY processing')
-                    self.db['PROCESS_DP'][bids_id] = 'local'
-        self.update_db()
+        if self.project not in db['PROJECTS']:
+            self.db['PROJECTS'][self.project] = list()
+        for _id_bids in self._ids2process:
+            if _id_bids not in self.db["PROJECTS"][self.project]:
+                self.db['PROJECTS'][self.project].append(_id_bids)
+                if 'anat' in self._ids2process[_id_bids]:
+                    if 't1' in self._ids2process[_id_bids]['anat']:
+                        self.db[f'PROCESS_{DEFAULT.apps_per_type["anat"]}'][_id_bids] = 'local'
+                        if 'func' in self._ids2process[_id_bids]:
+                            self.db[f'PROCESS_{DEFAULT.apps_per_type["func"]}'][_id_bids] = 'local'
+                        if 'dwi' in self._ids2process[_id_bids]:
+                            self.db[f'PROCESS_{DEFAULT.apps_per_type["dwi"]}'][_id_bids] = 'local'
+                self.update_db(db)
+        else:
+            self.log.info(f'{self.project} is already registered in the database')
+        return self.db
 
 
     def rm_from_db(self, bids_id, app, db):
@@ -459,13 +382,13 @@ class DB:
                 self.log.info(f'    {bids_id} not in db PROJECTS')
 
         if update:
-            self.update_db()
+            self.update_db(db)
         return self.db
 
 
-    def update_db(self):
+    def update_db(self, db):
         with open(self.db_f, 'w') as jf:
-            json.dump(self.db, jf, indent=4)
+            json.dump(db, jf, indent=4)
         system(f'chmod 777 {self.db_f}')
 
 
@@ -505,9 +428,10 @@ if __name__ == "__main__":
     from setup.get_vars import Get_Vars
     from distribution.distribution_helper import  DistributionHelper
     from distribution.logger import Log
-    from distribution.distribution_definitions import DEFAULT, get_keys_processed
+    from distribution.distribution_definitions import DEFAULT
     from distribution.utilities import load_json, save_json, makedir_ifnot_exist
     from distribution.project_helper import  ProjectManager
+    from classification.dcm2bids_helper import DCM2BIDS_helper 
     from processing import processing_db as proc_db
     from processing.schedule_helper import Scheduler, get_jobs_status
     from stats.db_processing import Table
@@ -519,5 +443,4 @@ if __name__ == "__main__":
     NIMB_tmp    = all_vars.location_vars['local']['NIMB_PATHS']['NIMB_tmp']
     fs_version  = all_vars.location_vars['local']['FREESURFER']['freesurfer_version']
     logger      = Log(NIMB_tmp, fs_version).logger
-    print("running processing")
-    # RUNProcessing(all_vars, logger)
+    RUNProcessing(all_vars, logger)

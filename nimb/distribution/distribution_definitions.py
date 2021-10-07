@@ -4,6 +4,9 @@ class DEFAULT(object):
     """ Default values """
 
     apps_all         = ('freesurfer', 'nilearn', 'dipy')
+    apps_per_type    = {"anat":"freesurfer",
+                        "func":"nilearn",
+                        "dwi" :"dipy"}
     apps_keys        = {"src"    :"source",
                         "fs"     :"freesurfer",
                         "nilearn":"nilearn",
