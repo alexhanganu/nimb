@@ -3,19 +3,46 @@ import os
 class DEFAULT(object):
     """ Default values """
 
-    apps_all         = ('freesurfer', 'nilearn', 'dipy')
     apps_per_type    = {"anat":"freesurfer",
                         "func":"nilearn",
                         "dwi" :"dipy"}
+
     apps_keys        = {"src"    :"source",
                         "fs"     :"freesurfer",
                         "nilearn":"nilearn",
                         "dipy"   :"dipy",
                         }
-    apps_instal_param= {"freesurfer":"FreeSurfer_install",
-                        "nilearn"   :"nilearn_install",
-                        "dipy"      :"dipy_install",
+
+    app_files         = {"freesurfer":{"new_subjects"  :"new_subjects_fs.json",
+                                       "running"       :"IsRunningFS_",
+                                       "db"            :"cdb.json",
+                                       "install_param" :"FreeSurfer_install",
+                                       "run_file"      :"crun.py",
+                                       "dir_nimb_proc" :"NIMB_PROCESSED_FS",
+                                       "dir_store_proc":"PROCESSED_FS_DIR"
+                                        },
+                        "nilearn":    {"new_subjects":"new_subjects_nl.json",
+                                       "running":"IsRunningNL_",
+                                       "db":"db_nl.json",
+                                       "install_param":"nilearn_install",
+                                       "run_file": "nl_run.py"
+                                       "dir_nimb_proc":"NIMB_PROCESSED_NILEARN"
+                                       "dir_store_proc":"PROCESSED_NILEARN_DIR"
+                                        },
+                        "dipy":       {"new_subjects":"new_subjects_dp.json",
+                                       "running":"IsRunningDP_",
+                                       "db":"db_dp.json",
+                                       "install_param":"dipy_install",
+                                       "run_file": "dp_run.py"
+                                       "dir_nimb_proc":"NIMB_PROCESSED_DIPY"
+                                       "dir_store_proc":"PROCESSED_DIPY_DIR"
+                                        }
                         }
+    f_nimb_classified = 'nimb_classified.json'
+    f_ids             = 'f_ids.json'
+    f_subjects2proc   = 'new_subjects.json'
+    f_running_process = 'IsRunningProcessing_'
+    process_db_name   = "processing_db.json"
 
     default_project  = 'project1'
     project_ids      = {'loni_ppmi':{
@@ -106,16 +133,21 @@ class DEFAULT(object):
                     "logistic_regression_dir":'stats/logistic_regression',
                     "linreg_moderation_dir"  :'stats/linreg_moderation',
                         }
-    f_nimb_classified = 'nimb_classified.json'
-    f_subjects2proc   = 'new_subjects.json'
-    f_ids             = 'f_ids.json'
-    f_running_fs      = 'running_'
-    f_running_process = 'processing_running_'
 
-    process_db_name   = "processing_db.json"
-    fs_db_name        = "db.json"
     gaain_link        =  "http://www.gaain.org/"
 
+    # below must be adjusted for app_files and removed
+    apps_all          = ('freesurfer', 'nilearn', 'dipy')
+    f_new_subjects_fs = 'new_subjects_fs.json'
+    f_new_subjects_nl = 'new_subjects_nl.json'
+    f_new_subjects_dp = 'new_subjects_dp.json'
+    f_running_fs      = 'IsRunningFS_'
+    f_running_nl      = 'IsRunningNL_'
+    f_running_dp      = 'IsRunningDP_'
+    apps_instal_param= {"freesurfer":"FreeSurfer_install",
+                        "nilearn"   :"nilearn_install",
+                        "dipy"      :"dipy_install",
+                        }
 
 class DEFAULTpaths:
 

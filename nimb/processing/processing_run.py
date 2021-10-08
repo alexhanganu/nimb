@@ -52,7 +52,6 @@ class RUNProcessing:
         self.NIMB_HOME   = self.vars_local["NIMB_PATHS"]["NIMB_HOME"]
         materials_dir_pt = all_vars.projects[self.project]["materials_DIR"][1]
         self.f_running   = os.path.join(self.NIMB_tmp, DEFAULT.f_running_process)
-        self.start_fs_processing = False
         self.python_run  = self.vars_local["PROCESSING"]["python3_run_cmd"]
         self.schedule    = Scheduler(self.vars_local)
 
@@ -80,11 +79,10 @@ class RUNProcessing:
         time_extracted = time.mktime(time_batchwalltime) - 2400
         max_batch_running = time.strftime('%H:%M:%S',time.localtime(time_extracted))
         _, len_all_running = self.count_timesleep()
-        print(max_batch_running, len_all_running)
 
         while len_all_running >0 and time.strftime("%H:%M:%S",time.gmtime(time_elapsed)) < max_batch_running:
             count_run += 1
-            self.log.info('restarting run, '+str(count_run))
+            self.log.info('starting run, '+str(count_run))
             time_elapsed_strftime = time.strftime("%H:%M",time.gmtime(time_elapsed))
             batch_time_hm = vars_processing["batch_walltime"][:-6]
             self.log.info(f'elapsed time: {time_elapsed_strftime}; max walltime: {batch_time_hm}')
@@ -92,7 +90,7 @@ class RUNProcessing:
     #             self.log.info('    NEW SUBJECTS searching:')
     #             self.db = self.DBc.update_db_new_subjects(self.db)
     #             self.DBc.update_db(self.db)
-            # self.loop_run()
+            self.loop_run()
 
             time_to_sleep, len_all_running = self.count_timesleep()
             next_run_time = str(time.strftime("%H:%M",time.localtime(time.time()+time_to_sleep)))
@@ -118,66 +116,55 @@ class RUNProcessing:
 
     def loop_run(self):
         self.log.info('    starting the processing loop')
-        fs_db = load_json(os.path.join(self.NIMB_tmp, DEFAULT.fs_db_name))
-        ls_subj_in_fs_db = list()
-        for ls_bids_ids in fs_db["LONG_DIRS"].values():
-            ls_subj_in_fs_db = ls_subj_in_fs_db + ls_bids_ids
-
-        db_key = "PROCESS_FS"
-        ls_fs_subjects = list(self.db[db_key].keys())
-        ls_2process_with_fs = list()
-        for subjid in ls_fs_subjects:
-            if self.db[db_key][subjid] == 'local':
-                if subjid not in ls_subj_in_fs_db:
-                    ls_2process_with_fs.append(subjid)
-
-        # NOT READ, no link
-        db_key = "PROCESS_NL"
-        ls_nl_subjects = list(self.db[db_key].keys())
-        ls_2process_with_nl = list()
-        for subjid in ls_nl_subjects:
-            if self.db[db_key][subjid] == 'local':
-                # MUST change this part because NL and DP don't have a db now
-                if subjid not in ls_subj_in_fs_db:
-                    ls_2process_with_nl.append(subjid)
+        self.start_app = False
+        for processing_type in DEFAULT.apps_per_type:
+            app = DEFAULT.apps_per_type[processing_type]
+            db_proc_app_key = f'PROCESS_{app}'
+            _ids_2proc = list(self.db[db_proc_app_key].keys())
+            _ids_2proc_onlocal = list()
+            _ids_in_app_db = self.get_ids_per_app(app)
+            for _id in _ids_2proc:
+                if self.db[db_proc_app_key][_id] == 'local':
+                    if _id not in _ids_in_app_db:
+                        _ids_2proc_onlocal.append(_id)
+            self.update_db_app(app, _ids_2proc_onlocal)
+            self.chk_start_processing_app(app)
+        # self.chk_subj_if_processed(app)
 
 
-        # NOT READ, no link
-        db_key = "PROCESS_DP"
-        ls_dp_subjects = list(self.db[db_key].keys())
-        ls_2process_with_dp = list()
-        for subjid in ls_dp_subjects:
-            if self.db[db_key][subjid] == 'local':
-                # MUST change this part because NL and DP don't have a db now
-                if subjid not in ls_subj_in_fs_db:
-                    ls_2process_with_dp.append(subjid)
-
-        self.log.info(len(ls_subj_in_fs_db))
-        self.log.info(len(ls_2process_with_fs))
-
-        self.update_fs_processing(ls_2process_with_fs)
-        if self.start_fs_processing:
-            self.chk_start_processing()
-        self.chk_subj_if_processed()
+    def get_ids_per_app(self, app):
+        _ids_in_app_db = list()
+        if app == "freesurfer":
+            db_fs = cdb.Get_DB(self.NIMB_HOME, self.NIMB_tmp, process_order)
+            # print(db_fs)
+            for ls_bids_ids in db_fs["LONG_DIRS"].values():
+                _ids_in_app_db = _ids_in_app_db + ls_bids_ids
+        elif app == "nilearn":
+            print("must define list of participants for app: ", app)
+        elif app == "dipy":
+            print("must define list of participants for app: ", app)
+        self.log.info(f"there are: {len(_ids_in_app_db)} participants being processed with {app}")
+        return _ids_in_app_db
 
 
-    def chk_subj_if_processed(self):
-        app = 'fs'
-        ls_fs_subjects = list(self.db["PROCESS_FS"].keys())
-        d_id_bids_to_fs_proc = dict() # {bids_id : fs_processed_id.zip}
-        _dir_fs_processed = self.vars_local["NIMB_PATHS"]["NIMB_PROCESSED_FS"]
-        for bids_id in ls_fs_subjects:
+    def chk_subj_if_processed(self, app):
+        subjects_ls = list(self.db[f'PROCESS_{app}'].keys())
+        _id_bids_2app_proc_d = dict() # {bids_id : app_processed_id.zip}
+        dir_processed_nimb = DEFAULT.app_files[app]["dir_nimb_proc"]
+        _dir_processed_nimb_app = self.vars_local["NIMB_PATHS"][dir_processed_nimb]
+        dir_processed_store = DEFAULT.app_files[app]["dir_store_proc"]
+        _dir_store = self.project_vars[dir_processed_store][1]
+        for bids_id in subjects_ls:
             subj_processed = f'{bids_id}.zip'
-            if self.db['PROCESS_FS'][bids_id] == 'local':
-                if subj_processed in os.listdir(_dir_fs_processed):
-                    d_id_bids_to_fs_proc[bids_id] = subj_processed
+            if self.db[f'PROCESS_{app}'][bids_id] == 'local':
+                if subj_processed in os.listdir(_dir_processed_nimb_app):
+                    _id_bids_2app_proc_d[bids_id] = subj_processed
             else:
-                remote = self.db['PROCESS_FS'][bids_id]
+                remote = self.db[f'PROCESS_{app}'][bids_id]
                 self.log.info(f'    {bids_id} is on being processed on the remote: {remote}')
-        _dir_store = self.project_vars["PROCESSED_FS_DIR"][1]
-        for bids_id in d_id_bids_to_fs_proc:
-            subj_processed = d_id_bids_to_fs_proc[bids_id]
-            src = os.path.join(_dir_fs_processed, subj_processed)
+        for bids_id in _id_bids_2app_proc_d:
+            subj_processed = _id_bids_2app_proc_d[bids_id]
+            src = os.path.join(_dir_processed_nimb_app, subj_processed)
             dst = os.path.join(_dir_store, subj_processed)
             self.log.info(f'    moving {subj_processed} from {src} to storage folder: {dst}')
             # shutil.move(src, dst)
@@ -202,56 +189,68 @@ class RUNProcessing:
         save_json(self._ids_all, f_ids_abspath)
 
 
-    def update_fs_processing(self, ls_2process_with_fs):
+    def update_db_app(self, app, _ids_2proc_onlocal):
+        self.log.info(f"there are: {len(_ids_2proc_onlocal)} participants that must be processed with {app} on local")
+        f_new_subjects_app = os.path.join(self.NIMB_tmp, DEFAULT.app_files[app]["new_subjects"])
+
         update = False
-        if ls_2process_with_fs:
-            new_subjects_dir = self.vars_local['NIMB_PATHS']['NIMB_NEW_SUBJECTS']
-
-            f_classif_in_src = os.path.join(new_subjects_dir, DEFAULT.f_nimb_classified)
-            f_new_subjects   = os.path.join(self.NIMB_tmp, DEFAULT.f_subjects2proc)
-
-            if os.path.exists(f_classif_in_src):
-                classif_subjects = load_json(f_classif_in_src)
-                update = True
-            if os.path.exists(f_new_subjects):
-                new_subjects = load_json(f_new_subjects)
+        if _ids_2proc_onlocal:
+            _ids2process = dict()
+            f_subjects2proc = os.path.join(self.NIMB_tmp, DEFAULT.f_subjects2proc)
+            if os.path.exists(f_subjects2proc):
+                _ids2process = load_json(f_subjects2proc)
             else:
+                self.log.info(f'    file with with subjects to process is MISSING in: {self.NIMB_tmp}')
+
+            if _ids2process:
+                # print(_ids2process)
                 new_subjects = dict()
-            if update:
-                for subjid in ls_2process_with_fs:
-                    self.log.info(f'    adding subject {subjid} for fs_new_subjects')
-#                    if check_that_all_files_are_accessible(ls_files):
-#                        add_to_new_subjects
-                    _id, ses = self.DBc.get_id_ses(subjid)
-                    self.log.info(_id, ses)
-                    new_subjects[subjid] = classif_subjects[_id][ses]
+                for _id_bids in _ids_2proc_onlocal:
+                    files_per_id = _ids2process[_id_bids]
+                    if self.chk_if_files_exist(files_per_id["anat"]["t1"]):
+                        ok2add = True
+                        if app == "nilearn":
+                            if "func" in files_per_id:
+                                if not self.chk_if_files_exist(files_per_id["func"]["bold"]):
+                                    ok2add = False
+                        elif app == "dipy":
+                            if "dwi" in files_per_id:
+                                if not self.chk_if_files_exist(files_per_id["dwi"]["dwi"]):
+                                    ok2add = False
+                        if ok2add:
+                            new_subjects[_id_bids] = _ids2process[_id_bids]
+                        else:
+                            print(f"!!!ERR: files are missing for app: {app}")
+                save_json(new_subjects, f_new_subjects_app)
+                self.start_app = True
 
-                    # changing the structure of f_ids to subject id, not bids_id
-                    # new_subjects[_id] = {ses: {'anat': {}}}
-                    # new_subjects[_id][ses]['anat'] = classif_subjects[_id][ses]['anat']
-                self.log.info(f'    saving file new_subjects at: {f_new_subjects}')
-                save_json(new_subjects, f_new_subjects)
-                self.start_fs_processing = True
 
-
-    def check_that_all_files_are_accessible(self, ls):
+    def chk_if_files_exist(self, ls):
+        ok_files = False
         for file in ls:
             if not path.exists(file):
                 ls.remove(file)
-        return ls
+        if ls:
+            ok_files = True
+        return ok_files
 
 
-    def chk_start_processing(self):
-        f_fs_running = os.path.join(self.NIMB_tmp, f'{DEFAULT.f_running_fs}0')
-        if os.path.exists(f_fs_running):
-            path_2cd = os.path.join(self.NIMB_HOME, 'processing', 'freesurfer')
-            cd_cmd = f"cd {path_2cd}"
-            cmd = f'{self.python_run} crun.py'
-#                self.schedule.submit_4_processing(cmd, 'nimb','run', cd_cmd,
-#                                                activate_fs = False,
-#                                                python_load = True)
-        else:
-            self.log.info(f'    file {f_fs_running} is missing')
+    def chk_start_processing_app(self, app):
+        print("starting processing part")
+        if self.start_app:
+            running_f = os.path.join(self.NIMB_tmp, f'{DEFAULT.app_files[app]["running"]}0')
+            if os.path.exists(running_f):
+                path_2cd = os.path.join(self.NIMB_HOME, 'processing', str(app))
+                cd_cmd = f"cd {path_2cd}"
+                cmd = f'{self.python_run} {DEFAULT.app_files[app]["run_file"]}'
+                batch_file_name = f"nimb_{app}"
+                self.log.info(f'initiating new run of {app} processing')
+                # self.schedule.submit_4_processing(cmd, batch_file_name,'run', cd_cmd,
+                #                                 activate_fs = False,
+                #                                 python_load = True)
+                self.start_app = False
+            else:
+                self.log.info(f'    file {running_f} is missing')
 
 
     def count_timesleep(self):
@@ -329,8 +328,6 @@ class DB:
         from the file DEFAULT.f_subjects2process
         '''
         self.db = db
-        print(self.db)
-
         self._ids2process  = dict()
         f_subjects2proc = os.path.join(self.NIMB_tmp, DEFAULT.f_subjects2proc)
         if os.path.exists(f_subjects2proc):
@@ -355,7 +352,7 @@ class DB:
                             self.db[f'PROCESS_{DEFAULT.apps_per_type["dwi"]}'][_id_bids] = 'local'
                 self.update_db(db)
         else:
-            self.log.info(f'{self.project} is already registered in the database')
+            self.log.info(f'project: {self.project} is already registered in the database')
         return self.db
 
 
@@ -434,6 +431,8 @@ if __name__ == "__main__":
     from classification.dcm2bids_helper import DCM2BIDS_helper 
     from processing import processing_db as proc_db
     from processing.schedule_helper import Scheduler, get_jobs_status
+    from processing.freesurfer import cdb
+    from processing.freesurfer.fs_definitions import process_order
     from stats.db_processing import Table
 
     project_ids = Get_Vars().get_projects_ids()

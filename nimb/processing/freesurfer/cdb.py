@@ -124,7 +124,7 @@ def chk_new_subjects_json_file(NIMB_tmp, db, vars_freesurfer, DEFAULT):
     from fs_checker import FreeSurferChecker
     chk = FreeSurferChecker(vars_freesurfer)
 
-    f_new_subjects = path.join(NIMB_tmp, DEFAULT.f_subjects2proc)
+    f_new_subjects = path.join(NIMB_tmp, DEFAULT.f_new_subjects_fs)
     if path.isfile(f_new_subjects):
         import json
         with open(f_new_subjects) as jfile:
