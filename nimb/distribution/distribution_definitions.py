@@ -19,23 +19,23 @@ class DEFAULT(object):
                                        "install_param" :"FreeSurfer_install",
                                        "run_file"      :"crun.py",
                                        "dir_nimb_proc" :"NIMB_PROCESSED_FS",
-                                       "dir_store_proc":"PROCESSED_FS_DIR"
+                                       "dir_store_proc":"PROCESSED_FS_DIR",
                                         },
                         "nilearn":    {"new_subjects":"new_subjects_nl.json",
                                        "running":"IsRunningNL_",
                                        "db":"db_nl.json",
                                        "install_param":"nilearn_install",
-                                       "run_file": "nl_run.py"
-                                       "dir_nimb_proc":"NIMB_PROCESSED_NILEARN"
-                                       "dir_store_proc":"PROCESSED_NILEARN_DIR"
+                                       "run_file": "nl_run.py",
+                                       "dir_nimb_proc":"NIMB_PROCESSED_NILEARN",
+                                       "dir_store_proc":"PROCESSED_NILEARN_DIR",
                                         },
                         "dipy":       {"new_subjects":"new_subjects_dp.json",
                                        "running":"IsRunningDP_",
                                        "db":"db_dp.json",
                                        "install_param":"dipy_install",
-                                       "run_file": "dp_run.py"
-                                       "dir_nimb_proc":"NIMB_PROCESSED_DIPY"
-                                       "dir_store_proc":"PROCESSED_DIPY_DIR"
+                                       "run_file": "dp_run.py",
+                                       "dir_nimb_proc":"NIMB_PROCESSED_DIPY",
+                                       "dir_store_proc":"PROCESSED_DIPY_DIR",
                                         }
                         }
     f_nimb_classified = 'nimb_classified.json'

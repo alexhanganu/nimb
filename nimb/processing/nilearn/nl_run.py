@@ -24,7 +24,7 @@ class RUNProcessingNL:
         if os.path.isfile(f_db_proc):
             print('    reading processing database')
             db_proc = load_json(f_db_proc)
-            ls_subj_nl = list(db_proc[f"PROCESS_NL"].keys())
+            ls_subj_nl = list(db_proc["PROCESS_NL"].keys())
         if os.path.isfile(f_new_subjects):
             print('    reading new subjects to process')
             new_subj = load_json(f_new_subjects)
@@ -113,7 +113,5 @@ if __name__ == "__main__":
     params      = get_parameters(project_ids)
     project     = params.project
     all_vars    = Get_Vars(params)
-
-    RUNProcessingNL(all_vars)
-
-
+    print(all_vars)
+    # RUNProcessingNL(all_vars)
