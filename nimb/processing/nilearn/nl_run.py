@@ -4,27 +4,31 @@ import os
 class RUNProcessingNL:
 
     def __init__(self, all_vars):
-        self.all_vars = all_vars
-        self.project  = all_vars.params.project
-        vars_local    = all_vars.location_vars['local']
-        self.NIMB_tmp = vars_local['NIMB_PATHS']['NIMB_tmp']
+        app = "nilearn"
+        self.all_vars   = all_vars
+        self.project    = all_vars.params.project
+        vars_local      = all_vars.location_vars['local']
+        self.NIMB_tmp   = vars_local['NIMB_PATHS']['NIMB_tmp']
         self.output_loc = vars_local['NIMB_PATHS']['NIMB_PROCESSED_NILEARN']
 
         self.db_nl    = dict()
-        # fs_ver = vars_local['FREESURFER']['freesurfer_version']
+        # nl_ver = vars_local['FREESURFER']['freesurfer_version']
         # logger = Log(self.NIMB_tmp, fs_ver).logger
         self.get_subjects()
         # self.run_connectivity_analysis()
 
 
     def get_subjects(self):
-        f_new_subjects = os.path.join(self.NIMB_tmp, DEFAULT.f_subjects2proc)
-        f_db_proc = os.path.join(self.NIMB_tmp, DEFAULT.process_db_name)
+        f_new_subjects = os.path.join(self.NIMB_tmp, DEFAULT.app_files[app]["new_subjects"])
+        f_db = os.path.join(self.NIMB_tmp, DEFAULT.app_files[app]["db"])
         ls_subj_nl = list()
         if os.path.isfile(f_db_proc):
             print('    reading processing database')
             db_proc = load_json(f_db_proc)
             ls_subj_nl = list(db_proc["PROCESS_NL"].keys())
+        else:
+            print(f'    database file for app: {app} is missing')
+
         if os.path.isfile(f_new_subjects):
             print('    reading new subjects to process')
             new_subj = load_json(f_new_subjects)
@@ -113,5 +117,5 @@ if __name__ == "__main__":
     params      = get_parameters(project_ids)
     project     = params.project
     all_vars    = Get_Vars(params)
-    print(all_vars)
-    # RUNProcessingNL(all_vars)
+
+    RUNProcessingNL(all_vars)
