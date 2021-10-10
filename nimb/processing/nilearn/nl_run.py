@@ -4,7 +4,7 @@ import os
 class RUNProcessingNL:
 
     def __init__(self, all_vars):
-        app = "nilearn"
+        self.app        = "nilearn"
         self.all_vars   = all_vars
         self.project    = all_vars.params.project
         vars_local      = all_vars.location_vars['local']
@@ -12,31 +12,34 @@ class RUNProcessingNL:
         self.output_loc = vars_local['NIMB_PATHS']['NIMB_PROCESSED_NILEARN']
 
         self.db_nl    = dict()
-        # nl_ver = vars_local['FREESURFER']['freesurfer_version']
+        # nl_ver = vars_local['FREESURFER']['nilearn_version']
         # logger = Log(self.NIMB_tmp, fs_ver).logger
         self.get_subjects()
-        # self.run_connectivity_analysis()
+        self.run_connectivity_analysis()
 
 
     def get_subjects(self):
-        f_new_subjects = os.path.join(self.NIMB_tmp, DEFAULT.app_files[app]["new_subjects"])
-        f_db = os.path.join(self.NIMB_tmp, DEFAULT.app_files[app]["db"])
-        ls_subj_nl = list()
-        if os.path.isfile(f_db_proc):
-            print('    reading processing database')
-            db_proc = load_json(f_db_proc)
-            ls_subj_nl = list(db_proc["PROCESS_NL"].keys())
-        else:
-            print(f'    database file for app: {app} is missing')
-
-        if os.path.isfile(f_new_subjects):
+        new_subjects_f_name = DEFAULT.app_files[self.app]["new_subjects"]
+        new_subjects_f_path = os.path.join(self.NIMB_tmp, new_subjects_f_name)
+        if os.path.isfile(new_subjects_f_path):
             print('    reading new subjects to process')
-            new_subj = load_json(f_new_subjects)
-        if ls_subj_nl:
-            print(ls_subj_nl)
-            for subj_id in ls_subj_nl:
-                print(subj_id)
-                self.db_nl[subj_id] = new_subj[subj_id]["func"]
+            new_subj = load_json(new_subjects_f_path)
+            self.db_nl = new_subj
+
+        # ls_subj_nl = list()
+        # f_db = os.path.join(self.NIMB_tmp, DEFAULT.app_files[self.app]["db"])
+        # if os.path.isfile(f_db):
+        #     print('    reading processing database')
+        #     db_proc = load_json(f_db)
+        #     ls_subj_nl = list(db_proc["PROCESS_NL"].keys())
+        # else:
+        #     print(f'    database file for app: {self.app} is missing')
+
+        # if ls_subj_nl:
+        #     print(ls_subj_nl)
+        #     for subj_id in ls_subj_nl:
+        #         print(subj_id)
+        #         self.db_nl[subj_id] = new_subj[subj_id]["func"]
         print(self.db_nl)
 
 
@@ -47,14 +50,14 @@ class RUNProcessingNL:
 
         #load file
         for subj_id in self.db_nl:
-            if "rsfmri" in self.db_nl[subj_id]:
-                rs_img = self.db_nl[subj_id]["rsfmri"][0] #!!! might include multiple files
-                im_bold1 = image.load_img(rs_img)#"run1_bold.nii.gz"
+            rs_img = self.db_nl[subj_id]["func"]["bold"][0]
+            im_bold1 = image.load_img(rs_img)#"run1_bold.nii.gz"
+            print(im_bold1)
 
-                # conn_h = harvard.extract_connectivity_zFisher(im_bold1, self.output_loc, "connectivity.csv")
-                # rois_labels = harvard.extract_label_rois(im_bold1)[0] #extract label for ploting
-                # conn_d = destrieux.extract_correlation(im_bold1, self.output_loc, 'left_hemi_corr.csv', 'right_hemi_corr.csv')
-                # self.plot_connectivity(conn_h, rois_labels)
+            # conn_h = harvard.extract_connectivity_zFisher(im_bold1, self.output_loc, "connectivity.csv")
+            # rois_labels = harvard.extract_label_rois(im_bold1)[0] #extract label for ploting
+            # conn_d = destrieux.extract_correlation(im_bold1, self.output_loc, 'left_hemi_corr.csv', 'right_hemi_corr.csv')
+            # self.plot_connectivity(conn_h, rois_labels)
 
 
     def plot_connectivity(self, connectivity, rois_labels):
