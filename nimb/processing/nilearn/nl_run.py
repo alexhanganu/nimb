@@ -40,27 +40,34 @@ class RUNProcessingNL:
         #     for subj_id in ls_subj_nl:
         #         print(subj_id)
         #         self.db_nl[subj_id] = new_subj[subj_id]["func"]
-        print(self.db_nl)
 
 
     def run_connectivity_analysis(self):
         # #initialize
+        print(f"performing correlation")
         harvard   = nl_helper.Havard_Atlas()
-        destrieux = nl_helper.Destrieux_Atlas()
+        # destrieux = nl_helper.Destrieux_Atlas()
 
         #load file
         for subj_id in self.db_nl:
+            print(f"    for subject: {subj_id}")
             rs_img = self.db_nl[subj_id]["func"]["bold"][0]
             im_bold1 = image.load_img(rs_img)#"run1_bold.nii.gz"
-            print(im_bold1)
+            conn_h = harvard.extract_connectivity_zFisher(im_bold1,
+                                                            self.output_loc,
+                                                            f"{subj_id}_connectivity_harvard.csv")
+            rois_labels_h = harvard.extract_label_rois(im_bold1)[0] #extract label for ploting
 
-            # conn_h = harvard.extract_connectivity_zFisher(im_bold1, self.output_loc, "connectivity.csv")
-            # rois_labels = harvard.extract_label_rois(im_bold1)[0] #extract label for ploting
-            # conn_d = destrieux.extract_correlation(im_bold1, self.output_loc, 'left_hemi_corr.csv', 'right_hemi_corr.csv')
-            # self.plot_connectivity(conn_h, rois_labels)
+            # conn_d = destrieux.extract_correlation(im_bold1,
+            #                                         self.output_loc,
+            #                                         f'{subj_id}_connectivity_destrieux_left.csv',
+            #                                         f'{subj_id}connectivity_destrieux_right.csv')
+            # rois_labels_d = destrieux.extract_label_rois(im_bold1)[0] #extract label for ploting
+            self.plot_connectivity(conn_h, rois_labels_h, f"{subj_id}_corr_harvard.png")
+            # self.plot_connectivity(conn_d, rois_labels_d, f"{subj_id}_corr_destrieux.png")
 
 
-    def plot_connectivity(self, connectivity, rois_labels):
+    def plot_connectivity(self, connectivity, rois_labels, f_name):
         #plot
         print(rois_labels[1:])
         import matplotlib.pyplot as plt
@@ -71,7 +78,7 @@ class RUNProcessingNL:
         plt.xticks(range(len(rois_labels)), rois_labels[0:], rotation=90);
         plt.title('Parcellation correlation matrix')
         plt.colorbar();
-        img_name = os.path.join(self.output_loc,"corr_harvard.png")
+        img_name = os.path.join(self.output_loc, f_name)
         plt.savefig(img_name)
 
 
