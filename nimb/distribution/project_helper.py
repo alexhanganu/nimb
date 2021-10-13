@@ -256,6 +256,8 @@ class ProjectManager:
                     if "archived" in self._ids_nimb_classified[_id_src]:
                         archive = self._ids_nimb_classified[_id_src]["archived"]
                         self.unprocessed_d[_id_bids]["archived"] = archive
+                else:
+                    print(f"{LogLVL.lvl2}{_id_bids} registered if file with ids")
 
 
     def check_ids_from_grid(self):

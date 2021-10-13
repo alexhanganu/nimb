@@ -97,6 +97,10 @@ class DistributionHelper():
                     # print(f"{LogLVL.lvl2}new path is: {new_path}\n")
                     path_src_all[path_src_all.index(path_src)] = new_path
                 _id_bids_data[BIDS_type][mr_modality] = path_src_all
+                if mr_modality == "dwi":
+                    _id_bids_data[BIDS_type]["bval"] = path_src_all.replace(".nii.gz", "bval")
+                    _id_bids_data[BIDS_type]["bvec"] = path_src_all.replace(".nii.gz", "bvec")
+
         # print("#" *50)
         return _id_bids_data
 

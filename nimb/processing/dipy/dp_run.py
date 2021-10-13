@@ -1,13 +1,9 @@
 # %% initiator for dipy pipeline
 '''
 Kim Pham Phuong, 20202026
-
-dipy_sample_conn.ipynb: image donnée par Dipy et l'atlas Stanford, connectivité.
-Dipy_apply_test.ipynb: appliquer sur image sur Cedar. Le label des images et la transformation des dimension - ne fonctionne pas.
-
-dipy_apply_test2: matrice de connectivité utilisant Stanford atlas mais aucune connection des ROIs.
 '''
 
+import os
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -21,94 +17,64 @@ from dipy.direction import peaks
 from dipy.tracking import utils
 from dipy.tracking.local_tracking import LocalTracking
 from dipy.tracking.stopping_criterion import BinaryStoppingCriterion
-from dipy.tracking.streamline import Streamlines
+from dipy.tracking.streamline import Streamlines        
+        
 
-
-class SampleConnDipy:
+class RUNProcessingDIPY:
 
     def __init__(self, all_vars):
-        hardi_fname, hardi_bval_fname, hardi_bvec_fname = get_fnames('stanford_hardi')
-        label_fname = get_fnames('stanford_labels')
-        t1_fname = get_fnames('stanford_t1')
-        data, affine, hardi_img = load_nifti(hardi_fname, return_img=True) 
-        labels = load_nifti_data(label_fname)
-        bvals, bvecs = read_bvals_bvecs(hardi_bval_fname, hardi_bvec_fname)
-        gtab = gradient_table(bvals, bvecs)
-        
-        # ploting the middle slide and the label image 
-        plt.subplot(1,2,1)
-        plt.imshow(data[:,:,data.shape[2]//2, 0].T, cmap='gray')
-        plt.subplot(1,2,2)
-        plt.imshow(labels[:,:,labels.shape[2]//2].T, cmap='gray')
-        
-        # generate streamlines
-        white_matter = binary_dilation((labels == 1) | (labels == 2))
-        csamodel = shm.CsaOdfModel(gtab, 6)
-        csapeaks = peaks.peaks_from_model(model=csamodel,
-                                  data=data,
-                                  sphere=peaks.default_sphere,
-                                  relative_peak_threshold=.8,
-                                  min_separation_angle=45,
-                                  mask=white_matter)
-                                  
-        affine = np.eye(4)
-        seeds = utils.seeds_from_mask(white_matter, affine, density=1)
-        stopping_criterion = BinaryStoppingCriterion(white_matter)
+        self.app        = "dipy"
+        self.all_vars   = all_vars
+        self.project    = all_vars.params.project
+        vars_local      = all_vars.location_vars['local']
+        self.NIMB_tmp   = vars_local['NIMB_PATHS']['NIMB_tmp']
+        self.output_loc = vars_local['NIMB_PATHS']['NIMB_PROCESSED_DIPY']
+        self.db_dp    = dict()
 
-        streamline_generator = LocalTracking(csapeaks, stopping_criterion, seeds,
-                                             affine=affine, step_size=0.5)
-        streamlines = Streamlines(streamline_generator)
+        self.get_subjects()
+        self.run_connectivity_analysis()
 
-        # ROI label = 2
-        cc_slice = labels == 2
-        cc_streamlines = utils.target(streamlines, affine, cc_slice)
-        cc_streamlines = Streamlines(cc_streamlines)
 
-        other_streamlines = utils.target(streamlines, affine, cc_slice,
-                                         include=False)
-        other_streamlines = Streamlines(other_streamlines)
-        assert len(other_streamlines) + len(cc_streamlines) == len(streamlines)
-        
-        M, grouping = utils.connectivity_matrix(cc_streamlines, affine,
-                                        labels.astype(np.uint8),
-                                        return_mapping=True,
-                                        mapping_as_streamlines=True)
-        plt.imshow(np.log1p(M), interpolation='nearest')
-        plt.savefig("connectivity.png")
-        
-        # All ROIs
-        M1, grouping1 = utils.connectivity_matrix(streamlines, affine,
-                                        labels.astype(np.uint8),
-                                        return_mapping=True,
-                                        mapping_as_streamlines=True)
-                                        
-        plt.imshow(np.log1p(M1), interpolation='nearest')
-        
-        
+    def get_subjects(self):
+        new_subjects_f_name = DEFAULT.app_files[self.app]["new_subjects"]
+        new_subjects_f_path = os.path.join(self.NIMB_tmp, new_subjects_f_name)
+        if os.path.isfile(new_subjects_f_path):
+            print('    reading new subjects to process')
+            new_subj = load_json(new_subjects_f_path)
+            self.db_dp = new_subj
 
-class DiffusionConnectivity:
 
-    def __init__(self, all_vars):
-    
-        data, affine, img = load_nifti("nilearn/pdmci059/dwi/pdmci059BT2_DTI_64_dir.nii.gz", return_img=True)
-        fn_bval = 'nilearn/pdmci059/dwi/pdmci059BT2_DTI_64_dir.bval'
-        fn_bvec = 'nilearn/pdmci059/dwi/pdmci059BT2_DTI_64_dir.bvec'
-        bvals, bvecs = read_bvals_bvecs(fn_bval, fn_bvec)
-        gtab = gradient_table(bvals, bvecs)
-
+    def run_connectivity_analysis(self):
+        #initialize
+        print(f"performing connectivity analysis with stanford atlas")
         # Get the label from standfort atlas
         label_fname = get_fnames('stanford_labels')
         labels = load_nifti_data(label_fname)
+        for subj_id in self.db_dp:
+            affine, img, gtab = self.get_dwi_data(subj_id)
+            # View the image
+            plt.subplot(1,2,1)
+            plt.imshow(self.data[:,:,self.data.shape[2]//2, 0].T, cmap='gray')
+            # self.create_mask()
+            # self.get_fiber_direction()
 
-        # View the image
-        plt.subplot(1,2,1)
-        plt.imshow(data[:,:,data.shape[2]//2, 0].T, cmap='gray')
 
+    def get_dwi_data(self, subj_id):
+        print(f"    for subject: {subj_id}")
+        self.data, affine, img = load_nifti(self.db_dp[subj_id]["dwi"]["dwi"][0],
+                                        return_img=True)
+        bvals, bvecs = read_bvals_bvecs(self.db_dp[subj_id]["dwi"]["bval"][0]
+                                        self.db_dp[subj_id]["dwi"]["bvec"][0]) #f_name.bval; f_name.bvec
+        gtab = gradient_table(bvals, bvecs)
+        return affine, img, gtab
+
+
+    def create_mask(self):
         # CREATE MASK
         # Cropp the mask and image
         # vol_idx: list of volumes will be masked - of axis=3 of a 4D input_volume
         #b0_mask, mask = median_otsu(data,gtab.b0s_mask,3,1, autocrop=True)
-        b0_mask, mask = median_otsu(data,vol_idx=range(data.shape[3]), 
+        b0_mask, mask = median_otsu(self.data,vol_idx=range(self.data.shape[3]), 
                                      median_radius=3, numpass=1, autocrop=True, dilate=2)
 
         # View cropped mask
@@ -117,6 +83,8 @@ class DiffusionConnectivity:
         plt.subplot(1,2,2)
         plt.imshow(mask[:,:,b0_mask.shape[2]//2].T, cmap='gray')
 
+
+    def get_fiber_direction(self):
         # Getting fiber direction
         #     With cropped data
 
@@ -279,6 +247,88 @@ class DiffusionConnectivity:
 
 
 
+class SampleConnDipy:
+
+    def __init__(self):
+        """this is a sample class
+            to check the working steps as defined in the cours
+        """
+        hardi_fname, hardi_bval_fname, hardi_bvec_fname = get_fnames('stanford_hardi')
+        label_fname = get_fnames('stanford_labels')
+        t1_fname = get_fnames('stanford_t1')
+        data, affine, hardi_img = load_nifti(hardi_fname, return_img=True) 
+        labels = load_nifti_data(label_fname)
+        bvals, bvecs = read_bvals_bvecs(hardi_bval_fname, hardi_bvec_fname)
+        gtab = gradient_table(bvals, bvecs)
+        
+        # ploting the middle slide and the label image 
+        plt.subplot(1,2,1)
+        plt.imshow(data[:,:,data.shape[2]//2, 0].T, cmap='gray')
+        plt.subplot(1,2,2)
+        plt.imshow(labels[:,:,labels.shape[2]//2].T, cmap='gray')
+        
+        # generate streamlines
+        white_matter = binary_dilation((labels == 1) | (labels == 2))
+        csamodel = shm.CsaOdfModel(gtab, 6)
+        csapeaks = peaks.peaks_from_model(model=csamodel,
+                                  data=data,
+                                  sphere=peaks.default_sphere,
+                                  relative_peak_threshold=.8,
+                                  min_separation_angle=45,
+                                  mask=white_matter)
+                                  
+        affine = np.eye(4)
+        seeds = utils.seeds_from_mask(white_matter, affine, density=1)
+        stopping_criterion = BinaryStoppingCriterion(white_matter)
+
+        streamline_generator = LocalTracking(csapeaks, stopping_criterion, seeds,
+                                             affine=affine, step_size=0.5)
+        streamlines = Streamlines(streamline_generator)
+
+        # ROI label = 2
+        cc_slice = labels == 2
+        cc_streamlines = utils.target(streamlines, affine, cc_slice)
+        cc_streamlines = Streamlines(cc_streamlines)
+
+        other_streamlines = utils.target(streamlines, affine, cc_slice,
+                                         include=False)
+        other_streamlines = Streamlines(other_streamlines)
+        assert len(other_streamlines) + len(cc_streamlines) == len(streamlines)
+        
+        M, grouping = utils.connectivity_matrix(cc_streamlines, affine,
+                                        labels.astype(np.uint8),
+                                        return_mapping=True,
+                                        mapping_as_streamlines=True)
+        plt.imshow(np.log1p(M), interpolation='nearest')
+        plt.savefig("connectivity.png")
+        
+        # All ROIs
+        M1, grouping1 = utils.connectivity_matrix(streamlines, affine,
+                                        labels.astype(np.uint8),
+                                        return_mapping=True,
+                                        mapping_as_streamlines=True)
+                                        
+        plt.imshow(np.log1p(M1), interpolation='nearest')
+
+
+def get_parameters(projects):
+    """get parameters for nimb"""
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+
+    parser.add_argument(
+        "-project", required=False,
+        default=projects[0],
+        choices = projects,
+        help="names of projects located in credentials_path.py/nimb/projects.json -> PROJECTS",
+    )
+
+
+    params = parser.parse_args()
+    return params
+
+
 if __name__ == "__main__":
 
     import argparse
@@ -304,8 +354,4 @@ if __name__ == "__main__":
     project     = params.project
     all_vars    = Get_Vars(params)
 
-    SampleConnDipy(all_vars)
-    DiffusionConnectivity(all_vars)
-
-
-
+    RUNProcessingDIPY(all_vars)
