@@ -117,6 +117,15 @@ class ProjectManager:
 
     def get_ids_all(self):
         """
+        ALGO:
+            f_ids is searched in materials.
+            f_ids is searched in folder for stats.
+            if files are similar:
+                continue
+            if files are different:
+                ask user
+                default: use f_ids from materials
+
         f_ids.json:{
             "_id_bids": {
                 "project"    : "ID_in_file_provided_by_user_for_GLM_analysis.tsv",
@@ -142,8 +151,21 @@ class ProjectManager:
                         _id_bids = sub-3378_ses-1
         """
         self._ids_all = dict()
+        _ids_all_main = dict()
+        _ids_all_stats = dict()
+        if self.f_ids_in_dir(self.materials_dir_pt):
+            _ids_all_main = load_json(os.path.join(self.materials_dir_pt, self.f_ids_name))
         if self.f_ids_in_dir(self.path_stats_dir):
-            self._ids_all = load_json(os.path.join(self.path_stats_dir, self.f_ids_name))
+            _ids_all_stats = load_json(os.path.join(self.path_stats_dir, self.f_ids_name))
+
+        if _ids_all_main == _ids_all_stats:
+            self._ids_all = _ids_all_stats
+        else:
+            print(f'{LogLVL.lvl1} ids all in the materials folder and stats folder are DIFFERENT')
+            print(f'{LogLVL.lvl2} by default - I am using the file from materials folder')
+            self._ids_all = _ids_all_main
+        if not bool(self._ids_all):
+            print(f'{LogLVL.lvl2} file with ids is EMPTY')
         # print(f'{LogLVL.lvl1} ids all are: {self._ids_all}')
 
 
@@ -439,7 +461,13 @@ class ProjectManager:
                     self._ids_all[_id_bids] = dict()
                 self._ids_all[_id_bids][get_keys_processed('src')] = src_id
         self.create_file_ids(self._ids_all)
+
+
     def f_ids_in_dir(self, path_2groups_f):
+        """
+        verifies if file with ids is present in the path_2groups_f
+        """
+
         self.f_ids_abspath = os.path.join(path_2groups_f, self.f_ids_name)
         if os.path.exists(self.f_ids_abspath):
             return True
@@ -467,7 +495,9 @@ class ProjectManager:
 
 
     def _ids_file_try2make(self):
+        print(f'{LogLVL.lvl1}file with ids is MISSING')
         if self.df_grid_ok:
+            print(f'{LogLVL.lvl2}trying to create file with ids based on grid file')
             _ids_bids    = self.df_grid[self._ids_bids_col]
             _ids_project = self.df_grid[self._ids_project_col]
 
@@ -484,6 +514,7 @@ class ProjectManager:
                 print('    could not create the file with ids')
                 True
         else:
+            print(f'{LogLVL.lvl2}CANNOT create file with ids. Grid file is missing')
             return False
 
 

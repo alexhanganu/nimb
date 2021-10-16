@@ -89,17 +89,19 @@ class DistributionHelper():
                 path_2archive = _id_bids_data[BIDS_type]["archived"]
             for mr_modality in mr_modalities:
                 path_src_all = _id_bids_data[BIDS_type][mr_modality]
-                for path_src in path_src_all:
-                    # print(f"{LogLVL.lvl2}path_src is: {path_src}\n")
-                    new_path = self.get_path_2mr(path_src,
-                                                path_2archive,
-                                                self.NIMB_tmp)
-                    # print(f"{LogLVL.lvl2}new path is: {new_path}\n")
-                    path_src_all[path_src_all.index(path_src)] = new_path
+                path_src = path_src_all[0]
+                if len(path_src_all) > 1:
+                    print(f"{LogLVL.lvl2}multiple paths are present. I am using only the first")
+                # print(f"{LogLVL.lvl2}path_src is: {path_src}\n")
+                new_path = self.get_path_2mr(path_src,
+                                            path_2archive,
+                                            self.NIMB_tmp)
+                # print(f"{LogLVL.lvl2}new path is: {new_path}\n")
+                path_src_all = [new_path]
                 _id_bids_data[BIDS_type][mr_modality] = path_src_all
                 if mr_modality == "dwi":
-                    _id_bids_data[BIDS_type]["bval"] = path_src_all.replace(".nii.gz", "bval")
-                    _id_bids_data[BIDS_type]["bvec"] = path_src_all.replace(".nii.gz", "bvec")
+                    _id_bids_data[BIDS_type]["bval"] = [path_src.replace(".nii.gz", "bval")]
+                    _id_bids_data[BIDS_type]["bvec"] = [path_src.replace(".nii.gz", "bvec")]
 
         # print("#" *50)
         return _id_bids_data
