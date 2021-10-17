@@ -29,7 +29,7 @@ class RUNProcessingDIPY:
         vars_local      = all_vars.location_vars['local']
         self.NIMB_tmp   = vars_local['NIMB_PATHS']['NIMB_tmp']
         self.output_loc = vars_local['NIMB_PATHS']['NIMB_PROCESSED_DIPY']
-        self.db_dp    = dict()
+        self.db_dp      = dict()
 
         self.get_subjects()
         self.run_connectivity_analysis()
@@ -39,14 +39,15 @@ class RUNProcessingDIPY:
         new_subjects_f_name = DEFAULT.app_files[self.app]["new_subjects"]
         new_subjects_f_path = os.path.join(self.NIMB_tmp, new_subjects_f_name)
         if os.path.isfile(new_subjects_f_path):
-            print('    reading new subjects to process')
+            print(f'{LogLVL.lvl1}reading new subjects to process')
             new_subj = load_json(new_subjects_f_path)
             self.db_dp = new_subj
+        else:
+            print(f'{LogLVL.lvl1}ERR: file with subjects is MISSING')
 
 
     def run_connectivity_analysis(self):
-        #initialize
-        print(f"performing connectivity analysis with stanford atlas")
+        print(f'{LogLVL.lvl1}performing connectivity analysis with stanford atlas')
         # Get the label from standfort atlas
         label_fname = get_fnames('stanford_labels')
         labels = load_nifti_data(label_fname)
@@ -60,10 +61,10 @@ class RUNProcessingDIPY:
 
 
     def get_dwi_data(self, subj_id):
-        print(f"    for subject: {subj_id}")
+        print(f"{LogLVL.lvl2}for subject: {subj_id}")
         self.data, affine, img = load_nifti(self.db_dp[subj_id]["dwi"]["dwi"][0],
                                         return_img=True)
-        bvals, bvecs = read_bvals_bvecs(self.db_dp[subj_id]["dwi"]["bval"][0]
+        bvals, bvecs = read_bvals_bvecs(self.db_dp[subj_id]["dwi"]["bval"][0],
                                         self.db_dp[subj_id]["dwi"]["bvec"][0]) #f_name.bval; f_name.bvec
         gtab = gradient_table(bvals, bvecs)
         return affine, img, gtab
@@ -343,7 +344,7 @@ if __name__ == "__main__":
     sys.path.append(str(top))
 
     from setup.get_vars import Get_Vars
-    from distribution.logger import Log
+    from distribution.logger import Log, LogLVL
     from distribution.utilities import load_json, save_json
     from distribution.distribution_definitions import DEFAULT
     from processing.schedule_helper import Scheduler, get_jobs_status
