@@ -55,8 +55,9 @@ class RUNProcessingDIPY:
             affine, img, gtab = self.get_dwi_data(subj_id)
             # View the image
             plt.subplot(1,2,1)
-            plt.imshow(self.data[:,:,self.data.shape[2]//2, 0].T, cmap='gray')
-            # self.create_mask()
+            plt.imshow(self.data[:,:,self.data.shape[2]//2, 0].T,
+                        cmap='gray')
+            self.create_mask()
             # self.get_fiber_direction()
 
 
@@ -75,14 +76,20 @@ class RUNProcessingDIPY:
         # Cropp the mask and image
         # vol_idx: list of volumes will be masked - of axis=3 of a 4D input_volume
         #b0_mask, mask = median_otsu(data,gtab.b0s_mask,3,1, autocrop=True)
-        b0_mask, mask = median_otsu(self.data,vol_idx=range(self.data.shape[3]), 
-                                     median_radius=3, numpass=1, autocrop=True, dilate=2)
+        b0_mask, mask = median_otsu(self.data,
+                                    vol_idx=range(self.data.shape[3]), 
+                                    median_radius=3,
+                                    numpass=1,
+                                    autocrop=True,
+                                    dilate=2)
 
         # View cropped mask
         plt.subplot(1,2,1)
-        plt.imshow(b0_mask[:,:,b0_mask.shape[2]//2, 0].T, cmap='gray')
+        plt.imshow(b0_mask[:,:,b0_mask.shape[2]//2, 0].T,
+                    cmap='gray')
         plt.subplot(1,2,2)
-        plt.imshow(mask[:,:,b0_mask.shape[2]//2].T, cmap='gray')
+        plt.imshow(mask[:,:,b0_mask.shape[2]//2].T,
+                    cmap='gray')
 
 
     def get_fiber_direction(self):
