@@ -53,10 +53,7 @@ class RUNProcessingDIPY:
         labels = load_nifti_data(label_fname)
         for subj_id in self.db_dp:
             affine, img, gtab = self.get_dwi_data(subj_id)
-            # View the image
-            plt.subplot(1,2,1)
-            plt.imshow(self.data[:,:,self.data.shape[2]//2, 0].T,
-                        cmap='gray')
+            self.save_plot(self.data[:,:,self.data.shape[2]//2, 0].T)
             self.create_mask()
             # self.get_fiber_direction()
 
@@ -82,14 +79,13 @@ class RUNProcessingDIPY:
                                     numpass=1,
                                     autocrop=True,
                                     dilate=2)
+        self.save_plot(b0_mask[:,:,b0_mask.shape[2]//2, 0].T)
+        self.save_plot(mask[:,:,b0_mask.shape[2]//2].T)
 
-        # View cropped mask
-        plt.subplot(1,2,1)
-        plt.imshow(b0_mask[:,:,b0_mask.shape[2]//2, 0].T,
-                    cmap='gray')
-        plt.subplot(1,2,2)
-        plt.imshow(mask[:,:,b0_mask.shape[2]//2].T,
-                    cmap='gray')
+
+    def save_plot(self, data):
+            plt.subplot(1,2,1)
+            plt.imshow(data, cmap='gray')
 
 
     def get_fiber_direction(self):
