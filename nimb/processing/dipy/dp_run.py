@@ -1,6 +1,7 @@
 # %% initiator for dipy pipeline
 '''
-Kim Pham Phuong, 20202026
+adjustment: Alexandru Hanganu 20211001:
+1st version: Kim Pham Phuong, 20202026
 '''
 
 import os
@@ -9,6 +10,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from dipy.data import get_fnames
 from dipy.io.image import load_nifti_data, load_nifti, save_nifti
+from dipy.segment.mask import median_otsu
 from dipy.io.gradients import read_bvals_bvecs
 from dipy.core.gradients import gradient_table
 from scipy.ndimage.morphology import binary_dilation
@@ -53,13 +55,15 @@ class RUNProcessingDIPY:
         labels = load_nifti_data(label_fname)
         for subj_id in self.db_dp:
             affine, img, gtab = self.get_dwi_data(subj_id)
-            self.save_plot(self.data[:,:,self.data.shape[2]//2, 0].T)
+            self.save_plot(self.data[:,:,self.data.shape[2]//2, 0].T,
+                            "data")
             self.create_mask()
-            # self.get_fiber_direction()
+            csapeaks = self.get_fiber_direction()
+            self.make_csd()
 
 
     def get_dwi_data(self, subj_id):
-        print(f"{LogLVL.lvl2}for subject: {subj_id}")
+        print(f"{LogLVL.lvl2}subject: {subj_id}")
         self.data, affine, img = load_nifti(self.db_dp[subj_id]["dwi"]["dwi"][0],
                                         return_img=True)
         bvals, bvecs = read_bvals_bvecs(self.db_dp[subj_id]["dwi"]["bval"][0],
@@ -71,47 +75,53 @@ class RUNProcessingDIPY:
     def create_mask(self):
         # CREATE MASK
         # Cropp the mask and image
+        # https://dipy.org/documentation/1.0.0./examples_built/brain_extraction_dwi/
         # vol_idx: list of volumes will be masked - of axis=3 of a 4D input_volume
         #b0_mask, mask = median_otsu(data,gtab.b0s_mask,3,1, autocrop=True)
-        b0_mask, mask = median_otsu(self.data,
+        self.b0_mask, mask = median_otsu(self.data,
                                     vol_idx=range(self.data.shape[3]), 
                                     median_radius=3,
                                     numpass=1,
                                     autocrop=True,
                                     dilate=2)
-        self.save_plot(b0_mask[:,:,b0_mask.shape[2]//2, 0].T)
-        self.save_plot(mask[:,:,b0_mask.shape[2]//2].T)
+        self.save_plot(self.b0_mask[:,:,self.b0_mask.shape[2]//2, 0].T,
+                        "b0_mask")
+        self.save_plot(mask[:,:,self.b0_mask.shape[2]//2].T,
+                        "mask")
 
 
-    def save_plot(self, data):
-            plt.subplot(1,2,1)
-            plt.imshow(data, cmap='gray')
+    def save_plot(self, data, f_name):
+        plt.subplot(1,2,1)
+        plt.imshow(data, cmap='gray')
+        # plt.yticks(range(len(rois_labels)), rois_labels[0:]);
+        # plt.xticks(range(len(rois_labels)), rois_labels[0:], rotation=90);
+        plt.title(f'Title')
+        plt.colorbar();
+        img_name = os.path.join(self.output_loc, f_name)
+        plt.savefig(img_name)
 
 
     def get_fiber_direction(self):
         # Getting fiber direction
         #     With cropped data
+        white_matter = binary_dilation((labels == 1) | (labels == 2))
+        csamodel     = shm.CsaOdfModel(gtab, 6)
+        csapeaks     = peaks_from_model(model=csamodel,
+                                          data=self.b0_mask,
+                                          sphere=default_sphere,
+                                          relative_peak_threshold=.8,
+                                          min_separation_angle=45,
+                                          mask=white_matter)
+        return csapeaks
 
-        # label_fname = get_fnames('stanford_labels')
-        # labels = load_nifti_data(label_fname)
 
-        # white_matter = binary_dilation((labels == 1) | (labels == 2))
-        # csamodel = shm.CsaOdfModel(gtab, 6)
-        # csapeaks = peaks_from_model(model=csamodel,
-        #                                   data=b0_mask,
-        #                                   sphere=default_sphere,
-        #                                   relative_peak_threshold=.8,
-        #                                   min_separation_angle=45,
-        #                                   mask=white_matter)
+    def make_csd(self):
         """
-
             CSD
             https://dipy.org/documentation/0.16.0./examples_built/tracking_quick_start/
             https://dipy.org/documentation/0.16.0./examples_built/introduction_to_basic_tracking/
             Another kind of tracking : https://dipy.org/documentation/1.2.0./examples_built/tracking_introduction_eudx/#example-tracking-introduction-eudx
                 https://github.com/dipy/dipy/blob/master/doc/examples/tracking_deterministic.py
-
-
         """
 
 
@@ -122,7 +132,7 @@ class RUNProcessingDIPY:
         # Using peaks
         sphere = get_sphere('symmetric724')
         csd_peaks = peaks_from_model(model=csd_model,
-                                     data=b0_mask,
+                                     data=self.b0_mask,
                                      sphere=sphere, #peaks.default_sphere,
                                      mask=mask,
                                      relative_peak_threshold=.5,
@@ -153,7 +163,7 @@ class RUNProcessingDIPY:
         # - with cropped data
         from dipy.reconst.dti import TensorModel
         tensor_model = TensorModel(gtab)
-        tensor_fit = tensor_model.fit(b0_mask)
+        tensor_fit = tensor_model.fit(self.b0_mask)
 
         fa = tensor_fit.fa
 
@@ -197,7 +207,7 @@ class RUNProcessingDIPY:
         from dipy.direction import ProbabilisticDirectionGetter
 
         stopping_criterion = ThresholdStoppingCriterion(fa, .25)
-        csd_fit = csd_model.fit(b0_mask, mask)
+        csd_fit = csd_model.fit(self.b0_mask, mask)
         prob_dg = ProbabilisticDirectionGetter.from_shcoeff(csd_fit.shm_coeff,
                                                             max_angle=30.,
                                                             sphere=default_sphere)
