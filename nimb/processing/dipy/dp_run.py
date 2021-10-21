@@ -138,9 +138,8 @@ class RUNProcessingDIPY:
                                      relative_peak_threshold=.5,
                                      min_separation_angle=25,
                                      parallel=True)
+        self.save_plot(csd_peaks.gfa[:,:,35].T, "csd"):
 
-        plt.subplot(1,2,1)
-        plt.imshow(csd_peaks.gfa[:,:,35].T, cmap='gray')
 
         # ==> The GFA values of these FODs don’t classify gray matter and white matter well
 
