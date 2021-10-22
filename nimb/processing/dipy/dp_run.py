@@ -52,13 +52,13 @@ class RUNProcessingDIPY:
         print(f'{LogLVL.lvl1}performing connectivity analysis with stanford atlas')
         # Get the label from standfort atlas
         label_fname = get_fnames('stanford_labels')
-        labels = load_nifti_data(label_fname)
+        self.labels = load_nifti_data(label_fname)
         for subj_id in self.db_dp:
             affine, img, gtab = self.get_dwi_data(subj_id)
             self.save_plot(self.data[:,:,self.data.shape[2]//2, 0].T,
                             "data")
             self.create_mask()
-            csapeaks = self.get_fiber_direction()
+            csapeaks = self.get_fiber_direction(gtab)
             self.make_csd()
 
 
@@ -90,23 +90,12 @@ class RUNProcessingDIPY:
                         "mask")
 
 
-    def save_plot(self, data, f_name):
-        plt.subplot(1,2,1)
-        plt.imshow(data, cmap='gray')
-        # plt.yticks(range(len(rois_labels)), rois_labels[0:]);
-        # plt.xticks(range(len(rois_labels)), rois_labels[0:], rotation=90);
-        plt.title(f'Title')
-        plt.colorbar();
-        img_name = os.path.join(self.output_loc, f_name)
-        plt.savefig(img_name)
-
-
-    def get_fiber_direction(self):
+    def get_fiber_direction(self, gtab):
         # Getting fiber direction
         #     With cropped data
-        white_matter = binary_dilation((labels == 1) | (labels == 2))
+        white_matter = binary_dilation((self.labels == 1) | (self.labels == 2))
         csamodel     = shm.CsaOdfModel(gtab, 6)
-        csapeaks     = peaks_from_model(model=csamodel,
+        csapeaks     = peaks.peaks_from_model(model=csamodel,
                                           data=self.b0_mask,
                                           sphere=default_sphere,
                                           relative_peak_threshold=.8,
@@ -131,16 +120,28 @@ class RUNProcessingDIPY:
 
         # Using peaks
         sphere = get_sphere('symmetric724')
-        csd_peaks = peaks_from_model(model=csd_model,
+        csd_peaks = peaks.peaks_from_model(model=csd_model,
                                      data=self.b0_mask,
                                      sphere=sphere, #peaks.default_sphere,
                                      mask=mask,
                                      relative_peak_threshold=.5,
                                      min_separation_angle=25,
                                      parallel=True)
-        self.save_plot(csd_peaks.gfa[:,:,35].T, "csd"):
+        self.save_plot(csd_peaks.gfa[:,:,35].T, "csd")
 
 
+    def save_plot(self, data, f_name):
+        plt.subplot(1,2,1)
+        plt.imshow(data, cmap='gray')
+        # plt.yticks(range(len(rois_labels)), rois_labels[0:]);
+        # plt.xticks(range(len(rois_labels)), rois_labels[0:], rotation=90);
+        plt.title(f'Title')
+        plt.colorbar();
+        img_name = os.path.join(self.output_loc, f_name)
+        plt.savefig(img_name)
+
+
+    def new_def(self):
         # ==> The GFA values of these FODs don’t classify gray matter and white matter well
 
         #    View csd_peaks
