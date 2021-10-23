@@ -97,7 +97,7 @@ class RUNProcessingDIPY:
         csamodel     = shm.CsaOdfModel(gtab, 6)
         csapeaks     = peaks.peaks_from_model(model=csamodel,
                                           data=self.b0_mask,
-                                          sphere=default_sphere,
+                                          sphere=peaks.default_sphere,
                                           relative_peak_threshold=.8,
                                           min_separation_angle=45,
                                           mask=white_matter)
@@ -141,7 +141,7 @@ class RUNProcessingDIPY:
         plt.savefig(img_name)
 
 
-    def new_def(self):
+    def make_tensor(self):
         # ==> The GFA values of these FODs don’t classify gray matter and white matter well
 
         #    View csd_peaks
@@ -168,9 +168,9 @@ class RUNProcessingDIPY:
         fa = tensor_fit.fa
 
         # check image
-        plt.subplot(1,2,1)
-        plt.imshow(fa2[:,:,35].T, cmap='gray')
-            
+        self.save_plot(fa2[:,:,35].T, "tensor")
+
+    def make_streamlines(self):            
         # Generate streamlines
 
         #    Using GFA of peaks
@@ -210,9 +210,9 @@ class RUNProcessingDIPY:
         csd_fit = csd_model.fit(self.b0_mask, mask)
         prob_dg = ProbabilisticDirectionGetter.from_shcoeff(csd_fit.shm_coeff,
                                                             max_angle=30.,
-                                                            sphere=default_sphere)
+                                                            sphere=peaks.default_sphere)
         # detmax_dg = DeterministicMaximumDirectionGetter.from_shcoeff(
-        #     csd_fit.shm_coeff, max_angle=30., sphere=default_sphere)
+        #     csd_fit.shm_coeff, max_angle=30., sphere=peaks.default_sphere)
 
         streamline_generator2 = LocalTracking(prob_dg, stopping_criterion,
                                              seeds, affine=np.eye(4),
