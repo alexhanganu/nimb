@@ -1,6 +1,6 @@
 # %% initiator for dipy pipeline
 '''
-adjustment: Alexandru Hanganu 20211001:
+adjusted: Alexandru Hanganu 20211001:
 1st version: Kim Pham Phuong, 20202026
 '''
 
@@ -60,6 +60,8 @@ class RUNProcessingDIPY:
             self.create_mask()
             csapeaks = self.get_fiber_direction(gtab)
             self.make_csd()
+            self.make_tensor()
+            self.make_streamlines()
 
 
     def get_dwi_data(self, subj_id):
@@ -132,7 +134,7 @@ class RUNProcessingDIPY:
 
     def save_plot(self, data, f_name):
         plt.subplot(1,2,1)
-        plt.imshow(data, cmap='gray')
+        plt.pcolor(data, cmap = 'gray')
         # plt.yticks(range(len(rois_labels)), rois_labels[0:]);
         # plt.xticks(range(len(rois_labels)), rois_labels[0:], rotation=90);
         plt.title(f'Title')
@@ -258,71 +260,6 @@ class RUNProcessingDIPY:
         plt.imshow(np.arctanh(M), interpolation='None', cmap='RdYlBu_r')
         plt.title('Parcellation correlation matrix')
         plt.colorbar();
-
-
-
-class SampleConnDipy:
-
-    def __init__(self):
-        """this is a sample class
-            to check the working steps as defined in the cours
-        """
-        hardi_fname, hardi_bval_fname, hardi_bvec_fname = get_fnames('stanford_hardi')
-        label_fname = get_fnames('stanford_labels')
-        t1_fname = get_fnames('stanford_t1')
-        data, affine, hardi_img = load_nifti(hardi_fname, return_img=True) 
-        labels = load_nifti_data(label_fname)
-        bvals, bvecs = read_bvals_bvecs(hardi_bval_fname, hardi_bvec_fname)
-        gtab = gradient_table(bvals, bvecs)
-        
-        # ploting the middle slide and the label image 
-        plt.subplot(1,2,1)
-        plt.imshow(data[:,:,data.shape[2]//2, 0].T, cmap='gray')
-        plt.subplot(1,2,2)
-        plt.imshow(labels[:,:,labels.shape[2]//2].T, cmap='gray')
-        
-        # generate streamlines
-        white_matter = binary_dilation((labels == 1) | (labels == 2))
-        csamodel = shm.CsaOdfModel(gtab, 6)
-        csapeaks = peaks.peaks_from_model(model=csamodel,
-                                  data=data,
-                                  sphere=peaks.default_sphere,
-                                  relative_peak_threshold=.8,
-                                  min_separation_angle=45,
-                                  mask=white_matter)
-                                  
-        affine = np.eye(4)
-        seeds = utils.seeds_from_mask(white_matter, affine, density=1)
-        stopping_criterion = BinaryStoppingCriterion(white_matter)
-
-        streamline_generator = LocalTracking(csapeaks, stopping_criterion, seeds,
-                                             affine=affine, step_size=0.5)
-        streamlines = Streamlines(streamline_generator)
-
-        # ROI label = 2
-        cc_slice = labels == 2
-        cc_streamlines = utils.target(streamlines, affine, cc_slice)
-        cc_streamlines = Streamlines(cc_streamlines)
-
-        other_streamlines = utils.target(streamlines, affine, cc_slice,
-                                         include=False)
-        other_streamlines = Streamlines(other_streamlines)
-        assert len(other_streamlines) + len(cc_streamlines) == len(streamlines)
-        
-        M, grouping = utils.connectivity_matrix(cc_streamlines, affine,
-                                        labels.astype(np.uint8),
-                                        return_mapping=True,
-                                        mapping_as_streamlines=True)
-        plt.imshow(np.log1p(M), interpolation='nearest')
-        plt.savefig("connectivity.png")
-        
-        # All ROIs
-        M1, grouping1 = utils.connectivity_matrix(streamlines, affine,
-                                        labels.astype(np.uint8),
-                                        return_mapping=True,
-                                        mapping_as_streamlines=True)
-                                        
-        plt.imshow(np.log1p(M1), interpolation='nearest')
 
 
 def get_parameters(projects):
