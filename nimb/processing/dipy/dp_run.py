@@ -54,12 +54,12 @@ class RUNProcessingDIPY:
         label_fname = get_fnames('stanford_labels')
         self.labels = load_nifti_data(label_fname)
         for subj_id in self.db_dp:
-            affine, img, gtab = self.get_dwi_data(subj_id)
+            gtab = self.get_dwi_data(subj_id)
             self.save_plot(self.data[:,:,self.data.shape[2]//2, 0].T,
                             "data")
             self.create_mask()
-            csapeaks = self.get_fiber_direction(gtab)
-            self.make_csd()
+            csapeaks  = self.get_fiber_direction(gtab)
+            csd_peaks = self.make_csd()
             self.make_tensor()
             self.make_streamlines()
 
@@ -71,7 +71,28 @@ class RUNProcessingDIPY:
         bvals, bvecs = read_bvals_bvecs(self.db_dp[subj_id]["dwi"]["bval"][0],
                                         self.db_dp[subj_id]["dwi"]["bvec"][0]) #f_name.bval; f_name.bvec
         gtab = gradient_table(bvals, bvecs)
-        return affine, img, gtab
+        return gtab
+
+
+    def get_fiber_direction(self, gtab):
+        # Getting fiber direction
+        #     With cropped data
+        white_matter = binary_dilation((self.labels == 1) | (self.labels == 2))
+        csamodel     = shm.CsaOdfModel(gtab, 6)
+        csapeaks     = peaks.peaks_from_model(model=csamodel,
+                                          data=self.data,
+                                          sphere=peaks.default_sphere,
+                                          relative_peak_threshold=.8,
+                                          min_separation_angle=45,
+                                          mask=white_matter)
+        # csapeaks     = peaks.peaks_from_model(model=csamodel,
+        #                                   data=self.b0_mask,
+        #                                   sphere=peaks.default_sphere,
+        #                                   relative_peak_threshold=.8,
+        #                                   min_separation_angle=45,
+        #                                   mask=white_matter)
+        return csapeaks
+
 
 
     def create_mask(self):
@@ -92,20 +113,6 @@ class RUNProcessingDIPY:
                         "mask")
 
 
-    def get_fiber_direction(self, gtab):
-        # Getting fiber direction
-        #     With cropped data
-        white_matter = binary_dilation((self.labels == 1) | (self.labels == 2))
-        csamodel     = shm.CsaOdfModel(gtab, 6)
-        csapeaks     = peaks.peaks_from_model(model=csamodel,
-                                          data=self.b0_mask,
-                                          sphere=peaks.default_sphere,
-                                          relative_peak_threshold=.8,
-                                          min_separation_angle=45,
-                                          mask=white_matter)
-        return csapeaks
-
-
     def make_csd(self):
         """
             CSD
@@ -117,7 +124,7 @@ class RUNProcessingDIPY:
 
 
         #For the Constrained Spherical Deconvolution we need to estimate the response function and create a model.
-        response, ratio = auto_response(gtab, data, roi_radius=10, fa_thr=0.7)
+        response, ratio = auto_response(gtab, self.data, roi_radius=10, fa_thr=0.7)
         csd_model = ConstrainedSphericalDeconvModel(gtab, response)
 
         # Using peaks
@@ -130,17 +137,8 @@ class RUNProcessingDIPY:
                                      min_separation_angle=25,
                                      parallel=True)
         self.save_plot(csd_peaks.gfa[:,:,35].T, "csd")
+        return csd_peaks
 
-
-    def save_plot(self, data, f_name):
-        plt.subplot(1,2,1)
-        plt.pcolor(data, cmap = 'gray')
-        # plt.yticks(range(len(rois_labels)), rois_labels[0:]);
-        # plt.xticks(range(len(rois_labels)), rois_labels[0:], rotation=90);
-        plt.title(f'Title')
-        plt.colorbar();
-        img_name = os.path.join(self.output_loc, f_name)
-        plt.savefig(img_name)
 
 
     def make_tensor(self):
@@ -171,6 +169,7 @@ class RUNProcessingDIPY:
 
         # check image
         self.save_plot(fa2[:,:,35].T, "tensor")
+
 
     def make_streamlines(self):            
         # Generate streamlines
@@ -260,6 +259,18 @@ class RUNProcessingDIPY:
         plt.imshow(np.arctanh(M), interpolation='None', cmap='RdYlBu_r')
         plt.title('Parcellation correlation matrix')
         plt.colorbar();
+
+
+    def save_plot(self, data, f_name):
+        plt.subplot(1,2,1)
+        plt.pcolor(data, cmap = 'gray')
+        # plt.yticks(range(len(rois_labels)), rois_labels[0:]);
+        # plt.xticks(range(len(rois_labels)), rois_labels[0:], rotation=90);
+        plt.title(f'Title')
+        plt.colorbar();
+        img_name = os.path.join(self.output_loc, f_name)
+        plt.savefig(img_name)
+        plt.close()
 
 
 def get_parameters(projects):

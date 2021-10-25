@@ -32,6 +32,7 @@ def save_plot(data, f_name):
         plt.colorbar();
         img_name = os.path.join(output_loc, f_name)
         plt.savefig(img_name)
+        plt.close()
 
 
 class SampleConnDipy:
