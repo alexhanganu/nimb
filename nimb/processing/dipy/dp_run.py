@@ -53,46 +53,40 @@ class RUNProcessingDIPY:
         # Get the label from standfort atlas
         label_fname = get_fnames('stanford_labels')
         self.labels = load_nifti_data(label_fname)
-        for subj_id in self.db_dp:
-            gtab = self.get_dwi_data(subj_id)
+        for self.subj_id in self.db_dp:
+            gtab = self.get_dwi_data()
             self.save_plot(self.data[:,:,self.data.shape[2]//2, 0].T,
-                            "data")
-            self.create_mask()
-            csapeaks  = self.get_fiber_direction(gtab)
-            csd_peaks = self.make_csd()
-            self.make_tensor()
+                            f"{self.subj_id}_data")
+            csapeaks  = self.get_fiber_direction(gtab, self.data)
             self.make_streamlines()
+            # self.create_mask()
+            # csapeaks  = self.get_fiber_direction(gtab, self.b0_mask)
+            # csd_peaks = self.make_csd()
+            # self.make_tensor()
+            # self.make_streamlines_random()
 
 
-    def get_dwi_data(self, subj_id):
-        print(f"{LogLVL.lvl2}subject: {subj_id}")
-        self.data, affine, img = load_nifti(self.db_dp[subj_id]["dwi"]["dwi"][0],
+    def get_dwi_data(self):
+        print(f"{LogLVL.lvl2}subject: {self.subj_id}")
+        self.data, affine, img = load_nifti(self.db_dp[self.subj_id]["dwi"]["dwi"][0],
                                         return_img=True)
-        bvals, bvecs = read_bvals_bvecs(self.db_dp[subj_id]["dwi"]["bval"][0],
-                                        self.db_dp[subj_id]["dwi"]["bvec"][0]) #f_name.bval; f_name.bvec
+        bvals, bvecs = read_bvals_bvecs(self.db_dp[self.subj_id]["dwi"]["bval"][0],
+                                        self.db_dp[self.subj_id]["dwi"]["bvec"][0]) #f_name.bval; f_name.bvec
         gtab = gradient_table(bvals, bvecs)
         return gtab
 
 
-    def get_fiber_direction(self, gtab):
+    def get_fiber_direction(self, gtab, data_dir):
         # Getting fiber direction
-        #     With cropped data
         white_matter = binary_dilation((self.labels == 1) | (self.labels == 2))
         csamodel     = shm.CsaOdfModel(gtab, 6)
         csapeaks     = peaks.peaks_from_model(model=csamodel,
-                                          data=self.data,
+                                          data=data_dir,
                                           sphere=peaks.default_sphere,
                                           relative_peak_threshold=.8,
                                           min_separation_angle=45,
                                           mask=white_matter)
-        # csapeaks     = peaks.peaks_from_model(model=csamodel,
-        #                                   data=self.b0_mask,
-        #                                   sphere=peaks.default_sphere,
-        #                                   relative_peak_threshold=.8,
-        #                                   min_separation_angle=45,
-        #                                   mask=white_matter)
         return csapeaks
-
 
 
     def create_mask(self):
@@ -108,9 +102,9 @@ class RUNProcessingDIPY:
                                     autocrop=True,
                                     dilate=2)
         self.save_plot(self.b0_mask[:,:,self.b0_mask.shape[2]//2, 0].T,
-                        "b0_mask")
+                        f"{self.subj_id}_b0_mask")
         self.save_plot(mask[:,:,self.b0_mask.shape[2]//2].T,
-                        "mask")
+                        f"{self.subj_id}_mask")
 
 
     def make_csd(self):
@@ -136,7 +130,7 @@ class RUNProcessingDIPY:
                                      relative_peak_threshold=.5,
                                      min_separation_angle=25,
                                      parallel=True)
-        self.save_plot(csd_peaks.gfa[:,:,35].T, "csd")
+        self.save_plot(csd_peaks.gfa[:,:,35].T, f"{self.subj_id}csd")
         return csd_peaks
 
 
@@ -168,46 +162,55 @@ class RUNProcessingDIPY:
         fa = tensor_fit.fa
 
         # check image
-        self.save_plot(fa2[:,:,35].T, "tensor")
+        self.save_plot(fa2[:,:,35].T, f"{self.subj_id}tensor")
 
 
     def make_streamlines(self):            
+
+        affine = np.eye(4)
+        seeds = utils.seeds_from_mask(white_matter, affine, density=1)
+        stopping_criterion = BinaryStoppingCriterion(white_matter)
+        streamline_generator = LocalTracking(csapeaks, stopping_criterion, seeds,
+                                             affine=affine, step_size=0.5)
+        streamlines = Streamlines(streamline_generator)
+
+        # ROI label = 2
+        cc_slice = labels == 2
+        cc_streamlines = utils.target(streamlines, affine, cc_slice)
+        cc_streamlines = Streamlines(cc_streamlines)
+
+        other_streamlines = utils.target(streamlines, affine, cc_slice,
+                                         include=False)
+        other_streamlines = Streamlines(other_streamlines)
+        assert len(other_streamlines) + len(cc_streamlines) == len(streamlines)
+        
+        M, grouping = utils.connectivity_matrix(cc_streamlines, affine,
+                                        labels.astype(np.uint8),
+                                        return_mapping=True,
+                                        mapping_as_streamlines=True)
+        self.save_plot(np.log1p(M), f"{self.subj_id}_cc_connectivity")
+
+        
+        # All ROIs
+        M1, grouping1 = utils.connectivity_matrix(streamlines, affine,
+                                        labels.astype(np.uint8),
+                                        return_mapping=True,
+                                        mapping_as_streamlines=True)
+        self.save_plot(np.log1p(M1), f"{self.subj_id}_streamlies")
+
+
+    def make_streamlines_random(self):            
         # Generate streamlines
-
-        #    Using GFA of peaks
-
         # Define the “seed” (begin) the fiber tracking
-        seeds = utils.random_seeds_from_mask(fa > 0.3, seeds_count=1, affine=np.eye(4))
+        from dipy.direction import ProbabilisticDirectionGetter # slower
 
-        # faster but less exact (by visulizing)
-        stopping_criterion = ThresholdStoppingCriterion(fa, .1)
+        labels == 2
+        affine = np.eye(4)
+        seeds = utils.random_seeds_from_mask(fa > 0.3, seeds_count=1, affine=affine)
+        stopping_criterion_1  = ThresholdStoppingCriterion(fa, .1)
+        stopping_criterion_25 = ThresholdStoppingCriterion(fa, .25)
 
-        streamline_generator1 = LocalTracking(csd_peaks, stopping_criterion,
-                                             seeds, affine=np.eye(4),
-                                             step_size=0.5)
-        streamlines1 = Streamlines(streamline_generator1)
 
-        interactive = False
-        if has_fury:
-            # Prepare the display objects.
-            color = cmap.line_colors(streamlines1)
-
-            streamlines_actor = actor.line(streamlines1,
-                                           cmap.line_colors(streamlines1))
-
-            # Create the 3D display.
-            scene = window.Scene()
-            scene.add(streamlines_actor)
-
-            window.record(scene, out_path='streamline_1.png', size=(800, 800))
-            if interactive:
-                window.show(scene)
-                
-        # Using ProbabilisticDirectionGetter
-        # slower
-        from dipy.direction import ProbabilisticDirectionGetter
-
-        stopping_criterion = ThresholdStoppingCriterion(fa, .25)
         csd_fit = csd_model.fit(self.b0_mask, mask)
         prob_dg = ProbabilisticDirectionGetter.from_shcoeff(csd_fit.shm_coeff,
                                                             max_angle=30.,
@@ -215,55 +218,69 @@ class RUNProcessingDIPY:
         # detmax_dg = DeterministicMaximumDirectionGetter.from_shcoeff(
         #     csd_fit.shm_coeff, max_angle=30., sphere=peaks.default_sphere)
 
-        streamline_generator2 = LocalTracking(prob_dg, stopping_criterion,
-                                             seeds, affine=np.eye(4),
+        streamline_generator2 = LocalTracking(csd_peaks, stopping_criterion_1,
+                                             seeds, affine=affine, step_size=0.5) #faster, less exact
+        streamline_generator3 = LocalTracking(prob_dg, stopping_criterion_25,
+                                             seeds, affine=affine,
                                              step_size=0.5, max_cross=1)
+
         streamlines2 = Streamlines(streamline_generator2)
+        streamlines3 = Streamlines(streamline_generator3)
 
-        # View streamline
-        interactive = True
-        if has_fury:
-            # Prepare the display objects.
-            color = cmap.line_colors(streamlines2)
+        # # View streamline
 
-            streamlines_actor = actor.line(streamlines2,
-                                           cmap.line_colors(streamlines2))
 
-            # Create the 3D display.
-            scene = window.Scene()
-            scene.add(streamlines_actor)
+        # interactive = False
+        # if has_fury:
+        #     # Prepare the display objects.
+        #     color = cmap.line_colors(streamlines2)
 
-            window.record(scene, out_path='streamline_2.png', size=(800, 800))
-            if interactive:
-                window.show(scene)
+        #     streamlines_actor = actor.line(streamlines2,
+        #                                    cmap.line_colors(streamlines2))
+
+        #     # Create the 3D display.
+        #     scene = window.Scene()
+        #     scene.add(streamlines_actor)
+
+        #     window.record(scene, out_path='streamline_1.png', size=(800, 800))
+        #     if interactive:
+        #         window.show(scene)
+
+        # interactive = True
+        # if has_fury:
+        #     # Prepare the display objects.
+        #     color = cmap.line_colors(streamlines3)
+
+        #     streamlines_actor = actor.line(streamlines3,
+        #                                    cmap.line_colors(streamlines3))
+
+        #     # Create the 3D display.
+        #     scene = window.Scene()
+        #     scene.add(streamlines_actor)
+
+        #     window.record(scene, out_path='streamline_2.png', size=(800, 800))
+        #     if interactive:
+        #         window.show(scene)
                 
-        # it runs very slow -> should try other method 
-        affine = np.eye(4)
-        M, grouping = utils.connectivity_matrix(streamlines2, affine,
+        M2, grouping = utils.connectivity_matrix(streamlines2, affine,
                                                 labels.astype(np.uint8),
                                                 inclusive=True,
                                                 return_mapping=True,
                                                 mapping_as_streamlines=True)        
+        self.save_plot(np.log1p(M2), f"{self.subj_id}_streamlines_threshold1")
 
-        # -> How to evaluate if this matrix is generated correctly ?
-
-        import numpy as np
-        import matplotlib.pyplot as plt
-        plt.imshow(np.log1p(M), interpolation='nearest')
-        # plt.savefig("connectivity.png")
-
-
-        fig = plt.figure(figsize=(11,10))
-        M[:3, :] = 0
-        M[:, :3] = 0
-        plt.imshow(np.arctanh(M), interpolation='None', cmap='RdYlBu_r')
-        plt.title('Parcellation correlation matrix')
-        plt.colorbar();
+        M3, grouping = utils.connectivity_matrix(streamlines3, affine,
+                                                labels.astype(np.uint8),
+                                                inclusive=True,
+                                                return_mapping=True,
+                                                mapping_as_streamlines=True)        
+        self.save_plot(np.log1p(M3), f"{self.subj_id}_streamlines_threshold.25")
 
 
     def save_plot(self, data, f_name):
+        # fig = plt.figure(figsize=(11,10))
         plt.subplot(1,2,1)
-        plt.pcolor(data, cmap = 'gray')
+        plt.pcolor(data, cmap = 'gray') #interpolation='None', cmap='RdYlBu_r'
         # plt.yticks(range(len(rois_labels)), rois_labels[0:]);
         # plt.xticks(range(len(rois_labels)), rois_labels[0:], rotation=90);
         plt.title(f'Title')
