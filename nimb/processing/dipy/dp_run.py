@@ -57,8 +57,14 @@ class RUNProcessingDIPY:
             gtab = self.get_dwi_data()
             self.save_plot(self.data[:,:,self.data.shape[2]//2, 0].T,
                             f"{self.subj_id}_data")
-            csapeaks  = self.get_fiber_direction(gtab, self.data)
-            self.make_streamlines()
+            if self.data.ndim == self.labels.ndim:
+                csapeaks  = self.get_fiber_direction(gtab, self.data)
+            else:
+                print("There is an error: dimensions are different:")
+                print("dimensions of data:", self.data.ndim)
+                print("dimensions of labels:", self.labels.ndim)
+
+            # self.make_streamlines()
             # self.create_mask()
             # csapeaks  = self.get_fiber_direction(gtab, self.b0_mask)
             # csd_peaks = self.make_csd()
@@ -76,12 +82,12 @@ class RUNProcessingDIPY:
         return gtab
 
 
-    def get_fiber_direction(self, gtab, data_dir):
+    def get_fiber_direction(self, gtab, data):
         # Getting fiber direction
         white_matter = binary_dilation((self.labels == 1) | (self.labels == 2))
         csamodel     = shm.CsaOdfModel(gtab, 6)
         csapeaks     = peaks.peaks_from_model(model=csamodel,
-                                          data=data_dir,
+                                          data=data,
                                           sphere=peaks.default_sphere,
                                           relative_peak_threshold=.8,
                                           min_separation_angle=45,
