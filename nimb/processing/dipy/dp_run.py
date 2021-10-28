@@ -53,18 +53,25 @@ class RUNProcessingDIPY:
         # Get the label from standfort atlas
         label_fname = get_fnames('stanford_labels')
         self.labels = load_nifti_data(label_fname)
+
+        self.subj_id = "stanfordt1"
+        hardi_fname, hardi_bval_fname, hardi_bvec_fname = get_fnames('stanford_hardi')
+        t1_fname = get_fnames('stanford_t1')
+        data, affine, hardi_img = load_nifti(hardi_fname, return_img=True)
+        bvals, bvecs = read_bvals_bvecs(hardi_bval_fname, hardi_bvec_fname)
+        gtab = gradient_table(bvals, bvecs)
+        csapeaks, white_matter  = self.get_fiber_direction(gtab, self.data)
+        self.make_streamlines(csapeaks, white_matter)
+
+
+
+
         for self.subj_id in self.db_dp:
             gtab = self.get_dwi_data()
             self.save_plot(self.data[:,:,self.data.shape[2]//2, 0].T,
                             f"{self.subj_id}_data")
-            if self.data.ndim == self.labels.ndim:
-                csapeaks  = self.get_fiber_direction(gtab, self.data)
-            else:
-                print("There is an error: dimensions are different:")
-                print("dimensions of data:", self.data.ndim)
-                print("dimensions of labels:", self.labels.ndim)
-
-            # self.make_streamlines()
+            csapeaks, white_matter  = self.get_fiber_direction(gtab, self.data)
+            # self.make_streamlines(csapeaks, white_matter)
             # self.create_mask()
             # csapeaks  = self.get_fiber_direction(gtab, self.b0_mask)
             # csd_peaks = self.make_csd()
@@ -86,13 +93,15 @@ class RUNProcessingDIPY:
         # Getting fiber direction
         white_matter = binary_dilation((self.labels == 1) | (self.labels == 2))
         csamodel     = shm.CsaOdfModel(gtab, 6)
+        print("dimensions of data:", data.ndim)
+        print("dimensions of white matter:", white_matter.ndim)
         csapeaks     = peaks.peaks_from_model(model=csamodel,
                                           data=data,
                                           sphere=peaks.default_sphere,
                                           relative_peak_threshold=.8,
                                           min_separation_angle=45,
                                           mask=white_matter)
-        return csapeaks
+        return csapeaks, white_matter
 
 
     def create_mask(self):
@@ -171,7 +180,7 @@ class RUNProcessingDIPY:
         self.save_plot(fa2[:,:,35].T, f"{self.subj_id}tensor")
 
 
-    def make_streamlines(self):            
+    def make_streamlines(self, csapeaks, white_matter):
 
         affine = np.eye(4)
         seeds = utils.seeds_from_mask(white_matter, affine, density=1)
