@@ -57,13 +57,11 @@ class RUNProcessingDIPY:
         self.subj_id = "stanfordt1"
         hardi_fname, hardi_bval_fname, hardi_bvec_fname = get_fnames('stanford_hardi')
         t1_fname = get_fnames('stanford_t1')
-        data, affine, hardi_img = load_nifti(hardi_fname, return_img=True)
+        self.data, affine, hardi_img = load_nifti(hardi_fname, return_img=True)
         bvals, bvecs = read_bvals_bvecs(hardi_bval_fname, hardi_bvec_fname)
         gtab = gradient_table(bvals, bvecs)
         csapeaks, white_matter  = self.get_fiber_direction(gtab, self.data)
         self.make_streamlines(csapeaks, white_matter)
-
-
 
 
         for self.subj_id in self.db_dp:
