@@ -188,7 +188,8 @@ class RUNProcessingDIPY:
         streamlines = Streamlines(streamline_generator)
 
         # ROI label = 2
-        cc_slice = labels == 2
+
+        cc_slice = self.labels == 2
         cc_streamlines = utils.target(streamlines, affine, cc_slice)
         cc_streamlines = Streamlines(cc_streamlines)
 
@@ -198,7 +199,7 @@ class RUNProcessingDIPY:
         assert len(other_streamlines) + len(cc_streamlines) == len(streamlines)
         
         M, grouping = utils.connectivity_matrix(cc_streamlines, affine,
-                                        labels.astype(np.uint8),
+                                        self.labels.astype(np.uint8),
                                         return_mapping=True,
                                         mapping_as_streamlines=True)
         self.save_plot(np.log1p(M), f"{self.subj_id}_cc_connectivity")
@@ -206,7 +207,7 @@ class RUNProcessingDIPY:
         
         # All ROIs
         M1, grouping1 = utils.connectivity_matrix(streamlines, affine,
-                                        labels.astype(np.uint8),
+                                        self.labels.astype(np.uint8),
                                         return_mapping=True,
                                         mapping_as_streamlines=True)
         self.save_plot(np.log1p(M1), f"{self.subj_id}_streamlies")
@@ -217,7 +218,7 @@ class RUNProcessingDIPY:
         # Define the “seed” (begin) the fiber tracking
         from dipy.direction import ProbabilisticDirectionGetter # slower
 
-        labels == 2
+        self.labels == 2
         affine = np.eye(4)
         seeds = utils.random_seeds_from_mask(fa > 0.3, seeds_count=1, affine=affine)
         stopping_criterion_1  = ThresholdStoppingCriterion(fa, .1)
@@ -276,14 +277,14 @@ class RUNProcessingDIPY:
         #         window.show(scene)
                 
         M2, grouping = utils.connectivity_matrix(streamlines2, affine,
-                                                labels.astype(np.uint8),
+                                                self.labels.astype(np.uint8),
                                                 inclusive=True,
                                                 return_mapping=True,
                                                 mapping_as_streamlines=True)        
         self.save_plot(np.log1p(M2), f"{self.subj_id}_streamlines_threshold1")
 
         M3, grouping = utils.connectivity_matrix(streamlines3, affine,
-                                                labels.astype(np.uint8),
+                                                self.labels.astype(np.uint8),
                                                 inclusive=True,
                                                 return_mapping=True,
                                                 mapping_as_streamlines=True)        
