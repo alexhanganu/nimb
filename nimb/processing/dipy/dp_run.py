@@ -19,7 +19,7 @@ from dipy.direction import peaks
 from dipy.tracking import utils
 from dipy.tracking.local_tracking import LocalTracking
 from dipy.tracking.stopping_criterion import BinaryStoppingCriterion
-from dipy.tracking.streamline import Streamlines        
+from dipy.tracking.streamline import Streamlines
         
 
 class RUNProcessingDIPY:
@@ -91,8 +91,9 @@ class RUNProcessingDIPY:
         # Getting fiber direction
         white_matter = binary_dilation((self.labels == 1) | (self.labels == 2))
         csamodel     = shm.CsaOdfModel(gtab, 6)
-        print("dimensions of data:", data.ndim)
-        print("dimensions of white matter:", white_matter.ndim)
+        print("dimensions of data:", data.shape)
+        print("dimensions of white matter:", white_matter.shape)
+        #ERR: Mask is not the same shape as data
         csapeaks     = peaks.peaks_from_model(model=csamodel,
                                           data=data,
                                           sphere=peaks.default_sphere,
@@ -211,6 +212,46 @@ class RUNProcessingDIPY:
                                         return_mapping=True,
                                         mapping_as_streamlines=True)
         self.save_plot(np.log1p(M1), f"{self.subj_id}_streamlies")
+
+    def get_metrics(self):
+        """
+        https://dipy.org/documentation/1.0.0./examples_built/segment_clustering_metrics/
+        """
+        from dipy.segment.metric import AveragePointwiseEuclideanMetric
+        from dipy.segment.clustering import QuickBundles
+        # Create the instance of `AveragePointwiseEuclideanMetric` to use.
+        metric = AveragePointwiseEuclideanMetric()
+        qb = QuickBundles(threshold=10., metric=metric)
+        clusters = qb.cluster(streamlines)
+        """
+        https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3931231/
+        streamlines found to intersect with the yellow mask in the
+        corpus callosum (CC) using target. Then we used these streamlines
+        to investigate which areas of the cortex are connected using a
+        modified aparc+aseg.mgz label map created by FreeSurfer
+        (Fischl, 2012) of 89 regions. For a complete example of
+        how you can create your own connectivity matrices we recommend
+        reading the online tutorial on the topic from Dipy's websit
+        """
+        from dipy.tracking.metrics import length
+        lengths = [length(s) for s in streamlines]
+        lengths = np.array(lengths)
+        average_length = lengths.mean()
+        standard_deviation_lengths = lengths.std()
+        """
+        Many other metrics can be found in the metrics sub-module e.g.,
+        spline for spline interpolation, centre_of_mass, mean_curvature,
+        mean_orientation and the frenet_serret framework for curvature
+        and torsion calculations along a streamline.
+        https://dipy.org/documentation/1.4.1./reference/dipy.tracking/
+        https://dipy.org/documentation/1.1.1./reference/dipy.tracking/
+        """
+
+        import pandas as pd
+        df = pd.DataFram(lengths).T
+        df["average_length"] = average_length
+        df["std"] = standard_deviation_lengths
+        df.to_csv(os.path.join(self.output_loc, "lengths.csv"))
 
 
     def make_streamlines_random(self):            
