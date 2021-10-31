@@ -32,6 +32,7 @@ class RUNProcessingDIPY:
         self.NIMB_tmp   = vars_local['NIMB_PATHS']['NIMB_tmp']
         self.output_loc = vars_local['NIMB_PATHS']['NIMB_PROCESSED_DIPY']
         self.db_dp      = dict()
+        self.test       = all_vars.params.test
 
         self.get_subjects()
         self.run_connectivity_analysis()
@@ -53,6 +54,8 @@ class RUNProcessingDIPY:
         # Get the label from standfort atlas
         label_fname = get_fnames('stanford_labels')
         self.labels = load_nifti_data(label_fname)
+
+        print("test is:",self.test)
 
         self.subj_id = "stanfordt1"
         hardi_fname, hardi_bval_fname, hardi_bvec_fname = get_fnames('stanford_hardi')
@@ -93,13 +96,19 @@ class RUNProcessingDIPY:
         csamodel     = shm.CsaOdfModel(gtab, 6)
         print("dimensions of data:", data.shape)
         print("dimensions of white matter:", white_matter.shape)
-        #ERR: Mask is not the same shape as data
-        csapeaks     = peaks.peaks_from_model(model=csamodel,
-                                          data=data,
-                                          sphere=peaks.default_sphere,
-                                          relative_peak_threshold=.8,
-                                          min_separation_angle=45,
-                                          mask=white_matter)
+        if data.shape[:3] == white_matter.shape:
+            csapeaks     = peaks.peaks_from_model(model=csamodel,
+                                              data=data,
+                                              sphere=peaks.default_sphere,
+                                              relative_peak_threshold=.8,
+                                              min_separation_angle=45,
+                                              mask=white_matter)
+        else:
+            print(f"{LogLVL.lvl1}ERR: dimensions are different:")
+            print(f"{LogLVL.lvl2} data shape:         {data.shape}")
+            print(f"{LogLVL.lvl2} white matter shape: {white_matter.shape}")
+            print(f"{LogLVL.lvl1}ERR: cannot continue")
+            csapeaks = none
         return csapeaks, white_matter
 
 
@@ -358,6 +367,11 @@ def get_parameters(projects):
         help="names of projects located in credentials_path.py/nimb/projects.json -> PROJECTS",
     )
 
+    parser.add_argument(
+        "-test", required=False,
+        action='store_true',
+        help="if used a test will be run initially on the default subject",
+    )
 
     params = parser.parse_args()
     return params
