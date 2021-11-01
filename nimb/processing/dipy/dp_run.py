@@ -34,8 +34,22 @@ class RUNProcessingDIPY:
         self.db_dp      = dict()
         self.test       = all_vars.params.test
 
-        self.get_subjects()
-        self.run_connectivity_analysis()
+        self.run()
+
+
+    def run(self):
+        label_fname = get_fnames('stanford_labels')
+        self.labels = load_nifti_data(label_fname)
+        csapeaks = None
+        if self.test:
+            print(f"{LogLVL.lvl1}testing is activated")
+            gtab = self.run_test_subject()
+            self.run_connectivity_analysis(gtab)
+        else:
+            self.get_subjects()
+            for self.subj_id in self.db_dp:
+                gtab = self.get_dwi_data()
+                self.run_connectivity_analysis(gtab)
 
 
     def get_subjects(self):
@@ -49,35 +63,27 @@ class RUNProcessingDIPY:
             print(f'{LogLVL.lvl1}ERR: file with subjects is MISSING')
 
 
-    def run_connectivity_analysis(self):
+    def run_connectivity_analysis(self, gtab):
         print(f'{LogLVL.lvl1}performing connectivity analysis with stanford atlas')
         # Get the label from standfort atlas
-        label_fname = get_fnames('stanford_labels')
-        self.labels = load_nifti_data(label_fname)
+        csapeaks, white_matter  = self.get_fiber_direction(gtab, self.data)
+        if csapeaks:
+            print("ok for csapeaks")
+            self.make_streamlines(csapeaks, white_matter)
+            # self.create_mask()
+            # csapeaks  = self.get_fiber_direction(gtab, self.b0_mask)
+            # csd_peaks = self.make_csd()
+            # self.make_tensor()
+            # self.make_streamlines_random()
 
-        print("test is:",self.test)
 
+    def run_test_subject(self):
         self.subj_id = "stanfordt1"
         hardi_fname, hardi_bval_fname, hardi_bvec_fname = get_fnames('stanford_hardi')
         t1_fname = get_fnames('stanford_t1')
         self.data, affine, hardi_img = load_nifti(hardi_fname, return_img=True)
         bvals, bvecs = read_bvals_bvecs(hardi_bval_fname, hardi_bvec_fname)
         gtab = gradient_table(bvals, bvecs)
-        csapeaks, white_matter  = self.get_fiber_direction(gtab, self.data)
-        self.make_streamlines(csapeaks, white_matter)
-
-
-        for self.subj_id in self.db_dp:
-            gtab = self.get_dwi_data()
-            self.save_plot(self.data[:,:,self.data.shape[2]//2, 0].T,
-                            f"{self.subj_id}_data")
-            csapeaks, white_matter  = self.get_fiber_direction(gtab, self.data)
-            # self.make_streamlines(csapeaks, white_matter)
-            # self.create_mask()
-            # csapeaks  = self.get_fiber_direction(gtab, self.b0_mask)
-            # csd_peaks = self.make_csd()
-            # self.make_tensor()
-            # self.make_streamlines_random()
 
 
     def get_dwi_data(self):
@@ -87,6 +93,8 @@ class RUNProcessingDIPY:
         bvals, bvecs = read_bvals_bvecs(self.db_dp[self.subj_id]["dwi"]["bval"][0],
                                         self.db_dp[self.subj_id]["dwi"]["bvec"][0]) #f_name.bval; f_name.bvec
         gtab = gradient_table(bvals, bvecs)
+        self.save_plot(self.data[:,:,self.data.shape[2]//2, 0].T,
+                        f"{self.subj_id}_data")        
         return gtab
 
 
@@ -94,8 +102,6 @@ class RUNProcessingDIPY:
         # Getting fiber direction
         white_matter = binary_dilation((self.labels == 1) | (self.labels == 2))
         csamodel     = shm.CsaOdfModel(gtab, 6)
-        print("dimensions of data:", data.shape)
-        print("dimensions of white matter:", white_matter.shape)
         if data.shape[:3] == white_matter.shape:
             csapeaks     = peaks.peaks_from_model(model=csamodel,
                                               data=data,
@@ -108,7 +114,7 @@ class RUNProcessingDIPY:
             print(f"{LogLVL.lvl2} data shape:         {data.shape}")
             print(f"{LogLVL.lvl2} white matter shape: {white_matter.shape}")
             print(f"{LogLVL.lvl1}ERR: cannot continue")
-            csapeaks = none
+            csapeaks = None
         return csapeaks, white_matter
 
 
@@ -155,7 +161,6 @@ class RUNProcessingDIPY:
                                      parallel=True)
         self.save_plot(csd_peaks.gfa[:,:,35].T, f"{self.subj_id}csd")
         return csd_peaks
-
 
 
     def make_tensor(self):
@@ -352,6 +357,9 @@ class RUNProcessingDIPY:
         img_name = os.path.join(self.output_loc, f_name)
         plt.savefig(img_name)
         plt.close()
+
+
+
 
 
 def get_parameters(projects):
