@@ -7,20 +7,22 @@ adjusted: Alexandru Hanganu 20211001:
 import os
 
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 from dipy.data import get_fnames
 from dipy.io.image import load_nifti_data, load_nifti, save_nifti
-from dipy.segment.mask import median_otsu
 from dipy.io.gradients import read_bvals_bvecs
 from dipy.core.gradients import gradient_table
 from scipy.ndimage.morphology import binary_dilation
 from dipy.reconst import shm
 from dipy.direction import peaks
 from dipy.tracking import utils
-from dipy.tracking.local_tracking import LocalTracking
 from dipy.tracking.stopping_criterion import BinaryStoppingCriterion
+from dipy.tracking.local_tracking import LocalTracking
 from dipy.tracking.streamline import Streamlines
-        
+from dipy.tracking.metrics import length
+from dipy.segment.mask import median_otsu
+
 
 class RUNProcessingDIPY:
 
@@ -40,6 +42,15 @@ class RUNProcessingDIPY:
     def run(self):
         label_fname = get_fnames('stanford_labels')
         self.labels = load_nifti_data(label_fname)
+        """
+        labels are the image aparc-reduced.nii.gz, which is a modified version
+        of FreeSurfer label map aparc+aseg.mgz.
+        The corpus callosum region is a combination of FreeSurfer labels 251-255
+        Remaining FreeSurfer labels were re-mapped and reduced
+        so that they lie between 0 and 88.
+        To see the FreeSurfer region, label and name, represented by each value
+        see label_info.txt in ~/.dipy/stanford_hardi.
+        """
         csapeaks = None
         if self.test:
             print(f"{LogLVL.lvl1}testing is activated")
@@ -64,7 +75,7 @@ class RUNProcessingDIPY:
 
 
     def run_connectivity_analysis(self, gtab):
-        print(f'{LogLVL.lvl1}performing connectivity analysis with stanford atlas')
+        print(f'{LogLVL.lvl1}connectivity analysis with stanford atlas, is being performed')
         # Get the label from standfort atlas
         csapeaks, white_matter  = self.get_fiber_direction(gtab, self.data)
         if csapeaks:
@@ -78,30 +89,31 @@ class RUNProcessingDIPY:
 
 
     def run_test_subject(self):
-        self.subj_id = "stanfordt1"
+        self.subj_id = "stanford_hardi"
         hardi_fname, hardi_bval_fname, hardi_bvec_fname = get_fnames('stanford_hardi')
-        t1_fname = get_fnames('stanford_t1')
         self.data, affine, hardi_img = load_nifti(hardi_fname, return_img=True)
         bvals, bvecs = read_bvals_bvecs(hardi_bval_fname, hardi_bvec_fname)
         gtab = gradient_table(bvals, bvecs)
+        return gtab
 
 
     def get_dwi_data(self):
         print(f"{LogLVL.lvl2}subject: {self.subj_id}")
         self.data, affine, img = load_nifti(self.db_dp[self.subj_id]["dwi"]["dwi"][0],
-                                        return_img=True)
+                                            return_img=True)
         bvals, bvecs = read_bvals_bvecs(self.db_dp[self.subj_id]["dwi"]["bval"][0],
-                                        self.db_dp[self.subj_id]["dwi"]["bvec"][0]) #f_name.bval; f_name.bvec
+                                        self.db_dp[self.subj_id]["dwi"]["bvec"][0])
+                                        #f_name.bval; f_name.bvec
         gtab = gradient_table(bvals, bvecs)
         self.save_plot(self.data[:,:,self.data.shape[2]//2, 0].T,
-                        f"{self.subj_id}_data")        
+                        f"{self.subj_id}_data")
         return gtab
 
 
     def get_fiber_direction(self, gtab, data):
         # Getting fiber direction
-        white_matter = binary_dilation((self.labels == 1) | (self.labels == 2))
         csamodel     = shm.CsaOdfModel(gtab, 6)
+        white_matter = binary_dilation((self.labels == 1) | (self.labels == 2))
         if data.shape[:3] == white_matter.shape:
             csapeaks     = peaks.peaks_from_model(model=csamodel,
                                               data=data,
@@ -194,107 +206,233 @@ class RUNProcessingDIPY:
 
 
     def make_streamlines(self, csapeaks, white_matter):
-
         affine = np.eye(4)
         seeds = utils.seeds_from_mask(white_matter, affine, density=1)
         stopping_criterion = BinaryStoppingCriterion(white_matter)
         streamline_generator = LocalTracking(csapeaks, stopping_criterion, seeds,
                                              affine=affine, step_size=0.5)
         streamlines = Streamlines(streamline_generator)
+        M, grouping = utils.connectivity_matrix(streamlines, affine,
+                                                self.labels.astype(np.uint8),
+                                                return_mapping=True,
+                                                mapping_as_streamlines=True)
+        self.save_plot(np.log1p(M),
+                    f"{self.subj_id}_connectivity_all_rois")
+        self.save_metrics(streamlines)
 
-        # ROI label = 2
-
-        cc_slice = self.labels == 2
-        cc_streamlines = utils.target(streamlines, affine, cc_slice)
-        cc_streamlines = Streamlines(cc_streamlines)
-
-        other_streamlines = utils.target(streamlines, affine, cc_slice,
-                                         include=False)
-        other_streamlines = Streamlines(other_streamlines)
-        assert len(other_streamlines) + len(cc_streamlines) == len(streamlines)
-        
-        M, grouping = utils.connectivity_matrix(cc_streamlines, affine,
-                                        self.labels.astype(np.uint8),
-                                        return_mapping=True,
-                                        mapping_as_streamlines=True)
-        self.save_plot(np.log1p(M), f"{self.subj_id}_cc_connectivity")
-
-        
-        # All ROIs
-        M1, grouping1 = utils.connectivity_matrix(streamlines, affine,
-                                        self.labels.astype(np.uint8),
-                                        return_mapping=True,
-                                        mapping_as_streamlines=True)
-        self.save_plot(np.log1p(M1), f"{self.subj_id}_streamlies")
-
-    def get_metrics(self):
-        """
-        https://dipy.org/documentation/1.0.0./examples_built/segment_clustering_metrics/
-        """
-        from dipy.segment.metric import AveragePointwiseEuclideanMetric
-        from dipy.segment.clustering import QuickBundles
-        # Create the instance of `AveragePointwiseEuclideanMetric` to use.
-        metric = AveragePointwiseEuclideanMetric()
-        qb = QuickBundles(threshold=10., metric=metric)
-        clusters = qb.cluster(streamlines)
         """
         https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3931231/
         streamlines found to intersect with the yellow mask in the
-        corpus callosum (CC) using target. Then we used these streamlines
+        corpus callosum (CC) using target.
+        Then we used these streamlines
         to investigate which areas of the cortex are connected using a
         modified aparc+aseg.mgz label map created by FreeSurfer
-        (Fischl, 2012) of 89 regions. For a complete example of
-        how you can create your own connectivity matrices we recommend
-        reading the online tutorial on the topic from Dipy's websit
+        (Fischl, 2012) of 89 regions.
+        https://dipy.org/documentation/1.0.0./examples_built/segment_clustering_metrics/
         """
-        from dipy.tracking.metrics import length
+        # # Using streamlines per ROI
+        # # Corpus callosum
+        # cc_slice = self.labels == 2
+        # cc_streamlines    = utils.target(streamlines, affine, cc_slice)
+        # cc_streamlines    = Streamlines(cc_streamlines)
+        # M_cc, grouping_cc = utils.connectivity_matrix(cc_streamlines, affine,
+        #                                             self.labels.astype(np.uint8),
+        #                                             return_mapping=True,
+        #                                             mapping_as_streamlines=True)
+        # self.save_plot(np.log1p(M_cc),
+        #             f"{self.subj_id}_corpuscallosum_connectivity")
+
+        # # Left_Right_SuperiorFrontal
+        # lr_superiorfrontal_track = grouping[11, 54]
+        # shape     = labels.shape
+        # dm        = utils.density_map(lr_superiorfrontal_track, affine, shape)
+        # lr_sf_trk = Streamlines(lr_superiorfrontal_track)
+
+
+    def save_metrics(self, streamlines):
+        """
+        script to extract metrics
+        and save to a tabular file
+        """
+        # saving lengths of streamlines
         lengths = [length(s) for s in streamlines]
         lengths = np.array(lengths)
         average_length = lengths.mean()
         standard_deviation_lengths = lengths.std()
+
         """
-        Many other metrics can be found in the metrics sub-module e.g.,
-        spline for spline interpolation, centre_of_mass, mean_curvature,
-        mean_orientation and the frenet_serret framework for curvature
-        and torsion calculations along a streamline.
+        spline for spline interpolation
+        centre_of_mass
+        mean_curvature,
+        mean_orientation
+        the frenet_serret framework for curvature
+        torsion calculations along a streamline.
         https://dipy.org/documentation/1.4.1./reference/dipy.tracking/
         https://dipy.org/documentation/1.1.1./reference/dipy.tracking/
         """
+        # Saving to tabular file
 
-        import pandas as pd
         df = pd.DataFram(lengths).T
         df["average_length"] = average_length
         df["std"] = standard_deviation_lengths
         df.to_csv(os.path.join(self.output_loc, "lengths.csv"))
 
 
-    def make_streamlines_random(self):            
-        # Generate streamlines
-        # Define the “seed” (begin) the fiber tracking
-        from dipy.direction import ProbabilisticDirectionGetter # slower
 
-        self.labels == 2
-        affine = np.eye(4)
-        seeds = utils.random_seeds_from_mask(fa > 0.3, seeds_count=1, affine=affine)
-        stopping_criterion_1  = ThresholdStoppingCriterion(fa, .1)
-        stopping_criterion_25 = ThresholdStoppingCriterion(fa, .25)
+        # from dipy.segment.metric import AveragePointwiseEuclideanMetric
+        # from dipy.segment.clustering import QuickBundles
+        # # Create the instance of `AveragePointwiseEuclideanMetric` to use.
+        # metric = AveragePointwiseEuclideanMetric()
+        # qb = QuickBundles(threshold=10., metric=metric)
+        # clusters = qb.cluster(streamlines)
+        """
+        chk:
+        https://nipype.readthedocs.io/en/latest/users/examples/dmri_connectivity_advanced.html
+        """
 
 
-        csd_fit = csd_model.fit(self.b0_mask, mask)
-        prob_dg = ProbabilisticDirectionGetter.from_shcoeff(csd_fit.shm_coeff,
-                                                            max_angle=30.,
-                                                            sphere=peaks.default_sphere)
-        # detmax_dg = DeterministicMaximumDirectionGetter.from_shcoeff(
-        #     csd_fit.shm_coeff, max_angle=30., sphere=peaks.default_sphere)
+    def save_plot(self, data, f_name):
+        # fig = plt.figure(figsize=(11,10))
+        plt.subplot(1,2,1)
+        plt.pcolor(data, cmap = 'gray') #interpolation='None', cmap='RdYlBu_r'
+        # plt.yticks(range(len(rois_labels)), rois_labels[0:]);
+        # plt.xticks(range(len(rois_labels)), rois_labels[0:], rotation=90);
+        plt.title(f'Title')
+        plt.colorbar();
+        img_name = os.path.join(self.output_loc, f_name)
+        plt.savefig(img_name)
+        plt.close()
 
-        streamline_generator2 = LocalTracking(csd_peaks, stopping_criterion_1,
-                                             seeds, affine=affine, step_size=0.5) #faster, less exact
-        streamline_generator3 = LocalTracking(prob_dg, stopping_criterion_25,
-                                             seeds, affine=affine,
-                                             step_size=0.5, max_cross=1)
+    # def get_label_indices(self):
+    #     dipy_label, freesurfef_label, freesurfer_name
+    #     dipy_fs_labels = {
+    #         1, 2, "Left-Cerebral-White-Matter"
+    #         1, 41, "Right-Cerebral-White-Matter"
+    #         1, 77, "WM-hypointensities"
+    #         1, 85, "Optic-Chiasm"
+    #         1, 1004, "ctx-lh-corpuscallosum"
+    #         1, 2004, "ctx-rh-corpuscallosum"
+    #         2, 251, "CC_Posterior"
+    #         2, 252, "CC_Mid_Posterior"
+    #         2, 253, "CC_Central"
+    #         2, 254, "CC_Mid_Anterior"
+    #         2, 255, "CC_Anterior"
+    #         3, 1032, "ctx-lh-frontalpole"
+    #         4, 1014, "ctx-lh-medialorbitofrontal"
+    #         5, 1012, "ctx-lh-lateralorbitofrontal"
+    #         6, 1019, "ctx-lh-parsorbitalis"
+    #         7, 1020, "ctx-lh-parstriangularis"
+    #         8, 1018, "ctx-lh-parsopercularis"
+    #         9, 1027, "ctx-lh-rostralmiddlefrontal"
+    #         10, 1003, "ctx-lh-caudalmiddlefrontal"
+    #         11, 1028, "ctx-lh-superiorfrontal"
+    #         12, 1024, "ctx-lh-precentral"
+    #         13, 1017, "ctx-lh-paracentral"
+    #         14, 1035, "ctx-lh-insula"
+    #         15, 1026, "ctx-lh-rostralanteriorcingulate"
+    #         16, 1002, "ctx-lh-caudalanteriorcingulate"
+    #         17, 1023, "ctx-lh-posteriorcingulate"
+    #         18, 1010, "ctx-lh-isthmuscingulate"
+    #         19, 1006, "ctx-lh-entorhinal"
+    #         20, 1007, "ctx-lh-fusiform"
+    #         21, 1016, "ctx-lh-parahippocampal"
+    #         22, 1009, "ctx-lh-inferiortemporal"
+    #         23, 1033, "ctx-lh-temporalpole"
+    #         24, 1015, "ctx-lh-middletemporal"
+    #         25, 1030, "ctx-lh-superiortemporal"
+    #         26, 1034, "ctx-lh-transversetemporal"
+    #         27, 1001, "ctx-lh-bankssts"
+    #         28, 1022, "ctx-lh-postcentral"
+    #         29, 1031, "ctx-lh-supramarginal"
+    #         30, 1008, "ctx-lh-inferiorparietal"
+    #         31, 1029, "ctx-lh-superiorparietal"
+    #         32, 1025, "ctx-lh-precuneus"
+    #         33, 1005, "ctx-lh-cuneus"
+    #         34, 1011, "ctx-lh-lateraloccipital"
+    #         35, 1021, "ctx-lh-pericalcarine"
+    #         36, 1013, "ctx-lh-lingual"
+    #         37, 11, "Left-Caudate"
+    #         38, 12, "Left-Putamen"
+    #         39, 13, "Left-Pallidum"
+    #         40, 9, "Left-Thalamus"
+    #         41, 10, "Left-Thalamus-Proper"
+    #         42, 17, "Left-Hippocampus"
+    #         43, 18, "Left-Amygdala"
+    #         44, 26, "Left-Accumbens-area"
+    #         45, 28, "Left-VentralDC"
+    #         46, 2032, "ctx-rh-frontalpole"
+    #         47, 2014, "ctx-rh-medialorbitofrontal"
+    #         48, 2012, "ctx-rh-lateralorbitofrontal"
+    #         49, 2019, "ctx-rh-parsorbitalis"
+    #         50, 2020, "ctx-rh-parstriangularis"
+    #         51, 2018, "ctx-rh-parsopercularis"
+    #         52, 2027, "ctx-rh-rostralmiddlefrontal"
+    #         53, 2003, "ctx-rh-caudalmiddlefrontal"
+    #         54, 2028, "ctx-rh-superiorfrontal"
+    #         55, 2024, "ctx-rh-precentral"
+    #         56, 2017, "ctx-rh-paracentral"
+    #         57, 2035, "ctx-rh-insula"
+    #         58, 2026, "ctx-rh-rostralanteriorcingulate"
+    #         59, 2002, "ctx-rh-caudalanteriorcingulate"
+    #         60, 2023, "ctx-rh-posteriorcingulate"
+    #         61, 2010, "ctx-rh-isthmuscingulate"
+    #         62, 2006, "ctx-rh-entorhinal"
+    #         63, 2007, "ctx-rh-fusiform"
+    #         64, 2016, "ctx-rh-parahippocampal"
+    #         65, 2009, "ctx-rh-inferiortemporal"
+    #         66, 2033, "ctx-rh-temporalpole"
+    #         67, 2015, "ctx-rh-middletemporal"
+    #         68, 2030, "ctx-rh-superiortemporal"
+    #         69, 2034, "ctx-rh-transversetemporal"
+    #         70, 2001, "ctx-rh-bankssts"
+    #         71, 2022, "ctx-rh-postcentral"
+    #         72, 2031, "ctx-rh-supramarginal"
+    #         73, 2008, "ctx-rh-inferiorparietal"
+    #         74, 2029, "ctx-rh-superiorparietal"
+    #         75, 2025, "ctx-rh-precuneus"
+    #         76, 2005, "ctx-rh-cuneus"
+    #         77, 2011, "ctx-rh-lateraloccipital"
+    #         78, 2021, "ctx-rh-pericalcarine"
+    #         79, 2013, "ctx-rh-lingual"
+    #         80, 50, "Right-Caudate"
+    #         81, 51, "Right-Putamen"
+    #         82, 52, "Right-Pallidum"
+    #         83, 48, "Right-Thalamus"
+    #         84, 49, "Right-Thalamus-Proper"
+    #         85, 53, "Right-Hippocampus"
+    #         86, 54, "Right-Amygdala"
+    #         87, 58, "Right-Accumbens-area"
+    #         88, 60, "Right-VentralDC"
+    #     }
 
-        streamlines2 = Streamlines(streamline_generator2)
-        streamlines3 = Streamlines(streamline_generator3)
+
+    # def make_streamlines_random(self):
+    #     # Generate streamlines
+    #     # Define the “seed” (begin) the fiber tracking
+    #     from dipy.direction import ProbabilisticDirectionGetter # slower
+
+    #     self.labels == 2
+    #     affine = np.eye(4)
+    #     seeds = utils.random_seeds_from_mask(fa > 0.3, seeds_count=1, affine=affine)
+    #     stopping_criterion_1  = ThresholdStoppingCriterion(fa, .1)
+    #     stopping_criterion_25 = ThresholdStoppingCriterion(fa, .25)
+
+
+    #     csd_fit = csd_model.fit(self.b0_mask, mask)
+    #     prob_dg = ProbabilisticDirectionGetter.from_shcoeff(csd_fit.shm_coeff,
+    #                                                         max_angle=30.,
+    #                                                         sphere=peaks.default_sphere)
+    #     # detmax_dg = DeterministicMaximumDirectionGetter.from_shcoeff(
+    #     #     csd_fit.shm_coeff, max_angle=30., sphere=peaks.default_sphere)
+
+    #     streamline_generator2 = LocalTracking(csd_peaks, stopping_criterion_1,
+    #                                          seeds, affine=affine, step_size=0.5) #faster, less exact
+    #     streamline_generator3 = LocalTracking(prob_dg, stopping_criterion_25,
+    #                                          seeds, affine=affine,
+    #                                          step_size=0.5, max_cross=1)
+
+    #     streamlines2 = Streamlines(streamline_generator2)
+    #     streamlines3 = Streamlines(streamline_generator3)
 
         # # View streamline
 
@@ -330,34 +468,20 @@ class RUNProcessingDIPY:
         #     window.record(scene, out_path='streamline_2.png', size=(800, 800))
         #     if interactive:
         #         window.show(scene)
-                
-        M2, grouping = utils.connectivity_matrix(streamlines2, affine,
-                                                self.labels.astype(np.uint8),
-                                                inclusive=True,
-                                                return_mapping=True,
-                                                mapping_as_streamlines=True)        
-        self.save_plot(np.log1p(M2), f"{self.subj_id}_streamlines_threshold1")
 
-        M3, grouping = utils.connectivity_matrix(streamlines3, affine,
-                                                self.labels.astype(np.uint8),
-                                                inclusive=True,
-                                                return_mapping=True,
-                                                mapping_as_streamlines=True)        
-        self.save_plot(np.log1p(M3), f"{self.subj_id}_streamlines_threshold.25")
+        # M2, grouping = utils.connectivity_matrix(streamlines2, affine,
+        #                                         self.labels.astype(np.uint8),
+        #                                         inclusive=True,
+        #                                         return_mapping=True,
+        #                                         mapping_as_streamlines=True)
+        # self.save_plot(np.log1p(M2), f"{self.subj_id}_streamlines_threshold1")
 
-
-    def save_plot(self, data, f_name):
-        # fig = plt.figure(figsize=(11,10))
-        plt.subplot(1,2,1)
-        plt.pcolor(data, cmap = 'gray') #interpolation='None', cmap='RdYlBu_r'
-        # plt.yticks(range(len(rois_labels)), rois_labels[0:]);
-        # plt.xticks(range(len(rois_labels)), rois_labels[0:], rotation=90);
-        plt.title(f'Title')
-        plt.colorbar();
-        img_name = os.path.join(self.output_loc, f_name)
-        plt.savefig(img_name)
-        plt.close()
-
+        # M3, grouping = utils.connectivity_matrix(streamlines3, affine,
+        #                                         self.labels.astype(np.uint8),
+        #                                         inclusive=True,
+        #                                         return_mapping=True,
+        #                                         mapping_as_streamlines=True)
+        # self.save_plot(np.log1p(M3), f"{self.subj_id}_streamlines_threshold.25")
 
 
 
