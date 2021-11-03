@@ -41,11 +41,11 @@ class SampleConnDipy:
         """this is a sample class
             to check the working steps as defined in the cours
         """
-        hardi_fname, hardi_bval_fname, hardi_bvec_fname = get_fnames('stanford_hardi')
         label_fname = get_fnames('stanford_labels')
-        t1_fname = get_fnames('stanford_t1')
+        labels      = load_nifti_data(label_fname)
+        hardi_fname, hardi_bval_fname, hardi_bvec_fname = get_fnames('stanford_hardi')
+        # t1_fname = get_fnames('stanford_t1')
         data, affine, hardi_img = load_nifti(hardi_fname, return_img=True) 
-        labels = load_nifti_data(label_fname)
         bvals, bvecs = read_bvals_bvecs(hardi_bval_fname, hardi_bvec_fname)
         gtab = gradient_table(bvals, bvecs)
         
