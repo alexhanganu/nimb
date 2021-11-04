@@ -1,14 +1,16 @@
 """
         - local.json - def-supervisor is not changed in the SBATCH command
 """
-import os, sys
+import os
 import shutil
+from sys import platform
+
 from setup.get_vars import Get_Vars
 from distribution.utilities import is_writable_directory, is_ENV_defined
 from distribution.setup_miniconda import (setup_miniconda, is_miniconda_installed,
                                         is_conda_module_installed, check_that_modules_are_installed)
 from distribution.utilities import ErrorMessages, makedir_ifnot_exist
-from sys import platform
+from distribution.distribution_definitions import DEFAULT
 from setup.interminal_setup import get_yes_no
 
 
@@ -180,7 +182,7 @@ class DistributionReady():
         ready = False
         if not os.path.exists(os.path.join(self.locations['local']['FREESURFER']['FREESURFER_HOME'], "MCRv84")):
             from .setup_freesurfer import SETUP_FREESURFER
-            SETUP_FREESURFER(self.locations)
+            SETUP_FREESURFER(self.locations, DEFAULT)
             ready = True
         else:
             ready =  True

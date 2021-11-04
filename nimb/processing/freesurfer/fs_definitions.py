@@ -28,7 +28,8 @@ class FilePerFSVersion:
             'qcache'    :{'7':'recon-all.log',                       '6':'recon-all.log'},
             'bs'        :{'7':'brainstem-substructures-T1.log',      '6':'brainstem-structures.log'},
             'hip'       :{'7':'hippocampal-subfields-T1.log',        '6':'hippocampal-subfields-T1.log'},
-            'tha'       :{'7':'thalamic-nuclei-mainFreeSurferT1.log','6':''}
+            'tha'       :{'7':'thalamic-nuclei-mainFreeSurferT1.log','6':''},
+            'hypotha'   :{'7':'hypothalamic_subunits_volumes.log',   '6':''}
                           }
         self.stats_files = {
             'stats': {
@@ -40,7 +41,8 @@ class FilePerFSVersion:
                 'bs'     :{'7':'brainstem.v12.stats',             '6':'brainstem.v10.stats',},
                 'hip'    :{'7':'hipposubfields.T1.v21.stats',     '6':'hipposubfields.T1.v10.stats',},
                 'amy'    :{'7':'amygdalar-nuclei.T1.v21.stats',   '6':'',},
-                'tha'    :{'7':'thalamic-nuclei.v12.T1.stats',    '6':'',}
+                'tha'    :{'7':'thalamic-nuclei.v12.T1.stats',    '6':'',},
+                'hypotha':{'7':'hypothalamic_subunits_volumes.v1.stats',    '6':'',}
                 },
             'stats_old': {
                 'bs'   :{'7':'aseg.brainstem.volume.stats',       '6':'aseg.brainstem.volume.stats',},
@@ -138,7 +140,7 @@ processes_recon   = ["autorecon1",
                      "autorecon2",
                      "autorecon3",
                      "qcache"]
-processes_subcort = ["brstem","hip","tha"]
+processes_subcort = ["brstem","hip","tha","hypotha"]
 process_order = ["registration",]+processes_recon+processes_subcort
 
 
@@ -154,6 +156,7 @@ suggested_times = {
         'brstem'      :'03:00:00',
         'hip'         :'03:00:00',
         'tha'         :'03:00:00',
+        'hypotha'     :'03:00:00',
         'masks'       :'12:00:00',
         'archiving'   :'01:00:00',
         }
@@ -177,7 +180,7 @@ files_created = {
 
 
 all_data = {
-    'atlases':['bs','hip','amy','tha','Subcort', 'CortexDK','CortexDKT','CortexDS', 'WMDK'],
+    'atlases':['bs','hip','amy','tha','hypotha','Subcort', 'CortexDK','CortexDKT','CortexDS', 'WMDK'],
     "atlas_params" : {
                 'bs' : {
                     'atlas_param':'bs',
@@ -206,6 +209,7 @@ all_data = {
                 'WMDK' : {
                     'atlas_param':'WMDK',
                     'atlas_name' :'White Matter subcortical segmentations based on Desikan atlas'},
+                'hypotha':{"atlas_param":"hypotha", "atlas_name": "Hypothalamus segmentations"},
                },
     'bs':{
         'two_hemi':False,
@@ -235,6 +239,12 @@ all_data = {
         'parameters' : {'Vol':'Vol'},
         'header': ['AV', 'CeM', 'CL', 'CM', 'LD', 'LGN', 'LP', 'L-Sg', 'MDl', 'MDm', 'MGN', 'MV(Re)', 'Pc', 'Pf', 'Pt',
                     'PuA', 'PuI', 'PuL', 'PuM', 'VA', 'VAmc', 'VLa', 'VLp', 'VM', 'VPL', 'Whole_thalamus']},
+    'hypotha':{
+        'two_hemi':True,
+        'hemi' : ['lh','rh'],
+        'parameters' : {'Vol':'Vol'},
+        'header': ['SON', 'PVN', 'TMN']},
+    }
     'Subcort':{
         'two_hemi':False,
         'hemi' : ['lhrh'],

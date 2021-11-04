@@ -3,6 +3,12 @@ import os
 class DEFAULT(object):
     """ Default values """
 
+    freesurfer_version = "7.2.0"
+    centos_version     = '7'
+    batch_walltime     = "12:00:00"
+    walltime_format    = "%H:%M:%S"
+    time_format        = "%Y%m%d_%H%M"
+
     apps_per_type    = {"anat":"freesurfer",
                         "func":"nilearn",
                         "dwi" :"dipy"}

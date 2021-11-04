@@ -38,6 +38,8 @@ class get_cmd():
             self.cmd = 'segmentHA_T1.sh {}'.format(_id) if fs_ver > '6' else 'recon-all -s {} -hippocampal-subfields-T1'.format(_id)
         if process == 'tha':
             self.cmd = "segmentThalamicNuclei.sh {}".format(_id)
+        if process == 'hypotha':
+            self.cmd = "mri_segment_hypothalamic_subunits --s {}".format(_id)
         if process == 'masks':
             self.cmd = "cd {}\npython run_masks.py {}".format(path.join(NIMB_HOME, 'processing', 'freesurfer'), _id)
 

@@ -47,7 +47,7 @@
     "GLM_measurements"        : ["thickness","area","volume"],
     "GLM_thresholds"          : [10],
     "GLM_MCz_cache"           : 13,
-    "freesurfer_version"      : "7.1.1",
+    "freesurfer_version"      : "7.2.0",
     "freesurfer_license"      : ["email", "00000", " *ABCDEFGHIJKL", " ABCDEFGHIJKLM"],
     "export_screen"           : 0
      },
