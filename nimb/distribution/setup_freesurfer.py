@@ -79,7 +79,7 @@ class SETUP_FREESURFER():
     def fs_download_path(self):
         # path2fs = "https://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/{}/freesurfer-linux-centos{}_x86_64-{}.tar.gz".format(
         #             self.freesurfer_version, self.centos_version, self.freesurfer_version)
-        with open("installers.json", "r") as f:
+        with open("nimb/distribution/installers.json", "r") as f:
             installers = json.load(f)
         return installers[f"install_fs{self.freesurfer_version}_centos{self.centos_version}"]
 

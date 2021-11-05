@@ -244,7 +244,6 @@ all_data = {
         'hemi' : ['lh','rh'],
         'parameters' : {'Vol':'Vol'},
         'header': ['SON', 'PVN', 'TMN']},
-    }
     'Subcort':{
         'two_hemi':False,
         'hemi' : ['lhrh'],

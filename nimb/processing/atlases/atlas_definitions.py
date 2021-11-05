@@ -1,6 +1,34 @@
 #!/bin/python
 # 2021.11.02
 
+file_FSLabels = "nimb/processing/atlases/FreeSurferColorLUT.txt"
+file_DipyLabels = "nimb/processing/atlases/label_info.txt"
+
+def get_freesurfer_labels():
+    d1 = dict()
+    with open(file_FSLabels, "r") as f:
+        for line in f:
+            if "#" not in line:
+                vals = line.split(" ")
+                vals = [i for i in vals if i]
+                if vals and "\n" not in vals[0]:
+                    d1[vals[1]] = vals[0]
+    return d1
+
+
+def get():#_dipy_labels():
+    d1 = dict()
+    with open(file_DipyLabels, "r") as f:
+        for line in f:
+            vals = line.split(",")
+            vals = [i.replace(" ","").replace("\n","").replace('\"','') for i in vals]
+            if "newlabel" in vals[0]:
+                vals[0] = "dipy_label"
+            if len(vals) > 1:
+                d1[vals[2]] = vals[0]
+    return d1
+
+
 atlas_data = {
     "hemi2": ['lh','rh'],
     "hemi3": {'lh':'lh.', 'rh':'rh.', 'lhrh':''},
@@ -27,107 +55,6 @@ atlas_data = {
                 'BrainSegVol-to-eTIV', 'CerebralWhiteMatterVol', 'SupraTentorialVol', 'SupraTentorialVolNotVent',
                 'SupraTentorialVolNotVentVox', 'WM-hypointensities', 'non-WM-hypointensities', 'SurfaceHoles',
                 'MaskVol', 'MaskVol-to-eTIV', 'eTIV'],
-        'regions':{
-                'Left-Cerebral-White-Matter':{'freesurfer_label': 2, 'dipy_label': 1},
-                'Right-Cerebral-White-Matter':{'freesurfer_label': 41, 'dipy_label': 1},                                                                              
-                'WM-hypointensities':{'freesurfer_label': 77, 'dipy_label': 1},                                                                                       
-                'Optic-Chiasm':{'freesurfer_label': 85, 'dipy_label': 1},                                                                                             
-                'ctx-lh-corpuscallosum':{'freesurfer_label': 1004, 'dipy_label': 1},                                                                                  
-                'ctx-rh-corpuscallosum':{'freesurfer_label': 2004, 'dipy_label': 1},                                                                                  
-                'CC_Posterior':{'freesurfer_label': 251, 'dipy_label': 2},                                                                                            
-                'CC_Mid_Posterior':{'freesurfer_label': 252, 'dipy_label': 2},                                                                                        
-                'CC_Central':{'freesurfer_label': 253, 'dipy_label': 2},                                                                                              
-                'CC_Mid_Anterior':{'freesurfer_label': 254, 'dipy_label': 2},                                                                                         
-                'CC_Anterior':{'freesurfer_label': 255, 'dipy_label': 2},                                                                                             
-                'ctx-lh-frontalpole':{'freesurfer_label': 1032, 'dipy_label': 3},                                                                                     
-                'ctx-lh-medialorbitofrontal':{'freesurfer_label': 1014, 'dipy_label': 4},                                                                             
-                'ctx-lh-lateralorbitofrontal':{'freesurfer_label': 1012, 'dipy_label': 5},
-                'ctx-lh-parsorbitalis':{'freesurfer_label': 1019, 'dipy_label': 6},                                                                                   
-                'ctx-lh-parstriangularis':{'freesurfer_label': 1020, 'dipy_label': 7},                                                                                
-                'ctx-lh-parsopercularis':{'freesurfer_label': 1018, 'dipy_label': 8},                                                                                 
-                'ctx-lh-rostralmiddlefrontal':{'freesurfer_label': 1027, 'dipy_label': 9},                                                                            
-                'ctx-lh-caudalmiddlefrontal':{'freesurfer_label': 1003, 'dipy_label': 10},                                                                            
-                'ctx-lh-superiorfrontal':{'freesurfer_label': 1028, 'dipy_label': 11},                                                                                
-                'ctx-lh-precentral':{'freesurfer_label': 1024, 'dipy_label': 12},                                                                                     
-                'ctx-lh-paracentral':{'freesurfer_label': 1017, 'dipy_label': 13},                                                                                    
-                'ctx-lh-insula':{'freesurfer_label': 1035, 'dipy_label': 14},                                                                                         
-                'ctx-lh-rostralanteriorcingulate':{'freesurfer_label': 1026, 'dipy_label': 15},
-                'ctx-lh-caudalanteriorcingulate':{'freesurfer_label': 1002, 'dipy_label': 16},                                                                        
-                'ctx-lh-posteriorcingulate':{'freesurfer_label': 1023, 'dipy_label': 17},                                                                             
-                'ctx-lh-isthmuscingulate':{'freesurfer_label': 1010, 'dipy_label': 18},                                                                               
-                'ctx-lh-entorhinal':{'freesurfer_label': 1006, 'dipy_label': 19},                                                                                     
-                'ctx-lh-fusiform':{'freesurfer_label': 1007, 'dipy_label': 20},                                                                                       
-                'ctx-lh-parahippocampal':{'freesurfer_label': 1016, 'dipy_label': 21},                                                                                
-                'ctx-lh-inferiortemporal':{'freesurfer_label': 1009, 'dipy_label': 22},                                                                               
-                'ctx-lh-temporalpole':{'freesurfer_label': 1033, 'dipy_label': 23},                                                                                   
-                'ctx-lh-middletemporal':{'freesurfer_label': 1015, 'dipy_label': 24},                                                                                 
-                'ctx-lh-superiortemporal':{'freesurfer_label': 1030, 'dipy_label': 25},                                                                               
-                'ctx-lh-transversetemporal':{'freesurfer_label': 1034, 'dipy_label': 26},                                                                             
-                'ctx-lh-bankssts':{'freesurfer_label': 1001, 'dipy_label': 27},                                                                                       
-                'ctx-lh-postcentral':{'freesurfer_label': 1022, 'dipy_label': 28},                                                                                    
-                'ctx-lh-supramarginal':{'freesurfer_label': 1031, 'dipy_label': 29},                                                                                  
-                'ctx-lh-inferiorparietal':{'freesurfer_label': 1008, 'dipy_label': 30},                                                                               
-                'ctx-lh-superiorparietal':{'freesurfer_label': 1029, 'dipy_label': 31},                                                                               
-                'ctx-lh-precuneus':{'freesurfer_label': 1025, 'dipy_label': 32},                                                                                      
-                'ctx-lh-cuneus':{'freesurfer_label': 1005, 'dipy_label': 33},                                                                                         
-                'ctx-lh-lateraloccipital':{'freesurfer_label': 1011, 'dipy_label': 34},                                                                               
-                'ctx-lh-pericalcarine':{'freesurfer_label': 1021, 'dipy_label': 35},                                                                                  
-                'ctx-lh-lingual':{'freesurfer_label': 1013, 'dipy_label': 36},                                                                                        
-                'Left-Caudate':{'freesurfer_label': 11, 'dipy_label': 37},                                                                                            
-                'Left-Putamen':{'freesurfer_label': 12, 'dipy_label': 38},                                                                                            
-                'Left-Pallidum':{'freesurfer_label': 13, 'dipy_label': 39},                                                                                           
-                'Left-Thalamus':{'freesurfer_label': 9, 'dipy_label': 40},
-                "Left-Thalamus-Proper":{"freesurfef_label": 10, "dipy_label": 41, 
-                                        "nimb_name": 'thalamusProper_lh'},
-                'Left-Hippocampus':{'freesurfer_label': 17, 'dipy_label': 42},                                                                                        
-                'Left-Amygdala':{'freesurfer_label': 18, 'dipy_label': 43},                                                                                           
-                'Left-Accumbens-area':{'freesurfer_label': 26, 'dipy_label': 44},                                                                                     
-                'Left-VentralDC':{'freesurfer_label': 28, 'dipy_label': 45},                                                                                          
-                'ctx-rh-frontalpole':{'freesurfer_label': 2032, 'dipy_label': 46},                                                                                    
-                'ctx-rh-medialorbitofrontal':{'freesurfer_label': 2014, 'dipy_label': 47},                                                                            
-                'ctx-rh-lateralorbitofrontal':{'freesurfer_label': 2012, 'dipy_label': 48},                                                                           
-                'ctx-rh-parsorbitalis':{'freesurfer_label': 2019, 'dipy_label': 49},                                                                                  
-                'ctx-rh-parstriangularis':{'freesurfer_label': 2020, 'dipy_label': 50},                                                                               
-                'ctx-rh-parsopercularis':{'freesurfer_label': 2018, 'dipy_label': 51},                                                                                
-                'ctx-rh-rostralmiddlefrontal':{'freesurfer_label': 2027, 'dipy_label': 52},
-                'ctx-rh-caudalmiddlefrontal':{'freesurfer_label': 2003, 'dipy_label': 53},
-                'ctx-rh-superiorfrontal':{'freesurfer_label': 2028, 'dipy_label': 54},
-                'ctx-rh-precentral':{'freesurfer_label': 2024, 'dipy_label': 55},
-                'ctx-rh-paracentral':{'freesurfer_label': 2017, 'dipy_label': 56},
-                'ctx-rh-insula':{'freesurfer_label': 2035, 'dipy_label': 57},
-                'ctx-rh-rostralanteriorcingulate':{'freesurfer_label': 2026, 'dipy_label': 58},
-                'ctx-rh-caudalanteriorcingulate':{'freesurfer_label': 2002, 'dipy_label': 59},
-                'ctx-rh-posteriorcingulate':{'freesurfer_label': 2023, 'dipy_label': 60},
-                'ctx-rh-isthmuscingulate':{'freesurfer_label': 2010, 'dipy_label': 61},
-                'ctx-rh-entorhinal':{'freesurfer_label': 2006, 'dipy_label': 62},
-                'ctx-rh-fusiform':{'freesurfer_label': 2007, 'dipy_label': 63},
-                'ctx-rh-parahippocampal':{'freesurfer_label': 2016, 'dipy_label': 64},
-                'ctx-rh-inferiortemporal':{'freesurfer_label': 2009, 'dipy_label': 65},
-                'ctx-rh-temporalpole':{'freesurfer_label': 2033, 'dipy_label': 66},
-                'ctx-rh-middletemporal':{'freesurfer_label': 2015, 'dipy_label': 67},
-                'ctx-rh-superiortemporal':{'freesurfer_label': 2030, 'dipy_label': 68},
-                'ctx-rh-transversetemporal':{'freesurfer_label': 2034, 'dipy_label': 69},
-                'ctx-rh-bankssts':{'freesurfer_label': 2001, 'dipy_label': 70},
-                'ctx-rh-postcentral':{'freesurfer_label': 2022, 'dipy_label': 71},
-                'ctx-rh-supramarginal':{'freesurfer_label': 2031, 'dipy_label': 72},
-                'ctx-rh-inferiorparietal':{'freesurfer_label': 2008, 'dipy_label': 73},
-                'ctx-rh-superiorparietal':{'freesurfer_label': 2029, 'dipy_label': 74},
-                'ctx-rh-precuneus':{'freesurfer_label': 2025, 'dipy_label': 75},
-                'ctx-rh-cuneus':{'freesurfer_label': 2005, 'dipy_label': 76},
-                'ctx-rh-lateraloccipital':{'freesurfer_label': 2011, 'dipy_label': 77},
-                'ctx-rh-pericalcarine':{'freesurfer_label': 2021, 'dipy_label': 78},
-                'ctx-rh-lingual':{'freesurfer_label': 2013, 'dipy_label': 79},
-                'Right-Caudate':{'freesurfer_label': 50, 'dipy_label': 80},
-                'Right-Putamen':{'freesurfer_label': 51, 'dipy_label': 81},
-                'Right-Pallidum':{'freesurfer_label': 52, 'dipy_label': 82},
-                'Right-Thalamus':{'freesurfer_label': 48, 'dipy_label': 83},
-                "Right-Thalamus-Proper":{"freesurfef_label": 49, "dipy_label": 84,
-                                        "nimb_name": 'thalamusProper_rh'},
-                'Right-Hippocampus':{'freesurfer_label': 53, 'dipy_label': 85},
-                'Right-Amygdala':{'freesurfer_label': 54, 'dipy_label': 86},
-                'Right-Accumbens-area':{'freesurfer_label': 58, 'dipy_label': 87},
-                'Right-VentralDC':{'freesurfer_label': 60, 'dipy_label': 88}
-            },
         'stats_files' :{'fs7':'aseg.stats',
                         'fs6':'aseg.stats',},
                 },
