@@ -110,14 +110,9 @@ class ErrorCheck():
 
 
 
-def fs_find_error(subjid, SUBJECTS_DIR, NIMB_tmp, process, fs_version):
+def fs_find_error(subjid, SUBJECTS_DIR, NIMB_tmp, process, log_file):
     error = ''
     print('                identifying THE error')
-    files = fs_definitions.FilePerFSVersion(fs_version)
-    if process == 'brstem':
-        log_file = path.join(SUBJECTS_DIR, subjid, files.log_f('bs'))
-    else:
-        log_file = path.join(SUBJECTS_DIR, subjid, files.log_f(process))
     try:
         if path.exists(log_file):
             f = open(log_file,'r').readlines()

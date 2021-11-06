@@ -4,6 +4,8 @@
 file_FSLabels = "nimb/processing/atlases/FreeSurferColorLUT.txt"
 file_DipyLabels = "nimb/processing/atlases/label_info.txt"
 
+import os
+
 def get_freesurfer_labels():
     d1 = dict()
     with open(file_FSLabels, "r") as f:
@@ -27,6 +29,22 @@ def get():#_dipy_labels():
             if len(vals) > 1:
                 d1[vals[2]] = vals[0]
     return d1
+
+
+def stats_f(fsver, atlas, _dir = "stats", hemi='lhrh'):
+    mri_key = ""
+    fs_key = "fs"
+    if fsver < "7" and "fs6_stats_f" in atlas_data[atlas]:
+        fs_key = "fs6"
+    if _dir == "mri" and "fs_stats_f_inmridir" in atlas_data[atlas]:
+        mri_key = "_inmridir"
+    key = f"{fs_key}_stats_f{mri_key}"
+    file = atlas_data[atlas][key]
+
+    hemi_dot = atlas_data["hemi3"][hemi]
+    if 'lh.' in file and hemi_dot not in file:
+        file = file.replace("lh.", hemi_dot)
+    return os.path.join(_dir, file)
 
 
 atlas_data = {
@@ -55,8 +73,7 @@ atlas_data = {
                 'BrainSegVol-to-eTIV', 'CerebralWhiteMatterVol', 'SupraTentorialVol', 'SupraTentorialVolNotVent',
                 'SupraTentorialVolNotVentVox', 'WM-hypointensities', 'non-WM-hypointensities', 'SurfaceHoles',
                 'MaskVol', 'MaskVol-to-eTIV', 'eTIV'],
-        'stats_files' :{'fs7':'aseg.stats',
-                        'fs6':'aseg.stats',},
+        "fs_stats_f":"aseg.stats",
                 },
     'CtxDK':{
         'atlas_name' :'Desikan segmentations',
@@ -78,8 +95,7 @@ atlas_data = {
                 'precuneus', 'rostralanteriorcingulate', 'rostralmiddlefrontal', 'superiorfrontal', 'superiorparietal',
                 'superiortemporal', 'supramarginal', 'frontalpole', 'temporalpole', 'transversetemporal', 'insula',
                 'Cortex_MeanThickness', 'Cortex_WhiteSurfArea', 'Cortex_CortexVol', 'Cortex_NumVert', 'UnsegmentedWhiteMatter'],
-        'stats_files' :{'fs7':'aparc.stats',
-                        'fs6':'aparc.stats',},
+        "fs_stats_f":"lh.aparc.stats",
                 },
     'CtxDKT':{
         'atlas_name' :'Desikan-Tournoix segmentations',
@@ -101,9 +117,8 @@ atlas_data = {
                 'rostralmiddlefrontal', 'superiorfrontal', 'superiorparietal', 'superiortemporal', 'supramarginal',
                 'transversetemporal', 'insula', 'Cortex_MeanThickness', 'Cortex_WhiteSurfArea', 'Cortex_CortexVol',
                 'Cortex_NumVert', 'UnsegmentedWhiteMatter'],
-        'stats_files' :{'fs7':'aparc.DKTatlas.stats',
-                        'fs6':'aparc.DKTatlas.stats',},
-                },                
+        "fs_stats_f":"lh.aparc.DKTatlas.stats",
+                },
     'CtxDS':{
         'atlas_name' :'Destrieux segmentations',
         'hemi' : ['lh','rh'],
@@ -134,8 +149,7 @@ atlas_data = {
                 'S_pericallosal', 'S_postcentral', 'S_precentral-inf-part', 'S_precentral-sup-part', 'S_suborbital', 'S_subparietal',
                 'S_temporal_inf', 'S_temporal_sup', 'S_temporal_transverse', 'Cortex_MeanThickness', 'Cortex_WhiteSurfArea',
                 'Cortex_CortexVol', 'Cortex_NumVert', 'UnsegmentedWhiteMatter'],
-        'stats_files' :{'fs7':'aparc.a2009s.stats',
-                        'fs6':'aparc.a2009s.stats',},
+        "fs_stats_f":"lh.aparc.a2009s.stats",
                 },
     'WMDK':{
         'atlas_name' :'White Matter subcortical segmentations based on Desikan atlas',
@@ -162,16 +176,19 @@ atlas_data = {
                 'wm-rh-rostralmiddlefrontal', 'wm-rh-superiorfrontal', 'wm-rh-superiorparietal', 'wm-rh-superiortemporal',
                 'wm-rh-supramarginal', 'wm-rh-frontalpole', 'wm-rh-temporalpole', 'wm-rh-transversetemporal',
                 'wm-rh-insula', 'Left-UnsegmentedWhiteMatter', 'Right-UnsegmentedWhiteMatter'],
-        'stats_files' :{'fs7':'wmparc.stats',
-                        'fs6':'',},
+        "fs_stats_f":"wmparc.stats",
                 },
     'BS':{
         'atlas_name' :'Brainstem segmentations',
         'hemi' : ['lhrh'],
         'parameters' : {'Vol':'Vol'},
         'header':['Medulla','Pons','SCP','Midbrain','Whole_brainstem',],
-        'stats_files' :{'fs7':'brainstem.v12.stats',
+        'fs_stats_files' :{'fs7':'brainstem.v12.stats',
                         'fs6':'brainstem.v10.stats',},
+        "fs_stats_f":"brainstem.v12.stats",
+        "fs6_stats_f":"brainstem.v10.stats",
+        "fs_stats_f_inmridir":"brainstemSsVolumes.v12.txt",
+        "fs6_stats_f_inmridir":"brainstemSsVolumes.v10",
         },
     'HIP':{
         'atlas_name' :'Hippocampus segmentations',
@@ -183,8 +200,10 @@ atlas_data = {
                 'molecular_layer_HP-head','molecular_layer_HP-body','GC-ML-DG','GC-ML-DG-body', 'GC-ML-DG-head'
                 'CA3', 'CA3-body', 'CA3-head', 'CA4', 'CA4-body', 'CA4-head', 'fimbria','HATA','Whole_hippocampus',
                 'Whole_hippocampal_body', 'Whole_hippocampal_head'],
-        'stats_files' :{'fs7':'hipposubfields.T1.v21.stats',
-                        'fs6':'hipposubfields.T1.v10.stats',},
+        "fs_stats_f":"hipposubfields.lh.T1.v21.stats",
+        "fs6_stats_f":"hipposubfields.lh.T1.v10.stats",
+        "fs_stats_f_inmridir":"lh.hippoSfVolumes-T1.v21.txt",
+        "fs6_stats_f_inmridir":"lh.hippoSfVolumes-T1.v10.txt",
                 },
     'AMY':{
         'atlas_name' :'Amygdala segmentations',
@@ -193,8 +212,8 @@ atlas_data = {
         'header': ['Lateral-nucleus', 'Basal-nucleus', 'Accessory-Basal-nucleus', 'Anterior-amygdaloid-area-AAA',
                     'Central-nucleus', 'Medial-nucleus', 'Cortical-nucleus', 'Corticoamygdaloid-transitio',
                     'Paralaminar-nucleus', 'Whole_amygdala'],
-        'stats_files' :{'fs7':'amygdalar-nuclei.T1.v21.stats',
-                        'fs6':'',},
+        "fs_stats_f":"amygdalar-nuclei.lh.T1.v21.stats",
+        "fs_stats_f_inmridir":"lh.amygNucVolumes-T1.v21.txt",
                     },
     'THA':{
         'atlas_name' :'Thalamus segmentations',
@@ -202,18 +221,18 @@ atlas_data = {
         'parameters' : {'Vol':'Vol'},
         'header': ['AV', 'CeM', 'CL', 'CM', 'LD', 'LGN', 'LP', 'L-Sg', 'MDl', 'MDm', 'MGN', 'MV(Re)', 'Pc', 'Pf', 'Pt',
                     'PuA', 'PuI', 'PuL', 'PuM', 'VA', 'VAmc', 'VLa', 'VLp', 'VM', 'VPL', 'Whole_thalamus'],
-        'stats_files' :{'fs7':'thalamic-nuclei.v12.T1.stats',
-                        'fs6':'',},
+        "fs_stats_f":"thalamic-nuclei.lh.v12.T1.stats",
+        "fs_stats_f_inmridir":"ThalamicNuclei.v12.T1.volumes.txt",
                     },
     'HypoTHA':{
         'atlas_name' :'HypoThalamus segmentations',
         'hemi' : ['lh','rh'],
         'parameters' : {'Vol':'Vol'},
         'header': ['SON', 'PVN', 'TMN'],
-        'stats_files' :{'fs7':'hypothalamic_subunits_volumes.v1.stats',
-                        'fs6':'',},
+        "fs_stats_f":"lh.hypothalamic_subunits_volumes.v1.stats",
                     },
 }
+
 
 header_fs2nimb = {'Medulla':'medulla','Pons':'pons','SCP':'scp','Midbrain':'midbrain',
                 'Whole_brainstem':'wholeBrainstem',

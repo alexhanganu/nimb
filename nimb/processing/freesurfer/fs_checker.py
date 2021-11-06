@@ -10,14 +10,17 @@ import fs_definitions
 log = logging.getLogger(__name__)
 
 class FreeSurferChecker():
-    def __init__(self, vars_fs):
-        self.SUBJECTS_DIR       = vars_fs['FS_SUBJECTS_DIR']
-        self.freesurfer_version = vars_fs['freesurfer_version']
-        self.process_order      = vars_fs['process_order']
-        self.masks              = vars_fs['masks']
-        self.meas               = vars_fs["GLM_measurements"]
-        self.thresh             = vars_fs["GLM_thresholds"]
-        self.file               = fs_definitions.FilePerFSVersion(vars_fs['freesurfer_version'])
+    def __init__(self, vars_fs, atlas_definitions):
+        self.SUBJECTS_DIR  = vars_fs['FS_SUBJECTS_DIR']
+        self.fsver         = vars_fs['freesurfer_version']
+        self.process_order = vars_fs['process_order']
+        self.masks         = vars_fs['masks']
+        self.meas          = vars_fs["GLM_measurements"]
+        self.thresh        = vars_fs["GLM_thresholds"]
+        self.Procs         = fs_definitions.FSProcesses(self.fsver)
+        self.stats         = atlas_definitions.stats_f
+        self.atlas         = atlas_definitions.atlas_data
+        self.file          = fs_definitions.FilePerFSVersion(self.fsver)
 
     def IsRunning_chk(self, subjid):
         try:
@@ -50,14 +53,18 @@ class FreeSurferChecker():
             return self.chk_if_autorecon_done(3, subjid)
         if process == 'qcache':
             return self.chk_if_qcache_done(subjid)
-        if process == 'brstem':
-            return self.chkbrstemf(subjid)
-        if process == 'hip':
-            return self.chkhipf(subjid,)
-        if process == 'tha':
-            return self.chkthaf(subjid)
         if process == 'masks':
             return self.chk_masks(subjid)
+        if process == "brstem" or process == "hip" or process == "tha" or process == "hypotha":
+            for atlas in self.Procs.processes[process]["atlas_2chk"]:
+                return self.chk_stats_f(atlas, subjid)
+
+        # if process == 'brstem':
+        #     return self.chkbrstemf(subjid)
+        # if process == 'hip':
+        #     return self.chkhipf(subjid,)
+        # if process == 'tha':
+        #     return self.chkthaf(subjid)
 
     def chksubjidinfs(self, subjid):
         if subjid in listdir(self.SUBJECTS_DIR):
@@ -107,6 +114,7 @@ class FreeSurferChecker():
             log.info('    files are missing: {}'.format(str(miss)))
 
     def log_chk(self, process, subjid):
+        # log_file = path.join(self.SUBJECTS_DIR, subjid, self.Procs.log(process))
         log_file = path.join(self.SUBJECTS_DIR, subjid, self.file.log_f(process))
         if path.exists(log_file) and any('Everything done' in i for i in open(log_file, 'rt').readlines()):
             return True
@@ -116,7 +124,7 @@ class FreeSurferChecker():
     def stats_f_cp_from_mri(self, src, dst):
         if path.exists(src):
             try:
-                shutil.copy(src,dst)
+                shutil.copy(src, dst)
                 return True
             except Exception as e:
                 print(e)
@@ -124,42 +132,72 @@ class FreeSurferChecker():
         else:
             return False
 
-    def chkbrstemf(self, subjid):
-        if self.log_chk('bs', subjid):
-            self.stats_f_cp_from_mri(path.join(self.SUBJECTS_DIR, subjid, self.file.stats_f('bs', 'mri')), path.join(self.SUBJECTS_DIR, subjid, self.file.stats_f('bs', 'stats')))
-            if path.join(self.SUBJECTS_DIR, subjid, self.file.stats_f('bs', 'stats')):
+
+    def chk_stats_f(self, atlas, subjid):
+        res = True
+        if self.log_chk(atlas, subjid):
+            for hemi in self.atlas[atlas]["hemi"]:
+                stats_mridir = self.stats(self.fsver, atlas, _dir = "mri", hemi=hemi)
+                path_2stats_dir = os.path.join(self.SUBJECTS_DIR, subjid, "stats")
+                self.stats_f_cp_from_mri(stats_mridir, path_2stats_dir)
+            for hemi in self.atlas[atlas]["hemi"]:
+                stats = self.stats(self.fsver, atlas, _dir = "stats", hemi=hemi)
+                if not os.path.exists(os.path.join(self.SUBJECTS_DIR, subjid, stats)):
+                    res = False
+                    break
+        else:
+            res = False
+        return res
+
+
+    def chkbrstemf(self, subjid):        
+        if self.log_chk('brstem', subjid):
+            file_in_mri_dir   = path.join(self.SUBJECTS_DIR, subjid, self.file.stats_f('brstem', 'mri'))
+            path_2stats_dir = os.path.join(self.SUBJECTS_DIR, subjid, "stats")
+            self.stats_f_cp_from_mri(file_in_mri_dir, path_2stats_dir)
+            file_in_stats_dir = path.join(self.SUBJECTS_DIR, subjid, self.file.stats_f('brstem', 'stats'))
+            if path.join(file_in_stats_dir):
                 return True
             else:
                 return False
         else:
             return False
 
+
+    def chkthaf(self, subjid):
+        if self.log_chk('tha', subjid):
+            path_2stats_dir = os.path.join(self.SUBJECTS_DIR, subjid, "stats")
+            stats_f_inmri = path.join(self.SUBJECTS_DIR, subjid, self.file.stats_f('tha', 'mri'))
+            self.stats_f_cp_from_mri(stats_f_inmri, path_2stats_dir)
+
+            stats_f_instats = self.SUBJECTS_DIR, subjid, self.file.stats_f('tha', 'stats')
+            if path.join(stats_f_instats):
+                return True
+            else:
+                return False
+        else:
+            return False
+
+
     def chkhipf(self, subjid):
         res = True
         if self.log_chk('hip', subjid):
             for hemi in fs_definitions.hemi:
-                for process in ['hip','amy']:
+                for process in ['hip', 'amy']:
                     stats_f_inmri = path.join(self.SUBJECTS_DIR, subjid, self.file.stats_f(process, 'mri', hemi))
-                    stats_f_instats = path.join(self.SUBJECTS_DIR, subjid, self.file.stats_f(process, 'stats', hemi))
-                    self.stats_f_cp_from_mri(stats_f_inmri, stats_f_instats)
+                    path_2stats_dir = os.path.join(self.SUBJECTS_DIR, subjid, "stats")
+                    self.stats_f_cp_from_mri(stats_f_inmri, path_2stats_dir)
+
             for hemi in fs_definitions.hemi:
                 for process in ['hip','amy']:
-                    if not path.exists(path.join(self.SUBJECTS_DIR, subjid, self.file.stats_f(process, 'stats', hemi))):
+                    stats_f_instats = path.join(self.SUBJECTS_DIR, subjid, self.file.stats_f(process, 'stats', hemi))
+                    if not path.exists(stats_f_instats):
                         res = False
                         break
         else:
             res = False
         return res
 
-    def chkthaf(self, subjid):
-        if self.log_chk('tha', subjid):
-            self.stats_f_cp_from_mri(path.join(self.SUBJECTS_DIR, subjid, self.file.stats_f('tha', 'mri')), path.join(self.SUBJECTS_DIR, subjid, self.file.stats_f('tha', 'stats')))            
-            if path.join(self.SUBJECTS_DIR, subjid, self.file.stats_f('tha', 'stats')):
-                return True
-            else:
-                return False
-        else:
-            return False
 
     def chk_masks(self, subjid):
         if path.isdir(path.join(self.SUBJECTS_DIR, subjid, 'masks')):
@@ -171,6 +209,7 @@ class FreeSurferChecker():
                     return True
         else:
             return False
+
 
     def chk_if_all_done(self, subjid):
             result = True
@@ -184,191 +223,3 @@ class FreeSurferChecker():
                 log.info('            IsRunning file present ')
                 result = False
             return result
-
-
-
-"""
-2RM
-def chkIsRunning(SUBJECTS_DIR, subjid):
-    try:
-        for file in fs_definitions.IsRunning_files:
-            if path.exists(path.join(SUBJECTS_DIR,subjid,'scripts',file)):
-                return True
-        else:
-            return False
-    except Exception as e:
-        print(e)
-        return True
-
-
-def IsRunning_rm(SUBJECTS_DIR, subjid):
-    try:
-        remove(path.join(SUBJECTS_DIR, subjid, 'scripts', [i for i in fs_definitions.IsRunning_files if path.exists(path.join(SUBJECTS_DIR, subjid, 'scripts', i))][0]))
-    except Exception as e:
-        print(e)
-
-
-
-def checks_from_runfs(SUBJECTS_DIR, process, subjid, freesurfer_version, masks):
-
-    if process == 'registration':
-        result = chksubjidinfs(SUBJECTS_DIR, subjid)
-
-    if process == 'autorecon1':
-        result = chk_if_autorecon_done(SUBJECTS_DIR, 1, subjid)
-
-    if process == 'autorecon2':
-        result = chk_if_autorecon_done(SUBJECTS_DIR, 2, subjid)
-
-    if process == 'autorecon3':
-        result = chk_if_autorecon_done(SUBJECTS_DIR, 3, subjid)
-
-    if process == 'recon-all':
-        result = chk_if_recon_done(SUBJECTS_DIR, subjid)
-
-    if process == 'qcache':
-        result = chk_if_qcache_done(SUBJECTS_DIR, subjid)
-
-    if process == 'brstem':
-        result = chkbrstemf(SUBJECTS_DIR, subjid, freesurfer_version)
-
-    if process == 'hip':
-        result = chkhipf(SUBJECTS_DIR, subjid, freesurfer_version)
-
-    if process == 'tha':
-        result = chkthaf(SUBJECTS_DIR, subjid, freesurfer_version)
-
-    if process == 'masks':
-        result = chk_masks(SUBJECTS_DIR, subjid, masks)
-
-    return result
-
-def chksubjidinfs(SUBJECTS_DIR, subjid):
-
-    lsallsubjid=listdir(SUBJECTS_DIR)
-
-    if subjid in lsallsubjid:
-        return True
-
-    else:
-        return False
-
-
-# == move to chk_process_files
-def chk_if_autorecon_done(SUBJECTS_DIR, lvl, subjid):
-    for path_f in fs_definitions.f_autorecon[lvl]:
-            if not path.exists(path.join(SUBJECTS_DIR, subjid, path_f)):
-                return False
-                break
-            else:
-                return True
-def chk_if_recon_done(SUBJECTS_DIR, subjid):
-
-    if path.exists(path.join(SUBJECTS_DIR,subjid, 'mri', 'wmparc.mgz')):
-        return True
-    else:
-        return False
-def chk_if_qcache_done(SUBJECTS_DIR, subjid):
-
-    if 'rh.w-g.pct.mgh.fsaverage.mgh' and 'lh.thickness.fwhm10.fsaverage.mgh' in listdir(path.join(SUBJECTS_DIR, subjid, 'surf')):
-        return True
-    else:
-        return False
-# == up to here
-
-def check_qcache_files(SUBJECTS_DIR, subjid, vars_fs):
-
-        res = True
-        miss = list()
-        for hemi in ['lh','rh']:
-            for meas in vars_fs["GLM_measurements"]:
-                for thresh in vars_fs["GLM_thresholds"]:
-                    file = hemi+'.'+meas+'.fwhm'+str(thresh)+'.fsaverage.mgh'
-                    if not path.exists(path.join(SUBJECTS_DIR, subjid, 'surf', file)):
-                        miss.append(file)
-        if miss:
-            print('some subjects or files are missing: {}'.format(str(miss)))
-            res = False
-        return res
-
-
-def bs_hip_tha_chk_log_if_done(process, SUBJECTS_DIR, subjid, freesurfer_version):
-    log_file = path.join(SUBJECTS_DIR, subjid, 'scripts', fs_definitions.log_files[process][freesurfer_version])
-    if path.exists(log_file) and any('Everything done' in i for i in open(log_file, 'rt').readlines()):
-        return True
-    else:
-        return False
-
-
-def bs_hip_tha_get_stats_file(process, SUBJECTS_DIR, subjid, freesurfer_version):
-    lsmri = listdir(path.join(SUBJECTS_DIR, subjid, 'mri'))
-    file_stats = path.join(SUBJECTS_DIR, subjid, 'mri', fs_definitions.bs_hip_tha_stats_file_inmri[process][freesurfer_version])
-    if path.exists(file_stats):
-        try:
-            shutil.copy(path.join(SUBJECTS_DIR, subjid, 'mri', file_stats),
-                        path.join(SUBJECTS_DIR, subjid, 'stats', fs_definitions.bs_hip_tha_stats_file_instats[process][freesurfer_version]))
-        except Exception as e:
-            print(e)
-        return file_stats
-    else:
-        return ''
-
-
-def chkbrstemf(SUBJECTS_DIR, subjid, freesurfer_version):
-    if bs_hip_tha_chk_log_if_done('bs', SUBJECTS_DIR, subjid, freesurfer_version):
-        file_stats = bs_hip_tha_get_stats_file('bs', SUBJECTS_DIR, subjid, freesurfer_version)
-        if file_stats:
-            return True
-        else:
-            return False
-    else:
-        return False
-
-
-def chkhipf(SUBJECTS_DIR, subjid, freesurfer_version):
-    if bs_hip_tha_chk_log_if_done('hip', SUBJECTS_DIR, subjid, freesurfer_version):
-        if path.exists(path.join(SUBJECTS_DIR, subjid, 'mri', fs_definitions.bs_hip_tha_stats_file_inmri['hipR'][freesurfer_version])):
-            for file in ['hipL', 'hipR', 'amyL', 'amyR']:
-                file_stats = bs_hip_tha_get_stats_file(file, SUBJECTS_DIR, subjid, freesurfer_version)
-            return True
-        else:
-            return False
-    else:
-        return False
-
-
-def chkthaf(SUBJECTS_DIR, subjid, freesurfer_version):
-    if bs_hip_tha_chk_log_if_done('tha', SUBJECTS_DIR, subjid, freesurfer_version):
-        file_stats = bs_hip_tha_get_stats_file('tha', SUBJECTS_DIR, subjid, freesurfer_version)
-        if file_stats:
-            return True
-        else:
-            return False
-    else:
-        return False
-
-
-def chk_masks(SUBJECTS_DIR, subjid, masks):
-
-    if path.isdir(path.join(SUBJECTS_DIR,subjid,'masks')):
-        for structure in masks:
-            if structure+'.nii' not in listdir(path.join(SUBJECTS_DIR,subjid,'masks')):
-                return False
-            else:
-                return True
-    else:
-        return False
-
-def chk_if_all_done(SUBJECTS_DIR, subjid, process_order, NIMB_tmp, freesurfer_version, masks):
-        result = True
-        if not chkIsRunning(SUBJECTS_DIR, subjid):
-            for process in process_order[1:]:
-                if not checks_from_runfs(SUBJECTS_DIR, process, subjid, freesurfer_version, masks):
-                    log.info('        '+subjid+' is missing '+process)
-                    result = False
-                    break
-        else:
-            log.info('            IsRunning file present ')
-            result = False
-        return result
-"""

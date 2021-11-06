@@ -174,6 +174,15 @@ def get_registration_files(subjid, db, nimb_dir, NIMB_tmp, flair_t2_add):
         return t1_ls_f, flair_ls_f, t2_ls_f
 
 
+def get_registration_cmd(_id, db, nimb_dir, NIMB_tmp, flair_t2_add):
+    t1_ls_f, flair_ls_f, t2_ls_f = get_registration_files(_id, db, nimb_dir, NIMB_tmp, flair_t2_add)
+    t1_cmd    = ''.join([' -i '+i for i in t1_ls_f])
+    flair_cmd = '{}'.format(''.join([' -FLAIR '+i for i in flair_ls_f])) if flair_ls_f != 'none' else ''
+    t2_cmd    = '{}'.format(''.join([' -T2 '   +i for i in t2_ls_f]))    if t2_ls_f    != 'none' else ''
+    return f"recon-all{t1_cmd}{flair_cmd}{t2_cmd} -s {_id}"
+#        return "recon-all{}".format(''.join([' -i '+i for i in t1_ls_f]))+flair_cmd+t2_cmd+' -s '+_id
+
+
 def get_id_long(subjid, LONG_DIRS, base_name, long_name):
         _id = 'none'
         for key in LONG_DIRS:

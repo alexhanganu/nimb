@@ -6,9 +6,9 @@ from pathlib import Path
 import time
 import shutil
 import logging
-import cdb, fs_err_helper, fs_checker
+import cdb, fs_err_helper#, fs_checker
 from fs_checker import FreeSurferChecker
-from fs_definitions import FreeSurferVersion, process_order
+from fs_definitions import FreeSurferVersion, FSProcesses
 
 environ['TZ'] = 'US/Eastern'
 time.tzset()
@@ -17,39 +17,45 @@ class get_cmd():
 
     def __init__(self, process, _id, id_base = '', ls_tps = []):
         if process == 'registration':
-            self.cmd = self.registration(_id)
-        if process == 'recbase':
-            self.cmd = "recon-all -base {0}{1} -all".format(_id, ''.join([' -tp '+i for i in ls_tps]))
-        if process == 'reclong':
-            self.cmd = "recon-all -long {0} {1} -all".format(_id, id_base)
-        if process == 'recon':
-            self.cmd = "recon-all -all -s {}".format(_id)
-        if process == 'autorecon1':
-            self.cmd = "recon-all -autorecon1 -s {}".format(_id)
-        if process == 'autorecon2':
-            self.cmd = "recon-all -autorecon2 -s {}".format(_id)
-        if process == 'autorecon3':
-            self.cmd = "recon-all -autorecon3 -s {}".format(_id)
-        if process == 'qcache':
-            self.cmd = "recon-all -qcache -s {}".format(_id)
-        if process == 'brstem':
-            self.cmd = 'segmentBS.sh {}'.format(_id) if fs_ver > '6' else 'recon-all -s {} -brainstem-structures'.format(_id)
-        if process == 'hip':
-            self.cmd = 'segmentHA_T1.sh {}'.format(_id) if fs_ver > '6' else 'recon-all -s {} -hippocampal-subfields-T1'.format(_id)
-        if process == 'tha':
-            self.cmd = "segmentThalamicNuclei.sh {}".format(_id)
-        if process == 'hypotha':
-            self.cmd = "mri_segment_hypothalamic_subunits --s {}".format(_id)
-        if process == 'masks':
-            self.cmd = "cd {}\npython run_masks.py {}".format(path.join(NIMB_HOME, 'processing', 'freesurfer'), _id)
+            self.cmd = cdb.get_registration_cmd(_id, db,
+                                                NIMB_HOME,
+                                                NIMB_tmp,
+                                                vars_freesurfer["flair_t2_add"])
+        else:
+            self.cmd = Procs.cmd(process, _id, id_base, ls_tps)
 
-    def registration(self, _id):
-        t1_ls_f, flair_ls_f, t2_ls_f = cdb.get_registration_files(_id, db, NIMB_HOME, NIMB_tmp, vars_freesurfer["flair_t2_add"])
-        t1_cmd    = ''.join([' -i '+i for i in t1_ls_f])
-        flair_cmd = '{}'.format(''.join([' -FLAIR '+i for i in flair_ls_f])) if flair_ls_f != 'none' else ''
-        t2_cmd    = '{}'.format(''.join([' -T2 '   +i for i in t2_ls_f]))    if t2_ls_f    != 'none' else ''
-        return "recon-all{}{}{} -s {}".format(t1_cmd, flair_cmd, t2_cmd, _id)
-#        return "recon-all{}".format(''.join([' -i '+i for i in t1_ls_f]))+flair_cmd+t2_cmd+' -s '+_id
+        # if process == 'recbase':
+        #     self.cmd = "recon-all -base {0}{1} -all".format(_id, ''.join([' -tp '+i for i in ls_tps]))
+        # if process == 'reclong':
+        #     self.cmd = "recon-all -long {0} {1} -all".format(_id, id_base)
+        # if process == 'recon':
+        #     self.cmd = "recon-all -all -s {}".format(_id)
+        # if process == 'autorecon1':
+        #     self.cmd = "recon-all -autorecon1 -s {}".format(_id)
+        # if process == 'autorecon2':
+        #     self.cmd = "recon-all -autorecon2 -s {}".format(_id)
+        # if process == 'autorecon3':
+        #     self.cmd = "recon-all -autorecon3 -s {}".format(_id)
+        # if process == 'qcache':
+        #     self.cmd = "recon-all -qcache -s {}".format(_id)
+        # if process == 'brstem':
+        #     self.cmd = 'segmentBS.sh {}'.format(_id) if fs_ver > '6' else 'recon-all -s {} -brainstem-structures'.format(_id)
+        # if process == 'hip':
+        #     self.cmd = 'segmentHA_T1.sh {}'.format(_id) if fs_ver > '6' else 'recon-all -s {} -hippocampal-subfields-T1'.format(_id)
+        # if process == 'tha':
+        #     self.cmd = "segmentThalamicNuclei.sh {}".format(_id)
+        # if process == 'hypotha':
+        #     self.cmd = "mri_segment_hypothalamic_subunits --s {}".format(_id)
+        # if process == 'masks':
+        #     self.cmd = "cd {}\npython run_masks.py {}".format(path.join(NIMB_HOME, 'processing', 'freesurfer'), _id)
+
+#     def registration(self, _id):
+#         t1_ls_f, flair_ls_f, t2_ls_f = cdb.get_registration_files(_id, db, NIMB_HOME, NIMB_tmp, vars_freesurfer["flair_t2_add"])
+#         t1_cmd    = ''.join([' -i '+i for i in t1_ls_f])
+#         flair_cmd = '{}'.format(''.join([' -FLAIR '+i for i in flair_ls_f])) if flair_ls_f != 'none' else ''
+#         t2_cmd    = '{}'.format(''.join([' -T2 '   +i for i in t2_ls_f]))    if t2_ls_f    != 'none' else ''
+#         return "recon-all{}{}{} -s {}".format(t1_cmd, flair_cmd, t2_cmd, _id)
+# #        return "recon-all{}".format(''.join([' -i '+i for i in t1_ls_f]))+flair_cmd+t2_cmd+' -s '+_id
 
 def Get_status_for_subjid_in_queue(running_jobs, subjid, scheduler_jobs):
     if subjid in running_jobs:
@@ -155,7 +161,8 @@ def check_error(scheduler_jobs, process):
                     if not chk.checks_from_runfs(process, subjid):
                     # if not fs_checker.checks_from_runfs(SUBJECTS_DIR, process, subjid, vars_freesurfer["freesurfer_version"], vars_freesurfer["masks"]):
                             log.info('            some files were not created and recon-all-status has errors.')
-                            fs_error = fs_err_helper.fs_find_error(subjid, SUBJECTS_DIR, NIMB_tmp, process, fs_ver)
+                            log_f = Procs.log(process)
+                            fs_error = fs_err_helper.fs_find_error(subjid, SUBJECTS_DIR, NIMB_tmp, process, log_f)
                             solved = False
                             if fs_error:
                                 solve = fs_err_helper.solve_error(subjid, fs_error, SUBJECTS_DIR, NIMB_tmp)
@@ -435,8 +442,9 @@ def Update_running(NIMB_tmp, cmd):
 
 def run(varslocal, logger):
 
-    global db, schedule, log, chk, vars_local, vars_freesurfer, fs_ver, vars_processing, vars_nimb, NIMB_HOME, NIMB_tmp, SUBJECTS_DIR, max_walltime, process_order, processing_env
+    global db, Procs, schedule, log, chk, vars_local, vars_freesurfer, fs_ver, vars_processing, vars_nimb, NIMB_HOME, NIMB_tmp, SUBJECTS_DIR, max_walltime, process_order, processing_env
     
+    Procs           = FSProcesses(vars_freesurfer["freesurfer_version"])
     vars_local      = varslocal
     vars_freesurfer = vars_local["FREESURFER"]
     vars_processing = vars_local["PROCESSING"]
@@ -447,11 +455,12 @@ def run(varslocal, logger):
     NIMB_tmp        = vars_nimb["NIMB_tmp"]
     max_walltime    = vars_processing["max_walltime"]
     SUBJECTS_DIR    = vars_freesurfer["FS_SUBJECTS_DIR"]
-    # process_order   = vars_freesurfer["process_order"] #importing from fs_definitions
     fs_ver          = FreeSurferVersion(vars_freesurfer["freesurfer_version"]).fs_ver()
     log             = logger #logging.getLogger(__name__)
-    chk             = FreeSurferChecker(vars_freesurfer)
+    chk             = FreeSurferChecker(vars_freesurfer, atlas_definitions)
     schedule        = Scheduler(vars_local)
+
+    process_order   = ["registration"] + Procs.process_order()
 
     t0           = time.time()
     time_elapsed = 0
@@ -526,6 +535,8 @@ if __name__ == "__main__":
     from setup.get_vars import Get_Vars
     from distribution.logger import Log
     from distribution.distribution_definitions import DEFAULT
+    from processing.atlases import atlas_definitions
+
     getvars = Get_Vars()
     vars_local = getvars.location_vars['local']
     # Log(vars_local['NIMB_PATHS']['NIMB_tmp'],

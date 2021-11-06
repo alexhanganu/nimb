@@ -1,9 +1,9 @@
 #!/bin/python
 # 2020.09.04
 from os import path
+import os
 
 hemi = ['lh','rh']
-
 
 class FreeSurferVersion:
     def __init__(self, freesurfer_version):
@@ -15,65 +15,183 @@ class FreeSurferVersion:
         else:
             return str(self.version)
 
+    def fs_ver2(self):
+        if len(str(self.version)) > 1:
+            return str(self.version.replace(".","")[:2])
+        else:
+            return str(self.version)
+
+class FSProcesses:
+    def __init__(self, freesurfer_version):
+        """
+        codes in atlas_chk key MUST be the same as atlas names in
+        processing/atlases/atlas_definitions.atlas_data
+        """
+        self.processes = {
+            "autorecon1":{
+                        "group": "recon",
+                        "run_step":1},
+            "autorecon2":{
+                        "group": "recon",
+                        "run_step":2},
+            "autorecon3":{
+                        "group": "recon",
+                        "run_step":3},
+            "qcache"    :{
+                        "group": "recon",
+                        "run_step":4},
+            "brstem"    :{
+                        "fsver"  :6,
+                        "log"    :"brainstem-substructures-T1.log",
+                        "log6"   :"brainstem-structures.log",
+                        "group"  :"atlas",
+                        "atlas_2chk": ['BS'],
+                        "cmd6"   :"brainstem-structures",
+                        "cmd"    :"segmentBS.sh",
+                        "s_param":"",
+                        "run_step":5},
+            "hip"       :{
+                        "fsver"  :6,
+                        "log"    :"hippocampal-subfields-T1.log",
+                        "group"  :"atlas",
+                        "atlas_2chk": ['HIP', 'AMY'],
+                        "cmd6"   :"hippocampal-subfields-T1",
+                        "cmd"    :"segmentHA_T1.sh",
+                        "s_param":"",
+                        "run_step":6},
+            "tha"       :{
+                        "fsver"  :7,
+                        "log"    :"thalamic-nuclei-mainFreeSurferT1.log",
+                        "group"  :"atlas",
+                        "atlas_2chk": ['THA'],
+                        "cmd"    :"segmentThalamicNuclei.sh",
+                        "s_param":"",
+                        "run_step":7},
+            "hypotha"   :{
+                        "fsver"  :72,
+                        "log"    :"hypothalamic_subunits_volumes.log",
+                        "group"  :"atlas",
+                        "atlas_2chk": ['HypoTHA'],
+                        "cmd"    :"mri_segment_hypothalamic_subunits",
+                        "s_param":"--s",
+                        "run_step":8}}
+
+        self.recons   = [i for i in self.processes if "recon" in self.processes[i]["group"]]
+        self.fs_ver2 = FreeSurferVersion(freesurfer_version).fs_ver2()
+
+    def log(self, process):
+        if process in self.recons:
+            file = 'recon-all.log'
+        elif self.fs_ver2 == 6 and "log6" in self.processes[process]:
+            file = self.processes[process]["log6"]
+        else:
+            file = self.processes[process]["log"]
+        return os.path.join('scripts', file)
+
+    def process_order(self):
+        order_all = sorted(self.processes, key=lambda k: self.processes[k]["run_step"])
+        atlases = [i for i in self.processes if "atlas" in self.processes[i]["group"]]
+
+        fs72_order = fs7_order + fs72_atlases
+
+        if self.fs_ver2 < "7":
+            fs7_atlases = [i for i in atlases if self.processes[i]["fsver"] > 6]
+            return [i for i in order_all if i not in fs7_atlases]
+        elif self.fs_ver2 == "72":
+            fs72_atlases = [i for i in atlases if self.processes[i]["fsver"] == 72]
+            return [i for i in order_all if i not in fs72_atlases]
+        else:
+            return order_all
+
+    def cmd(self, process, _id, id_base = '', ls_tps = []):
+        if process in self.recons:
+            return f"recon-all -{process} -s {_id}"
+        elif process == 'recbase':
+            all_tps = ''.join([f" -tp {i}" for i in ls_tps])
+            return f"recon-all -base {_id}{all_tps} -all"
+        elif process == 'reclong':
+            return f"recon-all -long {_id} {id_base} -all"
+        elif self.processes[process]["group"] == 'atlas':
+            return self.cmd_atlas(process, _id)
+        elif process == 'masks':
+            chdir = os.path.join(NIMB_HOME, 'processing', 'freesurfer')
+            return f"cd {chdir}\npython run_masks.py {_id}"
+
+    def cmd_atlas(self, process, _id):
+        if self.fs_ver2 < "7":
+            run_sh = self.processes[process]["cmd6"]
+            return f"recon-all -s {_id} -{run_sh}"
+        else:
+            run_sh = self.processes[process]["cmd"]
+            s_param = self.processes[process]["s_param"]
+            if s_param:
+                return f"{run_sh} {s_param} {_id}"
+            else:
+                return f"{run_sh} {_id}"
+
 
 class FilePerFSVersion:
     def __init__(self, freesurfer_version):
-        # self.fs_ver    = freesurfer_version
-        self.processes = ['Subcort', 'DK', 'DKT', 'DS', 'WMDK', 'bs', 'hip', 'amy', 'tha']
-        self.log       = {
-            'recon'     :{'7':'recon-all.log',                       '6':'recon-all.log'},
-            'autorecon1':{'7':'recon-all.log',                       '6':'recon-all.log'},
-            'autorecon2':{'7':'recon-all.log',                       '6':'recon-all.log'},
-            'autorecon3':{'7':'recon-all.log',                       '6':'recon-all.log'},
-            'qcache'    :{'7':'recon-all.log',                       '6':'recon-all.log'},
-            'bs'        :{'7':'brainstem-substructures-T1.log',      '6':'brainstem-structures.log'},
-            'hip'       :{'7':'hippocampal-subfields-T1.log',        '6':'hippocampal-subfields-T1.log'},
-            'tha'       :{'7':'thalamic-nuclei-mainFreeSurferT1.log','6':''},
-            'hypotha'   :{'7':'hypothalamic_subunits_volumes.log',   '6':''}
-                          }
-        self.stats_files = {
+        self.processes = ['Subcort', 'DK', 'DKT', 'DS', 'WMDK', 'brstem', 'hip', 'amy', 'tha']
+        self.fs_ver = FreeSurferVersion(freesurfer_version).fs_ver()
+        self.fs_ver2 = FreeSurferVersion(freesurfer_version).fs_ver2()
+
+    def stats_f(self, process, _dir, hemi='lhrh'): #to be removed
+        hemi3 = {'lh':'lh.', 'rh':'rh.', 'lhrh':''}
+        stats_files = {
             'stats': {
                 'Subcort':{'7':'aseg.stats',                      '6':'aseg.stats',},
                 'DK'     :{'7':'aparc.stats',                     '6':'aparc.stats',},
                 'DKT'    :{'7':'aparc.DKTatlas.stats',            '6':'aparc.DKTatlas.stats',},
                 'DS'     :{'7':'aparc.a2009s.stats',              '6':'aparc.a2009s.stats',},
                 'WMDK'   :{'7':'wmparc.stats',                    '6':'',},
-                'bs'     :{'7':'brainstem.v12.stats',             '6':'brainstem.v10.stats',},
+                'brstem'     :{'7':'brainstem.v12.stats',             '6':'brainstem.v10.stats',},
                 'hip'    :{'7':'hipposubfields.T1.v21.stats',     '6':'hipposubfields.T1.v10.stats',},
                 'amy'    :{'7':'amygdalar-nuclei.T1.v21.stats',   '6':'',},
                 'tha'    :{'7':'thalamic-nuclei.v12.T1.stats',    '6':'',},
-                'hypotha':{'7':'hypothalamic_subunits_volumes.v1.stats',    '6':'',}
-                },
+                'hypotha':{'7':'hypothalamic_subunits_volumes.v1.stats',    '6':'',}},
             'stats_old': {
-                'bs'   :{'7':'aseg.brainstem.volume.stats',       '6':'aseg.brainstem.volume.stats',},
+                'brstem'   :{'7':'aseg.brainstem.volume.stats',       '6':'aseg.brainstem.volume.stats',},
                 'hip'  :{'7':'aseg.hippo.lh.volume.stats',        '6':'aseg.hippo.lh.volume.stats',},
                 'amy'  :{'7':'amygdalar-nuclei.lh.T1.v21.stats',  '6':'',},
-                'tha'  :{'7':'thalamic-nuclei.lh.v12.T1.stats',   '6':'',}
-                },
+                'tha'  :{'7':'thalamic-nuclei.lh.v12.T1.stats',   '6':'',}},
             'mri': {
-                'bs'   :{'7':'brainstemSsVolumes.v12.txt',        '6':'brainstemSsVolumes.v10',},
+                'brstem'   :{'7':'brainstemSsVolumes.v12.txt',        '6':'brainstemSsVolumes.v10',},
                 'hip'  :{'7':'hippoSfVolumes-T1.v21.txt',         '6':'hippoSfVolumes-T1.v10.txt',},
                 'amy'  :{'7':'amygNucVolumes-T1.v21.txt',         '6':'',},
-                'tha'  :{'7':'ThalamicNuclei.v12.T1.volumes.txt', '6':'',}
-                }
+                'tha'  :{'7':'ThalamicNuclei.v12.T1.volumes.txt', '6':'',}}
                         }
-        self.hemi = {'lh':'lh.', 'rh':'rh.', 'lhrh':''}
-        self.fs_ver = FreeSurferVersion(freesurfer_version).fs_ver()
-
-    def stats_f(self, process, _dir, hemi='lhrh'):
-        hemi_ = self.hemi[hemi]
-        f_4process = self.stats_files[_dir][process][self.fs_ver]
+        hemi_ = hemi3[hemi]
+        f_4process = stats_files[_dir][process][self.fs_ver]
         file = f'{hemi_}{f_4process}'
-        if _dir == 'stats_old' and process != 'bs':
+        if _dir == 'stats_old' and process != 'brstem':
             file = f'{f_4process}'
             _dir = 'stats'
             if hemi == 'rh':
                 file = file.replace('lh', 'rh')
         return path.join(_dir, file)
 
-    def log_f(self, process):
-        return path.join('scripts', self.log[process][self.fs_ver])
 
+    def log_f(self, process): #to be removed
+        log = {
+            'recon'     :{'7':'recon-all.log',                       '6':'recon-all.log'},
+            'autorecon1':{'7':'recon-all.log',                       '6':'recon-all.log'},
+            'autorecon2':{'7':'recon-all.log',                       '6':'recon-all.log'},
+            'autorecon3':{'7':'recon-all.log',                       '6':'recon-all.log'},
+            'qcache'    :{'7':'recon-all.log',                       '6':'recon-all.log'},
+            'brstem'        :{'7':'brainstem-substructures-T1.log',      '6':'brainstem-structures.log'},
+            'hip'       :{'7':'hippocampal-subfields-T1.log',        '6':'hippocampal-subfields-T1.log'},
+            'tha'       :{'7':'thalamic-nuclei-mainFreeSurferT1.log','6':''},
+            'hypotha'   :{'7':'hypothalamic_subunits_volumes.log',   '6':''}}
+        return path.join('scripts', log[process][self.fs_ver])
+
+
+# processes_recon   = ["autorecon1",
+#                      "autorecon2",
+#                      "autorecon3",
+#                      "qcache"]
+# processes_subcort = ["brstem","hip","tha","hypotha"]
+# process_order = ["registration",]+processes_recon+processes_subcort
 
 class GLMVars:
     def __init__(self, proj_vars):
@@ -135,13 +253,6 @@ GLMcontrasts = {
             'g1v2':['dods',],}
                 }
 # https://surfer.nmr.mgh.harvard.edu/fswiki/Fsgdf2G2V
-
-processes_recon   = ["autorecon1",
-                     "autorecon2",
-                     "autorecon3",
-                     "qcache"]
-processes_subcort = ["brstem","hip","tha","hypotha"]
-process_order = ["registration",]+processes_recon+processes_subcort
 
 
 suggested_times = {
