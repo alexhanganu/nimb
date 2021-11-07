@@ -13,10 +13,10 @@ from setup.interminal_setup import get_yes_no
 from stats.db_processing import Table
 from distribution.utilities import save_json
 try:
-    from fs_definitions import hemi, GLMcontrasts
+    import fs_definitions
 except ModuleNotFoundError:
     print('exception ModuleNotFoundError for fs_definitions was triggered')
-    from processing.freesurfer.fs_definitions import hemi, GLMcontrasts
+    from processing.freesurfer import fs_definitions
 
 try:
     import pandas as pd
@@ -28,40 +28,6 @@ except ImportError as e:
         try to install them using pip, or use the miniconda run with the command located \
         in credentials_path.py/local.json -> miniconda_python_run')
     sys.exit(e)
-
-class ChkFSQcache:
-    '''FS GLM requires two folders: surf and label
-        script checks that both folders are present
-        checks that all GLM files are present
-    Args:
-        path2chk: path to the folder with the subject
-        _id: ID of the subject to chk
-    Return:
-        populates list of missing subjects
-    '''
-    def __init__(self, path2chk, _id, vars_fs):
-        self.miss       = {}
-        self.path2chk   = path2chk
-        self._id        = _id
-        self.GLM_meas   = vars_fs["GLM_measurements"]
-        self.GLM_thresh = vars_fs["GLM_thresholds"]
-        self.chk_f()
-
-    def chk_f(self):
-        if os.path.exists(os.path.join(self.path2chk, self._id, 'surf')) and os.path.exists(os.path.join(self.path2chk, self._id, 'label')):
-            for hemis in hemi:
-                for meas in self.GLM_meas:
-                    for thresh in self.GLM_thresh:
-                        file = '{}.{}.fwhm{}.fsaverage.mgh'.format(hemis, meas, str(thresh))
-                        if not os.path.exists(os.path.join(self.path2chk, self._id, 'surf', file)):
-                            self.populate_miss(file)
-        else:
-            self.populate_miss('surf label missing')
-
-    def populate_miss(self, file):
-        if self._id not in self.miss:
-            self.miss[self._id] = list()
-        self.miss[self._id].append(file)
 
 
 class CheckIfReady4GLM():
@@ -131,7 +97,7 @@ class CheckIfReady4GLM():
             populates list of missing subjects
             populates dict with ids
         '''
-        files_ok = ChkFSQcache(self.FS_SUBJECTS_DIR, bids_id, self.vars_fs)
+        files_ok = fs_definitions.ChkFSQcache(self.FS_SUBJECTS_DIR, bids_id, self.vars_fs)
         if not files_ok:
             for file in files_ok:
                 self.add_to_miss(bids_id, file)
@@ -227,7 +193,7 @@ class PrepareForGLM():
                     self.d_subjid[_id][var] = d_init[var][rownr]
         self.ls_vars_stats.remove(self.group_col)
 
-        self.contrasts = GLMcontrasts['contrasts']
+        self.contrasts = fs_definitions.GLMcontrasts['contrasts']
 
         self.files_glm = {}
         for fsgd_type in self.contrasts:
@@ -235,7 +201,7 @@ class PrepareForGLM():
                                         'fsgd' : [],
                                         'mtx' : [],
                                         'mtx_explanation' : [],
-                                        'gd2mtx' : GLMcontrasts['dods_doss'][fsgd_type]}
+                                        'gd2mtx' : fs_definitions.GLMcontrasts['dods_doss'][fsgd_type]}
 
         # print('creating list of subjects')
         self.make_subjects_per_group(df_groups_clin)
@@ -259,7 +225,7 @@ class PrepareForGLM():
     def get_ids_ready4glm(self, SUBJECTS_DIR, ids, vars_fs):
         miss = {}
         for _id in ids:
-            files_ok = ChkFSQcache(SUBJECTS_DIR, _id, vars_fs)
+            files_ok = fs_definitions.ChkFSQcache(SUBJECTS_DIR, _id, vars_fs)
             if not files_ok:
                 miss.update(files_ok)
         if miss.keys():

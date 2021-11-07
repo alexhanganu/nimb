@@ -8,7 +8,6 @@ import shutil
 import datetime
 import time
 import logging
-import fs_definitions
 
 log = logging.getLogger(__name__)
 

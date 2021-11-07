@@ -22,11 +22,6 @@ import xlsxwriter, xlrd
 import json
 import time
 
-from fs_definitions import (all_data, aparc_file_extra_measures,
-                            BS_Hip_Tha_stats_f,
-                            parc_DK_f2rd, parc_DS_f2rd,
-                            FilePerFSVersion)
-
 import logging
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -68,9 +63,9 @@ def chk_if_all_stats_present(_SUBJECT, stats_dir_path, miss = dict()):
         logger.info(f'subject: {_SUBJECT} is archived. Please run through nimb.py -process fs-get-stats')
         ready = False
     else:
-        for sheet in BS_Hip_Tha_stats_f:
+        for sheet in atlas_definitions.BS_Hip_Tha_stats_f:
             try:
-                file_with_stats = [i for i in BS_Hip_Tha_stats_f[sheet] if path.exists(path.join(stats_dir_path.replace('/stats',''),i))][0]
+                file_with_stats = [i for i in atlas_definitions.BS_Hip_Tha_stats_f[sheet] if path.exists(path.join(stats_dir_path.replace('/stats',''),i))][0]
                 if not file_with_stats:
                     logger.info('missing: {}'.format(sheet))
                     ready = False
@@ -83,14 +78,14 @@ def chk_if_all_stats_present(_SUBJECT, stats_dir_path, miss = dict()):
                 logger.info('missing: aseg.stats')
                 ready = False
                 miss = add_2dict(miss, _SUBJECT, 'VolSeg')
-        for hemisphere in parc_DK_f2rd:
-            file_with_stats = parc_DK_f2rd[hemisphere]
+        for hemisphere in atlas_definitions.parc_DK_f2rd:
+            file_with_stats = atlas_definitions.parc_DK_f2rd[hemisphere]
             if not path.isfile(path.join(stats_dir_path,file_with_stats)):
                 logger.info('missing: {}'.format(file_with_stats))
                 ready = False
                 miss = add_2dict(miss, _SUBJECT, file_with_stats)
-        for hemisphere in parc_DS_f2rd:
-            file_with_stats = parc_DS_f2rd[hemisphere]
+        for hemisphere in atlas_definitions.parc_DS_f2rd:
+            file_with_stats = atlas_definitions.parc_DS_f2rd[hemisphere]
             if not path.isfile(path.join(stats_dir_path,file_with_stats)):
                 logger.info('missing: {}'.format(file_with_stats))
                 ready = False
@@ -119,6 +114,7 @@ class FSStats2Table:
     def __init__(self, ls_subjects,
                     stats_DIR,
                     project_vars,
+                    fs_ver,
                     big_file = True,
                     use_params_nimb = True,
                     data_only_volumes=False,
@@ -131,9 +127,12 @@ class FSStats2Table:
         self.data_only_volumes = data_only_volumes
         self.use_params_nimb   = use_params_nimb
         self.dir_stats         = 'stats'
-        self.miss = dict()
-        freesurfer_version     = '7.1.1'
-        self.get_file               = FilePerFSVersion(freesurfer_version)
+        self.miss              = dict()
+        self.fsver             = fs_ver#'7.2.0'
+        # aiming to create independent sheet for subcortical structures;
+        # Name MUST be similar to atlas in atlas_definitions.atlas_data
+        self.criteria_4subcort = ['SubCtx', 'Volume_mm3']
+        self.subcort_atlases   = ["BS", "HIP", "AMY", "THA", "HypoTHA"]#('bs', 'hip', 'amy','tha'):
 
         self.define_file_names(new_date)
         self.run()
@@ -201,46 +200,54 @@ class FSStats2Table:
 
     def get_fs_stats_2table(self, path_2sub, sub):
         '''Extracting SEGMENTATIONS and PARCELLATIONS'''
-        atlases = ('bs', 'hip', 'amy','tha', 'Subcort', 'DK', 'DKT', 'DS', 'WMDK')
-        for atlas  in atlases:
-            name = all_data["atlas_params"][atlas]['atlas_name']
+        # for atlas  in atlases:
+        for atlas in atlas_definitions.atlas_data:
+            name = atlas_definitions.atlas_data[atlas]['atlas_name']
+            # name = fs_definitions.all_data["atlas_params"][atlas]['atlas_name']
             logger.info(f'    Atlas: {name}')
-            stats_param = all_data["atlas_params"][atlas]['atlas_param']
-            parameters = all_data[stats_param]['parameters']
-            for hemisphere in all_data[stats_param]['hemi']:
-                file = self.get_file.stats_f(atlas, 'stats', hemisphere)
+            # stats_param = fs_definitions.all_data["atlas_params"][atlas]['atlas_param']
+            # parameters = fs_definitions.all_data[stats_param]['parameters']
+            for hemisphere in atlas_definitions.atlas_data[atlas]['hemi']:
+            # for hemisphere in fs_definitions.all_data[stats_param]['hemi']:
+                file = atlas_definitions.stats_f(self.fsver, atlas, 'stats', hemisphere)
+                # file = self.get_file.stats_f(atlas, 'stats', hemisphere)
                 f_stats_abspath = path.join(path_2sub, file)
                 if not self.f_exists(f_stats_abspath, file):
-                    file = self.get_file.stats_f(atlas, 'stats_old', hemisphere)
+                    file = atlas_definitions.stats_f(self.fsver, atlas, 'stats_old', hemisphere)
                     f_stats_abspath = path.join(path_2sub, file)
                     logger.info(f'        using old version of {file}')
                 if self.f_exists(f_stats_abspath, file):
                     content = list(open(f_stats_abspath,'r'))
-                    df, extra_measures = self.get_values(atlas, content, file, stats_param, sub)
-                    if len(all_data[stats_param]['parameters']) > 1:
+                    df, extra_measures = self.get_values(atlas, content, file, sub)
+                    parameters = atlas_definitions.atlas_data[atlas]['parameters']
+                    if len(parameters) > 1:
+                    # if len(fs_definitions.all_data[stats_param]['parameters']) > 1:
                         for fs_param in parameters:
                             param = self.define_parameter_for_sheet(parameters, fs_param)
                             sheetName = f'{atlas}_{param}_{hemisphere}'
-                            if atlas == 'Subcort' and fs_param == 'Volume_mm3':
+                            if atlas in self.criteria_4subcort and fs_param in self.criteria_4subcort:
                                 self.sheet_subcort = sheetName
                             df2 = pd.DataFrame()
                             df2[sub] = df[fs_param]
                             df2.index = df['StructName']
                             df2 = df2.transpose()
                             df2 = self.populate_extra_measures(df2, content, fs_param, extra_measures, atlas)
-                            self.add_sheet_2df(df2, sheetName, all_data["header_fs2nimb"], atlas)
+                            self.add_sheet_2df(df2, sheetName, atlas_definitions.header_fs2nimb, atlas)
+                            # self.add_sheet_2df(df2, sheetName, fs_definitions.all_data["header_fs2nimb"], atlas)
                     else:
                         param = list(parameters.keys())[0]
                         sheetName = f'{atlas}_{param}_{hemisphere}'
-                        self.add_sheet_2df(df, sheetName, all_data["header_fs2nimb"], atlas)
+                        self.add_sheet_2df(df, sheetName, atlas_definitions.header_fs2nimb, atlas)
+                        # self.add_sheet_2df(df, sheetName, fs_definitions.all_data["header_fs2nimb"], atlas)
 
 
-    def get_values(self, atlas, content, file_stats, stats_param, sub):
-        if atlas in ('bs', 'hip', 'amy','tha'):
+    def get_values(self, atlas, content, file_stats, sub):
+        if atlas in self.subcort_atlases:
             if '.v12' in file_stats or '.v21' in file_stats:
                 new_version = False
-                new_files = ('segmentHA_T1.sh', 'segmentThalamicNuclei.sh',
-                    'segmentBS.sh')
+                new_files = ('segmentHA_T1.sh',
+                            'segmentThalamicNuclei.sh',
+                            'segmentBS.sh')
                 for file in new_files:
                     if file in content[0]:
                         new_version = True
@@ -252,14 +259,16 @@ class FSStats2Table:
                     df = pd.DataFrame(values, index=[sub])
                 else:
                     logger.info(f'    ERROR: file {file} has NO content')
-                    index_df = all_data[stats_param]['header']
+                    index_df = atlas_definitions.atlas_data[atlas]['header']
+                    # index_df = fs_definitions.all_data[stats_param]['header']
                     df=pd.DataFrame(np.repeat('nan',len(index_df)), columns=[sub], index=index_df)
                     df=df.T
             else:
                 df = self.read_BS_HIP_v10(file_stats, sub)
         else:
             values_raw = content[content.index([x for x in content if 'ColHeaders' in x][0]):]
-            if not all_data[stats_param]["two_hemi"]:
+            if len(atlas_definitions.atlas_data[atlas]["hemi"]) < 2:
+            # if not fs_definitions.all_data[stats_param]["two_hemi"]:
                 values = [values_raw[0].split()[4:]]
                 for line in values_raw[1:]:
                     values.append(line.split()[2:])
@@ -307,11 +316,11 @@ class FSStats2Table:
         d = dict()
         for line in content:
             if 'Measure' in line:
-                line_ls = line.split()
-                region    = line_ls[2].strip(',')
+                line_ls  = line.split()
+                region   = line_ls[2].strip(',')
                 fs_param = line_ls[3].strip(',')
-                value     = line_ls[-2].strip(',')
-                if atlas == 'Subcort':
+                value    = line_ls[-2].strip(',')
+                if atlas in self.criteria_4subcort:
                     d[fs_param] = value
                 else:
                     d[f'{region}_{fs_param}'] = value
@@ -329,12 +338,12 @@ class FSStats2Table:
         Return:
             new pandas.DataFrame with the newly populated measures'''
 
-        if fs_param == 'Volume_mm3' and atlas == 'Subcort':
+        if fs_param in self.criteria_4subcort and atlas in self.criteria_4subcort:
             for extra_param in measures:
                 df[extra_param] = measures[extra_param]
         else:
-            if fs_param in aparc_file_extra_measures:
-                extra_param = aparc_file_extra_measures[fs_param]
+            if fs_param in atlas_definitions.aparc_file_extra_measures:
+                extra_param = atlas_definitions.aparc_file_extra_measures[fs_param]
                 if extra_param in measures:
                     df[extra_param] = measures[extra_param]
                 else:
@@ -511,11 +520,15 @@ if __name__ == "__main__":
     from setup.get_vars import Get_Vars
     from stats.db_processing import Table
     from distribution.distribution_definitions import DEFAULT
+    from processing.atlases import atlas_definitions
+    import fs_definitions
 
-    project_ids = Get_Vars().get_projects_ids()
-    params      = get_parameters(project_ids)
-    all_vars    = Get_Vars(params)
-    project_vars  = all_vars.projects[params.project]
+    project_ids  = Get_Vars().get_projects_ids()
+    params       = get_parameters(project_ids)
+    all_vars     = Get_Vars(params)
+    project_vars = all_vars.projects[params.project]
+    fs_ver_long  = all_vars.location_vars['local']["FREESURFER"]["freesurfer_version"]
+    fs_ver       = fs_definitions.FreeSurferVersion(fs_ver_long).fs_ver()
 
     if params.stats_dir == 'home':
         all_vars.params.stats_dir = project_vars["STATS_PATHS"]["STATS_HOME"]
@@ -523,29 +536,11 @@ if __name__ == "__main__":
         project_vars["PROCESSED_FS_DIR"][1] = params.dir_fs_stats
     ls_subjects   = []
 
-    # if "STATS_FILES" in project_vars:
-    #     stats_files   = project_vars["STATS_FILES"]
-    # else:
-    #     stats_files   = {
-    #    "fname_fs_per_param"     : "stats_FreeSurfer_per_param",
-    #    "fname_fs_all_stats"     : "stats_FreeSurfer_all",
-    #    "fname_fs_subcort_vol"   : "stats_FreeSurfer_subcortical",
-    #    "file_type"              : "xlsx"}
-
-    # getvars           = Get_Vars()
-    # vars_stats        = getvars.stats_vars
-    # default_stats_dir = vars_stats["STATS_PATHS"]["STATS_HOME"]
-
-    # projects      = getvars.projects
-    # all_projects  = [i for i in projects.keys() if 'EXPLANATION' not in i and 'LOCATION' not in i]
-    # params        = get_parameters(all_projects, default_stats_dir)
-    # project_vars  = projects[params.project]
-    # ls_subjects   = []
-    # stats_DIR     = params.stats_dir
 
     FSStats2Table(ls_subjects,
                     all_vars.params.stats_dir,
                     project_vars,
+                    fs_ver,
                     big_file = True,
                     use_params_nimb = True,
                     data_only_volumes=False,

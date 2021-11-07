@@ -6,9 +6,9 @@ from os import system, listdir, makedirs, path
 import linecache, sys
 import shutil
 try:
-    from processing.freesurfer.fs_definitions import hemi, FSGLMParams, GLMcontrasts
+    from processing.freesurfer import fs_definitions
 except ImportError:
-    from fs_definitions import hemi, FSGLMParams, GLMcontrasts
+    import fs_definitions
 
 
 
@@ -25,7 +25,7 @@ class PerformGLM():
         self.measurements          = vars_fs["GLM_measurements"]
         self.thresholds            = vars_fs["GLM_thresholds"]
         self.mc_cache_thresh       = vars_fs["GLM_MCz_cache"]
-        param                      = FSGLMParams(PATHglm)
+        param                      = fs_definitions.FSGLMParams(PATHglm)
         self.PATHglm               = PATHglm
         self.sig_fdr_thresh        = sig_fdr_thresh
 
@@ -36,7 +36,7 @@ class PerformGLM():
         self.sig_mc_json           = param.sig_mc_json
         self.err_mris_preproc_file = param.err_mris_preproc_file
         self.mcz_sim_direction     = param.mcz_sim_direction
-        self.hemispheres           = hemi
+        self.hemispheres           = fs_definitions.hemi
         self.GLM_sim_fwhm4csd      = param.GLM_sim_fwhm4csd
         self.GLM_MCz_meas_codes    = param.GLM_MCz_meas_codes
         self.cluster_stats         = path.join(self.PATHglm_results,'cluster_stats.log')
@@ -306,7 +306,7 @@ class ClusterFile2CSV():
 
     def __init__(self, file_abspath, result_abspath):
         from stats.db_processing import Table
-        self.contrasts = GLMcontrasts['contrasts']
+        self.contrasts = fs_definitions.GLMcontrasts['contrasts']
         self.get_explanations()
 
         self.col_4constrasts = "Contrast"
@@ -431,7 +431,7 @@ if __name__ == "__main__":
     from distribution.utilities import load_json, save_json
     from setup.get_vars import Get_Vars, SetProject
     from stats.db_processing import Table
-    from processing.freesurfer.fs_definitions import hemi, FSGLMParams, GLMcontrasts
+    from processing.freesurfer import fs_definitions
 
     all_vars     = Get_Vars()
     projects     = all_vars.projects

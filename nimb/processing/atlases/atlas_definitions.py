@@ -1,10 +1,13 @@
 #!/bin/python
 # 2021.11.02
 
-file_FSLabels = "nimb/processing/atlases/FreeSurferColorLUT.txt"
+file_FSLabels   = "nimb/processing/atlases/FreeSurferColorLUT.txt"
 file_DipyLabels = "nimb/processing/atlases/label_info.txt"
 
 import os
+
+hemi2 = ['lh','rh']
+hemi3 = {'lh':'lh.', 'rh':'rh.', 'lhrh':''}
 
 def get_freesurfer_labels():
     d1 = dict()
@@ -18,7 +21,7 @@ def get_freesurfer_labels():
     return d1
 
 
-def get():#_dipy_labels():
+def get():#_dipy_labels:
     d1 = dict()
     with open(file_DipyLabels, "r") as f:
         for line in f:
@@ -41,19 +44,34 @@ def stats_f(fsver, atlas, _dir = "stats", hemi='lhrh'):
     key = f"{fs_key}_stats_f{mri_key}"
     file = atlas_data[atlas][key]
 
-    hemi_dot = atlas_data["hemi3"][hemi]
+    hemi_dot = hemi3[hemi]
     if 'lh.' in file and hemi_dot not in file:
         file = file.replace("lh.", hemi_dot)
     return os.path.join(_dir, file)
 
 
+BS_Hip_Tha_stats_f = {
+    'Brainstem':('mri/brainstemSsVolumes.v10.txt','stats/brainstem.v12.stats','stats/aseg.brainstem.volume.stats'),
+    'HIPL'     :('mri/hippoSfVolumes-T1.v10.txt','stats/lh.hipposubfields.T1.v21.stats','stats/aseg.hippo.lh.volume.stats'),
+    'HIPR'     :('mri/hippoSfVolumes-T1.v10.txt','stats/rh.hipposubfields.T1.v21.stats','stats/aseg.hippo.rh.volume.stats'),
+    'AMYL'     :('stats/amygdalar-nuclei.lh.T1.v21.stats',),
+    'AMYR'     :('stats/amygdalar-nuclei.rh.T1.v21.stats',),
+    'THAL'     :('stats/thalamic-nuclei.lh.v12.T1.stats',),
+    'THAR'     :('stats/thalamic-nuclei.rh.v12.T1.stats',)}
+'''this is used in fs_stats2table to add columns to specific sheets'''
+aparc_file_extra_measures = {
+    'SurfArea': 'Cortex_WhiteSurfArea',
+    'ThickAvg': 'Cortex_MeanThickness',
+    'GrayVol' : 'Cortex_CortexVol',
+    'NumVert' : 'Cortex_NumVert',}
+parc_DS_f2rd ={'L':'lh.aparc.a2009s.stats','R':'rh.aparc.a2009s.stats'}
+parc_DK_f2rd ={'L':'lh.aparc.stats','R':'rh.aparc.stats'}
+
 atlas_data = {
-    "hemi2": ['lh','rh'],
-    "hemi3": {'lh':'lh.', 'rh':'rh.', 'lhrh':''},
     'SubCtx':{
         'atlas_name' :'Subcortical segmentations',
         'hemi' : ['lhrh'],
-        'parameters' : {'Volume_mm3':'Vol',         'NVoxels'    :'VolVoxNum',
+        'parameters' : {'Volume_mm3':'Vol',         'NVoxels'   :'VolVoxNum',
                         'normMean'  :'VolMeanNorm', 'normStdDev':'VolStdNorm',
                         'normMin'   :'VolMinNorm',  'normMax'   :'VolMaxNorm',
                         'normRange' :'VolRangeNorm'},
@@ -154,7 +172,7 @@ atlas_data = {
     'WMDK':{
         'atlas_name' :'White Matter subcortical segmentations based on Desikan atlas',
         'hemi' : ['lhrh'],
-        'parameters' : {'Volume_mm3':'Vol',         'NVoxels'    :'VolVoxNum',
+        'parameters' : {'Volume_mm3':'Vol',         'NVoxels'   :'VolVoxNum',
                         'normMean'  :'VolMeanNorm', 'normStdDev':'VolStdNorm',
                         'normMin'   :'VolMinNorm',  'normMax'   :'VolMaxNorm',
                         'normRange' :'VolRangeNorm'},

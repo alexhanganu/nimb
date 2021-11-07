@@ -7,7 +7,6 @@ import json
 import logging
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
-from fs_definitions import all_data, cols_per_measure_per_atlas
 
 
 class FSStatsUtils:
@@ -93,17 +92,22 @@ class FSStatsUtils:
         logger.info('FINISHED creating One file for all subjects')
         self.check_nan(df_concat)
 
-    def create_HIP_to_cortex_ratio(self, df_data_big, HIP_to_cortex_ratio_DK, HIP_to_cortex_ratio_DS):
+
+    def create_HIP_to_cortex_ratio(self,
+                                    df_data_big,
+                                    HIP_to_cortex_ratio_DK,
+                                    HIP_to_cortex_ratio_DS,
+                                    atlas_data):
 
         print('CREATING file Hippocampus to Cortex ratio')
-        from a.lib.stats_definitions import all_data, cols_per_measure_per_atlas
+        
         cols2meas2atlas = cols_per_measure_per_atlas(df_data_big)
         cols_to_meas = cols2meas2atlas.cols_to_meas_to_atlas
 
         ls_columns = df_data_big.columns
         ls_atlases_laterality = list()
-        for atlas in all_data['atlases']:
-            if all_data[atlas]['two_hemi']:
+        for atlas in atlas_data:
+            if len(atlas_data[atlas]['hemi']) > 1:
                 ls_atlases_laterality.append(atlas)
 
         ls_HIP = []
@@ -136,7 +140,12 @@ class FSStatsUtils:
         df_HIP_to_CORTEX_DS_ratio.to_csv(HIP_to_cortex_ratio_DS)
         print('FINISHED creating file Hippocampus to Cortex ratio')
 
-    def create_SurfArea_to_Vol_ratio(self, df_data_big, f_SA_to_Vol_ratio_DK, f_SA_to_Vol_ratio_DS):
+
+    def create_SurfArea_to_Vol_ratio(self,
+                                    df_data_big,
+                                    f_SA_to_Vol_ratio_DK,
+                                    f_SA_to_Vol_ratio_DS,
+                                    atlas_data):
         """
         this parameter is also an indirect method to add curvature int he analysis.
         Surface are corrected for Volume is NOT the same as raw Surface Area.
@@ -144,14 +153,13 @@ class FSStatsUtils:
         """
 
         print('CREATING file Surface Area to Volume ratio')
-        from a.lib.stats_definitions import all_data, cols_per_measure_per_atlas
         cols2meas2atlas = cols_per_measure_per_atlas(df_data_big)
         cols_to_meas = cols2meas2atlas.cols_to_meas_to_atlas
 
         ls_columns = df_data_big.columns
         ls_atlases_laterality = list()
-        for atlas in all_data['atlases']:
-            if all_data[atlas]['two_hemi']:
+        for atlas in atlas_data:
+            if len(atlas_data[atlas]['hemi']) > 1:
                 ls_atlases_laterality.append(atlas)
 
         ls_Surf_DK = []

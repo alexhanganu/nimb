@@ -13,49 +13,15 @@ from fs_definitions import FreeSurferVersion, FSProcesses
 environ['TZ'] = 'US/Eastern'
 time.tzset()
 
-class get_cmd():
+def get_cmd(process, _id, id_base = '', ls_tps = []):
+    if process == 'registration':
+        return cdb.get_registration_cmd(_id, db,
+                                            NIMB_HOME,
+                                            NIMB_tmp,
+                                            vars_freesurfer["flair_t2_add"])
+    else:
+        return Procs.cmd(process, _id, id_base, ls_tps)
 
-    def __init__(self, process, _id, id_base = '', ls_tps = []):
-        if process == 'registration':
-            self.cmd = cdb.get_registration_cmd(_id, db,
-                                                NIMB_HOME,
-                                                NIMB_tmp,
-                                                vars_freesurfer["flair_t2_add"])
-        else:
-            self.cmd = Procs.cmd(process, _id, id_base, ls_tps)
-
-        # if process == 'recbase':
-        #     self.cmd = "recon-all -base {0}{1} -all".format(_id, ''.join([' -tp '+i for i in ls_tps]))
-        # if process == 'reclong':
-        #     self.cmd = "recon-all -long {0} {1} -all".format(_id, id_base)
-        # if process == 'recon':
-        #     self.cmd = "recon-all -all -s {}".format(_id)
-        # if process == 'autorecon1':
-        #     self.cmd = "recon-all -autorecon1 -s {}".format(_id)
-        # if process == 'autorecon2':
-        #     self.cmd = "recon-all -autorecon2 -s {}".format(_id)
-        # if process == 'autorecon3':
-        #     self.cmd = "recon-all -autorecon3 -s {}".format(_id)
-        # if process == 'qcache':
-        #     self.cmd = "recon-all -qcache -s {}".format(_id)
-        # if process == 'brstem':
-        #     self.cmd = 'segmentBS.sh {}'.format(_id) if fs_ver > '6' else 'recon-all -s {} -brainstem-structures'.format(_id)
-        # if process == 'hip':
-        #     self.cmd = 'segmentHA_T1.sh {}'.format(_id) if fs_ver > '6' else 'recon-all -s {} -hippocampal-subfields-T1'.format(_id)
-        # if process == 'tha':
-        #     self.cmd = "segmentThalamicNuclei.sh {}".format(_id)
-        # if process == 'hypotha':
-        #     self.cmd = "mri_segment_hypothalamic_subunits --s {}".format(_id)
-        # if process == 'masks':
-        #     self.cmd = "cd {}\npython run_masks.py {}".format(path.join(NIMB_HOME, 'processing', 'freesurfer'), _id)
-
-#     def registration(self, _id):
-#         t1_ls_f, flair_ls_f, t2_ls_f = cdb.get_registration_files(_id, db, NIMB_HOME, NIMB_tmp, vars_freesurfer["flair_t2_add"])
-#         t1_cmd    = ''.join([' -i '+i for i in t1_ls_f])
-#         flair_cmd = '{}'.format(''.join([' -FLAIR '+i for i in flair_ls_f])) if flair_ls_f != 'none' else ''
-#         t2_cmd    = '{}'.format(''.join([' -T2 '   +i for i in t2_ls_f]))    if t2_ls_f    != 'none' else ''
-#         return "recon-all{}{}{} -s {}".format(t1_cmd, flair_cmd, t2_cmd, _id)
-# #        return "recon-all{}".format(''.join([' -i '+i for i in t1_ls_f]))+flair_cmd+t2_cmd+' -s '+_id
 
 def Get_status_for_subjid_in_queue(running_jobs, subjid, scheduler_jobs):
     if subjid in running_jobs:
@@ -133,7 +99,7 @@ def do(process):
     for subjid in lsd:
         if len_Running()<= vars_processing["max_nr_running_batches"]:
             db[ACTION][process].remove(subjid)
-            cmd = get_cmd(process, subjid).cmd
+            cmd = get_cmd(process, subjid)
             job_id = schedule.submit_4_processing(cmd, subjid, process)
             db['RUNNING_JOBS'][subjid] = job_id
             db['RUNNING'][process].append(subjid)
@@ -258,7 +224,7 @@ def long_check_groups(_id):
                         for ses in LONG_TPS:
                             long_f = _id+ses+'.long.'+_id+vars_freesurfer["base_name"]
                             if long_f not in ls:
-                                cmd = get_cmd('reclong', _id+ses, id_base = _id+vars_freesurfer["base_name"]).cmd
+                                cmd = get_cmd('reclong', _id+ses, id_base = _id+vars_freesurfer["base_name"])
                                 job_id = schedule.submit_4_processing(cmd, _id+ses, 'reclong')
                                 db['RUNNING_JOBS'][long_f] = job_id
                                 db['RUNNING']['recon'].append(long_f)
@@ -296,7 +262,7 @@ def long_check_groups(_id):
                         db['ERROR_QUEUE'][subjid] = schedule.get_time_end_of_walltime(process) #str(format(datetime.now()+timedelta(hours=datetime.strptime(Get_walltime(process), '%H:%M:%S').hour), "%Y%m%d_%H%M")) #2RM
                         db['PROCESSED']['error_recon'].append(base_f)
             else:
-                cmd = get_cmd('recbase', base_f, ls_tps = All_cross_ids_done).cmd
+                cmd = get_cmd('recbase', base_f, ls_tps = All_cross_ids_done)
                 job_id = schedule.submit_4_processing(cmd, base_f, 'recbase')
                 db['RUNNING_JOBS'][base_f] = job_id
                 db['LONG_DIRS'][_id].append(base_f)
