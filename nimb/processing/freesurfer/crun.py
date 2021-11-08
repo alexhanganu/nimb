@@ -119,8 +119,8 @@ def check_error(scheduler_jobs, process):
             for subjid in lserr:
                 log.info('    {}'.format(subjid))
                 if subjid not in db["ERROR_QUEUE"] and path.exists(path.join(SUBJECTS_DIR, subjid)): #path.exists was added due to moving the subjects too early; requires adjustment
-                    chk.IsRunning_rm(subjid)
-                    # fs_checker.IsRunning_rm(SUBJECTS_DIR, subjid)
+                    chk.IsRunning_chk(subjid, rm = True)
+                    # chk.IsRunning_rm(subjid)
                     log.info('        checking the recon-all-status.log for error for: {}'.format(process))
                     fs_err_helper.chkreconf_if_without_error(NIMB_tmp, subjid, SUBJECTS_DIR)
                     log.info('        checking if all files were created for: {}'.format(process))

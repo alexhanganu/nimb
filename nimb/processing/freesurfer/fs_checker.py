@@ -23,40 +23,36 @@ class FreeSurferChecker():
         self.atlas         = atlas_definitions.atlas_data
 
 
-    def IsRunning_chk(self, subjid):
+    def IsRunning_chk(self, subjid, rm = False):
         path_2scripts_dir = os.path.join(self.SUBJECTS_DIR, subjid, 'scripts')
         res = False
         try:
+            IsRunning_files = list()
             for file in self.Procs.IsRunning_files:
-                if os.path.exists(os.path.join(path_2scripts_dir, file)):
-                    res = True
-                    break
+                file_abspath = os.path.join(path_2scripts_dir, file)
+                if os.path.exists(file_abspath):
+                    IsRunning_files.append(file)
+                    if rm:
+                        os.remove(file_abspath)
+            if IsRunning_files:
+                res = True
         except Exception as e:
             print(e)
             res = True
         return res
 
 
-    def IsRunning_rm(self, subjid):
-        path_2scripts_dir = os.path.join(self.SUBJECTS_DIR, subjid, 'scripts')
-        try:
-            IsRunning_f = [i for i in self.Procs.IsRunning_files if os.path.exists(os.path.join(path_2scripts_dir, i))][0]
-            os.remove(os.path.join(path_2scripts_dir, IsRunning_f))
-        except Exception as e:
-            print(e)
-
-
     def checks_from_runfs(self, process, subjid):
         if process == 'registration':
             return self.chksubjidinfs(subjid)
         elif process in self.Procs.recons:
-            return self.chk_process_files(process, subjid)
+            return self.chk_recon_files(process, subjid)
         elif process in self.Procs.atlas_proc:
                 return self.chk_stats_f(process, subjid)
-        elif process == 'recon-all':
-            return self.chk_if_recon_done(subjid)
         elif process == 'masks':
             return self.chk_masks(subjid)
+        # elif process == 'recon-all':
+        #     return self.chk_if_recon_done(subjid)
 
 
     def chksubjidinfs(self, subjid):
@@ -66,7 +62,7 @@ class FreeSurferChecker():
             return False
 
 
-    def chk_process_files(self, process, subjid):
+    def chk_recon_files(self, process, subjid):
         files_missing = list()
         for path_f in self.Procs.processes[process]["files_2chk"]:
             if not os.path.exists(os.path.join(self.SUBJECTS_DIR, subjid, path_f)):
@@ -80,12 +76,6 @@ class FreeSurferChecker():
         else:
             return True
 
-
-    def chk_if_recon_done(self, subjid): # move to chk_process_files
-        if os.path.exists(os.path.join(self.SUBJECTS_DIR,subjid, 'mri', 'wmparc.mgz')):
-            return True
-        else:
-            return False
 
 
     def chk_stats_f(self, process, subjid):
@@ -150,3 +140,20 @@ class FreeSurferChecker():
                 return False
         else:
             return False
+
+
+
+    # def IsRunning_rm(self, subjid):
+    #     path_2scripts_dir = os.path.join(self.SUBJECTS_DIR, subjid, 'scripts')
+    #     try:
+    #         IsRunning_f = [i for i in self.Procs.IsRunning_files if os.path.exists(os.path.join(path_2scripts_dir, i))][0]
+    #         os.remove(os.path.join(path_2scripts_dir, IsRunning_f))
+    #     except Exception as e:
+    #         print(e)
+
+
+    # def chk_if_recon_done(self, subjid):
+    #     if os.path.exists(os.path.join(self.SUBJECTS_DIR,subjid, 'mri', 'wmparc.mgz')):
+    #         return True
+    #     else:
+    #         return False
