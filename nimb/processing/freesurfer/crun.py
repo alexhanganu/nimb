@@ -1,5 +1,5 @@
 #!/bin/python
-# 2020.09.10
+# 2021.11.08
 
 from os import path, system, chdir, environ, rename
 from pathlib import Path
@@ -410,7 +410,6 @@ def run(varslocal, logger):
 
     global db, Procs, schedule, log, chk, vars_local, vars_freesurfer, fs_ver, vars_processing, vars_nimb, NIMB_HOME, NIMB_tmp, SUBJECTS_DIR, max_walltime, process_order, processing_env
     
-    Procs           = FSProcesses(vars_freesurfer["freesurfer_version"])
     vars_local      = varslocal
     vars_freesurfer = vars_local["FREESURFER"]
     vars_processing = vars_local["PROCESSING"]
@@ -425,6 +424,7 @@ def run(varslocal, logger):
     log             = logger #logging.getLogger(__name__)
     chk             = FreeSurferChecker(vars_freesurfer, atlas_definitions)
     schedule        = Scheduler(vars_local)
+    Procs           = FSProcesses(vars_freesurfer["freesurfer_version"])
 
     process_order   = ["registration"] + Procs.process_order()
 
@@ -442,7 +442,8 @@ def run(varslocal, logger):
     db = cdb.Update_DB_new_subjects_and_SUBJECTS_DIR(NIMB_tmp,
                                                     db,
                                                     vars_freesurfer,
-                                                    DEFAULT)
+                                                    DEFAULT,
+                                                    atlas_definitions)
     cdb.Update_DB(db, NIMB_tmp)
     active_subjects = check_active_tasks(db)
 
@@ -460,7 +461,8 @@ def run(varslocal, logger):
             db = cdb.Update_DB_new_subjects_and_SUBJECTS_DIR(NIMB_tmp,
                                                             db,
                                                             vars_freesurfer,
-                                                            DEFAULT)
+                                                            DEFAULT,
+                                                            atlas_definitions)
             cdb.Update_DB(db, NIMB_tmp)
         loop_run()
 

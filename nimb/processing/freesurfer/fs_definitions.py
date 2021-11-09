@@ -128,9 +128,6 @@ class FSProcesses:
 
     def process_order(self):
         order_all = sorted(self.processes, key=lambda k: self.processes[k]["run_step"])
-
-        fs72_order = fs7_order + fs72_atlases
-
         if self.fs_ver2 < "7":
             fs7_atlases = [i for i in self.atlas_proc if self.processes[i]["fsver"] > 6]
             return [i for i in order_all if i not in fs7_atlases]

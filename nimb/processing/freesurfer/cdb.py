@@ -5,6 +5,9 @@ from os import path, listdir, rename, environ, system
 import time, json
 import logging
 
+from fs_checker import FreeSurferChecker
+
+
 environ['TZ'] = 'US/Eastern'
 time.tzset()
 log = logging.getLogger(__name__)
@@ -60,10 +63,21 @@ def get_ls_subjids_in_long_dirs(db):
 def Update_DB_new_subjects_and_SUBJECTS_DIR(NIMB_tmp,
                                             db,
                                             vars_freesurfer,
-                                            DEFAULT):
-    db = chk_subj_in_SUBJECTS_DIR(NIMB_tmp, db, vars_freesurfer)
-    db = chk_subjects2fs_file(NIMB_tmp, db, vars_freesurfer)
-    db = chk_new_subjects_json_file(NIMB_tmp, db, vars_freesurfer, DEFAULT)
+                                            DEFAULT,
+                                            atlas_definitions):
+    db = chk_subj_in_SUBJECTS_DIR(NIMB_tmp,
+                                    db,
+                                    vars_freesurfer,
+                                    atlas_definitions)
+    db = chk_subjects2fs_file(NIMB_tmp,
+                                db,
+                                vars_freesurfer,
+                                atlas_definitions)
+    db = chk_new_subjects_json_file(NIMB_tmp,
+                                    db,
+                                    vars_freesurfer,
+                                    DEFAULT,
+                                    atlas_definitions)
     return db
 
 
@@ -83,15 +97,14 @@ def add_subjid_2_DB(NIMB_tmp, subjid, _id, ses, db, ls_SUBJECTS_in_long_dirs_pro
 
 
 
-def chk_subjects2fs_file(NIMB_tmp, db, vars_freesurfer):
+def chk_subjects2fs_file(NIMB_tmp, db, vars_freesurfer, atlas_definitions):
     log.info('    NEW_SUBJECTS_DIR checking ...')
 
     base_name =vars_freesurfer["base_name"] 
     long_name = vars_freesurfer["long_name"]
 
     ls_SUBJECTS_in_long_dirs_processed = get_ls_subjids_in_long_dirs(db)
-    from fs_checker import FreeSurferChecker
-    chk = FreeSurferChecker(vars_freesurfer)
+    chk = FreeSurferChecker(vars_freesurfer, atlas_definitions)
 
     f_subj2fs = path.join(NIMB_tmp, 'subjects2fs')
     if path.isfile(f_subj2fs):
@@ -105,7 +118,7 @@ def chk_subjects2fs_file(NIMB_tmp, db, vars_freesurfer):
     return db
 
 
-def chk_new_subjects_json_file(NIMB_tmp, db, vars_freesurfer, DEFAULT):
+def chk_new_subjects_json_file(NIMB_tmp, db, vars_freesurfer, DEFAULT, atlas_definitions):
 
     def ls_from_subj2fs(NIMB_tmp, f_subj2fs):
         ls_subjids = list()
@@ -121,8 +134,9 @@ def chk_new_subjects_json_file(NIMB_tmp, db, vars_freesurfer, DEFAULT):
     log.info('    new_subjects.json checking ...')
 
     ls_SUBJECTS_in_long_dirs_processed = get_ls_subjids_in_long_dirs(db)
-    from fs_checker import FreeSurferChecker
-    chk = FreeSurferChecker(vars_freesurfer)
+    chk = FreeSurferChecker(vars_freesurfer, atlas_definitions)
+    base_name =vars_freesurfer["base_name"] 
+    long_name = vars_freesurfer["long_name"]
 
     f_new_subjects = path.join(NIMB_tmp, DEFAULT.f_new_subjects_fs)
     if path.isfile(f_new_subjects):
@@ -134,26 +148,14 @@ def chk_new_subjects_json_file(NIMB_tmp, db, vars_freesurfer, DEFAULT):
                 if 'anat' in new_subjects[subjid]:
                     if 't1' in new_subjects[subjid]['anat']:
                         if new_subjects[subjid]['anat']['t1']:
+                            _id, ses = get_id_long(subjid, db['LONG_DIRS'], base_name, long_name)
                             db['REGISTRATION'][subjid] = dict()
                             db['REGISTRATION'][subjid]['anat'] = new_subjects[subjid]['anat']
                             log.info('        '+subjid+' added to database from new_subjects.json')
-                            db = add_subjid_2_DB(NIMB_tmp, subjid, db, ls_SUBJECTS_in_long_dirs_processed)
+                            db = add_subjid_2_DB(NIMB_tmp, subjid, _id, ses, db, ls_SUBJECTS_in_long_dirs_processed)
                         else:
                             db['PROCESSED']['error_registration'].append(subjid)
                             log.info('ERROR: '+subjid+' was read and but was not added to database')
-                #THIS IS THE OLD VERSION OF READING THE FILE WITH NEW_SUBJECTS
-                # for ses in new_subjects[_id]:
-                #     if 'anat' in new_subjects[_id][ses]:
-                #         if 't1' in new_subjects[_id][ses]['anat']:
-                #             if new_subjects[_id][ses]['anat']['t1']:
-                #                 subjid = _id+'_'+ses
-                #                 db['REGISTRATION'][subjid] = dict()
-                #                 db['REGISTRATION'][subjid]['anat'] = new_subjects[_id][ses]['anat']
-                #                 log.info('        '+subjid+' added to database from new_subjects.json')
-                #                 db = add_subjid_2_DB(NIMB_tmp, subjid, _id, ses, db, ls_SUBJECTS_in_long_dirs_processed)
-                #             else:
-                #                 db['PROCESSED']['error_registration'].append(subjid)
-                #                 log.info('ERROR: '+_id+' was read and but was not added to database')
         rename(f_new_subjects, path.join(NIMB_tmp,'znew_subjects_registered_to_db_'+time.strftime("%Y%m%d_%H%M",time.localtime(time.time()))+'.json'))
         log.info('        new subjects were added from the new_subjects.json file')
     return db
@@ -202,7 +204,7 @@ def get_id_long(subjid, LONG_DIRS, base_name, long_name):
         return _id, longitud
 
 
-def chk_subj_in_SUBJECTS_DIR(NIMB_tmp, db, vars_freesurfer):
+def chk_subj_in_SUBJECTS_DIR(NIMB_tmp, db, vars_freesurfer, atlas_definitions):
     log.info('    SUBJECTS_DIR checking ...')
 
     base_name          = vars_freesurfer["base_name"]
@@ -210,8 +212,7 @@ def chk_subj_in_SUBJECTS_DIR(NIMB_tmp, db, vars_freesurfer):
     SUBJECTS_DIR       = vars_freesurfer["FS_SUBJECTS_DIR"]
     process_order      = vars_freesurfer["process_order"]
 
-    from fs_checker import FreeSurferChecker
-    chk = FreeSurferChecker(vars_freesurfer)
+    chk = FreeSurferChecker(vars_freesurfer, atlas_definitions)
 
     def chk_if_exclude(subjid):
         exclude = False
