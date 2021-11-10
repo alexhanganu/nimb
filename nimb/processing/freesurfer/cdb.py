@@ -2,15 +2,50 @@
 # 2020.08.25
 
 from os import path, listdir, rename, environ, system
+import os
 import time, json
 import logging
-
 from fs_checker import FreeSurferChecker
-
 
 environ['TZ'] = 'US/Eastern'
 time.tzset()
 log = logging.getLogger(__name__)
+
+
+class DBManage:
+
+    def __init__(self,
+                vars_local,
+                process_order,
+                DEFAULT):
+        self.NIMB_HOME     = vars_local["NIMB_PATHS"]["NIMB_HOME"]
+        self.NIMB_tmp      = vars_local["NIMB_PATHS"]["NIMB_tmp"]
+        self.process_order = process_order
+        db_f_name          = DEFAULT.app_files["freesurfer"]["db"]
+        self.db_file       = os.path.join(self.NIMB_HOME, db_f_name)
+
+
+    def get_db(self):
+        log.info(f"        Database file is: {self.db_file}")
+        if path.isfile(self.db_file):
+            with open(self.db_file) as db_open:
+                db = json.load(db_open)
+        else:
+            db = dict()
+            for action in ['DO','RUNNING',]:
+                db[action] = {}
+                for process in self.process_order:
+                    db[action][process] = []
+            db['RUNNING_JOBS'] = {}
+            db['LONG_DIRS'] = {}
+            db['LONG_TPS'] = {}
+            db['REGISTRATION'] = {}
+            db['ERROR_QUEUE'] = {}
+            db['PROCESSED'] = {'cp2local':[],}
+            for process in self.process_order:
+                db['PROCESSED']['error_'+process] = []
+        return db
+
 
 
 def Get_DB(NIMB_HOME, NIMB_tmp, process_order):

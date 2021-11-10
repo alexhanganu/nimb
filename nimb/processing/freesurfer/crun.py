@@ -504,6 +504,7 @@ if __name__ == "__main__":
     from distribution.logger import Log
     from distribution.distribution_definitions import DEFAULT
     from processing.atlases import atlas_definitions
+    from classification.dcm2bids_helper import is_bids_format
 
     getvars = Get_Vars()
     vars_local = getvars.location_vars['local']
