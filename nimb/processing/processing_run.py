@@ -55,6 +55,10 @@ class RUNProcessing:
         self.python_run  = self.vars_local["PROCESSING"]["python3_run_cmd"]
         self.schedule    = Scheduler(self.vars_local)
 
+        fs_version       = all_vars.location_vars['local']['FREESURFER']['freesurfer_version']
+        Procs           = FSProcesses(fs_version)
+        self.process_order   = ["registration"] + Procs.process_order()
+
         t0           = time.time()
         time_elapsed = 0
         count_run    = 0
@@ -135,7 +139,7 @@ class RUNProcessing:
     def get_ids_per_app(self, app):
         _ids_in_app_db = list()
         if app == "freesurfer":
-            db_fs = cdb.Get_DB(self.NIMB_HOME, self.NIMB_tmp, process_order)
+            db_fs = cdb.Get_DB(self.NIMB_HOME, self.NIMB_tmp, self.process_order)
             # print(db_fs)
             for ls_bids_ids in db_fs["LONG_DIRS"].values():
                 _ids_in_app_db = _ids_in_app_db + ls_bids_ids
@@ -412,7 +416,6 @@ def get_parameters(projects):
 
 if __name__ == "__main__":
 
-
     try:
         from pathlib import Path
     except ImportError as e:
@@ -432,7 +435,8 @@ if __name__ == "__main__":
     from processing import processing_db as proc_db
     from processing.schedule_helper import Scheduler, get_jobs_status
     from processing.freesurfer import cdb
-    from processing.freesurfer.fs_definitions import process_order
+    from processing.freesurfer.fs_definitions import FSProcesses
+
     from stats.db_processing import Table
 
     project_ids = Get_Vars().get_projects_ids()
@@ -442,4 +446,5 @@ if __name__ == "__main__":
     NIMB_tmp    = all_vars.location_vars['local']['NIMB_PATHS']['NIMB_tmp']
     fs_version  = all_vars.location_vars['local']['FREESURFER']['freesurfer_version']
     logger      = Log(NIMB_tmp, fs_version).logger
+
     RUNProcessing(all_vars, logger)

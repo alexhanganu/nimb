@@ -49,9 +49,7 @@ class DBManage:
 
 
 def Get_DB(NIMB_HOME, NIMB_tmp, process_order):
-
     db_json_file = path.join(NIMB_tmp, 'db.json')
-
     log.info("Database file db.json located at: {}".format(NIMB_tmp))
     if path.isfile(db_json_file):
         with open(db_json_file) as db_json_open:
@@ -70,7 +68,6 @@ def Get_DB(NIMB_HOME, NIMB_tmp, process_order):
         db['PROCESSED'] = {'cp2local':[],}
         for process in process_order:
             db['PROCESSED']['error_'+process] = []
-
     return db
 
 
