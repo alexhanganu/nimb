@@ -56,7 +56,7 @@ class RUNProcessingNL:
             rois_labels_h = harvard.extract_label_rois(im_bold1)[0] #extract label for ploting
             self.plot_connectivity(conn_h, rois_labels_h, f"{subj_id}_corr_harvard.png")
 
-        # print(f"performing connectivity analysis with harvard atlas")
+        # print(f"performing connectivity analysis with destrieux atlas")
         # destrieux = nl_helper.Destrieux_Atlas()
         # for subj_id in self.db_nl:
         #     print(f"    for subject: {subj_id}")

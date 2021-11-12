@@ -1,9 +1,11 @@
+import os
+
+import pandas as pd
+import numpy as np
+
 from nilearn import input_data, datasets
 from nilearn.connectome import ConnectivityMeasure
-import numpy as np
 from nilearn import surface
-import pandas as pd
-import os
 
 
 class Havard_Atlas():
