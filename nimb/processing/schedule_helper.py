@@ -3,7 +3,7 @@ import time
 import subprocess
 import logging
 from datetime import datetime, timedelta
-from processing.freesurfer import fs_definitions
+from processing.freesurfer.fs_definitions import FSProcesses
 from sys import platform
 
 environ['TZ'] = 'US/Eastern'
@@ -16,8 +16,9 @@ class Scheduler():
         self.vars_local     = vars_local
         self.NIMB_tmp       = self.vars_local["NIMB_PATHS"]['NIMB_tmp']
         self.processing_env = self.vars_local["PROCESSING"]["processing_env"]
-        self.max_walltime   = self.vars_local['PROCESSING']["batch_walltime"]
+        self.max_walltime   = 
         self.time_format    = self.vars_local['NIMB_PATHS']["time_format"]
+
 
     def submit_4_processing(self, cmd, name, task, cd_cmd = '',
                             activate_fs = True,
@@ -37,18 +38,25 @@ class Scheduler():
             print('        SUBMITTING is stopped')
         return self.job_id
 
+
     def get_submit_file_names(self, name, task):
         dt = time.strftime("%Y%m%d_%H%M",time.localtime(time.time()))
         sh_file = '{}_{}_{}.sh'.format(name, task, str(dt))
         out_file = '{}_{}_{}.out'.format(name, task, str(dt))
         return sh_file, out_file
 
+
     def Get_walltime(self, process):
-        walltime = self.max_walltime
-        if process in fs_definitions.suggested_times:
-            if fs_definitions.suggested_times[process] <= self.max_walltime:
-                walltime = fs_definitions.suggested_times[process]
+        FSProcs = FSProcesses("7.2.0")
+        max_walltime = self.vars_local['PROCESSING']["batch_walltime"]
+        walltime = max_walltime
+        duration = FSProcs.get_suggested_times()
+
+        if process in duration:
+            if duration[process] <= max_walltime:
+                walltime = duration[process]
         return walltime
+
 
     def get_time_end_of_walltime(self, process):
         if process == 'now':
@@ -56,6 +64,7 @@ class Scheduler():
         else:
             nr_hours = datetime.strptime(self.Get_walltime(process), self.vars_local['PROCESSING']["walltime_format"]).hour
             return str(format(datetime.now()+timedelta(hours=nr_hours), "%Y%m%d_%H%M"))
+
 
     def make_submit_file(self, cmd, name, task, cd_cmd):
         sh_file, out_file = self.get_submit_file_names(name, task)
@@ -75,6 +84,7 @@ class Scheduler():
             f.write(cmd+'\n')
         return sh_file
 
+
     def submit_2scheduler(self, sh_file):
         print('        submitting {}'.format(sh_file))
         time.sleep(1)
@@ -83,6 +93,7 @@ class Scheduler():
             self.job_id = list(filter(None, resp.split(' ')))[-1].strip('\n')
         except Exception as e:
             print(e)
+
 
     def submit_2tmux(self, cmd, subjid, cd_cmd):
         self.job_id = 'tmux_'+str(subjid)
@@ -99,14 +110,17 @@ class Scheduler():
                                                               self.vars_local['PROCESSING']["python3_load_cmd"]))
         system("tmux send-keys -t '{}' '{}' ENTER".format(str(self.job_id), cmd))
 
+
     def kill_tmux_session(self, session):
         system('tmux kill-session -t {}'.format(session))
+
 
     def get_jobs_status(self, user, RUNNING_JOBS):
         if self.processing_env == 'slurm':
             return self.get_scheduler_jobs(user)
         elif self.processing_env == 'tmux':
             return self.get_tmux_jobs(RUNNING_JOBS)
+
 
     def get_scheduler_jobs(self, user):
         scheduler_jobs = dict()

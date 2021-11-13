@@ -1,7 +1,7 @@
 #!/bin/python
 # 2020.09.10
 
-# uncomment lines: 89, 120, 156
+# uncomment lines: 93, 118, 174, 252
 
 import os
 from os import path, system, chdir, environ, rename, listdir
@@ -41,23 +41,23 @@ class RUNProcessing:
     def __init__(self, all_vars, logger):
 
         #defining working variables
-        self.project      = all_vars.params.project
-        self.project_vars = all_vars.projects[self.project]
-        self.vars_local   = all_vars.location_vars['local']
-        vars_processing   = self.vars_local["PROCESSING"]
-        self.log          = logger #logging.getLogger(__name__)
+        self.project       = all_vars.params.project
+        self.project_vars  = all_vars.projects[self.project]
+        self.vars_local    = all_vars.location_vars['local']
+        vars_processing    = self.vars_local["PROCESSING"]
+        self.log           = logger #logging.getLogger(__name__)
 
         # defining files and paths
-        self.NIMB_tmp    = self.vars_local['NIMB_PATHS']['NIMB_tmp']
-        self.NIMB_HOME   = self.vars_local["NIMB_PATHS"]["NIMB_HOME"]
-        materials_dir_pt = all_vars.projects[self.project]["materials_DIR"][1]
-        self.f_running   = os.path.join(self.NIMB_tmp, DEFAULT.f_running_process)
-        self.python_run  = self.vars_local["PROCESSING"]["python3_run_cmd"]
-        self.schedule    = Scheduler(self.vars_local)
+        self.NIMB_tmp      = self.vars_local['NIMB_PATHS']['NIMB_tmp']
+        self.NIMB_HOME     = self.vars_local["NIMB_PATHS"]["NIMB_HOME"]
+        materials_dir_pt   = all_vars.projects[self.project]["materials_DIR"][1]
+        self.f_running     = os.path.join(self.NIMB_tmp, DEFAULT.f_running_process)
+        self.python_run    = self.vars_local["PROCESSING"]["python3_run_cmd"]
+        self.schedule      = Scheduler(self.vars_local)
 
-        fs_version       = all_vars.location_vars['local']['FREESURFER']['freesurfer_version']
-        Procs           = FSProcesses(fs_version)
-        self.process_order   = ["registration"] + Procs.process_order()
+        fs_version         = all_vars.location_vars['local']['FREESURFER']['freesurfer_version']
+        Procs              = FSProcesses(fs_version)
+        self.process_order = ["registration"] + Procs.process_order()
 
         t0           = time.time()
         time_elapsed = 0

@@ -22,23 +22,6 @@ class FreeSurferVersion:
             return str(self.version)
 
 
-suggested_times = {
-        'registration':'01:00:00',
-        'recon'       :'30:00:00',
-        'recbase'     :'30:00:00',
-        'reclong'     :'23:00:00',
-        'masks'       :'12:00:00',
-        'archiving'   :'01:00:00',
-        'autorecon1'  :'05:00:00',
-        'autorecon2'  :'12:00:00',
-        'autorecon3'  :'12:00:00',
-        'qcache'      :'03:00:00',
-        'brstem'      :'03:00:00',
-        'hip'         :'03:00:00',
-        'tha'         :'03:00:00',
-        'hypotha'     :'03:00:00',
-        }
-
 class FSProcesses:
     def __init__(self, freesurfer_version):
         """
@@ -171,6 +154,26 @@ class FSProcesses:
             else:
                 return f"{run_sh} {_id}"
 
+    def get_suggested_times(self):
+        suggested_times = {
+            'registration':'01:00:00',
+            'recon'       :'30:00:00',
+            'recbase'     :'30:00:00',
+            'reclong'     :'23:00:00',
+            'masks'       :'12:00:00',
+            'archiving'   :'01:00:00',}
+            # 'autorecon1'  :'05:00:00',
+            # 'autorecon2'  :'12:00:00',
+            # 'autorecon3'  :'12:00:00',
+            # 'qcache'      :'03:00:00',
+            # 'brstem'      :'03:00:00',
+            # 'hip'         :'03:00:00',
+            # 'tha'         :'03:00:00',
+            # 'hypotha'     :'03:00:00',}
+        for process in self.processes:
+            suggested_times[process] = self.processes[process]["time_suggested"]
+        return suggested_times
+
 
 class ChkFSQcache:
     '''FS GLM requires two folders: surf and label
@@ -266,214 +269,6 @@ GLMcontrasts = {
             'g1v2':['dods',],}
                 }
 # https://surfer.nmr.mgh.harvard.edu/fswiki/Fsgdf2G2V
-
-
-
-
-
-def get_names_of_structures():
-    name_structures = list()
-
-    for val in segmentations_header:
-        name_structures.append(segmentations_header[val])
-    for val in parc_DK_header:
-        name_structures.append(parc_DK_header[val])
-    for val in brstem_hip_header['all']:
-        name_structures.append(brstem_hip_header['all'][val])
-    for val in parc_DS_header:
-        name_structures.append(parc_DS_header[val])
-
-    return name_structures
-
-name_structures = get_names_of_structures()
-
-
-
-def get_names_of_measurements():
-    name_measurement = ['Brainstem','HIPL','HIPR',]
-
-    for val in segmentation_parameters:
-        name_measurement.append('VolSeg'+val.replace('Volume_mm3',''))
-        name_measurement.append('VolSegWM'+val.replace('Volume_mm3','')+'_DK')
-
-    for hemi in ('L','R',):
-        for atlas in ('_DK','_DS',):
-            for meas in parc_parameters:
-                name_measurement.append(parc_parameters[meas]+hemi+atlas)
-
-    return name_measurement
-
-name_measurement = get_names_of_measurements()
-
-
-class cols_per_measure_per_atlas():
-
-    def __init__(self, ls_columns):
-        self.ls_columns = ls_columns
-        self.cols_to_meas_to_atlas = self.get_columns()
-
-    def get_columns(self):
-        result = dict()
-
-        for atlas in all_data['atlases']:
-            result[atlas] = dict()
-            for meas in all_data[atlas]['parameters']:
-                result[atlas][meas] = list()
-
-        for col in self.ls_columns:
-            for atlas in all_data['atlases']:
-                for meas in all_data[atlas]['parameters']:
-                    if all_data[atlas]['parameters'][meas] in col and all_data['atlas_ending'][atlas] in col:
-                        result[atlas][meas].append(self.ls_columns.index(col))
-        return result
-
-class GetFSStructureMeasurement:
-    def __init__(self):
-        self.ls_meas   = get_names_of_measurements()
-        self.ls_struct = get_names_of_structures()
-
-    def get(self, name, ls_err = list()):
-        meas_try1   = name[name.rfind('_')+1:]
-        struct_try1 = name.replace(f'_{meas_try1}','')
-        if struct_try1 in self.ls_struct and meas_try1 in self.ls_meas:
-            return meas_try1, struct_try1, ls_err
-        elif name == 'eTIV':
-            return 'eTIV', 'eTIV', ls_err
-        else:
-            measurement = name
-            structure = name
-            i = 0
-            while structure not in self.ls_struct and i<5:
-                if measurement not in self.ls_meas:
-                    for meas in self.ls_meas:
-                        if meas in name:
-                            measurement = meas
-                            break
-                else:
-                    self.ls_meas = self.ls_meas[self.ls_meas.index(measurement)+1:]
-                    for meas in self.ls_meas:
-                        if meas in name:
-                            measurement = meas
-                            break
-                structure = name.replace('_'+measurement,'')
-                i += 1
-            if f'{structure}_{measurement}' != name:
-                    ls_err.append(name)
-            return measurement, structure, ls_err
-
-
-def get_atlas_measurements():
-    measurements = {}
-    for meas in parc_parameters:
-        measurements[parc_parameters[meas]] = list()
-        for atlas in ('_DK','_DS',):
-            measurements[parc_parameters[meas]].append(parc_parameters[meas]+'L'+atlas)
-            measurements[parc_parameters[meas]].append(parc_parameters[meas]+'R'+atlas)
-    return measurements
-
-
-
-
-class RReplace():
-    '''written for NIMB ROIs
-        created based on  Desikan/ Destrieux atlases + FreeSurfer measurement (thickness, area, etc.), + Hemisphere
-        e.g.: frontal_middle_caudal_ThickL_DK, where DK stands for Desikan and DS stands for Destrieux
-        extracts roi name and measurement
-        combines roi with contralateral roi
-    Args: feature to
-    Return: {'feature_name':('Left-corresponding-feature', 'Right-corresponding-feature')}
-    '''
-
-    def __init__(self, features):
-        self.add_contralateral_features(features)
-        self.contralateral_features = self.lhrh
-
-    def add_contralateral_features(self, features):
-        self.lhrh = {}
-        for feat in features:
-            meas, struct, _ = GetFSStructureMeasurement().get(feat)
-            lr_feature = feat.replace(f'_{meas}','')
-            if lr_feature not in self.lhrh:
-                self.lhrh[lr_feature] = ''
-            if meas != 'VolSeg':
-                new_struct, hemi = self.get_contralateral_meas(meas)
-                contra_feat = f'{struct}_{new_struct}'
-            else:
-                new_struct, hemi = self.get_contralateral_meas(struct)
-                contra_feat = f'{new_struct}_{meas}'
-            if 'none' not in new_struct:
-                if hemi == 'L':
-                    self.lhrh[lr_feature] = (contra_feat, feat)
-                else:
-                    self.lhrh[lr_feature] = (feat, contra_feat)
-        # self.lhrh
-
-    def get_contralateral_meas(self, param):
-        if "L" in param:
-            return self.rreplace(param, "L", "R", 1), "R"
-        elif "R" in param:
-            return self.rreplace(param, "R", "L", 1), "L"
-        else:
-            # print('    no laterality in : {}'.format(param))
-            return 'none', 'none'
-
-    def rreplace(self, s, old, new, occurence):
-        li = s.rsplit(old, 1)
-        return new.join(li)
-
-
-
-def get_fs_rois_lateralized(atlas, meas = None):
-    '''
-    create a dictionary with atlas-based FreeSurfer ROIs, with hemisphere based classification
-    available atlas are based on all_data
-    if atlas defined:
-        Return: {roi':('Left-roi', 'Right-roi')}
-    else:
-        Return: {atlas: {measure: {roi':('roi_lh', 'roi_rh')}}}
-    '''
-    def get_measures(meas, atlas):
-        if not meas:
-            return all_data[atlas]['parameters'].values()
-        else:
-            return [meas]
-
-    def get_subcort_lat():
-        subcort_twohemi_rois = list()
-        for i in all_data['SubCort']['header'].values():
-            if i.endswith(f'_{hemi[0]}') or i.endswith(f'_{hemi[1]}'):
-                roi = i.strip(f'_{hemi[0]}').strip(f'_{hemi[1]}')
-                if roi not in subcort_twohemi_rois:
-                    subcort_twohemi_rois.append(roi)
-        return subcort_twohemi_rois
-
-    def get_rois(atlas):
-        if atlas != 'SubCort':
-            return all_data[atlas]['header'].values()
-        else:
-            return get_subcort_lat()
-
-    def populate_lateralized(meas_user, ls_atlases):
-        lateralized = {atlas:{} for atlas in ls_atlases}
-        for atlas in lateralized:
-            measures = get_measures(meas_user, atlas)
-            headers  = get_rois(atlas)
-            for meas in measures:
-                lateralized[atlas] = {meas:{header: {} for header in headers}}
-                for header in lateralized[atlas][meas]:
-                    lateralized[atlas][meas][header] = (f'{header}_{meas}_{hemi[0]}_{atlas}',
-                                                    f'{header}_{meas}_{hemi[1]}_{atlas}')
-        return lateralized
-
-
-    if atlas == 'SubCort' or atlas in all_data['atlases'] and all_data[atlas]['two_hemi']:
-        return populate_lateralized(meas, [atlas])
-    else:
-        ls_atlases = [atlas for atlas in all_data['atlases'] if all_data[atlas]['two_hemi']] + ['SubCort']
-        print(f'{atlas}\
-            is ill-defined or not lateralized. Please use one of the following names:\
-            {ls_atlases}. Returning all lateralized atlases')
-        return populate_lateralized(meas, ls_atlases)
 
 
 # def get_names_of_structures():
@@ -1146,3 +941,125 @@ def get_fs_rois_lateralized(atlas, meas = None):
 #                 'S_temporal_transverse': 'temporal_transverse_Sulc'}
 
 
+
+
+
+# def get_names_of_structures():
+#     name_structures = list()
+
+#     for val in segmentations_header:
+#         name_structures.append(segmentations_header[val])
+#     for val in parc_DK_header:
+#         name_structures.append(parc_DK_header[val])
+#     for val in brstem_hip_header['all']:
+#         name_structures.append(brstem_hip_header['all'][val])
+#     for val in parc_DS_header:
+#         name_structures.append(parc_DS_header[val])
+
+#     return name_structures
+
+# name_structures = get_names_of_structures()
+
+
+
+# def get_names_of_measurements():
+#     name_measurement = ['Brainstem','HIPL','HIPR',]
+
+#     for val in segmentation_parameters:
+#         name_measurement.append('VolSeg'+val.replace('Volume_mm3',''))
+#         name_measurement.append('VolSegWM'+val.replace('Volume_mm3','')+'_DK')
+
+#     for hemi in ('L','R',):
+#         for atlas in ('_DK','_DS',):
+#             for meas in parc_parameters:
+#                 name_measurement.append(parc_parameters[meas]+hemi+atlas)
+
+#     return name_measurement
+
+# name_measurement = get_names_of_measurements()
+
+
+
+# def get_atlas_measurements():
+#     measurements = {}
+#     for meas in parc_parameters:
+#         measurements[parc_parameters[meas]] = list()
+#         for atlas in ('_DK','_DS',):
+#             measurements[parc_parameters[meas]].append(parc_parameters[meas]+'L'+atlas)
+#             measurements[parc_parameters[meas]].append(parc_parameters[meas]+'R'+atlas)
+#     return measurements
+
+
+# class cols_per_measure_per_atlas():
+
+#     def __init__(self, ls_columns):
+#         self.ls_columns = ls_columns
+#         self.cols_to_meas_to_atlas = self.get_columns()
+
+#     def get_columns(self):
+#         result = dict()
+
+#         for atlas in all_data['atlases']:
+#             result[atlas] = dict()
+#             for meas in all_data[atlas]['parameters']:
+#                 result[atlas][meas] = list()
+
+#         for col in self.ls_columns:
+#             for atlas in all_data['atlases']:
+#                 for meas in all_data[atlas]['parameters']:
+#                     if all_data[atlas]['parameters'][meas] in col and all_data['atlas_ending'][atlas] in col:
+#                         result[atlas][meas].append(self.ls_columns.index(col))
+#         return result
+
+# class GetFSStructureMeasurement:
+#     def __init__(self):
+#         self.ls_meas   = get_names_of_measurements()
+#         self.ls_struct = get_names_of_structures()
+
+#     def get(self, name, ls_err = list()):
+#         meas_try1   = name[name.rfind('_')+1:]
+#         struct_try1 = name.replace(f'_{meas_try1}','')
+#         if struct_try1 in self.ls_struct and meas_try1 in self.ls_meas:
+#             return meas_try1, struct_try1, ls_err
+#         elif name == 'eTIV':
+#             return 'eTIV', 'eTIV', ls_err
+#         else:
+#             measurement = name
+#             structure = name
+#             i = 0
+#             while structure not in self.ls_struct and i<5:
+#                 if measurement not in self.ls_meas:
+#                     for meas in self.ls_meas:
+#                         if meas in name:
+#                             measurement = meas
+#                             break
+#                 else:
+#                     self.ls_meas = self.ls_meas[self.ls_meas.index(measurement)+1:]
+#                     for meas in self.ls_meas:
+#                         if meas in name:
+#                             measurement = meas
+#                             break
+#                 structure = name.replace('_'+measurement,'')
+#                 i += 1
+#             if f'{structure}_{measurement}' != name:
+#                     ls_err.append(name)
+#             return measurement, structure, ls_err
+
+
+
+# suggested_times = {
+#         'registration':'01:00:00',
+#         'recon'       :'30:00:00',
+#         'recbase'     :'30:00:00',
+#         'reclong'     :'23:00:00',
+#         'masks'       :'12:00:00',
+#         'archiving'   :'01:00:00',
+#         'autorecon1'  :'05:00:00',
+#         'autorecon2'  :'12:00:00',
+#         'autorecon3'  :'12:00:00',
+#         'qcache'      :'03:00:00',
+#         'brstem'      :'03:00:00',
+#         'hip'         :'03:00:00',
+#         'tha'         :'03:00:00',
+#         'hypotha'     :'03:00:00',
+#         }
