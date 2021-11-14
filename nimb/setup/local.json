@@ -11,9 +11,8 @@
     "NIMB_PROCESSED_NILEARN"  : "~/nimb_tmp/nimb_processed_nilearn",
     "NIMB_PROCESSED_DIPY"     : "~/nimb_tmp/nimb_processed_dipy",
     "NIMB_PROCESSED_FS_error" : "~/nimb_tmp/nimb_processed_fs_error",
-    "file_ids_processed"      : "f_ids.json",
     "conda_home"              : "~/conda",
-    "time_format"             : "%Y%m%d_%H%M"
+    "long_abbrevs"            : ["ses-",]
               },
 "PROCESSING": {
     "max_nr_running_batches"  : 5,
@@ -27,8 +26,6 @@
     "python3_load_cmd"        : "module load python/3.8.2",
     "python3_run_cmd"         : "python",
     "archive_processed"       : 1,
-    "submit_cmd"              : "sbatch",
-    "supervisor_account"      : "",
     "SUBMIT"                  : 1
               },
 "FREESURFER": {
@@ -37,13 +34,11 @@
     "FS_SUBJECTS_DIR"         : "~/freesurfer/subjects",
     "export_FreeSurfer_cmd"   : "export FREESURFER_HOME=~/freesurfer",
     "source_FreeSurfer_cmd"   : "source $FREESURFER_HOME/SetUpFreeSurfer.sh",
-    "process_order"           : ["registration","autorecon1","autorecon2","autorecon3","brstem","hip","tha", "qcache"],
     "multiple_T1_entries"     : 0,
     "flair_t2_add"            : 0,
     "masks"                   : [],
     "DO_LONG"                 : 0,
     "base_name"               : "base",
-    "long_name"               : "ses-",
     "GLM_measurements"        : ["thickness","area","volume"],
     "GLM_thresholds"          : [10],
     "GLM_MCz_cache"           : 13,
@@ -69,16 +64,14 @@
     "NIMB_NEW_SUBJECTS"       : "Default: NIMB_tmp/nimb_new_subjects; path to the folder where the new zipped and unzipped raw MR data is copied in order to be used by the classifyer and the FreeSurfer registration; subjects are removed from the folder once processing is done",
     "NIMB_PROCESSED_FS"       : "Default: NIMB_tmp/nimb_processed_fs; path where the processed FreeSurfer subjects are moved before they are moved to PROCESSED_FS_DIR",
     "NIMB_PROCESSED_FS_error" : "Default: NIMB_tmp/nimb_processed_FS_error: path where subjects that had errors during FreeSurfer processing; before they are moved to PROCESSED_FS_DIR_error",
-    "file_ids_processed"      : "name of the file with the ids of bids, source and processed subjects, classified based on bids names; it will be created in NIMB_tmp and for fs-glm analysis must be located in projects-> materials",
     "miniconda_home"          : "path to miniconda3 installation",
-    "time_format"             : "the format of the time string for files; %Y%m%d_%H%M",
+    "long_abbrevs"            : "list of abbreviation used to define the longitudinal time points for subjects; default is ses-",
 
     "max_nr_running_batches"  : "the number of batches that can be sent to the scheduler at the same time",
     "processing_env"          : "slurm or tmux or moab is the environment used for processing data",
     "text4_scheduler"         : "the text used for the scheduler",
     "batch_walltime_cmd"      : "this command differs between schedulers",
     "batch_output_cmd"        : "command used in the batch to define the path of the output file",
-    "submit_cmd"              : "command used to submit the batch to the scheduler",
     "max_walltime"            : "waltime maximal for the scheduler",
     "batch_walltime"          : "walltime maximal for the pipeline to reinitate itself; 3 hours is the duration that is used by the scheduler to quickly deploy the script",
     "python3_load_cmd"        : "command if python is used as module, can be: module load python/3.8.2",
@@ -98,7 +91,6 @@
     "masks"                   : "list of masks names of subcortical regions for which the user wants FreeSurfer to create masks",
     "DO_LONG"                 : "1 (True) or 0 (False): defines if longitudinal analysis needs to be made",
     "base_name"               : "the name of the base subject that will be created during the longitudinal analysis with FreeSurfer",
-    "long_name"               : "abbreviation used to define the longitudinal time points for subjects; default is ses-",
 
     "GLM_measurements"        : "cortical parameters that will be used for FreeSurfer GLM analysis: thickness,area,volume,curv",
     "GLM_thresholds"          : "threshold levels for smoothing in mm, used for FreeSurfer GLM analysis: 5,10,15,20,25",

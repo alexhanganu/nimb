@@ -4,6 +4,7 @@ import subprocess
 import logging
 from datetime import datetime, timedelta
 from processing.freesurfer.fs_definitions import FSProcesses
+from distribution.distribution_definitions import DEFAULT
 from sys import platform
 
 environ['TZ'] = 'US/Eastern'
@@ -13,11 +14,9 @@ if platform != "win32":
 class Scheduler():
 
     def __init__(self, vars_local):
-        self.vars_local     = vars_local
-        self.NIMB_tmp       = self.vars_local["NIMB_PATHS"]['NIMB_tmp']
-        self.processing_env = self.vars_local["PROCESSING"]["processing_env"]
-        self.max_walltime   = 
-        self.time_format    = self.vars_local['NIMB_PATHS']["time_format"]
+        self.vars_local       = vars_local
+        self.NIMB_tmp         = self.vars_local["NIMB_PATHS"]['NIMB_tmp']
+        self.processing_env   = self.vars_local["PROCESSING"]["processing_env"]
 
 
     def submit_4_processing(self, cmd, name, task, cd_cmd = '',
@@ -62,8 +61,9 @@ class Scheduler():
         if process == 'now':
             return str(format(datetime.now(), "%Y%m%d_%H%M"))
         else:
-            nr_hours = datetime.strptime(self.Get_walltime(process), self.vars_local['PROCESSING']["walltime_format"]).hour
-            return str(format(datetime.now()+timedelta(hours=nr_hours), "%Y%m%d_%H%M"))
+            cluster_time_format = self.vars_local['PROCESSING']["walltime_format"]
+            nr_hours = datetime.strptime(self.Get_walltime(process), cluster_time_format).hour
+            return str(format(datetime.now()+timedelta(hours=nr_hours), DEFAULT.nimb_time_format))
 
 
     def make_submit_file(self, cmd, name, task, cd_cmd):
