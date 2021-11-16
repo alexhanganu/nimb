@@ -45,10 +45,10 @@ class DBManage:
                 db[action] = {}
                 for process in self.process_order:
                     db[action][process] = []
+            db['REGISTRATION'] = {}
             db['RUNNING_JOBS'] = {}
             db['LONG_DIRS'] = {}
             db['LONG_TPS'] = {}
-            db['REGISTRATION'] = {}
             db['ERROR_QUEUE'] = {}
             db['PROCESSED'] = {'cp2local':[],}
             for process in self.process_order:

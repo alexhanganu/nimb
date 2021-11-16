@@ -55,10 +55,6 @@ class RUNProcessing:
         self.python_run    = self.vars_local["PROCESSING"]["python3_run_cmd"]
         self.schedule      = Scheduler(self.vars_local)
 
-        fs_version         = all_vars.location_vars['local']['FREESURFER']['freesurfer_version']
-        Procs              = FSProcesses(fs_version)
-        self.process_order = ["registration"] + Procs.process_order()
-
         t0           = time.time()
         time_elapsed = 0
         count_run    = 0
@@ -118,28 +114,9 @@ class RUNProcessing:
 #         self.schedule.submit_4_processing(cmd, 'nimb_processing','run', cd_cmd)
 
 
-    def loop_run(self):
-        self.log.info('    starting the processing loop')
-        self.start_app = False
-        for processing_type in DEFAULT.apps_per_type:
-            app = DEFAULT.apps_per_type[processing_type]
-            db_proc_app_key = f'PROCESS_{app}'
-            _ids_2proc = list(self.db[db_proc_app_key].keys())
-            _ids_2proc_onlocal = list()
-            _ids_in_app_db = self.get_ids_per_app(app)
-            for _id in _ids_2proc:
-                if self.db[db_proc_app_key][_id] == 'local':
-                    if _id not in _ids_in_app_db:
-                        _ids_2proc_onlocal.append(_id)
-            self.update_db_app(app, _ids_2proc_onlocal)
-            self.chk_start_processing_app(app)
-        # self.chk_subj_if_processed(app)
-
-
     def get_ids_per_app(self, app):
         _ids_in_app_db = list()
         if app == "freesurfer":
-            db_fs = cdb.Get_DB(self.NIMB_HOME, self.NIMB_tmp, self.process_order)
             # print(db_fs)
             for ls_bids_ids in db_fs["LONG_DIRS"].values():
                 _ids_in_app_db = _ids_in_app_db + ls_bids_ids
@@ -149,6 +126,24 @@ class RUNProcessing:
             print("must define list of participants for app: ", app)
         self.log.info(f"there are: {len(_ids_in_app_db)} participants being processed with {app}")
         return _ids_in_app_db
+
+
+    def loop_run(self):
+        self.log.info('    starting the processing loop')
+        self.start_app = False
+        for processing_type in DEFAULT.apps_per_type:
+            app = DEFAULT.apps_per_type[processing_type]
+            db_proc_app_key = f'PROCESS_{app}'
+            _ids_in_app_db     = self.get_ids_per_app(app)
+            _ids_2proc_onlocal = list()
+            for _id in list(self.db[db_proc_app_key].keys()):
+                if self.db[db_proc_app_key][_id] == 'local':
+                    if _id not in _ids_in_app_db:
+                        _ids_2proc_onlocal.append(_id)
+            self.update_db_app(app, _ids_2proc_onlocal)
+            self.chk_start_processing_app(app)
+        # self.chk_subj_if_processed(app)
+
 
 
     def chk_subj_if_processed(self, app):
@@ -245,8 +240,8 @@ class RUNProcessing:
             running_f = os.path.join(self.NIMB_tmp, f'{DEFAULT.app_files[app]["running"]}0')
             if os.path.exists(running_f):
                 path_2cd = os.path.join(self.NIMB_HOME, 'processing', str(app))
-                cd_cmd = f"cd {path_2cd}"
-                cmd = f'{self.python_run} {DEFAULT.app_files[app]["run_file"]}'
+                cd_cmd   = f"cd {path_2cd}"
+                cmd      = f'{self.python_run} {DEFAULT.app_files[app]["run_file"]}'
                 batch_file_name = f"nimb_{app}"
                 self.log.info(f'initiating new run of {app} processing')
                 # self.schedule.submit_4_processing(cmd, batch_file_name,'run', cd_cmd,
@@ -436,15 +431,17 @@ if __name__ == "__main__":
     from processing.schedule_helper import Scheduler, get_jobs_status
     from processing.freesurfer import cdb
     from processing.freesurfer.fs_definitions import FSProcesses
-
     from stats.db_processing import Table
 
     project_ids = Get_Vars().get_projects_ids()
     params      = get_parameters(project_ids)
     all_vars    = Get_Vars(params)
 
+    NIMB_HOME   = all_vars.location_vars['local']["NIMB_PATHS"]["NIMB_HOME"]
     NIMB_tmp    = all_vars.location_vars['local']['NIMB_PATHS']['NIMB_tmp']
     fs_version  = all_vars.location_vars['local']['FREESURFER']['freesurfer_version']
     logger      = Log(NIMB_tmp, fs_version).logger
+    process_order = ["registration"] + FSProcesses(fs_version).process_order()
+    db_fs = cdb.Get_DB(NIMB_HOME, NIMB_tmp, process_order)
 
     RUNProcessing(all_vars, logger)
