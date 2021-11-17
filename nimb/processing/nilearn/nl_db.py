@@ -13,23 +13,21 @@ time.tzset()
 log = logging.getLogger(__name__)
 
 
+# process_order, ls_long_abrevs
+
 class DBManage:
 
     def __init__(self,
                 vars_local,
                 vars_app,
-                process_order,
                 DEFAULT,
                 atlas_definitions):
         self.NIMB_HOME      = vars_local["NIMB_PATHS"]["NIMB_HOME"]
         self.NIMB_tmp       = vars_local["NIMB_PATHS"]["NIMB_tmp"]
-        self.ls_long_abrevs = vars_local["NIMB_PATHS"]["long_abbrevs"]
-        self.process_order  = process_order
-        self.base_name      = vars_app["base_name"]
-        self.SUBJECTS_DIR   = vars_app["FS_SUBJECTS_DIR"]
+        self.SUBJECTS_DIR   = vars_app["NL_SUBJECTS_DIR"]
         self.chk            = FreeSurferChecker(vars_freesurfer, atlas_definitions)
 
-        db_f_name           = DEFAULT.app_files["freesurfer"]["db"]
+        db_f_name           = DEFAULT.app_files["nilearn"]["db"]
         self.db_file        = os.path.join(self.NIMB_tmp, db_f_name)
         self.f_new_subjs    = DEFAULT.f_new_subjects_fs
 

@@ -10,8 +10,15 @@ class RUNProcessingNL:
         vars_local      = all_vars.location_vars['local']
         self.NIMB_tmp   = vars_local['NIMB_PATHS']['NIMB_tmp']
         self.output_loc = vars_local['NIMB_PATHS']['NIMB_PROCESSED_NILEARN']
+        vars_app        = vars_local["NILEARN"]
 
         self.db_nl    = dict()
+
+
+        # self.db_nl  = nl_db.DBManage(vars_local,
+        #                             vars_app,
+        #                             DEFAULT,
+        #                             atlas_definitions)
         # nl_ver = vars_local['FREESURFER']['nilearn_version']
         # logger = Log(self.NIMB_tmp, fs_ver).logger
         self.get_subjects()
@@ -19,6 +26,7 @@ class RUNProcessingNL:
 
 
     def get_subjects(self):
+        # subjects = self.db_nl.get_db()
         new_subjects_f_name = DEFAULT.app_files[self.app]["new_subjects"]
         new_subjects_f_path = os.path.join(self.NIMB_tmp, new_subjects_f_name)
         if os.path.isfile(new_subjects_f_path):
@@ -122,7 +130,8 @@ if __name__ == "__main__":
     from distribution.utilities import load_json, save_json
     from distribution.distribution_definitions import DEFAULT
     from processing.schedule_helper import Scheduler, get_jobs_status
-    from processing.nilearn import nl_helper
+    from processing.nilearn import nl_helper, nl_db
+    from processing.atlases import atlas_definitions
 
     project_ids = Get_Vars().get_projects_ids()
     params      = get_parameters(project_ids)
