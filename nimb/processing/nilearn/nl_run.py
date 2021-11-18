@@ -15,7 +15,8 @@ class RUNProcessingNL:
         self.db_nl    = dict()
 
 
-        # self.db_nl  = nl_db.DBManage(vars_local,
+        # self.db_nl  = app_db.DBManage(self.app,
+        #                             vars_local,
         #                             vars_app,
         #                             DEFAULT,
         #                             atlas_definitions)
@@ -130,8 +131,8 @@ if __name__ == "__main__":
     from distribution.utilities import load_json, save_json
     from distribution.distribution_definitions import DEFAULT
     from processing.schedule_helper import Scheduler, get_jobs_status
-    from processing.nilearn import nl_helper, nl_db
     from processing.atlases import atlas_definitions
+    from processing import nl_helper, app_db
 
     project_ids = Get_Vars().get_projects_ids()
     params      = get_parameters(project_ids)
