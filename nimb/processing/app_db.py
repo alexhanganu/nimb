@@ -13,23 +13,27 @@ time.tzset()
 log = logging.getLogger(__name__)
 
 
-# process_order, ls_long_abrevs
+# , ls_long_abrevs
 
 class DBManage:
 
     def __init__(self,
+                app,
                 vars_local,
                 vars_app,
+                process_order,
                 DEFAULT,
                 atlas_definitions):
-        self.NIMB_HOME      = vars_local["NIMB_PATHS"]["NIMB_HOME"]
-        self.NIMB_tmp       = vars_local["NIMB_PATHS"]["NIMB_tmp"]
-        self.SUBJECTS_DIR   = vars_app["NL_SUBJECTS_DIR"]
-        self.chk            = FreeSurferChecker(vars_freesurfer, atlas_definitions)
+        self.NIMB_HOME    = vars_local["NIMB_PATHS"]["NIMB_HOME"]
+        self.NIMB_tmp     = vars_local["NIMB_PATHS"]["NIMB_tmp"]
+        self.SUBJECTS_DIR = vars_app["NL_SUBJECTS_DIR"]
+        self.chk          = FreeSurferChecker(vars_freesurfer, atlas_definitions)
+        self.proc_order   = process_order
 
-        db_f_name           = DEFAULT.app_files["nilearn"]["db"]
-        self.db_file        = os.path.join(self.NIMB_tmp, db_f_name)
-        self.f_new_subjs    = DEFAULT.f_new_subjects_fs
+        db_f_name         = "db_app.json"
+        self.db_file      = os.path.join(self.NIMB_tmp, db_f_name)
+        self.f_new_subjs  = DEFAULT.f_new_subjects_fs
+        self.apps         = DEFAULT.apps_per_type.values()
 
 
     def get_db(self):
@@ -39,18 +43,20 @@ class DBManage:
                 db = json.load(db_open)
         else:
             db = dict()
-            for action in ['DO','RUNNING',]:
-                db[action] = {}
-                for process in self.process_order:
-                    db[action][process] = []
-            db['REGISTRATION'] = {}
-            db['RUNNING_JOBS'] = {}
-            db['LONG_DIRS'] = {}
-            db['LONG_TPS'] = {}
-            db['ERROR_QUEUE'] = {}
-            db['PROCESSED'] = {'cp2local':[],}
-            for process in self.process_order:
-                db['PROCESSED']['error_'+process] = []
+            for app in self.apps:
+                db[app] = {}
+                for action in ['DO','RUNNING',]:
+                    db[action] = {}
+                    for process in self.proc_order:
+                        db[action][process] = []
+                db['REGISTRATION'] = {}
+                db['RUNNING_JOBS'] = {}
+                db['LONG_DIRS'] = {}
+                db['LONG_TPS'] = {}
+                db['ERROR_QUEUE'] = {}
+                db['PROCESSED'] = {'cp2local':[],}
+                for process in self.proc_order:
+                    db['PROCESSED']['error_'+process] = []
         return db
 
 

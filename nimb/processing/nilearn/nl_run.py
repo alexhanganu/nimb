@@ -9,21 +9,22 @@ class RUNProcessingNL:
         self.project    = all_vars.params.project
         vars_local      = all_vars.location_vars['local']
         self.NIMB_tmp   = vars_local['NIMB_PATHS']['NIMB_tmp']
-        self.output_loc = vars_local['NIMB_PATHS']['NIMB_PROCESSED_NILEARN']
         vars_app        = vars_local["NILEARN"]
+        self.output_loc = vars_app['NIMB_PROCESSED']
+        process_order   = ['connectivity',]
 
-        self.db_nl    = dict()
-
-
-        # self.db_nl  = app_db.DBManage(self.app,
+        self.db_nl      = dict()
+        # self.db_nl    = app_db.DBManage(self.app,
         #                             vars_local,
         #                             vars_app,
+        #                             process_order
         #                             DEFAULT,
         #                             atlas_definitions)
         # nl_ver = vars_local['FREESURFER']['nilearn_version']
         # logger = Log(self.NIMB_tmp, fs_ver).logger
         self.get_subjects()
         self.run_connectivity_analysis()
+        # self.output_loc = vars_local['NIMB_PATHS']['NIMB_PROCESSED_NILEARN']
 
 
     def get_subjects(self):
