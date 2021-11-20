@@ -6,7 +6,8 @@ import os
 import time
 import json
 import logging
-from fs_checker import FreeSurferChecker
+# from processing.freesurfer.fs_checker import FreeSurferChecker
+# self.chk          = FreeSurferChecker(vars_freesurfer, atlas_definitions)
 
 environ['TZ'] = 'US/Eastern'
 time.tzset()
@@ -26,8 +27,7 @@ class DBManage:
                 atlas_definitions):
         self.NIMB_HOME    = vars_local["NIMB_PATHS"]["NIMB_HOME"]
         self.NIMB_tmp     = vars_local["NIMB_PATHS"]["NIMB_tmp"]
-        self.SUBJECTS_DIR = vars_app["NL_SUBJECTS_DIR"]
-        self.chk          = FreeSurferChecker(vars_freesurfer, atlas_definitions)
+        self.SUBJECTS_DIR = vars_app["SUBJECTS_DIR"]
         self.proc_order   = process_order
 
         db_f_name         = "db_app.json"

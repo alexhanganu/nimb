@@ -450,7 +450,11 @@ def get_names_of_structures():
     for atlas in atlas_data:
         header = atlas_data[atlas]["header"]
         for fs_roi in header:
-            name_structures.append(header_fs2nimb[fs_roi])
+            if fs_roi in header_fs2nimb:
+                nimb_names.append(header_fs2nimb[fs_roi])
+            else:
+                nimb_names.append(fs_roi)
+                print(fs_roi, "not in header_fs2nimb")
     return nimb_names
 
 
