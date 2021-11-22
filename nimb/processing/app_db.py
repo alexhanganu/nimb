@@ -6,8 +6,8 @@ import os
 import time
 import json
 import logging
-# from processing.freesurfer.fs_checker import FreeSurferChecker
-# self.chk          = FreeSurferChecker(vars_freesurfer, atlas_definitions)
+
+from processing.checker import CHECKER
 
 environ['TZ'] = 'US/Eastern'
 time.tzset()
@@ -29,11 +29,11 @@ class DBManage:
         self.NIMB_tmp     = vars_local["NIMB_PATHS"]["NIMB_tmp"]
         self.SUBJECTS_DIR = vars_app["SUBJECTS_DIR"]
         self.proc_order   = process_order
+        self.app          = app
+        self.chk          = CHECKER(app, vars_app, atlas_definitions)
 
-        db_f_name         = "db_app.json"
-        self.db_file      = os.path.join(self.NIMB_tmp, db_f_name)
+        self.db_file      = os.path.join(self.NIMB_tmp, "db_app.json")
         self.f_new_subjs  = DEFAULT.f_new_subjects_fs
-        self.apps         = DEFAULT.apps_per_type.values()
 
 
     def get_db(self):
@@ -43,20 +43,20 @@ class DBManage:
                 db = json.load(db_open)
         else:
             db = dict()
-            for app in self.apps:
-                db[app] = {}
-                for action in ['DO','RUNNING',]:
-                    db[action] = {}
-                    for process in self.proc_order:
-                        db[action][process] = []
-                db['REGISTRATION'] = {}
-                db['RUNNING_JOBS'] = {}
-                db['LONG_DIRS'] = {}
-                db['LONG_TPS'] = {}
-                db['ERROR_QUEUE'] = {}
-                db['PROCESSED'] = {'cp2local':[],}
+            if self.app not in db:
+                db[self.app] = {}
+            for action in ['DO','RUNNING',]:
+                db[self.app][action] = {}
                 for process in self.proc_order:
-                    db['PROCESSED']['error_'+process] = []
+                    db[self.app][action][process] = []
+            db[self.app]['REGISTRATION'] = {}
+            db[self.app]['RUNNING_JOBS'] = {}
+            db[self.app]['LONG_DIRS'] = {}
+            db[self.app]['LONG_TPS'] = {}
+            db[self.app]['ERROR_QUEUE'] = {}
+            db[self.app]['PROCESSED'] = {'cp2local':[],}
+            for process in self.proc_order:
+                db[self.app]['PROCESSED']['error_'+process] = []
         return db
 
 

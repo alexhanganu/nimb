@@ -20,6 +20,7 @@ class RUNProcessingNL:
                                         process_order,
                                         DEFAULT,
                                         atlas_definitions).get_db()
+        print(self.db_nl)
         # nl_ver = vars_local['FREESURFER']['nilearn_version']
         # logger = Log(self.NIMB_tmp, fs_ver).logger
         self.get_subjects()
