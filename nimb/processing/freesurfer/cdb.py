@@ -27,7 +27,7 @@ class DBManage:
         self.process_order  = process_order
         self.base_name      = vars_freesurfer["base_name"]
         self.SUBJECTS_DIR   = vars_freesurfer["FS_SUBJECTS_DIR"]
-        self.chk            = FreeSurferChecker(vars_freesurfer, atlas_definitions)
+        self.chk            = FreeSurferChecker(vars_freesurfer, atlas_definitions, process_order)
 
         db_f_name           = DEFAULT.app_files["freesurfer"]["db"]
         self.db_file        = os.path.join(self.NIMB_tmp, db_f_name)

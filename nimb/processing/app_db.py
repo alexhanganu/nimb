@@ -14,7 +14,6 @@ time.tzset()
 log = logging.getLogger(__name__)
 
 
-# , ls_long_abrevs
 
 class DBManage:
 
@@ -30,10 +29,11 @@ class DBManage:
         self.SUBJECTS_DIR = vars_app["SUBJECTS_DIR"]
         self.proc_order   = process_order
         self.app          = app
-        self.chk          = CHECKER(app, vars_app, atlas_definitions)
+        self.chk          = CHECKER(app, vars_app, atlas_definitions, process_order)
 
         self.db_file      = os.path.join(self.NIMB_tmp, "db_app.json")
         self.f_new_subjs  = DEFAULT.f_new_subjects_fs
+        self.long_abrevs  = vars_local["NIMB_PATHS"]["long_abbrevs"]
 
 
     def get_db(self):
@@ -159,7 +159,7 @@ class DBManage:
             if _id == 'none':
                 _id = subjid
                 longitud = long_name+str(1)
-                for long_name in self.ls_long_abrevs:
+                for long_name in self.long_abrevs:
                     if long_name in subjid:
                         longitud = subjid[subjid.find(long_name):]
                         _id = subjid.replace('_'+longitud,'')

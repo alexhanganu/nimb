@@ -10,11 +10,11 @@ log = logging.getLogger(__name__)
 
 
 class FreeSurferChecker():
-    def __init__(self, vars_fs, atlas_definitions):
+    def __init__(self, vars_fs, atlas_definitions, process_order):
         self.vars_fs       = vars_fs
         self.SUBJECTS_DIR  = vars_fs['FS_SUBJECTS_DIR']
         self.fsver         = vars_fs['freesurfer_version']
-        self.process_order = vars_fs['process_order']
+        self.process_order = process_order
         self.masks         = vars_fs['masks']
         self.meas          = vars_fs["GLM_measurements"]
         self.thresh        = vars_fs["GLM_thresholds"]

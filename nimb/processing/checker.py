@@ -10,14 +10,11 @@ log = logging.getLogger(__name__)
 
 
 class CHECKER():
-    def __init__(self, app, app_vars, atlas_definitions):
-        self.app_vars       = app_vars
+    def __init__(self, app, app_vars, atlas_definitions, process_order):
+        self.app_vars      = app_vars
         self.SUBJECTS_DIR  = app_vars['SUBJECTS_DIR']
         self.app_ver       = self.get_app_version(app_vars)
-        self.process_order = app_vars['process_order']
-        self.masks         = app_vars['masks']
-        self.meas          = app_vars["GLM_measurements"]
-        self.thresh        = app_vars["GLM_thresholds"]
+        self.process_order = process_order
         self.Procs         = fs_definitions.FSProcesses(self.app_ver)
         self.stats         = atlas_definitions.stats_f
         self.atlas         = atlas_definitions.atlas_data

@@ -12,7 +12,7 @@ import logging
 log = logging.getLogger(__name__)
 
 
-# import fs_checker
+import fs_checker
 class ErrorCheck():
     def __init__(self, vars_freesurfer):
         self.vars_freesurfer = vars_freesurfer

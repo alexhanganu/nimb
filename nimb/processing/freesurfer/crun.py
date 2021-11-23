@@ -422,11 +422,11 @@ def run(varslocal, logger):
     SUBJECTS_DIR    = vars_freesurfer["FS_SUBJECTS_DIR"]
     fs_ver          = FreeSurferVersion(vars_freesurfer["freesurfer_version"]).fs_ver()
     log             = logger #logging.getLogger(__name__)
-    chk             = FreeSurferChecker(vars_freesurfer, atlas_definitions)
-    schedule        = Scheduler(vars_local)
     Procs           = FSProcesses(vars_freesurfer["freesurfer_version"])
-
     process_order   = ["registration"] + Procs.process_order()
+    chk             = FreeSurferChecker(vars_freesurfer, atlas_definitions, process_order)
+    schedule        = Scheduler(vars_local)
+
 
     t0           = time.time()
     time_elapsed = 0
