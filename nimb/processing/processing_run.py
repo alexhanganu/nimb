@@ -16,8 +16,6 @@ environ['TZ'] = 'US/Eastern'
 time.tzset()
 
 
-
-
 #         - after each 2 hours check the local/remote NIMB_PROCESSED_FS and NIMB_PROCESSED_FS_ERROR folders. 
 #             If not empty: mv (or copy/rm) to the path provided in the ~/nimb/projects.json → project → local 
 #                 or remote $PROCESSED_FS_DIR folder
@@ -39,7 +37,6 @@ time.tzset()
 class RUNProcessing:
 
     def __init__(self, all_vars, logger):
-
         #defining working variables
         self.project       = all_vars.params.project
         self.project_vars  = all_vars.projects[self.project]
@@ -54,6 +51,13 @@ class RUNProcessing:
         self.f_running     = os.path.join(self.NIMB_tmp, DEFAULT.f_running_process)
         self.python_run    = self.vars_local["PROCESSING"]["python3_run_cmd"]
         self.schedule      = Scheduler(self.vars_local)
+        self.app_db        = AppDBManage(self.vars_local,
+                                        DEFAULT,
+                                        atlas_definitions)
+        self.vars_apps_populate()
+
+        fs_version  = self.vars_local['FREESURFER']['freesurfer_version']
+        logger      = Log(self.NIMB_tmp, fs_version).logger
 
         t0           = time.time()
         time_elapsed = 0
@@ -113,17 +117,27 @@ class RUNProcessing:
             self.log.info(f'    Sending new processing batch to scheduler with cd_cmd: {cd_cmd} ')
 #         self.schedule.submit_4_processing(cmd, 'nimb_processing','run', cd_cmd)
 
+    def vars_apps_populate(self):
+        self.vars_apps = dict()
+        for processing_type in DEFAULT.apps_per_type:
+            app = DEFAULT.apps_per_type[processing_type]
+            self.vars_apps[app] = self.vars_local[app.upper()]
+            app_ver = self.vars_local[app.upper()][f'{app}_version']
+            if app == "freesurfer":
+                process_order = ["registration"] + FSProcesses(app_ver).process_order()
+                self.vars_apps["process_order"] = process_order
+            if app == "nilearn":
+                self.vars_apps["process_order"] = ['connectivity',]
+            if app == "dipy":
+                self.vars_apps["process_order"] = ['connectivity',]
+
 
     def get_ids_per_app(self, app):
         _ids_in_app_db = list()
-        if app == "freesurfer":
-            # print(db_fs)
-            for ls_bids_ids in db_fs["LONG_DIRS"].values():
-                _ids_in_app_db = _ids_in_app_db + ls_bids_ids
-        elif app == "nilearn":
-            print("must define list of participants for app: ", app)
-        elif app == "dipy":
-            print("must define list of participants for app: ", app)
+        db_per_app = self.app_db.get_db(app, self.vars_apps[app])
+        # print(db_per_app)
+        for ls_bids_ids in db_per_app["LONG_DIRS"].values():
+            _ids_in_app_db = _ids_in_app_db + ls_bids_ids
         self.log.info(f"there are: {len(_ids_in_app_db)} participants being processed with {app}")
         return _ids_in_app_db
 
@@ -421,27 +435,19 @@ if __name__ == "__main__":
     sys.path.append(str(top))
 
     from setup.get_vars import Get_Vars
-    from distribution.distribution_helper import  DistributionHelper
-    from distribution.logger import Log
-    from distribution.distribution_definitions import DEFAULT
-    from distribution.utilities import load_json, save_json, makedir_ifnot_exist
-    from distribution.project_helper import  ProjectManager
-    from classification.dcm2bids_helper import DCM2BIDS_helper 
-    from processing import processing_db as proc_db
-    from processing.schedule_helper import Scheduler, get_jobs_status
-    from processing.freesurfer import cdb
-    from processing.freesurfer.fs_definitions import FSProcesses
-    from stats.db_processing import Table
-
     project_ids = Get_Vars().get_projects_ids()
     params      = get_parameters(project_ids)
     all_vars    = Get_Vars(params)
 
-    NIMB_HOME   = all_vars.location_vars['local']["NIMB_PATHS"]["NIMB_HOME"]
-    NIMB_tmp    = all_vars.location_vars['local']['NIMB_PATHS']['NIMB_tmp']
-    fs_version  = all_vars.location_vars['local']['FREESURFER']['freesurfer_version']
-    logger      = Log(NIMB_tmp, fs_version).logger
-    process_order = ["registration"] + FSProcesses(fs_version).process_order()
-    db_fs = cdb.Get_DB(NIMB_HOME, NIMB_tmp, process_order)
+    from processing.app_db import AppDBManage
+    from processing.schedule_helper import Scheduler
+    from processing.atlases import atlas_definitions
+    from processing.freesurfer.fs_definitions import FSProcesses
+    from distribution.distribution_helper import  DistributionHelper
+    from distribution.distribution_definitions import DEFAULT
+    from distribution.utilities import load_json, save_json
+    from distribution.project_helper import  ProjectManager
+    from classification.dcm2bids_helper import DCM2BIDS_helper 
+    from distribution.logger import Log
 
     RUNProcessing(all_vars, logger)

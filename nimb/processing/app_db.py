@@ -14,49 +14,44 @@ time.tzset()
 log = logging.getLogger(__name__)
 
 
-
-class DBManage:
+class AppDBManage:
 
     def __init__(self,
-                app,
                 vars_local,
-                vars_app,
-                process_order,
                 DEFAULT,
                 atlas_definitions):
         self.NIMB_HOME    = vars_local["NIMB_PATHS"]["NIMB_HOME"]
         self.NIMB_tmp     = vars_local["NIMB_PATHS"]["NIMB_tmp"]
         self.SUBJECTS_DIR = vars_app["SUBJECTS_DIR"]
-        self.proc_order   = process_order
-        self.app          = app
-        self.chk          = CHECKER(app, vars_app, atlas_definitions, process_order)
+        self.chk          = CHECKER(atlas_definitions)
 
         self.db_file      = os.path.join(self.NIMB_tmp, "db_app.json")
         self.f_new_subjs  = DEFAULT.f_new_subjects_fs
         self.long_abrevs  = vars_local["NIMB_PATHS"]["long_abbrevs"]
 
 
-    def get_db(self):
+    def get_db(self, app, vars_app):
         log.info(f"        Database file is: {self.db_file}")
         if path.isfile(self.db_file):
             with open(self.db_file) as db_open:
                 db = json.load(db_open)
         else:
             db = dict()
-            if self.app not in db:
-                db[self.app] = {}
+            proc_order = vars_app["process_order"]
+            if app not in db:
+                db[app] = {}
             for action in ['DO','RUNNING',]:
-                db[self.app][action] = {}
-                for process in self.proc_order:
-                    db[self.app][action][process] = []
-            db[self.app]['REGISTRATION'] = {}
-            db[self.app]['RUNNING_JOBS'] = {}
-            db[self.app]['LONG_DIRS'] = {}
-            db[self.app]['LONG_TPS'] = {}
-            db[self.app]['ERROR_QUEUE'] = {}
-            db[self.app]['PROCESSED'] = {'cp2local':[],}
-            for process in self.proc_order:
-                db[self.app]['PROCESSED']['error_'+process] = []
+                db[app][action] = {}
+                for process in proc_order:
+                    db[app][action][process] = []
+            db[app]['REGISTRATION'] = {}
+            db[app]['RUNNING_JOBS'] = {}
+            db[app]['LONG_DIRS'] = {}
+            db[app]['LONG_TPS'] = {}
+            db[app]['ERROR_QUEUE'] = {}
+            db[app]['PROCESSED'] = {'cp2local':[],}
+            for process in proc_order:
+                db[app]['PROCESSED']['error_'+process] = []
         return db
 
 
