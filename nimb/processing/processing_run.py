@@ -421,8 +421,6 @@ def get_parameters(projects):
     return params
 
 
-
-
 if __name__ == "__main__":
 
     try:

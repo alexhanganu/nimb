@@ -11,15 +11,12 @@ class RUNProcessingNL:
         self.NIMB_tmp   = vars_local['NIMB_PATHS']['NIMB_tmp']
         vars_app        = vars_local["NILEARN"]
         self.output_loc = vars_app['NIMB_PROCESSED']
-        process_order   = ['connectivity',]
-
+        vars_app["process_order"] = ['connectivity',]
         # self.db_nl      = dict()
-        self.db_nl      = app_db.DBManage(self.app,
-                                        vars_local,
-                                        vars_app,
-                                        process_order,
-                                        DEFAULT,
-                                        atlas_definitions).get_db()
+        self.app_db      = app_db.AppDBManage(vars_local,
+                                            DEFAULT,
+                                            atlas_definitions)
+        self.db_nl = self.app_db.get_db(self.app, vars_app)
         print(self.db_nl)
         # nl_ver = vars_local['FREESURFER']['nilearn_version']
         # logger = Log(self.NIMB_tmp, fs_ver).logger

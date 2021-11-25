@@ -1,7 +1,6 @@
 #!/bin/python
 # 2020.08.25
 
-from os import path, listdir, rename, environ, system
 import os
 import time
 import json
@@ -9,7 +8,7 @@ import logging
 
 from processing.checker import CHECKER
 
-environ['TZ'] = 'US/Eastern'
+os.environ['TZ'] = 'US/Eastern'
 time.tzset()
 log = logging.getLogger(__name__)
 
@@ -22,7 +21,6 @@ class AppDBManage:
                 atlas_definitions):
         self.NIMB_HOME    = vars_local["NIMB_PATHS"]["NIMB_HOME"]
         self.NIMB_tmp     = vars_local["NIMB_PATHS"]["NIMB_tmp"]
-        self.SUBJECTS_DIR = vars_app["SUBJECTS_DIR"]
         self.chk          = CHECKER(atlas_definitions)
 
         self.db_file      = os.path.join(self.NIMB_tmp, "db_app.json")
@@ -32,7 +30,7 @@ class AppDBManage:
 
     def get_db(self, app, vars_app):
         log.info(f"        Database file is: {self.db_file}")
-        if path.isfile(self.db_file):
+        if os.path.isfile(self.db_file):
             with open(self.db_file) as db_open:
                 db = json.load(db_open)
         else:
@@ -58,7 +56,7 @@ class AppDBManage:
     def Update_DB(self, db):
         with open(self.db_file, 'w') as jf:
             json.dump(db, jf, indent=4)
-        system('chmod 777 {}'.format(self.db_file))
+        os.system('chmod 777 {}'.format(self.db_file))
 
 
     def get_registration_files(self, _id, db, flair_t2_add):
@@ -137,7 +135,7 @@ class AppDBManage:
                                 log.info('ERROR: '+subjid+' was read and but was not added to database')
             time_now = time.strftime("%Y%m%d_%H%M",time.localtime(time.time()))
             ren_name = 'znew_subjects_registered_to_db_'+time_now+'.json'
-            rename(f_new_subjects, os.path.join(self.NIMB_tmp, ren_name))
+            os.rename(f_new_subjects, os.path.join(self.NIMB_tmp, ren_name))
             log.info('        all new subjects were added from '+f_new_subjects)
         return db
 
@@ -185,9 +183,11 @@ class AppDBManage:
             db['RUNNING'][self.process_order[1]].append(subjid)
 
 
-    def chk_subj_in_SUBJECTS_DIR(self, db, vars_freesurfer, atlas_definitions):
+    def chk_subj_in_SUBJECTS_DIR(self, db, vars_app):
         log.info('    SUBJECTS_DIR checking ...')
-        ls_SUBJECTS = self.get_ls_subjects_in_fs_subj_dir()
+        SUBJECTS_DIR = vars_app["SUBJECTS_DIR"]
+
+        ls_SUBJECTS = self.get_ls_subjects_in_fs_subj_dir(SUBJECTS_DIR)
         for subjid in ls_SUBJECTS:
             if subjid not in self.get_ls_subjids_in_long_dirs(db):
                 log.info('    '+subjid+' not in PROCESSED')
@@ -196,7 +196,7 @@ class AppDBManage:
                 if _id == subjid:
                     subjid = _id+'_'+longitud
                     log.info('   no '+longitud+' in '+_id+' Changing name to: '+subjid)
-                    rename(path.join(self.SUBJECTS_DIR, _id), path.join(self.SUBJECTS_DIR, subjid))
+                    os.rename(os.path.join(SUBJECTS_DIR, _id), os.path.join(SUBJECTS_DIR, subjid))
                 if _id not in db['LONG_DIRS']:
                     db['LONG_DIRS'][_id] = list()
                 if _id in db['LONG_DIRS']:
@@ -216,14 +216,14 @@ class AppDBManage:
         return db
 
 
-    def get_ls_subjects_in_fs_subj_dir(self):
+    def get_ls_subjects_in_fs_subj_dir(self, SUBJECTS_DIR):
         files_in_SUBJECTS_DIR = ['bert','average','README','sample-00','cvs_avg35']
-        ls = sorted([i for i in listdir(self.SUBJECTS_DIR) if i not in files_in_SUBJECTS_DIR])
+        ls = sorted([i for i in os.listdir(SUBJECTS_DIR) if i not in files_in_SUBJECTS_DIR])
         return ls
 
 
     def check_that_all_files_are_accessible(self, ls):
         for file in ls:
-            if not path.exists(file):
+            if not os.path.exists(file):
                 ls.remove(file)
         return ls
