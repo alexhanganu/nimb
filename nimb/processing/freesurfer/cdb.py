@@ -26,7 +26,7 @@ class DBManage:
         self.ls_long_abrevs = vars_local["NIMB_PATHS"]["long_abbrevs"]
         self.process_order  = process_order
         self.base_name      = vars_freesurfer["base_name"]
-        self.SUBJECTS_DIR   = vars_freesurfer["FS_SUBJECTS_DIR"]
+        self.SUBJECTS_DIR   = vars_freesurfer["SUBJECTS_DIR"]
         self.chk            = FreeSurferChecker(vars_freesurfer, atlas_definitions, process_order)
 
         db_f_name           = DEFAULT.app_files["freesurfer"]["db"]
@@ -275,14 +275,14 @@ def Update_DB_new_subjects_and_SUBJECTS_DIR(NIMB_tmp,
                                             vars_freesurfer,
                                             DEFAULT,
                                             atlas_definitions):
-    db = chk_subj_in_SUBJECTS_DIR(NIMB_tmp,
-                                    db,
-                                    vars_freesurfer,
-                                    atlas_definitions)
-    db = chk_subjects2fs_file(NIMB_tmp,
-                                db,
-                                vars_freesurfer,
-                                atlas_definitions)
+    # db = chk_subj_in_SUBJECTS_DIR(NIMB_tmp,
+    #                                 db,
+    #                                 vars_freesurfer,
+    #                                 atlas_definitions)
+    # db = chk_subjects2fs_file(NIMB_tmp,
+    #                             db,
+    #                             vars_freesurfer,
+    #                             atlas_definitions)
     db = chk_new_subjects_json_file(NIMB_tmp,
                                     db,
                                     vars_freesurfer,
@@ -395,7 +395,7 @@ def chk_subj_in_SUBJECTS_DIR(NIMB_tmp, db, vars_freesurfer, atlas_definitions):
 
     base_name          = vars_freesurfer["base_name"]
     long_name          = vars_freesurfer["long_name"]
-    SUBJECTS_DIR       = vars_freesurfer["FS_SUBJECTS_DIR"]
+    SUBJECTS_DIR       = vars_freesurfer["SUBJECTS_DIR"]
     process_order      = vars_freesurfer["process_order"]
 
     chk = FreeSurferChecker(vars_freesurfer, atlas_definitions)

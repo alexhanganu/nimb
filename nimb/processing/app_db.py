@@ -7,6 +7,7 @@ import json
 import logging
 
 from processing.checker import CHECKER
+from classification.dcm2bids_helper import is_bids_format
 
 os.environ['TZ'] = 'US/Eastern'
 time.tzset()
@@ -21,11 +22,10 @@ class AppDBManage:
                 atlas_definitions):
         self.NIMB_HOME    = vars_local["NIMB_PATHS"]["NIMB_HOME"]
         self.NIMB_tmp     = vars_local["NIMB_PATHS"]["NIMB_tmp"]
-        self.chk          = CHECKER(atlas_definitions)
-
-        self.db_file      = os.path.join(self.NIMB_tmp, "db_app.json")
-        self.f_new_subjs  = DEFAULT.f_new_subjects_fs
         self.long_abrevs  = vars_local["NIMB_PATHS"]["long_abbrevs"]
+        self.chk          = CHECKER(atlas_definitions)
+        self.DEF          = DEFAULT
+        self.db_file      = os.path.join(self.NIMB_tmp, "db_app.json")
 
 
     def get_db(self, app, vars_app):
@@ -53,7 +53,7 @@ class AppDBManage:
         return db
 
 
-    def Update_DB(self, db):
+    def update_db(self, db):
         with open(self.db_file, 'w') as jf:
             json.dump(db, jf, indent=4)
         os.system('chmod 777 {}'.format(self.db_file))
@@ -85,6 +85,47 @@ class AppDBManage:
         return f"recon-all{t1_cmd}{flair_cmd}{t2_cmd} -s {_id}"
 
 
+    def chk_new_subj(self, db, app, app_vars):
+        self.app        = app
+        self.app_vars   = app_vars
+        self.proc_order = app_vars["process_order"]
+
+        db = self.json_file_chk(db)
+        # db = self.SUBJECTS_DIR_chk(db)
+        return db
+
+
+    def json_file_chk(self, db):
+        self.f_new_subjs  = self.DEF.app_files[self.app]["new_subjects"]
+        f_new_subjects = os.path.join(self.NIMB_tmp, self.f_new_subjs)
+        log.info('    new_subjects.json checking ...')
+
+        if os.path.isfile(f_new_subjects):
+            with open(f_new_subjects) as jfile:
+                new_subjects = json.load(jfile)
+            ls_SUBJECTS_in_long_dirs_processed = self.get_ls_subjids_in_long_dirs(db)
+            for subjid in new_subjects:
+                if not self.chk.chk(subjid, self.app, self.app_vars, 'registration'):
+                    if 'anat' in new_subjects[subjid]:
+                        if 't1' in new_subjects[subjid]['anat']:
+                            if new_subjects[subjid]['anat']['t1']:
+                                bids_format, _id, ses, run_label = is_bids_format(subjid)
+                                if not bids_format:
+                                    _id, ses = self.get_id_long(subjid, db['LONG_DIRS'])
+                                db['REGISTRATION'][subjid] = dict()
+                                db['REGISTRATION'][subjid]['anat'] = new_subjects[subjid]['anat']
+                                log.info('        '+subjid+' added to database from '+f_new_subjects)
+                                db = self.add_subjid_2_DB(subjid, _id, ses, db, ls_SUBJECTS_in_long_dirs_processed)
+                            else:
+                                db['PROCESSED']['error_registration'].append(subjid)
+                                log.info('ERROR: '+subjid+' was read and but was not added to database')
+            time_now = time.strftime("%Y%m%d_%H%M",time.localtime(time.time()))
+            ren_name = 'znew_subjects_registered_to_db_'+time_now+'.json'
+            os.rename(f_new_subjects, os.path.join(self.NIMB_tmp, ren_name))
+            log.info('        all new subjects were added from '+f_new_subjects)
+        return db
+
+
     def add_subjid_2_DB(self, subjid, _id, ses, db, ls_SUBJECTS_in_long_dirs_processed):
         if subjid not in ls_SUBJECTS_in_long_dirs_processed:
             if _id not in db['LONG_DIRS']:
@@ -112,58 +153,31 @@ class AppDBManage:
         return lsall
 
 
-    def chk_new_subjects_json_file(self, db):
-        log.info('    new_subjects.json checking ...')
-
-        ls_SUBJECTS_in_long_dirs_processed = self.get_ls_subjids_in_long_dirs(db)
-        f_new_subjects = os.path.join(self.NIMB_tmp, self.f_new_subjs)
-        if os.path.isfile(f_new_subjects):
-            with open(f_new_subjects) as jfile:
-                new_subjects = json.load(jfile)
-            for subjid in new_subjects:
-                if not self.chk.checks_from_runfs('registration', subjid):
-                    if 'anat' in new_subjects[subjid]:
-                        if 't1' in new_subjects[subjid]['anat']:
-                            if new_subjects[subjid]['anat']['t1']:
-                                _id, ses = self.get_id_long(subjid, db['LONG_DIRS'])
-                                db['REGISTRATION'][subjid] = dict()
-                                db['REGISTRATION'][subjid]['anat'] = new_subjects[subjid]['anat']
-                                log.info('        '+subjid+' added to database from '+f_new_subjects)
-                                db = self.add_subjid_2_DB(subjid, _id, ses, db, ls_SUBJECTS_in_long_dirs_processed)
-                            else:
-                                db['PROCESSED']['error_registration'].append(subjid)
-                                log.info('ERROR: '+subjid+' was read and but was not added to database')
-            time_now = time.strftime("%Y%m%d_%H%M",time.localtime(time.time()))
-            ren_name = 'znew_subjects_registered_to_db_'+time_now+'.json'
-            os.rename(f_new_subjects, os.path.join(self.NIMB_tmp, ren_name))
-            log.info('        all new subjects were added from '+f_new_subjects)
-        return db
-
-
     def get_id_long(self, subjid, LONG_DIRS):
-            _id = 'none'
-            for key in LONG_DIRS:
-                if subjid in LONG_DIRS[key]:
-                    _id = key
-                    longitud = subjid.replace(_id+'_','')
+        print('    subject id is NOT BIDS format')
+        _id = 'none'
+        for key in LONG_DIRS:
+            if subjid in LONG_DIRS[key]:
+                _id = key
+                longitud = subjid.replace(_id+'_','')
+                break
+        if self.base_name in subjid:
+            subjid = subjid.replace(self.base_name,'').split('.',1)[0]
+        if _id == 'none':
+            _id = subjid
+            longitud = long_name+str(1)
+            for long_name in self.long_abrevs:
+                if long_name in subjid:
+                    longitud = subjid[subjid.find(long_name):]
+                    _id = subjid.replace('_'+longitud,'')
                     break
-            if self.base_name in subjid:
-                subjid = subjid.replace(self.base_name,'').split('.',1)[0]
-            if _id == 'none':
-                _id = subjid
-                longitud = long_name+str(1)
-                for long_name in self.long_abrevs:
-                    if long_name in subjid:
-                        longitud = subjid[subjid.find(long_name):]
-                        _id = subjid.replace('_'+longitud,'')
-                        break
-            return _id, longitud
+        return _id, longitud
 
 
     def get_subjs_running(self, db):
         ls_subj_running = []
         for ACTION in ('DO', 'RUNNING',):
-            for process in self.process_order:
+            for process in self.proc_order:
                 for subjid in db[ACTION][process]:
                     if subjid not in ls_subj_running:
                         ls_subj_running.append(subjid)
@@ -173,25 +187,27 @@ class AppDBManage:
 
     def add_new_subjid_to_db(self, subjid):
         if not self.chk.IsRunning_chk(subjid):
-            for process in self.process_order[1:]:
+            for process in self.proc_order[1:]:
                 if not self.chk.checks_from_runfs(process, subjid):
                     log.info('        '+subjid+' sent for DO '+process)
                     db['DO'][process].append(subjid)
                     break
         else:
-            log.info('            IsRunning file present, adding to RUNNING '+self.process_order[1])
-            db['RUNNING'][self.process_order[1]].append(subjid)
+            log.info('            IsRunning file present, adding to RUNNING '+self.proc_order[1])
+            db['RUNNING'][self.proc_order[1]].append(subjid)
 
 
-    def chk_subj_in_SUBJECTS_DIR(self, db, vars_app):
+    def SUBJECTS_DIR_chk(self, db):
         log.info('    SUBJECTS_DIR checking ...')
-        SUBJECTS_DIR = vars_app["SUBJECTS_DIR"]
+        SUBJECTS_DIR = self.app_vars["SUBJECTS_DIR"]
 
         ls_SUBJECTS = self.get_ls_subjects_in_fs_subj_dir(SUBJECTS_DIR)
         for subjid in ls_SUBJECTS:
             if subjid not in self.get_ls_subjids_in_long_dirs(db):
                 log.info('    '+subjid+' not in PROCESSED')
-                _id, longitud = self.get_id_long(subjid, db['LONG_DIRS'])
+                bids_format, _id, longitud, run_label = is_bids_format(subjid)
+                if not bids_format:
+                    _id, longitud = self.get_id_long(subjid, db['LONG_DIRS'])
                 log.info('        adding to database: id: '+_id+', long name: '+longitud)
                 if _id == subjid:
                     subjid = _id+'_'+longitud

@@ -122,7 +122,7 @@ class FSProcesses:
         if self.fs_ver2 < "7":
             fs7_atlases = [i for i in self.atlas_proc if self.processes[i]["fsver"] > 6]
             return [i for i in order_all if i not in fs7_atlases]
-        elif self.fs_ver2 == "72":
+        elif self.fs_ver2 < "72":
             fs72_atlases = [i for i in self.atlas_proc if self.processes[i]["fsver"] == 72]
             return [i for i in order_all if i not in fs72_atlases]
         else:

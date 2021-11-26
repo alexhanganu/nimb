@@ -9,9 +9,12 @@ class RUNProcessingNL:
         self.project    = all_vars.params.project
         vars_local      = all_vars.location_vars['local']
         self.NIMB_tmp   = vars_local['NIMB_PATHS']['NIMB_tmp']
-        vars_app        = vars_local["NILEARN"]
+        vars_app        = vars_local[self.app.upper()]
         self.output_loc = vars_app['NIMB_PROCESSED']
         vars_app["process_order"] = ['connectivity',]
+        if f"{self.app}_version" not in vars_app:
+            vars_app[f"{self.app}_version"] = "1"
+
         # self.db_nl      = dict()
         self.app_db      = app_db.AppDBManage(vars_local,
                                             DEFAULT,
