@@ -19,14 +19,31 @@ from distribution.logger import LogLVL
 
 class ProjectManager:
     '''
-    projects require assessment of stage. Stages:
-    - file with data is present
-    - ids are present
-    - BIDS is performed, files are present in the BIDS corresponding folders
-    -> if not: source for IRM is defined
-    - ids are processed with FreeSurfer/ nilearn/ dipy
-    - stats performed
-    For missing stages, helper will initiate distribution for the corresponding stage
+    class to Manage a specific project
+    missing stages are being initiated with distribution
+
+    ALGO:
+    - get tsv file to df for project. If missing: make default
+    - get f_ids with. If missing: make default
+    - chk if data provided. If yes:
+        chk if BIDS classified
+    - if BIDS classified:
+        for subj in df:
+            chk that files are present in the BIDS folder
+            chk that source of sourcedata is defined in f_ids
+            chk if each file in f_ids is present
+            if missing:
+                send to processing
+        for subj in BIDS classified:
+            chk if present in df
+            if missing:
+                send to loop 1 to chk subj in df
+        for subj in sourcedata:
+            chk if source name present in f_ids
+            if not:
+                do loop 2 chk if BIDS
+    - stats performed chk
+
     Args:
         all_vars
     '''
