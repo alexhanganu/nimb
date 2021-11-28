@@ -53,37 +53,35 @@ class ProjectManager:
 
         self.all_vars           = all_vars
         self.local_vars         = all_vars.location_vars['local']
+        self.NIMB_tmp           = self.local_vars["NIMB_PATHS"]["NIMB_tmp"]
+        self.new_subjects_dir   = self.local_vars["NIMB_PATHS"]["NIMB_NEW_SUBJECTS"]
         self.project            = all_vars.params.project
         self.project_vars       = all_vars.projects[self.project]
+        self.materials_dir_pt   = self.project_vars["materials_DIR"][1]
+        self.srcdata_dir        = self.project_vars["SOURCE_SUBJECTS_DIR"][1]
+        self.BIDS_DIR           = self.project_vars['SOURCE_BIDS_DIR'][1]
         self._ids_project_col   = self.project_vars['id_proj_col']
         self._ids_bids_col      = self.project_vars['id_col']
-        self.NIMB_tmp           = self.local_vars["NIMB_PATHS"]["NIMB_tmp"]
-
-        # self.f_ids_proc_path  = os.path.join(self.materials_DIR,
-        #                                      local_vars["NIMB_PATHS"]['file_ids_processed'])
-
         self.path_stats_dir     = makedir_ifnot_exist(
-                                    all_vars.projects[self.project]["STATS_PATHS"]["STATS_HOME"])
-        self.materials_dir_pt   = all_vars.projects[self.project]["materials_DIR"][1]
-        self.f_ids_name         = self.local_vars["NIMB_PATHS"]['file_ids_processed']
+                                    self.project_vars["STATS_PATHS"]["STATS_HOME"])
+        self.apps_all           = DEFAULT.apps_all
+        self.f_ids_name         = DEFAULT.f_ids
         self.f_ids_abspath      = os.path.join(self.path_stats_dir, self.f_ids_name)
+
+        self.new_subjects       = False
+        self.test               = all_vars.params.test
+        self.nr_for_testing     = 2 # if self.test - this defines nr of subj to run
+
         self.tab                = Table()
         self.distrib_hlp        = DistributionHelper(self.all_vars)
         self.distrib_ready      = DistributionReady(self.all_vars)
-        self.srcdata_dir        = self.project_vars["SOURCE_SUBJECTS_DIR"][1]
-        self.BIDS_DIR           = self.project_vars['SOURCE_BIDS_DIR'][1]
-        self.new_subjects_dir   = self.local_vars["NIMB_PATHS"]["NIMB_NEW_SUBJECTS"]
         self.dcm2bids           = DCM2BIDS_helper(self.project_vars,
                                                 self.project,
                                                 DICOM_DIR = self.srcdata_dir,
                                                 tmp_dir = self.NIMB_tmp)
-        self.apps_all           = DEFAULT.apps_all
         self.get_df_f_groups()
         self.get_ids_all()
 
-        self.test               = all_vars.params.test
-        self.nr_for_testing     = 2
-        self.new_subjects       = False
 
 
     def get_df_f_groups(self):
@@ -171,9 +169,11 @@ class ProjectManager:
         _ids_all_main = dict()
         _ids_all_stats = dict()
         if self.f_ids_in_dir(self.materials_dir_pt):
-            _ids_all_main = load_json(os.path.join(self.materials_dir_pt, self.f_ids_name))
+            _ids_all_main = load_json(os.path.join(self.materials_dir_pt,
+                                                    self.f_ids_name))
         if self.f_ids_in_dir(self.path_stats_dir):
-            _ids_all_stats = load_json(os.path.join(self.path_stats_dir, self.f_ids_name))
+            _ids_all_stats = load_json(os.path.join(self.path_stats_dir,
+                                                    self.f_ids_name))
 
         if _ids_all_main == _ids_all_stats:
             self._ids_all = _ids_all_stats
