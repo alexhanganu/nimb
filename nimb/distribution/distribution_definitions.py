@@ -13,38 +13,39 @@ class DEFAULT(object):
                         "func":"nilearn",
                         "dwi" :"dipy"}
 
-    apps_keys        = {"src"    :"source",
-                        "fs"     :"freesurfer",
-                        "nilearn":"nilearn",
-                        "dipy"   :"dipy",}
+    id_source_key    = "source"
+    apps_keys        = {"source"    :"source",
+                        "freesurfer":"freesurfer",
+                        "nilearn"   :"nilearn",
+                        "dipy"      :"dipy",}
 
-    app_files         = {"freesurfer":{"new_subjects"  :"new_subjects_fs.json",
-                                       "running"       :"IsRunningFS_",
-                                       "db"            :"db_fs.json",
-                                       "install_param" :"FreeSurfer_install",
-                                       "run_file"      :"crun.py",
-                                       "dir_nimb_proc" :"NIMB_PROCESSED_FS",
-                                       "dir_store_proc":"PROCESSED_FS_DIR",
-                                       "fname_stats"   :"fs_stats",
-                                       "fname_st_param":"fs_stats_per_param"},
-                        "nilearn":    {"new_subjects"  :"new_subjects_nl.json",
-                                       "running"       :"IsRunningNL_",
-                                       "db"            :"db_nl.json",
-                                       "install_param" :"nilearn_install",
-                                       "run_file"      :"nl_run.py",
-                                       "dir_nimb_proc" :"NIMB_PROCESSED_NILEARN",
-                                       "dir_store_proc":"PROCESSED_NILEARN_DIR",
-                                       "fname_stats"   :"func_stats",
-                                       "fname_st_param":"func_stats_per_param"},
-                        "dipy":       {"new_subjects"  :"new_subjects_dp.json",
-                                       "running"       :"IsRunningDP_",
-                                       "db"            :"db_dp.json",
-                                       "install_param" :"dipy_install",
-                                       "run_file"      :"dp_run.py",
-                                       "dir_nimb_proc" :"NIMB_PROCESSED_DIPY",
-                                       "dir_store_proc":"PROCESSED_DIPY_DIR",
-                                       "fname_stats"   :"diff_stats",
-                                       "fname_st_param":"diff_stats_per_param"}}
+    app_files        = {"freesurfer":{"new_subjects"  :"new_subjects_fs.json",
+                                      "running"       :"IsRunningFS_",
+                                      "db"            :"db_fs.json",
+                                      "install_param" :"FreeSurfer_install",
+                                      "run_file"      :"crun.py",
+                                      "dir_nimb_proc" :"NIMB_PROCESSED_FS",
+                                      "dir_store_proc":"PROCESSED_FS_DIR",
+                                      "fname_stats"   :"fs_stats",
+                                      "fname_st_param":"fs_stats_per_param"},
+                        "nilearn"   :{"new_subjects"  :"new_subjects_nl.json",
+                                      "running"       :"IsRunningNL_",
+                                      "db"            :"db_nl.json",
+                                      "install_param" :"nilearn_install",
+                                      "run_file"      :"nl_run.py",
+                                      "dir_nimb_proc" :"NIMB_PROCESSED_NILEARN",
+                                      "dir_store_proc":"PROCESSED_NILEARN_DIR",
+                                      "fname_stats"   :"func_stats",
+                                      "fname_st_param":"func_stats_per_param"},
+                        "dipy"      :{"new_subjects"  :"new_subjects_dp.json",
+                                      "running"       :"IsRunningDP_",
+                                      "db"            :"db_dp.json",
+                                      "install_param" :"dipy_install",
+                                      "run_file"      :"dp_run.py",
+                                      "dir_nimb_proc" :"NIMB_PROCESSED_DIPY",
+                                      "dir_store_proc":"PROCESSED_DIPY_DIR",
+                                      "fname_stats"   :"diff_stats",
+                                      "fname_st_param":"diff_stats_per_param"}}
     f_nimb_classified = 'nimb_classified.json'
     f_ids             = 'f_ids.json'
     f_subjects2proc   = 'new_subjects.json'
@@ -157,7 +158,7 @@ def get_keys_processed(key):
     keys_all = DEFAULT.apps_keys
     print(keys_all)
     if key == 'src':
-        return 'source'
+        return DEFAULT.id_source_key
     elif key == 'fs':
         return 'freesurfer'
     elif key == 'nilearn':

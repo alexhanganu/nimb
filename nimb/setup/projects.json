@@ -1,11 +1,11 @@
 {
 "project1" : {
-    "SOURCE_BIDS_DIR"        : ["local","/home/username/datasets/project1/bids"],
-    "SOURCE_SUBJECTS_DIR"    : ["local","/home/username/datasets/project1/source/mri"],
-    "PROCESSED_FS_DIR"       : ["local","/home/username/datasets/project1/bids/derivatives/freesurfer"],
-    "PROCESSED_NILEARN_DIR"  : ["local","/home/username/datasets/project1/bids/derivatives/nilearn"],
-    "PROCESSED_DIPY_DIR"     : ["local","/home/username/datasets/project1/bids/derivatives/dipy"],
-    "PROCESSED_FS_DIR_error" : ["local","/home/username/datasets/project1/bids/derivatives/err_freesurfer"],
+    "SOURCE_BIDS_DIR"        : ["local","/home/username/datasets/project1/rawdata"],
+    "SOURCE_SUBJECTS_DIR"    : ["local","/home/username/datasets/project1/rawdata/source"],
+    "PROCESSED_FS_DIR"       : ["local","/home/username/datasets/project1/rawdata/derivatives/freesurfer"],
+    "PROCESSED_NILEARN_DIR"  : ["local","/home/username/datasets/project1/rawdata/derivatives/nilearn"],
+    "PROCESSED_DIPY_DIR"     : ["local","/home/username/datasets/project1/rawdata/derivatives/dipy"],
+    "PROCESSED_FS_DIR_error" : ["local","/home/username/datasets/project1/rawdata/derivatives/err_freesurfer"],
     "materials_DIR"          : ["local","/home/username/projects/project1/materials"],
     "fname_groups"           : "default",
     "id_col"                 : "default",
