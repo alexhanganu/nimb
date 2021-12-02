@@ -119,6 +119,132 @@ class ProjectManager:
         self.extract_statistics()
 
 
+    def get_ids_all(self):
+        """
+        ALGO:
+            if f_ids is present in the materials dir:
+                ids are loaded
+                if f_ids is present in the stats dir:
+                    if the two files are are different:
+                        save f_ids from materials to stats folder
+            if f_ids is missing:
+                self._ids_all_make() is initiated
+        """
+        self._ids_all = dict()
+        if os.path.exists(self.f_ids_inmatdir):
+            _ids_in_matdir = load_json(self.f_ids_inmatdir)
+            self._ids_all = _ids_in_matdir
+            if os.path.exists(f_ids_instatsdir):
+                _ids_in_stats_dir = load_json(f_ids_instatsdir)
+                if _ids_in_matdir != _ids_in_stats_dir:
+                    print(f'{LogLVL.lvl1} ids in {f_ids_instatsdir}\
+                                is DIFFERENT from: {self.f_ids_inmatdir}')
+                    print(f'{LogLVL.lvl2}saving {self.f_ids_inmatdir}\
+                                        to: {self.path_stats_dir}')
+                    save_json(_ids_in_matdir, f_ids_instatsdir)
+        else:
+            print(f'{LogLVL.lvl1}file with ids is MISSING')
+            self._ids_all_make()
+        if not bool(self._ids_all):
+            print(f'{LogLVL.lvl2} file with ids is EMPTY')
+        # print(f'{LogLVL.lvl1} ids all are: {self._ids_all}')
+
+
+    def _ids_all_make(self):
+        """
+        creates an empty f_ids
+        Structure:
+            f_ids.json:{
+                "_id_bids": {
+                    "project"    : "ID_in_file_provided_by_user_for_GLM_analysis.tsv",
+                    "source"     : "ID_in_source_dir_or_zip_file",
+                    "freesurfer" : "ID_after_freesurfer_processing.zip",
+                    "nilearn"    : "ID_after_nilearn_processing.zip",
+                    "dipy"       : "ID_after_dipy_processing.zip"
+                            }
+                        }
+                _id_project: ID provided by the user in a grid file.
+                            e.g., in PPMI _id_project = 3378_session1
+                            _id_project is expected to be used for stats analysis
+                            _id_project can be same as _id_bids, if edited by the user
+                _id_source:  ID as defined in a database.
+                            It can be same as _id_project, but it is NOT expected
+                            e.g., in PPMI _id_source = 3378
+                                with if a folders of ID with multiple sessions
+                _id_bids   : created with DCM2BIDS_helper().make_bids_id
+                            using dcm2bids app
+                            includes: bids_prefix-_id_source_session_run;
+                            e.g: sub-3378_ses-1
+        new f_ids is created and saved in the two folders:
+        materials and stats dirs
+        """
+        print(f'{LogLVL.lvl2}creating file with ids based on grid file')
+        _ids_bids    = self.df_grid[self._ids_bids_col]
+        _ids_project = self.df_grid[self._ids_project_col]
+
+        if len(_ids_bids) > 0:
+            rawdata_listdir = self.get_listdir(self.BIDS_DIR)
+            if rawdata_listdir:
+                for _id_bids in _ids_bids:
+                    # populate from rawdata folder, with BIDS structure
+                    self.populate_ids_from_rawdata(_id_bids,
+                                                    rawdata_listdir)
+            else:
+                print(f"{LogLVL.lvl1}folder {self.BIDS_DIR} is empty")
+                print(f"{LogLVL.lvl1}cannot populate file with ids")
+            self.save_ids_all()
+        elif len(_ids_project) > 0:
+            self.check_new()
+        _ids_not_bids = [i for i in _ids_bids if i not in self._ids_all]
+        if _ids_not_bids:
+            print(f"{LogLVL.lvl1}some IDs do not have BIDS format.")
+            f_grid = os.path.join(self.path_stats_dir,
+                self.project_vars['fname_groups'])
+            print(f"{LogLVL.lvl2}please adjust the file: {self.f_grid}")
+            print(f"{LogLVL.lvl2}for participants: {_ids_not_bids}")
+        _exists = os.path.exists(self.f_ids_instatsdir)
+        if not _exists:
+            print('    could not create file with ids')
+        return _exists
+
+
+    def populate_ids_from_rawdata(self,
+                                  _id_bids,
+                                  dir_listdir):
+        bids_format, sub_label, ses_label, run_label = is_bids_format(_id_bids)
+        if bids_format:
+            if sub_label in dir_listdir:
+                print(f"{LogLVL.lvl2}subject {_id_bids} is present")
+                if _id_bids not in self._ids_all:
+                    self._ids_all[_id_bids] = dict()
+                    self.populate_ids_all_derivatives(_id_bids)
+        else:
+            print(f"{LogLVL.lvl2}subject {_id_bids} is not of BIDS format")
+
+
+    def populate_ids_all_derivatives(self, _id_bids):
+        for app in DEFAULT.app_files:
+            key_2processed = DEFAULT.app_files[app]["dir_store_proc"]
+            location = self.project_vars['PROCESSED_FS_DIR'][0]
+            abspath_2storage = self.project_vars['PROCESSED_FS_DIR'][1]
+            if location != "local":
+                print(f"{LogLVL.lvl2}subject {_id_bids} for app: {app} is stored on: {location}")
+            else:
+                _id_per_app = [i for i in self.get_listdir(abspath_2storage) if _id_bids in i]
+                self._ids_all[_id_bids][app] = _id_per_app
+
+
+    def save_f_ids(self):
+        if self.must_save_f_ids:
+            self.save_ids_all()
+
+
+    def save_ids_all(self):
+        print(f'creating file with groups {self.f_ids_instatsdir}')
+        save_json(self._ids_all, self.f_ids_inmatdir)
+        save_json(self._ids_all, self.f_ids_instatsdir)
+
+
     def check_new(self):
         print(f'{LogLVL.lvl1}checking for new subject to be processed')
         self.unprocessed_d = dict()
@@ -324,120 +450,6 @@ class ProjectManager:
     '''
     ID related scripts
     '''
-
-
-    def get_ids_all(self):
-        """
-        ALGO:
-            if f_ids is present in the materials dir:
-                ids are loaded
-                if f_ids is present in the stats dir:
-                    if the two files are are different:
-                        save f_ids from materials to stats folder
-            if f_ids is missing:
-                new f_ids is created and saved in the two folders:
-                materials and stats dirs
-        """
-        self._ids_all = dict()
-        if os.path.exists(self.f_ids_inmatdir):
-            _ids_in_matdir = load_json(self.f_ids_inmatdir)
-            self._ids_all = _ids_in_matdir
-            if os.path.exists(f_ids_instatsdir):
-                _ids_in_stats_dir = load_json(f_ids_instatsdir)
-                if _ids_in_matdir != _ids_in_stats_dir:
-                    print(f'{LogLVL.lvl1} ids in {f_ids_instatsdir}\
-                                is DIFFERENT from: {self.f_ids_inmatdir}')
-                    print(f'{LogLVL.lvl2}saving {self.f_ids_inmatdir}\
-                                        to: {self.path_stats_dir}')
-                    save_json(_ids_in_matdir, f_ids_instatsdir)
-        else:
-            print(f'{LogLVL.lvl1}file with ids is MISSING')
-            self._ids_all_make()
-        if not bool(self._ids_all):
-            print(f'{LogLVL.lvl2} file with ids is EMPTY')
-        # print(f'{LogLVL.lvl1} ids all are: {self._ids_all}')
-
-
-    def _ids_all_make(self):
-        """
-        creates an empty f_ids
-        Structure:
-            f_ids.json:{
-                "_id_bids": {
-                    "project"    : "ID_in_file_provided_by_user_for_GLM_analysis.tsv",
-                    "source"     : "ID_in_source_dir_or_zip_file",
-                    "freesurfer" : "ID_after_freesurfer_processing.zip",
-                    "nilearn"    : "ID_after_nilearn_processing.zip",
-                    "dipy"       : "ID_after_dipy_processing.zip"
-                            }
-                        }
-                _id_project: ID provided by the user in a grid file.
-                            e.g., in PPMI _id_project = 3378_session1
-                            _id_project is expected to be used for stats analysis
-                            _id_project can be same as _id_bids, if edited by the user
-                _id_source:  ID as defined in a database.
-                            It can be same as _id_project, but it is NOT expected
-                            e.g., in PPMI _id_source = 3378
-                                with if a folders of ID with multiple sessions
-                _id_bids   : created with DCM2BIDS_helper().make_bids_id
-                            using dcm2bids app
-                            includes: bids_prefix-_id_source_session_run;
-                            e.g: sub-3378_ses-1
-        """
-        print(f'{LogLVL.lvl2}creating file with ids based on grid file')
-        _ids_bids    = self.df_grid[self._ids_bids_col]
-        _ids_project = self.df_grid[self._ids_project_col]
-
-        if len(_ids_bids) > 0:
-            rawdata_listdir = self.get_listdir(self.BIDS_DIR)
-            if rawdata_listdir:
-                for _id_bids in _ids_bids:
-                    # populate from rawdata folder, with BIDS structure
-                    self.populate_ids_all_from_bids(_id_bids,
-                                                    rawdata_listdir)
-            else:
-                print(f"{LogLVL.lvl1}folder {self.BIDS_DIR} is empty")
-                print(f"{LogLVL.lvl1}cannot populate file with ids")
-        elif len(_ids_project) > 0:
-            sourcedata_listdir = self.get_listdir(self.srcdata_dir)
-            if sourcedata_listdir:
-                for _id_project in _ids_project:
-                    # populate from sourcedata folder
-                    self.get_ids_bids()
-                    # self.populate_ids_all_from_source(_id_project,
-                    #                                 sourcedata_listdir)
-            self.save_ids_all()
-
-        _exists = os.path.exists(self.f_ids_instatsdir)
-        if not _exists:
-            print('    could not create file with ids')
-        return _exists
-
-
-    def populate_ids_all_from_bids(self,
-                                   _id_bids,
-                                   dir_listdir):
-        bids_format, sub_label, ses_label, run_label = is_bids_format(_id_bids)
-        if bids_format:
-            if sub_label in dir_listdir:
-                print(f"{LogLVL.lvl2}subject {_id_bids} is present")
-                if _id_bids not in self._ids_all:
-                    self._ids_all[_id_bids] = dict()
-                    self.populate_ids_all_derivatives(_id_bids)
-
-
-    def populate_ids_all_derivatives(self, _id_bids):
-        for app in DEFAULT.app_files:
-            key_2processed = DEFAULT.app_files[app]["dir_store_proc"]
-            location = self.project_vars['PROCESSED_FS_DIR'][0]
-            abspath_2storage = self.project_vars['PROCESSED_FS_DIR'][1]
-            if location != "local":
-                print(f"{LogLVL.lvl2}subject {_id_bids} for app: {app} is stored on: {location}")
-            else:
-                _id_per_app = [i for i in self.get_listdir(abspath_2storage) if _id_bids in i]
-                self._ids_all[_id_bids][app] = _id_per_app
-
-
     # def populate_ids_all_from_source(self, _id_project, dir_listdir):
     #     '''tries to populate the _ids_file with corresponding FreeSurfer processed folder
     #         f_ids includes only the archived folder names
@@ -452,16 +464,6 @@ class ProjectManager:
     #             self._ids_all[_id_bids][key_source] = _dir
 
 
-    def save_f_ids(self):
-        if self.must_save_f_ids:
-            self.save_ids_all()
-
-
-    def save_ids_all(self):
-        print(f'creating file with groups {self.f_ids_instatsdir}')
-        save_json(self._ids_all, self.f_ids_inmatdir)
-        save_json(self._ids_all, self.f_ids_instatsdir)
-
 
     def get_ids_bids(self):
         """ extract bids ids from the file groups provided by user
@@ -470,7 +472,7 @@ class ProjectManager:
         self._ids_missing = list()
         print(f'    reading IDs for project {self.project}')
         self._ids_bids = list(self.df_grid[self._ids_bids_col])
-        print(f'{" " * 4}list of ids that are present: {self._ids_bids}')
+        print(f'{" " * 4}list of ids that are present in the grid: {self._ids_bids}')
         if self._ids_all:
             self.add_missing_participants()
         else:
@@ -491,7 +493,7 @@ class ProjectManager:
         self.get_ids_nimb_classified(self.srcdata_dir)
         if self._ids_nimb_classified:
             print(f'{LogLVL.lvl1}checking missing participants')
-            key_source = DEFAULT.is_source_key
+            key_source = DEFAULT.id_source_key
             # print(f'{LogLVL.lvl1} ids classified: {self._ids_nimb_classified}')
             # print(f'{LogLVL.lvl1} ids all: {self._ids_all}')
             ids_all_source = [self._ids_all[i][key_source] for i in self._ids_all.keys()]
@@ -515,7 +517,7 @@ class ProjectManager:
 
                 if _id_bids not in self._ids_all:
                     self._ids_all[_id_bids] = dict()
-                self._ids_all[_id_bids][get_keys_processed('src')] = src_id
+                self._ids_all[_id_bids][DEFAULT.id_source_key] = src_id
         self.save_ids_all()
 
 
