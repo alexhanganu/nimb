@@ -119,35 +119,51 @@ class ProjectManager:
         self.extract_statistics()
 
 
-    def get_ids_all(self):
+    def check_ids_from_grid(self):
         """
         ALGO:
-            if f_ids is present in the materials dir:
-                ids are loaded
-                if f_ids is present in the stats dir:
-                    if the two files are are different:
-                        save f_ids from materials to stats folder
-            if f_ids is missing:
-                self._ids_all_make() is initiated
+            grid and self._ids_project already defined by self.get_df_f_groups()
+            self._ids_all created by self.get_ids_all()
+
+            for _id_project in self._ids_project:
+                _id_bids = get_id_bids(_id_project)
+                if _id_bids:
+                    for APP in _id_bids:
+                        if not APP:
+                            add _id_bids to new_subjects.json for processing
+                    new_subjects.json = True
+
+            get_id_bids(_id_project):
+                if _id_project in f_ids.json:
+                    _id_bids = i from f_ids.json for the _id_project
+                    chk _id_bids in BIDS_DIR and validate BIDS
+                else:
+                    if _id_project has BIDS format:
+                        if _id_project in BIDS_DIR and validate BIDS:
+                        _id_bids = _id_project
+                    else:
+                        _id_bids = classify_2_bids(_id_project)
+                    update f_ids.json with _id_bids for _id_project
+
+            classify_2_bids(_id_project):
+                if not nimb_classified.json exists:
+                    classify_2nimb SOURCE_DIR
+                elif _id_project not in nimb_classified.json:
+                    if _id_project in SOURCE_DIR:
+                        classify_2nimb SOURCE_DIR
+                    else:
+                        remove _id_project from self._ids_project
+                else:
+                    _id_bids = classify 2 bids for _id_project
+
+            if new_subjects.json:
+                if ask OK to initiate processing is True:
+                    initiate processing
         """
-        self._ids_all = dict()
-        if os.path.exists(self.f_ids_inmatdir):
-            _ids_in_matdir = load_json(self.f_ids_inmatdir)
-            self._ids_all = _ids_in_matdir
-            if os.path.exists(f_ids_instatsdir):
-                _ids_in_stats_dir = load_json(f_ids_instatsdir)
-                if _ids_in_matdir != _ids_in_stats_dir:
-                    print(f'{LogLVL.lvl1} ids in {f_ids_instatsdir}\
-                                is DIFFERENT from: {self.f_ids_inmatdir}')
-                    print(f'{LogLVL.lvl2}saving {self.f_ids_inmatdir}\
-                                        to: {self.path_stats_dir}')
-                    save_json(_ids_in_matdir, f_ids_instatsdir)
-        else:
-            print(f'{LogLVL.lvl1}file with ids is MISSING')
-            self._ids_all_make()
-        if not bool(self._ids_all):
-            print(f'{LogLVL.lvl2} file with ids is EMPTY')
-        # print(f'{LogLVL.lvl1} ids all are: {self._ids_all}')
+        self.check_app_processed()
+        if self.new_subjects:
+            print(f'{LogLVL.lvl1}must initiate processing')
+        # self.get_ids_bids()
 
 
     def _ids_all_make(self):
@@ -328,54 +344,6 @@ class ProjectManager:
                     # MUST check now for each app if was processed for each _id_bids
 
 
-    def check_ids_from_grid(self):
-        """
-        ALGO:
-            grid and self._ids_project already defined by self.get_df_f_groups()
-            self._ids_all created by self.get_ids_all()
-
-            for _id_project in self._ids_project:
-                _id_bids = get_id_bids(_id_project)
-                if _id_bids:
-                    for APP in _id_bids:
-                        if not APP:
-                            add _id_bids to new_subjects.json for processing
-                    new_subjects.json = True
-
-            get_id_bids(_id_project):
-                if _id_project in f_ids.json:
-                    _id_bids = i from f_ids.json for the _id_project
-                    chk _id_bids in BIDS_DIR and validate BIDS
-                else:
-                    if _id_project has BIDS format:
-                        if _id_project in BIDS_DIR and validate BIDS:
-                        _id_bids = _id_project
-                    else:
-                        _id_bids = classify_2_bids(_id_project)
-                    update f_ids.json with _id_bids for _id_project
-
-            classify_2_bids(_id_project):
-                if not nimb_classified.json exists:
-                    classify_2nimb SOURCE_DIR
-                elif _id_project not in nimb_classified.json:
-                    if _id_project in SOURCE_DIR:
-                        classify_2nimb SOURCE_DIR
-                    else:
-                        remove _id_project from self._ids_project
-                else:
-                    _id_bids = classify 2 bids for _id_project
-
-            if new_subjects.json:
-                if ask OK to initiate processing is True:
-                    initiate processing
-        """
-        self.check_app_processed()
-        if self.new_subjects:
-            print(f'{LogLVL.lvl1}must initiate processing')
-
-        # self.get_ids_bids()
-
-
     def check_app_processed(self):
         for _id_project in self._ids_project:
             _id_bids = self.get_id_bids(_id_project)
@@ -450,6 +418,32 @@ class ProjectManager:
     '''
     ID related scripts
     '''
+    def get_ids_all(self):
+        """
+        ALGO:
+            if f_ids is present in the materials dir:
+                ids are loaded
+                if f_ids is present in the stats dir:
+                    if the two files are are different:
+                        save f_ids from materials to stats folder
+        """
+        self._ids_all = dict()
+        if os.path.exists(self.f_ids_inmatdir):
+            _ids_in_matdir = load_json(self.f_ids_inmatdir)
+            self._ids_all = _ids_in_matdir
+            if os.path.exists(f_ids_instatsdir):
+                _ids_in_stats_dir = load_json(f_ids_instatsdir)
+                if _ids_in_matdir != _ids_in_stats_dir:
+                    print(f'{LogLVL.lvl1} ids in {f_ids_instatsdir}\
+                                is DIFFERENT from: {self.f_ids_inmatdir}')
+                    print(f'{LogLVL.lvl2}saving {self.f_ids_inmatdir}\
+                                        to: {self.path_stats_dir}')
+                    save_json(_ids_in_matdir, f_ids_instatsdir)
+        if not bool(self._ids_all):
+            print(f'{LogLVL.lvl2} file with ids is EMPTY')
+        # print(f'{LogLVL.lvl1} ids all are: {self._ids_all}')
+
+
     # def populate_ids_all_from_source(self, _id_project, dir_listdir):
     #     '''tries to populate the _ids_file with corresponding FreeSurfer processed folder
     #         f_ids includes only the archived folder names
