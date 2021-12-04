@@ -19,35 +19,17 @@ from distribution.logger import LogLVL
 
 class ProjectManager:
     '''
-    class to Manage a specific project
-    missing stages are being initiated with distribution
-
+        class to Manage a specific project
+        missing stages are being initiated with distribution
+    Args:
+        all_vars
     ALGO:
     - get tsv file to df for project.
         If missing: make default
     - get f_ids.
         If missing: make default
-    - chk if data provided. If yes:
-        chk if BIDS classified
-    - if BIDS classified:
-        for subj in df:
-            chk that files are present in the BIDS folder
-            chk that source of sourcedata is defined in f_ids
-            chk if each file in f_ids is present
-            if missing:
-                send to processing
-        for subj in BIDS classified:
-            chk if present in df
-            if missing:
-                send to loop 1 to chk subj in df
-        for subj in sourcedata:
-            chk if source name present in f_ids
-            if not:
-                do loop 2 chk if BIDS
-    - stats performed chk
+    self.run()
 
-    Args:
-        all_vars
     '''
 
 
@@ -90,11 +72,44 @@ class ProjectManager:
 
     def run(self):
         """
-            will run the whole project starting with the file provided in the projects.json -> group
+            runs project: processing -> stats -> glm
+            based projects.json -> project: fname_groups
         Args:
-            groups file
+            none
         Return:
             stats
+        ALGO:
+        all_ids_all_were_processed?
+            all files for ids_bids in f_ids are present
+            if not all ids from _ids_all were processed:
+                prepare processing files
+                send for processing
+            elif not all_ids_all_had_stats_extracted:
+                extract_stats_for_all_ids_all
+            elif glm vars are present:
+                if glm not done:
+                    run fs-glm
+                    extract fs-glm-image
+        ids_bids_grid_are_in_ids_all ?
+            if not all ids_bids from grid in _ids_all:
+                populate _ids_all with new _ids_bids from grid
+                run: all_ids_all_were_processed
+        all_ids_bids_from_rawdata_in_ids_all?
+            if not all ids_bids from rawdata in _ids_all:
+                populate _ids_all with new _ids_bids from rawdata
+                populate grid with new ids_bids from rawdata
+                run: all_ids_all_were_processed
+        ids_project_in_ids_all ?
+            if not all ids_project from grid in _ids_all:
+                if ids_project in sourcedata:
+                    do_dcm2bids_and_populate_ids_all_with_ids_bids:
+                        perform dcm2bids conversion
+                        populate grid with ids_bids
+                        populate ids_all with ids_bids
+                        run: all_ids_all_were_processed
+        all_ids_project_from_sourcedata_in_ids_all?
+            if not all ids_project from sourcedata in _ids_all:
+                do_dcm2bids_and_populate_ids_all_with_ids_bids
         """
         print(f'    running pipeline for project: {self.project}')
         do_task = self.all_vars.params.do
@@ -112,6 +127,7 @@ class ProjectManager:
             self.prep_4dcm2bids_classification()
         elif do_task == 'classify-dcm2bids':
             self.classify_with_dcm2bids()
+
 
         self.check_ids_from_grid()
         self.check_new()
