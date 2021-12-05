@@ -79,7 +79,7 @@ class ProjectManager:
         Return:
             stats
         ALGO:
-        all_ids_all_were_processed?
+        self.ids_all_process() all_ids_all_were_processed?
             all files for ids_bids in f_ids are present
             if not all ids from _ids_all were processed:
                 prepare processing files
@@ -93,12 +93,12 @@ class ProjectManager:
         ids_bids_grid_are_in_ids_all ?
             if not all ids_bids from grid in _ids_all:
                 populate _ids_all with new _ids_bids from grid
-                run: all_ids_all_were_processed
+                self.ids_all_process()
         all_ids_bids_from_rawdata_in_ids_all?
             if not all ids_bids from rawdata in _ids_all:
                 populate _ids_all with new _ids_bids from rawdata
                 populate grid with new ids_bids from rawdata
-                run: all_ids_all_were_processed
+                self.ids_all_process()
         ids_project_in_ids_all ?
             if not all ids_project from grid in _ids_all:
                 if ids_project in sourcedata:
@@ -106,7 +106,7 @@ class ProjectManager:
                         perform dcm2bids conversion
                         populate grid with ids_bids
                         populate ids_all with ids_bids
-                        run: all_ids_all_were_processed
+                        self.ids_all_process()
         all_ids_project_from_sourcedata_in_ids_all?
             if not all ids_project from sourcedata in _ids_all:
                 do_dcm2bids_and_populate_ids_all_with_ids_bids
@@ -128,11 +128,50 @@ class ProjectManager:
         elif do_task == 'classify-dcm2bids':
             self.classify_with_dcm2bids()
 
-
+        # self.ids_all_process()
         self.check_ids_from_grid()
         self.check_new()
         self.process_mri_data()
         self.extract_statistics()
+
+
+    def ids_all_process(self):
+        """
+        checks if all ids in self.ids_all were processed
+        Args:
+            none
+        Return:
+            bool
+        ALGO:
+            all files for ids_bids in f_ids are present
+            if not all ids from _ids_all were processed:
+                prepare processing files
+                send for processing
+            elif not all_ids_all_had_stats_extracted:
+                extract_stats_for_all_ids_all
+            elif glm vars are present:
+                if glm not done:
+                    run fs-glm
+                    extract fs-glm-image
+        """
+        df = self.get_df_f_groups()
+        if self._ids_nimb_classified:
+            self.get_ids_all()
+            self.populate_f_ids_from_nimb_classified()
+
+            for _id_bids in self._ids_bids_new:
+                if _id_bids not in df[self._ids_bids_col]:
+                    df.loc[-1] = df.columns.values
+                    for col in df.columns.tolist():
+                        df.at[-1, col] = ''
+                    df.at[-1, self._ids_bids_col] = _id_bids
+                    df.index = range(len(df[self._ids_bids_col]))
+            # self.tab.save_df(df,
+            #     os.path.join(self.path_stats_dir, self.project_vars['fname_groups']))
+            print('    NIMB ready to initiate processing of data')
+            self.send_2processing('process')
+        else:
+            print('   file with nimb classified is missing')
 
 
     def check_ids_from_grid(self):
