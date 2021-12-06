@@ -48,7 +48,6 @@ class ProjectManager:
         self._ids_bids_col      = self.project_vars['id_col']
         self.path_stats_dir     = makedir_ifnot_exist(
                                     self.project_vars["STATS_PATHS"]["STATS_HOME"])
-        self.apps_all           = DEFAULT.apps_all
         self.f_ids_name         = DEFAULT.f_ids
         self.f_ids_instatsdir   = os.path.join(self.path_stats_dir,
                                                 self.f_ids_name)
@@ -110,73 +109,8 @@ class ProjectManager:
         all_ids_project_from_sourcedata_in_ids_all?
             if not all ids_project from sourcedata in _ids_all:
                 do_dcm2bids_and_populate_ids_all_with_ids_bids
-        """
-        print(f'    running pipeline for project: {self.project}')
-        do_task = self.all_vars.params.do
-        if do_task == 'fs-glm':
-            self.run_fs_glm()
-        if do_task == 'fs-glm-image':
-            self.run_fs_glm(image = True)
-        if do_task == 'fs-get-stats':
-            self.get_stats_fs()
-        elif do_task == 'fs-get-masks':
-            self.get_masks()
-        elif do_task == 'check-new':
-            self.check_new()
-        elif do_task == 'classify':
-            self.prep_4dcm2bids_classification()
-        elif do_task == 'classify-dcm2bids':
-            self.classify_with_dcm2bids()
 
-        # self.ids_all_process()
-        self.check_ids_from_grid()
-        self.check_new()
-        self.process_mri_data()
-        self.extract_statistics()
-
-
-    def ids_all_process(self):
-        """
-        checks if all ids in self.ids_all were processed
-        Args:
-            none
-        Return:
-            bool
-        ALGO:
-            all files for ids_bids in f_ids are present
-            if not all ids from _ids_all were processed:
-                prepare processing files
-                send for processing
-            elif not all_ids_all_had_stats_extracted:
-                extract_stats_for_all_ids_all
-            elif glm vars are present:
-                if glm not done:
-                    run fs-glm
-                    extract fs-glm-image
-        """
-        df = self.get_df_f_groups()
-        if self._ids_nimb_classified:
-            self.get_ids_all()
-            self.populate_f_ids_from_nimb_classified()
-
-            for _id_bids in self._ids_bids_new:
-                if _id_bids not in df[self._ids_bids_col]:
-                    df.loc[-1] = df.columns.values
-                    for col in df.columns.tolist():
-                        df.at[-1, col] = ''
-                    df.at[-1, self._ids_bids_col] = _id_bids
-                    df.index = range(len(df[self._ids_bids_col]))
-            # self.tab.save_df(df,
-            #     os.path.join(self.path_stats_dir, self.project_vars['fname_groups']))
-            print('    NIMB ready to initiate processing of data')
-            self.send_2processing('process')
-        else:
-            print('   file with nimb classified is missing')
-
-
-    def check_ids_from_grid(self):
-        """
-        ALGO:
+        OLD ALGO:
             grid and self._ids_project already defined by self.get_df_f_groups()
             self._ids_all created by self.get_ids_all()
 
@@ -214,11 +148,61 @@ class ProjectManager:
             if new_subjects.json:
                 if ask OK to initiate processing is True:
                     initiate processing
+
         """
-        self.check_app_processed()
+        print(f'    running pipeline for project: {self.project}')
+        do_task = self.all_vars.params.do
+        if do_task == 'fs-glm':
+            self.run_fs_glm()
+        if do_task == 'fs-glm-image':
+            self.run_fs_glm(image = True)
+        if do_task == 'fs-get-stats':
+            self.get_stats_fs()
+        elif do_task == 'fs-get-masks':
+            self.get_masks()
+        elif do_task == 'check-new':
+            self.check_new()
+        elif do_task == 'classify':
+            self.prep_4dcm2bids_classification()
+        elif do_task == 'classify-dcm2bids':
+            self.classify_with_dcm2bids()
+
+        self.ids_all_process()
         if self.new_subjects:
             print(f'{LogLVL.lvl1}must initiate processing')
         # self.get_ids_bids()
+
+        self.check_new()
+        self.process_mri_data()
+        self.extract_statistics()
+
+
+    def ids_all_process(self):
+        """
+        checks if all ids in self.ids_all were processed
+        Args:
+            none
+        Return:
+            bool
+        ALGO:
+            all files for ids_bids in f_ids are present
+            if not all ids from _ids_all were processed:
+                prepare processing files
+                send for processing
+            elif not all_ids_all_had_stats_extracted:
+                extract_stats_for_all_ids_all
+            elif glm vars are present:
+                if glm not done:
+                    run fs-glm
+                    extract fs-glm-image
+        """
+        for _id_bids in self._ids_all:
+            for app in DEFAULT.app_files:
+            if not self._ids_all[_id_bids][app]:
+                # self.populate_new_subjects(_id_bids, _id_project)
+                print(f'must send for processing: {_id_bids}, for app: {app}')
+        print('    NIMB ready to initiate processing of data')
+        # self.send_2processing('process')
 
 
     def _ids_all_make(self):
@@ -397,17 +381,6 @@ class ProjectManager:
                 else:
                     print(f"{LogLVL.lvl2}{_id_bids} registered in file with ids")
                     # MUST check now for each app if was processed for each _id_bids
-
-
-    def check_app_processed(self):
-        for _id_project in self._ids_project:
-            _id_bids = self.get_id_bids(_id_project)
-            if _id_bids:
-                for app in self.apps_all:
-                    if not self._ids_all[_id_bids][app]:
-                        self.populate_new_subjects(_id_bids, _id_project)
-            else:
-                print(f'{LogLVL.lvl1} cannot create _id_bids for _id_project: {_id_project}')
 
 
     def populate_new_subjects(self, _id_bids, _id_project):
