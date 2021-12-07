@@ -81,8 +81,11 @@ class ProjectManager:
         self.ids_all_process() all_ids_all_were_processed?
             all files for ids_bids in f_ids are present
             if not all ids from _ids_all were processed:
-                prepare processing files
-                send for processing
+                prepare processing files - add _id_bids to new_subjects.json for processing
+                new_subjects.json = True
+                if new_subjects.json:
+                    if ask OK to initiate processing is True:
+                        send for processing
             elif not all_ids_all_had_stats_extracted:
                 extract_stats_for_all_ids_all
             elif glm vars are present:
@@ -91,10 +94,12 @@ class ProjectManager:
                     extract fs-glm-image
         ids_bids_grid_are_in_ids_all ?
             if not all ids_bids from grid in _ids_all:
+                chk _id_bids in BIDS_DIR and validate BIDS
                 populate _ids_all with new _ids_bids from grid
                 self.ids_all_process()
         all_ids_bids_from_rawdata_in_ids_all?
             if not all ids_bids from rawdata in _ids_all:
+                validate BIDS
                 populate _ids_all with new _ids_bids from rawdata
                 populate grid with new ids_bids from rawdata
                 self.ids_all_process()
@@ -103,6 +108,7 @@ class ProjectManager:
                 if ids_project in sourcedata:
                     do_dcm2bids_and_populate_ids_all_with_ids_bids:
                         perform dcm2bids conversion
+                        validate BIDS
                         populate grid with ids_bids
                         populate ids_all with ids_bids
                         self.ids_all_process()
@@ -111,24 +117,13 @@ class ProjectManager:
                 do_dcm2bids_and_populate_ids_all_with_ids_bids
 
         OLD ALGO:
-            grid and self._ids_project already defined by self.get_df_f_groups()
-            self._ids_all created by self.get_ids_all()
-
-            for _id_project in self._ids_project:
-                _id_bids = get_id_bids(_id_project)
-                if _id_bids:
-                    for APP in _id_bids:
-                        if not APP:
-                            add _id_bids to new_subjects.json for processing
-                    new_subjects.json = True
 
             get_id_bids(_id_project):
                 if _id_project in f_ids.json:
                     _id_bids = i from f_ids.json for the _id_project
-                    chk _id_bids in BIDS_DIR and validate BIDS
                 else:
                     if _id_project has BIDS format:
-                        if _id_project in BIDS_DIR and validate BIDS:
+                        if _id_project in BIDS_DIR and :
                         _id_bids = _id_project
                     else:
                         _id_bids = classify_2_bids(_id_project)
@@ -144,11 +139,6 @@ class ProjectManager:
                         remove _id_project from self._ids_project
                 else:
                     _id_bids = classify 2 bids for _id_project
-
-            if new_subjects.json:
-                if ask OK to initiate processing is True:
-                    initiate processing
-
         """
         print(f'    running pipeline for project: {self.project}')
         do_task = self.all_vars.params.do
