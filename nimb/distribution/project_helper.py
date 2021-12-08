@@ -103,42 +103,20 @@ class ProjectManager:
                 populate _ids_all with new _ids_bids from rawdata
                 populate grid with new ids_bids from rawdata
                 self.ids_all_process()
-        ids_project_in_ids_all ?
-            if not all ids_project from grid in _ids_all:
-                if ids_project in sourcedata:
-                    do_dcm2bids_and_populate_ids_all_with_ids_bids:
-                        perform dcm2bids conversion
-                        validate BIDS
-                        populate grid with ids_bids
-                        populate ids_all with ids_bids
-                        self.ids_all_process()
-        all_ids_project_from_sourcedata_in_ids_all?
-            if not all ids_project from sourcedata in _ids_all:
-                do_dcm2bids_and_populate_ids_all_with_ids_bids
+        ids_project_from_grid_NOT_in_ids_all:
+            id_project not in rawdata:
 
-        OLD ALGO:
+            id_project in nimb_classified:
 
-            get_id_bids(_id_project):
-                if _id_project in f_ids.json:
-                    _id_bids = i from f_ids.json for the _id_project
-                else:
-                    if _id_project has BIDS format:
-                        if _id_project in BIDS_DIR and :
-                        _id_bids = _id_project
-                    else:
-                        _id_bids = classify_2_bids(_id_project)
-                    update f_ids.json with _id_bids for _id_project
-
-            classify_2_bids(_id_project):
-                if not nimb_classified.json exists:
-                    classify_2nimb SOURCE_DIR
-                elif _id_project not in nimb_classified.json:
-                    if _id_project in SOURCE_DIR:
-                        classify_2nimb SOURCE_DIR
-                    else:
-                        remove _id_project from self._ids_project
-                else:
-                    _id_bids = classify 2 bids for _id_project
+            ids_project in sourcedata:
+                do_dcm2bids_and_populate_ids_all_with_ids_bids:
+                    perform dcm2bids conversion
+                    validate BIDS
+                    populate grid with ids_bids
+                    populate ids_all with ids_bids
+                    self.ids_all_process()
+        ids_project_from_sourcedata_NOT_in_ids_all:
+            do_dcm2bids_and_populate_ids_all_with_ids_bids
         """
         print(f'    running pipeline for project: {self.project}')
         do_task = self.all_vars.params.do
