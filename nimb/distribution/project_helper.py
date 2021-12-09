@@ -78,20 +78,12 @@ class ProjectManager:
         Return:
             stats
         ALGO:
-        self.ids_all_process() all_ids_all_were_processed?
-            all files for ids_bids in f_ids are present
-            if not all ids from _ids_all were processed:
-                prepare processing files - add _id_bids to new_subjects.json for processing
-                new_subjects.json = True
-                if new_subjects.json:
-                    if ask OK to initiate processing is True:
-                        send for processing
-            elif not all_ids_all_had_stats_extracted:
-                extract_stats_for_all_ids_all
-            elif glm vars are present:
-                if glm not done:
-                    run fs-glm
-                    extract fs-glm-image
+        self.ids_all_process():
+            all _ids_bids from _ids_all were processed?
+        self.extract_statistics():
+            all _ids_bids from grid have stats extracted?
+        self.glm_fs_do():
+            perform glm ?
         ids_bids_grid_are_in_ids_all ?
             if not all ids_bids from grid in _ids_all:
                 chk _id_bids in BIDS_DIR and validate BIDS
@@ -138,11 +130,12 @@ class ProjectManager:
         self.ids_all_process()
         if self.new_subjects:
             print(f'{LogLVL.lvl1}must initiate processing')
+        self.extract_statistics()
+        self.glm_fs_do()
         # self.get_ids_bids()
 
         self.check_new()
         self.process_mri_data()
-        self.extract_statistics()
 
 
     def ids_all_process(self):
@@ -153,17 +146,21 @@ class ProjectManager:
         Return:
             bool
         ALGO:
-            all files for ids_bids in f_ids are present
-            if not all ids from _ids_all were processed:
-                prepare processing files
-                send for processing
-            elif not all_ids_all_had_stats_extracted:
-                extract_stats_for_all_ids_all
-            elif glm vars are present:
-                if glm not done:
-                    run fs-glm
-                    extract fs-glm-image
+            ids_bids from grid MISSING from f_ids:
+                send to process for all APPs
+            ids_bids from f_ids MISSING APPS processed:
+                send to process for APP
+            sending for processing:
+                prepare processing files - add _id_bids to new_subjects.json for processing
+                new_subjects.json = True
+                if new_subjects.json:
+                    if ask OK to initiate processing is True:
+                        send for processing
         """
+        for _id_bids in self._ids_bids:
+            if _id_bids not in self._ids_all:
+                print(f"{LogLVL.lvl1}{_id_bids} is has not been processed")
+
         for _id_bids in self._ids_all:
             for app in DEFAULT.app_files:
             if not self._ids_all[_id_bids][app]:
@@ -739,6 +736,15 @@ class ProjectManager:
     def extract_statistics(self):
         print("extracting statistics")
 
+    def glm_fs_do(self):
+        """
+        ALGO:
+            glm vars are present:
+                if glm not done:
+                    run fs-glm
+                    extract fs-glm-image
+        """
+        print("peforming glm ?")
 
     def get_stats_fs(self):
         if self.distrib_ready.chk_if_ready_for_stats():
@@ -827,7 +833,18 @@ class ProjectManager:
             self.df_grid    = self.tab.get_df(f_grid)
         else:
             self.df_grid    = self.make_default_grid()
-        self._ids_project   = self.df_grid[self._ids_project_col]
+        self.get_ids_from_grid()
+
+
+    def get_ids_from_grid(self):
+        if self._ids_bids_col not in self.df_grid.colums:
+            df[self._ids_bids_col] = ''
+        if self._ids_project_col not in self.df_grid.colums:
+            df[self._ids_project_col] = ''
+
+        self._ids_bids    = self.df_grid[self._ids_bids_col]
+        self._ids_project = self.df_grid[self._ids_project_col]
+
 
 
     def make_default_grid(self):
