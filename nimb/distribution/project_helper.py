@@ -12,7 +12,7 @@ from distribution.distribution_ready import DistributionReady
 from distribution.utilities import load_json, save_json, makedir_ifnot_exist
 from distribution.distribution_definitions import get_keys_processed, DEFAULT, DEFAULTpaths
 from classification.classify_2nimb_bids import Classify2_NIMB_BIDS
-from classification.dcm2bids_helper import DCM2BIDS_helper, is_bids_format
+from classification.dcm2bids_helper import DCM2BIDS_helper
 from setup.interminal_setup import get_userdefined_paths, get_yes_no
 from distribution.logger import LogLVL
 
@@ -77,9 +77,10 @@ class ProjectManager:
             none
         Return:
             stats
+            glm results
         ALGO:
         self.ids_all_process():
-            all _ids_bids from _ids_all were processed?
+            all _ids_bids from grid were processed?
         self.extract_statistics():
             all _ids_bids from grid have stats extracted?
         self.glm_fs_do():
@@ -147,27 +148,90 @@ class ProjectManager:
             bool
         ALGO:
             ids_bids from grid MISSING from f_ids:
-                send to process for all APPs
-            ids_bids from f_ids MISSING APPS processed:
-                send to process for APP
-            sending for processing:
-                prepare processing files - add _id_bids to new_subjects.json for processing
-                new_subjects.json = True
-                if new_subjects.json:
-                    if ask OK to initiate processing is True:
-                        send for processing
+                ids_bids in rawdata and
+                validate BIDS ?:
+                    add to f_ids
+                    populate dict_2process for _id_bids with all APPS
+                    self.prepare_4processing()
+            ids_bids from grid in f_ids:
+                any APPS UNprocessed?:
+                    populate dict_2process for _id_bids with missing APPS
+                    self.prepare_4processing()
         """
         for _id_bids in self._ids_bids:
             if _id_bids not in self._ids_all:
-                print(f"{LogLVL.lvl1}{_id_bids} is has not been processed")
+                print(f"{LogLVL.lvl1}{_id_bids} has not been processed")
+                # self.prepare_4processing(_id_bids)
 
         for _id_bids in self._ids_all:
             for app in DEFAULT.app_files:
             if not self._ids_all[_id_bids][app]:
-                # self.populate_new_subjects(_id_bids, _id_project)
+                # self.prepare_4processing(_id_bids)
                 print(f'must send for processing: {_id_bids}, for app: {app}')
         print('    NIMB ready to initiate processing of data')
-        # self.send_2processing('process')
+        # self.prepare_4processing()
+
+
+    def prepare_4processing(self, _id_bids):
+        """
+        Args:
+            dict()
+        Return:
+            bool
+        Algo:
+            add _id_bids to new_subjects.json for processing
+            new_subjects.json = True
+            if new_subjects.json:
+                if ask OK to initiate processing is True:
+                    send for processing
+        """
+        print("adding new _id_bids to existing new_subjects.json file")
+        _, _, ses_label, _ = self.dcm2bids.is_bids_format(_id_bids)
+        _id_project        = self.get_id_project(_id_bids)
+        if _id_project:
+            self.new_subjects = True
+            self.adj_subs2process(get = True)
+            self.subs_2process[_id_bids] = self._ids_nimb_classified[_id_project][ses_label]
+            self.adj_subs2process(save = True)
+
+            self.send_2processing('process')
+        else:
+            print(f"{LogLVL.lvl2}ERR: _id_project is missing for id_bids: {_id_bids}")
+
+
+    def get_id_project(self, _id_bids):
+        """
+            extracts the corresponding _id_project from
+            _ids_nimb_classified
+        Args:
+            _id_bids
+        Return:
+            _id_project from _ids_nimb_classified
+        """
+        result = ''
+        if self._ids_nimb_classified:
+            for _id_project in self._ids_nimb_classified:
+                if _id_bids in _id_project or \
+                _id_project in _ids_bids:
+                    result = _id_project
+                    break
+        else:
+            print(f"{LogLVL.lvl1} ERR file nimb_classified.json is not available")
+        return result
+
+
+    def adj_subs2process(self, get = False, save = False):
+        DEFpaths = DEFAULTpaths(self.NIMB_tmp)
+        f_subj2process = DEFpaths.f_subj2process_abspath
+        if get:
+            if os.path.exists(f_subj2process):
+                print(f'{" " * 4} file with subs to process is: {f_subj2process}')
+                self.subs_2process = load_json(f_subj2process)
+            else:
+                print(f'{" " * 4} file with subjects to process is missing; creating empty dictionary')
+                self.subs_2process = dict()
+        elif save:
+            save_json(self.subs_2process, f_subj2process)
 
 
     def _ids_all_make(self):
@@ -231,7 +295,7 @@ class ProjectManager:
     def populate_ids_from_rawdata(self,
                                   _id_bids,
                                   dir_listdir):
-        bids_format, sub_label, ses_label, run_label = is_bids_format(_id_bids)
+        bids_format, sub_label, ses_label, run_label = self.dcm2bids.is_bids_format(_id_bids)
         if bids_format:
             if sub_label in dir_listdir:
                 print(f"{LogLVL.lvl2}subject {_id_bids} is present")
@@ -346,30 +410,6 @@ class ProjectManager:
                 else:
                     print(f"{LogLVL.lvl2}{_id_bids} registered in file with ids")
                     # MUST check now for each app if was processed for each _id_bids
-
-
-    def populate_new_subjects(self, _id_bids, _id_project):
-        """ adding new _id_bids to existing new_subjects.json file"""
-        print("adding new _id_bids to existing new_subjects.json file")
-        self.new_subjects = True
-        self.adj_subs2process(get = True)
-        _, _, ses_label, _ = self.dcm2bids.is_bids_format(_id_bids)
-        self.subs_2process[_id_bids] = self._ids_nimb_classified[_id_project][ses_label]
-        self.adj_subs2process(save = True)
-
-
-    def adj_subs2process(self, get = False, save = False):
-        DEFpaths = DEFAULTpaths(self.NIMB_tmp)
-        f_subj2process = DEFpaths.f_subj2process_abspath
-        if get:
-            if os.path.exists(f_subj2process):
-                print(f'{" " * 4} file with subs to process is: {f_subj2process}')
-                self.subs_2process = load_json(f_subj2process)
-            else:
-                print(f'{" " * 4} file with subjects to process is missing; creating empty dictionary')
-                self.subs_2process = dict()
-        elif save:
-            save_json(self.subs_2process, f_subj2process)
 
 
     def get_id_bids(self, _id_project):
