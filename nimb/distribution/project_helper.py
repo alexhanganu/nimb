@@ -24,11 +24,11 @@ class ProjectManager:
     Args:
         all_vars
     ALGO:
-    - get tsv file to df for project.
-        If missing: make default
-    - get f_ids.
-        If missing: make default
-    self.run()
+        - get tsv file to df for project.
+            If missing: make default
+        - get f_ids.
+            If missing: make default
+        self.run()
 
     '''
 
@@ -141,7 +141,7 @@ class ProjectManager:
 
     def ids_all_process(self):
         """
-        checks if all ids in self.ids_all were processed
+            checks if all ids in self.ids_all were processed
         Args:
             none
         Return:
@@ -162,14 +162,11 @@ class ProjectManager:
             if _id_bids not in self._ids_all:
                 print(f"{LogLVL.lvl1}{_id_bids} has not been processed")
                 # self.prepare_4processing(_id_bids)
-
-        for _id_bids in self._ids_all:
-            for app in DEFAULT.app_files:
-            if not self._ids_all[_id_bids][app]:
-                # self.prepare_4processing(_id_bids)
-                print(f'must send for processing: {_id_bids}, for app: {app}')
-        print('    NIMB ready to initiate processing of data')
-        # self.prepare_4processing()
+            else:
+                for app in DEFAULT.app_files:
+                    if not self._ids_all[_id_bids][app]:
+                        print(f'must send for processing: {_id_bids}, for app: {app}')
+                        # self.prepare_4processing(_id_bids)
 
 
     def prepare_4processing(self, _id_bids):
@@ -194,6 +191,7 @@ class ProjectManager:
             self.subs_2process[_id_bids] = self._ids_nimb_classified[_id_project][ses_label]
             self.adj_subs2process(save = True)
 
+            print('    NIMB ready to initiate processing of data')
             self.send_2processing('process')
         else:
             print(f"{LogLVL.lvl2}ERR: _id_project is missing for id_bids: {_id_bids}")
