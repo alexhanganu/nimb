@@ -147,32 +147,35 @@ class ProjectManager:
         Return:
             bool
         ALGO:
-            ids_bids from grid MISSING from f_ids:
-                ids_bids in rawdata and
-                validate BIDS ?:
-                    add to f_ids
-                    populate dict_2process for _id_bids with all APPS
+            ids_bids from grid NOT in f_ids:
+                populate_id_from_rawdata()
                     self.prepare_4processing()
             ids_bids from grid in f_ids:
                 any APPS UNprocessed?:
-                    populate dict_2process for _id_bids with missing APPS
                     self.prepare_4processing()
         """
+        apps = list(DEFAULT.app_files.keys())
         for _id_bids in self._ids_bids:
             if _id_bids not in self._ids_all:
-                print(f"{LogLVL.lvl1}{_id_bids} has not been processed")
-                # self.prepare_4processing(_id_bids)
+                added = self.populate_ids_from_rawdata(_id_bids)
+                if not added:
+                    apps = list()
             else:
-                for app in DEFAULT.app_files:
+                apps2proc = list()
+                for app in apps:
                     if not self._ids_all[_id_bids][app]:
-                        print(f'must send for processing: {_id_bids}, for app: {app}')
-                        # self.prepare_4processing(_id_bids)
+                        apps2proc.append(app)
+                apps = apps2proc
+            if apps:
+                print(f'must send for processing: {_id_bids}, for app: {app}')
+                self.prepare_4processing(_id_bids, apps)
 
 
-    def prepare_4processing(self, _id_bids):
+    def prepare_4processing(self, _id_bids, apps):
         """
         Args:
-            dict()
+            _id_bids: id of participant in BIDS format
+            apps: list of apps to be processed
         Return:
             bool
         Algo:
