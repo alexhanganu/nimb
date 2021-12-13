@@ -149,15 +149,15 @@ class ProjectManager:
         ALGO:
             ids_bids from grid NOT in f_ids:
                 populate_id_from_rawdata()
-                    self.prepare_4processing()
-            ids_bids from grid in f_ids:
-                any APPS UNprocessed?:
-                    self.prepare_4processing()
+            any APPS UNprocessed? for ids_bids:
+                self.prepare_4processing()
         """
         apps = list(DEFAULT.app_files.keys())
         for _id_bids in self._ids_bids:
             if _id_bids not in self._ids_all:
-                added = self.populate_ids_from_rawdata(_id_bids)
+                rawdata_listdir = self.get_listdir(self.BIDS_DIR)
+                added = self.populate_ids_from_rawdata(_id_bids,
+                                                  rawdata_listdir)
                 if not added:
                     apps = list()
             else:
@@ -169,6 +169,47 @@ class ProjectManager:
             if apps:
                 print(f'must send for processing: {_id_bids}, for app: {app}')
                 self.prepare_4processing(_id_bids, apps)
+
+
+    def populate_ids_from_rawdata(self,
+                                  _id_bids,
+                                  dir_listdir):
+        res = False
+        bids_format, sub_label, ses_label, run_label = self.dcm2bids.is_bids_format(_id_bids)
+        if bids_format:
+            if sub_label in dir_listdir:
+                print(f"{LogLVL.lvl2}subject {_id_bids} is present")
+                if _id_bids not in self._ids_all:
+                    self._ids_all[_id_bids] = dict()
+                self.populate_ids_all_derivatives(_id_bids)
+                res = True
+            else:
+                print(f"{LogLVL.lvl2}subject {sub_label} not in {self.BIDS_DIR}")
+        else:
+            print(f"{LogLVL.lvl2}subject {_id_bids} is not of BIDS format")
+        return res
+
+
+    def populate_ids_all_derivatives(self, _id_bids):
+        for app in DEFAULT.app_files:
+            self._ids_all[_id_bids][app] = ""
+            key_dir_2processed = DEFAULT.app_files[app]["dir_store_proc"]
+            location = self.project_vars[key_dir_2processed][0]
+            abspath_2storage = self.project_vars[key_dir_2processed][1]
+            if location != "local":
+                print(f"{LogLVL.lvl2}subject {_id_bids} for app: {app} is stored on: {location}")
+            else:
+                _id_per_app = [i for i in self.get_listdir(abspath_2storage) if _id_bids in i]
+                if _id_per_app:
+                    self._ids_all[_id_bids][app] = _id_per_app[0]
+                if len(_id_per_app) > 1:
+                    print(f"{LogLVL.lvl2}participant: {_id_bids} has multiple ids for app: {app}: {_id_per_app}")
+                    print(f"{LogLVL.lvl3}{_id_per_app}")
+
+
+    def save_f_ids(self):
+        if self.must_save_f_ids:
+            self.save_ids_all()
 
 
     def prepare_4processing(self, _id_bids, apps):
@@ -291,37 +332,6 @@ class ProjectManager:
         if not _exists:
             print('    could not create file with ids')
         return _exists
-
-
-    def populate_ids_from_rawdata(self,
-                                  _id_bids,
-                                  dir_listdir):
-        bids_format, sub_label, ses_label, run_label = self.dcm2bids.is_bids_format(_id_bids)
-        if bids_format:
-            if sub_label in dir_listdir:
-                print(f"{LogLVL.lvl2}subject {_id_bids} is present")
-                if _id_bids not in self._ids_all:
-                    self._ids_all[_id_bids] = dict()
-                    self.populate_ids_all_derivatives(_id_bids)
-        else:
-            print(f"{LogLVL.lvl2}subject {_id_bids} is not of BIDS format")
-
-
-    def populate_ids_all_derivatives(self, _id_bids):
-        for app in DEFAULT.app_files:
-            key_2processed = DEFAULT.app_files[app]["dir_store_proc"]
-            location = self.project_vars['PROCESSED_FS_DIR'][0]
-            abspath_2storage = self.project_vars['PROCESSED_FS_DIR'][1]
-            if location != "local":
-                print(f"{LogLVL.lvl2}subject {_id_bids} for app: {app} is stored on: {location}")
-            else:
-                _id_per_app = [i for i in self.get_listdir(abspath_2storage) if _id_bids in i]
-                self._ids_all[_id_bids][app] = _id_per_app
-
-
-    def save_f_ids(self):
-        if self.must_save_f_ids:
-            self.save_ids_all()
 
 
     def save_ids_all(self):
