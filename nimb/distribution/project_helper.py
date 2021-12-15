@@ -129,34 +129,15 @@ class ProjectManager:
             self.classify_with_dcm2bids()
 
         self.ids_all_process()
+        self.ids_bids_process()
         if self.new_subjects:
             print(f'{LogLVL.lvl1}must initiate processing')
             self.send_2processing('process')
         self.extract_statistics()
         self.glm_fs_do()
-        # self.get_ids_bids()
 
         self.check_new()
         self.process_mri_data()
-
-
-    def get_ids_bids(self):
-        """ extract bids ids from the file groups provided by user
-        """
-
-        self._ids_missing = list()
-        print(f'    reading IDs for project {self.project}')
-        self._ids_bids = list(self.df_grid[self._ids_bids_col])
-        print(f'{" " * 4}list of ids that are present in the grid: {self._ids_bids}')
-        if self._ids_all:
-            self.add_missing_participants()
-        else:
-            print(f'    file with ids is missing: {self._ids_all}')
-            self.populate_f_ids_from_nimb_classified()
-        self.chk_ids_processed()
-        if self._ids_missing:
-            print(f'{LogLVL.lvl1}missing ids: {self._ids_missing}')
-        self.prep_4dcm2bids_classification()
 
 
     def ids_all_process(self):
@@ -167,28 +148,39 @@ class ProjectManager:
         Return:
             bool
         ALGO:
-            ids_bids from grid NOT in f_ids:
-                populate_id_from_rawdata()
             any APPS UNprocessed? for ids_bids:
                 self.prepare_4processing()
         """
         apps = list(DEFAULT.app_files.keys())
+        for _id_bids in self._ids_all:
+            apps2process = list()
+            for app in apps:
+                if not self._ids_all[_id_bids][app]:
+                    apps2process.append(app)
+            if apps2process:
+                print(f'must send for processing: {_id_bids}, for apps: {apps2process}')
+                self.prepare_4processing(_id_bids, apps2process)
+
+
+    def ids_bids_process(self):
+        """
+            checks _ids_bids from grid to be in _ids_all
+        Args:
+            none
+        Return:
+            none
+        Algo:
+            ids_bids from grid NOT in f_ids:
+                populate f_ids with ids_bids  from rawdata with
+                populate_ids_from_rawdata()
+            restart ids_all_process()
+        """
         for _id_bids in self._ids_bids:
             if _id_bids not in self._ids_all:
                 rawdata_listdir = self.get_listdir(self.BIDS_DIR)
-                added = self.populate_ids_from_rawdata(_id_bids,
-                                                  rawdata_listdir)
-                if not added:
-                    apps = list()
-            else:
-                apps2proc = list()
-                for app in apps:
-                    if not self._ids_all[_id_bids][app]:
-                        apps2proc.append(app)
-                apps = apps2proc
-            if apps:
-                print(f'must send for processing: {_id_bids}, for app: {app}')
-                self.prepare_4processing(_id_bids, apps)
+                self.populate_ids_from_rawdata(_id_bids,
+                                               rawdata_listdir)
+        self.ids_all_process()
 
 
     def populate_ids_from_rawdata(self,
@@ -289,22 +281,15 @@ class ProjectManager:
 
 
     def get_ids_nimb_classified(self, _dir):
-        f = DEFAULT.f_nimb_classified
+        f_abspath = os.path.join(_dir, DEFAULT.f_nimb_classified)
         self.must_run_classify_2nimb_bids = False
         self._ids_nimb_classified = dict()
 
-        if self.is_nimb_classified(_dir):
-            self._ids_nimb_classified = load_json(os.path.join(_dir, f))
+        if os.path.exists(f_abspath):
+            self._ids_nimb_classified = load_json(f_abspath)
         else:
+            print(f'{LogLVL.lvl1}file {f_abspath} is missing in: {_dir}')
             self.must_run_classify_2nimb_bids = True
-            print(f'{LogLVL.lvl1}file {DEFAULT.f_nimb_classified} is missing in: {_dir}')
-
-
-    def is_nimb_classified(self, _dir):
-        is_classified = False
-        if os.path.exists(os.path.join(_dir, DEFAULT.f_nimb_classified)):
-            is_classified = True
-        return is_classified
 
 
     def adj_subs2process(self, get = False, save = False):
@@ -321,6 +306,25 @@ class ProjectManager:
             save_json(self.subs_2process, f_subj2process)
             self.new_subjects = True
             print(f'{LogLVL.lvl1}NIMB ready to initiate processing of data')
+
+
+    # def get_ids_bids(self):
+    #     """ extract bids ids from the file groups provided by user
+    #     """
+
+    #     self._ids_missing = list()
+    #     print(f'    reading IDs for project {self.project}')
+    #     self._ids_bids = list(self.df_grid[self._ids_bids_col])
+    #     print(f'{" " * 4}list of ids that are present in the grid: {self._ids_bids}')
+    #     if self._ids_all:
+    #         self.add_missing_participants()
+    #     else:
+    #         print(f'    file with ids is missing: {self._ids_all}')
+    #         self.populate_f_ids_from_nimb_classified()
+    #     self.chk_ids_processed()
+    #     if self._ids_missing:
+    #         print(f'{LogLVL.lvl1}missing ids: {self._ids_missing}')
+    #     self.prep_4dcm2bids_classification()
 
 
     def _ids_all_make(self):
