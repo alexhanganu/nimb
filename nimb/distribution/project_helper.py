@@ -29,9 +29,22 @@ class ProjectManager:
         - get f_ids.
             If missing: make default
         self.run()
-
+    Definitions:
+        _id_bids   : created with DCM2BIDS_helper().make_bids_id
+                    using dcm2bids app
+                    includes: bids_prefix-_id_source_session_run;
+                    e.g: sub-3378_ses-1
+                    _id_bids is used for stats analysis
+        _id_project: ID provided by the user in a grid file.
+                    MUST correspond to 1 participant
+                    MUST have ONLY 1 set of data, e.g.: ses-01
+                    e.g., in PPMI _id_project = 3378_ses-01
+                    _id_project can be same as _id_bids or _id_source
+        _id_source:  ID as defined in a database.
+                    MUST correspond to 1 participant
+                    CAN have multiple sets of data, multiple session
+                    e.g., in PPMI _id_source = 3378 and is a folder with multiple sessions
     '''
-
 
     def __init__(self, all_vars):
 
@@ -53,7 +66,6 @@ class ProjectManager:
                                                 self.f_ids_name)
         self.f_ids_inmatdir     = os.path.join(self.materials_dir_pt,
                                                 self.f_ids_name)
-
         self.new_subjects       = False
         self.test               = all_vars.params.test
         self.nr_for_testing     = 2 # if self.test - this defines nr of subj to run
@@ -234,6 +246,7 @@ class ProjectManager:
         if bids_format:
             if sub_label in dir_listdir:
                 print(f"{LogLVL.lvl2}subject {_id_bids} is present")
+                # if validate BIDS: !!!!!!!!!!!!!!!!!
                 if _id_bids not in self._ids_all:
                     self._ids_all[_id_bids] = dict()
                 self.populate_ids_all_derivatives(_id_bids)
@@ -247,6 +260,17 @@ class ProjectManager:
 
 
     def populate_ids_all_derivatives(self, _id_bids):
+        """
+        populate f_ids with corresponding APP processed file names.
+        Structure:
+            f_ids.json:{
+                "_id_bids": {
+                    "_id_project" : "ID_in_file_provided_by_user_for_GLM_analysis.tsv",
+                    "_id_source"  : "ID_in_source_dir_or_zip_file",
+                    "freesurfer"  : "ID_after_freesurfer_processing.zip",
+                    "nilearn"     : "ID_after_nilearn_processing.zip",
+                    "dipy"        : "ID_after_dipy_processing.zip"}}
+        """
         for app in DEFAULT.app_files:
             self._ids_all[_id_bids][app] = ""
             key_dir_2processed = DEFAULT.app_files[app]["dir_store_proc"]
@@ -269,6 +293,11 @@ class ProjectManager:
 
 
     def save_ids_all(self):
+        """
+        f_ids is saved in:
+            materials and
+            stats_dirs
+        """
         print(f'creating file with groups {self.f_ids_instatsdir}')
         save_json(self._ids_all, self.f_ids_inmatdir)
         save_json(self._ids_all, self.f_ids_instatsdir)
@@ -341,6 +370,7 @@ class ProjectManager:
         Return:
             bool
         ALGO:
+            is nimb classified ?
             any ids_project NOT in sourcedata?:
                 any ids_project without corresponding ids_bids ?:
                     self.prepare_4processing()
@@ -354,6 +384,38 @@ class ProjectManager:
 
 
 
+
+
+    def _ids_all_make(self):
+
+        print(f'{LogLVL.lvl2}creating file with ids based on grid file')
+        _ids_bids    = self.df_grid[self._ids_bids_col]
+        _ids_project = self.df_grid[self._ids_project_col]
+
+        if len(_ids_bids) > 0:
+            rawdata_listdir = self.get_listdir(self.BIDS_DIR)
+            if rawdata_listdir:
+                for _id_bids in _ids_bids:
+                    # populate from rawdata folder, with BIDS structure
+                    self.populate_ids_from_rawdata(_id_bids,
+                                                    rawdata_listdir)
+            else:
+                print(f"{LogLVL.lvl1}folder {self.BIDS_DIR} is empty")
+                print(f"{LogLVL.lvl1}cannot populate file with ids")
+            self.save_ids_all()
+        elif len(_ids_project) > 0:
+            self.check_new()
+        _ids_not_bids = [i for i in _ids_bids if i not in self._ids_all]
+        if _ids_not_bids:
+            print(f"{LogLVL.lvl1}some IDs do not have BIDS format.")
+            f_grid = os.path.join(self.path_stats_dir,
+                self.project_vars['fname_groups'])
+            print(f"{LogLVL.lvl2}please adjust the file: {self.f_grid}")
+            print(f"{LogLVL.lvl2}for participants: {_ids_not_bids}")
+        _exists = os.path.exists(self.f_ids_instatsdir)
+        if not _exists:
+            print('    could not create file with ids')
+        return _exists
 
 
 """
@@ -404,64 +466,6 @@ class ProjectManager:
     #         self.update_f_ids(_id_bids, "project", _id_project)
     #         self.save_f_ids()
     #     return _id_bids
-
-
-    def _ids_all_make(self):
-        """
-        creates an empty f_ids
-        Structure:
-            f_ids.json:{
-                "_id_bids": {
-                    "_id_project" : "ID_in_file_provided_by_user_for_GLM_analysis.tsv",
-                    "_id_source"  : "ID_in_source_dir_or_zip_file",
-                    "freesurfer"  : "ID_after_freesurfer_processing.zip",
-                    "nilearn"     : "ID_after_nilearn_processing.zip",
-                    "dipy"        : "ID_after_dipy_processing.zip"
-                            }
-                        }
-                _id_bids   : created with DCM2BIDS_helper().make_bids_id
-                            using dcm2bids app
-                            includes: bids_prefix-_id_source_session_run;
-                            e.g: sub-3378_ses-1
-                            _id_bids is used for stats analysis
-                _id_project: ID provided by the user in a grid file.
-                            e.g., in PPMI _id_project = 3378_ses-01
-                            _id_project can be same as _id_bids, if edited by the user
-                _id_source:  ID as defined in a database.
-                            e.g., in PPMI _id_source = 3378 and includes multiple sessions
-                                _id_source in PPMI is a folder with multiple sessions
-        new f_ids is created and saved in the two folders:
-            materials and
-            stats_dirs
-        """
-        print(f'{LogLVL.lvl2}creating file with ids based on grid file')
-        _ids_bids    = self.df_grid[self._ids_bids_col]
-        _ids_project = self.df_grid[self._ids_project_col]
-
-        if len(_ids_bids) > 0:
-            rawdata_listdir = self.get_listdir(self.BIDS_DIR)
-            if rawdata_listdir:
-                for _id_bids in _ids_bids:
-                    # populate from rawdata folder, with BIDS structure
-                    self.populate_ids_from_rawdata(_id_bids,
-                                                    rawdata_listdir)
-            else:
-                print(f"{LogLVL.lvl1}folder {self.BIDS_DIR} is empty")
-                print(f"{LogLVL.lvl1}cannot populate file with ids")
-            self.save_ids_all()
-        elif len(_ids_project) > 0:
-            self.check_new()
-        _ids_not_bids = [i for i in _ids_bids if i not in self._ids_all]
-        if _ids_not_bids:
-            print(f"{LogLVL.lvl1}some IDs do not have BIDS format.")
-            f_grid = os.path.join(self.path_stats_dir,
-                self.project_vars['fname_groups'])
-            print(f"{LogLVL.lvl2}please adjust the file: {self.f_grid}")
-            print(f"{LogLVL.lvl2}for participants: {_ids_not_bids}")
-        _exists = os.path.exists(self.f_ids_instatsdir)
-        if not _exists:
-            print('    could not create file with ids')
-        return _exists
 
 
     def check_new(self):
@@ -546,16 +550,6 @@ class ProjectManager:
                     print(f"{LogLVL.lvl2}{_id_bids} registered in file with ids")
                     # MUST check now for each app if was processed for each _id_bids
 
-
-    def chk_id_bids_in_bids_dir(self, _id_bids_sub_label):
-        print('checing if _id_bids is present in the provided BIDS_DIR')
-        if _id_bids_sub_label in os.listdir(self.BIDS_DIR):
-            print(f'{LogLVL.lvl1}id_bids is present in BIDS_DIR')
-            # if validate BIDS:
-            return True
-        else:
-            print(f'{LogLVL.lvl1}id_bids ABSENT from BIDS_DIR')
-            return False
 
 
     '''
