@@ -176,6 +176,7 @@ class ProjectManager:
                     save_json(_ids_in_matdir, f_ids_instatsdir)
         if not bool(self._ids_all):
             print(f'{LogLVL.lvl2} file with ids is EMPTY')
+            self.save_ids_all()
         # print(f'{LogLVL.lvl1} ids all are: {self._ids_all}')
 
 
@@ -375,9 +376,12 @@ class ProjectManager:
                 any ids_project without corresponding ids_bids ?:
                     self.prepare_4processing()
         """
-        pass
+        if not self._ids_nimb_classified:
+            self.prep_4dcm2bids_classification()
+        for _id_project in self._ids_project:
+            if _id_project not in self._ids_all:
+                print(f'{LogLVL.lvl2}id_project: {_id_project} is missing from file with ids')
 
-        # self.prep_4dcm2bids_classification()
         # self.ids_bids_chk4process()
 
 
