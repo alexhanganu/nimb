@@ -57,6 +57,8 @@ class ProjectManager:
         self.materials_dir_pt   = self.project_vars["materials_DIR"][1]
         self.srcdata_dir        = self.project_vars["SOURCE_SUBJECTS_DIR"][1]
         self.BIDS_DIR           = self.project_vars['SOURCE_BIDS_DIR'][1]
+
+        self.f_groups           = self.project_vars['fname_groups']
         self._ids_project_col   = self.project_vars['id_proj_col']
         self._ids_bids_col      = self.project_vars['id_col']
         self.path_stats_dir     = makedir_ifnot_exist(
@@ -372,15 +374,29 @@ class ProjectManager:
             bool
         ALGO:
             is nimb classified ?
+                are all id_bids from grid, corresponding to ids_project
+                    similar to id_bids from f_ids?
+            all ids_project from grid are present in f_ids ?
+            if not:
+                all ids_project from grid 
             any ids_project NOT in sourcedata?:
                 any ids_project without corresponding ids_bids ?:
                     self.prepare_4processing()
         """
         if not self._ids_nimb_classified:
             self.prep_4dcm2bids_classification()
-        for _id_project in self._ids_project:
+
+        for ix_id_project, _id_project in enumerate(self._ids_project):
+            if _id_project not in self._ids_nimb_classified:
+                print(f'{LogLVL.lvl2}id_project: {_id_project} is missing from file with ids')
+                # chk if _id_project is present in sourcedata
+
             if _id_project not in self._ids_all:
                 print(f'{LogLVL.lvl2}id_project: {_id_project} is missing from file with ids')
+            else:
+                id_bids_from_grid = self._ids_bids[ix_id_project]
+                if not self._ids_bids[ix_id_project]:
+                    print(f'{LogLVL.lvl2}id_project: {_id_project} has no corresponding id_bids in grid')
 
         # self.ids_bids_chk4process()
 
@@ -413,7 +429,7 @@ class ProjectManager:
         if _ids_not_bids:
             print(f"{LogLVL.lvl1}some IDs do not have BIDS format.")
             f_grid = os.path.join(self.path_stats_dir,
-                self.project_vars['fname_groups'])
+                self.f_groups)
             print(f"{LogLVL.lvl2}please adjust the file: {self.f_grid}")
             print(f"{LogLVL.lvl2}for participants: {_ids_not_bids}")
         _exists = os.path.exists(self.f_ids_instatsdir)
@@ -660,7 +676,7 @@ class ProjectManager:
                     _id_bids = self.classify_with_dcm2bids(nimb_classified)
             else:
                 print(f'{LogLVL.lvl1}id: {_id_project} is missing from source data; it cannot be used for further analysis')
-                f_grid = os.path.join(self.path_stats_dir, self.project_vars['fname_groups'])
+                f_grid = os.path.join(self.path_stats_dir, self.f_groups)
                 print(f'{LogLVL.lvl1}must remove id: {_id_project} from file: {f_grid}')
                 self._ids_project.remove(_id_project)
         else:
@@ -845,10 +861,9 @@ class ProjectManager:
         '''
         fs_glm_dir   = self.project_vars['STATS_PATHS']["FS_GLM_dir"]
         # fs_glm_dir   = self.stats_vars["STATS_PATHS"]["FS_GLM_dir"]
-        fname_groups = self.project_vars['fname_groups']
         if DistributionReady(self.all_vars).chk_if_ready_for_fs_glm():
             GLM_file_path, GLM_dir = DistributionHelper(self.all_vars).prep_4fs_glm(fs_glm_dir,
-                                                                        fname_groups)
+                                                                        self.f_groups)
             FS_SUBJECTS_DIR = self.vars_local['FREESURFER']['FS_SUBJECTS_DIR']
             DistributionReady(self.all_vars).fs_chk_fsaverage_ready(FS_SUBJECTS_DIR)
             if GLM_file_path:
@@ -891,7 +906,7 @@ class ProjectManager:
                     df.at[-1, self._ids_bids_col] = _id_bids
                     df.index = range(len(df[self._ids_bids_col]))
             # self.tab.save_df(df,
-            #     os.path.join(self.path_stats_dir, self.project_vars['fname_groups']))
+            #     os.path.join(self.path_stats_dir, self.f_groups))
             print('    NIMB ready to initiate processing of data')
             self.send_2processing('process')
         else:
@@ -901,7 +916,7 @@ class ProjectManager:
     def get_df_f_groups(self):
         '''reading the user-provided tabular tsv/csv/xlsx file
             with IDs (id_col, id_proj_col) and potential data (variables_for_glm)
-            ../nimb/projects.json -> fname_groups
+            ../nimb/projects.json -> self.f_groups
         Args:
             none
         Return:
@@ -910,10 +925,9 @@ class ProjectManager:
             if file is missing:
                 return self.make_default_grid()
         '''
-        f_groups = self.project_vars['fname_groups']
         if self.distrib_hlp.get_files_for_stats(self.path_stats_dir,
-                                                [f_groups,]):
-            f_grid = os.path.join(self.path_stats_dir, f_groups)
+                                                [self.f_groups,]):
+            f_grid = os.path.join(self.path_stats_dir, self.f_groups)
             print(f'    file with groups is present: {f_grid}')
             self.df_grid    = self.tab.get_df(f_grid)
         else:
@@ -923,12 +937,16 @@ class ProjectManager:
 
     def get_ids_from_grid(self):
         if self._ids_bids_col not in self.df_grid.colums:
+            print(f'{LogLVL.lvl1}column: {self._ids_bids_col} is missing from grid {self.f_groups}')
+            print(f'{LogLVL.lvl2}adding to grid an empty column: {self._ids_bids_col}')
             df[self._ids_bids_col] = ''
         if self._ids_project_col not in self.df_grid.colums:
+            print(f'{LogLVL.lvl1}column: {self._ids_project_col} is missing from grid {self.f_groups}')
+            print(f'{LogLVL.lvl2}adding to grid an empty column: {self._ids_project_col}')
             df[self._ids_project_col] = ''
 
-        self._ids_bids    = self.df_grid[self._ids_bids_col]
-        self._ids_project = self.df_grid[self._ids_project_col]
+        self._ids_bids    = self.df_grid[self._ids_bids_col].tolist()
+        self._ids_project = self.df_grid[self._ids_project_col].tolist()
 
 
 
@@ -950,6 +968,7 @@ class ProjectManager:
         self.tab.save_df(df,
             os.path.join(self.materials_dir_pt, f_name))
         self.project_vars['fname_groups']    = f_name
+        self.f_groups                        = f_name
 
         # updating self.all_vars and project.json file
         from setup.get_credentials_home import _get_credentials_home
