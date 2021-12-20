@@ -268,11 +268,11 @@ class ProjectManager:
         Structure:
             f_ids.json:{
                 "_id_bids": {
-                    "_id_project" : "ID_in_file_provided_by_user_for_GLM_analysis.tsv",
-                    "_id_source"  : "ID_in_source_dir_or_zip_file",
-                    "freesurfer"  : "ID_after_freesurfer_processing.zip",
-                    "nilearn"     : "ID_after_nilearn_processing.zip",
-                    "dipy"        : "ID_after_dipy_processing.zip"}}
+                    DEFAULT.id_project_key : "ID_in_file_provided_by_user_for_GLM_analysis.tsv",
+                    DEFAULT.id_source_key  : "ID_in_source_dir_or_zip_file",
+                    "freesurfer"           : "ID_after_freesurfer_processing.zip",
+                    "nilearn"              : "ID_after_nilearn_processing.zip",
+                    "dipy"                 : "ID_after_dipy_processing.zip"}}
         """
         for app in DEFAULT.app_files:
             self._ids_all[_id_bids][app] = ""
@@ -391,7 +391,8 @@ class ProjectManager:
                 print(f'{LogLVL.lvl2}id_project: {_id_project} is missing from file with ids')
                 # chk if _id_project is present in sourcedata
 
-            if _id_project not in self._ids_all:
+           _ids_project_in_ids_all = [self._ids_all[i][DEFAULT.id_project_key] for i in self._ids_all]
+            if _id_project not in _ids_project_in_ids_all:
                 print(f'{LogLVL.lvl2}id_project: {_id_project} is missing from file with ids')
             else:
                 id_bids_from_grid = self._ids_bids[ix_id_project]

@@ -13,11 +13,12 @@ class DEFAULT(object):
                         "func":"nilearn",
                         "dwi" :"dipy"}
 
-    id_source_key    = "source"
-    apps_keys        = {"source"    :"source",
-                        "freesurfer":"freesurfer",
-                        "nilearn"   :"nilearn",
-                        "dipy"      :"dipy",}
+    id_source_key    = "id_source"
+    id_project_key   = "id_project"
+    apps_keys        = {id_source_key :"source",
+                        "freesurfer"  :"freesurfer",
+                        "nilearn"     :"nilearn",
+                        "dipy"        :"dipy",}
 
     app_files        = {"freesurfer":{"new_subjects"  :"new_subjects_fs.json",
                                       "running"       :"IsRunningFS_",
