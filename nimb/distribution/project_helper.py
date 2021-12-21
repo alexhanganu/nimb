@@ -383,27 +383,39 @@ class ProjectManager:
                 any ids_project without corresponding ids_bids ?:
                     self.prepare_4processing()
         """
-        if not self._ids_nimb_classified:
+        _ids_project_in_ids_all = [self._ids_all[i][DEFAULT.id_project_key] for i in self._ids_all]
+        if not self._ids_nimb_classified or self.must_run_classify_2nimb_bids:
             self.prep_4dcm2bids_classification()
 
         for ix_id_project, _id_project in enumerate(self._ids_project):
             if _id_project not in self._ids_nimb_classified:
-                print(f'{LogLVL.lvl2}id_project: {_id_project} is missing from file with ids')
-                # chk if _id_project is present in sourcedata
+                print(f'{LogLVL.lvl2}id_project: {_id_project} is missing:')
+                print(f'{LogLVL.lvl3}from file with ids')
+                if _id_project not in self.get_listdir(self.srcdata_dir):
+                    print(f'{LogLVL.lvl3}from sourcedats: {self.srcdata_dir}')
+                    # RM _id_project from GRID !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                    f_grid = os.path.join(self.path_stats_dir, self.f_groups)
+                    print(f'{LogLVL.lvl3}removing id: {_id_project} from grid {f_grid}')
+                    self._ids_project.remove(_id_project)
+                    # SAVE new grid
 
-           _ids_project_in_ids_all = [self._ids_all[i][DEFAULT.id_project_key] for i in self._ids_all]
-            if _id_project not in _ids_project_in_ids_all:
+                else:
+                    print(f'{LogLVL.lvl2}must initiate nimb classifier')
+                    is_classified, nimb_classified = self.run_classify_2nimb_bids(_id_project)
+                    if is_classified:
+                        _id_bids = self.classify_with_dcm2bids(nimb_classified)
+                        # populate grid with _id_bids
+                        # populate f_ids with _id_bids
+            elif _id_project not in _ids_project_in_ids_all:
                 print(f'{LogLVL.lvl2}id_project: {_id_project} is missing from file with ids')
+                _id_bids = self.classify_with_dcm2bids(nimb_classified, _id = _id_project)
+                # populate grid with _id_bids
+                # populate f_ids with _id_bids
             else:
                 id_bids_from_grid = self._ids_bids[ix_id_project]
                 if not self._ids_bids[ix_id_project]:
                     print(f'{LogLVL.lvl2}id_project: {_id_project} has no corresponding id_bids in grid')
-
-        # self.ids_bids_chk4process()
-
-
-
-
+        self.ids_bids_chk4process()
 
 
 
@@ -661,36 +673,14 @@ class ProjectManager:
     '''
     CLASSIFICATION related scripts
     '''
-    def classify_2_bids(self, _id_project):
-        print('classifying to BIDS format')
-        self.get_ids_nimb_classified(self.srcdata_dir)
-        if self.must_run_classify_2nimb_bids:
-            print(f'{" " * 4} must initiate nimb classifier')
-            is_classified, nimb_classified = self.run_classify_2nimb_bids(_id_project)
-            if is_classified:
-                _id_bids = self.classify_with_dcm2bids(nimb_classified)
-        elif _id_project not in self._ids_nimb_classified:
-            if _id_project in SOURCE_DIR:
-                print(f'{" " * 4} must initiate nimb classifier')
-                is_classified, nimb_classified = self.run_classify_2nimb_bids(_id_project)
-                if is_classified:
-                    _id_bids = self.classify_with_dcm2bids(nimb_classified)
-            else:
-                print(f'{LogLVL.lvl1}id: {_id_project} is missing from source data; it cannot be used for further analysis')
-                f_grid = os.path.join(self.path_stats_dir, self.f_groups)
-                print(f'{LogLVL.lvl1}must remove id: {_id_project} from file: {f_grid}')
-                self._ids_project.remove(_id_project)
-        else:
-            _id_bids = self.classify_with_dcm2bids(nimb_classified, _id = _id_project)
-        return _id_bids
-
 
     def prep_4dcm2bids_classification(self):
         ls_source_dirs = self.get_listdir(self.srcdata_dir)
-        print(f'   there are {len(self.get_listdir(self.srcdata_dir))} files found in {self.srcdata_dir} \
+
+        print(f'   there are {len(ls_source_dirs)} files found in {self.srcdata_dir} \
             expected to contain MRI data for project {self.project}')
         if self.test:
-            ls_source_dirs = self.get_listdir(self.srcdata_dir)[:self.nr_for_testing]
+            ls_source_dirs = ls_source_dirs[:self.nr_for_testing]
 
         self.prep_dirs(["SOURCE_BIDS_DIR",
                     "SOURCE_SUBJECTS_DIR"])
