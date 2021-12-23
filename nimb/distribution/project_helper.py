@@ -409,8 +409,10 @@ class ProjectManager:
                 _id_bids = self.classify_with_dcm2bids(nimb_classified, _id = _id_project)
                 # populate grid with _id_bids
             else:
-                id_bids_from_grid = self._ids_bids[ix_id_project]
-                if not self._ids_bids[ix_id_project]:
+                try:
+                    id_bids_from_grid = self._ids_bids[ix_id_project]
+                except Exception as e:
+                    print(e)
                     print(f'{LogLVL.lvl2}id_project: {_id_project} has no corresponding id_bids in grid')
         self.ids_bids_chk4process()
 
