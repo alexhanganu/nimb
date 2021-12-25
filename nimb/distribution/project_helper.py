@@ -820,11 +820,11 @@ class ProjectManager:
 
 
     def get_ids_from_grid(self):
-        if self._ids_bids_col not in self.df_grid.colums:
+        if self._ids_bids_col not in self.df_grid.columns:
             print(f'{LogLVL.lvl1}column: {self._ids_bids_col} is missing from grid {self.f_groups}')
             print(f'{LogLVL.lvl2}adding to grid an empty column: {self._ids_bids_col}')
             df[self._ids_bids_col] = ''
-        if self._ids_project_col not in self.df_grid.colums:
+        if self._ids_project_col not in self.df_grid.columns:
             print(f'{LogLVL.lvl1}column: {self._ids_project_col} is missing from grid {self.f_groups}')
             print(f'{LogLVL.lvl2}adding to grid an empty column: {self._ids_project_col}')
             df[self._ids_project_col] = ''
