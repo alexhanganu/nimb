@@ -125,7 +125,7 @@ class ProjectManager:
         ids_project_from_sourcedata_NOT_in_ids_all:
             do_dcm2bids_and_populate_ids_all_with_ids_bids
         """
-        print(f'    running pipeline for project: {self.project}')
+        print(f'{LogLVL.lvl1}running pipeline for project: {self.project}')
         do_task = self.all_vars.params.do
         if do_task == 'fs-glm':
             self.run_fs_glm()
@@ -148,8 +148,8 @@ class ProjectManager:
         if self.new_subjects:
             print(f'{LogLVL.lvl1}must initiate processing')
             self.send_2processing('process')
-        self.extract_statistics()
-        self.glm_fs_do()
+        # self.extract_statistics()
+        # self.glm_fs_do()
 
         self.check_new()
         self.process_mri_data()
@@ -168,14 +168,14 @@ class ProjectManager:
         if os.path.exists(self.f_ids_inmatdir):
             _ids_in_matdir = load_json(self.f_ids_inmatdir)
             self._ids_all = _ids_in_matdir
-            if os.path.exists(f_ids_instatsdir):
-                _ids_in_stats_dir = load_json(f_ids_instatsdir)
+            if os.path.exists(self.f_ids_instatsdir):
+                _ids_in_stats_dir = load_json(self.f_ids_instatsdir)
                 if _ids_in_matdir != _ids_in_stats_dir:
-                    print(f'{LogLVL.lvl1} ids in {f_ids_instatsdir}\
+                    print(f'{LogLVL.lvl1} ids in {self.f_ids_instatsdir}\
                                 is DIFFERENT from: {self.f_ids_inmatdir}')
                     print(f'{LogLVL.lvl2}saving {self.f_ids_inmatdir}\
                                         to: {self.path_stats_dir}')
-                    save_json(_ids_in_matdir, f_ids_instatsdir)
+                    save_json(_ids_in_matdir, self.f_ids_instatsdir)
         if not bool(self._ids_all):
             print(f'{LogLVL.lvl2} file with ids is EMPTY')
             self.save_ids_all()
@@ -301,7 +301,7 @@ class ProjectManager:
             materials and
             stats_dirs
         """
-        print(f'creating file with groups {self.f_ids_instatsdir}')
+        print(f'{LogLVL.lvl3}saving file with groups {self.f_ids_instatsdir}')
         save_json(self._ids_all, self.f_ids_inmatdir)
         save_json(self._ids_all, self.f_ids_instatsdir)
 
@@ -459,7 +459,8 @@ class ProjectManager:
         if len(self.unprocessed_d) > 1:
             self.change_paths_2rawdata()
             print(f'{LogLVL.lvl2}there are {len(self.unprocessed_d)} participants with MRI data to be processed')
-            self.distrib_hlp.distribute_4_processing(self.unprocessed_d)
+            self.send_2processing('process')
+            # self.distrib_hlp.distribute_4_processing(self.unprocessed_d)
         else:
            print(f'{LogLVL.lvl2}ALL participants with MRI data were processed')
 
@@ -678,12 +679,18 @@ class ProjectManager:
         python_run = self.local_vars["PROCESSING"]["python3_run_cmd"]
         NIMB_HOME  = self.local_vars["NIMB_PATHS"]["NIMB_HOME"]
         if task == 'process':
-            schedule = Scheduler(self.local_vars)
-            cd_cmd   = f'cd {os.path.join(NIMB_HOME, "processing")}'
-            cmd      = f'{python_run} processing_run.py -project {self.project}'
-            process_type = 'nimb_processing'
-            subproc = 'run'
-        if task == 'fs-get-stats':
+            if not self.test:
+                print(f'    sending to scheduler for task {task}')
+                self.distrib_hlp.distribute_4_processing(self.unprocessed_d)
+            else:
+                print(f'    READY to send to scheduler for task {task}. TESTing active')
+
+            # schedule = Scheduler(self.local_vars)
+            # cd_cmd   = f'cd {os.path.join(NIMB_HOME, "processing")}'
+            # cmd      = f'{python_run} processing_run.py -project {self.project}'
+            # process_type = 'nimb_processing'
+            # subproc = 'run'
+        elif task == 'fs-get-stats':
             self.local_vars['PROCESSING']['processing_env']  = "tmux" #must be checked if works with slurm
             schedule = Scheduler(self.local_vars)
             dir_4stats = self.project_vars['STATS_PATHS']["STATS_HOME"]
@@ -691,20 +698,29 @@ class ProjectManager:
             cmd      = f'{python_run} fs_stats2table.py -project {self.project} -stats_dir {dir_4stats}'
             process_type = 'fs_stats'
             subproc = 'get_stats'
-        if task == 'fs-get-masks':
+            if not self.test:
+                print(f'    sending to scheduler for task {task}')
+                schedule.submit_4_processing(cmd, process_type, subproc, cd_cmd)
+            else:
+                print(f'    READY to send to scheduler for task {task}. TESTing active')
+        elif task == 'fs-get-masks':
             cd_cmd   = f'cd {os.path.join(NIMB_HOME, "processing", "freesurfer")}'
             cmd      = f'{python_run} run_masks.py -project {self.project}'
             process_type = 'fs'
             subproc = 'run_masks'
-        print('    sending to scheduler')
-        schedule.submit_4_processing(cmd, process_type, subproc, cd_cmd)
+            if not self.test:
+                print(f'    sending to scheduler for task {task}')
+                schedule.submit_4_processing(cmd, process_type, subproc, cd_cmd)
+            else:
+                print(f'    READY to send to scheduler for task {task}. TESTing active')
 
 
     '''
     EXTRACT STATISTICS related scripts
     '''
     def extract_statistics(self):
-        print("extracting statistics")
+        print(f"{LogLVL.lvl1}extracting statistics; script not read")
+
 
     def glm_fs_do(self):
         """
@@ -714,7 +730,8 @@ class ProjectManager:
                     run fs-glm
                     extract fs-glm-image
         """
-        print("peforming glm ?")
+        print("{LogLVL.lvl1}peforming glm ...; script not read")
+
 
     def get_stats_fs(self):
         if self.distrib_ready.chk_if_ready_for_stats():
