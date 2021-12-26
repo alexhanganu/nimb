@@ -128,11 +128,11 @@ class ProjectManager:
         print(f'{LogLVL.lvl1}running pipeline for project: {self.project}')
         do_task = self.all_vars.params.do
         if do_task == 'fs-glm':
-            self.run_fs_glm()
+            self.glm_fs_do()
         if do_task == 'fs-glm-image':
-            self.run_fs_glm(image = True)
+            self.glm_fs_do(image = True)
         if do_task == 'fs-get-stats':
-            self.get_stats_fs()
+            self.extract_statistics(app = ["freesurfer",])
         elif do_task == 'fs-get-masks':
             self.get_masks()
         elif do_task == 'check-new':
@@ -236,8 +236,12 @@ class ProjectManager:
         for _id_bids in self._ids_bids:
             if _id_bids not in self._ids_all:
                 rawdata_listdir = self.get_listdir(self.BIDS_DIR)
+                # if rawdata_listdir:
                 self.populate_ids_from_rawdata(_id_bids,
                                                rawdata_listdir)
+                # else:
+                #     print(f"{LogLVL.lvl1}folder {self.BIDS_DIR} is empty")
+                #     print(f"{LogLVL.lvl2}cannot populate file with ids")
         self.ids_all_chk4process()
 
 
@@ -415,41 +419,6 @@ class ProjectManager:
                     print(e)
                     print(f'{LogLVL.lvl2}id_project: {_id_project} has no corresponding id_bids in grid')
         self.ids_bids_chk4process()
-
-
-
-
-
-    def _ids_all_make(self):
-
-        print(f'{LogLVL.lvl2}creating file with ids based on grid file')
-        _ids_bids    = self.df_grid[self._ids_bids_col]
-        _ids_project = self.df_grid[self._ids_project_col]
-
-        if len(_ids_bids) > 0:
-            rawdata_listdir = self.get_listdir(self.BIDS_DIR)
-            if rawdata_listdir:
-                for _id_bids in _ids_bids:
-                    # populate from rawdata folder, with BIDS structure
-                    self.populate_ids_from_rawdata(_id_bids,
-                                                    rawdata_listdir)
-            else:
-                print(f"{LogLVL.lvl1}folder {self.BIDS_DIR} is empty")
-                print(f"{LogLVL.lvl1}cannot populate file with ids")
-            self.save_ids_all()
-        elif len(_ids_project) > 0:
-            self.check_new()
-        _ids_not_bids = [i for i in _ids_bids if i not in self._ids_all]
-        if _ids_not_bids:
-            print(f"{LogLVL.lvl1}some IDs do not have BIDS format.")
-            f_grid = os.path.join(self.path_stats_dir,
-                self.f_groups)
-            print(f"{LogLVL.lvl2}please adjust the file: {self.f_grid}")
-            print(f"{LogLVL.lvl2}for participants: {_ids_not_bids}")
-        _exists = os.path.exists(self.f_ids_instatsdir)
-        if not _exists:
-            print('    could not create file with ids')
-        return _exists
 
 
     def check_new(self):
@@ -718,11 +687,18 @@ class ProjectManager:
     '''
     EXTRACT STATISTICS related scripts
     '''
-    def extract_statistics(self):
-        print(f"{LogLVL.lvl1}extracting statistics; script not read")
+    def extract_statistics(self, apps = list()):
+        print(f"{LogLVL.lvl1}extracting statistics; script not ready")
+        for app in apps:
+            if app == "freesurfer":
+                if self.distrib_ready.chk_if_ready_for_stats():
+                    PROCESSED_FS_DIR = self.distrib_hlp.prep_4fs_stats()
+                    if PROCESSED_FS_DIR:
+                        print('    ready to extract stats from project helper')
+                #         self.send_2processing('fs-get-stats')
 
 
-    def glm_fs_do(self):
+    def glm_fs_do(self, image = False):
         """
         ALGO:
             glm vars are present:
@@ -730,23 +706,8 @@ class ProjectManager:
                     run fs-glm
                     extract fs-glm-image
         """
-        print("{LogLVL.lvl1}peforming glm ...; script not read")
-
-
-    def get_stats_fs(self):
-        if self.distrib_ready.chk_if_ready_for_stats():
-            PROCESSED_FS_DIR = self.distrib_hlp.prep_4fs_stats()
-            if PROCESSED_FS_DIR:
-                print('    ready to extract stats from project helper')
-        #         self.send_2processing('fs-get-stats')
-
-
-    def run_fs_glm(self, image = False):
-        '''
-        REQUIRES ADJUSTMENT
-        '''
+        print("{LogLVL.lvl1}peforming glm ...; script not ready")
         fs_glm_dir   = self.project_vars['STATS_PATHS']["FS_GLM_dir"]
-        # fs_glm_dir   = self.stats_vars["STATS_PATHS"]["FS_GLM_dir"]
         if DistributionReady(self.all_vars).chk_if_ready_for_fs_glm():
             GLM_file_path, GLM_dir = DistributionHelper(self.all_vars).prep_4fs_glm(fs_glm_dir,
                                                                         self.f_groups)
@@ -759,19 +720,22 @@ class ProjectManager:
                 cd_cmd = 'cd {}'.format(path.join(self.NIMB_HOME, 'processing', 'freesurfer'))
                 cmd = f'{self.py_run_cmd} fs_glm_runglm.py -project {self.project} -glm_dir {GLM_dir}'
                 schedule_fsglm.submit_4_processing(cmd, 'fs_glm','run_glm', cd_cmd)
-        if not "export_screen" in self.vars_local['FREESURFER']:
-            print("PLEASE check that you can export your screen or you can run screen-based applications. \
-                                This is necessary for Freeview and Tksurfer. \
-                                Check the variable: export_screen in file {}".format(
-                                    "credentials_path.py/nimb/local.json"))
-        elif self.vars_local['FREESURFER']["export_screen"] == 0:
-            print("Current environment is not ready to export screen. Please define a compute where the screen can \
-                                be used for FreeSurfer Freeview and tksurfer")
-        if DistributionReady(self.all_vars).fs_ready():
-            print('before running the script, remember to source $FREESURFER_HOME')
-            cmd = '{} fs_glm_extract_images.py -project {}'.format(self.py_run_cmd, self.project)
-            cd_cmd = 'cd '+path.join(self.NIMB_HOME, 'processing', 'freesurfer')
-            self.schedule.submit_4_processing(cmd, 'fs_glm','extract_images', cd_cmd)
+        if image:
+            if "export_screen" in self.vars_local['FREESURFER'] and \
+                self.vars_local['FREESURFER']["export_screen"] == 1:
+                if DistributionReady(self.all_vars).fs_ready():
+                    print('before running the script, remember to source $FREESURFER_HOME')
+                    cmd = '{} fs_glm_extract_images.py -project {}'.format(self.py_run_cmd, self.project)
+                    cd_cmd = 'cd '+path.join(self.NIMB_HOME, 'processing', 'freesurfer')
+                    self.schedule.submit_4_processing(cmd, 'fs_glm','extract_images', cd_cmd)
+                else:
+                    print(f"{LogLVL.lvl2}ERR: cannont extract image for GLM analysis: FreeSurfer not ready")
+            else:
+                print(f"Current environment is not ready to export screen")
+                print(f"ERR! check that you can export your screen")
+                print(f"Please define a computer where the screen can be used for FreeSurfer Freeview and tksurfer")
+                print(f"ERR! Check the variable: export_screen in file credentials_path.py/nimb/local.json")
+
 
     '''
     GRID related scripts
