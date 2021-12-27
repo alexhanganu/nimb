@@ -421,6 +421,38 @@ class ProjectManager:
         self.ids_bids_chk4process()
 
 
+    def populate_f_ids_from_nimb_classified(self):
+        ls_2add_2grid = list()
+        print(f'{LogLVL.lvl1} ids classified: {self._ids_nimb_classified}')
+        for _id_src in self._ids_nimb_classified:
+            for session in self._ids_nimb_classified[_id_src]:
+                _id_bids, _ = self.dcm2bids.make_bids_id(_id_src, session)
+                ls_2add_2grid.append(_id_bids)
+
+                if _id_bids not in self._ids_all:
+                    self._ids_all[_id_bids] = dict()
+                self._ids_all[_id_bids][DEFAULT.id_source_key] = src_id
+        self.save_ids_all()
+        if ls_2add_2grid:
+            self.populate_grid(ls_2add_2grid)
+
+
+    def populate_grid(self, ls_2add_2grid):
+        # get grid
+        # populate
+        for _id_bids in ls_2add_2grid:
+            if _id_bids not in self.df_grid[self._ids_bids_col]:
+                self.df_grid.loc[-1] = self.df_grid.columns.values
+                for col in self.df_grid.columns.tolist():
+                    self.df_grid.at[-1, col] = ''
+                self.df_grid.at[-1, self._ids_bids_col] = _id_bids
+                self.df_grid.index = range(len(self.df_grid[self._ids_bids_col]))
+        # self.tab.save_df(self.df_grid,
+        #     os.path.join(self.path_stats_dir, self.f_groups))
+        print('    NIMB ready to initiate processing of data')
+        self.send_2processing('process')
+
+
     def check_new(self):
         print(f'{LogLVL.lvl1}checking for new subject to be processed')
         self.unprocessed_d = dict()
@@ -740,44 +772,6 @@ class ProjectManager:
     '''
     GRID related scripts
     '''
-    def populate_grid(self):
-        # get grid
-        # populate
-        df = self.get_df_f_groups()
-        if self._ids_nimb_classified:
-            self.get_ids_all()
-            self.populate_f_ids_from_nimb_classified()
-
-            for _id_bids in self._ids_bids_new:
-                if _id_bids not in df[self._ids_bids_col]:
-                    df.loc[-1] = df.columns.values
-                    for col in df.columns.tolist():
-                        df.at[-1, col] = ''
-                    df.at[-1, self._ids_bids_col] = _id_bids
-                    df.index = range(len(df[self._ids_bids_col]))
-            # self.tab.save_df(df,
-            #     os.path.join(self.path_stats_dir, self.f_groups))
-            print('    NIMB ready to initiate processing of data')
-            self.send_2processing('process')
-        else:
-            print('   file with nimb classified is missing')
-
-
-    def populate_f_ids_from_nimb_classified(self):
-        self._ids_bids_new = list()
-        print(f'{LogLVL.lvl1} ids classified: {self._ids_nimb_classified}')
-        for _id_src in self._ids_nimb_classified:
-            for session in self._ids_nimb_classified[_id_src]:
-                _id_bids, _ = self.dcm2bids.make_bids_id(_id_src, session)
-                self._ids_bids_new.append(_id_bids)
-
-                if _id_bids not in self._ids_all:
-                    self._ids_all[_id_bids] = dict()
-                self._ids_all[_id_bids][DEFAULT.id_source_key] = src_id
-        self.save_ids_all()
-
-
-
     def get_df_f_groups(self):
         '''reading the user-provided tabular tsv/csv/xlsx file
             with IDs (id_col, id_proj_col) and potential data (variables_for_glm)
@@ -976,22 +970,3 @@ class ProjectManager:
     #     else:
     #         print(f'{LogLVL.lvl1}nimb_classified.json is missing')
     #     return self._ids_missing
-
-
-    # def chk_ids_processed(self):
-    #         '''
-    #         def check_is_subject_session_in_grid:
-    #             if subject_session not in grid:
-    #                 add subject_session to be processed
-    #                 populate new_subjects.json with dcm2bids versions
-    #                 if dcm2bids not efficient:
-    #                     populate new_subjects with raw DCM
-    #             self.get_ids_nimb_classified()
-    #             self.populate_grid()
-    #         '''
-    #         print(f'{LogLVL.lvl1}checking processed ids')
-    #         # for _id_bids in self._ids_all:
-    #         #     for app in self._ids_all[_id_bids]:
-    #         #         print(app)
-
-    #         # self.prep_4dcm2bids_classification()
