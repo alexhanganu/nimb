@@ -17,6 +17,40 @@ from setup.interminal_setup import get_userdefined_paths, get_yes_no
 from distribution.logger import LogLVL
 
 
+"""
+ALGO:
+    Created based on the loni-ppmi dataset
+
+    Situations:
+        (1) ONLY grid file is provided:
+        (2) ONLY _dir with MRI data is provided
+        (3) grid is present. New data is provided in sourcedata
+    if 1:
+        A: get _ids_project from grid file
+        B: does _ids_project have a BIDS stadard:
+            yes: chk if each _id_project has a corresponding _dir in rawdata _dir
+                chk/ populate file with ids
+                chk if apps were processed
+                extract stats
+                perform glm
+            no:
+                - chk if each _id_project has a corresponding MRI _dir in sourcedata
+                yes:
+                    do dcm2bids conversion
+                    populate grid with _ids_bids
+                    provide new grid as file
+                    re-run 1 from B
+    if 2:
+        run nimb_classify
+        run dcm2bids
+        populate grid with _ids_bids
+        provide new grid as file
+        re-run 1 from B
+    if 3:
+        
+"""
+
+
 class ProjectManager:
     '''
         class to Manage a specific project
@@ -387,31 +421,29 @@ class ProjectManager:
                 any ids_project without corresponding ids_bids ?:
                     self.prepare_4processing()
         """
-        _ids_project_in_ids_all = [self._ids_all[i][DEFAULT.id_project_key] for i in self._ids_all]
         if not self._ids_nimb_classified or self.must_run_classify_2nimb_bids:
             self.prep_4dcm2bids_classification()
 
+        _ids_project_in_ids_all = [self._ids_all[i][DEFAULT.id_project_key] for i in self._ids_all]
         for ix_id_project, _id_project in enumerate(self._ids_project):
             if _id_project not in self._ids_nimb_classified:
                 print(f'{LogLVL.lvl2}id_project: {_id_project} is missing:')
                 print(f'{LogLVL.lvl3}from file with ids')
                 if _id_project not in self.get_listdir(self.srcdata_dir):
-                    print(f'{LogLVL.lvl3}from sourcedats: {self.srcdata_dir}')
-                    # RM _id_project from GRID !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                    f_grid = os.path.join(self.path_stats_dir, self.f_groups)
+                    print(f'{LogLVL.lvl3}from sourcedata: {self.srcdata_dir}')
                     print(f'{LogLVL.lvl3}removing id: {_id_project} from grid {f_grid}')
+                    f_grid = os.path.join(self.path_stats_dir, self.f_groups)
                     self._ids_project.remove(_id_project)
-                    # SAVE new grid
+                    # RM _id_project from GRID !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                    # SAVE new grid to stats ONLY
                 else:
                     print(f'{LogLVL.lvl2}must initiate nimb classifier')
                     is_classified, nimb_classified = self.run_classify_2nimb_bids(_id_project)
                     if is_classified:
                         _id_bids = self.classify_with_dcm2bids(nimb_classified)
-                        # populate grid with _id_bids
             elif _id_project not in _ids_project_in_ids_all:
                 print(f'{LogLVL.lvl2}id_project: {_id_project} is missing from file with ids')
                 _id_bids = self.classify_with_dcm2bids(nimb_classified, _id = _id_project)
-                # populate grid with _id_bids
             else:
                 try:
                     id_bids_from_grid = self._ids_bids[ix_id_project]
@@ -422,11 +454,16 @@ class ProjectManager:
 
 
     def populate_f_ids_from_nimb_classified(self):
+        """
+            self._ids_nimb_classified can contain
+            either _id_source = from the sourdata folder
+            or can contain _id_project, from the grid file
+        """
         ls_2add_2grid = list()
         print(f'{LogLVL.lvl1} ids classified: {self._ids_nimb_classified}')
-        for _id_src in self._ids_nimb_classified:
-            for session in self._ids_nimb_classified[_id_src]:
-                _id_bids, _ = self.dcm2bids.make_bids_id(_id_src, session)
+        for _id in self._ids_nimb_classified:
+            for session in self._ids_nimb_classified[_id]:
+                _id_bids, _ = self.dcm2bids.make_bids_id(_id, session)
                 ls_2add_2grid.append(_id_bids)
 
                 if _id_bids not in self._ids_all:
@@ -623,6 +660,7 @@ class ProjectManager:
         if _id_project:
             _id_bids = self.bids_classified[_id_project]
             self.update_f_ids(_id_bids, DEFAULT.id_project_key, _id_project)
+            # populate grid with _id_bids
             return _id_bids
 
 
