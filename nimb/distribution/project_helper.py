@@ -18,102 +18,115 @@ from distribution.logger import LogLVL
 
 
 """
-ALGO:
-Created based on the loni-ppmi dataset
-
+ALGO: (created based on the loni-ppmi dataset)
 Situations:
     (1) ONLY grid file is provided:
-    (2) ONLY _dir with MRI data is provided
-    (3) grid is present. New data is provided in sourcedata
-    all _ids_bids processed with APP:
-        (4) User wants stats: Do Stats
-        (5) User wants FS-GLM: Do FS-GLM
+        all _ids_bids processed with APP:
+            (1.1) User wants stats: Do Stats
+            (1.2) User wants FS-GLM: Do FS-GLM
+    (2) grid is present. New data is provided in sourcedata
+    (3) ONLY _dir with MRI data is provided
 if 1:
+    grid absent:
+        make default grid
+        make default f_ids
+        run 3
     A: grid has a column with _ids_bids ?:
         yes:
             all _ids_bids have BIDS structure name?:
-            no:
-                ?
+                no:
+                    _ids_project col name present ? yes:
+                        chng
+                    change name of column to _ids_project column name
+                    run 1B
             all ids_bids have corresponding _dir in rawdata ?
-            no:
-                notify user
-
-            yes: populate f_ids
-                for each _id_bids chk if processed with app
-                if not:
+                no:
+                    notify user
+                    run 1B
+            populate f_ids
+            for each _id_bids: processed with app?:
+                no:
                     send to processing
                 yes:
-                    stats extracted?
-                    no:
-                        extract stats
+                    stats extracted?:
+                        no:
+                            extract stats
+            all _ids_bids were processed with one APP? yes.
+                if 1.1:
+                    user wants to perform STATS? yes:
+                        do Stats: general description
+                    grid has variables for GLM? yes:
+                        go GLM-based stats
+                    grid has a group column? yes:
+                        do group-based Stats
+                    if 1.2:
+                        all _ids_bids were processed with FreeSurfer ? yes.
+                        user wants to perform FreeSurfer GLM ? yes.
+                        yes:
+                            do GLM for group
+                        grid has variables for GLM?
+                        yes:
+                            do GLM for group for variables
+                        environment allows screen export ? yes:
+                            extract FS-GLM images
         no:
             run 1 B
     B: grid has a column with _ids_project?
         yes:
-            all _ids_project have corresponding _ids_bids?
-            no ?:
-                create _ids_bids
-                try to populate from rawdata _dir
-                corresponding rawdata dir is missing?
+            rawdata _dir has corresponding _ids_bids data ?
+            yes:
+                rawdata _dir is BIDS validated? chk Nr1
                 yes:
-                    run dcm2bids conversion
-                    get _id_bids
-                    populate grid with _id_bids
-                    populate f_ids with _id_bids
-                run 1 A
-            yes:
-                run 1a
+                    populate grid with corresponding _ids_bids from rawdata _dir
+                    populate f_ids with _ids_bids
+                    save grid
+                    run 1A
+                rawdata _dir is BIDS validated? chk Nr2
+                yes:
+                    continue
+                no:
+                    notify user
+                    remove _id_project from grid
+                    remove _id_project from f_ids
+                    add _id_project to missing.json
+            no:
+                run dcm2bids conversion
+                run 1B
         no:
-            ask user to verify the name of the column with ids from the grid file
-            run 3
-    C: do _ids_project have a BIDS standard?:
-        yes: chk if each _id_project has a corresponding _dir in rawdata _dir
-            chk/ populate file with ids
-            chk if apps were processed
-            extract stats
-            perform glm
-        no:
-            - chk if each _id_project has a corresponding MRI _dir in sourcedata
-            yes:
-                do dcm2bids conversion
-                populate grid with _ids_bids
-                provide new grid as file
-                re-run 1 from B
-if 2:
-    run nimb_classify
-    run dcm2bids
-    populate grid with _ids_bids
-    provide new grid as file
-    re-run 1 from C
-if 3:
-    chk new in sourcedata based on diff from nimb_classified file
-    if new: chk if new (with _id_source structure)
-            are present in the _id_bids column in the grid
-        if absent:
-            for new participants:
-                run 2 (update nimb_classify)
-                    run dcm2bids for new participants only
-                    populate grid with _ids_bids of new participants
+            _ids_project have a BIDS standard?:
+            yes: chk if each _id_project has a corresponding _dir in rawdata _dir
+                chk/ populate file with ids
+                chk if apps were processed
+                extract stats
+                perform glm
+            no:
+                each _id_project has a corresponding MRI _dir in sourcedata
+                yes:
+                    do dcm2bids conversion
+                    populate grid with _ids_bids
                     provide new grid as file
-                    run 1 from C
-all _ids_bids were processed with one APP? yes.
-    if 4:
-        user wants to perform STATS? yes:
-            do Stats: general description
-        grid has variables for GLM? yes:
-            go GLM-based stats
-        grid has a group column? yes:
-            do group-based Stats
-        if 5:
-            all _ids_bids were processed with FreeSurfer ? yes.
-            user wants to perform FreeSurfer GLM ? yes.
-            yes:
-                do GLM for group
-            grid has variables for GLM?
-            yes:
-                do GLM for group for variables
-            environment allows screen export ? yes:
-                extract FS-GLM images
+                    re-run 1 from B
+                no:
+                    notify user to verify the name of the column with ids from the grid file
+                    exit
+if 2:
+    A: get list(_ids in sourcedata _dir) NOT in nimb_classified file
+        if list():
+            run 2B
+    B: list() provided:
+        run update nimb classify for list()
+        for list():
+            run dcm2bids
+            populate grid with _ids_bids
+            populate f_ids with _ids_bids
+            save new grid to project.json
+            run 1 A
+if 3:
+    grid is absent
+    sourcedata _dir is present? yes:
+        run 2 A for list(all _ids) in sourcedata _dir
+    no:
+        notify user
 """
 
 
