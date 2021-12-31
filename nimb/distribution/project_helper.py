@@ -31,20 +31,16 @@ if 1:
         make default grid
         make default f_ids
         run 3
-    A: grid has a column with _ids_bids ?:
+    A: grid has a column with _ids_bids ?
+        and
+        all _ids_bids have BIDS structure name?
+        and
+         all ids_bids have corresponding _dir in rawdata ?
+        and
+         all _dir in rawdata are BIDS validated?:
         yes:
-            all _ids_bids have BIDS structure name?:
-                no:
-                    _ids_project col name present ? yes:
-                        chng
-                    change name of column to _ids_project column name
-                    run 1B
-            all ids_bids have corresponding _dir in rawdata ?
-                no:
-                    notify user
-                    run 1B
-            populate f_ids
-            for each _id_bids: processed with app?:
+           populate f_ids
+           for each _id_bids: processed with app?:
                 no:
                     send to processing
                 yes:
@@ -70,45 +66,31 @@ if 1:
                         environment allows screen export ? yes:
                             extract FS-GLM images
         no:
+            for ids_bids with no BIDS structure name:
+                _ids_project col name present ? yes:
+                    chng
+                move to _ids_project column
             run 1 B
     B: grid has a column with _ids_project?
+        _ids_project have a BIDS standard name
+            and
+            _ids_project has a corresponding _dir in rawdata _dir:
         yes:
-            rawdata _dir has corresponding _ids_bids data ?
-            yes:
-                rawdata _dir is BIDS validated? chk Nr1
-                yes:
-                    populate grid with corresponding _ids_bids from rawdata _dir
-                    populate f_ids with _ids_bids
-                    save grid
-                    run 1A
-                rawdata _dir is BIDS validated? chk Nr2
-                yes:
-                    continue
-                no:
-                    notify user
-                    remove _id_project from grid
-                    remove _id_project from f_ids
-                    add _id_project to missing.json
-            no:
-                run dcm2bids conversion
-                run 1B
+            populate _ids_bids column with _id_project name
+            run 1A
         no:
-            _ids_project have a BIDS standard?:
-            yes: chk if each _id_project has a corresponding _dir in rawdata _dir
-                chk/ populate file with ids
-                chk if apps were processed
-                extract stats
-                perform glm
+            each _id_project has a corresponding MRI _dir in sourcedata
+            yes:
+                run nimb classify
+                run dcm2bids
+                populate grid with _ids_bids
+                run 1A
             no:
-                each _id_project has a corresponding MRI _dir in sourcedata
-                yes:
-                    do dcm2bids conversion
-                    populate grid with _ids_bids
-                    provide new grid as file
-                    re-run 1 from B
-                no:
-                    notify user to verify the name of the column with ids from the grid file
-                    exit
+                notify user to verify the name of the column with ids from the grid file
+                remove _id_project from grid
+                remove _id_project from f_ids
+                add _id_project to missing.json
+                exit
 if 2:
     A: get list(_ids in sourcedata _dir) NOT in nimb_classified file
         if list():
