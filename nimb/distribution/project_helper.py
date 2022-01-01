@@ -20,12 +20,12 @@ from distribution.logger import LogLVL
 """
 ALGO: (created based on the loni-ppmi dataset)
 Situations:
-    (1) ONLY grid file is provided:
+    (1) Grid file is present:
+        (1.chk) Check for new data in rawdata _dir and sourcedata _dir
         all _ids_bids processed with APP:
             (1.1) User wants stats: Do Stats
             (1.2) User wants FS-GLM: Do FS-GLM
-    (2) grid is present. New data is provided in sourcedata
-    (3) ONLY _dir with MRI data is provided
+    (2) Grid file is absent. rawdata (BIDS classified) or sourcedata _dir with MRIs are provided
 if 1:
     grid absent:
         make default grid
@@ -91,7 +91,7 @@ if 1:
                 remove _id_project from f_ids
                 add _id_project to missing.json
                 exit
-if 2:
+1.chk:
     A: get list(_ids in sourcedata _dir) NOT in nimb_classified file
         if list():
             run 2B
@@ -103,10 +103,16 @@ if 2:
             populate f_ids with _ids_bids
             save new grid to project.json
             run 1 A
-if 3:
-    grid is absent
-    sourcedata _dir is present? yes:
-        run 2 A for list(all _ids) in sourcedata _dir
+if 2:
+    _dir with MRI is provided? yes:
+        _dir is BIDS validates ?
+        yes:
+            extract _ids_bids
+            populate grid col _ids_bids
+            run 1A
+        no:
+            run nimb classify
+            run 1.chk B for list(all _ids) in sourcedata _dir
     no:
         notify user
 """
