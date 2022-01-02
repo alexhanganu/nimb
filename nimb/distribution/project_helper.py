@@ -23,86 +23,92 @@ Situations:
     (1) Grid file is present:
         (1.chk) Check for new data in rawdata _dir and sourcedata _dir
         all _ids_bids processed with APP:
-            (1.1) User wants stats: Do Stats
-            (1.2) User wants FS-GLM: Do FS-GLM
+            (1.stats) User wants stats: Do Stats
+            (1.glm) User wants FS-GLM: Do FS-GLM
     (2) Grid file is absent. rawdata (BIDS classified) or sourcedata _dir with MRIs are provided
-if 1:
-    grid absent:
+
+f_ids get or make
+Grid is present:
+    yes:
+        run 1
+    no:
         make default grid
         make default f_ids
-        run 3
+        run 2
+1:
     A: grid has a column with _ids_bids ?
-        and
-        all _ids_bids have BIDS structure name?
-        and
-         all ids_bids have corresponding _dir in rawdata ?
-        and
-         all _dir in rawdata are BIDS validated?:
         yes:
-           populate f_ids
-           for each _id_bids: processed with app?:
-                no:
-                    send to processing
+            for _id_bids:
+                has BIDS structure name?
+                  and
+                  has corresponding _dir in rawdata ?
+                  and
+                  _dir in rawdata is BIDS validated?:
                 yes:
-                    stats extracted?:
-                        no:
-                            extract stats
-            all _ids_bids were processed with one APP? yes.
-                if 1.1:
-                    user wants to perform STATS? yes:
-                        do Stats: general description
-                    grid has variables for GLM? yes:
-                        go GLM-based stats
-                    grid has a group column? yes:
-                        do group-based Stats
-                    if 1.2:
-                        all _ids_bids were processed with FreeSurfer ? yes.
-                        user wants to perform FreeSurfer GLM ? yes.
+                   populate f_ids
+            get list _ids_bids with missing APP processed for each APP
+            list missing present:
+                yes:
+                    send to processing
+                no, all _ids_bids were processed with all APPs?
+                    get list _ids_bids have NO stats
+                    list missing stats not empty:
+                         extract stats
+                    list missing stats empty:
+                    if 1.stats: user wants to perform STATS?
                         yes:
-                            do GLM for group
-                        grid has variables for GLM?
-                        yes:
-                            do GLM for group for variables
-                        environment allows screen export ? yes:
-                            extract FS-GLM images
+                            do Stats: general description
+                        grid has variables for GLM? yes:
+                            go GLM-based stats
+                        grid has a group column? yes:
+                            do group-based Stats
+                            if 1.2:user wants to perform FreeSurfer GLM
+                                and
+                                all _ids_bids were processed with FreeSurfer:
+                                yes:
+                                    do GLM-FS for group
+                                grid has variables for GLM?
+                                yes:
+                                    do GLM-FS for group for variables
+                                environment allows screen export ? yes:
+                                    extract FS-GLM images
         no:
-            for ids_bids with no BIDS structure name:
-                _ids_project col name present ? yes:
-                    chng
-                move to _ids_project column
-            run 1 B
+            _ids_project col name present ? yes:
+                for ids_bids with no BIDS structure name:
+                    move to _ids_project column
+            run 1B
     B: grid has a column with _ids_project?
-        _ids_project have a BIDS standard name
-            and
-            _ids_project has a corresponding _dir in rawdata _dir:
-        yes:
-            populate _ids_bids column with _id_project name
-            run 1A
-        no:
-            each _id_project has a corresponding MRI _dir in sourcedata
+        for _id_project:
+            has a BIDS standard name
+             and
+             has a corresponding _dir in rawdata _dir
+              and
+               _dir in rawdata is BIDS validates:
             yes:
-                run nimb classify
-                run dcm2bids
-                populate grid with _ids_bids
+                populate _ids_bids column with _id_project name
                 run 1A
             no:
-                notify user to verify the name of the column with ids from the grid file
-                remove _id_project from grid
-                remove _id_project from f_ids
-                add _id_project to missing.json
-                exit
-1.chk:
-    A: get list(_ids in sourcedata _dir) NOT in nimb_classified file
-        if list():
-            run 2B
-    B: list() provided:
-        run update nimb classify for list()
-        for list():
-            run dcm2bids
-            populate grid with _ids_bids
-            populate f_ids with _ids_bids
-            save new grid to project.json
-            run 1 A
+               has a corresponding MRI _dir in sourcedata
+                yes:
+                    run nimb classify
+                    run 1 CHK for _id_project
+                no:
+                    notify user to verify the name of the column with ids from the grid file
+                    remove _id_project from grid
+                    remove _id_project from f_ids
+                    add _id_project to missing.json
+    CHK:
+        A: get list(_ids in sourcedata _dir) NOT in nimb_classified file
+            if list():
+                run 2B
+        B: list() provided:
+            run update nimb classify for list()
+            for list():
+                run dcm2bids
+                populate grid with _ids_bids
+                populate f_ids with _ids_bids
+                save new grid to project.json
+                run 1 A
 if 2:
     _dir with MRI is provided? yes:
         _dir is BIDS validates ?
