@@ -240,14 +240,21 @@ class FSGLMParams:
         self.PATHglm_results       = path.join(path_GLMdir,   'results')
         self.err_mris_preproc_file = path.join(self.PATHglm_results,'error_mris_preproc.json')
 
+"""
+suggested by Douglas Greve (https://www.mail-archive.com/freesurfer@nmr.mgh.harvard.edu/msg71630.html): 
+when VARiable is provided, first test if the slopes are different: [0 0 -1 1]
+if slopes are different, use the contrast [1 -1 0 0] DODS
+is there is no difference between the slopes, use [1 -1 0] DOSS
+To test if VAR changes cortical thickness regardless of Group (assuming there is no interaction), use [0 0 1] DOSS
 
+"""
 GLMcontrasts = {
         "contrasts" : {
             'g1v1':{'slope.mtx'         :['0 1',        'does the correlation between thickness and variable differ from zero ? is the slope equal to 0? contrast: 0 1; t-test with the slope>0 being positive',],},
-            'g2v0':{'group.diff.mtx'    :['1 -1',       'Is there a difference between groups? Is there a difference between the group intercepts? contrast 1 -1; t-test with Group1>Group2 being positive',],},
-            'g2v1':{'group.diff.mtx'    :['1 -1 0 0',   'Is there a difference between groups regressing out the effect of VARiable? Is there a difference between the group intercepts? Is there a difference between groups when the VARiable has the value 0? contrast 1 -1 0 0; t-test with Group1>Group2 being positive',],
-                    'group-x-var.mtx'   :['0 0 1 -1',   'is there a difference between the group VARiable slopes? contrast 0 0 1 -1; t-test with Group1>Group2 being positive; Note: this is an interaction between group and VARiable',],
-                    'g1g2.var.mtx'      :['0 0 0.5 0.5','Does mean of group VARiable slope differ from 0? Is there an average affect of VARiable regressing out the effect of group? contrast 0 0 0.5 -0.5; t-test with (Group1+Group2)/2 > 0 being positive',],}
+            'g2v0':{'group.diff.mtx'    :['1 -1',       'is there a difference between groups? Is there a difference between the group intercepts? contrast 1 -1; t-test with Group1>Group2 being positive',],},
+            'g2v1':{'group-x-var.mtx'   :['0 0 1 -1',   'is there a difference between the group VARiable slopes? contrast 0 0 1 -1; t-test with Group1>Group2 being positive; Note: this is an interaction between group and VARiable',],
+                    'group.diff.mtx'    :['1 -1 0 0',   'is there a difference between groups regressing out the effect of VARiable? Is there a difference between the group intercepts? Is there a difference between groups when the VARiable has the value 0? contrast 1 -1 0 0; t-test with Group1>Group2 being positive',],
+                    'g1g2.var.mtx'      :['0 0 0.5 0.5','does mean of group VARiable slope differ from 0? Is there an average affect of VARiable regressing out the effect of group? contrast 0 0 0.5 -0.5; t-test with (Group1+Group2)/2 > 0 being positive',],}
                             },
         "dods_doss" : {
             'g1v1':[       'dods',],

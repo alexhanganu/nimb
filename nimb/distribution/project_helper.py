@@ -25,7 +25,8 @@ Situations:
         all _ids_bids processed with APP:
             (1.stats) User wants stats: Do Stats
             (1.glm) User wants FS-GLM: Do FS-GLM
-    (2) Grid file is absent. rawdata (BIDS classified) or sourcedata _dir with MRIs are provided
+    (2) Grid file is absent.
+        rawdata (BIDS classified) or sourcedata _dir is provided
 
 f_ids get or make
 Grid is present:
@@ -90,25 +91,23 @@ Grid is present:
             no:
                has a corresponding MRI _dir in sourcedata
                 yes:
-                    run nimb classify
-                    run 1 CHK for _id_project
+                    add to list for 1.CHK
                 no:
                     notify user to verify the name of the column with ids from the grid file
                     remove _id_project from grid
                     remove _id_project from f_ids
                     add _id_project to missing.json
+        if list for 1.CHK:
+            run 1.CHK for list
     CHK:
-        A: get list(_ids in sourcedata _dir) NOT in nimb_classified file
-            if list():
-                run 2B
-        B: list() provided:
+        get list(_ids in sourcedata _dir) NOT in nimb_classified file
+        for list():
             run update nimb classify for list()
-            for list():
-                run dcm2bids
-                populate grid with _ids_bids
-                populate f_ids with _ids_bids
-                save new grid to project.json
-                run 1 A
+            run dcm2bids
+            populate grid with _ids_bids
+            populate f_ids with _ids_bids
+            save new grid to project.json
+            run 1 A
 if 2:
     _dir with MRI is provided? yes:
         _dir is BIDS validates ?
@@ -117,8 +116,7 @@ if 2:
             populate grid col _ids_bids
             run 1A
         no:
-            run nimb classify
-            run 1.chk B for list(all _ids) in sourcedata _dir
+            run 1.CHK for list(all _ids) in sourcedata _dir
     no:
         notify user
 """
