@@ -20,13 +20,11 @@ from distribution.logger import LogLVL
 """
 ALGO: (created based on the loni-ppmi dataset)
 Situations:
-    (1) Grid file is present:
-        (1.chk) Check for new data in rawdata _dir and sourcedata _dir
-        all _ids_bids processed with APP:
-            (1.stats) User wants stats: Do Stats
-            (1.glm) User wants FS-GLM: Do FS-GLM
-    (2) Grid file is absent.
-        rawdata (BIDS classified) or sourcedata _dir is provided
+    (1) all _ids_bids from grid file were processed with APP:
+        (1.stats) User wants stats: Do Stats
+        (1.glm) User wants FS-GLM: Do FS-GLM
+    (2) rawdata (BIDS classified) or sourcedata _dir is provided
+    (3) Check for new data in rawdata _dir and sourcedata _dir
 
 f_ids get or make
 Grid is present:
@@ -37,88 +35,100 @@ Grid is present:
         make default f_ids
         run 2
 1:
-    A: grid has a column with _ids_bids ?
-        yes:
-            for _id_bids:
-                has BIDS structure name?
-                  and
-                  has corresponding _dir in rawdata ?
-                  and
-                  _dir in rawdata is BIDS validated?:
-                yes:
-                   populate f_ids
-            get list _ids_bids with missing APP processed for each APP
-            list missing present:
-                yes:
-                    send to processing
-                no, all _ids_bids were processed with all APPs?
-                    get list _ids_bids have NO stats
-                    list missing stats not empty:
-                         extract stats
-                    list missing stats empty:
-                    if 1.stats: user wants to perform STATS?
-                        yes:
-                            do Stats: general description
-                        grid has variables for GLM? yes:
-                            go GLM-based stats
-                        grid has a group column? yes:
-                            do group-based Stats
-                            if 1.2:user wants to perform FreeSurfer GLM
-                                and
-                                all _ids_bids were processed with FreeSurfer:
-                                yes:
-                                    do GLM-FS for group
-                                grid has variables for GLM?
-                                yes:
-                                    do GLM-FS for group for variables
-                                environment allows screen export ? yes:
-                                    extract FS-GLM images
-        no:
-            _ids_project col name present ? yes:
-                for ids_bids with no BIDS structure name:
-                    move to _ids_project column
-            run 1B
-    B: grid has a column with _ids_project?
+    A: grid HAS column with _ids_bids:
+        for _id_bids:
+            has BIDS structure name?
+              and
+              has corresponding _dir in rawdata ?
+              and
+              _dir in rawdata is BIDS validated?:
+            yes:
+               populate f_ids
+        get list _ids_bids with missing APP processed for each APP
+        list missing present:
+            yes:
+                send to processing
+            no, all _ids_bids were processed with all APPs?
+                get list _ids_bids have NO stats
+                list missing stats not empty:
+                     extract stats
+                list missing stats empty:
+                if 1.stats: user wants to perform STATS?
+                    yes:
+                        do Stats: general description
+                    grid has variables for GLM? yes:
+                        go GLM-based stats
+                    grid has a group column? yes:
+                        do group-based Stats
+                        if 1.2:user wants to perform FreeSurfer GLM
+                            and
+                            all _ids_bids were processed with FreeSurfer:
+                            yes:
+                                do GLM-FS for group
+                            grid has variables for GLM?
+                            yes:
+                                do GLM-FS for group for variables
+                            environment allows screen export ? yes:
+                                extract FS-GLM images
+    B: grid HAS column with _ids_project:
         for _id_project:
             has a BIDS standard name
              and
              has a corresponding _dir in rawdata _dir
               and
-               _dir in rawdata is BIDS validates:
+               _dir in rawdata is BIDS validated:
             yes:
                 populate _ids_bids column with _id_project name
                 run 1A
             no:
                has a corresponding MRI _dir in sourcedata
                 yes:
-                    add to list for 1.CHK
+                    add to list for updating
                 no:
                     notify user to verify the name of the column with ids from the grid file
                     remove _id_project from grid
                     remove _id_project from f_ids
                     add _id_project to missing.json
-        if list for 1.CHK:
-            run 1.CHK for list
-    CHK:
-        get list(_ids in sourcedata _dir) NOT in nimb_classified file
-        for list():
-            run update nimb classify for list()
-            run dcm2bids
-            populate grid with _ids_bids
-            populate f_ids with _ids_bids
-            save new grid to project.json
-            run 1 A
-if 2:
-    _dir with MRI is provided? yes:
-        _dir is BIDS validates ?
+        if list for updating:
+            run 3 for list
+
+2:
+    _dir with MRI is provided?
+    yes:
+        _dir is BIDS validated ?
         yes:
             extract _ids_bids
             populate grid col _ids_bids
             run 1A
         no:
-            run 1.CHK for list(all _ids) in sourcedata _dir
+            run 3
     no:
         notify user
+3:
+    get list(_ids in sourcedata _dir) NOT in nimb_classified file
+    for _id in list():
+        run update nimb classify for list()
+        run dcm2bids
+        populate grid with _ids_bids
+        populate f_ids with _ids_bids
+        save new grid to project.json
+        run 1 A
+
+Definitions:
+    _id_bids   : created with DCM2BIDS_helper().make_bids_id
+                using dcm2bids app
+                includes: bids_prefix-_id_source_session_run;
+                e.g: sub-3378_ses-1
+                _id_bids is used for stats analysis
+    _id_project: ID provided by the user in a grid file.
+                MUST correspond to 1 participant
+                MUST have ONLY 1 set of data, e.g.: ses-01
+                e.g., in PPMI _id_project = 3378_ses-01
+                _id_project can be same as _id_bids or _id_source
+    _id_source:  ID as defined in a database.
+                MUST correspond to 1 participant
+                CAN have multiple sets of data, multiple session
+                e.g., in PPMI _id_source = 3378 and is a folder with multiple sessions
 """
 
 
@@ -134,21 +144,6 @@ class ProjectManager:
         - get f_ids.
             If missing: make default
         self.run()
-    Definitions:
-        _id_bids   : created with DCM2BIDS_helper().make_bids_id
-                    using dcm2bids app
-                    includes: bids_prefix-_id_source_session_run;
-                    e.g: sub-3378_ses-1
-                    _id_bids is used for stats analysis
-        _id_project: ID provided by the user in a grid file.
-                    MUST correspond to 1 participant
-                    MUST have ONLY 1 set of data, e.g.: ses-01
-                    e.g., in PPMI _id_project = 3378_ses-01
-                    _id_project can be same as _id_bids or _id_source
-        _id_source:  ID as defined in a database.
-                    MUST correspond to 1 participant
-                    CAN have multiple sets of data, multiple session
-                    e.g., in PPMI _id_source = 3378 and is a folder with multiple sessions
     '''
 
     def __init__(self, all_vars):
@@ -197,38 +192,6 @@ class ProjectManager:
         Return:
             stats
             glm results
-        ALGO:
-        self.ids_all_chk4process():
-            all _ids_bids from grid were processed?
-        self.extract_statistics():
-            all _ids_bids from grid have stats extracted?
-        self.glm_fs_do():
-            perform glm ?
-        ids_bids_grid_are_in_ids_all ?
-            if not all ids_bids from grid in _ids_all:
-                chk _id_bids in BIDS_DIR and validate BIDS
-                populate _ids_all with new _ids_bids from grid
-                self.ids_all_chk4process()
-        all_ids_bids_from_rawdata_in_ids_all?
-            if not all ids_bids from rawdata in _ids_all:
-                validate BIDS
-                populate _ids_all with new _ids_bids from rawdata
-                populate grid with new ids_bids from rawdata
-                self.ids_all_chk4process()
-        ids_project_from_grid_NOT_in_ids_all:
-            id_project not in rawdata:
-
-            id_project in nimb_classified:
-
-            ids_project in sourcedata:
-                do_dcm2bids_and_populate_ids_all_with_ids_bids:
-                    perform dcm2bids conversion
-                    validate BIDS
-                    populate grid with ids_bids
-                    populate ids_all with ids_bids
-                    self.ids_all_chk4process()
-        ids_project_from_sourcedata_NOT_in_ids_all:
-            do_dcm2bids_and_populate_ids_all_with_ids_bids
         """
         print(f'{LogLVL.lvl1}running pipeline for project: {self.project}')
         do_task = self.all_vars.params.do
