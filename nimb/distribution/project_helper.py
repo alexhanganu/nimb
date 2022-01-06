@@ -26,14 +26,8 @@ Situations:
     (2) rawdata (BIDS classified) or sourcedata _dir is provided
     (3) Check for new data in rawdata _dir and sourcedata _dir
 
+Grid get or make
 f_ids get or make
-Grid is present:
-    yes:
-        run 1
-    no:
-        make default grid
-        make default f_ids
-        run 2
 1:
     A: grid HAS column with _ids_bids:
         for _id_bids:
@@ -180,7 +174,7 @@ class ProjectManager:
                                                 DICOM_DIR = self.srcdata_dir,
                                                 tmp_dir = self.NIMB_tmp)
         self.get_df_f_groups()
-        self.get_ids_all()
+        self.read_f_ids()
 
 
     def run(self):
@@ -210,7 +204,7 @@ class ProjectManager:
         elif do_task == 'classify-dcm2bids':
             self.classify_with_dcm2bids()
 
-        self.ids_all_chk4process()
+        self.processing_chk()
         self.ids_bids_chk4process()
         self.ids_project_chk2process()
         if self.new_subjects:
@@ -223,7 +217,7 @@ class ProjectManager:
         self.process_mri_data()
 
 
-    def get_ids_all(self):
+    def read_f_ids(self):
         """
         ALGO:
             if f_ids is present in the materials dir:
@@ -250,7 +244,7 @@ class ProjectManager:
         # print(f'{LogLVL.lvl1} ids all are: {self._ids_all}')
 
 
-    def ids_all_chk4process(self):
+    def processing_chk(self):
         """
             checks if all ids in self.ids_all were processed
         Args:
@@ -259,21 +253,92 @@ class ProjectManager:
             bool
         ALGO:
             any APPS UNprocessed? for ids_bids:
-                self.prepare_4processing()
+                self.add_2processing()
         """
-        self.get_ids_nimb_classified(self.srcdata_dir)
-        if self._ids_nimb_classified:
+        if self._ids_bids:
             apps = list(DEFAULT.app_files.keys())
-            for _id_bids in self._ids_all:
+            for _id_bids in self._ids_bids:
+                if _id_bids not in self._ids_all:
+                    self._ids_all[_id_bids] = dict()
                 apps2process = list()
                 for app in apps:
+                    if app not in self._ids_all[_id_bids]:
+                        self._ids_all[_id_bids][app] = ""
                     if not self._ids_all[_id_bids][app]:
                         apps2process.append(app)
                 if apps2process:
                     print(f'must send for processing: {_id_bids}, for apps: {apps2process}')
-                    self.prepare_4processing(_id_bids, apps2process)
+                    self.add_2processing(_id_bids, apps2process)
+        if self.new_subjects:
+            print(f'{LogLVL.lvl1}NIMB ready to initiate processing of data')
+
+
+    def add_2processing(self, _id_bids, apps):
+        """
+        Args:
+            _id_bids: id of participant in BIDS format
+            apps: list of apps to be processed
+        Return:
+            bool
+        Algo:
+            add _id_bids to new_subjects.json for processing
+            new_subjects.json = True
+            if new_subjects.json:
+                if ask OK to initiate processing is True:
+                    send for processing
+        """
+        print("adding new _id_bids to existing new_subjects.json file")
+        DEFpaths = DEFAULTpaths(self.NIMB_tmp)
+        f_subj2process = DEFpaths.f_subj2process_abspath
+        if not os.path.exists(f_subj2process):
+            print(f'{LogLVL.lvl1} file with subjects to process is missing; creating empty dictionary')
+            self.subs_2process = dict()
         else:
-            print(f"{LogLVL.lvl1} ERR file nimb_classified.json is not available")
+            self.subs_2process = load_json(f_subj2process)
+
+        _, sub_label, ses_label, _ = self.dcm2bids.is_bids_format(_id_bids)
+        content = self.dir_2dict_bids_dir(sub_label, ses_label)
+        self.subs_2process[_id_bids] = content
+        save_json(self.subs_2process, f_subj2process)
+        self.new_subjects = True
+
+
+    def dir_2dict_bids_dir(self, sub_label, ses_label):
+        """
+            searches for corresponding folders in rawdata
+            creates a dict with absolute paths to MRI files
+        Args:
+            sub_label: label of folder with sub- prefix, as per BIDS standard
+            ses_label: label of session sub-folder with ses- prefix, as per BIDS standard
+        Return:
+            dict(): {
+                    "anat":
+                        "t1"   :[sub-label_ses-label_T1w.nii.gz],
+                        "flair":[sub-label_ses-label_Flair.nii.gz],
+                    "func":
+                        "bold" :[sub-label_ses-label_bold.nii.gz],
+                    "dwi":
+                        "dwi"  :[sub-label_ses-label_dwi.nii.gz]}
+        """
+        print(f'reading dirs: {sub_label} and {ses_label}')
+        ses_path = os.path.join(self.BIDS_DIR, sub_label, ses_label)
+        content = dict()
+        dirs = os.listdir(ses_path)
+        for _dir in dirs:
+            _dir_content = os.listdir(os.path.join(ses_path, _dir))
+            mri_files = [i for i in _dir_content if i.endswith(".nii.gz")]
+            if _dir == "dwi":
+                content[_dir] = {"dwi":mri_files}
+            elif _dir == "func":
+                bold_files = [i for i in mri_files if "bold" in i]
+                content[_dir] = {"bold":bold_files}
+            elif _dir == "anat":
+                t1_files = [i for i in mri_files if "T1w" in i]
+                content[_dir] = {"t1":t1_files}
+                flair_files = [i for i in mri_files if "Flair" in i]
+                if flair_files:
+                    content[_dir]["flair"] = flair_files
+        return content
 
 
     def get_ids_nimb_classified(self, _dir):
@@ -299,7 +364,7 @@ class ProjectManager:
             ids_bids from grid NOT in f_ids:
                 populate f_ids with ids_bids  from rawdata with
                 populate_ids_from_rawdata()
-            restart ids_all_chk4process()
+            restart processing_chk()
         """
         for _id_bids in self._ids_bids:
             if _id_bids not in self._ids_all:
@@ -310,7 +375,7 @@ class ProjectManager:
                 # else:
                 #     print(f"{LogLVL.lvl1}folder {self.BIDS_DIR} is empty")
                 #     print(f"{LogLVL.lvl2}cannot populate file with ids")
-        self.ids_all_chk4process()
+        self.processing_chk()
 
 
     def populate_ids_from_rawdata(self,
@@ -378,31 +443,6 @@ class ProjectManager:
         save_json(self._ids_all, self.f_ids_instatsdir)
 
 
-    def prepare_4processing(self, _id_bids, apps):
-        """
-        Args:
-            _id_bids: id of participant in BIDS format
-            apps: list of apps to be processed
-        Return:
-            bool
-        Algo:
-            add _id_bids to new_subjects.json for processing
-            new_subjects.json = True
-            if new_subjects.json:
-                if ask OK to initiate processing is True:
-                    send for processing
-        """
-        print("adding new _id_bids to existing new_subjects.json file")
-        _, sub_label, ses_label, _ = self.dcm2bids.is_bids_format(_id_bids)
-        _id_project = self.get_id_project_from_nimb_classified(sub_label)
-        if _id_project:
-            self.adj_subs2process(get = True)
-            self.subs_2process[_id_bids] = self._ids_nimb_classified[_id_project][ses_label]
-            self.adj_subs2process(save = True)
-        else:
-            print(f"{LogLVL.lvl2}ERR: _id_project is missing for id_bids: {_id_bids}")
-
-
     def get_id_project_from_nimb_classified(self, sub_label):
         """
             extracts the corresponding _id_project from
@@ -421,22 +461,6 @@ class ProjectManager:
         return result
 
 
-    def adj_subs2process(self, get = False, save = False):
-        DEFpaths = DEFAULTpaths(self.NIMB_tmp)
-        f_subj2process = DEFpaths.f_subj2process_abspath
-        if get:
-            if os.path.exists(f_subj2process):
-                print(f'{LogLVL.lvl1} file with subs to process is: {f_subj2process}')
-                self.subs_2process = load_json(f_subj2process)
-            else:
-                print(f'{LogLVL.lvl1} file with subjects to process is missing; creating empty dictionary')
-                self.subs_2process = dict()
-        elif save:
-            save_json(self.subs_2process, f_subj2process)
-            self.new_subjects = True
-            print(f'{LogLVL.lvl1}NIMB ready to initiate processing of data')
-
-
     def ids_project_chk2process(self):
         """
             checks if all ids_project in grid were processed
@@ -453,7 +477,7 @@ class ProjectManager:
                 all ids_project from grid 
             any ids_project NOT in sourcedata?:
                 any ids_project without corresponding ids_bids ?:
-                    self.prepare_4processing()
+                    self.add_2processing()
         """
         if not self._ids_nimb_classified or self.must_run_classify_2nimb_bids:
             self.prep_4dcm2bids_classification()
@@ -526,15 +550,19 @@ class ProjectManager:
 
     def check_new(self):
         print(f'{LogLVL.lvl1}checking for new subject to be processed')
-        self.unprocessed_d = dict()
-        self.get_ls_unprocessed_data()
-        if len(self.unprocessed_d) > 1:
-            self.change_paths_2rawdata()
-            print(f'{LogLVL.lvl2}there are {len(self.unprocessed_d)} participants with MRI data to be processed')
-            self.send_2processing('process')
-            # self.distrib_hlp.distribute_4_processing(self.unprocessed_d)
+        self.get_ids_nimb_classified(self.srcdata_dir)
+        if self._ids_nimb_classified:
+            self.unprocessed_d = dict()
+            self.get_ls_unprocessed_data()
+            if len(self.unprocessed_d) > 1:
+                self.change_paths_2rawdata()
+                print(f'{LogLVL.lvl2}there are {len(self.unprocessed_d)} participants with MRI data to be processed')
+                self.send_2processing('process')
+                # self.distrib_hlp.distribute_4_processing(self.unprocessed_d)
+            else:
+               print(f'{LogLVL.lvl2}ALL participants with MRI data were processed')
         else:
-           print(f'{LogLVL.lvl2}ALL participants with MRI data were processed')
+            print(f"{LogLVL.lvl1} ERR file nimb_classified.json is not available")
 
 
     def change_paths_2rawdata(self):
@@ -852,7 +880,6 @@ class ProjectManager:
             none
         Return:
             pandas.DataFrame: self.df_grid
-            pandas.Series:    self._ids_project
             if file is missing:
                 return self.make_default_grid()
         '''
@@ -867,6 +894,13 @@ class ProjectManager:
 
 
     def get_ids_from_grid(self):
+        """
+        Args:
+            none
+        Return:
+            list():           self._ids_project
+            list():           self._ids_bids
+        """
         if self._ids_bids_col not in self.df_grid.columns:
             print(f'{LogLVL.lvl1}column: {self._ids_bids_col} is missing from grid {self.f_groups}')
             print(f'{LogLVL.lvl2}adding to grid an empty column: {self._ids_bids_col}')
@@ -890,7 +924,7 @@ class ProjectManager:
         f_name = DEFAULT.default_tab_name
         df = self.tab.get_clean_df()
         df[self._ids_project_col] = ''
-        df[self._ids_bids_col] = ''
+        df[self._ids_bids_col]    = ''
         print(f'    file with groups is absent; creating default grid file:\
                     in: {self.path_stats_dir}\
                     in: {self.materials_dir_pt}')
@@ -904,8 +938,8 @@ class ProjectManager:
         # updating self.all_vars and project.json file
         from setup.get_credentials_home import _get_credentials_home
         credentials_home = _get_credentials_home()
-        json_projects = os.path.join(credentials_home, 'projects.json')
-        print(f'        updating project.json at: {json_projects}')
+        json_projects    = os.path.join(credentials_home, 'projects.json')
+        print(f'{LogLVL.lvl1}updating project.json at: {json_projects}')
         self.all_vars.projects[self.project] = self.project_vars
         save_json(self.all_vars.projects, json_projects)
         return df
