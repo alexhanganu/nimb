@@ -2,6 +2,7 @@
 # coding: utf-8
 # last update: 2020-08-21
 # script intends to work specifically with pandas on xlx, xlsx and csv files
+# https://pandas.pydata.org/docs/user_guide/index.html
 
 import sys
 try:
@@ -26,7 +27,7 @@ class Table:
         print(f"    reading file: {path2file}\n    sheet: {sheetname}")
         df = self.read_df(path2file, sheetname, cols)
         if index:
-            df = self.change_index(df, index)
+            df = df.set_index(index)
         if rename:
             df.rename(columns = rename, inplace=True)
         return df
@@ -36,18 +37,14 @@ class Table:
         '''reads a csv, xls or an xlsx file
         '''
         if path2file.endswith('.csv'):
-            return pd.read_csv(path2file, usecols = cols)
+            try:
+                return pd.read_csv(path2file, sep = '\s+', usecols = cols)
+            except ValueError as e:
+                return pd.read_csv(path2file, delim_whitespace=True, usecols = cols)
         if path2file.endswith('.xls'):
             return pd.read_excel(path2file, sheet_name = sheetname, usecols = cols)
         if path2file.endswith('.xlsx'):
             return pd.read_excel(path2file, engine='openpyxl', sheet_name = sheetname, usecols = cols)
-
-
-    def change_index(self, df, index):
-        '''to set the index, based on column
-        Args: index = str(column name)
-        '''
-        return df.set_index(index)
 
 
     def get_df_index(self, file, index_col='default'):
@@ -149,6 +146,15 @@ class Table:
         return list(df.loc[pd.isnull(df).any(1), :].index.values)
 
 
+    def get_index_of_val(self, df, col, val):
+        """
+            get the index of the value
+            if multiple indices are present:
+                only the first is provided
+        """
+        return list(df[df[col] == val].index.values)[0]
+
+
     def get_nan_from_col(self, df, col):
         return df[col].isnull().tolist()
 
@@ -166,6 +172,19 @@ class Table:
                 df.reset_index(drop = True, inplace = True)
         return df
 
+
+    def get_value(df, index, col):
+        return df.at[index, col]
+
+
+    def change_val(self,df, index, col, new_val):
+        df.at[index, col] = new_val
+        return df
+
+
+    def rm_row(self,df, index):
+        df.drop(index, axis = 0, inplace = True)
+        return df
 
 
 def get_df_with_params(df, params):
@@ -201,3 +220,10 @@ def get_df_for_fs_atlas(f_subcort, f_atlas_DK, f_atlas_DS, atlas, id_col):
     df_sub_and_cort = db_processing.join_dfs(df_subcort, df_atlas)
     ls_cols_X = db_processing.get_cols_tolist(df_sub_and_cort)
     return df_sub_and_cort, ls_cols_X
+
+
+    # def change_index(self, df, index):
+    #     '''to set the index, based on column
+    #     Args: index = str(column name)
+    #     '''
+    #     return df.set_index(index)
