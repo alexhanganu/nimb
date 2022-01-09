@@ -227,7 +227,10 @@ class ProjectManager:
             bool
         """
         if self._ids_bids:
-            self.verify_ids_are_bids_standard()
+            not_bids, _ = self.verify_ids_are_bids_standard()
+            if not_bids:
+                print(f"{LogLVL.lvl2}some subjects are not of bids format: {not_bids}")
+                self.mv_ids_bids_in_grid(not_bids)
             apps = list(DEFAULT.app_files.keys())
             for _id_bids in self._ids_bids:
                 apps2process = self.processing_get_apps(_id_bids)
@@ -350,7 +353,7 @@ class ProjectManager:
         ALGO:
             verify_ids_are_bids_standard
             yes:
-                mv _ids_project to _ids_bids column
+                add to _ids_bids column
             no:
                 _ids_project have corresponding _ids_bids ?
                 yes:
@@ -371,14 +374,18 @@ class ProjectManager:
             if list for updating:
                 run 3 for list
         """
-        self.verify_ids_are_bids_standard(col = "project")
+        _, yes_bids = self.verify_ids_are_bids_standard(col = "project")
+        if yes_bids:
+            print(f"{LogLVL.lvl2}some subjects are of bids format: {yes_bids}")
+            self.add_ids_project_to_bids_in_grid(yes_bids)
+
         self.get_ids_nimb_classified()
         ls_4dcm2bids_classif = list()
         ls_4nimb_classif     = list()
         ls_2rm_from_grid     = list()
 
         for _id_project in self._ids_project:
-            classified = self.ids_project_chk_if_classified(_id_project)
+            classified = self.ids_project_chk_if_bids_classified(_id_project)
             if not classified:
                 if _id_project in self._ids_nimb_classified:
                     ls_4dcm2bids_classif.append(_id_project)
@@ -392,10 +399,11 @@ class ProjectManager:
                         print(f'{LogLVL.lvl3}from sourcedata: {self.srcdata_dir}')
                         print(f'{LogLVL.lvl3}removing id: {_id_project} from grid {f_grid}')
                         ls_2rm_from_grid.append(_id_project)
-                        # rm _id_project to f_ids !!!!!!!!!!
-                        # add _id_project to missing.json !!!!!!!!!!
+                        # rm _id_project from f_ids !!!!!!!!!!
         if ls_2rm_from_grid:
             self.rm_id_from_grid(ls_2rm_from_grid)
+            missing_file = os.path.join(self.path_stats_dir, "missing.json")
+            save_json(ls_2rm_from_grid, missing_file)
 
         # removing potential _ids that might undergo double classification
         for _id in ls_4nimb_classif[::-1]:
@@ -406,57 +414,6 @@ class ProjectManager:
         if ls_4dcm2bids_classif:
             self.run_classify_dcm2bids(ls_4dcm2bids_classif)
         self.processing_chk()
-
-
-    def rm_id_from_grid(self, ls_2rm_from_grid):
-        """removing _id from grid
-        """
-        for _id_project in ls_2rm_from_grid:
-            index = self.tab.get_index_of_val(self.df_grid, self._ids_project_col, _id)
-            self.tab.rm_row(self.df_grid, index)
-            self._ids_project.remove(_id_project)
-        self.tab.save_df(self.df_grid,
-                        os.path.join(self.path_stats_dir, self.f_groups))
-
-
-    def ids_project_chk_if_classified(self, _id_project):
-        """
-            check if _id_project was bids classified
-        """
-        index = self.tab.get_index_of_val(self.df_grid, self._ids_project_col, _id_project)
-        _id_bids_probab = self.tab.get_value(self.df_grid, index, self._ids_bids_col)
-        if _id_bids_probab:
-            self.update_f_ids(_id_bids_probab, DEFAULT.id_project_key, _id_project)
-            return True
-        else:
-            print(f'{LogLVL.lvl2}id_project: {_id_project} has no corresponding id_bids in grid')
-            return False
-
-
-    def verify_ids_are_bids_standard(self, col = "bids"):
-        """
-            verify that all _ids in ls2chk
-            have a BIDS structure name
-            have a folder in rawdata
-            folder is BIDS validated
-        """
-        ls2chk = self._ids_bids
-        if col == "project":
-            ls2chk = self._ids_project
-
-        rawdata_listdir = self.get_listdir(self.BIDS_DIR)
-        not_bids = list()
-
-        for _id in ls2chk:
-            bids_format, sub_label, ses_label, _ = self.dcm2bids.is_bids_format(_id)
-            if bids_format:
-                if sub_label not in rawdata_listdir:
-                    print(f"{LogLVL.lvl2}subject {_id} is missing from: {self.BIDS_DIR}")
-                    not_bids.append(_id)
-                    # if validate BIDS: !!!!!!!!!!!!!!!!!
-        if not_bids:
-            print(f"{LogLVL.lvl2}some subjects are not of bids format: {not_bids}")
-            self.mv_ids_in_grid(not_bids, col = col)
 
 
     def update_f_ids(self, _id_bids, key, val_2update):
@@ -650,6 +607,51 @@ class ProjectManager:
     '''
     CLASSIFICATION related scripts
     '''
+    def verify_ids_are_bids_standard(self, col = "bids"):
+        """
+            verify that all _ids in ls2chk
+            have a BIDS structure name
+            have a folder in rawdata
+            folder is BIDS validated
+            if NOT:
+                mv _ids to _ids_project column
+        """
+        ls2chk = self._ids_bids
+        if col == "project":
+            ls2chk = self._ids_project
+
+        rawdata_listdir = self.get_listdir(self.BIDS_DIR)
+        not_bids = list()
+
+        for _id in ls2chk:
+            bids_format, sub_label, ses_label, _ = self.dcm2bids.is_bids_format(_id)
+            if not bids_format:
+                print(f"{LogLVL.lvl2}subject {_id} name is not of BIDS format")
+                not_bids.append(_id)
+            elif sub_label not in rawdata_listdir:
+                print(f"{LogLVL.lvl2}subject {_id} is missing from: {self.BIDS_DIR}")
+                not_bids.append(_id)
+            # elif not validate BIDS: !!!!!!!!!!!!!!!!!
+            #     print(f"{LogLVL.lvl2}subject {_id} folder in: {self.BIDS_DIR} has not been validated for BIDS")
+            #     not_bids.append(_id)
+        return not_bids, yes_bids
+
+
+    def ids_project_chk_if_bids_classified(self, _id_project):
+        """
+            check if _id_project from grid was bids classified
+            if yes:
+                update f_ids with _id_bids and _id_project
+        """
+        index = self.tab.get_index_of_val(self.df_grid, self._ids_project_col, _id_project)
+        _id_bids_probab = self.tab.get_value(self.df_grid, index, self._ids_bids_col)
+        if _id_bids_probab:
+            self.update_f_ids(_id_bids_probab, DEFAULT.id_project_key, _id_project)
+            return True
+        else:
+            print(f'{LogLVL.lvl2}id_project: {_id_project} has no corresponding id_bids in grid')
+            return False
+
 
     def prep_4dcm2bids_classification(self):
         ls_source_dirs = self.get_listdir(self.srcdata_dir)
@@ -941,33 +943,46 @@ class ProjectManager:
         return df
 
 
-    def mv_ids_in_grid(self, ls_ids, col = "bids"):
-        """moving _id between _ids_bids_col and _ids_project_col
+    def mv_ids_bids_in_grid(self, ls_ids):
+        """moving _ids_bids to _ids_project_col
         """
-        col_src = self._ids_bids_col
-        col_tgt = self._ids_project_col
-        if col == "project":
-            col_src = self._ids_project_col
-            col_tgt = self._ids_bids_col
         for _id in ls_ids:
-            index = self.tab.get_index_of_val(self.df_grid, col_src, _id)
+            index = self.tab.get_index_of_val(self.df_grid, self._ids_bids_col, _id)
             self.tab.change_val(self.df_grid,
-                                index, col_src,
+                                index, self._ids_bids_col,
                                 None)
-            if col == "project":
-                self._ids_project.remove(_id)
-                if _id not in self._ids_bids:
-                    self.tab.change_val(self.df_grid, index, col_tgt, _id)
-                    self._ids_bids.append(_id)
-                else:
-                    print(f'{LogLVL.lvl2}id: {_id} is already present in grid  in column: {col_tgt}')
+            self._ids_bids.remove(_id)
+            # rm from f_ids !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            if _id not in self._ids_project:
+                self.tab.change_val(self.df_grid, index, self._ids_project_col, _id)
+                self._ids_project.append(_id)
             else:
-                self._ids_bids.remove(_id)
-                if _id not in self._ids_project:
-                    self.tab.change_val(self.df_grid, index, col_tgt, _id)
-                    self._ids_project.append(_id)
-                else:
-                    print(f'{LogLVL.lvl2}id: {_id} is already present in grid  in column: {col_tgt}')
+                print(f'{LogLVL.lvl2}id: {_id} is already present in grid  in column: {self._ids_project_col}')
+        self.tab.save_df(self.df_grid,
+                        os.path.join(self.path_stats_dir, self.f_groups))
+
+
+    def add_ids_project_to_bids_in_grid(self, ls_ids):
+        """adding _id_project to _ids_bids_col
+        """
+        for _id in ls_ids:
+            index = self.tab.get_index_of_val(self.df_grid, self._ids_project_col, _id)
+            if _id not in self._ids_bids:
+                self.tab.change_val(self.df_grid, index, self._ids_bids_col, _id)
+                self._ids_bids.append(_id)
+            else:
+                print(f'{LogLVL.lvl2}id: {_id} is already present in grid  in column: {self._ids_bids_col}')
+        self.tab.save_df(self.df_grid,
+                        os.path.join(self.path_stats_dir, self.f_groups))
+
+
+    def rm_id_from_grid(self, ls_2rm_from_grid):
+        """removing _id from grid
+        """
+        for _id_project in ls_2rm_from_grid:
+            index = self.tab.get_index_of_val(self.df_grid, self._ids_project_col, _id)
+            self.tab.rm_row(self.df_grid, index)
+            self._ids_project.remove(_id_project)
         self.tab.save_df(self.df_grid,
                         os.path.join(self.path_stats_dir, self.f_groups))
 
