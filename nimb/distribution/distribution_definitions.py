@@ -68,13 +68,13 @@ class DEFAULT(object):
                             "dir_from_source": "ADNI",
                             'date_format'    : "%Y-%m-%d_%H_%M_%S.%f",
                             "demographics"   : {"file" :"DXSUM_PDXCONV_ADNIALL.csv",
-                                                "file_name":"Diagnostic Summary [ADNI1,GO,2,3]"
+                                                "file_name":"Diagnostic Summary [ADNI1,GO,2,3]",
                                                 "sheet":"DXSUM_PDXCONV_ADNIALL"},
                             "diagnosis"      : {"file" :"ADSXLIST.csv",
-                                                "file_name":"Diagnosis and Symptoms Checklist [ADNI1,GO,2]"
+                                                "file_name":"Diagnosis and Symptoms Checklist [ADNI1,GO,2]",
                                                 "sheet":"ADSXLIST"},
                             "baseline_diagnosis": {"file" :"BLCHANGE.csv",
-                                                "file_name":"Diagnostic Summary - Baseline Changes [ADNI1,GO,2,3]"
+                                                "file_name":"Diagnostic Summary - Baseline Changes [ADNI1,GO,2,3]",
                                                 "sheet":"BLCHANGE"},
                             'link'           : "ida.loni.usc.edu",},
                         'nacc_ad':{
