@@ -425,10 +425,9 @@ class ProjectManager:
             materials and
             stats_dirs
         """
-        if self.must_save_f_ids:
-            print(f'{LogLVL.lvl3}saving file with groups {self.f_ids_instatsdir}')
-            save_json(self._ids_all, self.f_ids_inmatdir)
-            save_json(self._ids_all, self.f_ids_instatsdir)
+        print(f'{LogLVL.lvl3}saving file with groups {self.f_ids_instatsdir}')
+        save_json(self._ids_all, self.f_ids_inmatdir)
+        save_json(self._ids_all, self.f_ids_instatsdir)
 
 
     def get_ids_nimb_classified(self):
