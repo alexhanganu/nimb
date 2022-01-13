@@ -228,7 +228,8 @@ class DistributionHelper():
     def get_local_remote_dir(self, dir_data, _dir = 'None'):
         location    = dir_data[0]
         dir_abspath = dir_data[1]
-        print(f'folder {dir_abspath} is located on: {location}')
+        print(f'        folder {dir_abspath}')
+        print(f'            is located on: {location}')
         if location == 'local':
             if not os.path.exists(dir_abspath):
                 dir_abspath = get_userdefined_paths(f'{_dir} folder',
@@ -278,10 +279,13 @@ class DistributionHelper():
             for file in list_of_files:
                 path2file = os.path.join(materials_dir_path, file)
                 if os.path.exists(path2file):
-                    print(f'    copying files: {file} to: {path_2copy_files}')
+                    print(f'    copying files:')
+                    print(f'        {file} to:')
+                    print(f'            {path_2copy_files}')
                     shutil.copy(path2file, path_2copy_files)
                 else:
-                    print(f'    file: {file} absent in path: {path2file}')
+                    print(f'        NOTE! file: {file} is absent from path:')
+                    print(f'            {path2file}')
         else:
             print('    nimb must access the remote computer: {}'.format(location))
             from distribution import SSHHelper
@@ -297,14 +301,16 @@ class DistributionHelper():
         f_ids_processed_abspath = os.path.join(path_2copy_files,
                                                 f_ids_processed)
         if f_ids_processed in list_of_files and not os.path.exists(f_ids_processed_abspath):
-            print(f'file {f_ids_processed} is missing from folder: {path_2copy_files}')
+            print(f'        file {f_ids_processed} is missing from folder:')
+            print(f'            {path_2copy_files}')
             group_file = self.proj_vars['fname_groups']
             if group_file in list_of_files:
-                print(f"trying to create {f_ids_processed} from group file: {group_file}")
+                print(f"        trying to create {f_ids_processed}")
+                print(f"            from group file: {group_file}")
                 from distribution.project_helper import ProjectManager
-                return ProjectManager(self.all_vars).f_ids_in_dir(path_2copy_files)
+                return ProjectManager(self.all_vars).f_ids_inmatdir(path_2copy_files)
             else:
-                print(f'Cannot find group file: {group_file}. Cannot continue.')
+                print(f'    ERR! Cannot find group file: {group_file}. Cannot continue.')
                 return False
 
 
@@ -386,7 +392,8 @@ class DistributionHelper():
     def prep_4fs_glm(self, FS_GLM_dir, fname_groups):
         FS_GLM_dir           = makedir_ifnot_exist(FS_GLM_dir)
         f_ids_processed_name = self.locations["local"]["NIMB_PATHS"]['file_ids_processed']
-        print('    fs glm dir is:', FS_GLM_dir)
+        print('INITIATING: preparation to perform GLM with FreeSurfer')
+        print('    in the folder:', FS_GLM_dir)
         if not self.get_files_for_stats(FS_GLM_dir,
                                 [fname_groups, f_ids_processed_name]):
             sys.exit()
@@ -402,16 +409,18 @@ class DistributionHelper():
                                                 f_ids_processed, 
                                                 f_GLM_group,
                                                 FS_GLM_dir).chk_if_subjects_ready()
-            print(f'variables used for GLM are: {self.proj_vars["variables_for_glm"]}')
-            print(f'    ID columns is: {self.proj_vars["id_col"]}')
+            print(f'    variables used for GLM are: {self.proj_vars["variables_for_glm"]}')
+            print(f'    ID column is: {self.proj_vars["id_col"]}')
             print(f'    Group column is: {self.proj_vars["group_col"]}')
-            print(f'variables EXCLUDED from GLM are: {self.proj_vars["other_params"]}')
+            print(f'    variables EXCLUDED from GLM are: {self.proj_vars["other_params"]}')
             print(f'    for details check: credentials_path/projects.py')
             if miss_ls:
-                print('some subjects are missing, nimb must extract their surf and label folders')
-                if get_yes_no('do you want to prepare the missing subjects for glm analysis? (y/n)') == 1:
+                print('    ATTENTION! some subjects could be prepared for GLM analysis')
+                print('        by extracting the surf and label folders')
+                if get_yes_no('    do you want to prepare the missing subjects? (y/n)') == 1:
                     dirs2extract = ['label','surf',]
                     self.prep_4fs_glm_extract_dirs(miss_ls, SUBJECTS_DIR, dirs2extract)
+                    self.prep_4fs_glm(FS_GLM_dir, fname_groups)
                 return False
             else:
                 print('all ids are present in the analysis folder, ready for glm analysis')
@@ -424,6 +433,7 @@ class DistributionHelper():
     def prep_4fs_glm_extract_dirs(self, ls, SUBJECTS_DIR, dirs2extract):
         from .manage_archive import ZipArchiveManagement
         if self.proj_vars['materials_DIR'][0] == 'local':
+            print(f'Extracting folders {dirs2extract} to: {SUBJECTS_DIR}')
             NIMB_PROCESSED_FS = os.path.join(self.locations["local"]['NIMB_PATHS']['NIMB_PROCESSED_FS'])
             for sub in ls:
                 zip_file_path = os.path.join(NIMB_PROCESSED_FS, '{}.zip'.format(sub))
@@ -434,12 +444,13 @@ class DistributionHelper():
                     if os.path.exists(zip_file_path):
                         extract = True
                 if extract:
-                    print('Extracting folders {} for subject {}, to destination {}'.format(dirs2extract, sub, SUBJECTS_DIR))
+                    print(f'    participant: {sub}')
                     ZipArchiveManagement(zip_file_path, path2xtrct = SUBJECTS_DIR,
                                         path_err = self.NIMB_tmp, dirs2xtrct = dirs2extract,
                                         log=True)
                 else:
                     print('{} subject missing from {}'.format(sub, NIMB_PROCESSED_FS))
+                print(f'    participants left: {len(ls[ls.index(sub):])}')
 
 
     def run_processing_on_cluster_2(self):

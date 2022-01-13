@@ -204,10 +204,10 @@ class ProjectManager:
         if self.new_subjects:
             print(f'{LogLVL.lvl1}must initiate processing')
             self.send_2processing('process')
-        else:
-            self.extract_statistics(app = ["freesurfer",])
-            # self.glm_fs_do()
-            # self.glm_fs_do(image = True)
+        # else:
+        #     self.extract_statistics(app = ["freesurfer",])
+        #     # self.glm_fs_do()
+        #     # self.glm_fs_do(image = True)
         self.check_new()
 
 
@@ -565,20 +565,23 @@ class ProjectManager:
             ls2chk = self._ids_project
 
         rawdata_listdir = self.get_listdir(self.BIDS_DIR)
-        not_bids = list()
+        no_bids = list()
+        yes_bids = list()
 
         for _id in ls2chk:
             bids_format, sub_label, ses_label, _ = self.dcm2bids.is_bids_format(_id)
             if not bids_format:
                 print(f"{LogLVL.lvl2}subject {_id} name is not of BIDS format")
-                not_bids.append(_id)
+                no_bids.append(_id)
             elif sub_label not in rawdata_listdir:
                 print(f"{LogLVL.lvl2}subject {_id} is missing from: {self.BIDS_DIR}")
-                not_bids.append(_id)
+                no_bids.append(_id)
+            else:
+                yes_bids.append(_id)
             # elif not validate BIDS: !!!!!!!!!!!!!!!!!
             #     print(f"{LogLVL.lvl2}subject {_id} folder in: {self.BIDS_DIR} has not been validated for BIDS")
-            #     not_bids.append(_id)
-        return not_bids, yes_bids
+            #     no_bids.append(_id)
+        return no_bids, yes_bids
 
 
     def prep_4dcm2bids_classification(self):
