@@ -37,13 +37,22 @@ class Table:
         '''reads a csv, xls or an xlsx file
         '''
         if path2file.endswith('.csv'):
+            print(f"        this a csv file")
             try:
-                return pd.read_csv(path2file, sep = '\s+', usecols = cols)
+                df = pd.read_csv(path2file, sep = '\s+', usecols = cols)
+                if len(df.columns) == 1:
+                    try:
+                        df = pd.read_csv(path2file, usecols = cols)
+                    except Exception as e:
+                        print(e)
+                return df
             except ValueError as e:
                 return pd.read_csv(path2file, delim_whitespace=True, usecols = cols)
         if path2file.endswith('.xls'):
+            print(f"        this a xls file")
             return pd.read_excel(path2file, sheet_name = sheetname, usecols = cols)
         if path2file.endswith('.xlsx'):
+            print(f"        this a xlsx file")
             return pd.read_excel(path2file, engine='openpyxl', sheet_name = sheetname, usecols = cols)
 
 
@@ -178,6 +187,9 @@ class Table:
 
 
     def change_val(self,df, index, col, new_val):
+        """
+            change to new_val the value located in position: index: col
+        """
         df.at[index, col] = new_val
         return df
 
