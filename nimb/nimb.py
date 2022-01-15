@@ -107,17 +107,16 @@ class NIMB(object):
             '''checks that all subjects are present in the SUBJECTS_DIR folder that will be used for GLM analysis,
                 sends cmd to batch to initiate FreeSurfer GLM running script
             '''
+            distrib = DistributionHelper(self.all_vars)
             fs_glm_dir   = self.project_vars['STATS_PATHS']["FS_GLM_dir"]
-            # fs_glm_dir   = self.stats_vars["STATS_PATHS"]["FS_GLM_dir"]
             fname_groups = self.project_vars['fname_groups']
             if DistributionReady(self.all_vars).chk_if_ready_for_fs_glm():
-                GLM_file_path, GLM_dir = DistributionHelper(self.all_vars).prep_4fs_glm(fs_glm_dir,
-                                                                            fname_groups)
+                GLM_file_path, GLM_dir = distrib.prep_4fs_glm(fs_glm_dir,
+                                                                fname_groups)
                 FS_SUBJECTS_DIR = self.vars_local['FREESURFER']['FS_SUBJECTS_DIR']
                 DistributionReady(self.all_vars).fs_chk_fsaverage_ready(FS_SUBJECTS_DIR)
                 if GLM_file_path:
-                    print('    GLM file path is:',GLM_file_path)
-                    self.vars_local['PROCESSING']['processing_env']  = "tmux"
+                    # self.vars_local['PROCESSING']['processing_env']  = "tmux"
                     schedule_fsglm = Scheduler(self.vars_local)
                     cd_cmd = 'cd {}'.format(path.join(self.NIMB_HOME, 'processing', 'freesurfer'))
                     cmd = f'{self.py_run_cmd} fs_glm_runglm.py -project {self.project} -glm_dir {GLM_dir}'
