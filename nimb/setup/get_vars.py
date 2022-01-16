@@ -144,11 +144,10 @@ class Get_Vars():
                         print('    types are different {}'.format(subkey))
 
         for _dir in DEFAULT.stats_dirs:
-            if 'default' in self.projects[self.project]['STATS_PATHS'][_dir]:
-                new_key = path.join(NIMB_tmp, 'projects', self.project, fname_dir,
-                    DEFAULT.stats_dirs[_dir]).replace(sep, '/')
-                self.projects[self.project]['STATS_PATHS'][_dir] = new_key
-                update = True
+            new_key = path.join(NIMB_tmp, 'projects', self.project, fname_dir,
+                                    DEFAULT.stats_dirs[_dir]).replace(sep, '/')
+            self.projects[self.project]['STATS_PATHS'][_dir] = new_key
+            update = True
         return update
 
 
