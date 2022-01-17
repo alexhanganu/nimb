@@ -33,6 +33,14 @@ class Table:
         return df
 
 
+    def change_index(self, df, index):
+        '''to set the index, based on column
+        Args:
+            index = str(column name)
+        '''
+        return df.set_index(index)
+
+
     def read_df(self, path2file, sheetname, cols):
         '''reads a csv, xls or an xlsx file
         '''
@@ -232,10 +240,3 @@ def get_df_for_fs_atlas(f_subcort, f_atlas_DK, f_atlas_DS, atlas, id_col):
     df_sub_and_cort = db_processing.join_dfs(df_subcort, df_atlas)
     ls_cols_X = db_processing.get_cols_tolist(df_sub_and_cort)
     return df_sub_and_cort, ls_cols_X
-
-
-    # def change_index(self, df, index):
-    #     '''to set the index, based on column
-    #     Args: index = str(column name)
-    #     '''
-    #     return df.set_index(index)
