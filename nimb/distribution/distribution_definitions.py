@@ -19,6 +19,7 @@ class DEFAULT(object):
                         "freesurfer"  :"freesurfer",
                         "nilearn"     :"nilearn",
                         "dipy"        :"dipy",}
+    freesurfer_key   = "freesurfer"
 
     app_files        = {"freesurfer":{"new_subjects"  :"new_subjects_fs.json",
                                       "running"       :"IsRunningFS_",
