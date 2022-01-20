@@ -156,6 +156,7 @@ class DistributionReady():
                     makedir_ifnot_exist(SUBJECTS_DIR)
                 return self.fs_chk_fsaverage_ready(SUBJECTS_DIR)
         else:
+            print('FreeSurfer is not installed yet. Please define FreeSurfer_install to 1 in the nimb/local.json file')
             return False
 
 
