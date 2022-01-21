@@ -424,6 +424,7 @@ class DistributionHelper():
                 return False
             else:
                 print('all ids are present in the analysis folder, ready for glm analysis')
+                print('    GLM file path is:',f_GLM_group)
                 return f_GLM_group, FS_GLM_dir
         else:
             print('GLM files are missing: {}, {}'.format(f_GLM_group, f_ids_processed))
