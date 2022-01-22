@@ -96,7 +96,8 @@ class Scheduler():
 
 
     def submit_2tmux(self, cmd, subjid, cd_cmd):
-        self.job_id = 'tmux_'+str(subjid)
+        dt = time.strftime("%Y%m%d_%H%M",time.localtime(time.time()))
+        self.job_id = 'tmux_'+str(subjid)+"_"+dt
         print('        submitting to tmux session: {}'.format(self.job_id))
         system('tmux new -d -s {}'.format(self.job_id))
         if self.activate_fs:
