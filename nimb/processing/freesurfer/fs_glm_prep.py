@@ -12,10 +12,14 @@ import linecache
 from setup.interminal_setup import get_yes_no
 from stats.db_processing import Table
 from distribution.utilities import save_json
+from distribution.distribution_definitions import DEFAULT
+
 try:
     import fs_definitions
+    print('    module fs_definitions was read directly')
 except ModuleNotFoundError:
-    print('exception ModuleNotFoundError for fs_definitions was triggered')
+    print('    EXCEPTION module fs_definitions could not be imported directly')
+    print('        importing fs_definitions from processing.freesurfer')
     from processing.freesurfer import fs_definitions
 
 try:
@@ -49,10 +53,11 @@ class CheckIfReady4GLM():
 
     def chk_if_subjects_ready(self):
 
-        fs_proc_ids = self.get_ids_processed('fs')
+        fs_proc_ids = self.get_ids_processed()
         miss_bids_ids = [i for i in self.bids_ids if i not in fs_proc_ids.keys()]
         if miss_bids_ids:
-            print(f'    some IDs are missing from the {self.f_ids_processed} file: {miss_bids_ids}')
+            print(f'    {len(miss_bids_ids)} IDs are missing from file: {self.f_ids_processed}')
+            print(f'        first 5 IDs are: {self.f_ids_processed[:5]}')
             for bids_id in miss_bids_ids:
                 self.add_to_miss(bids_id, 'id_missing')
 
@@ -70,13 +75,19 @@ class CheckIfReady4GLM():
                         are missing from the {self.FS_SUBJECTS_DIR} folder')
                     self.add_to_miss(bids_id, 'id_missing')
             if self.miss.keys():
-                save_json(self.miss, os.path.join(self.FS_GLM_dir, 'excluded_from_glm.json'))
+                file_abspath2save = os.path.join(self.FS_GLM_dir, 'excluded_from_glm.json')
+                save_json(self.miss, file_abspath2save, print_space = 8)
                 subjs_missing = len(self.miss.keys())
                 subjs_present = len(self.ids_4fs_glm.keys())
-                print(f'    {subjs_missing} missing \n\
-    {subjs_present} present\n\
-         in the folder: {self.FS_SUBJECTS_DIR}')
-                if get_yes_no('do you want to do glm analysis with current subjects ? (y/n)') == 1:
+                print(f'    Number of participants ready for FreeSurfer GLM:')
+                print(f'        in the folder: {self.FS_SUBJECTS_DIR}')
+                print(f'        {subjs_present} present')
+                print(f'        {subjs_missing} missing')
+                q = "    EXCEPTION! do you want to do glm analysis with current subjects ? (y/n)\n\
+                    (note: if you answer NO, you will be asked to extract the corresponding\n\
+                    processed folders of subjects to the FREESURFER_SUBJECTS folder for analysis\n\
+                    if those subjects are present in the corresponding FREESURFER_PROCESSED folder)"
+                if get_yes_no(q) == 1:
                     self.create_fs_glm_df()
                     return True, list()
                 else:
@@ -85,7 +96,7 @@ class CheckIfReady4GLM():
                 self.create_fs_glm_df()
                 return True, list()
         else:
-            print('no ids found')
+            print('    no ids found')
             return False, list()
 
     def chk_glm_files(self, bids_id):
@@ -130,11 +141,16 @@ class CheckIfReady4GLM():
             bids_id = self.df.at[ix, self.proj_vars['id_col']]
             if bids_id not in self.ids_4fs_glm.keys():
                 ls_ix_2rm.append(ix)
-        print(f'        {len(ls_ix_2rm)} subjects are missing and will be removed from futher analysis')
+        len_miss = len(ls_ix_2rm)
+        if len_miss == 0:
+            print(f'        ALL subjects are present')
+        else:
+            print(f'        {len_miss} subjects are missing')
+            print(f'            they will be removed from futher analysis')
         self.df = self.df.drop(ls_ix_2rm)
 
 
-    def get_ids_processed(self, method):
+    def get_ids_processed(self):
         '''retrieves the bids names of the IDs provided in the GLM file.
             It is expected that each project had a group of subjects that are present in the dataset
             it is expected that BIDS names are the ones used in the groups_glm file for the ids
@@ -142,10 +158,10 @@ class CheckIfReady4GLM():
             has the corresponding names of the source file/freesurfer/nilearn/dipy processed ziped files
             see nimb/example/f_ids.json
         '''
-        print('extracting list of ids')
-        from distribution.distribution_definitions import get_keys_processed
+        print('    extracting list of ids that were processed with FreeSurfer')
+        print(f'        in the file{self.f_ids_processed}')
         self.ids_bids_proc_all = self.read_json(self.f_ids_processed)
-        return {i: self.ids_bids_proc_all[i][get_keys_processed(method)] for i in self.ids_bids_proc_all}
+        return {i: self.ids_bids_proc_all[i][DEFAULT.freesurfer_key] for i in self.ids_bids_proc_all}
         # return {i: 'path' for i in self.ids_bids_proc_all if self.ids_bids_proc_all[i]['source'] in ids_src_glm_file} #old version
 
 
