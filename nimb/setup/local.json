@@ -30,7 +30,7 @@
     "SUBMIT"                  : 1
               },
 "FREESURFER": {
-    "install"                 : 0,
+    "install"                 : 1,
     "FREESURFER_HOME"         : "~/freesurfer",
     "SUBJECTS_DIR"            : "~/freesurfer/subjects",
     "NIMB_PROCESSED"          : "~/nimb_tmp/freesurfer/nimb_processed",
