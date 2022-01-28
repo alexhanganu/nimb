@@ -133,8 +133,9 @@ class NIMB(object):
                                     Check the variable: export_screen in file {}".format(
                                         "credentials_path.py/nimb/local.json"))
             elif self.vars_local['FREESURFER']["export_screen"] == 0:
-                print("Current environment is not ready to export screen. Please define a compute where the screen can \
-                                    be used for FreeSurfer Freeview and tksurfer")
+                print("ERROR!: Current environment is not ready to export screen.")
+                print("    Provide a computer where the screen can be used")
+                print("    to run FreeSurfer Freeview and tksurfer")
             if DistributionReady(self.all_vars).fs_ready():
                 print('before running the script, remember to source $FREESURFER_HOME')
                 cmd = '{} fs_glm_extract_images.py -project {}'.format(self.py_run_cmd, self.project)
