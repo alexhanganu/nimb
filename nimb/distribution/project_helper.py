@@ -39,7 +39,7 @@ verify_ids_are_bids_standard:
         yes:
             populate f_ids with apps from rawdata/derivatives
         no:
-            move _id_bid to _ids_project_col
+            move _id_bids to _ids_project_col
         get list _ids_bids with missing APP processed for each APP
         list missing present. Save the list
         make True (will be run by 3)
@@ -462,7 +462,7 @@ class ProjectManager:
                 run 1 A
         """
         print(f'{LogLVL.lvl1}checking for new subject to be processed')
-        self.get_ids_nimb_classified()
+        # self.get_ids_nimb_classified() # is used above, in ids_project_chk; probably redundant
         if self._ids_nimb_classified:
             self.unprocessed_d = dict()
             self.get_ls_unprocessed_data()
@@ -479,12 +479,15 @@ class ProjectManager:
 
     def get_ls_unprocessed_data(self):
         """
-        get the list of un-processed subject
-        must be absolute path
-        :param SOURCE_SUBJECTS_DIR:
-        :param PROCESSED_FS_DIR:
-        :param project_name: name of the project, cannot be None
-        :return: a list of subject to be processed
+            distributor:
+                initiate to get list of unprocessed from nimb_classified.json
+                if file is missing:
+                    initiate classify 2 nimb_bids
+                    get list of unprocessed from nimb_classified.json
+        Args:
+            none
+        Return:
+            none
         """
         print(f"{LogLVL.lvl2}SOURCE_SUBJECTS_DIR is: {self.srcdata_dir}")
         print(f"{LogLVL.lvl2}PROCESSED_FS_DIR is: {self.project_vars['PROCESSED_FS_DIR'][1]}")
