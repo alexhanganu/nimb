@@ -462,12 +462,16 @@ class ProjectManager:
                 run 1 A
         """
         print(f'{LogLVL.lvl1}checking for new subject to be processed')
-        # self.get_ids_nimb_classified() # is used above, in ids_project_chk; probably redundant
+        # self.get_ids_nimb_classified() # is used in ids_project_chk; probably redundant
         if self._ids_nimb_classified:
             self.unprocessed_d = dict()
             self.get_ls_unprocessed_data()
             if len(self.unprocessed_d) > 1:
+
+                #!!!! PROBABLY not needed, because it's performed when the new_subjects.json file is created
                 self.change_paths_2rawdata()
+                # !!! rm upper ?
+
                 print(f'{LogLVL.lvl2}there are {len(self.unprocessed_d)} participants with MRI data to be processed')
                 self.send_2processing('process')
                 # self.distrib_hlp.distribute_4_processing(self.unprocessed_d)
@@ -489,14 +493,13 @@ class ProjectManager:
         Return:
             none
         """
-        print(f"{LogLVL.lvl2}SOURCE_SUBJECTS_DIR is: {self.srcdata_dir}")
-        print(f"{LogLVL.lvl2}PROCESSED_FS_DIR is: {self.project_vars['PROCESSED_FS_DIR'][1]}")
-        self.get_ids_nimb_classified()
+        # self.get_ids_nimb_classified() # is used in ids_project_chk; probably redundant
         if self._ids_nimb_classified:
             self.get_unprocessed_ids_from_nimb_classified()
         else:
             if self.must_run_classify_2nimb:
                 print(f'{" " * 4} must initiate nimb classifier')
+                print(f"{LogLVL.lvl2} from SOURCE_SUBJECTS_DIR: {self.srcdata_dir}")
                 _dirs_to_classify = os.listdir(self.srcdata_dir)
                 is_classified, nimb_classified = self.run_classify_2nimb_bids(_dirs_to_classify)
                 if is_classified:
