@@ -220,7 +220,7 @@ class ProjectManager:
             bool
         """
         if self._ids_bids:
-            not_bids, _ = self.verify_ids_are_bids_standard()
+            not_bids, _ = self.verify_ids_are_bids_standard(self._ids_bids, self.BIDS_DIR)
             if not_bids:
                 print(f"{LogLVL.lvl2}some subjects are not of bids format: {not_bids}")
                 self.mv_ids_bids_in_grid(not_bids)
@@ -344,7 +344,7 @@ class ProjectManager:
         Return:
             bool
         """
-        _, yes_bids = self.verify_ids_are_bids_standard(col = "project")
+        _, yes_bids = self.verify_ids_are_bids_standard(self._ids_project, self.BIDS_DIR)
         if yes_bids:
             print(f"{LogLVL.lvl2}some subjects are of bids format: {yes_bids}")
             self.add_ids_project_to_bids_in_grid(yes_bids)
@@ -451,7 +451,6 @@ class ProjectManager:
                 yes:
                     extract _ids_bids
                     populate grid col _ids_bids_col
-                    run 1A
             get list(_ids in sourcedata _dir) NOT in nimb_classified file
             for _id in list():
                 run update nimb classify for list()
@@ -459,8 +458,14 @@ class ProjectManager:
                 populate grid with _ids_bids
                 populate f_ids with _ids_bids
                 save new grid to project.json
-                run 1 A
+            run 1 A
         """
+        ls2chk = self.get_listdir(self.srcdata_dir)
+        _, yes_bids = self.verify_ids_are_bids_standard(ls2chk, self.srcdata_dir)
+        if yes_bids:
+            print(f"{LogLVL.lvl2}some subjects are of bids format: {yes_bids}")
+            self.add_ids_project_to_bids_in_grid(yes_bids)
+
         print(f'{LogLVL.lvl1}checking for new subject to be processed')
         # self.get_ids_nimb_classified() # is used in ids_project_chk; probably redundant
         if self._ids_nimb_classified:
@@ -557,20 +562,20 @@ class ProjectManager:
     '''
     CLASSIFICATION related scripts
     '''
-    def verify_ids_are_bids_standard(self, col = "bids"):
+    def verify_ids_are_bids_standard(self, ls2chk, _dir2chk):
         """
             verify that all _ids in ls2chk
-            have a BIDS structure name
-            have a folder in rawdata
-            folder is BIDS validated
-            if NOT:
-                mv _ids to _ids_project column
+                have a BIDS structure name
+                have a folder in rawdata
+                folder is BIDS validated
+        Args:
+            ls2chk = list() with ids to check
+            _dir2chk = str() absolute path to dir with ids to check
+        Return:
+            no_bids, yes_bids = list() with that do not have or have
+                all criteria as True
         """
-        ls2chk = self._ids_bids
-        if col == "project":
-            ls2chk = self._ids_project
-
-        rawdata_listdir = self.get_listdir(self.BIDS_DIR)
+        rawdata_listdir = self.get_listdir(_dir2chk)
         no_bids = list()
         yes_bids = list()
 
@@ -580,12 +585,12 @@ class ProjectManager:
                 print(f"{LogLVL.lvl2}subject {_id} name is not of BIDS format")
                 no_bids.append(_id)
             elif sub_label not in rawdata_listdir:
-                print(f"{LogLVL.lvl2}subject {_id} is missing from: {self.BIDS_DIR}")
+                print(f"{LogLVL.lvl2}subject {_id} is missing from: {_dir2chk}")
                 no_bids.append(_id)
             else:
                 yes_bids.append(_id)
             # elif not validate BIDS: !!!!!!!!!!!!!!!!!
-            #     print(f"{LogLVL.lvl2}subject {_id} folder in: {self.BIDS_DIR} has not been validated for BIDS")
+            #     print(f"{LogLVL.lvl2}subject {_id} folder in: {_dir2chk} has not been validated for BIDS")
             #     no_bids.append(_id)
         return no_bids, yes_bids
 
