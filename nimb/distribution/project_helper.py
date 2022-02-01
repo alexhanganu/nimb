@@ -464,6 +464,7 @@ class ProjectManager:
         _, yes_bids = self.verify_ids_are_bids_standard(ls2chk, self.srcdata_dir)
         if yes_bids:
             print(f"{LogLVL.lvl2}some subjects are of bids format: {yes_bids}")
+            self.add_ids_source_to_bids_in_grid(yes_bids)
             self.add_ids_project_to_bids_in_grid(yes_bids)
 
         print(f'{LogLVL.lvl1}checking for new subject to be processed')
@@ -948,6 +949,19 @@ class ProjectManager:
                     self.tab.change_val(self.df_grid, index, self._ids_project_col, None)
                     self._ids_project.remove(_id_project)
 
+        self.tab.save_df(self.df_grid,
+                        os.path.join(self.path_stats_dir, self.f_groups))
+
+
+    def add_ids_source_to_bids_in_grid(self, ls_ids):
+        """
+            adding a new id from sourcedata dir
+            to the bids columns
+            in the last position
+        """
+        self._ids_bids = self.df_grid[self._ids_bids_col].tolist()
+        self._ids_bids = self._ids_bids + ls_ids
+        self.df_grid[self._ids_bids_col] = self._ids_bids
         self.tab.save_df(self.df_grid,
                         os.path.join(self.path_stats_dir, self.f_groups))
 
