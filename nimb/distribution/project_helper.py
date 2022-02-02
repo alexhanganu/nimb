@@ -465,7 +465,6 @@ class ProjectManager:
         if yes_bids:
             print(f"{LogLVL.lvl2}some subjects are of bids format: {yes_bids}")
             self.add_ids_source_to_bids_in_grid(yes_bids)
-            self.add_ids_project_to_bids_in_grid(yes_bids)
 
         print(f'{LogLVL.lvl1}checking for new subject to be processed')
         # self.get_ids_nimb_classified() # is used in ids_project_chk; probably redundant
