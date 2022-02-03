@@ -55,7 +55,15 @@ class Table:
                         print(e)
                 return df
             except ValueError as e:
-                return pd.read_csv(path2file, delim_whitespace=True, usecols = cols)
+                try:
+                    df = pd.read_csv(path2file, delim_whitespace=True, usecols = cols)
+                except Exception as e:
+                    print(e)
+                    try:
+                        df = pd.read_csv(path2file, sep = ",", , usecols = cols)
+                    except Exception as e:
+                        print(e)
+                        df = self.get_clean_df()
         if path2file.endswith('.xls'):
             print(f"        this a xls file")
             return pd.read_excel(path2file, sheet_name = sheetname, usecols = cols)
