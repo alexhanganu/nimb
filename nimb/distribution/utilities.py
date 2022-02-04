@@ -5,10 +5,12 @@ import os
 import sys
 from os import makedirs, path, sep
 
+import shutil
 import json
 from collections import OrderedDict
 import subprocess
 import logging
+import pathlib
 
 from setup import database
 
@@ -182,3 +184,36 @@ class ErrorMessages:
         logger.fatal("ERROR: {command} is fail".format(command=command))
     def error_conda():
         logger.info("conda is missing some modules")
+
+def copy_rm_dir(source_data,
+                target,
+                rm = False):
+    """copies a dir
+        checks if copy was performed correctly
+        if rm = True:
+            deleted the source dir
+    Args:
+        source_data: absolute path to dir of file to be copied
+        target: asolute path to new dir/file where to copy
+            ATTENTION: must include also the new dir/file name
+        rm: bool; If True: will remove the source dir / file
+    Return:
+        bool: True = copy performed correctly
+    """
+    if not os.path.exists(target):
+        log.info(f'    copying {source_data} to: {target}')
+        shutil.copytree(source_data, target)
+
+        # extracting the initial size of the folder to copy, to verify with the copied size
+        # if both sizes are similar, source is removed
+        # if a new name due to error - was assigned, folder is renamed
+        # if user requested archiving - archiving is performed.
+        size_src = sum(f.stat().st_size for f in pathlib.Path(source_data).glob('**/*') if f.is_file())
+        size_dst = sum(f.stat().st_size for f in pathlib.Path(target).glob('**/*') if f.is_file())
+        if size_src == size_dst:
+            shutil.rmtree(source_data)
+        return True
+    else:
+        log.info(f'    copying {source_data} to: {target}')
+        return False
+
