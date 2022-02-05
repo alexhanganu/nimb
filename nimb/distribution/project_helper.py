@@ -3,11 +3,11 @@
 
 import os
 import sys
-import shutil
 
 from stats.db_processing import Table
 from distribution.distribution_helper import  DistributionHelper
 from distribution.distribution_ready import DistributionReady
+from distribution import utilities
 from distribution.utilities import load_json, save_json, makedir_ifnot_exist
 from distribution.distribution_definitions import get_keys_processed, DEFAULT, DEFAULTpaths
 from classification.classify_2nimb_bids import Classify2_NIMB_BIDS
@@ -952,17 +952,34 @@ class ProjectManager:
                         os.path.join(self.path_stats_dir, self.f_groups))
 
 
-    def add_ids_source_to_bids_in_grid(self, ls_ids):
+    def add_ids_source_to_bids_in_grid(self, yes_bids):
         """
             adding a new id from sourcedata dir
             to the bids columns
             in the last position
         """
+        ls_id_bids_copied = list()
+        ls_id_bids_not_copied = list()
+        for _id_src in yes_bids:
+            if self.srcdata_dir != self.BIDS_DIR:
+                print(f"{LogLVL.lvl2}copying {_id_src}")
+                print(f"{LogLVL.lvl3}from :{self.srcdata_dir}")
+                print(f"{LogLVL.lvl3}to   : {self.BIDS_DIR}")
+                source_data = os.path.join(self.srcdata_dir, _id_src)
+                target      = os.path.join(self.BIDS_DIR, _id_src)
+                copied = utilities.copy_rm_dir(source_data, target)
+                if copied:
+                    ls_id_bids_copied.append(_id_src)
+                else:
+                    ls_id_bids_not_copied.append(_id_src)
         self._ids_bids = self.df_grid[self._ids_bids_col].tolist()
-        self._ids_bids = self._ids_bids + ls_ids
+        self._ids_bids = self._ids_bids + ls_id_bids_copied
         self.df_grid[self._ids_bids_col] = self._ids_bids
         self.tab.save_df(self.df_grid,
                         os.path.join(self.path_stats_dir, self.f_groups))
+        if ls_id_bids_not_copied:
+            print(f"{LogLVL.lvl2}some ids could not be copied {_id_src}")
+                print(f"{LogLVL.lvl3}{ls_id_bids_not_copied}")
 
 
     def rm_id_from_grid(self, ls_2rm_from_grid):
