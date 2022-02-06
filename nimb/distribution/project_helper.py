@@ -29,6 +29,8 @@ Situations:
 
 Grid get or make
 f_ids get or make
+f_nimb_classified get or make
+
 verify_ids_are_bids_standard:
     has BIDS structure name?
         and has corresponding _dir in rawdata ?
@@ -170,6 +172,7 @@ class ProjectManager:
                                                 tmp_dir = self.NIMB_tmp)
         self.get_df_f_groups()
         self.read_f_ids()
+        self.get_ids_nimb_classified()
 
 
     def run(self):
@@ -349,8 +352,6 @@ class ProjectManager:
             print(f"{LogLVL.lvl2}some subjects are of bids format: {yes_bids}")
             self.add_ids_project_to_bids_in_grid(yes_bids)
 
-        self.get_ids_nimb_classified()
-
         ls_2rm_from_grid     = list()
         ls_4dcm2bids_classif = list()
         ls_4nimb_classif     = list()
@@ -430,19 +431,6 @@ class ProjectManager:
         save_json(self._ids_all, self.f_ids_instatsdir)
 
 
-    def get_ids_nimb_classified(self):
-        f_abspath = os.path.join(self.srcdata_dir, DEFAULT.f_nimb_classified)
-        self.must_run_classify_2nimb = False
-        self._ids_nimb_classified = dict()
-
-        if os.path.exists(f_abspath):
-            self._ids_nimb_classified = load_json(f_abspath)
-        else:
-            print(f'{LogLVL.lvl1}file {f_abspath} is missing in: {_dir}')
-            self.must_run_classify_2nimb = True
-
-
-
 
 
     def check_new(self):
@@ -467,8 +455,13 @@ class ProjectManager:
             self.add_ids_source_to_bids_in_grid(yes_bids)
 
         print(f'{LogLVL.lvl1}checking for new subject to be processed')
-        # self.get_ids_nimb_classified() # is used in ids_project_chk; probably redundant
-        if self._ids_nimb_classified:
+
+        # must check is "if self_ids_nimb_classified" is used multiple time
+        # and must setp a method for else
+        # probably just need a for loop, not an if
+        if not self._ids_nimb_classified:
+            print(f"{LogLVL.lvl1} ERR file nimb_classified.json is not available")
+        else:
             self.unprocessed_d = dict()
             self.get_ls_unprocessed_data()
             if len(self.unprocessed_d) > 1:
@@ -482,8 +475,6 @@ class ProjectManager:
                 # self.distrib_hlp.distribute_4_processing(self.unprocessed_d)
             else:
                print(f'{LogLVL.lvl2}ALL participants with MRI data were processed')
-        else:
-            print(f"{LogLVL.lvl1} ERR file nimb_classified.json is not available")
 
 
     def get_ls_unprocessed_data(self):
@@ -502,16 +493,15 @@ class ProjectManager:
         if self._ids_nimb_classified:
             self.get_unprocessed_ids_from_nimb_classified()
         else:
-            if self.must_run_classify_2nimb:
-                print(f'{" " * 4} must initiate nimb classifier')
-                print(f"{LogLVL.lvl2} from SOURCE_SUBJECTS_DIR: {self.srcdata_dir}")
-                _dirs_to_classify = os.listdir(self.srcdata_dir)
-                is_classified, nimb_classified = self.run_classify_2nimb_bids(_dirs_to_classify)
-                if is_classified:
-                    self.get_ids_nimb_classified()
-                    self.get_unprocessed_ids_from_nimb_classified()
-                else:
-                    print(f"{LogLVL.lvl2}ERROR: classification 2nimb-bids had an error")
+            print(f'{" " * 4} must initiate nimb classifier')
+            print(f"{LogLVL.lvl2} from SOURCE_SUBJECTS_DIR: {self.srcdata_dir}")
+            _dirs_to_classify = os.listdir(self.srcdata_dir)
+            is_classified, nimb_classified = self.run_classify_2nimb_bids(_dirs_to_classify)
+            if is_classified:
+                self.get_ids_nimb_classified()
+                self.get_unprocessed_ids_from_nimb_classified()
+            else:
+                print(f"{LogLVL.lvl2}ERROR: classification 2nimb-bids had an error")
 
 
     def get_unprocessed_ids_from_nimb_classified(self):
@@ -1021,6 +1011,21 @@ class ProjectManager:
             print(f'{LogLVL.lvl2} file with ids is EMPTY')
             self.save_f_ids()
         # print(f'{LogLVL.lvl1} ids all are: {self._ids_all}')
+
+
+    """
+    f_ids_nimb_classified related scripts
+
+    """
+    def get_ids_nimb_classified(self):
+        f_abspath = os.path.join(self.srcdata_dir, DEFAULT.f_nimb_classified)
+        self._ids_nimb_classified = dict()
+
+        if os.path.exists(f_abspath):
+            self._ids_nimb_classified = load_json(f_abspath)
+        else:
+            print(f'{LogLVL.lvl1}file {f_abspath} is missing in: {_dir}')
+
 
 
     # def get_id_project_from_nimb_classified(self, sub_label):
