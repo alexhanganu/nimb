@@ -91,19 +91,19 @@ verify_ids_are_bids_standard:
                         environment allows screen export ? yes:
                             extract FS-GLM images
 4:
-    _dir with MRI is BIDS validated ?
-        yes:
-            extract _ids_bids
+    extract dirs that are BIDS format and validated
+    yes_bids list:
             populate grid col _ids_bids_col
-            run 1A
-    get list(_ids in sourcedata _dir) NOT in nimb_classified file
-    for _id in list():
-        run update nimb classify for list()
-        run dcm2bids
-        populate grid with _ids_bids
-        populate f_ids with _ids_bids
-        save new grid to project.json
-        run 1 A
+            copy folder to rawdata folder
+    no_bids list:
+        get list(_ids in sourcedata _dir) NOT in nimb_classified file
+        for _id in list():
+            run update nimb classify for list()
+            run dcm2bids
+            populate grid with _ids_bids
+            populate f_ids with _ids_bids
+            save new grid to project.json
+    run 1 A
 
 Definitions:
     _id_bids   : created with DCM2BIDS_helper().make_bids_id
@@ -435,50 +435,21 @@ class ProjectManager:
 
     def check_new(self):
         """
-            _dir with MRI is BIDS validated ?
-                yes:
-                    extract _ids_bids
+        ALGO
+            extract dirs that are BIDS format and validated
+            yes_bids list:
                     populate grid col _ids_bids_col
-            get list(_ids in sourcedata _dir) NOT in nimb_classified file
-            for _id in list():
-                run update nimb classify for list()
-                run dcm2bids
-                populate grid with _ids_bids
-                populate f_ids with _ids_bids
-                save new grid to project.json
+                    copy folder to rawdata folder
+            no_bids list:
+                get list(_ids in sourcedata _dir) NOT in nimb_classified file
+                for _id in list():
+                    run update nimb classify for list()
+                    run dcm2bids
+                    populate grid with _ids_bids
+                    populate f_ids with _ids_bids
+                    save new grid to project.json
             run 1 A
-        """
-        ls2chk = self.get_listdir(self.srcdata_dir)
-        _, yes_bids = self.verify_ids_are_bids_standard(ls2chk, self.srcdata_dir)
-        if yes_bids:
-            print(f"{LogLVL.lvl2}some subjects are of bids format: {yes_bids}")
-            self.add_ids_source_to_bids_in_grid(yes_bids)
-
-        print(f'{LogLVL.lvl1}checking for new subject to be processed')
-
-        # must check is "if self_ids_nimb_classified" is used multiple time
-        # and must setp a method for else
-        # probably just need a for loop, not an if
-        if not self._ids_nimb_classified:
-            print(f"{LogLVL.lvl1} ERR file nimb_classified.json is not available")
-        else:
-            self.unprocessed_d = dict()
-            self.get_ls_unprocessed_data()
-            if len(self.unprocessed_d) > 1:
-
-                #!!!! PROBABLY not needed, because it's performed when the new_subjects.json file is created
-                self.change_paths_2rawdata()
-                # !!! rm upper ?
-
-                print(f'{LogLVL.lvl2}there are {len(self.unprocessed_d)} participants with MRI data to be processed')
-                self.send_2processing('process')
-                # self.distrib_hlp.distribute_4_processing(self.unprocessed_d)
-            else:
-               print(f'{LogLVL.lvl2}ALL participants with MRI data were processed')
-
-
-    def get_ls_unprocessed_data(self):
-        """
+        DESCRIPTION:
             distributor:
                 initiate to get list of unprocessed from nimb_classified.json
                 if file is missing:
@@ -489,19 +460,45 @@ class ProjectManager:
         Return:
             none
         """
-        # self.get_ids_nimb_classified() # is used in ids_project_chk; probably redundant
+        print(f'{LogLVL.lvl1}checking for new subjects')
+
+        # extract potential ids that might have bids structure
+        # and could be directly moved to the _ids_bids column in the grid
+        ls2chk = self.get_listdir(self.srcdata_dir)
+        print(f'{LogLVL.lvl2}checking BIDS format in:')
+        print(f"{LogLVL.lvl3}SOURCE_SUBJECTS_DIR: {self.srcdata_dir}")
+        no_bids, yes_bids = self.verify_ids_are_bids_standard(ls2chk, self.srcdata_dir)
+        if yes_bids:
+            print(f"{LogLVL.lvl2}some subjects are of bids format: {yes_bids}")
+            self.add_ids_source_to_bids_in_grid(yes_bids)
+
+        # checking for new subjects
+        # extracting subjects missing from the nimb_classified file
+        print(f'{LogLVL.lvl2}checking for new subject to be processed')
+        self.unprocessed_d = dict()
         if self._ids_nimb_classified:
             self.get_unprocessed_ids_from_nimb_classified()
         else:
-            print(f'{" " * 4} must initiate nimb classifier')
-            print(f"{LogLVL.lvl2} from SOURCE_SUBJECTS_DIR: {self.srcdata_dir}")
-            _dirs_to_classify = os.listdir(self.srcdata_dir)
-            is_classified, nimb_classified = self.run_classify_2nimb_bids(_dirs_to_classify)
+            print(f"{LogLVL.lvl3}file nimb_classified.json is not available")
+            print(f'{LogLVL.lvl3} must initiate nimb classifier')
+            print(f"{LogLVL.lvl3} from SOURCE_SUBJECTS_DIR: {self.srcdata_dir}")
+            is_classified, nimb_classified = self.run_classify_2nimb_bids(no_bids)
             if is_classified:
                 self.get_ids_nimb_classified()
                 self.get_unprocessed_ids_from_nimb_classified()
             else:
                 print(f"{LogLVL.lvl2}ERROR: classification 2nimb-bids had an error")
+
+        if len(self.unprocessed_d) > 1:
+
+            # #!!!! PROBABLY not needed, because it's performed when the new_subjects.json file is created
+            # self.change_paths_2rawdata()
+            # # !!! rm upper ?
+
+            print(f'{LogLVL.lvl2}there are {len(self.unprocessed_d)} participants with MRI data to be processed')
+            self.processing_chk()
+        else:
+           print(f'{LogLVL.lvl2}ALL participants with MRI data were processed')
 
 
     def get_unprocessed_ids_from_nimb_classified(self):
@@ -520,33 +517,33 @@ class ProjectManager:
                     # MUST check now for each app if was processed for each _id_bids
 
 
-    def change_paths_2rawdata(self):
-        for _id_bids in self.unprocessed_d:
-            _id_bids_data = self.unprocessed_d[_id_bids]
-            if "archived" in _id_bids_data:
-                archive = _id_bids_data["archived"]
-                _id_bids_data.pop("archived", None)
-            for BIDS_type in _id_bids_data:# [i for i in _id_bids_data if i not in ("archived",)]:
-                for mr_modality in _id_bids_data[BIDS_type]:
-                    _, sub_label, ses_label, _ = self.dcm2bids.is_bids_format(_id_bids)
-                    path_2rawdata = os.path.join(self.BIDS_DIR, sub_label, ses_label, BIDS_type)
-                    if not os.path.exists(path_2rawdata):
-                        print(f"{LogLVL.lvl2}{_id_bids} has no rawdata folder")
-                        _id_project = self._ids_all[_id_bids]["project"]
-                        _id_bids = self.classify_with_dcm2bids(self._ids_nimb_classified,
-                                                                _id = _id_project)
+    # def change_paths_2rawdata(self):
+    #     for _id_bids in self.unprocessed_d:
+    #         _id_bids_data = self.unprocessed_d[_id_bids]
+    #         if "archived" in _id_bids_data:
+    #             archive = _id_bids_data["archived"]
+    #             _id_bids_data.pop("archived", None)
+    #         for BIDS_type in _id_bids_data:# [i for i in _id_bids_data if i not in ("archived",)]:
+    #             for mr_modality in _id_bids_data[BIDS_type]:
+    #                 _, sub_label, ses_label, _ = self.dcm2bids.is_bids_format(_id_bids)
+    #                 path_2rawdata = os.path.join(self.BIDS_DIR, sub_label, ses_label, BIDS_type)
+    #                 if not os.path.exists(path_2rawdata):
+    #                     print(f"{LogLVL.lvl2}{_id_bids} has no rawdata folder")
+    #                     _id_project = self._ids_all[_id_bids]["project"]
+    #                     _id_bids = self.classify_with_dcm2bids(self._ids_nimb_classified,
+    #                                                             _id = _id_project)
 
-                    _, sub_label, ses_label, _ = self.dcm2bids.is_bids_format(_id_bids)
-                    path_2rawdata = self.dcm2bids.get_path_2rawdata(sub_label,
-                                                        ses_label,
-                                                        BIDS_type,
-                                                        mr_modality)
-                    if path_2rawdata:
-                        self.unprocessed_d[_id_bids][BIDS_type][mr_modality] = [path_2rawdata,]
-                    elif archive:
-                        self.unprocessed_d[_id_bids][BIDS_type]["archived"] = archive
-                    else:
-                        print(f"{LogLVL.lvl2}raw data is missing and file is not archived")
+    #                 _, sub_label, ses_label, _ = self.dcm2bids.is_bids_format(_id_bids)
+    #                 path_2rawdata = self.dcm2bids.get_path_2rawdata(sub_label,
+    #                                                     ses_label,
+    #                                                     BIDS_type,
+    #                                                     mr_modality)
+    #                 if path_2rawdata:
+    #                     self.unprocessed_d[_id_bids][BIDS_type][mr_modality] = [path_2rawdata,]
+    #                 elif archive:
+    #                     self.unprocessed_d[_id_bids][BIDS_type]["archived"] = archive
+    #                 else:
+    #                     print(f"{LogLVL.lvl2}raw data is missing and file is not archived")
 
 
     '''
