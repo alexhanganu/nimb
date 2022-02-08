@@ -436,18 +436,20 @@ class ProjectManager:
     def check_new(self):
         """
         ALGO
-            extract dirs that are BIDS format and validated
-            yes_bids list:
-                    populate grid col _ids_bids_col
-                    copy folder to rawdata folder
-            no_bids list:
-                get list(_ids in sourcedata _dir) NOT in nimb_classified file
-                for _id in list():
-                    run update nimb classify for list()
-                    run dcm2bids
-                    populate grid with _ids_bids
-                    populate f_ids with _ids_bids
-                    save new grid to project.json
+            get _ids_src_new that are missing from nimb_classified
+            from _ids_src:
+                run update nimb classify for list()
+                extract dirs that are BIDS format and validated
+                yes_bids list:
+                        populate grid col _ids_bids_col
+                        copy folder to rawdata folder
+                no_bids list:
+                    get list(_ids in sourcedata _dir) NOT in nimb_classified file
+                    for _id in list():
+                        run dcm2bids
+                        populate grid with _ids_bids
+                        populate f_ids with _ids_bids
+                        save new grid to project.json
             run 1 A
         DESCRIPTION:
             distributor:
@@ -460,45 +462,42 @@ class ProjectManager:
         Return:
             none
         """
-        print(f'{LogLVL.lvl1}checking for new subjects')
-
-        # extract potential ids that might have bids structure
-        # and could be directly moved to the _ids_bids column in the grid
-        ls2chk = self.get_listdir(self.srcdata_dir)
-        print(f'{LogLVL.lvl2}checking BIDS format in:')
-        print(f"{LogLVL.lvl3}SOURCE_SUBJECTS_DIR: {self.srcdata_dir}")
-        no_bids, yes_bids = self.verify_ids_are_bids_standard(ls2chk, self.srcdata_dir)
-        if yes_bids:
-            print(f"{LogLVL.lvl2}some subjects are of bids format: {yes_bids}")
-            self.add_ids_source_to_bids_in_grid(yes_bids)
-
         # checking for new subjects
         # extracting subjects missing from the nimb_classified file
-        print(f'{LogLVL.lvl2}checking for new subject to be processed')
-        self.unprocessed_d = dict()
-        if self._ids_nimb_classified:
-            self.get_unprocessed_ids_from_nimb_classified()
-        else:
-            print(f"{LogLVL.lvl3}file nimb_classified.json is not available")
-            print(f'{LogLVL.lvl3} must initiate nimb classifier')
-            print(f"{LogLVL.lvl3} from SOURCE_SUBJECTS_DIR: {self.srcdata_dir}")
-            is_classified, nimb_classified = self.run_classify_2nimb_bids(no_bids)
+        print(f'{LogLVL.lvl1}checking for new subjects')
+
+        ls_ids_src     = self.get_listdir(self.srcdata_dir)
+        ls_new_ids_src = [i for i in ls2chk if i not in self._ids_nimb_classified]
+        if ls_new_ids_src:
+            print(f'{LogLVL.lvl3}initiating nimb classifier')
+            print(f"{LogLVL.lvl3}for SOURCE_SUBJECTS_DIR: {self.srcdata_dir}")
+            print(f'{LogLVL.lvl3}to file: nimb_classified.json')
+            is_classified, nimb_classified = self.run_classify_2nimb_bids(ls_new_ids_src)
             if is_classified:
                 self.get_ids_nimb_classified()
+                # extract potential ids that might have bids structure
+                # and could be directly moved to the _ids_bids column in the grid
+                print(f'{LogLVL.lvl2}checking BIDS format in:')
+                print(f"{LogLVL.lvl3}SOURCE_SUBJECTS_DIR: {self.srcdata_dir}")
+                no_bids, yes_bids = self.verify_ids_are_bids_standard(ls_new_ids_src, self.srcdata_dir)
+                if yes_bids:
+                    print(f"{LogLVL.lvl2}some subjects are of bids format: {yes_bids}")
+                    self.add_ids_source_to_bids_in_grid(yes_bids)
+
+                # extract unprocessed ids
+                self.unprocessed_d = dict()
                 self.get_unprocessed_ids_from_nimb_classified()
+                if len(self.unprocessed_d) > 1:
+                    print(f'{LogLVL.lvl2}there are {len(self.unprocessed_d)} participants with MRI data to be processed')
+                    self.processing_chk()
+                else:
+                   print(f'{LogLVL.lvl2}ALL participants with MRI data were processed')
             else:
                 print(f"{LogLVL.lvl2}ERROR: classification 2nimb-bids had an error")
-
-        if len(self.unprocessed_d) > 1:
-
-            # #!!!! PROBABLY not needed, because it's performed when the new_subjects.json file is created
-            # self.change_paths_2rawdata()
-            # # !!! rm upper ?
-
-            print(f'{LogLVL.lvl2}there are {len(self.unprocessed_d)} participants with MRI data to be processed')
-            self.processing_chk()
         else:
-           print(f'{LogLVL.lvl2}ALL participants with MRI data were processed')
+            self.get_unprocessed_ids_from_nimb_classified()
+            print(f'{LogLVL.lvl3}All subjects were classified to nimb')
+
 
 
     def get_unprocessed_ids_from_nimb_classified(self):
@@ -518,6 +517,9 @@ class ProjectManager:
 
 
     # def change_paths_2rawdata(self):
+    #     '''
+    #         !!!! PROBABLY not needed, because it's performed when the new_subjects.json file is created
+    #     '''
     #     for _id_bids in self.unprocessed_d:
     #         _id_bids_data = self.unprocessed_d[_id_bids]
     #         if "archived" in _id_bids_data:
