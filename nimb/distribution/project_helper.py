@@ -516,37 +516,6 @@ class ProjectManager:
                     # MUST check now for each app if was processed for each _id_bids
 
 
-    # def change_paths_2rawdata(self):
-    #     '''
-    #         !!!! PROBABLY not needed, because it's performed when the new_subjects.json file is created
-    #     '''
-    #     for _id_bids in self.unprocessed_d:
-    #         _id_bids_data = self.unprocessed_d[_id_bids]
-    #         if "archived" in _id_bids_data:
-    #             archive = _id_bids_data["archived"]
-    #             _id_bids_data.pop("archived", None)
-    #         for BIDS_type in _id_bids_data:# [i for i in _id_bids_data if i not in ("archived",)]:
-    #             for mr_modality in _id_bids_data[BIDS_type]:
-    #                 _, sub_label, ses_label, _ = self.dcm2bids.is_bids_format(_id_bids)
-    #                 path_2rawdata = os.path.join(self.BIDS_DIR, sub_label, ses_label, BIDS_type)
-    #                 if not os.path.exists(path_2rawdata):
-    #                     print(f"{LogLVL.lvl2}{_id_bids} has no rawdata folder")
-    #                     _id_project = self._ids_all[_id_bids]["project"]
-    #                     _id_bids = self.classify_with_dcm2bids(self._ids_nimb_classified,
-    #                                                             _id = _id_project)
-
-    #                 _, sub_label, ses_label, _ = self.dcm2bids.is_bids_format(_id_bids)
-    #                 path_2rawdata = self.dcm2bids.get_path_2rawdata(sub_label,
-    #                                                     ses_label,
-    #                                                     BIDS_type,
-    #                                                     mr_modality)
-    #                 if path_2rawdata:
-    #                     self.unprocessed_d[_id_bids][BIDS_type][mr_modality] = [path_2rawdata,]
-    #                 elif archive:
-    #                     self.unprocessed_d[_id_bids][BIDS_type]["archived"] = archive
-    #                 else:
-    #                     print(f"{LogLVL.lvl2}raw data is missing and file is not archived")
-
 
     '''
     CLASSIFICATION related scripts
@@ -584,6 +553,18 @@ class ProjectManager:
         return no_bids, yes_bids
 
 
+    def run_classify_2nimb_bids(self, _dir):
+        print(f'{LogLVL.lvl1}classifying folder: {_dir}')
+        multi_T1     = self.local_vars['FREESURFER']['multiple_T1_entries']
+        add_flair_t2 = self.local_vars['FREESURFER']['flair_t2_add']
+        fix_spaces   = self.all_vars.params.fix_spaces
+        is_classified, nimb_classified = Classify2_NIMB_BIDS(self.project,
+                                                        self.srcdata_dir, self.NIMB_tmp, [_dir,],
+                                                        fix_spaces, True,
+                                                        multi_T1, add_flair_t2).run()
+        return is_classified, nimb_classified
+
+
     def prep_4dcm2bids_classification(self):
         ls_source_dirs = self.get_listdir(self.srcdata_dir)
 
@@ -610,20 +591,6 @@ class ProjectManager:
             is_classified, nimb_classified = self.run_classify_2nimb_bids(_id)
             if is_classified:
                 _id_bids = self.classify_with_dcm2bids(nimb_classified)
-
-
-
-
-    def run_classify_2nimb_bids(self, _dir):
-        print(f'{LogLVL.lvl1}classifying folder: {_dir}')
-        multi_T1     = self.local_vars['FREESURFER']['multiple_T1_entries']
-        add_flair_t2 = self.local_vars['FREESURFER']['flair_t2_add']
-        fix_spaces   = self.all_vars.params.fix_spaces
-        is_classified, nimb_classified = Classify2_NIMB_BIDS(self.project,
-                                                        self.srcdata_dir, self.NIMB_tmp, [_dir,],
-                                                        fix_spaces, True,
-                                                        multi_T1, add_flair_t2).run()
-        return is_classified, nimb_classified
 
 
     def prep_dirs(self, ls_dirs):
@@ -1182,3 +1149,36 @@ class ProjectManager:
     #     else:
     #         print(f'{LogLVL.lvl1}nimb_classified.json is missing')
     #     return self._ids_missing
+
+
+
+    # def change_paths_2rawdata(self):
+    #     '''
+    #         !!!! PROBABLY not needed, because it's performed when the new_subjects.json file is created
+    #     '''
+    #     for _id_bids in self.unprocessed_d:
+    #         _id_bids_data = self.unprocessed_d[_id_bids]
+    #         if "archived" in _id_bids_data:
+    #             archive = _id_bids_data["archived"]
+    #             _id_bids_data.pop("archived", None)
+    #         for BIDS_type in _id_bids_data:# [i for i in _id_bids_data if i not in ("archived",)]:
+    #             for mr_modality in _id_bids_data[BIDS_type]:
+    #                 _, sub_label, ses_label, _ = self.dcm2bids.is_bids_format(_id_bids)
+    #                 path_2rawdata = os.path.join(self.BIDS_DIR, sub_label, ses_label, BIDS_type)
+    #                 if not os.path.exists(path_2rawdata):
+    #                     print(f"{LogLVL.lvl2}{_id_bids} has no rawdata folder")
+    #                     _id_project = self._ids_all[_id_bids]["project"]
+    #                     _id_bids = self.classify_with_dcm2bids(self._ids_nimb_classified,
+    #                                                             _id = _id_project)
+
+    #                 _, sub_label, ses_label, _ = self.dcm2bids.is_bids_format(_id_bids)
+    #                 path_2rawdata = self.dcm2bids.get_path_2rawdata(sub_label,
+    #                                                     ses_label,
+    #                                                     BIDS_type,
+    #                                                     mr_modality)
+    #                 if path_2rawdata:
+    #                     self.unprocessed_d[_id_bids][BIDS_type][mr_modality] = [path_2rawdata,]
+    #                 elif archive:
+    #                     self.unprocessed_d[_id_bids][BIDS_type]["archived"] = archive
+    #                 else:
+    #                     print(f"{LogLVL.lvl2}raw data is missing and file is not archived")
