@@ -483,6 +483,8 @@ class ProjectManager:
                 if yes_bids:
                     print(f"{LogLVL.lvl2}some subjects are of bids format: {yes_bids}")
                     self.add_ids_source_to_bids_in_grid(yes_bids)
+                if not_bids:
+                    _id_bids = self.classify_with_dcm2bids(not_bids)
 
                 # extract unprocessed ids
                 self.unprocessed_d = dict()
@@ -553,15 +555,26 @@ class ProjectManager:
         return no_bids, yes_bids
 
 
-    def run_classify_2nimb_bids(self, _dir):
-        print(f'{LogLVL.lvl1}classifying folder: {_dir}')
+    def run_classify_2nimb_bids(self, ls_subjects):
+        """initiator for nimb_classifier
+        Args:
+            ls_subjects: list() if _ids to be classified
+        Return:
+            is_classified: bool; True = classification was performed correctly
+            nimb_classified: dict() of the nimb_classified.json file
+        """
+        print(f'{LogLVL.lvl2}classifying folder: {_dir}')
         multi_T1     = self.local_vars['FREESURFER']['multiple_T1_entries']
         add_flair_t2 = self.local_vars['FREESURFER']['flair_t2_add']
         fix_spaces   = self.all_vars.params.fix_spaces
         is_classified, nimb_classified = Classify2_NIMB_BIDS(self.project,
-                                                        self.srcdata_dir, self.NIMB_tmp, [_dir,],
-                                                        fix_spaces, True,
-                                                        multi_T1, add_flair_t2).run()
+                                                        self.srcdata_dir,
+                                                        self.NIMB_tmp,
+                                                        ls_subjects = ls_subjects,
+                                                        fix_spaces = fix_spaces,
+                                                        update = True,
+                                                        multiple_T1_entries = multi_T1,
+                                                        flair_t2_add = add_flair_t2).run()
         return is_classified, nimb_classified
 
 
@@ -581,16 +594,9 @@ class ProjectManager:
                 self.run_classify_2nimb_bids(_dir)
                 is_classified, nimb_classified = self.run_classify_2nimb_bids(_dir)
                 if is_classified:
-                    self.classify_with_dcm2bids(nimb_classified)
+                    _id_bids = self.classify_with_dcm2bids(nimb_classified)
         else:
             print(f'    folder with source subjects {self.srcdata_dir} is empty')
-
-
-    def run_classify_2nimb(self, ls_ids = list()):
-        for _id in ls_ids:
-            is_classified, nimb_classified = self.run_classify_2nimb_bids(_id)
-            if is_classified:
-                _id_bids = self.classify_with_dcm2bids(nimb_classified)
 
 
     def prep_dirs(self, ls_dirs):
@@ -608,11 +614,6 @@ class ProjectManager:
                 self.all_vars.projects[self.project] = self.project_vars
                 save_json(self.all_vars.projects,
                             os.path.join(_get_credentials_home(), 'projects.json'))
-
-
-    def run_classify_dcm2bids(self, ls_ids = list()):
-        for _id in ls_ids:
-            self.run_classify_dcm2bids(_id)
 
 
     def classify_with_dcm2bids(self, nimb_classified = False, _id_project = False):
@@ -1182,3 +1183,11 @@ class ProjectManager:
     #                     self.unprocessed_d[_id_bids][BIDS_type]["archived"] = archive
     #                 else:
     #                     print(f"{LogLVL.lvl2}raw data is missing and file is not archived")
+
+
+
+    # def run_classify_2nimb(self, ls_ids = list()):
+    #     for _id in ls_ids:
+    #         is_classified, nimb_classified = self.run_classify_2nimb_bids(_id)
+    #         if is_classified:
+    #             _id_bids = self.classify_with_dcm2bids(nimb_classified)
