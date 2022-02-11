@@ -466,8 +466,7 @@ class ProjectManager:
         # extracting subjects missing from the nimb_classified file
         print(f'{LogLVL.lvl1}checking for new subjects')
 
-        ls_ids_src     = self.get_listdir(self.srcdata_dir)
-        ls_new_ids_src = [i for i in ls2chk if i not in self._ids_nimb_classified]
+        ls_new_ids_src = self.get_unprocessed_ids_from_nimb_classified()
         if ls_new_ids_src:
             print(f'{LogLVL.lvl3}initiating nimb classifier')
             print(f"{LogLVL.lvl3}for SOURCE_SUBJECTS_DIR: {self.srcdata_dir}")
@@ -490,20 +489,23 @@ class ProjectManager:
                 self.unprocessed_d = dict()
                 self.get_unprocessed_ids_from_nimb_classified()
                 if len(self.unprocessed_d) > 1:
-                    print(f'{LogLVL.lvl2}there are {len(self.unprocessed_d)} participants with MRI data to be processed')
+                    print(f'{LogLVL.lvl2}there are {len(not_bids)} participants with MRI data to be processed')
                     self.processing_chk()
                 else:
                    print(f'{LogLVL.lvl2}ALL participants with MRI data were processed')
             else:
                 print(f"{LogLVL.lvl2}ERROR: classification 2nimb-bids had an error")
         else:
-            self.get_unprocessed_ids_from_nimb_classified()
             print(f'{LogLVL.lvl3}All subjects were classified to nimb')
 
 
 
     def get_unprocessed_ids_from_nimb_classified(self):
         # print(f'{LogLVL.lvl1}nimb_classified is: {self._ids_nimb_classified}')
+        ls_new_ids_src = list()
+        ls_ids_src     = self.get_listdir(self.srcdata_dir)
+        ls_new_ids_src = [i for i in ls2chk if i not in self._ids_nimb_classified]
+
         for _id_src in self._ids_nimb_classified:
             ls_sessions = [i for i in  self._ids_nimb_classified[_id_src] if i not in ('archived',)]
             for session in ls_sessions:
@@ -516,6 +518,7 @@ class ProjectManager:
                 else:
                     print(f"{LogLVL.lvl2}{_id_bids} registered in file with ids")
                     # MUST check now for each app if was processed for each _id_bids
+        return ls_new_ids_src
 
 
 
