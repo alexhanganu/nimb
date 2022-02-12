@@ -482,14 +482,14 @@ class ProjectManager:
                 if yes_bids:
                     print(f"{LogLVL.lvl2}some subjects are of bids format: {yes_bids}")
                     self.add_ids_source_to_bids_in_grid(yes_bids)
-                if not_bids:
-                    _id_bids = self.classify_with_dcm2bids(not_bids)
 
-                # extract unprocessed ids
-                self.unprocessed_d = dict()
-                self.get_unprocessed_ids_from_nimb_classified()
-                if len(self.unprocessed_d) > 1:
+                # manage the unprocessed ids
+                if not_bids:
                     print(f'{LogLVL.lvl2}there are {len(not_bids)} participants with MRI data to be processed')
+                    _id_bids = self.classify_with_dcm2bids(not_bids)
+                    # adding _id_bids to the grid
+                    # and f_ids file
+                    # and to self._ids_bids
                     self.processing_chk()
                 else:
                    print(f'{LogLVL.lvl2}ALL participants with MRI data were processed')
@@ -503,6 +503,7 @@ class ProjectManager:
     def get_unprocessed_ids_from_nimb_classified(self):
         # print(f'{LogLVL.lvl1}nimb_classified is: {self._ids_nimb_classified}')
         ls_new_ids_src = list()
+        self.unprocessed_d = dict()
         ls_ids_src     = self.get_listdir(self.srcdata_dir)
         ls_new_ids_src = [i for i in ls2chk if i not in self._ids_nimb_classified]
 
