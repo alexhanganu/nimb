@@ -436,20 +436,25 @@ class ProjectManager:
     def check_new(self):
         """
         ALGO
+            STEP 1:
             get _ids_src_new that are missing from nimb_classified
             from _ids_src:
                 run update nimb classify for list()
-                extract dirs that are BIDS format and validated
-                yes_bids list:
-                        populate grid col _ids_bids_col
-                        copy folder to rawdata folder
-                no_bids list:
-                    get list(_ids in sourcedata _dir) NOT in nimb_classified file
-                    for _id in list():
-                        run dcm2bids
-                        populate grid with _ids_bids
-                        populate f_ids with _ids_bids
-                        save new grid to project.json
+            STEP 2:
+            get ids_src from nimb_classified, missing from f_ids:
+            STEP 3:
+            extract ids that are BIDS format and validated
+            yes_bids list:
+                    populate grid col _ids_bids_col
+                    copy folder to rawdata folder
+            STEP 4:
+            no_bids list:
+                get list(_ids in sourcedata _dir) NOT in nimb_classified file
+                for _id in list():
+                    run dcm2bids
+                    populate grid with _ids_bids
+                    populate f_ids with _ids_bids
+                    save new grid to project.json
             run 1 A
         DESCRIPTION:
             distributor:
@@ -462,64 +467,74 @@ class ProjectManager:
         Return:
             none
         """
+        # STEP 1
         # checking for new subjects
         # extracting subjects missing from the nimb_classified file
         print(f'{LogLVL.lvl1}checking for new subjects')
-
-        ls_new_ids_src = self.get_unprocessed_ids_from_nimb_classified()
+        print(f"{LogLVL.lvl2}in SOURCE_SUBJECTS_DIR: {self.srcdata_dir}")
+        ls_ids_src     = self.get_listdir(self.srcdata_dir)
+        ls_new_ids_src = [i for i in ls_ids_src if i not in self._ids_nimb_classified]
         if ls_new_ids_src:
             print(f'{LogLVL.lvl3}initiating nimb classifier')
-            print(f"{LogLVL.lvl3}for SOURCE_SUBJECTS_DIR: {self.srcdata_dir}")
+            print(f"{LogLVL.lvl3}for IDs in SOURCE_SUBJECTS_DIR: {self.srcdata_dir}")
             print(f'{LogLVL.lvl3}to file: nimb_classified.json')
             is_classified, nimb_classified = self.run_classify_2nimb_bids(ls_new_ids_src)
             if is_classified:
-                self.get_ids_nimb_classified()
-                # extract potential ids that might have bids structure
-                # and could be directly moved to the _ids_bids column in the grid
-                print(f'{LogLVL.lvl2}checking BIDS format in:')
-                print(f"{LogLVL.lvl3}SOURCE_SUBJECTS_DIR: {self.srcdata_dir}")
-                no_bids, yes_bids = self.verify_ids_are_bids_standard(ls_new_ids_src, self.srcdata_dir)
-                if yes_bids:
-                    print(f"{LogLVL.lvl2}some subjects are of bids format: {yes_bids}")
-                    self.add_ids_source_to_bids_in_grid(yes_bids)
-
-                # manage the unprocessed ids
-                if not_bids:
-                    print(f'{LogLVL.lvl2}there are {len(not_bids)} participants with MRI data to be processed')
-                    _id_bids = self.classify_with_dcm2bids(not_bids)
-                    # adding _id_bids to the grid
-                    # and f_ids file
-                    # and to self._ids_bids
-                    self.processing_chk()
-                else:
-                   print(f'{LogLVL.lvl2}ALL participants with MRI data were processed')
+                print(f'{LogLVL.lvl3}classification to nimb_classified.json DONE')
             else:
                 print(f"{LogLVL.lvl2}ERROR: classification 2nimb-bids had an error")
         else:
-            print(f'{LogLVL.lvl3}All subjects were classified to nimb')
+            print(f'{LogLVL.lvl3}All data in SOURCE_SUBJECTS_DIR were added to file nimb_classified.json')
+
+        # STEP 2:
+        # get ids from nimb_classified missing from f_ids
+        self.get_ids_nimb_classified()
+        unprocessed_d = self.get_unprocessed_ids_from_nimb_classified()
+
+        # STEP 3:
+        # extract potential ids that might have bids structure
+        # and could be directly moved to the _ids_bids column in the grid
+        _ids_bids_unprocessed = list(unprocessed_d.keys())
+        print(f'{LogLVL.lvl2}checking BIDS format for: {_id_bids}')
+        print(f"{LogLVL.lvl3}in SOURCE_SUBJECTS_DIR: {self.srcdata_dir}")
+        no_bids, yes_bids = self.verify_ids_are_bids_standard(_ids_bids_unprocessed, self.srcdata_dir)
+        if yes_bids:
+            print(f"{LogLVL.lvl2}some subjects are of BIDS format: {yes_bids}")
+            self.add_ids_source_to_bids_in_grid(yes_bids)
+
+        # STEP 4:
+        # manage the unprocessed ids
+        if no_bids:
+            print(f'{LogLVL.lvl2}there are {len(no_bids)} participants with MRI data to be processed')
+            _id_bids = self.classify_with_dcm2bids(no_bids)
+            # adding _id_bids to the grid
+            # and f_ids file
+            # and to self._ids_bids
+            self.processing_chk()
+        else:
+           print(f'{LogLVL.lvl2}ALL participants with MRI data were processed')
 
 
 
     def get_unprocessed_ids_from_nimb_classified(self):
+        """
+            get ids_src from nimb_classified that are missing from f_ids.json
+        """
         # print(f'{LogLVL.lvl1}nimb_classified is: {self._ids_nimb_classified}')
-        ls_new_ids_src = list()
-        self.unprocessed_d = dict()
-        ls_ids_src     = self.get_listdir(self.srcdata_dir)
-        ls_new_ids_src = [i for i in ls2chk if i not in self._ids_nimb_classified]
-
+        unprocessed_d = dict()
         for _id_src in self._ids_nimb_classified:
             ls_sessions = [i for i in  self._ids_nimb_classified[_id_src] if i not in ('archived',)]
             for session in ls_sessions:
                 _id_bids, _ = self.dcm2bids.make_bids_id(_id_src, session)
                 if _id_bids not in self._ids_all:
-                    self.unprocessed_d[_id_bids] = self._ids_nimb_classified[_id_src][session]
+                    unprocessed_d[_id_bids] = self._ids_nimb_classified[_id_src][session]
                     if "archived" in self._ids_nimb_classified[_id_src]:
                         archive = self._ids_nimb_classified[_id_src]["archived"]
-                        self.unprocessed_d[_id_bids]["archived"] = archive
+                        unprocessed_d[_id_bids]["archived"] = archive
                 else:
                     print(f"{LogLVL.lvl2}{_id_bids} registered in file with ids")
                     # MUST check now for each app if was processed for each _id_bids
-        return ls_new_ids_src
+        return unprocessed_d
 
 
 
