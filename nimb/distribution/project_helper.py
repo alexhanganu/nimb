@@ -478,7 +478,7 @@ class ProjectManager:
             print(f'{LogLVL.lvl3}initiating nimb classifier')
             print(f"{LogLVL.lvl3}for IDs in SOURCE_SUBJECTS_DIR: {self.srcdata_dir}")
             print(f'{LogLVL.lvl3}to file: nimb_classified.json')
-            is_classified, nimb_classified = self.run_classify_2nimb_bids(ls_new_ids_src)
+            is_classified, _ = self.run_classify_2nimb_bids(ls_new_ids_src)
             if is_classified:
                 print(f'{LogLVL.lvl3}classification to nimb_classified.json DONE')
             else:
@@ -506,10 +506,12 @@ class ProjectManager:
         # manage the unprocessed ids
         if no_bids:
             print(f'{LogLVL.lvl2}there are {len(no_bids)} participants with MRI data to be processed')
-            _id_bids = self.classify_with_dcm2bids(no_bids)
-            # adding _id_bids to the grid
-            # and f_ids file
-            # and to self._ids_bids
+            for _id_src in no_bids:
+                _id_bids = self.classify_with_dcm2bids(nimb_classified = self._ids_nimb_classified,
+                                                    _id_project = _id_src)
+                # adding _id_bids to the grid
+                # and f_ids file
+                # and to self._ids_bids
             self.processing_chk()
         else:
            print(f'{LogLVL.lvl2}ALL participants with MRI data were processed')
@@ -652,12 +654,12 @@ class ProjectManager:
                 ls_ids_2convert_2bids = [i for i in nimb_classified]
                 if self.test:
                     print(f'        TESTING with {self.nr_for_testing} participants')
-                    ls_ids_2convert_2bids = [i for i in nimb_classified][:self.nr_for_testing]
+                    ls_ids_2convert_2bids = ls_ids_2convert_2bids[:self.nr_for_testing]
             for _id_from_nimb_classified in ls_ids_2convert_2bids:
                 ls_sessions = [i for i in nimb_classified[_id_from_nimb_classified] if i not in ('archived',)]
                 for ses in ls_sessions:
-                    redy_2convert_2bids = self.id_is_bids_converted(_id_from_nimb_classified, ses)
-                    if redy_2convert_2bids:
+                    ready_2convert_2bids = self.id_is_bids_converted(_id_from_nimb_classified, ses)
+                    if ready_2convert_2bids:
                         print('    ready to convert to BIDS')
                         self.bids_classified = self.convert_with_dcm2bids(_id_from_nimb_classified,
                                                             ses,
@@ -673,16 +675,16 @@ class ProjectManager:
 
     def id_is_bids_converted(self, _id_from_nimb_classified, ses):
         bids_dir_location = self.project_vars['SOURCE_BIDS_DIR'][0]
-        redy_2convert_2bids = False
+        ready_2convert_2bids = False
         if bids_dir_location == 'local':
             _ids_in_bids_dir = os.listdir(self.BIDS_DIR)
             if _id_from_nimb_classified not in _ids_in_bids_dir:
-                redy_2convert_2bids = True
+                ready_2convert_2bids = True
             elif ses not in os.listdir(os.path.join(self.BIDS_DIR, _id_from_nimb_classified)):
-                redy_2convert_2bids = True
+                ready_2convert_2bids = True
         else:
             print(f'    bids folder located remotely: {bids_dir_location}')
-        return redy_2convert_2bids
+        return ready_2convert_2bids
 
 
     def convert_with_dcm2bids(self, _id_from_nimb_classified, ses, nimb_classified_per_id):
