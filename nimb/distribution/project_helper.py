@@ -509,9 +509,8 @@ class ProjectManager:
             for _id_src in no_bids:
                 _id_bids = self.classify_with_dcm2bids(nimb_classified = self._ids_nimb_classified,
                                                     _id_project = _id_src)
-                # adding _id_bids to the grid
+                self.add_ids_source_to_bids_in_grid([_id_bids,], copy_dir = False)
                 # and f_ids file
-                # and to self._ids_bids
             self.processing_chk()
         else:
            print(f'{LogLVL.lvl2}ALL participants with MRI data were processed')
@@ -930,7 +929,7 @@ class ProjectManager:
                         os.path.join(self.path_stats_dir, self.f_groups))
 
 
-    def add_ids_source_to_bids_in_grid(self, yes_bids):
+    def add_ids_source_to_bids_in_grid(self, yes_bids, copy_dir = True):
         """
             adding a new id from sourcedata dir
             to the bids columns
@@ -939,7 +938,7 @@ class ProjectManager:
         ls_id_bids_copied = list()
         ls_id_bids_not_copied = list()
         for _id_src in yes_bids:
-            if self.srcdata_dir != self.BIDS_DIR:
+            if copy_dir and self.srcdata_dir != self.BIDS_DIR:
                 print(f"{LogLVL.lvl2}copying {_id_src}")
                 print(f"{LogLVL.lvl3}from :{self.srcdata_dir}")
                 print(f"{LogLVL.lvl3}to   : {self.BIDS_DIR}")
