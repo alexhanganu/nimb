@@ -91,19 +91,24 @@ verify_ids_are_bids_standard:
                         environment allows screen export ? yes:
                             extract FS-GLM images
 4:
-    extract dirs that are BIDS format and validated
-    yes_bids list:
-            populate grid col _ids_bids_col
-            copy folder to rawdata folder
-    no_bids list:
-        get list(_ids in sourcedata _dir) NOT in nimb_classified file
-        for _id in list():
+    STEP 1:
+        get _ids_src_new that are missing from nimb_classified
+        from _ids_src:
             run update nimb classify for list()
-            run dcm2bids
-            populate grid with _ids_bids
-            populate f_ids with _ids_bids
-            save new grid to project.json
-    run 1 A
+    STEP 2:
+        get ids_src from nimb_classified, missing from f_ids:
+    STEP 3:
+        extract ids that are BIDS format and validated
+        yes_bids list:
+                populate grid col _ids_bids_col
+                copy folder to rawdata folder
+    STEP 4:
+        no_bids list:
+            get list(_ids in sourcedata _dir) NOT in nimb_classified file
+            for _id in list():
+                run dcm2bids (self.classify_with_dcm2bids)
+                populate grid with _ids_bids (self.add_ids_source_to_bids_in_grid)
+        run 1 A
 
 Definitions:
     _id_bids   : created with DCM2BIDS_helper().make_bids_id
@@ -435,27 +440,6 @@ class ProjectManager:
 
     def check_new(self):
         """
-        ALGO
-            STEP 1:
-            get _ids_src_new that are missing from nimb_classified
-            from _ids_src:
-                run update nimb classify for list()
-            STEP 2:
-            get ids_src from nimb_classified, missing from f_ids:
-            STEP 3:
-            extract ids that are BIDS format and validated
-            yes_bids list:
-                    populate grid col _ids_bids_col
-                    copy folder to rawdata folder
-            STEP 4:
-            no_bids list:
-                get list(_ids in sourcedata _dir) NOT in nimb_classified file
-                for _id in list():
-                    run dcm2bids
-                    populate grid with _ids_bids
-                    populate f_ids with _ids_bids
-                    save new grid to project.json
-            run 1 A
         DESCRIPTION:
             distributor:
                 initiate to get list of unprocessed from nimb_classified.json
@@ -510,7 +494,6 @@ class ProjectManager:
                 _id_bids = self.classify_with_dcm2bids(nimb_classified = self._ids_nimb_classified,
                                                     _id_project = _id_src)
                 self.add_ids_source_to_bids_in_grid([_id_bids,], copy_dir = False)
-                # and f_ids file
             self.processing_chk()
         else:
            print(f'{LogLVL.lvl2}ALL participants with MRI data were processed')
@@ -989,10 +972,10 @@ class ProjectManager:
             if os.path.exists(self.f_ids_instatsdir):
                 _ids_in_stats_dir = load_json(self.f_ids_instatsdir)
                 if _ids_in_matdir != _ids_in_stats_dir:
-                    print(f'{LogLVL.lvl1} ids in {self.f_ids_instatsdir}\
-                                is DIFFERENT from: {self.f_ids_inmatdir}')
-                    print(f'{LogLVL.lvl2}saving {self.f_ids_inmatdir}\
-                                        to: {self.path_stats_dir}')
+                    print(f'{LogLVL.lvl1} ids in {self.f_ids_instatsdir}')
+                    print(f'{LogLVL.lvl1} is DIFFERENT from: {self.f_ids_inmatdir}')
+                    print(f'{LogLVL.lvl2}saving {self.f_ids_inmatdir}')
+                    print(f'{LogLVL.lvl2}to: {self.path_stats_dir}')
                     save_json(_ids_in_matdir, self.f_ids_instatsdir)
         if not bool(self._ids_all):
             print(f'{LogLVL.lvl2} file with ids is EMPTY')
