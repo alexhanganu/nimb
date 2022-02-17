@@ -939,7 +939,7 @@ class ProjectManager:
                         os.path.join(self.path_stats_dir, self.f_groups))
         if ls_id_bids_not_copied:
             print(f"{LogLVL.lvl2}some ids could not be copied {_id_src}")
-                print(f"{LogLVL.lvl3}{ls_id_bids_not_copied}")
+            print(f"{LogLVL.lvl3}{ls_id_bids_not_copied}")
 
 
     def rm_id_from_grid(self, ls_2rm_from_grid):
