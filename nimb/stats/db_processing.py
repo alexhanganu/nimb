@@ -60,7 +60,7 @@ class Table:
                 except Exception as e:
                     print(e)
                     try:
-                        df = pd.read_csv(path2file, sep = ",", , usecols = cols)
+                        df = pd.read_csv(path2file, sep = ",", usecols = cols)
                     except Exception as e:
                         print(e)
                         df = self.get_clean_df()
