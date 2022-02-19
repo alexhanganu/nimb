@@ -566,7 +566,7 @@ class ProjectManager:
             is_classified: bool; True = classification was performed correctly
             nimb_classified: dict() of the nimb_classified.json file
         """
-        print(f'{LogLVL.lvl2}classifying folder: {_dir}')
+        print(f'{LogLVL.lvl2}classifying subjects: {ls_subjects}')
         multi_T1     = self.local_vars['FREESURFER']['multiple_T1_entries']
         add_flair_t2 = self.local_vars['FREESURFER']['flair_t2_add']
         fix_spaces   = self.all_vars.params.fix_spaces
