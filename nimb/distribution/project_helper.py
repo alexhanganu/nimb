@@ -988,13 +988,14 @@ class ProjectManager:
 
     """
     def get_ids_nimb_classified(self):
-        f_abspath = os.path.join(self.srcdata_dir, DEFAULT.f_nimb_classified)
+        _dir_2chk = self.srcdata_dir
+        f_abspath = os.path.join(_dir_2chk, DEFAULT.f_nimb_classified)
         self._ids_nimb_classified = dict()
 
         if os.path.exists(f_abspath):
             self._ids_nimb_classified = load_json(f_abspath)
         else:
-            print(f'{LogLVL.lvl1}file {f_abspath} is missing in: {_dir}')
+            print(f'{LogLVL.lvl1}file {f_abspath} is missing in: {_dir_2chk}')
 
 
 
