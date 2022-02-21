@@ -479,8 +479,8 @@ class ProjectManager:
         # extract potential ids that might have bids structure
         # and could be directly moved to the _ids_bids column in the grid
         _ids_bids_unprocessed = list(unprocessed_d.keys())
-        print(f'{LogLVL.lvl2}checking BIDS format for: {_id_bids}')
-        print(f"{LogLVL.lvl3}in SOURCE_SUBJECTS_DIR: {self.srcdata_dir}")
+        print(f'{LogLVL.lvl2}checking BIDS format for folders in:')
+        print(f"{LogLVL.lvl3}SOURCE_SUBJECTS_DIR: {self.srcdata_dir}")
         no_bids, yes_bids = self.verify_ids_are_bids_standard(_ids_bids_unprocessed, self.srcdata_dir)
         if yes_bids:
             print(f"{LogLVL.lvl2}some subjects are of BIDS format: {yes_bids}")
