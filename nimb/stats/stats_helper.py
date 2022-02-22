@@ -22,7 +22,7 @@ class RUN_stats():
         print('    file for analysis: {:<50}'.format(self.project_vars['fname_groups']))
         print('    id column: {:<50}'.format(str(self.project_vars['id_col'])))
         print('    group column: {:<50}'.format(str(self.project_vars['group_col'])))
-        print('    variables to analyse: {:<50}'.format(str(self.project_vars['variables_for_glm'])))
+        # print('    variables to analyse: {:<50}'.format(str(self.project_vars['variables_for_glm'])))
 
         self.tab = Table()
         self.preproc = preprocessing.Preprocess()
@@ -156,9 +156,10 @@ class RUN_stats():
 
                 # STEP run Laterality
                 if step2run == "STEP_Laterality":
+                    from processing.atlases.atlas_definitions import RReplace
                     from stats import stats_laterality
                     print('performing Laterality analysis')
-                    lhrh_feat_d = stats_laterality.RReplace(features).contralateral_features
+                    lhrh_feat_d = RReplace(features).contralateral_features
                     lhrh_features_list = [i for i in lhrh_feat_d.keys()] + [v for v in lhrh_feat_d.values()]
                     df_with_features_lhrh = self.tab.get_df_from_df(df_X, usecols = sorted(lhrh_features_list))
                     stats_laterality.LateralityAnalysis(df_with_features_lhrh, lhrh_feat_d, group,
