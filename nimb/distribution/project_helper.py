@@ -302,7 +302,7 @@ class ProjectManager:
         _, sub_label, ses_label, _ = self.dcm2bids.is_bids_format(_id_bids)
         content = self.processing_get_abspath_rawdata(sub_label, ses_label)
         self.subs_2process[_id_bids] = content
-        save_json(self.subs_2process, f_subj2process)
+        save_json(self.subs_2process, f_subj2process, print_space = 4)
         self.new_subjects = True
 
 
@@ -378,7 +378,7 @@ class ProjectManager:
         if ls_2rm_from_grid:
             self.rm_id_from_grid(ls_2rm_from_grid)
             missing_file = os.path.join(self.path_stats_dir, "missing.json")
-            save_json(ls_2rm_from_grid, missing_file)
+            save_json(ls_2rm_from_grid, missing_file, print_space = 4)
             for _id_project in ls_2rm_from_grid:
                 _id_bids_ls = self.f_ids_find_id_bids_4id_project(_id_project)
                 for _id_bids in _id_bids_ls:
@@ -431,9 +431,8 @@ class ProjectManager:
             materials and
             stats_dirs
         """
-        print(f'{LogLVL.lvl3}saving file with groups {self.f_ids_instatsdir}')
-        save_json(self._ids_all, self.f_ids_inmatdir)
-        save_json(self._ids_all, self.f_ids_instatsdir)
+        save_json(self._ids_all, self.f_ids_inmatdir, print_space = 12)
+        save_json(self._ids_all, self.f_ids_instatsdir, print_space = 12)
 
 
 
