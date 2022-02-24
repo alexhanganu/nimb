@@ -453,14 +453,14 @@ class ProjectManager:
         # STEP 1
         # checking for new subjects
         # extracting subjects missing from the nimb_classified file
-        print(f'{LogLVL.lvl1}checking for new subjects')
-        print(f"{LogLVL.lvl2}in SOURCE_SUBJECTS_DIR: {self.srcdata_dir}")
+        print(f'{LogLVL.lvl1}{"=" * 36}')
+        print(f'{LogLVL.lvl1}checking for new subjects in SOURCE_SUBJECTS_DIR:')
+        print(f"{LogLVL.lvl2}{self.srcdata_dir}")
         ls_ids_src     = self.get_listdir(self.srcdata_dir)
         ls_new_ids_src = [i for i in ls_ids_src if i not in self._ids_nimb_classified]
         if ls_new_ids_src:
-            print(f'{LogLVL.lvl3}initiating nimb classifier')
-            print(f"{LogLVL.lvl3}for IDs in SOURCE_SUBJECTS_DIR: {self.srcdata_dir}")
-            print(f'{LogLVL.lvl3}to file: nimb_classified.json')
+            print(f'{LogLVL.lvl2}there are new subjects that were not classified')
+            print(f'{LogLVL.lvl3}initiating nimb classifier, to file: nimb_classified.json')
             is_classified, _ = self.run_classify_2nimb_bids(ls_new_ids_src)
             if is_classified:
                 print(f'{LogLVL.lvl3}classification to nimb_classified.json DONE')
