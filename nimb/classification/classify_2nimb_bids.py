@@ -28,7 +28,8 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 class Classify2_NIMB_BIDS():
-    def __init__(self, project,
+    def __init__(self,
+                project,
                 MAIN_DIR,
                 NIMB_tmp,
                 ls_subjects = False,

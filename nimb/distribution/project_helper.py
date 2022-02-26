@@ -457,7 +457,20 @@ class ProjectManager:
         print(f'{LogLVL.lvl1}checking for new subjects in SOURCE_SUBJECTS_DIR:')
         print(f"{LogLVL.lvl2}{self.srcdata_dir}")
         ls_ids_src     = self.get_listdir(self.srcdata_dir)
+        archived = [self._ids_nimb_classified[i]["archived"] for i in self._ids_nimb_classified]
+        print(archived)
         ls_new_ids_src = [i for i in ls_ids_src if i not in self._ids_nimb_classified]
+        print(ls_new_ids_src)
+        for file in ls_new_ids_src[::-1]:
+            for archive in archived:
+                if file in archive:
+                    print("file in archive:", archive)
+                    ls_new_ids_src.remove(file)
+                    break
+        print(ls_new_ids_src)
+        if DEFAULT.f_nimb_classified in ls_new_ids_src:
+            ls_new_ids_src = ls_new_ids_src.remove(DEFAULT.f_nimb_classified)
+
         if ls_new_ids_src:
             print(f'{LogLVL.lvl2}there are new subjects that were not classified')
             print(f'{LogLVL.lvl3}initiating nimb classifier, to file: nimb_classified.json')
@@ -565,8 +578,6 @@ class ProjectManager:
             is_classified: bool; True = classification was performed correctly
             nimb_classified: dict() of the nimb_classified.json file
         """
-        if DEFAULT.f_nimb_classified in ls_subjects:
-            ls_subjects = ls_subjects.remove(DEFAULT.f_nimb_classified)
         print(f'{LogLVL.lvl2}classifying subjects: {ls_subjects}')
         multi_T1     = self.local_vars['FREESURFER']['multiple_T1_entries']
         add_flair_t2 = self.local_vars['FREESURFER']['flair_t2_add']
@@ -584,6 +595,8 @@ class ProjectManager:
 
     def prep_4dcm2bids_classification(self):
         ls_source_dirs = self.get_listdir(self.srcdata_dir)
+        if DEFAULT.f_nimb_classified in ls_source_dirs:
+            ls_source_dirs = ls_source_dirs.remove(DEFAULT.f_nimb_classified)
 
         print(f'   there are {len(ls_source_dirs)} files found in {self.srcdata_dir} \
             expected to contain MRI data for project {self.project}')
