@@ -458,16 +458,13 @@ class ProjectManager:
         print(f"{LogLVL.lvl2}{self.srcdata_dir}")
         ls_ids_src     = self.get_listdir(self.srcdata_dir)
         archived = [self._ids_nimb_classified[i]["archived"] for i in self._ids_nimb_classified]
-        print(archived)
         ls_new_ids_src = [i for i in ls_ids_src if i not in self._ids_nimb_classified]
-        print(ls_new_ids_src)
         for file in ls_new_ids_src[::-1]:
             for archive in archived:
                 if file in archive:
                     print("file in archive:", archive)
                     ls_new_ids_src.remove(file)
                     break
-        print(ls_new_ids_src)
         if DEFAULT.f_nimb_classified in ls_new_ids_src:
             ls_new_ids_src = ls_new_ids_src.remove(DEFAULT.f_nimb_classified)
 
@@ -486,6 +483,7 @@ class ProjectManager:
         # get ids from nimb_classified missing from f_ids
         self.get_ids_nimb_classified()
         unprocessed_d = self.get_unprocessed_ids_from_nimb_classified()
+        print(unprocessed_d)
 
         # STEP 3:
         # extract potential ids that might have bids structure
@@ -519,17 +517,22 @@ class ProjectManager:
         # print(f'{LogLVL.lvl1}nimb_classified is: {self._ids_nimb_classified}')
         unprocessed_d = dict()
         for _id_src in self._ids_nimb_classified:
-            ls_sessions = [i for i in  self._ids_nimb_classified[_id_src] if i not in ('archived',)]
-            for session in ls_sessions:
-                _id_bids, _ = self.dcm2bids.make_bids_id(_id_src, session)
-                if _id_bids not in self._ids_all:
-                    unprocessed_d[_id_bids] = self._ids_nimb_classified[_id_src][session]
-                    if "archived" in self._ids_nimb_classified[_id_src]:
-                        archive = self._ids_nimb_classified[_id_src]["archived"]
-                        unprocessed_d[_id_bids]["archived"] = archive
-                else:
-                    print(f"{LogLVL.lvl2}{_id_bids} registered in file with ids")
-                    # MUST check now for each app if was processed for each _id_bids
+            bids_format, _, ses_label, _ = self.dcm2bids.is_bids_format(_id_src)
+            if not bids_format:
+                ls_sessions = [i for i in  self._ids_nimb_classified[_id_src] if i not in ('archived',)]
+                for session in ls_sessions:
+                    _id_bids, _ = self.dcm2bids.make_bids_id(_id_src, session)
+                    if _id_bids not in self._ids_all:
+                        unprocessed_d[_id_src] = {session: _id_bids}
+                        if "archived" in self._ids_nimb_classified[_id_src]:
+                            archive = self._ids_nimb_classified[_id_src]["archived"]
+                            unprocessed_d[_id_src]["archived"] = archive
+                    else:
+                        print(f"{LogLVL.lvl2}{_id_bids} registered in file with ids")
+            else:
+                print(f"{LogLVL.lvl2}{_id_src} is BIDS format")
+                if _id_src not in self._ids_all:
+                    unprocessed_d[_id_src] = {ses_label: _id_src}
         return unprocessed_d
 
 
