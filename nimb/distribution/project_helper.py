@@ -517,22 +517,23 @@ class ProjectManager:
         # print(f'{LogLVL.lvl1}nimb_classified is: {self._ids_nimb_classified}')
         unprocessed_d = dict()
         for _id_src in self._ids_nimb_classified:
+            unprocessed_d[_id_src] = {}
             bids_format, _, ses_label, _ = self.dcm2bids.is_bids_format(_id_src)
             if not bids_format:
                 ls_sessions = [i for i in  self._ids_nimb_classified[_id_src] if i not in ('archived',)]
                 for session in ls_sessions:
                     _id_bids, _ = self.dcm2bids.make_bids_id(_id_src, session)
                     if _id_bids not in self._ids_all:
-                        unprocessed_d[_id_src] = {session: _id_bids}
+                        unprocessed_d[_id_src][session] = {"id_bids":_id_bids}
                         if "archived" in self._ids_nimb_classified[_id_src]:
                             archive = self._ids_nimb_classified[_id_src]["archived"]
-                            unprocessed_d[_id_src]["archived"] = archive
+                            unprocessed_d[_id_src][session]["archived"] = archive
                     else:
                         print(f"{LogLVL.lvl2}{_id_bids} registered in file with ids")
             else:
                 print(f"{LogLVL.lvl2}{_id_src} is BIDS format")
                 if _id_src not in self._ids_all:
-                    unprocessed_d[_id_src] = {ses_label: _id_src}
+                    unprocessed_d[_id_src][ses_label] = {"id_bids": _id_src}
         return unprocessed_d
 
 
