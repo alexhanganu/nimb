@@ -483,7 +483,6 @@ class ProjectManager:
         # get ids from nimb_classified missing from f_ids
         self.get_ids_nimb_classified()
         unprocessed_d = self.get_unprocessed_ids_from_nimb_classified()
-        print(unprocessed_d)
 
         # STEP 3:
         # extract potential ids that might have bids structure
@@ -499,7 +498,8 @@ class ProjectManager:
         # STEP 4:
         # manage the unprocessed ids
         if no_bids:
-            print(f'{LogLVL.lvl2}there are {len(no_bids)} participants with MRI data to be processed')
+            print(f'{LogLVL.lvl2}there are {len(no_bids)} participants')
+            print(f'{LogLVL.lvl3}with MRI data to be processed')
             for _id_src in no_bids:
                 _id_bids = self.classify_with_dcm2bids(nimb_classified = self._ids_nimb_classified,
                                                     _id_project = _id_src)
@@ -561,10 +561,10 @@ class ProjectManager:
         for _id in ls2chk:
             bids_format, sub_label, ses_label, _ = self.dcm2bids.is_bids_format(_id)
             if not bids_format:
-                print(f"{LogLVL.lvl2}subject {_id} name is not of BIDS format")
+                print(f"{LogLVL.lvl3}subject {_id} name is not of BIDS format")
                 no_bids.append(_id)
             elif sub_label not in rawdata_listdir:
-                print(f"{LogLVL.lvl2}subject {_id} is missing from: {_dir2chk}")
+                print(f"{LogLVL.lvl3}subject {_id} is missing from: {_dir2chk}")
                 no_bids.append(_id)
             else:
                 yes_bids.append(_id)
