@@ -293,10 +293,10 @@ class DCM2BIDS_helper():
         return path_2rawdata
 
 
-    def make_bids_id(self, proj_id, session, run = False):
+    def make_bids_id(self, _id, session, run = False):
         '''
         https://github.com/bids-standard/bids-specification/blob/master/src/02-common-principles.md
-        the _id_bids MUST have the structure: sub_<label>_ses-<label>
+        the _id_bids MUST have the structure: sub-<label>_ses-<label>_run-<label>
         the "sub-<label>" corresponds to the "subject" because of the "sub-" key.
 
         if there are multiple runs of the same session, the key "run" is used:
@@ -310,13 +310,19 @@ class DCM2BIDS_helper():
         nimb is using DCM2BIDS and DCM2NIIx to create the corresponding BIDS files and structures
         this script intends to define one _id_bids that will be used throughout nimb
         '''
-        _id_bids_dir = f'sub-{proj_id}'
-        _id_bids = f'{_id_bids_dir}_{session}'
-        '''must adjust run in the name
-        '''
+        _id_bids_label = _id
+        ses_bids_label = session
+        if "sub-" not in _id:
+            _id_bids_label = f'sub-{_id}'
+        if "ses-" not in session:
+            ses_bids_label = f'ses-{session}'
+        _id_bids = f'{_id_bids_label}_{ses_bids_label}'
         if run:
-            _id_bids = f'{_id_bids_dir}_{session}_{run}'
-        return _id_bids, _id_bids_dir
+            run_bids_label = run
+            if "run-" not in run:
+                run_bids_label = f'run-{run}'
+            _id_bids = f'{_id_bids_label}_{ses_bids_label}_{run_bids_label}'
+        return _id_bids, _id_bids_label
 
 
     def is_bids_format(self, _id):
