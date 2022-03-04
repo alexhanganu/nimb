@@ -487,10 +487,14 @@ class ProjectManager:
         # STEP 3:
         # extract potential ids that might have bids structure
         # and could be directly moved to the _ids_bids column in the grid
-        _ids_bids_unprocessed = list(unprocessed_d.keys())
         print(f'{LogLVL.lvl2}checking BIDS format for folders in:')
         print(f"{LogLVL.lvl3}SOURCE_SUBJECTS_DIR: {self.srcdata_dir}")
-        no_bids, yes_bids = self.verify_ids_are_bids_standard(_ids_bids_unprocessed, self.srcdata_dir)
+        _ids_src_bids_unprocessed = dict()
+        for _id_src in unprocessed_d.keys():
+            for session in unprocessed_d[_id_src]:
+                _ids_src_bids_unprocessed[_id_src] = unprocessed_d[_id_src][session]["id_bids"]
+        no_bids, yes_bids = self.verify_ids_are_bids_standard(list(_ids_src_bids_unprocessed.values()),
+                                                                self.srcdata_dir)
         if yes_bids:
             print(f"{LogLVL.lvl2}some subjects are of BIDS format: {yes_bids}")
             self.add_ids_source_to_bids_in_grid(yes_bids)
@@ -498,9 +502,13 @@ class ProjectManager:
         # STEP 4:
         # manage the unprocessed ids
         if no_bids:
-            print(f'{LogLVL.lvl2}there are {len(no_bids)} participants')
+            _ids_src_unprocessed = list()
+            for _id_src in _ids_src_bids_unprocessed.keys():
+                if _ids_src_bids_unprocessed[_id_src] in no_bids:
+                    _ids_src_unprocessed.append(_id_src)
+            print(f'{LogLVL.lvl2}there are {len(_ids_src_unprocessed)} participants')
             print(f'{LogLVL.lvl3}with MRI data to be processed')
-            for _id_src in no_bids:
+            for _id_src in _ids_src_unprocessed:
                 _id_bids = self.classify_with_dcm2bids(nimb_classified = self._ids_nimb_classified,
                                                     _id_project = _id_src)
                 self.add_ids_source_to_bids_in_grid([_id_bids,], copy_dir = False)
@@ -518,22 +526,17 @@ class ProjectManager:
         unprocessed_d = dict()
         for _id_src in self._ids_nimb_classified:
             unprocessed_d[_id_src] = {}
-            bids_format, _, ses_label, _ = self.dcm2bids.is_bids_format(_id_src)
-            if not bids_format:
-                ls_sessions = [i for i in  self._ids_nimb_classified[_id_src] if i not in ('archived',)]
-                for session in ls_sessions:
-                    _id_bids, _ = self.dcm2bids.make_bids_id(_id_src, session)
-                    if _id_bids not in self._ids_all:
-                        unprocessed_d[_id_src][session] = {"id_bids":_id_bids}
-                        if "archived" in self._ids_nimb_classified[_id_src]:
-                            archive = self._ids_nimb_classified[_id_src]["archived"]
-                            unprocessed_d[_id_src][session]["archived"] = archive
-                    else:
-                        print(f"{LogLVL.lvl2}{_id_bids} registered in file with ids")
-            else:
-                print(f"{LogLVL.lvl2}{_id_src} is BIDS format")
-                if _id_src not in self._ids_all:
-                    unprocessed_d[_id_src][ses_label] = {"id_bids": _id_src}
+            ls_sessions = [i for i in  self._ids_nimb_classified[_id_src] if i not in ('archived',)]
+            for session in ls_sessions:
+                _id_bids, _id_bids_label = self.dcm2bids.make_bids_id(_id_src, session)
+                if _id_bids not in self._ids_all:
+                    unprocessed_d[_id_src][session] = {"id_bids":_id_bids,
+                                                        "id_bids_label": _id_bids_label}
+                    if "archived" in self._ids_nimb_classified[_id_src]:
+                        archive = self._ids_nimb_classified[_id_src]["archived"]
+                        unprocessed_d[_id_src][session]["archived"] = archive
+                else:
+                    print(f"{LogLVL.lvl2}{_id_bids} registered in file with ids")
         return unprocessed_d
 
 
