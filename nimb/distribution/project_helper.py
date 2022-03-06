@@ -228,7 +228,7 @@ class ProjectManager:
             bool
         """
         if self._ids_bids:
-            not_bids, _ = self.verify_ids_are_bids_standard(self._ids_bids, self.BIDS_DIR)
+            not_bids, _, _ = self.verify_ids_are_bids_standard(self._ids_bids, self.BIDS_DIR)
             if not_bids:
                 print(f"{LogLVL.lvl2}some subjects are not of bids format: {not_bids}")
                 self.mv_ids_bids_in_grid(not_bids)
@@ -352,7 +352,7 @@ class ProjectManager:
         Return:
             bool
         """
-        _, yes_bids = self.verify_ids_are_bids_standard(self._ids_project, self.BIDS_DIR)
+        _, yes_bids, _ = self.verify_ids_are_bids_standard(self._ids_project, self.BIDS_DIR)
         if yes_bids:
             print(f"{LogLVL.lvl2}some subjects are of bids format: {yes_bids}")
             self.add_ids_project_to_bids_in_grid(yes_bids)
@@ -493,11 +493,12 @@ class ProjectManager:
         for _id_src in unprocessed_d.keys():
             for session in unprocessed_d[_id_src]:
                 _ids_src_bids_unprocessed[_id_src] = unprocessed_d[_id_src][session]["id_bids"]
-        no_bids, yes_bids = self.verify_ids_are_bids_standard(list(_ids_src_bids_unprocessed.values()),
-                                                                self.srcdata_dir)
-        if yes_bids:
-            print(f"{LogLVL.lvl2}some subjects are of BIDS format: {yes_bids}")
-            self.add_ids_source_to_bids_in_grid(yes_bids)
+        no_bids, _, yes_bids_d = self.verify_ids_are_bids_standard(
+                                                    list(_ids_src_bids_unprocessed.values()),
+                                                    self.srcdata_dir)
+        if yes_bids_d:
+            print(f"{LogLVL.lvl2}some subjects are of BIDS format: {list(yes_bids_d.keys())}")
+            self.add_ids_source_to_bids_in_grid(yes_bids_d)
 
         # STEP 4:
         # manage the unprocessed ids
@@ -511,7 +512,7 @@ class ProjectManager:
             for _id_src in _ids_src_unprocessed:
                 _id_bids = self.classify_with_dcm2bids(nimb_classified = self._ids_nimb_classified,
                                                     _id_project = _id_src)
-                self.add_ids_source_to_bids_in_grid([_id_bids,], copy_dir = False)
+                self.add_ids_source_to_bids_in_grid({_id_src: _id_bids}, copy_dir = False)
             self.processing_chk()
         else:
            print(f'{LogLVL.lvl2}ALL participants with MRI data were processed')
@@ -556,10 +557,12 @@ class ProjectManager:
         Return:
             no_bids, yes_bids = list() with that do not have or have
                 all criteria as True
+            yes_bids_d = {_id_src: _id_bids}
         """
         rawdata_listdir = self.get_listdir(_dir2chk)
         no_bids = list()
         yes_bids = list()
+        yes_bids_d = dict()
 
         for _id in ls2chk:
             bids_format, sub_label, ses_label, _ = self.dcm2bids.is_bids_format(_id)
@@ -570,11 +573,13 @@ class ProjectManager:
                 print(f"{LogLVL.lvl3}subject {_id} is missing from: {_dir2chk}")
                 no_bids.append(_id)
             else:
+                _id_bids, _ = self.dcm2bids.make_bids_id(sub_label, ses_label)
                 yes_bids.append(_id)
+                yes_bids_d[_id] = _id_bids
             # elif not validate BIDS: !!!!!!!!!!!!!!!!!
             #     print(f"{LogLVL.lvl2}subject {_id} folder in: {_dir2chk} has not been validated for BIDS")
             #     no_bids.append(_id)
-        return no_bids, yes_bids
+        return no_bids, yes_bids, yes_bids_d
 
 
     def run_classify_2nimb_bids(self, ls_subjects):
@@ -938,9 +943,18 @@ class ProjectManager:
             adding a new id from sourcedata dir
             to the bids columns
             in the last position
+        Args:
+            yes_bids = {_id_src: _id_bids}
+        Return:
+            populates self._ids_bids
+            updates self.df_grid
         """
+        # defining variables
         ls_id_bids_copied = list()
         ls_id_bids_not_copied = list()
+        self._ids_bids = self.df_grid[self._ids_bids_col].tolist()
+
+        # loop to work with each _id_src
         for _id_src in yes_bids:
             if copy_dir and self.srcdata_dir != self.BIDS_DIR:
                 print(f"{LogLVL.lvl2}copying {_id_src}")
@@ -951,13 +965,19 @@ class ProjectManager:
                 copied = utilities.copy_rm_dir(source_data, target)
                 if copied:
                     ls_id_bids_copied.append(_id_src)
+                    self._ids_bids = self._ids_bids + list(yes_bids[_id_src])
                 else:
                     ls_id_bids_not_copied.append(_id_src)
-        self._ids_bids = self.df_grid[self._ids_bids_col].tolist()
-        self._ids_bids = self._ids_bids + ls_id_bids_copied
+            # populating self.f_ids with _id_src
+            self.update_f_ids(_id_bids, DEFAULT.is_source_key, _id_src)
+
+        # populating the grid, column _ids_bids_col with the new 
+        # list of _ids_bids
         self.df_grid[self._ids_bids_col] = self._ids_bids
         self.tab.save_df(self.df_grid,
                         os.path.join(self.path_stats_dir, self.f_groups))
+
+        # checker to confirm that some _ids_bids were not copied
         if ls_id_bids_not_copied:
             print(f"{LogLVL.lvl2}some ids could not be copied {_id_src}")
             print(f"{LogLVL.lvl3}{ls_id_bids_not_copied}")
@@ -1138,17 +1158,3 @@ class ProjectManager:
     #     if self._ids_missing:
     #         print(f'{LogLVL.lvl1}missing ids: {self._ids_missing}')
     #     self.prep_4dcm2bids_classification()
-
-
-    # def populate_f_ids_all_from_source(self, _id_project, dir_listdir):
-    #     '''tries to populate the _ids_file with corresponding FreeSurfer processed folder
-    #         f_ids includes only the archived folder names
-    #     Args:
-    #         _id_bids: corresponding id_bids name from the grid file
-    #     '''
-    #     key_source = DEFAULT.is_source_key
-    #     _id_bids = self.dcm2bids.make_bids_id(_id_project, session)
-    #     self._ids_all[_id_bids][key_source] = ''
-    #     for _dir in dir_listdir:
-    #         if _id_project in _dir:
-    #             self._ids_all[_id_bids][key_source] = _dir
