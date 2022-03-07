@@ -104,19 +104,15 @@ class DCM2BIDS_helper():
         if self.id_classified['archived']:
             self.archived = True
         for self.data_Type in BIDS_types:
+            self.add_run = False
             if self.data_Type in self.id_classified[self.ses]:
                 for self.modalityLabel_nimb in BIDS_types[self.data_Type]:
                     if self.modalityLabel_nimb in self.id_classified[self.ses][self.data_Type]:
                         print(f'{" " *8}{self.data_Type} type, {self.modalityLabel_nimb} label, is being converted')
                         paths_2mr_data = self.id_classified[self.ses][self.data_Type][self.modalityLabel_nimb]
                         self.modalityLabel = mr_modality_nimb_2_dcm2bids[self.modalityLabel_nimb] # changing to dcm2bids type modality_label
-                        if len(paths_2mr_data) > 1:
-                            print(f'{" " *12}> NOTE: {self.modalityLabel} types are more than 1')
-                            print(f'{" " *15}> dcm2bids CANNOT save multiple versions of the same MR type in the same session.')
-                            print(f'{" " *15}> using the first version')
-                        path2mr_ = paths_2mr_data[0]
-                        self.abs_path2mr = self.get_path_2mr(path2mr_)
                         self.sub_SUBJDIR = os.path.join(self.OUTPUT_DIR, 'tmp_dcm2bids', self.bids_id)
+                        self.abs_path2mr = self.get_path_2mr(paths_2mr_data)
                         self.run_dcm2bids()
                         if os.path.exists(self.sub_SUBJDIR) and \
                             len(os.listdir(self.sub_SUBJDIR)) > 0:
@@ -359,7 +355,20 @@ class DCM2BIDS_helper():
 
 
     # must adapt this and next defs to the ones from distribution_helper
-    def get_path_2mr(self, path2mr_):
+    def get_path_2mr(self, paths_2mr_data):
+        """
+        Args:
+            paths_2mr_data = list() of paths to MR data
+        Return:
+            path2mr_ = str() abspath to MR data
+        """
+        if len(paths_2mr_data) > 1:
+            self.add_run = True
+            print(f'{" " *12}> NOTE: {self.modalityLabel} types are more than 1')
+            print(f'{" " *15}> dcm2bids CANNOT save multiple versions of the same MR type in the same session.')
+            print(f'{" " *15}> using the first version')
+        path2mr_ = paths_2mr_data[0]
+
         if self.archived:
             path_2archive = self.id_classified['archived']
             if is_archive(path_2archive):
