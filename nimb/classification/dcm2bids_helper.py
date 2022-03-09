@@ -114,6 +114,7 @@ class DCM2BIDS_helper():
                         self.sub_SUBJDIR = os.path.join(self.OUTPUT_DIR, 'tmp_dcm2bids', self.bids_id)
                         self.abs_path2mr = self.get_path_2mr(paths_2mr_data)
                         self.run_dcm2bids()
+                        print("testing adding run")
                         if os.path.exists(self.sub_SUBJDIR) and \
                             len(os.listdir(self.sub_SUBJDIR)) > 0:
                             print(f'{" " *12}> conversion did not find corresponding values in the configuration file')
