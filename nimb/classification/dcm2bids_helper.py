@@ -112,16 +112,17 @@ class DCM2BIDS_helper():
                         paths_2mr_data = self.id_classified[self.ses][self.data_Type][self.modalityLabel_nimb]
                         self.modalityLabel = mr_modality_nimb_2_dcm2bids[self.modalityLabel_nimb] # changing to dcm2bids type modality_label
                         self.sub_SUBJDIR = os.path.join(self.OUTPUT_DIR, 'tmp_dcm2bids', self.bids_id)
-                        self.abs_path2mr = self.get_path_2mr(paths_2mr_data)
-                        self.run_dcm2bids()
+                        abs_path2mr_all = self.get_path_2mr(paths_2mr_data)
                         print("testing adding run")
-                        if os.path.exists(self.sub_SUBJDIR) and \
-                            len(os.listdir(self.sub_SUBJDIR)) > 0:
-                            print(f'{" " *12}> conversion did not find corresponding values in the configuration file')
-                            print(f'{" " *12}> temporary converted: {self.sub_SUBJDIR}')
-                            self.chk_if_processed()
-                        else:
-                            self.cleaning_after_conversion()
+                        for abs_path2mr in abs_path2mr_all
+                            self.run_dcm2bids(abs_path2mr)
+                            if os.path.exists(self.sub_SUBJDIR) and \
+                                len(os.listdir(self.sub_SUBJDIR)) > 0:
+                                print(f'{" " *12}> conversion did not find corresponding values in the configuration file')
+                                print(f'{" " *12}> temporary converted: {self.sub_SUBJDIR}')
+                                self.chk_if_processed()
+                            else:
+                                self.cleaning_after_conversion()
 
 
     def populate_bids_classifed(self):
@@ -148,14 +149,14 @@ class DCM2BIDS_helper():
             print(f'{" " * 12} ERR: modality {self.modalityLabel_nimb} is already present.')
 
 
-    def run_dcm2bids(self):
+    def run_dcm2bids(self, abs_path2mr):
         if self.run_stt == 0:
             print("*" * 80)
             self.config_file = self.get_config_file()
             print(f'{" " * 12} config file is: {self.config_file}')
-            print(f'{" " *15} archive located at: {self.abs_path2mr}')
+            print(f'{" " *15} archive located at: {abs_path2mr}')
             return_value = os.system('dcm2bids -d {} -p {} -s {} -c {} -o {}'.format(
-                                                                                    self.abs_path2mr,
+                                                                                    abs_path2mr,
                                                                                     self.nimb_id,
                                                                                     self.ses,
                                                                                     self.config_file,
@@ -164,7 +165,7 @@ class DCM2BIDS_helper():
             return_value = int(bin(return_value).replace("0b", "").rjust(16, '0')[:8], 2)
             if return_value != 0: # failed
                 print(f'{" " *12} conversion finished with error')
-                os.system('dcm2bids -d {} -p {} -s {} -c {} -o {}'.format(self.abs_path2mr,
+                os.system('dcm2bids -d {} -p {} -s {} -c {} -o {}'.format(abs_path2mr,
                                                                         self.nimb_id,
                                                                         self.ses,
                                                                         self.config_file,
@@ -361,26 +362,29 @@ class DCM2BIDS_helper():
         Args:
             paths_2mr_data = list() of paths to MR data
         Return:
-            path2mr_ = str() abspath to MR data
+            paths_2mrdata = list() with all abspaths to MR data
         """
+        paths_2mrdata = list()
         if len(paths_2mr_data) > 1:
             self.add_run = True
             print(f'{" " *12}> NOTE: {self.modalityLabel} types are more than 1')
             print(f'{" " *15}> dcm2bids CANNOT save multiple versions of the same MR type in the same session.')
             print(f'{" " *15}> using the first version')
-        path2mr_ = paths_2mr_data[0]
 
-        if self.archived:
-            path_2archive = self.id_classified['archived']
-            if is_archive(path_2archive):
-                print(f'{" " *12} archive located at: {path_2archive}')
-                return self.extract_from_archive(path_2archive,
-                                                 path2mr_)
+        for path2mr_ in paths_2mr_data:
+            if self.archived:
+                path_2archive = self.id_classified['archived']
+                if is_archive(path_2archive):
+                    print(f'{" " *12} archive located at: {path_2archive}')
+                    path_extracted = self.extract_from_archive(path_2archive,
+                                                     path2mr_)
+                    paths_2mrdata.append(path_extracted)
+                else:
+                    print(f'{" " *12} file: {path_2archive} does not seem to be an archive')
+                    paths_2mrdata.append('')
             else:
-                print(f'{" " *12} file: {path_2archive} does not seem to be an archive')
-                return ''
-        else:
-            return path2mr_
+                paths_2mrdata.append(path2mr_)
+        return paths_2mrdata
 
 
     def extract_from_archive(self, archive_abspath, path2mr_):
