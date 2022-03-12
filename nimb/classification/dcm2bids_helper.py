@@ -114,8 +114,8 @@ class DCM2BIDS_helper():
                         self.sub_SUBJDIR = os.path.join(self.OUTPUT_DIR, 'tmp_dcm2bids', self.bids_id)
                         abs_path2mr_all = self.get_path_2mr(paths_2mr_data)
                         for abs_path2mr in abs_path2mr_all:
-                            print(f"{" "*8}there are {len(abs_path2mr_all)} paths to convert")
-                            print(f"{" "*8}testing adding run for path: {abs_path2mr}")
+                            print(f'{" "*8}there are {len(abs_path2mr_all)} paths to convert')
+                            print(f'{" "*8}testing adding run for path: {abs_path2mr}')
                             self.run_dcm2bids(abs_path2mr)
                             if os.path.exists(self.sub_SUBJDIR) and \
                                 len(os.listdir(self.sub_SUBJDIR)) > 0:

@@ -257,7 +257,7 @@ class ProjectManager:
 
         for app in DEFAULT.app_files:
             self.update_f_ids(_id_bids, app, "")
-            if not self._ids_all[_id_bids][app]:                
+            if not self._ids_all[_id_bids][app]:
                 key_dir_2processed = DEFAULT.app_files[app]["dir_store_proc"]
                 location = self.project_vars[key_dir_2processed][0]
                 abspath_2storage = self.project_vars[key_dir_2processed][1]
