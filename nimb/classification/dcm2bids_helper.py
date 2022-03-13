@@ -123,7 +123,7 @@ class DCM2BIDS_helper():
                                 print(f'{" " *12}> temporary converted: {self.sub_SUBJDIR}')
                                 self.chk_if_processed()
                             else:
-                                self.cleaning_after_conversion()
+                                self.cleaning_after_conversion(abs_path2mr)
 
 
     def populate_bids_classifed(self):
@@ -201,15 +201,15 @@ class DCM2BIDS_helper():
             self.cleaning_after_conversion()
 
 
-    def cleaning_after_conversion(self):
+    def cleaning_after_conversion(self, abs_path2mr):
         self.populate_bids_classifed()
         print(f'{" " *15} >>>>DCM2BIDS conversion DONE')
         if os.path.exists(self.sub_SUBJDIR):
             print(f'{" " *15} removing folder: {self.sub_SUBJDIR}')
             self.rm_dir(self.sub_SUBJDIR)
-        if os.path.exists(self.abs_path2mr):
-            print(f'{" " *15} removing folder: {self.abs_path2mr}')
-            self.rm_dir(self.abs_path2mr)
+        if os.path.exists(abs_path2mr):
+            print(f'{" " *15} removing folder: {abs_path2mr}')
+            self.rm_dir(abs_path2mr)
         print('\n')
 
 
