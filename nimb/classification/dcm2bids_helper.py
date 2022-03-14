@@ -73,6 +73,22 @@ class DCM2BIDS_helper():
             if nimb_classified.json[nimb_id][archived]:
                 extract from archive specific subject_session
                 start dcm2bids for subject_session
+        Return:
+            self.bids_classified = 
+            {'bids_id':
+                {'anat':
+                    {'t1': ['local',
+                            'PATH_TO_rawdata/bids_id_label/bids_id_session/modality/bids_label_ses-xx_run-xx_T1w.nii.gz']},
+                    },
+                {'dwi':
+                    {'dwi': ['local',
+                            'PATH_TO_rawdata/bids_id_label/bids_id_session/modality/bids_label_ses-xx_run-xx_dwi.nii.gz'],
+                    'bval': ['local',
+                            'PATH_TO_rawdata/bids_id_label/bids_id_session/modality/bids_label_ses-xx_run-xx_dwi.bval'],
+                    'bvec': ['local',
+                            'PATH_TO_rawdata/bids_id_label/bids_id_session/modality/bids_label_ses-xx_run-xx_dwi.bvec']}
+                    }
+            }
         '''
         self.id_classified   = nimb_classified_per_id
         self.bids_classified = dict()
@@ -103,51 +119,77 @@ class DCM2BIDS_helper():
         print(f'{" " *8}classifying for id: {self.bids_id}')
         if self.id_classified['archived']:
             self.archived = True
+        self.sub_SUBJDIR_tmp = os.path.join(self.OUTPUT_DIR, 'tmp_dcm2bids', self.bids_id)
+
         for self.data_Type in BIDS_types:
-            self.add_run = False
             if self.data_Type in self.id_classified[self.ses]:
                 for self.modalityLabel_nimb in BIDS_types[self.data_Type]:
                     if self.modalityLabel_nimb in self.id_classified[self.ses][self.data_Type]:
-                        print(f'{" " *8}{self.data_Type} type, {self.modalityLabel_nimb} label, is being converted')
-                        paths_2mr_data = self.id_classified[self.ses][self.data_Type][self.modalityLabel_nimb]
                         self.modalityLabel = mr_modality_nimb_2_dcm2bids[self.modalityLabel_nimb] # changing to dcm2bids type modality_label
-                        self.sub_SUBJDIR = os.path.join(self.OUTPUT_DIR, 'tmp_dcm2bids', self.bids_id)
+                        print(f'{" " *8}{self.data_Type} type, {self.modalityLabel_nimb} label,  {self.modalityLabel} label, is being converted')
+                        paths_2mr_data = self.id_classified[self.ses][self.data_Type][self.modalityLabel_nimb]
+                        if len(paths_2mr_data) > 1:
+                            print(f'{" " *12}> NOTE: {self.modalityLabel} types are more than 1')
                         abs_path2mr_all = self.get_path_2mr(paths_2mr_data)
                         for abs_path2mr in abs_path2mr_all:
                             print(f'{" "*8}there are {len(abs_path2mr_all)} paths to convert')
-                            print(f'{" "*8}testing adding run for path: {abs_path2mr}')
                             self.run_dcm2bids(abs_path2mr)
-                            if os.path.exists(self.sub_SUBJDIR) and \
-                                len(os.listdir(self.sub_SUBJDIR)) > 0:
+                            if os.path.exists(self.sub_SUBJDIR_tmp) and \
+                                len(os.listdir(self.sub_SUBJDIR_tmp)) > 0:
                                 print(f'{" " *12}> conversion did not find corresponding values in the configuration file')
-                                print(f'{" " *12}> temporary converted: {self.sub_SUBJDIR}')
+                                print(f'{" " *12}> temporary converted: {self.sub_SUBJDIR_tmp}')
                                 self.chk_if_processed()
                             else:
+                                self.populate_bids_classifed()
                                 self.cleaning_after_conversion(abs_path2mr)
 
 
     def populate_bids_classifed(self):
-        abs_path2_bids_id_dir = os.path.join(self.OUTPUT_DIR, self.bids_id_dir, self.ses, self.data_Type)
-        abs_path2_bids_nii_f = os.path.join(abs_path2_bids_id_dir,
-                                    [i for i in os.listdir(abs_path2_bids_id_dir) if i.endswith('.nii.gz')][0])
+        """
+        MUST ADJUST:
+        dwi is inside anat, but must be new key
+        {'sub-4085_ses-01': {'anat': {'t1': ['local', '/home/hanganua/datasets/loni_ppmi_testing/rawdata/sub-4085/ses-01/anat/sub-4085_ses-01_run-02_T1w.nii.gz']}, 'dwi': {'dwi': ['local', '/home/hanganua/datasets/loni_ppmi_testing/rawdata/sub-4085/ses-01/dwi/sub-4085_ses-01_run-01_dwi.nii.gz'], 'bval': ['local', '/home/hanganua/datasets/loni_ppmi_testing/rawdata/sub-4085/ses-01/dwi/sub-4085_ses-01_run-02_dwi.bval'], 'bvec': ['local', '/home/hanganua/datasets/loni_ppmi_testing/rawdata/sub-4085/ses-01/dwi/sub-4085_ses-01_run-01_dwi.bvec']}}}
+
+        """
         if self.bids_id not in self.bids_classified:
             self.bids_classified[self.bids_id] = dict()
         if self.data_Type not in self.bids_classified[self.bids_id]:
             self.bids_classified[self.bids_id][self.data_Type] = dict()
         if self.modalityLabel_nimb not in self.bids_classified[self.bids_id][self.data_Type]:
-            if self.modalityLabel_nimb == 'dwi':
-                abs_path2_bids_bval_f = os.path.join(abs_path2_bids_id_dir,
-                                            [i for i in os.listdir(abs_path2_bids_id_dir) if i.endswith('.bval')][0])
-                abs_path2_bids_bvec_f = os.path.join(abs_path2_bids_id_dir,
-                                            [i for i in os.listdir(abs_path2_bids_id_dir) if i.endswith('.bvec')][0])
-                val = {'dwi' : ['local', abs_path2_bids_nii_f],
-                       'bval': ['local', abs_path2_bids_bval_f],
-                       'bvec': ['local', abs_path2_bids_bvec_f]}
-            else:
-                val = {self.modalityLabel_nimb: ['local', abs_path2_bids_nii_f]}
-            self.bids_classified[self.bids_id][self.data_Type] = val
+            self.bids_classified[self.bids_id][self.data_Type] = self.modality_content_populate()
         else:
             print(f'{" " * 12} ERR: modality {self.modalityLabel_nimb} is already present.')
+
+
+    def modality_content_populate(self):
+        abspath_2dir_data_type = os.path.join(self.OUTPUT_DIR, self.bids_id_dir, self.ses, self.data_Type)
+
+        # populating nii.gz files
+        abspath_nii_files      = list()
+        ls_nii_files           = [i for i in os.listdir(abspath_2dir_data_type) if i.endswith('.nii.gz')]
+        for file in ls_nii_files:
+            abspath_nii_files.append(os.path.join(
+                                        abspath_2dir_data_type, file))
+
+        # populating dwi bval and bvec files
+        modalityLabel_content = {self.modalityLabel_nimb: ['local', abspath_nii_files]}
+        if self.modalityLabel_nimb == 'dwi':
+            abspath_bval_files = list()
+            bval_files = [i for i in os.listdir(abspath_2dir_data_type) if i.endswith('.bval')]
+            for file in bval_files:
+                abspath_bval_files.append(os.path.join(
+                                        abspath_2dir_data_type, file))
+
+            abspath_bvec_files = list()
+            bvec_files = [i for i in os.listdir(abspath_2dir_data_type) if i.endswith('.bvec')]
+            for file in bvec_files:
+                abspath_bvec_files.append(os.path.join(
+                                        abspath_2dir_data_type, file))
+
+            modalityLabel_content = {'dwi' : ['local', abspath_nii_files],
+                                     'bval': ['local', abspath_bval_files],
+                                     'bvec': ['local', abspath_bvec_files]}
+        return modalityLabel_content
 
 
     def run_dcm2bids(self, abs_path2mr):
@@ -179,34 +221,34 @@ class DCM2BIDS_helper():
           - if not converted, update config file based on sidecar params (update_config())
           - redo run() up to repeat_lim
         """
-        ls_niigz_files = [i for i in os.listdir(self.sub_SUBJDIR) if '.nii.gz' in i]
+        ls_niigz_files = [i for i in os.listdir(self.sub_SUBJDIR_tmp) if '.nii.gz' in i]
         if ls_niigz_files:
-            print(f'{" " *12}> remaining nii in {self.sub_SUBJDIR}')
+            print(f'{" " *12}> remaining nii in {self.sub_SUBJDIR_tmp}')
             if self.repeat_updating < self.repeat_lim:
                 self.update = False
                 for niigz_f in ls_niigz_files:
                     f_name = niigz_f.replace('.nii.gz','')
                     sidecar = f'{f_name}.json'
-                    self.sidecar_content = load_json(os.path.join(self.sub_SUBJDIR, sidecar))
+                    self.sidecar_content = load_json(os.path.join(self.sub_SUBJDIR_tmp, sidecar))
                     self.update_config()
                 if self.update:
-                    print(f'{" " *12} removing folder: {self.sub_SUBJDIR}')
+                    print(f'{" " *12} removing folder: {self.sub_SUBJDIR_tmp}')
                     self.repeat_updating += 1
-                    self.rm_dir(self.sub_SUBJDIR)
+                    self.rm_dir(self.sub_SUBJDIR_tmp)
                     print(f'{" " *12} re-renning dcm2bids')
                     self.run_dcm2bids()
                     print(f'{" " *12} looping to another chk_if_processed')
                     self.chk_if_processed()
         else:
+            self.populate_bids_classifed()
             self.cleaning_after_conversion()
 
 
     def cleaning_after_conversion(self, abs_path2mr):
-        self.populate_bids_classifed()
         print(f'{" " *15} >>>>DCM2BIDS conversion DONE')
-        if os.path.exists(self.sub_SUBJDIR):
-            print(f'{" " *15} removing folder: {self.sub_SUBJDIR}')
-            self.rm_dir(self.sub_SUBJDIR)
+        if os.path.exists(self.sub_SUBJDIR_tmp):
+            print(f'{" " *15} removing folder: {self.sub_SUBJDIR_tmp}')
+            self.rm_dir(self.sub_SUBJDIR_tmp)
         if os.path.exists(abs_path2mr):
             print(f'{" " *15} removing folder: {abs_path2mr}')
             self.rm_dir(abs_path2mr)
@@ -366,12 +408,6 @@ class DCM2BIDS_helper():
             paths_2mrdata = list() with all abspaths to MR data
         """
         paths_2mrdata = list()
-        if len(paths_2mr_data) > 1:
-            self.add_run = True
-            print(f'{" " *12}> NOTE: {self.modalityLabel} types are more than 1')
-            print(f'{" " *15}> dcm2bids CANNOT save multiple versions of the same MR type in the same session.')
-            print(f'{" " *15}> using the first version')
-
         for path2mr_ in paths_2mr_data:
             if self.archived:
                 path_2archive = self.id_classified['archived']
