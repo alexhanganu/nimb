@@ -74,7 +74,7 @@ class DCM2BIDS_helper():
                 extract from archive specific subject_session
                 start dcm2bids for subject_session
         Return:
-            self.bids_classified = 
+            self.bids_classified =
             {'bids_id':
                 {'anat':
                     {'t1': ['local',
@@ -156,10 +156,14 @@ class DCM2BIDS_helper():
         if self.data_Type not in self.bids_classified[self.bids_id]:
             self.bids_classified[self.bids_id][self.data_Type] = dict()
         if self.modalityLabel_nimb not in self.bids_classified[self.bids_id][self.data_Type]:
-            self.bids_classified[self.bids_id][self.data_Type] = self.modality_content_populate()
+            print(self.modalityLabel_nimb)
+            modality_content = self.modality_content_populate()
+            print(modality_content)
+            print(self.bids_classified)
+            self.bids_classified[self.bids_id][self.data_Type] = modality_content
         else:
             print(f'{" " * 12} ERR: modality {self.modalityLabel_nimb} is already present.')
-
+        print(self.bids_classified)
 
     def modality_content_populate(self):
         abspath_2dir_data_type = os.path.join(self.OUTPUT_DIR, self.bids_id_dir, self.ses, self.data_Type)
