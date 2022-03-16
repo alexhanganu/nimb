@@ -74,7 +74,7 @@ class DCM2BIDS_helper():
                 extract from archive specific subject_session
                 start dcm2bids for subject_session
         Return:
-            self.bids_classified =
+            self.bids_classified = 
             {'bids_id':
                 {'anat':
                     {'t1': ['local',
@@ -112,7 +112,7 @@ class DCM2BIDS_helper():
                     for self.ses in [i for i in self.id_classified if i not in ('archived',)]:
                         self.bids_id, self.bids_id_dir = self.make_bids_id(self.nimb_id, self.ses)
                         self.start_stepwise_choice()
-        return self.bids_classified
+        return self.bids_classified, self.bids_id
 
 
     def start_stepwise_choice(self):
@@ -148,7 +148,12 @@ class DCM2BIDS_helper():
         """
         MUST ADJUST:
         dwi is inside anat, but must be new key
-        {'sub-4085_ses-01': {'anat': {'t1': ['local', '/home/hanganua/datasets/loni_ppmi_testing/rawdata/sub-4085/ses-01/anat/sub-4085_ses-01_run-02_T1w.nii.gz']}, 'dwi': {'dwi': ['local', '/home/hanganua/datasets/loni_ppmi_testing/rawdata/sub-4085/ses-01/dwi/sub-4085_ses-01_run-01_dwi.nii.gz'], 'bval': ['local', '/home/hanganua/datasets/loni_ppmi_testing/rawdata/sub-4085/ses-01/dwi/sub-4085_ses-01_run-02_dwi.bval'], 'bvec': ['local', '/home/hanganua/datasets/loni_ppmi_testing/rawdata/sub-4085/ses-01/dwi/sub-4085_ses-01_run-01_dwi.bvec']}}}
+        {'sub-4085_ses-01':
+            {'anat': 
+                {'t1': ['local', 'path2.nii.gz']},
+                'dwi': {'dwi': ['local', 'path2.nii.gz'],
+                        'bval': ['local', 'path2.bval'],
+                        'bvec': ['local', 'path2.bvec']}}}
 
         """
         if self.bids_id not in self.bids_classified:
@@ -156,14 +161,11 @@ class DCM2BIDS_helper():
         if self.data_Type not in self.bids_classified[self.bids_id]:
             self.bids_classified[self.bids_id][self.data_Type] = dict()
         if self.modalityLabel_nimb not in self.bids_classified[self.bids_id][self.data_Type]:
-            print(self.modalityLabel_nimb)
             modality_content = self.modality_content_populate()
-            print(modality_content)
-            print(self.bids_classified)
             self.bids_classified[self.bids_id][self.data_Type] = modality_content
         else:
             print(f'{" " * 12} ERR: modality {self.modalityLabel_nimb} is already present.')
-        print(self.bids_classified)
+
 
     def modality_content_populate(self):
         abspath_2dir_data_type = os.path.join(self.OUTPUT_DIR, self.bids_id_dir, self.ses, self.data_Type)
@@ -197,8 +199,9 @@ class DCM2BIDS_helper():
 
 
     def run_dcm2bids(self, abs_path2mr):
+        print("====RUNNING DCM2BIDS====" * 3)
         if self.run_stt == 0:
-            print("*" * 80)
+            print(">" * 80)
             self.config_file = self.get_config_file()
             print(f'{" " * 12} config file is: {self.config_file}')
             print(f'{" " *15} archive located at: {abs_path2mr}')
@@ -217,7 +220,7 @@ class DCM2BIDS_helper():
                                                                         self.ses,
                                                                         self.config_file,
                                                                         self.OUTPUT_DIR))
-            print("*" * 80)
+            print("^" * 80)
 
 
     def chk_if_processed(self):

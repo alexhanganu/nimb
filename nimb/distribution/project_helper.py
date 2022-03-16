@@ -257,7 +257,7 @@ class ProjectManager:
 
         for app in DEFAULT.app_files:
             self.update_f_ids(_id_bids, app, "")
-            if not self._ids_all[_id_bids][app]:
+            if not self._ids_all[_id_bids][app]:                
                 key_dir_2processed = DEFAULT.app_files[app]["dir_store_proc"]
                 location = self.project_vars[key_dir_2processed][0]
                 abspath_2storage = self.project_vars[key_dir_2processed][1]
@@ -669,12 +669,11 @@ class ProjectManager:
                     ready_2convert_2bids = self.id_is_bids_converted(_id_from_nimb_classified, ses)
                     if ready_2convert_2bids:
                         print('    ready to convert to BIDS')
-                        self.bids_classified = self.convert_with_dcm2bids(_id_from_nimb_classified,
+                        self.bids_classified, _id_bids = self.convert_with_dcm2bids(_id_from_nimb_classified,
                                                             ses,
                                                             nimb_classified[_id_from_nimb_classified])
                         print(f'        bids_classified is: {self.bids_classified}')
         if _id_project:
-            _id_bids = self.bids_classified[_id_project]
             self.update_f_ids(_id_bids, DEFAULT.id_project_key, _id_project)
             # populate grid with _id_bids
             self.save_f_ids()
