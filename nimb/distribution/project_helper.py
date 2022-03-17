@@ -673,6 +673,7 @@ class ProjectManager:
                                                             ses,
                                                             nimb_classified[_id_from_nimb_classified])
                         print(f'        bids_classified is: {self.bids_classified}')
+                        print(f'        _id_bids is: {_id_bids}')
         if _id_project:
             self.update_f_ids(_id_bids, DEFAULT.id_project_key, _id_project)
             # populate grid with _id_bids
