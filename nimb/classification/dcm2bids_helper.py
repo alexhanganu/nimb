@@ -138,7 +138,7 @@ class DCM2BIDS_helper():
                                 len(os.listdir(self.sub_SUBJDIR_tmp)) > 0:
                                 print(f'{" " *12}> conversion did not find corresponding values in the configuration file')
                                 print(f'{" " *12}> temporary converted: {self.sub_SUBJDIR_tmp}')
-                                self.chk_if_processed()
+                                self.chk_if_processed(abs_path2mr)
                             else:
                                 self.populate_bids_classifed()
                                 self.cleaning_after_conversion(abs_path2mr)
@@ -223,7 +223,7 @@ class DCM2BIDS_helper():
             print("^" * 80)
 
 
-    def chk_if_processed(self):
+    def chk_if_processed(self, abs_path2mr):
         """Check if any unconverted,
           - if not converted, update config file based on sidecar params (update_config())
           - redo run() up to repeat_lim
@@ -243,7 +243,7 @@ class DCM2BIDS_helper():
                     self.repeat_updating += 1
                     self.rm_dir(self.sub_SUBJDIR_tmp)
                     print(f'{" " *12} re-renning dcm2bids')
-                    self.run_dcm2bids()
+                    self.run_dcm2bids(abs_path2mr)
                     print(f'{" " *12} looping to another chk_if_processed')
                     self.chk_if_processed()
         else:

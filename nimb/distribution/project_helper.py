@@ -675,6 +675,7 @@ class ProjectManager:
                         print(f'        bids_classified is: {self.bids_classified}')
                         print(f'        _id_bids is: {_id_bids}')
         if _id_project:
+            print(f'        _id_bids is at 3rd loop: {_id_bids}')
             self.update_f_ids(_id_bids, DEFAULT.id_project_key, _id_project)
             # populate grid with _id_bids
             self.save_f_ids()
