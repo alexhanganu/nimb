@@ -134,14 +134,14 @@ class DCM2BIDS_helper():
                         for abs_path2mr in abs_path2mr_all:
                             print(f'{" "*8}there are {len(abs_path2mr_all)} paths to convert')
                             self.run_dcm2bids(abs_path2mr)
-                            if os.path.exists(self.sub_SUBJDIR_tmp) and \
-                                len(os.listdir(self.sub_SUBJDIR_tmp)) > 0:
-                                print(f'{" " *12}> conversion did not find corresponding values in the configuration file')
-                                print(f'{" " *12}> temporary converted: {self.sub_SUBJDIR_tmp}')
-                                self.chk_if_processed(abs_path2mr)
-                            else:
-                                self.populate_bids_classifed()
-                                self.cleaning_after_conversion(abs_path2mr)
+                        if os.path.exists(self.sub_SUBJDIR_tmp) and \
+                            len(os.listdir(self.sub_SUBJDIR_tmp)) > 0:
+                            print(f'{" " *12}> conversion did not find corresponding values in the configuration file')
+                            print(f'{" " *12}> temporary converted: {self.sub_SUBJDIR_tmp}')
+                            self.chk_if_processed(abs_path2mr)
+                        else:
+                            self.populate_bids_classifed()
+                            self.cleaning_after_conversion(abs_path2mr)
 
 
     def populate_bids_classifed(self):
