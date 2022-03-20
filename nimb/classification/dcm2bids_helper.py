@@ -131,9 +131,12 @@ class DCM2BIDS_helper():
                         if len(paths_2mr_data) > 1:
                             print(f'{" " *12}> NOTE: {self.modalityLabel} types are more than 1')
                         abs_path2mr_all = self.get_path_2mr(paths_2mr_data)
-                        for abs_path2mr in abs_path2mr_all:
-                            print(f'{" "*8}there are {len(abs_path2mr_all)} paths to convert')
-                            self.run_dcm2bids(abs_path2mr)
+                        print(f'{" "*8}there are {len(abs_path2mr_all)} paths to convert')
+                        abs_path2mr  = abs_path2mr_all[0]
+                        self.run_dcm2bids(abs_path2mr)
+                        # for abs_path2mr in abs_path2mr_all:
+                        #     print(f'{" "*8}converting path {abs_path2mr_all.index(abs_path2mr)}')
+                        #     self.run_dcm2bids(abs_path2mr)
                         if os.path.exists(self.sub_SUBJDIR_tmp) and \
                             len(os.listdir(self.sub_SUBJDIR_tmp)) > 0:
                             print(f'{" " *12}> conversion did not find corresponding values in the configuration file')
