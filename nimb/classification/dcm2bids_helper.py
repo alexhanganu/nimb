@@ -128,12 +128,10 @@ class DCM2BIDS_helper():
                         self.modalityLabel = mr_modality_nimb_2_dcm2bids[self.modalityLabel_nimb] # changing to dcm2bids type modality_label
                         print(f'{" " *8}{self.data_Type} type, {self.modalityLabel_nimb} label,  {self.modalityLabel} label, is being converted')
                         paths_2mr_data = self.id_classified[self.ses][self.data_Type][self.modalityLabel_nimb]
-                        if len(paths_2mr_data) > 1:
-                            print(f'{" " *12}> NOTE: {self.modalityLabel} types are more than 1')
                         abs_path2mr_all = self.get_path_2mr(paths_2mr_data)
-                        print(f'{" "*8}there are {len(abs_path2mr_all)} paths to convert')
                         abs_path2mr  = abs_path2mr_all[0]
                         self.run_dcm2bids(abs_path2mr)
+                        # print(f'{" "*8}there are {len(abs_path2mr_all)} paths to convert')
                         # for abs_path2mr in abs_path2mr_all:
                         #     print(f'{" "*8}converting path {abs_path2mr_all.index(abs_path2mr)}')
                         #     self.run_dcm2bids(abs_path2mr)
