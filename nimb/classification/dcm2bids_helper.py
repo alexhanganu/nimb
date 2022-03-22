@@ -275,6 +275,7 @@ class DCM2BIDS_helper():
             if des['dataType'] == self.data_Type and \
                 des["modalityLabel"] == self.modalityLabel:
                 list_criteria.append(des)
+        print("    list of criteria, 1st chk", list_criteria)
         if len(list_criteria) > 0:
             print(f'{" " *12}> there is at least one configuration with dataType: {self.data_Type}')
             for des in list_criteria[::-1]:
@@ -285,8 +286,10 @@ class DCM2BIDS_helper():
                         sys.exit(0)
                     else:
                         list_criteria.remove(des)
+        print("    list of criteria, 2nd chk", list_criteria)
         if len(list_criteria) > 0:
             print(f'{" " *12}> cannot find a correct sidecar location. Please add more parameters.')
+        print("    list of criteria, 3rd chk", list_criteria)
         if len(list_criteria) == 0:
             print (f'{" " *12}> updating config with value: {sidecar_crit1}')
             new_des = {
