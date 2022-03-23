@@ -246,7 +246,7 @@ class DCM2BIDS_helper():
                     print(f'{" " *12} re-renning dcm2bids')
                     self.run_dcm2bids(abs_path2mr)
                     print(f'{" " *12} looping to another chk_if_processed')
-                    self.chk_if_processed()
+                    self.chk_if_processed(abs_path2mr)
         else:
             self.populate_bids_classifed()
             self.cleaning_after_conversion()
