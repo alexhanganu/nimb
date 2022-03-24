@@ -82,10 +82,6 @@ def install_conda_module(conda_home, NIMB_HOME, module):
         system(f'{conda_bin} install -y -c conda-forge/label/gcc7 {module}')
     else:
         system(f'{conda_bin} install -y -c conda-forge {module}')
-        # system(f'{conda_bin} install -y -c conda-forge dcm2niix')
-        # system(f'{conda_bin} install -y -c conda-forge dipy')
-        # system(f'{conda_bin} install -y -c conda-forge nilearn')
-        # system(f'{conda_bin} install -y -c conda-forge submitit')
     # must activate the conda environment before using by sourcing the bash profile. Otherwise, does not work
     system("source $HOME/.bashrc")
 
