@@ -512,6 +512,7 @@ class ProjectManager:
             for _id_src in _ids_src_unprocessed:
                 _id_bids = self.classify_with_dcm2bids(nimb_classified = self._ids_nimb_classified,
                                                     _id_project = _id_src)
+                print("_id_bids in check_new def is: ", _id_bids)
                 self.add_ids_source_to_bids_in_grid({_id_src: _id_bids}, copy_dir = False)
             self.processing_chk()
         else:
@@ -679,7 +680,7 @@ class ProjectManager:
             self.update_f_ids(_id_bids, DEFAULT.id_project_key, _id_project)
             # populate grid with _id_bids
             self.save_f_ids()
-            return _id_bids
+        return _id_bids
 
 
     def id_is_bids_converted(self, _id_from_nimb_classified, ses):
