@@ -958,16 +958,17 @@ class ProjectManager:
 
         # loop to work with each _id_src
         for _id_src in yes_bids:
+            _id_bids = yes_bids[_id_src]
             if copy_dir and self.srcdata_dir != self.BIDS_DIR:
                 print(f"{LogLVL.lvl2}copying {_id_src}")
                 print(f"{LogLVL.lvl3}from :{self.srcdata_dir}")
                 print(f"{LogLVL.lvl3}to   : {self.BIDS_DIR}")
                 source_data = os.path.join(self.srcdata_dir, _id_src)
                 target      = os.path.join(self.BIDS_DIR, _id_src)
-                copied = utilities.copy_rm_dir(source_data, target)
+                copied      = utilities.copy_rm_dir(source_data, target)
                 if copied:
                     ls_id_bids_copied.append(_id_src)
-                    self._ids_bids = self._ids_bids + list(yes_bids[_id_src])
+                    self._ids_bids = self._ids_bids + list(_id_bids)
                 else:
                     ls_id_bids_not_copied.append(_id_src)
             # populating self.f_ids with _id_src
