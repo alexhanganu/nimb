@@ -972,7 +972,7 @@ class ProjectManager:
                 else:
                     ls_id_bids_not_copied.append(_id_src)
             # populating self.f_ids with _id_src
-            self.update_f_ids(_id_bids, DEFAULT.is_source_key, _id_src)
+            self.update_f_ids(_id_bids, DEFAULT.id_source_key, _id_src)
 
         # populating the grid, column _ids_bids_col with the new 
         # list of _ids_bids
