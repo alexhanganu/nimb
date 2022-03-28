@@ -246,7 +246,7 @@ class DCM2BIDS_helper():
                     self.chk_if_processed(abs_path2mr)
         else:
             self.populate_bids_classifed()
-            self.cleaning_after_conversion()
+            self.cleaning_after_conversion(abs_path2mr)
 
 
     def cleaning_after_conversion(self, abs_path2mr):
