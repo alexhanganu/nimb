@@ -423,6 +423,7 @@ class ProjectManager:
             self._ids_all[_id_bids] = dict()
         else:
             self._ids_all[_id_bids][key] = val_2update
+        print("f_ids is: ", self._ids_all)
 
 
     def save_f_ids(self):
@@ -897,6 +898,7 @@ class ProjectManager:
             # rm from f_ids
             if _id in self._ids_all:
                 self.update_f_ids(_id, "", "")
+                self.save_f_ids()
 
             # adding to the _ids_project_col in the grid
             if _id not in self._ids_project:
@@ -969,7 +971,9 @@ class ProjectManager:
                 else:
                     ls_id_bids_not_copied.append(_id_src)
             # populating self.f_ids with _id_src
+            print("populting f_ids with id_bids:", _id_bids, "for _id_src: ", _id_src)
             self.update_f_ids(_id_bids, DEFAULT.id_source_key, _id_src)
+        self.save_f_ids()
 
         # populating the grid, column _ids_bids_col with the new 
         # list of _ids_bids
