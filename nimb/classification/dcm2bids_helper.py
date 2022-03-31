@@ -126,7 +126,7 @@ class DCM2BIDS_helper():
                 for self.modalityLabel_nimb in BIDS_types[self.data_Type]:
                     if self.modalityLabel_nimb in self.id_classified[self.ses][self.data_Type]:
                         self.modalityLabel = mr_modality_nimb_2_dcm2bids[self.modalityLabel_nimb] # changing to dcm2bids type modality_label
-                        print(f'{" " *8}{self.data_Type} type, {self.modalityLabel_nimb} label,  {self.modalityLabel} label, is being converted')
+                        print(f'{" " *8}DCM2BIDS CONVERTING: type: {self.data_Type}; label: {self.modalityLabel}')
                         paths_2mr_data = self.id_classified[self.ses][self.data_Type][self.modalityLabel_nimb]
                         abs_path2mr_all = self.get_path_2mr(paths_2mr_data)
                         abs_path2mr  = abs_path2mr_all[0]
@@ -201,8 +201,8 @@ class DCM2BIDS_helper():
         if self.run_stt == 0:
             print(">" * 80)
             self.config_file = self.get_config_file()
-            print(f'{" " * 12} config file is: {self.config_file}')
-            print(f'{" " *15} archive located at: {abs_path2mr}')
+            print(f'{" " * 12}config file is: {self.config_file}')
+            print(f'{" " *15}archive located at: {abs_path2mr}')
             return_value = os.system('dcm2bids -d {} -p {} -s {} -c {} -o {}'.format(
                                                                                     abs_path2mr,
                                                                                     self.nimb_id,
