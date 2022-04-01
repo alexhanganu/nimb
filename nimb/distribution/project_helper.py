@@ -951,6 +951,7 @@ class ProjectManager:
         ls_id_bids_copied = list()
         ls_id_bids_not_copied = list()
         self._ids_bids = self.df_grid[self._ids_bids_col].tolist()
+        print("TESTING. self._ids_bids test 1 are:", self._ids_bids)
 
         # loop to work with each _id_src
         for _id_src in yes_bids:
@@ -964,7 +965,7 @@ class ProjectManager:
                 copied      = utilities.copy_rm_dir(source_data, target)
                 if copied:
                     ls_id_bids_copied.append(_id_src)
-                    self._ids_bids = self._ids_bids + list(_id_bids)
+                    self._ids_bids = self._ids_bids + [_id_bids]
                 else:
                     ls_id_bids_not_copied.append(_id_src)
             # populating self.f_ids with _id_src
@@ -972,16 +973,20 @@ class ProjectManager:
             self.update_f_ids(_id_bids, DEFAULT.id_source_key, _id_src)
         self.save_f_ids()
 
-        # populating the grid, column _ids_bids_col with the new 
-        # list of _ids_bids
-        self.df_grid[self._ids_bids_col] = self._ids_bids
-        self.tab.save_df(self.df_grid,
-                        os.path.join(self.path_stats_dir, self.f_groups))
-
         # checker to confirm that some _ids_bids were not copied
         if ls_id_bids_not_copied:
             print(f"{LogLVL.lvl2}some ids could not be copied {_id_src}")
             print(f"{LogLVL.lvl3}{ls_id_bids_not_copied}")
+
+        # populating the grid, column _ids_bids_col with the new 
+        # list of _ids_bids
+        print("TESTING. self._ids_bids test 2 are:", self._ids_bids)
+        print("TESTING. self._ids_bids_col is:", self._ids_bids_col)
+        self.df_grid[self._ids_bids_col] = self._ids_bids
+        print("TESTING. self.df_grid is:", self.df_grid)
+        print("TESTING. Saving df to:", os.path.join(self.path_stats_dir, self.f_groups))
+        self.tab.save_df(self.df_grid,
+                        os.path.join(self.path_stats_dir, self.f_groups))
 
 
     def rm_id_from_grid(self, ls_2rm_from_grid):
