@@ -496,6 +496,7 @@ class ProjectManager:
                                                     self.srcdata_dir)
         if yes_bids_d:
             print(f"{LogLVL.lvl2}some subjects are of BIDS format: {list(yes_bids_d.keys())}")
+            self.copy_dir(yes_bids)
             self.add_ids_source_to_bids_in_grid(yes_bids_d)
 
         # STEP 4:
@@ -510,7 +511,7 @@ class ProjectManager:
             for _id_src in _ids_src_unprocessed:
                 _id_bids = self.classify_with_dcm2bids(nimb_classified = self._ids_nimb_classified,
                                                     _id_project = _id_src)
-                self.add_ids_source_to_bids_in_grid({_id_src: _id_bids}, copy_dir = False)
+                self.add_ids_source_to_bids_in_grid({_id_src: _id_bids})
             self.processing_chk()
         else:
            print(f'{LogLVL.lvl2}ALL participants with MRI data were processed')
@@ -935,8 +936,37 @@ class ProjectManager:
         self.tab.save_df(self.df_grid,
                         os.path.join(self.path_stats_dir, self.f_groups))
 
+    def copy_dir(self, yes_bids):
+        """some bids folders might require to be copied
+            to the rawdata folder
+        Args:
+            yes_bids = {_id_src: _id_bids}
+        """
+        ls_copied = list()
+        ls_not_copied = list()
+        for _id_src in yes_bids:
+            _id_bids = yes_bids[_id_src]
+            if self.srcdata_dir != self.BIDS_DIR:
+                print(f"{LogLVL.lvl2}copying {_id_bids}")
+                print(f"{LogLVL.lvl3}from :{self.srcdata_dir}")
+                print(f"{LogLVL.lvl3}to   : {self.BIDS_DIR}")
+                source_data = os.path.join(self.srcdata_dir, _id_bids)
+                target      = os.path.join(self.BIDS_DIR, _id_bids)
+                copied      = utilities.copy_rm_dir(source_data, target)
+                if copied:
+                    ls_copied.append(_id_bids)
+                else:
+                    ls_not_copied.append(_id_bids)
 
-    def add_ids_source_to_bids_in_grid(self, yes_bids, copy_dir = True):
+        # checker to confirm that some _ids_bids were not copied
+        if ls_not_copied:
+            print(f"{LogLVL.lvl2}some ids could not be copied:")
+            print(f"{LogLVL.lvl3}{ls_not_copied}")
+
+        return ls_copied, ls_not_copied
+
+
+    def add_ids_source_to_bids_in_grid(self, yes_bids):
         """
             adding a new id from sourcedata dir
             to the bids columns
@@ -948,43 +978,22 @@ class ProjectManager:
             updates self.df_grid
         """
         # defining variables
-        ls_id_bids_copied = list()
-        ls_id_bids_not_copied = list()
         self._ids_bids = self.df_grid[self._ids_bids_col].tolist()
-        print("TESTING. self._ids_bids test 1 are:", self._ids_bids)
 
         # loop to work with each _id_src
         for _id_src in yes_bids:
             _id_bids = yes_bids[_id_src]
-            if copy_dir and self.srcdata_dir != self.BIDS_DIR:
-                print(f"{LogLVL.lvl2}copying {_id_src}")
-                print(f"{LogLVL.lvl3}from :{self.srcdata_dir}")
-                print(f"{LogLVL.lvl3}to   : {self.BIDS_DIR}")
-                source_data = os.path.join(self.srcdata_dir, _id_src)
-                target      = os.path.join(self.BIDS_DIR, _id_src)
-                copied      = utilities.copy_rm_dir(source_data, target)
-                if copied:
-                    ls_id_bids_copied.append(_id_src)
-                    self._ids_bids = self._ids_bids + [_id_bids]
-                else:
-                    ls_id_bids_not_copied.append(_id_src)
+            self._ids_bids = self._ids_bids + [_id_bids]
             # populating self.f_ids with _id_src
             print("populating f_ids with id_bids:", _id_bids, "for _id_src: ", _id_src)
             self.update_f_ids(_id_bids, DEFAULT.id_source_key, _id_src)
         self.save_f_ids()
 
-        # checker to confirm that some _ids_bids were not copied
-        if ls_id_bids_not_copied:
-            print(f"{LogLVL.lvl2}some ids could not be copied {_id_src}")
-            print(f"{LogLVL.lvl3}{ls_id_bids_not_copied}")
-
         # populating the grid, column _ids_bids_col with the new 
         # list of _ids_bids
         print("TESTING. self._ids_bids test 2 are:", self._ids_bids)
-        print("TESTING. self._ids_bids_col is:", self._ids_bids_col)
         self.df_grid[self._ids_bids_col] = self._ids_bids
         print("TESTING. self.df_grid is:", self.df_grid)
-        print("TESTING. Saving df to:", os.path.join(self.path_stats_dir, self.f_groups))
         self.tab.save_df(self.df_grid,
                         os.path.join(self.path_stats_dir, self.f_groups))
 
