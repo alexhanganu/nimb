@@ -936,35 +936,6 @@ class ProjectManager:
         self.tab.save_df(self.df_grid,
                         os.path.join(self.path_stats_dir, self.f_groups))
 
-    def copy_dir(self, yes_bids):
-        """some bids folders might require to be copied
-            to the rawdata folder
-        Args:
-            yes_bids = {_id_src: _id_bids}
-        """
-        ls_copied = list()
-        ls_not_copied = list()
-        for _id_src in yes_bids:
-            _id_bids = yes_bids[_id_src]
-            if self.srcdata_dir != self.BIDS_DIR:
-                print(f"{LogLVL.lvl2}copying {_id_bids}")
-                print(f"{LogLVL.lvl3}from :{self.srcdata_dir}")
-                print(f"{LogLVL.lvl3}to   : {self.BIDS_DIR}")
-                source_data = os.path.join(self.srcdata_dir, _id_bids)
-                target      = os.path.join(self.BIDS_DIR, _id_bids)
-                copied      = utilities.copy_rm_dir(source_data, target)
-                if copied:
-                    ls_copied.append(_id_bids)
-                else:
-                    ls_not_copied.append(_id_bids)
-
-        # checker to confirm that some _ids_bids were not copied
-        if ls_not_copied:
-            print(f"{LogLVL.lvl2}some ids could not be copied:")
-            print(f"{LogLVL.lvl3}{ls_not_copied}")
-
-        return ls_copied, ls_not_copied
-
 
     def add_ids_source_to_bids_in_grid(self, yes_bids):
         """
@@ -996,6 +967,31 @@ class ProjectManager:
         print("TESTING. self.df_grid is:", self.df_grid)
         self.tab.save_df(self.df_grid,
                         os.path.join(self.path_stats_dir, self.f_groups))
+        """
+        TESTING. self._ids_bids test 2 are: ['sub-4085_ses-01', 'sub-3392_ses-01']
+        Traceback (most recent call last):
+          File "nimb/nimb.py", line 292, in <module>
+            main()
+          File "nimb/nimb.py", line 288, in main
+            return app.run()
+          File "nimb/nimb.py", line 184, in run
+            ProjectManager(self.all_vars).run()
+          File "/project/6063206/nimb/nimb/distribution/project_helper.py", line 219, in run
+            self.check_new()
+          File "/project/6063206/nimb/nimb/distribution/project_helper.py", line 514, in check_new
+            self.add_ids_source_to_bids_in_grid({_id_src: _id_bids})
+          File "/project/6063206/nimb/nimb/distribution/project_helper.py", line 995, in add_ids_source_to_bids_in_grid
+            self.df_grid[self._ids_bids_col] = self._ids_bids
+          File "/home/hanganua/miniconda3/lib/python3.7/site-packages/pandas/core/frame.py", line 3163, in __setitem__
+            self._set_item(key, value)
+          File "/home/hanganua/miniconda3/lib/python3.7/site-packages/pandas/core/frame.py", line 3242, in _set_item
+            value = self._sanitize_column(key, value)
+          File "/home/hanganua/miniconda3/lib/python3.7/site-packages/pandas/core/frame.py", line 3899, in _sanitize_column
+            value = sanitize_index(value, self.index)
+          File "/home/hanganua/miniconda3/lib/python3.7/site-packages/pandas/core/internals/construction.py", line 752, in sanitize_index
+            "Length of values "
+        ValueError: Length of values (2) does not match length of index (1)
+        """
 
 
     def rm_id_from_grid(self, ls_2rm_from_grid):
@@ -1053,6 +1049,35 @@ class ProjectManager:
         else:
             print(f'{LogLVL.lvl1}file {f_abspath} is missing in: {_dir_2chk}')
 
+
+    def copy_dir(self, yes_bids):
+        """some bids folders might require to be copied
+            to the rawdata folder
+        Args:
+            yes_bids = {_id_src: _id_bids}
+        """
+        ls_copied = list()
+        ls_not_copied = list()
+        for _id_src in yes_bids:
+            _id_bids = yes_bids[_id_src]
+            if self.srcdata_dir != self.BIDS_DIR:
+                print(f"{LogLVL.lvl2}copying {_id_bids}")
+                print(f"{LogLVL.lvl3}from :{self.srcdata_dir}")
+                print(f"{LogLVL.lvl3}to   : {self.BIDS_DIR}")
+                source_data = os.path.join(self.srcdata_dir, _id_bids)
+                target      = os.path.join(self.BIDS_DIR, _id_bids)
+                copied      = utilities.copy_rm_dir(source_data, target)
+                if copied:
+                    ls_copied.append(_id_bids)
+                else:
+                    ls_not_copied.append(_id_bids)
+
+        # checker to confirm that some _ids_bids were not copied
+        if ls_not_copied:
+            print(f"{LogLVL.lvl2}some ids could not be copied:")
+            print(f"{LogLVL.lvl3}{ls_not_copied}")
+
+        return ls_copied, ls_not_copied
 
 
     # def get_id_project_from_nimb_classified(self, sub_label):
