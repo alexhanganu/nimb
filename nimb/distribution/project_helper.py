@@ -959,39 +959,38 @@ class ProjectManager:
             print("populating f_ids with id_bids:", _id_bids, "for _id_src: ", _id_src)
             self.update_f_ids(_id_bids, DEFAULT.id_source_key, _id_src)
         self.save_f_ids()
+        self.populate_df(self._ids_bids, self._ids_bids_col, self.df_grid)
+
+
+    def populate_df(self, new_vals, col, df):
+        """script aims to add new_id to the corresponding column
+            in the df, which is a pandas.DataFrame
+            it is expected that pandas.DataFrame.index is a range(0, n)
+        Args:
+            new_vals: list() of vals to be added
+            col     : column name in pandas.DataFrame to be populated
+        Return:
+            saves the updated pandas.DataFrame
+        """
+        abspath_2save_file = os.path.join(self.path_stats_dir, self.f_groups)
+        print("TESTING. self._ids_bids test 2 are:", new_vals)
+
+        # list of _ids_bids
+        vals_exist = df[col].tolist()
 
         # populating the grid, column _ids_bids_col with the new 
-        # list of _ids_bids
-        print("TESTING. self._ids_bids test 2 are:", self._ids_bids)
-        self.df_grid[self._ids_bids_col] = self._ids_bids
-        print("TESTING. self.df_grid is:", self.df_grid)
-        self.tab.save_df(self.df_grid,
-                        os.path.join(self.path_stats_dir, self.f_groups))
-        """
-        TESTING. self._ids_bids test 2 are: ['sub-4085_ses-01', 'sub-3392_ses-01']
-        Traceback (most recent call last):
-          File "nimb/nimb.py", line 292, in <module>
-            main()
-          File "nimb/nimb.py", line 288, in main
-            return app.run()
-          File "nimb/nimb.py", line 184, in run
-            ProjectManager(self.all_vars).run()
-          File "/project/6063206/nimb/nimb/distribution/project_helper.py", line 219, in run
-            self.check_new()
-          File "/project/6063206/nimb/nimb/distribution/project_helper.py", line 514, in check_new
-            self.add_ids_source_to_bids_in_grid({_id_src: _id_bids})
-          File "/project/6063206/nimb/nimb/distribution/project_helper.py", line 995, in add_ids_source_to_bids_in_grid
-            self.df_grid[self._ids_bids_col] = self._ids_bids
-          File "/home/hanganua/miniconda3/lib/python3.7/site-packages/pandas/core/frame.py", line 3163, in __setitem__
-            self._set_item(key, value)
-          File "/home/hanganua/miniconda3/lib/python3.7/site-packages/pandas/core/frame.py", line 3242, in _set_item
-            value = self._sanitize_column(key, value)
-          File "/home/hanganua/miniconda3/lib/python3.7/site-packages/pandas/core/frame.py", line 3899, in _sanitize_column
-            value = sanitize_index(value, self.index)
-          File "/home/hanganua/miniconda3/lib/python3.7/site-packages/pandas/core/internals/construction.py", line 752, in sanitize_index
-            "Length of values "
-        ValueError: Length of values (2) does not match length of index (1)
-        """
+        if len(vals_exist) == 0:
+            df[col] = new_vals
+        else:
+            vals2add = [i for i in new_vals if i not in vals_exist]
+            ix_all = df.index.tolist()
+            ix = len(ix_all) + 1
+            for val in vals2add:
+                df.loc[ix] = None
+                df.at[ix, col] = val
+                ix += 1
+        print("TESTING. self.df_grid is:", df)
+        self.tab.save_df(df, abspath_2save_file)
 
 
     def rm_id_from_grid(self, ls_2rm_from_grid):
