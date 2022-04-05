@@ -416,25 +416,6 @@ class ProjectManager:
         return _id_bids_ls
 
 
-    def update_f_ids(self, _id_bids, key, val_2update):
-        if not key and _id_bids in self._ids_all:
-            self._ids_all.pop(_id_bids, None)
-        elif _id_bids not in self._ids_all:
-            self._ids_all[_id_bids] = dict()
-        else:
-            self._ids_all[_id_bids][key] = val_2update
-
-
-    def save_f_ids(self):
-        """
-        f_ids is saved in:
-            materials and
-            stats_dirs
-        """
-        save_json(self._ids_all, self.f_ids_inmatdir, print_space = 12)
-        save_json(self._ids_all, self.f_ids_instatsdir, print_space = 12)
-
-
     def check_new(self):
         """
         DESCRIPTION:
@@ -852,37 +833,6 @@ class ProjectManager:
         self._ids_project = self.df_grid[self._ids_project_col].tolist()
 
 
-
-    def make_default_grid(self):
-        '''creates the file default.csv located in:
-            ../nimb/projects.json -> materials_DIR -> ['local', 'PATH_2_DIR']
-            ../nimb/projects.json -> STATS_PATHS -> STATS_HOME
-            script will update file projects.json
-        '''
-        f_name = DEFAULT.default_tab_name
-        df = self.tab.get_clean_df()
-        df[self._ids_project_col] = ''
-        df[self._ids_bids_col]    = ''
-        print(f'    file with groups is absent; creating default grid file:\
-                    in: {self.path_stats_dir}\
-                    in: {self.materials_dir_pt}')
-        self.tab.save_df(df,
-            os.path.join(self.path_stats_dir, f_name))
-        self.tab.save_df(df,
-            os.path.join(self.materials_dir_pt, f_name))
-        self.project_vars['fname_groups']    = f_name
-        self.f_groups                        = f_name
-
-        # updating self.all_vars and project.json file
-        from setup.get_credentials_home import _get_credentials_home
-        credentials_home = _get_credentials_home()
-        json_projects    = os.path.join(credentials_home, 'projects.json')
-        print(f'{LogLVL.lvl1}updating project.json at: {json_projects}')
-        self.all_vars.projects[self.project] = self.project_vars
-        save_json(self.all_vars.projects, json_projects)
-        return df
-
-
     def mv_ids_bids_in_grid(self, ls_ids):
         """moving _ids_bids to _ids_project_col
         """
@@ -904,8 +854,7 @@ class ProjectManager:
                 self._ids_project.append(_id)
             else:
                 print(f'{LogLVL.lvl2}id: {_id} is already present in grid  in column: {self._ids_project_col}')
-        self.tab.save_df(self.df_grid,
-                        os.path.join(self.path_stats_dir, self.f_groups))
+        self.save_grid(self.df_grid, self.f_groups)
 
 
     def add_ids_project_to_bids_in_grid(self, ls_ids):
@@ -932,9 +881,7 @@ class ProjectManager:
                 else:
                     self.tab.change_val(self.df_grid, index, self._ids_project_col, None)
                     self._ids_project.remove(_id_project)
-
-        self.tab.save_df(self.df_grid,
-                        os.path.join(self.path_stats_dir, self.f_groups))
+        self.save_grid(self.df_grid, self.f_groups)
 
 
     def add_ids_source_to_bids_in_grid(self, yes_bids):
@@ -972,7 +919,6 @@ class ProjectManager:
         Return:
             saves the updated pandas.DataFrame
         """
-        abspath_2save_file = os.path.join(self.path_stats_dir, self.f_groups)
         print("TESTING. self._ids_bids test 2 are:", new_vals)
 
         # list of _ids_bids
@@ -990,7 +936,7 @@ class ProjectManager:
                 df.at[ix, col] = val
                 ix += 1
         print("TESTING. self.df_grid is:", df)
-        self.tab.save_df(df, abspath_2save_file)
+        self.save_grid(df, self.f_groups)
 
 
     def rm_id_from_grid(self, ls_2rm_from_grid):
@@ -1000,8 +946,46 @@ class ProjectManager:
             index = self.tab.get_index_of_val(self.df_grid, self._ids_project_col, _id)
             self.tab.rm_row(self.df_grid, index)
             self._ids_project.remove(_id_project)
-        self.tab.save_df(self.df_grid,
-                        os.path.join(self.path_stats_dir, self.f_groups))
+        self.save_grid(self.df_grid, self.f_groups)
+
+
+    def make_default_grid(self):
+        '''creates the file default.csv located in:
+            ../nimb/projects.json -> materials_DIR -> ['local', 'PATH_2_DIR']
+            ../nimb/projects.json -> STATS_PATHS -> STATS_HOME
+            script will update file projects.json
+        '''
+        f_name = DEFAULT.default_tab_name
+        df = self.tab.get_clean_df()
+        df[self._ids_project_col] = ''
+        df[self._ids_bids_col]    = ''
+        print(f'    file with groups is absent; creating default grid file:\
+                    in: {self.path_stats_dir}\
+                    in: {self.materials_dir_pt}')
+        self.save_grid(df, f_name)
+        self.project_vars['fname_groups']    = f_name
+        self.f_groups                        = f_name
+
+        # updating self.all_vars and project.json file
+        from setup.get_credentials_home import _get_credentials_home
+        credentials_home = _get_credentials_home()
+        json_projects    = os.path.join(credentials_home, 'projects.json')
+        print(f'{LogLVL.lvl1}updating project.json at: {json_projects}')
+        self.all_vars.projects[self.project] = self.project_vars
+        save_json(self.all_vars.projects, json_projects)
+        return df
+
+
+    def save_grid(self, df, f_name):
+        """
+        save grid file in:
+            materials_dir
+            stats_dirs
+        """
+        self.tab.save_df(df,
+            os.path.join(self.path_stats_dir, f_name))
+        self.tab.save_df(df,
+            os.path.join(self.materials_dir_pt, f_name))
 
 
     '''
@@ -1033,6 +1017,24 @@ class ProjectManager:
             self.save_f_ids()
         # print(f'{LogLVL.lvl1} ids all are: {self._ids_all}')
 
+
+    def update_f_ids(self, _id_bids, key, val_2update):
+        if not key and _id_bids in self._ids_all:
+            self._ids_all.pop(_id_bids, None)
+        elif _id_bids not in self._ids_all:
+            self._ids_all[_id_bids] = dict()
+        else:
+            self._ids_all[_id_bids][key] = val_2update
+
+
+    def save_f_ids(self):
+        """
+        f_ids is saved in:
+            materials and
+            stats_dirs
+        """
+        save_json(self._ids_all, self.f_ids_inmatdir, print_space = 12)
+        save_json(self._ids_all, self.f_ids_instatsdir, print_space = 12)
 
     """
     f_ids_nimb_classified related scripts
