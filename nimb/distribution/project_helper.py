@@ -276,74 +276,6 @@ class ProjectManager:
         return apps2process
 
 
-    def processing_add_id(self, _id_bids, apps):
-        """
-        Args:
-            _id_bids: id of participant in BIDS format
-            apps: list of apps to be processed
-        Return:
-            bool
-        Algo:
-            add _id_bids to new_subjects.json for processing
-            new_subjects.json = True
-            if new_subjects.json:
-                if ask OK to initiate processing is True:
-                    send for processing
-        """
-        print("adding new _id_bids to existing new_subjects.json file")
-        DEFpaths = DEFAULTpaths(self.NIMB_tmp)
-        f_subj2process = DEFpaths.f_subj2process_abspath
-        if not os.path.exists(f_subj2process):
-            print(f'{LogLVL.lvl1} file with subjects to process is missing; creating empty dictionary')
-            self.subs_2process = dict()
-        else:
-            self.subs_2process = load_json(f_subj2process)
-
-        _, sub_label, ses_label, _ = self.dcm2bids.is_bids_format(_id_bids)
-        content = self.processing_get_abspath_rawdata(sub_label, ses_label)
-        self.subs_2process[_id_bids] = content
-        save_json(self.subs_2process, f_subj2process, print_space = 4)
-        self.new_subjects = True
-
-
-    def processing_get_abspath_rawdata(self, sub_label, ses_label):
-        """
-            searches for corresponding folders in rawdata
-            creates a dict with absolute paths to MRI files
-        Args:
-            sub_label: label of folder with sub- prefix, as per BIDS standard
-            ses_label: label of session sub-folder with ses- prefix, as per BIDS standard
-        Return:
-            dict(): {
-                    "anat":
-                        "t1"   :[sub-label_ses-label_T1w.nii.gz],
-                        "flair":[sub-label_ses-label_Flair.nii.gz],
-                    "func":
-                        "bold" :[sub-label_ses-label_bold.nii.gz],
-                    "dwi":
-                        "dwi"  :[sub-label_ses-label_dwi.nii.gz]}
-        """
-        print(f'reading dirs: {sub_label} and {ses_label}')
-        ses_path = os.path.join(self.BIDS_DIR, sub_label, ses_label)
-        content = dict()
-        dirs = os.listdir(ses_path)
-        for _dir in dirs:
-            _dir_content = os.listdir(os.path.join(ses_path, _dir))
-            mri_files = [i for i in _dir_content if i.endswith(".nii.gz")]
-            if _dir == "dwi":
-                content[_dir] = {"dwi":mri_files}
-            elif _dir == "func":
-                bold_files = [i for i in mri_files if "bold" in i]
-                content[_dir] = {"bold":bold_files}
-            elif _dir == "anat":
-                t1_files = [i for i in mri_files if "T1w" in i]
-                content[_dir] = {"t1":t1_files}
-                flair_files = [i for i in mri_files if "Flair" in i]
-                if flair_files:
-                    content[_dir]["flair"] = flair_files
-        return content
-
-
     def ids_project_chk(self):
         """
             checks if all ids_project in grid were dcm2bids converted
@@ -521,9 +453,10 @@ class ProjectManager:
         return unprocessed_d
 
 
-
     '''
+    =====================================
     CLASSIFICATION related scripts
+    =====================================
     '''
     def verify_ids_are_bids_standard(self, ls2chk, _dir2chk):
         """
@@ -686,33 +619,98 @@ class ProjectManager:
 
 
     '''
+    =====================================
     PROCESSING related scripts
+    =====================================
     '''
-    def get_masks(self):
-        if self.distrib_ready.fs_ready():
-            print('running mask extraction')
-            # self.send_2processing('fs-get-masks')
+    def processing_add_id(self, _id_bids, apps):
+        """
+        Args:
+            _id_bids: id of participant in BIDS format
+            apps: list of apps to be processed
+        Return:
+            bool
+        Algo:
+            add _id_bids to new_subjects.json for processing
+            new_subjects.json = True
+            if new_subjects.json:
+                if ask OK to initiate processing is True:
+                    send for processing
+        """
+        print("adding new _id_bids to existing new_subjects.json file")
+        DEFpaths = DEFAULTpaths(self.NIMB_tmp)
+        f_subj2process = DEFpaths.f_subj2process_abspath
+        if not os.path.exists(f_subj2process):
+            print(f'{LogLVL.lvl1} file with subjects to process is missing; creating empty dictionary')
+            self.subs_2process = dict()
+        else:
+            self.subs_2process = load_json(f_subj2process)
+
+        _, sub_label, ses_label, _ = self.dcm2bids.is_bids_format(_id_bids)
+        content = self.processing_get_abspath_rawdata(sub_label, ses_label)
+        self.subs_2process[_id_bids] = content
+        save_json(self.subs_2process, f_subj2process, print_space = 4)
+        self.new_subjects = True
+
+
+    def processing_get_abspath_rawdata(self, sub_label, ses_label):
+        """
+            searches for corresponding folders in rawdata
+            creates a dict with absolute paths to MRI files
+            to save to the new_subjects.json file
+            that will be used for processing
+        Args:
+            sub_label: label of folder with sub- prefix, as per BIDS standard
+            ses_label: label of session sub-folder with ses- prefix, as per BIDS standard
+        Return:
+            dict(): {
+                    "anat":
+                        "t1"   :[os.path.abspath(sub-label_ses-label_T1w.nii.gz)],
+                        "flair":[os.path.abspath(sub-label_ses-label_Flair.nii.gz)],
+                    "func":
+                        "bold" :[os.path.abspath(sub-label_ses-label_bold.nii.gz)],
+                    "dwi":
+                        "dwi"  :[os.path.abspath(sub-label_ses-label_dwi.nii.gz)]}
+        """
+        print(f'reading dirs: {sub_label} and {ses_label}')
+        ses_path = os.path.join(self.BIDS_DIR, sub_label, ses_label)
+        content = dict()
+        dirs = os.listdir(ses_path)
+        for _dir in dirs:
+            _dir_content = os.listdir(os.path.join(ses_path, _dir))
+            mri_files = [os.path.abspath(i) for i in _dir_content if i.endswith(".nii.gz")]
+            if _dir == "dwi":
+                content[_dir] = {"dwi":mri_files}
+            elif _dir == "func":
+                bold_files = [os.path.abspath(i) for i in mri_files if "bold" in i]
+                content[_dir] = {"bold":bold_files}
+            elif _dir == "anat":
+                t1_files = [os.path.abspath(i) for i in mri_files if "T1w" in i]
+                content[_dir] = {"t1":t1_files}
+                flair_files = [os.path.abspath(i) for i in mri_files if "Flair" in i]
+                if flair_files:
+                    content[_dir]["flair"] = flair_files
+        return content
 
 
     def send_2processing(self, task):
         from processing.schedule_helper import Scheduler
         python_run = self.local_vars["PROCESSING"]["python3_run_cmd"]
         NIMB_HOME  = self.local_vars["NIMB_PATHS"]["NIMB_HOME"]
+        # schedule = Scheduler(self.local_vars)
         if task == 'process':
             if not self.test:
                 print(f'    sending to scheduler for task {task}')
                 self.distrib_hlp.distribute_4_processing(self.unprocessed_d)
+                # schedule = Scheduler(self.local_vars)
+                # cd_cmd   = f'cd {os.path.join(NIMB_HOME, "processing")}'
+                # cmd      = f'{python_run} processing_run.py -project {self.project}'
+                # process_type = 'nimb_processing'
+                # subproc = 'run'
             else:
                 print(f'    READY to send to scheduler for task {task}. TESTing active')
-
-            # schedule = Scheduler(self.local_vars)
-            # cd_cmd   = f'cd {os.path.join(NIMB_HOME, "processing")}'
-            # cmd      = f'{python_run} processing_run.py -project {self.project}'
-            # process_type = 'nimb_processing'
-            # subproc = 'run'
         elif task == 'fs-get-stats':
             self.local_vars['PROCESSING']['processing_env']  = "tmux" #must be checked if works with slurm
-            schedule = Scheduler(self.local_vars)
             dir_4stats = self.project_vars['STATS_PATHS']["STATS_HOME"]
             cd_cmd   = f'cd {os.path.join(NIMB_HOME, "processing", "freesurfer")}'
             cmd      = f'{python_run} fs_stats2table.py -project {self.project} -stats_dir {dir_4stats}'
@@ -720,7 +718,7 @@ class ProjectManager:
             subproc = 'get_stats'
             if not self.test:
                 print(f'    sending to scheduler for task {task}')
-                schedule.submit_4_processing(cmd, process_type, subproc, cd_cmd)
+                # schedule.submit_4_processing(cmd, process_type, subproc, cd_cmd)
             else:
                 print(f'    READY to send to scheduler for task {task}. TESTing active')
         elif task == 'fs-get-masks':
@@ -730,13 +728,15 @@ class ProjectManager:
             subproc = 'run_masks'
             if not self.test:
                 print(f'    sending to scheduler for task {task}')
-                schedule.submit_4_processing(cmd, process_type, subproc, cd_cmd)
+                # schedule.submit_4_processing(cmd, process_type, subproc, cd_cmd)
             else:
                 print(f'    READY to send to scheduler for task {task}. TESTing active')
 
 
     '''
+    =====================================
     EXTRACT STATISTICS related scripts
+    =====================================
     '''
     def extract_statistics(self, apps = list()):
         print(f"{LogLVL.lvl1}extracting statistics; script not ready")
@@ -789,7 +789,9 @@ class ProjectManager:
 
 
     '''
+    =====================================
     GRID related scripts
+    =====================================
     '''
     def get_df_f_groups(self):
         '''reading the user-provided tabular tsv/csv/xlsx file
@@ -919,8 +921,6 @@ class ProjectManager:
         Return:
             saves the updated pandas.DataFrame
         """
-        print("TESTING. self._ids_bids test 2 are:", new_vals)
-
         # list of _ids_bids
         vals_exist = df[col].tolist()
 
@@ -935,7 +935,6 @@ class ProjectManager:
                 df.loc[ix] = None
                 df.at[ix, col] = val
                 ix += 1
-        print("TESTING. self.df_grid is:", df)
         self.save_grid(df, self.f_groups)
 
 
@@ -989,7 +988,9 @@ class ProjectManager:
 
 
     '''
-    f_ids related scripts
+    =====================================
+    F_IDS related scripts
+    =====================================
     '''
     def read_f_ids(self):
         """
@@ -1036,9 +1037,12 @@ class ProjectManager:
         save_json(self._ids_all, self.f_ids_inmatdir, print_space = 12)
         save_json(self._ids_all, self.f_ids_instatsdir, print_space = 12)
 
-    """
-    f_ids_nimb_classified related scripts
 
+
+    """
+    =====================================
+    F_IDS_NIMB_CLASSIFIED related scripts
+    =====================================
     """
     def get_ids_nimb_classified(self):
         _dir_2chk = self.srcdata_dir
@@ -1079,6 +1083,13 @@ class ProjectManager:
             print(f"{LogLVL.lvl3}{ls_not_copied}")
 
         return ls_copied, ls_not_copied
+
+
+    def get_masks(self):
+        if self.distrib_ready.fs_ready():
+            print('running mask extraction')
+            # self.send_2processing('fs-get-masks')
+
 
 
     # def get_id_project_from_nimb_classified(self, sub_label):
