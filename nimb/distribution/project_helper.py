@@ -665,12 +665,12 @@ class ProjectManager:
         Return:
             dict(): {
                     "anat":
-                        "t1"   :[os.path.abspath(sub-label_ses-label_T1w.nii.gz)],
-                        "flair":[os.path.abspath(sub-label_ses-label_Flair.nii.gz)],
+                        "t1"   :[ABSPATH_TO/sub-label_ses-label_T1w.nii.gz],
+                        "flair":[ABSPATH_TO/sub-label_ses-label_Flair.nii.gz],
                     "func":
-                        "bold" :[os.path.abspath(sub-label_ses-label_bold.nii.gz)],
+                        "bold" :[ABSPATH_TO/sub-label_ses-label_bold.nii.gz],
                     "dwi":
-                        "dwi"  :[os.path.abspath(sub-label_ses-label_dwi.nii.gz)]}
+                        "dwi"  :[ABSPATH_TO/sub-label_ses-label_dwi.nii.gz]}
         """
         print(f'reading dirs: {sub_label} and {ses_label}')
         ses_path = os.path.join(self.BIDS_DIR, sub_label, ses_label)
