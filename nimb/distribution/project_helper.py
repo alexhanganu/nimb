@@ -637,7 +637,7 @@ class ProjectManager:
                 if ask OK to initiate processing is True:
                     send for processing
         """
-        print("adding new _id_bids to existing new_subjects.json file")
+        print(f"{LogLVL.lvl2}adding new _id_bids to existing new_subjects.json file")
         DEFpaths = DEFAULTpaths(self.NIMB_tmp)
         f_subj2process = DEFpaths.f_subj2process_abspath
         if not os.path.exists(f_subj2process):
@@ -694,40 +694,26 @@ class ProjectManager:
 
 
     def send_2processing(self, task):
-        from processing.schedule_helper import Scheduler
         python_run = self.local_vars["PROCESSING"]["python3_run_cmd"]
         NIMB_HOME  = self.local_vars["NIMB_PATHS"]["NIMB_HOME"]
-        # schedule = Scheduler(self.local_vars)
         if task == 'process':
+            self.distrib_hlp.distribute_4_processing(self.unprocessed_d)
+        elif task == 'fs-get-stats' or task == 'fs-get-masks':
+            cd_cmd       = f'cd {os.path.join(NIMB_HOME, "processing", "freesurfer")}'
+            if task == 'fs-get-stats':
+                self.local_vars['PROCESSING']['processing_env']  = "tmux" #must be checked if works with slurm
+                dir_4stats   = self.project_vars['STATS_PATHS']["STATS_HOME"]
+                cmd          = f'{python_run} fs_stats2table.py -project {self.project} -stats_dir {dir_4stats}'
+                process_type = 'fs_stats'
+                subproc      = 'get_stats'
+            elif task == 'fs-get-masks':
+                cmd          = f'{python_run} run_masks.py -project {self.project}'
+                process_type = 'fs'
+                subproc      = 'run_masks'
             if not self.test:
                 print(f'    sending to scheduler for task {task}')
-                self.distrib_hlp.distribute_4_processing(self.unprocessed_d)
+                # from processing.schedule_helper import Scheduler
                 # schedule = Scheduler(self.local_vars)
-                # cd_cmd   = f'cd {os.path.join(NIMB_HOME, "processing")}'
-                # cmd      = f'{python_run} processing_run.py -project {self.project}'
-                # process_type = 'nimb_processing'
-                # subproc = 'run'
-            else:
-                print(f'    READY to send to scheduler for task {task}. TESTing active')
-        elif task == 'fs-get-stats':
-            self.local_vars['PROCESSING']['processing_env']  = "tmux" #must be checked if works with slurm
-            dir_4stats = self.project_vars['STATS_PATHS']["STATS_HOME"]
-            cd_cmd   = f'cd {os.path.join(NIMB_HOME, "processing", "freesurfer")}'
-            cmd      = f'{python_run} fs_stats2table.py -project {self.project} -stats_dir {dir_4stats}'
-            process_type = 'fs_stats'
-            subproc = 'get_stats'
-            if not self.test:
-                print(f'    sending to scheduler for task {task}')
-                # schedule.submit_4_processing(cmd, process_type, subproc, cd_cmd)
-            else:
-                print(f'    READY to send to scheduler for task {task}. TESTing active')
-        elif task == 'fs-get-masks':
-            cd_cmd   = f'cd {os.path.join(NIMB_HOME, "processing", "freesurfer")}'
-            cmd      = f'{python_run} run_masks.py -project {self.project}'
-            process_type = 'fs'
-            subproc = 'run_masks'
-            if not self.test:
-                print(f'    sending to scheduler for task {task}')
                 # schedule.submit_4_processing(cmd, process_type, subproc, cd_cmd)
             else:
                 print(f'    READY to send to scheduler for task {task}. TESTing active')
