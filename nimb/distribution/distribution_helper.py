@@ -27,8 +27,10 @@ class DistributionHelper():
         self.locations        = all_vars.location_vars # credentials_home/local.json + remotes.json
         self.project          = all_vars.params.project
         self.proj_vars        = all_vars.projects[self.project]
-        self.NIMB_HOME        = self.locations["local"]["NIMB_PATHS"]["NIMB_HOME"]
-        self.NIMB_tmp         = self.locations["local"]["NIMB_PATHS"]["NIMB_tmp"]
+        self.test             = all_vars.params.test
+        self.local_vars       = self.locations["local"]
+        self.NIMB_HOME        = self.local_vars["NIMB_PATHS"]["NIMB_HOME"]
+        self.NIMB_tmp         = self.local_vars["NIMB_PATHS"]["NIMB_tmp"]
 
         # setup folder
         self.setup_folder = "../setup"
@@ -38,8 +40,8 @@ class DistributionHelper():
     def distribute_4_processing(self, unprocessed_d = dict()):
         """
         for ls of participants:
-          if user approves:
-              initiate the processing on local/ remote
+            if user approves:
+                initiate the processing on local/ remote
         """
         # print(f'{LogLVL.lvl2}{unprocessed_d}')
         self.get_processing_location()
@@ -59,11 +61,17 @@ class DistributionHelper():
         # self.get_subject_data_volume(unprocessed)
         # self.get_available_space(location, NIMB_NEW_SUBJECTS)
         # if self.get_user_confirmation():
-        self.make_f_subjects_2b_processed(location, unprocessed_d)
-        py_run_cmd   = self.locations["local"]['PROCESSING']["python3_run_cmd"]
-        cmd = f'{py_run_cmd} processing_run.py -project {self.project}'
-        cd_cmd = f'cd {os.path.join(self.NIMB_HOME, "processing")}'
-        Scheduler(self.locations["local"]).submit_4_processing(cmd, 'processing','run', cd_cmd)
+        if not self.test:
+            process_type = 'nimb_processing'
+            subproc = 'run'
+            print(f'    sending to scheduler for app {app}')
+            self.make_f_subjects_2b_processed(location, unprocessed_d)
+            python_run   = self.local_vars['PROCESSING']["python3_run_cmd"]
+            cmd = f'{python_run} processing_run.py -project {self.project}'
+            cd_cmd = f'cd {os.path.join(self.NIMB_HOME, "processing")}'
+            Scheduler(self.local_vars).submit_4_processing(cmd, process_type, subproc, cd_cmd)
+        else:
+            print(f'    READY to send to scheduler for app {app}. TESTing active')
 
 
     def make_f_subjects_2b_processed(self, location, unprocessed_d):
@@ -228,8 +236,8 @@ class DistributionHelper():
     def get_local_remote_dir(self, dir_data, _dir = 'None'):
         location    = dir_data[0]
         dir_abspath = dir_data[1]
-        print(f'        folder {dir_abspath}')
-        print(f'            is located on: {location}')
+        print(f'{LogLVL.lvl2}folder {dir_abspath}')
+        print(f'{LogLVL.lvl3}is located on: {location}')
         if location == 'local':
             if not os.path.exists(dir_abspath):
                 dir_abspath = get_userdefined_paths(f'{_dir} folder',
