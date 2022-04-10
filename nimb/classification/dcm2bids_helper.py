@@ -131,7 +131,6 @@ class DCM2BIDS_helper():
                         abs_path2mr_all = self.get_path_2mr(paths_2mr_data)
                         abs_path2mr  = abs_path2mr_all[0]
                         self.run_dcm2bids(abs_path2mr)
-                        print(f'{" "*8}there are {len(abs_path2mr_all)} paths to convert')
                         if os.path.exists(self.sub_SUBJDIR_tmp) and \
                             len(os.listdir(self.sub_SUBJDIR_tmp)) > 0:
                             print(f'{" " *12}> conversion did not find corresponding values in the configuration file')
@@ -202,7 +201,7 @@ class DCM2BIDS_helper():
             print(">" * 80)
             self.config_file = self.get_config_file()
             print(f'{" " * 12}config file is: {self.config_file}')
-            print(f'{" " *15}archive located at: {abs_path2mr}')
+            print(f'{" " * 15}archive located at: {abs_path2mr}')
             return_value = os.system('dcm2bids -d {} -p {} -s {} -c {} -o {}'.format(
                                                                                     abs_path2mr,
                                                                                     self.nimb_id,
@@ -212,7 +211,7 @@ class DCM2BIDS_helper():
             # Calculate the return value code
             return_value = int(bin(return_value).replace("0b", "").rjust(16, '0')[:8], 2)
             if return_value != 0: # failed
-                print(f'{" " *12} conversion finished with error')
+                print(f'{" " *12}conversion finished with error')
                 os.system('dcm2bids -d {} -p {} -s {} -c {} -o {}'.format(abs_path2mr,
                                                                         self.nimb_id,
                                                                         self.ses,
@@ -237,12 +236,12 @@ class DCM2BIDS_helper():
                     self.sidecar_content = load_json(os.path.join(self.sub_SUBJDIR_tmp, sidecar))
                     self.update_config()
                 if self.update:
-                    print(f'{" " *12} removing folder: {self.sub_SUBJDIR_tmp}')
+                    print(f'{" " *12}removing folder: {self.sub_SUBJDIR_tmp}')
                     self.repeat_updating += 1
                     self.rm_dir(self.sub_SUBJDIR_tmp)
-                    print(f'{" " *12} re-renning dcm2bids')
+                    print(f'{" " *12}re-renning dcm2bids')
                     self.run_dcm2bids(abs_path2mr)
-                    print(f'{" " *12} looping to another chk_if_processed')
+                    print(f'{" " *12}looping to another chk_if_processed')
                     self.chk_if_processed(abs_path2mr)
         else:
             self.populate_bids_classifed()
@@ -250,12 +249,12 @@ class DCM2BIDS_helper():
 
 
     def cleaning_after_conversion(self, abs_path2mr):
-        print(f'{" " *15} >>>>DCM2BIDS conversion DONE')
+        print(f'{" " *15}>>>>DCM2BIDS conversion DONE')
         if os.path.exists(self.sub_SUBJDIR_tmp):
-            print(f'{" " *15} removing folder: {self.sub_SUBJDIR_tmp}')
+            print(f'{" " *15}removing folder: {self.sub_SUBJDIR_tmp}')
             self.rm_dir(self.sub_SUBJDIR_tmp)
         if os.path.exists(abs_path2mr):
-            print(f'{" " *15} removing folder: {abs_path2mr}')
+            print(f'{" " *15}removing folder: {abs_path2mr}')
             self.rm_dir(abs_path2mr)
         print('\n')
 
@@ -417,12 +416,12 @@ class DCM2BIDS_helper():
             if self.archived:
                 path_2archive = self.id_classified['archived']
                 if is_archive(path_2archive):
-                    print(f'{" " *12} archive located at: {path_2archive}')
+                    print(f'{" " *12}archive located at: {path_2archive}')
                     path_extracted = self.extract_from_archive(path_2archive,
                                                      path2mr_)
                     paths_2mrdata.append(path_extracted)
                 else:
-                    print(f'{" " *12} file: {path_2archive} does not seem to be an archive')
+                    print(f'{" " *12} ile: {path_2archive} does not seem to be an archive')
                     paths_2mrdata.append('')
             else:
                 paths_2mrdata.append(path2mr_)
