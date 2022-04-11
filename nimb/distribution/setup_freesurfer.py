@@ -123,7 +123,7 @@ class SETUP_FREESURFER():
         return True, installer_abs_path
 
 
-    def freesurfer_installed():
+    def freesurfer_installed(self):
         """
             checks if FreeSurfer has the corresponding files
             implying that the standard version was correctly unarchived
