@@ -92,7 +92,7 @@ class SETUP_FREESURFER():
 
             if self.freesurfer_installed():
                 print(f'    installer can be removed at: {installer_abs_path}')
-                # os.remove(installer_f)
+                # os.remove(installer_abs_path)
             else:
                 print('    ERROR! something wrong, please review')
         else:

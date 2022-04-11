@@ -56,7 +56,7 @@ class DistributionHelper():
         print(f'{LogLVL.lvl2}!!!!processing will continue ONLY on local. still TESTING')
         location = 'local'
         app = 'freesurfer'
-        app_storage_dir = self.locations[location][app.upper()]['FS_SUBJECTS_DIR']
+        app_storage_dir = self.locations[location][app.upper()]['SUBJECTS_DIR']
         # self.get_available_space(location, app_storage_dir)
         # self.get_subject_data_volume(unprocessed)
         # self.get_available_space(location, NIMB_NEW_SUBJECTS)
@@ -408,7 +408,7 @@ class DistributionHelper():
         f_GLM_group     = os.path.join(FS_GLM_dir, fname_groups)
         f_ids_processed = os.path.join(FS_GLM_dir, f_ids_processed_name)
 
-        SUBJECTS_DIR         = self.locations["local"]['FREESURFER']['FS_SUBJECTS_DIR']
+        SUBJECTS_DIR         = self.locations["local"]['FREESURFER']['SUBJECTS_DIR']
         if os.path.exists(f_GLM_group) and os.path.exists(f_ids_processed):
             from processing.freesurfer.fs_glm_prep import CheckIfReady4GLM
             ready, miss_ls = CheckIfReady4GLM(self.locations["local"]['NIMB_PATHS'], 
@@ -423,10 +423,10 @@ class DistributionHelper():
             print(f'    variables EXCLUDED from GLM are: {self.proj_vars["other_params"]}')
             print(f'    for details check: credentials_path/projects.py')
             if miss_ls:
+                dirs2extract = ['label','surf',]
                 print('    ATTENTION! some subjects could be prepared for GLM analysis')
-                print('        by extracting the surf and label folders')
+                print(f'        by extracting the folders: {dirs2extract}')
                 if get_yes_no('    do you want to prepare the missing subjects? (y/n)') == 1:
-                    dirs2extract = ['label','surf',]
                     self.prep_4fs_glm_extract_dirs(miss_ls, SUBJECTS_DIR, dirs2extract)
                     self.prep_4fs_glm(FS_GLM_dir, fname_groups)
                 return False
