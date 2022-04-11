@@ -87,7 +87,7 @@ class SETUP_FREESURFER():
         downloaded, installer_abs_path = self.freesurfer_download()
         if downloaded:
             print('extracting freesurfer')
-            os.system(f"tar -C {self.FREESURFER_HOME.replace('freesurfer','')} -xvf {installer_f}")
+            os.system(f"tar -C {self.FREESURFER_HOME.replace('freesurfer','')} -xvf {installer_abs_path}")
             os.system(f"chmod -R 777 {os.path.join(self.FREESURFER_HOME, 'subjects')}")
 
             if self.freesurfer_installed():
