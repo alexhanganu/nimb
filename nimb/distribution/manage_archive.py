@@ -83,7 +83,7 @@ class ZipArchiveManagement():
                     if pattern in abs_path:
                         content_paths.append(abs_path)
         if content_paths:
-            print(f"{" " * 12}extracting patterns")
+            print(f'{" " * 12}extracting patterns')
             self.extract_pattern(content_paths)
 
     def extract_pattern(self, content_paths):
@@ -97,8 +97,8 @@ class ZipArchiveManagement():
 
     def extract_archive(self):
         if self.log:
-            print(f"{" " * 12}extracting: file {self.zip_f_path}")
-            print(f"{" " * 16}to folder {self.path2xtrct}")
+            print(f'{" " * 12}extracting: file {self.zip_f_path}')
+            print(f'{" " * 16}to folder {self.path2xtrct}')
         if self.dirs2xtrct:
                 self.pattern_exists()
         else:
