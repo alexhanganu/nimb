@@ -9,7 +9,6 @@ import zipfile
 import shutil
 
 
-
 def is_archive(file):
     archived = False
     archive_type = 'none'
@@ -41,7 +40,7 @@ class ZipArchiveManagement():
 
     def chk_if_zipfile(self):
         if not zipfile.is_zipfile(self.zip_f_path):
-            print(self.zip_f_path,' not a zip file')
+            print(f'{" " * 12}{self.zip_f_path} not a zip file')
             if self.path_err:
                 self.move_error()
             return False
@@ -58,19 +57,19 @@ class ZipArchiveManagement():
 
 
     def xtrct_all(self):
-        print('    extracting all content')
+        print(f'{" " * 12}extracting all content')
         extracted = False
         try:
             self.zip_file_open.extractall(self.path2xtrct)
             extracted = False
         except Exception as e:
-            print(e)
+            print(f'{" " * 16}{e}')
         if not extracted:
             try:
-                print('    trying to use system unzip:')
+                print(f'{" " * 12}trying to use system unzip:')
                 os.system(f'unzip -o {self.zip_f_path} -d {self.path2xtrct}')
             except Exception as e:
-                print(e)
+                print(f'{" " * 16}{e}')
 
 
     def pattern_exists(self):
@@ -84,7 +83,7 @@ class ZipArchiveManagement():
                     if pattern in abs_path:
                         content_paths.append(abs_path)
         if content_paths:
-            print("            extracting patterns")
+            print(f"{" " * 12}extracting patterns")
             self.extract_pattern(content_paths)
 
     def extract_pattern(self, content_paths):
@@ -92,14 +91,14 @@ class ZipArchiveManagement():
             try:
                 self.zip_file_open.extract(content_path, path=self.path2xtrct)
             except Exception as e:
-                print(f'            {e}')
+                print(f'{" " * 16}{e}')
                 pass
 
 
     def extract_archive(self):
         if self.log:
-            print("            extracting: file {}".format(self.zip_f_path))
-            print("                to folder {}".format(self.path2xtrct))
+            print(f"{" " * 12}extracting: file {self.zip_f_path}")
+            print(f"{" " * 16}to folder {self.path2xtrct}")
         if self.dirs2xtrct:
                 self.pattern_exists()
         else:
