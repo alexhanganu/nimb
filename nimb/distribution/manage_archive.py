@@ -81,7 +81,7 @@ class ZipArchiveManagement():
         ls_patterns = [os.path.join(self.zip_file.replace('.zip',''), i).replace(os.sep,'/') for i in self.dirs2xtrct]
         content_paths = list()
         for abs_path in self.zip_file_content():
-            for pattern in ls_pattern:
+            for pattern in ls_patterns:
                 if pattern in abs_path:
                     content_paths.append(abs_path)
         if content_paths:
