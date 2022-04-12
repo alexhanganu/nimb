@@ -23,7 +23,12 @@ def is_archive(file):
 
 class ZipArchiveManagement():
 
-    def __init__(self, zip_file_path, path2xtrct = False, path_err = False, dirs2xtrct = list(), log=True):
+    def __init__(self,
+                zip_file_path,
+                path2xtrct = False,
+                path_err = False,
+                dirs2xtrct = list(),
+                log=True):
         self.zip_f_path = zip_file_path
         self.zip_file   = os.path.split(self.zip_f_path)[-1]
         self.path2xtrct = path2xtrct
@@ -73,17 +78,14 @@ class ZipArchiveManagement():
 
 
     def pattern_exists(self):
-        ls_patterns     = list()
+        ls_patterns = [os.path.join(self.zip_file.replace('.zip',''), i).replace(os.sep,'/') for i in self.dirs2xtrct]
         content_paths = list()
-        ls_patterns.append(self.dirs2xtrct)
-        ls_patterns.append([os.path.join(self.zip_file.replace('.zip',''), i).replace(os.sep,'/') for i in self.dirs2xtrct])
-        for ls_pattern in ls_patterns:
+        for abs_path in self.zip_file_content():
             for pattern in ls_pattern:
-                for abs_path in self.zip_file_content():
-                    if pattern in abs_path:
-                        content_paths.append(abs_path)
+                if pattern in abs_path:
+                    content_paths.append(abs_path)
         if content_paths:
-            print(f'{" " * 12}extracting patterns')
+            print(f'{" " * 12}extracting patterns: {self.dirs2xtrct}')
             self.extract_pattern(content_paths)
 
     def extract_pattern(self, content_paths):

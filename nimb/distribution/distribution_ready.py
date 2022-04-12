@@ -150,7 +150,7 @@ class DistributionReady():
                 print("FREESURFER_HOME is missing. Please define FREESURFER_HOME in the nimb/local.json file")
                 return False
             if self.check_freesurfer_ready():
-                SUBJECTS_DIR = self.locations['local']['FREESURFER']['FS_SUBJECTS_DIR']
+                SUBJECTS_DIR = self.locations['local']['FREESURFER']['SUBJECTS_DIR']
                 if not os.path.exists(SUBJECTS_DIR):
                     print('    creating path {}'.format(SUBJECTS_DIR))
                     makedir_ifnot_exist(SUBJECTS_DIR)

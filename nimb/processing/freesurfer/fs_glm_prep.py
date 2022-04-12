@@ -1,6 +1,6 @@
 '''
 last update: 20201218
-check that all subjects are present in the FS_SUBJECTS_DIR folder
+check that all subjects are present in the SUBJECTS_DIR folder
 in order to perform the FreeSurfer glm
 '''
 
@@ -39,7 +39,7 @@ class CheckIfReady4GLM():
     def __init__(self, nimb_vars, fs_vars, proj_vars, f_ids_processed, f_GLM_group, FS_GLM_dir):
         self.proj_vars         = proj_vars
         self.vars_fs           = fs_vars
-        self.FS_SUBJECTS_DIR   = fs_vars['FS_SUBJECTS_DIR']
+        self.FS_SUBJECTS_DIR   = fs_vars['SUBJECTS_DIR']
         self.NIMB_PROCESSED_FS = nimb_vars["NIMB_PROCESSED_FS"]
         self.f_ids_processed   = f_ids_processed
         self.f_GLM_group       = f_GLM_group
