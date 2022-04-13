@@ -9,11 +9,7 @@
     "NIMB_NEW_SUBJECTS"       : "~/nimb_tmp/new_subjects",
     "conda_home"              : "~/conda",
     "long_abbrevs"            : ["ses-"],
-    "NIMB_PROCESSED_FS"       : "~/nimb_tmp/nimb_processed_fs",
-    "NIMB_PROCESSED_NILEARN"  : "~/nimb_tmp/nimb_processed_nilearn",
-    "NIMB_PROCESSED_DIPY"     : "~/nimb_tmp/nimb_processed_dipy",
-    "NIMB_PROCESSED_FS_error" : "~/nimb_tmp/nimb_processed_fs_error",
-    "miniconda_home"          : "~/conda"
+    "time_format"             : "%Y%m%d_%H%M"
               },
 "PROCESSING": {
     "max_nr_running_batches"  : 5,
@@ -35,6 +31,8 @@
     "SUBJECTS_DIR"            : "~/freesurfer/subjects",
     "export_FreeSurfer_cmd"   : "export FREESURFER_HOME=~/freesurfer",
     "source_FreeSurfer_cmd"   : "source $FREESURFER_HOME/SetUpFreeSurfer.sh",
+    "NIMB_PROCESSED"          : "~/nimb_tmp/freesurfer/nimb_processed_fs",
+    "NIMB_ERR"                : "~/nimb_tmp/freesurfer/nimb_err",
     "multiple_T1_entries"     : 0,
     "flair_t2_add"            : 0,
     "masks"                   : [],
@@ -45,7 +43,6 @@
     "GLM_MCz_cache"           : 13,
     "freesurfer_version"      : "7.2.0",
     "freesurfer_license"      : ["email", "00000", " *ABCDEFGHIJKL", " ABCDEFGHIJKLM"],
-    "FreeSurfer_install"      : 0,
     "export_screen"           : 0
      },
 "DIPY": {
@@ -64,19 +61,14 @@
      },
 "EXPLANATION": {
     "user"                    : "username to access the remote computer. Password will be asked by nimb and stored in sqlite",
-    "users_list"              : "if the number of users on the remote computer are more than 1, can be: ['user1','user2']",
     "supervisor_account"      : "variable used on compute canada clusters to create the batches",
 
     "NIMB_HOME"               : "where the local/remote nimb folder is downloaded",
     "NIMB_tmp"                : "Default is NIMB_HOME/tmp path to a temporary folder where all temporary files will be saved. This folder needs to be put in a place that allows quick reading and writing and to delete the files; This folder can get very big. On compute canada it should be put on scratch",
     "NIMB_NEW_SUBJECTS"       : "Default: NIMB_tmp/nimb_new_subjects; path to the folder where the new zipped and unzipped raw MR data is copied in order to be used by the classifyer and the FreeSurfer registration; subjects are removed from the folder once processing is done",
-    "NIMB_PROCESSED_FS"       : "path where the processed FreeSurfer subjects are moved before they are moved to storage",
-    "NIMB_PROCESSED_NILEARN"  : "path where the processed Nilearn subjects are moved before they are moved to storage",
-    "NIMB_PROCESSED_DIPY"     : "path where the processed Diy subjects are moved before they are moved to storage",
-    "NIMB_PROCESSED_FS_error" : "path where subjects that had errors during FreeSurfer processing; before they are moved to storage_err",
     "conda_home"              : "path to miniconda3 installation",
-    "miniconda_home"          : "is bieng removed; same as conda_home; path to miniconda3 installation",
     "long_abbrevs"            : "list of abbreviation used to define the longitudinal time points for subjects; default is ses-",
+    "time_format"             : "format of the time and date",
 
     "max_nr_running_batches"  : "the number of batches that can be sent to the scheduler at the same time",
     "processing_env"          : "slurm or tmux or moab is the environment used for processing data",
@@ -92,21 +84,17 @@
     "SUBMIT"                  : "1 for submit, 0 for NOT submit; defines if the scheduler batches are submitted to the scheduler. Is used to verify the batches",
 
     "install"                 : "1 = install, 0 = no installation; define if the local/remote compute will be used to perform APP analysis",
-    "SUBJECTS_DIR"            : "Default is $FREESURFER_HOME/subjects, path to the folder where the subjects are being processed by FreeSurfer",
-    "NIMB_PROCESSED"          : "path where the processed APP subjects are moved before they are moved to storage",
-    "NIMB_ERR"                : "path where subjects that had errors during APP processing; before they are moved to app/storage_err",
-    "FreeSurfer_install"      : "is being removed from scripts; 1 = install, 0 = no installation; define if the local/remote compute will be used to perform FreeSurfer analysis",
     "FREESURFER_HOME"         : " path to the freesurfer folder. Default is $NIMB_HOME/freesurfer. If OS is Windows, pipeline will ask the credentials for a remote Linux/Mac",
+    "SUBJECTS_DIR"            : "Default is $FREESURFER_HOME/subjects, path to the folder where the subjects are being processed by FreeSurfer",
     "export_FreeSurfer_cmd"   : "in some cases this command has to be adjusted",
     "source_FreeSurfer_cmd"   : "command might be different if FreeSurfer is used as module",
-    "process_order"           : "list of processing steps in FreeSurfer.: registration,autorecon1,autorecon2,autorecon3,qcache,brstem,hip,tha; For FreeSurfer version lower thatn 7, tha must be removed; Instead of autorecon1, autorecon2 and autorecon3, the commmand recon-all can be used, but it will take more time for processing and this can be limited by the scheduler",
-    "archive_processed"       : "if 1 the processed subjects must be archived with zip; if 0 subjects are NOT archived",
+    "NIMB_PROCESSED"          : "path where the processed APP subjects are moved before they are moved to storage",
+    "NIMB_ERR"                : "path where subjects that had errors during APP processing; before they are moved to app/storage_err",
     "multiple_T1_entries"     : "define if user wants to use multiple T1 entries for recon registration (recon-all -i T1 -i T1 -i T1)",
     "flair_t2_add"            : "1 or 0: defines if Flair or T2 images should be used (1) or not (0) for the FreeSurfer processing",
     "masks"                   : "list of masks names of subcortical regions for which the user wants FreeSurfer to create masks",
     "DO_LONG"                 : "1 (True) or 0 (False): defines if longitudinal analysis needs to be made",
     "base_name"               : "the name of the base subject that will be created during the longitudinal analysis with FreeSurfer",
-
     "GLM_measurements"        : "cortical parameters that will be used for FreeSurfer GLM analysis: thickness,area,volume,curv",
     "GLM_thresholds"          : "threshold levels for smoothing in mm, used for FreeSurfer GLM analysis: 5,10,15,20,25",
     "GLM_MCz_cache"           : "level of FreeSurfer GLM MCZ simulation threshold 13 equals to p:0.05",

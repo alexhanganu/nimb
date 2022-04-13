@@ -144,7 +144,7 @@ class DistributionReady():
 
 
     def fs_ready(self):
-        if self.locations['local']['FREESURFER']['FreeSurfer_install'] == 1:
+        if self.locations['local']['FREESURFER']['install'] == 1:
             print('FreeSurfer is set to be installed on local computer')
             if len(self.locations['local']['FREESURFER']['FREESURFER_HOME']) < 1:
                 print("FREESURFER_HOME is missing. Please define FREESURFER_HOME in the nimb/local.json file")

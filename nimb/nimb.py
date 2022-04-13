@@ -3,7 +3,7 @@
 """nimb module"""
 
 import argparse
-from os import path
+import os
 import sys
 from setup.get_vars import Get_Vars, SetProject
 from distribution.distribution_helper import DistributionHelper
@@ -74,7 +74,7 @@ class NIMB(object):
                     self.vars_local['PROCESSING']['processing_env']  = "tmux" #probably works with slurm, must be checked
                     schedule = Scheduler(self.vars_local)
                     step_stats = self.all_vars.params.step
-                    cd_cmd = 'cd {}'.format(path.join(self.NIMB_HOME, 'stats'))
+                    cd_cmd = f"cd {os.path.join(self.NIMB_HOME, 'stats')}"
                     cmd = f'{self.py_run_cmd} stats_helper.py -project {self.project} -step {step_stats}'
                     schedule.submit_4_processing(cmd, 'nimb_stats','run', cd_cmd)
 
@@ -84,7 +84,7 @@ class NIMB(object):
                 print("FreeSurfer is not ready or freesurfer_install is set to 0. Please check the configuration files.")
                 sys.exit()
             else:
-                cd_cmd = 'cd {}'.format(path.join(self.NIMB_HOME, 'processing', 'freesurfer'))
+                cd_cmd = f"cd {os.path.join(self.NIMB_HOME, 'processing', 'freesurfer')}"
                 cmd = f'{self.py_run_cmd} crun.py'
                 self.schedule.submit_4_processing(cmd, 'nimb','run', cd_cmd,
                                                 activate_fs = False,
@@ -99,12 +99,12 @@ class NIMB(object):
                     dir_4stats = self.project_vars['STATS_PATHS']["STATS_HOME"]
                     dir_with_fs_stats = PROCESSED_FS_DIR
                     cmd = f'{self.py_run_cmd} fs_stats2table.py -project {self.project} -stats_dir {dir_4stats} -dir_fs_stats {dir_with_fs_stats}'
-                    cd_cmd = 'cd {}'.format(path.join(self.NIMB_HOME, 'processing', 'freesurfer'))
+                    cd_cmd = f"cd {os.path.join(self.NIMB_HOME, 'processing', 'freesurfer')}"
                     schedule.submit_4_processing(cmd, 'fs_stats','get_stats', cd_cmd)
 
 
         if self.process == 'fs-glm':
-            '''checks that all subjects are present in the SUBJECTS_DIR folder that will be used for GLM analysis,
+            ''' checks that all subjects are present in the SUBJECTS_DIR folder that will be used for GLM analysis,
                 sends cmd to batch to initiate FreeSurfer GLM running script
             '''
             distrib = DistributionHelper(self.all_vars)
@@ -113,19 +113,19 @@ class NIMB(object):
             if DistributionReady(self.all_vars).chk_if_ready_for_fs_glm():
                 GLM_file_path, GLM_dir = distrib.prep_4fs_glm(fs_glm_dir,
                                                                 fname_groups)
-                FS_SUBJECTS_DIR = self.vars_local['FREESURFER']['FS_SUBJECTS_DIR']
+                FS_SUBJECTS_DIR = self.vars_local['FREESURFER']['SUBJECTS_DIR']
                 DistributionReady(self.all_vars).fs_chk_fsaverage_ready(FS_SUBJECTS_DIR)
                 if GLM_file_path:
                     # self.vars_local['PROCESSING']['processing_env']  = "tmux"
                     schedule_fsglm = Scheduler(self.vars_local)
-                    cd_cmd = 'cd {}'.format(path.join(self.NIMB_HOME, 'processing', 'freesurfer'))
+                    cd_cmd = f"cd {os.path.join(self.NIMB_HOME, 'processing', 'freesurfer')}"
                     cmd = f'{self.py_run_cmd} fs_glm_runglm.py -project {self.project} -glm_dir {GLM_dir}'
                     schedule_fsglm.submit_4_processing(cmd, 'fs_glm','run_glm', cd_cmd)
 
 
         if self.process == 'fs-glm-image':
-            '''extracts FS-GLM images for p<0.05 and MCz-corrected results
-            requires FreeSurfer to be installed in order to access tksurfer and freeview
+            ''' extracts FS-GLM images for p<0.05 and MCz-corrected results
+                requires FreeSurfer to be installed in order to access tksurfer and freeview
             '''
             if not "export_screen" in self.vars_local['FREESURFER']:
                 print("PLEASE check that you can export your screen or you can run screen-based applications. \
@@ -139,7 +139,7 @@ class NIMB(object):
             if DistributionReady(self.all_vars).fs_ready():
                 print('before running the script, remember to source $FREESURFER_HOME')
                 cmd = '{} fs_glm_extract_images.py -project {}'.format(self.py_run_cmd, self.project)
-                cd_cmd = 'cd '+path.join(self.NIMB_HOME, 'processing', 'freesurfer')
+                cd_cmd = f"cd {os.path.join(self.NIMB_HOME, 'processing', 'freesurfer')}"
                 self.schedule.submit_4_processing(cmd, 'fs_glm','extract_images', cd_cmd)
 
 
@@ -150,7 +150,7 @@ class NIMB(object):
                 sys.exit()
             else:
                 cmd = f'{self.py_run_cmd} crun.py'
-                cd_cmd = 'cd '+path.join(self.NIMB_HOME, 'processing', 'nilearn')
+                cd_cmd = f"cd {os.path.join(self.NIMB_HOME, 'processing', 'nilearn')}"
                 self.schedule.submit_4_processing(cmd, 'nilearn','run', cd_cmd,
                                                 activate_fs = False,
                                                 python_load = True)
@@ -163,7 +163,7 @@ class NIMB(object):
                 sys.exit()
             else:
                 cmd = f'{self.py_run_cmd} crun.py'
-                cd_cmd = 'cd '+path.join(self.NIMB_HOME, 'processing', 'dipy')
+                cd_cmd = f"cd {os.path.join(self.NIMB_HOME, 'processing', 'dipy')}"
                 self.schedule.submit_4_processing(cmd, 'dipy','run', cd_cmd,
                                                 activate_fs = False,
                                                 python_load = True)

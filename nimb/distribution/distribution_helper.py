@@ -305,7 +305,7 @@ class DistributionHelper():
 
 
     def chk_files_for_stats(self, list_of_files, path_2copy_files): #move to ProjectManager
-        f_ids_processed = self.locations["local"]["NIMB_PATHS"]['file_ids_processed']
+        f_ids_processed = DEFAULT.f_ids
         f_ids_processed_abspath = os.path.join(path_2copy_files,
                                                 f_ids_processed)
         if f_ids_processed in list_of_files and not os.path.exists(f_ids_processed_abspath):
@@ -364,9 +364,8 @@ class DistributionHelper():
 
         if local:
             fname_groups     = self.proj_vars['fname_groups']
-            f_ids_processed_name = self.locations["local"]["NIMB_PATHS"]['file_ids_processed']
             if self.get_files_for_stats(dir_4stats,
-                                [fname_groups, f_ids_processed_name]):
+                                [fname_groups, DEFAULT.f_ids]):
                 subjects = ProjectManager(self.all_vars).get_ids_all()
         return self.extract_stats_from_archive(subjects, PROCESSED_FS_DIR)
 
@@ -399,22 +398,21 @@ class DistributionHelper():
 
     def prep_4fs_glm(self, FS_GLM_dir, fname_groups):
         FS_GLM_dir           = makedir_ifnot_exist(FS_GLM_dir)
-        f_ids_processed_name = self.locations["local"]["NIMB_PATHS"]['file_ids_processed']
         print('INITIATING: preparation to perform GLM with FreeSurfer')
         print('    in the folder:', FS_GLM_dir)
         if not self.get_files_for_stats(FS_GLM_dir,
-                                [fname_groups, f_ids_processed_name]):
+                                [fname_groups, DEFAULT.f_ids]):
             sys.exit()
         f_GLM_group     = os.path.join(FS_GLM_dir, fname_groups)
-        f_ids_processed = os.path.join(FS_GLM_dir, f_ids_processed_name)
+        f_ids_processed = os.path.join(FS_GLM_dir, DEFAULT.f_ids)
 
         SUBJECTS_DIR         = self.locations["local"]['FREESURFER']['SUBJECTS_DIR']
         if os.path.exists(f_GLM_group) and os.path.exists(f_ids_processed):
             from processing.freesurfer.fs_glm_prep import CheckIfReady4GLM
-            ready, miss_ls = CheckIfReady4GLM(self.locations["local"]['NIMB_PATHS'], 
-                                                self.locations["local"]['FREESURFER'], 
-                                                self.proj_vars, 
-                                                f_ids_processed, 
+            ready, miss_ls = CheckIfReady4GLM(self.locations["local"]['NIMB_PATHS'],
+                                                self.locations["local"]['FREESURFER'],
+                                                self.proj_vars,
+                                                f_ids_processed,
                                                 f_GLM_group,
                                                 FS_GLM_dir).chk_if_subjects_ready()
             print(f'    variables used for GLM are: {self.proj_vars["variables_for_glm"]}')
@@ -442,7 +440,7 @@ class DistributionHelper():
     def prep_4fs_glm_extract_dirs(self, ls, SUBJECTS_DIR, dirs2extract):
         from .manage_archive import ZipArchiveManagement
         if self.proj_vars['materials_DIR'][0] == 'local':
-            print(f'Extracting folders {dirs2extract} to: {SUBJECTS_DIR}')
+            print(f'{LogLVL.lvl2}Extracting folders {dirs2extract} to: {SUBJECTS_DIR}')
             NIMB_PROCESSED_FS = os.path.join(self.locations["local"]['NIMB_PATHS']['NIMB_PROCESSED_FS'])
             for sub in ls:
                 zip_file_path = os.path.join(NIMB_PROCESSED_FS, '{}.zip'.format(sub))
@@ -454,8 +452,10 @@ class DistributionHelper():
                         extract = True
                 if extract:
                     print(f'    participant: {sub}')
-                    ZipArchiveManagement(zip_file_path, path2xtrct = SUBJECTS_DIR,
-                                        path_err = self.NIMB_tmp, dirs2xtrct = dirs2extract,
+                    ZipArchiveManagement(zip_file_path,
+                                        path2xtrct = SUBJECTS_DIR,
+                                        path_err = self.NIMB_tmp,
+                                        dirs2xtrct = dirs2extract,
                                         log=True)
                 else:
                     print('{} subject missing from {}'.format(sub, NIMB_PROCESSED_FS))
