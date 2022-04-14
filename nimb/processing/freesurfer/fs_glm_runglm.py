@@ -21,7 +21,7 @@ class PerformGLM():
 
         vars_fs                    = all_vars.location_vars['local']["FREESURFER"]
         self.FREESURFER_HOME       = vars_fs["FREESURFER_HOME"]
-        self.SUBJECTS_DIR          = vars_fs["FS_SUBJECTS_DIR"]
+        self.SUBJECTS_DIR          = vars_fs["SUBJECTS_DIR"]
         self.measurements          = vars_fs["GLM_measurements"]
         self.thresholds            = vars_fs["GLM_thresholds"]
         self.mc_cache_thresh       = vars_fs["GLM_MCz_cache"]
@@ -51,16 +51,12 @@ class PerformGLM():
 
         try:
             subjects_per_group = load_json(param.subjects_per_group)
-            # with open(param.subjects_per_group,'r') as jf:
-                # subjects_per_group = json.load(jf)
             print(f'    successfully uploaded file: {param.subjects_per_group}')
         except Exception as e:
             print(e)
             sys.exit(f'    file {param.subjects_per_group} is missing')
         try:
             files_glm = load_json(param.files_for_glm)
-            # with open(param.files_for_glm,'r') as jf:
-            #     files_glm = json.load(jf)
             print(f'    successfully uploaded file: {param.files_for_glm}')
         except ImportError as e:
                 print(e)
@@ -78,16 +74,10 @@ class PerformGLM():
             self.run_loop(files_glm)
             if self.err_preproc:
                 save_json(self.err_preproc, self.err_mris_preproc_file)
-                # with open(self.err_mris_preproc_file, 'w') as jf:
-                #     json.dump(self.err_preproc, jf, indent = 4)
             if self.sig_fdr_data:
                 save_json(self.sig_fdr_data, self.sig_fdr_json)
-                # with open(self.sig_fdr_json, 'w') as jf:
-                #     json.dump(self.sig_fdr_data, jf, indent = 4)
             if self.sig_mc_data:
                 save_json(self.sig_mc_data, self.sig_mc_json)
-                # with open(self.sig_mc_json, 'w') as jf:
-                #     json.dump(self.sig_mc_data, jf, indent = 4)
             if path.exists(self.cluster_stats):
                 ClusterFile2CSV(self.cluster_stats,
                                 self.cluster_stats_2csv)
@@ -152,15 +142,15 @@ class PerformGLM():
 
     def run_mri_surfcluster(self, glmdir, fsgd_type_contrast, hemi,
                                   contrast, analysis_name, meas, explanation):
-    '''
-    https://surfer.nmr.mgh.harvard.edu/fswiki/FsTutorial/MultipleComparisonsV6.0Perm
-    --glmdir: Specify the same GLM directory
-    --perm: Run a permuation simulation 
-    Vertex-wise/cluster-forming threshold of (13 = p < .05, 2 = p < .01).
-    direction: the sign of analysis ("neg" for negative, "pos" for positive, or "abs" for absolute/unsigned)
-    --cwp 0.05 : Keep clusters that have cluster-wise p-values < 0.05. To see all clusters, set to .999
-    --2spaces : adjust p-values for two hemispheres
-    '''
+        '''
+        https://surfer.nmr.mgh.harvard.edu/fswiki/FsTutorial/MultipleComparisonsV6.0Perm
+        --glmdir: Specify the same GLM directory
+        --perm: Run a permuation simulation 
+        Vertex-wise/cluster-forming threshold of (13 = p < .05, 2 = p < .01).
+        direction: the sign of analysis ("neg" for negative, "pos" for positive, or "abs" for absolute/unsigned)
+        --cwp 0.05 : Keep clusters that have cluster-wise p-values < 0.05. To see all clusters, set to .999
+        --2spaces : adjust p-values for two hemispheres
+        '''
         path_2contrast = path.join(glmdir, fsgd_type_contrast)
         mcz_meas = self.GLM_MCz_meas_codes[meas]
         for direction in self.mcz_sim_direction:
@@ -256,7 +246,7 @@ class PerformGLM():
             makedirs(glm_image_dir)
         sig_file = 'sig.mgh'
         shutil.copy(path.join(glmdir, fsgd_type_contrast, sig_file), glm_image_dir)
-        
+
         sig_count = len(self.sig_fdr_data.keys())+1
         self.sig_fdr_data[sig_count] = {
                                 'hemi'         : hemi,
@@ -347,7 +337,7 @@ class ClusterFile2CSV():
         df = df.set_index(df[self.col_4constrasts])
         df = df.drop(columns = [self.col_4constrasts])
         self.tab.save_df(df, self.result_abspath)
-        
+
     def chk_if_vals_in_line(self, line):
         '''will use each value from self.ls_vals_2chk
             if present in the line:
@@ -407,7 +397,7 @@ def initiate_fs_from_sh(vars_local):
     sh_file = path.join(vars_local["NIMB_PATHS"]["NIMB_tmp"], 'source_fs.sh')
     with open(sh_file, 'w') as f:
         f.write(vars_local["FREESURFER"]["export_FreeSurfer_cmd"]+'\n')
-        f.write("export SUBJECTS_DIR="+vars_local["FREESURFER"]["FS_SUBJECTS_DIR"]+'\n')
+        f.write("export SUBJECTS_DIR="+vars_local["FREESURFER"]["SUBJECTS_DIR"]+'\n')
         f.write(vars_local["FREESURFER"]["source_FreeSurfer_cmd"]+'\n')
     system("chmod +x {}".format(sh_file))
     return ("source {}".format(sh_file))

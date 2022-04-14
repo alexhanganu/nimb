@@ -76,7 +76,7 @@ class Scheduler():
             if self.activate_fs:
                 f.write(self.vars_local['FREESURFER']["export_FreeSurfer_cmd"]+'\n')
                 f.write(self.vars_local['FREESURFER']["source_FreeSurfer_cmd"]+'\n')
-                f.write('export SUBJECTS_DIR='+self.vars_local['FREESURFER']["FS_SUBJECTS_DIR"]+'\n')
+                f.write('export SUBJECTS_DIR='+self.vars_local['FREESURFER']["SUBJECTS_DIR"]+'\n')
             if cd_cmd:
                 f.write(cd_cmd+'\n')
             if self.python_load:
