@@ -232,13 +232,16 @@ class FSGLMParams:
                                    'area'     :'ar',
                                    'volume'   :'vol'}
         self.PATHglm_glm           = path.join(path_GLMdir,   'glm')
-        self.subjects_per_group    = path.join(path_GLMdir,   'subjects_per_group.json')
+        self.subjects_per_group    = path.join(path_GLMdir,   'ids_per_group.json')
         self.files_for_glm         = path.join(path_GLMdir,   'files_for_glm.json')
         self.PATH_img              = path.join(path_GLMdir,   'images')
         self.sig_fdr_json          = path.join(self.PATH_img, 'sig_fdr.json')
         self.sig_mc_json           = path.join(self.PATH_img, 'sig_mc.json')
         self.PATHglm_results       = path.join(path_GLMdir,   'results')
         self.err_mris_preproc_file = path.join(self.PATHglm_results,'error_mris_preproc.json')
+        self.cluster_stats         = path.join(self.PATHglm_results,'cluster_stats.log')
+        self.cluster_stats_2csv    = path.join(self.PATHglm_results,'cluster_stats.csv')
+        self.sig_contrasts         = path.join(self.PATHglm_results,'sig_contrasts.log')
 
 """
 suggested by Douglas Greve (https://www.mail-archive.com/freesurfer@nmr.mgh.harvard.edu/msg71630.html): 

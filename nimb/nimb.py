@@ -115,12 +115,13 @@ class NIMB(object):
                                                                 fname_groups)
                 FS_SUBJECTS_DIR = self.vars_local['FREESURFER']['SUBJECTS_DIR']
                 DistributionReady(self.all_vars).fs_chk_fsaverage_ready(FS_SUBJECTS_DIR)
-                if GLM_file_path:
-                    # self.vars_local['PROCESSING']['processing_env']  = "tmux"
+                if GLM_file_path and not self.all_vars.params.test:
                     schedule_fsglm = Scheduler(self.vars_local)
                     cd_cmd = f"cd {os.path.join(self.NIMB_HOME, 'processing', 'freesurfer')}"
                     cmd = f'{self.py_run_cmd} fs_glm_runglm.py -project {self.project} -glm_dir {GLM_dir}'
                     schedule_fsglm.submit_4_processing(cmd, 'fs_glm','run_glm', cd_cmd)
+                else:
+                    print("    TESTING")
 
 
         if self.process == 'fs-glm-image':
