@@ -186,28 +186,34 @@ class ChkFSQcache:
         populates list of missing subjects
     '''
     def __init__(self, path2chk, _id, vars_fs):
-        self.miss       = {}
         self.path2chk   = path2chk
         self._id        = _id
         self.GLM_meas   = vars_fs["GLM_measurements"]
         self.GLM_thresh = vars_fs["GLM_thresholds"]
-        self.chk_f()
+        self.miss       = self.chk_f()
 
     def chk_f(self):
-        if os.path.exists(os.path.join(self.path2chk, self._id, 'surf')) and os.path.exists(os.path.join(self.path2chk, self._id, 'label')):
+        miss = {}
+        surf_dir = os.path.join(self.path2chk, self._id, 'surf')
+        label_dir = os.path.join(self.path2chk, self._id, 'label')
+        if os.path.exists(surf_dir) and os.path.exists(label_dir):
             for hemis in hemi:
                 for meas in self.GLM_meas:
                     for thresh in self.GLM_thresh:
-                        file = '{}.{}.fwhm{}.fsaverage.mgh'.format(hemis, meas, str(thresh))
-                        if not os.path.exists(os.path.join(self.path2chk, self._id, 'surf', file)):
-                            self.populate_miss(file)
+                        file = f'{hemis}.{meas}.fwhm{str(thresh)}.fsaverage.mgh'
+                        file_abspath = os.path.join(surf_dir, file)
+                        if not os.path.exists(file_abspath):
+                            print("        files: MISSING", file, " id: ", self._id)
+                            miss = self.populate_miss(miss, file)
+            return miss
         else:
-            self.populate_miss('surf label missing')
+            return self.populate_miss(miss, 'surf label missing')
 
-    def populate_miss(self, file):
-        if self._id not in self.miss:
-            self.miss[self._id] = list()
-        self.miss[self._id].append(file)
+    def populate_miss(self, miss, file):
+        if self._id not in miss:
+            miss[self._id] = list()
+        miss[self._id].append(file)
+        return miss
 
 
 class GLMVars:

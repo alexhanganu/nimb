@@ -238,8 +238,12 @@ class Get_Vars():
                  path.join(NIMB_tmp, 'mriparams'),
                  path.join(NIMB_tmp, 'usedpbs'),
                            local_vars['NIMB_PATHS']['NIMB_NEW_SUBJECTS'],
-                           local_vars['NIMB_PATHS']['NIMB_PROCESSED_FS'],
-                           local_vars['NIMB_PATHS']['NIMB_PROCESSED_FS_error']):
+                           local_vars['FREESURFER']['NIMB_PROCESSED'],
+                           local_vars['FREESURFER']['NIMB_ERR'],
+                           local_vars['DIPY']['NIMB_PROCESSED'],
+                           local_vars['DIPY']['NIMB_ERR'],
+                           local_vars['NILEARN']['NIMB_PROCESSED'],
+                           local_vars['NILEARN']['NIMB_ERR']):
                 if not path.exists(p):
                     print('creating path ',p)
                     makedirs(p)
@@ -277,10 +281,6 @@ class Get_Vars():
             makedirs(new_NIMB_tmp)
         NIMB_PATHS['NIMB_tmp']                = new_NIMB_tmp
         NIMB_PATHS['NIMB_NEW_SUBJECTS']       = os.path.join(new_NIMB_tmp, 'nimb_new_subjects')
-        NIMB_PATHS['NIMB_PROCESSED_FS']       = os.path.join(new_NIMB_tmp, 'nimb_processed_fs')
-        NIMB_PATHS['NIMB_PROCESSED_NILEARN']  = os.path.join(new_NIMB_tmp, 'nimb_processed_nilearn')
-        NIMB_PATHS['NIMB_PROCESSED_DIPY']     = os.path.join(new_NIMB_tmp, 'nimb_processed_dipy')
-        NIMB_PATHS['NIMB_PROCESSED_FS_error'] = os.path.join(new_NIMB_tmp, 'nimb_processed_fs_error')
 
 
         '''setting FREESURFER paths'''
