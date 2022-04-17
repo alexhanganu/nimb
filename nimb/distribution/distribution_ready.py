@@ -24,6 +24,8 @@ class DistributionReady():
         self.proj_vars        = all_vars.projects[all_vars.params.project] # credentials_home/project.json
         self.NIMB_HOME        = self.locations["local"]["NIMB_PATHS"]["NIMB_HOME"]
         self.NIMB_tmp         = self.locations["local"]["NIMB_PATHS"]["NIMB_tmp"]
+        self.FREESURFER_HOME  = self.locations['local']['FREESURFER']['FREESURFER_HOME']
+
 
 
     def check_ready(self):
@@ -146,8 +148,9 @@ class DistributionReady():
     def fs_ready(self):
         if self.locations['local']['FREESURFER']['install'] == 1:
             print('FreeSurfer is set to be installed on local computer')
-            if len(self.locations['local']['FREESURFER']['FREESURFER_HOME']) < 1:
-                print("FREESURFER_HOME is missing. Please define FREESURFER_HOME in the nimb/local.json file")
+            if len(self.FREESURFER_HOME) < 1:
+                print("FREESURFER_HOME is missing.")
+                print("    Please define FREESURFER_HOME in the nimb/local.json file")
                 return False
             if self.check_freesurfer_ready():
                 SUBJECTS_DIR = self.locations['local']['FREESURFER']['SUBJECTS_DIR']
@@ -156,7 +159,8 @@ class DistributionReady():
                     makedir_ifnot_exist(SUBJECTS_DIR)
                 return self.fs_chk_fsaverage_ready(SUBJECTS_DIR)
         else:
-            print('FreeSurfer is not installed yet. Please define FreeSurfer_install to 1 in the nimb/local.json file')
+            print('FreeSurfer is not installed yet.')
+            print('    Please define FreeSurfer_install to 1 in the nimb/local.json file')
             return False
 
 
@@ -170,9 +174,24 @@ class DistributionReady():
 
 
     def fs_fsaverage_copy(self, SUBJECTS_DIR):
-        if not os.path.exists(os.path.join(SUBJECTS_DIR, 'fsaverage', 'xhemi')):
-            fsaverage_path = os.path.join(self.locations['local']['FREESURFER']['FREESURFER_HOME'], "subjects", "fsaverage")
-            shutil.copytree(fsaverage_path, os.path.join(SUBJECTS_DIR, 'fsaverage'))
+        fsaverage_src_path  = os.path.join(self.FREESURFER_HOME, "subjects", "fsaverage")
+        fsaverage_dst_path  = os.path.join(SUBJECTS_DIR, "fsaverage")
+        fsaverage_dst_surf  = os.path.join(fsaverage_dst_path, 'surf')
+        fsaverage_dst_xhemi = os.path.join(fsaverage_dst_path, 'xhemi')
+
+        if not os.path.exists(fsaverage_dst_xhemi) or\
+            not os.listdir(fsaverage_dst_surf):
+            try:
+                shutil.copytree(fsaverage_src_path, fsaverage_dst_path)
+            except Exception as e:
+                print(e)
+                try:
+                    print('    removing older version')
+                    shutil.rmtree(fsaverage_dst_path)
+                    print('    copying a new version')
+                    shutil.copytree(fsaverage_src_path, fsaverage_dst_path)
+                except Exception as e:
+                    print(e)
 
 
     def check_freesurfer_ready(self):
@@ -181,7 +200,7 @@ class DistributionReady():
         :return:
         """
         ready = False
-        if not os.path.exists(os.path.join(self.locations['local']['FREESURFER']['FREESURFER_HOME'], "MCRv84")):
+        if not os.path.exists(os.path.join(self.FREESURFER_HOME, "MCRv84")):
             from .setup_freesurfer import SETUP_FREESURFER
             SETUP_FREESURFER(self.locations, DEFAULT)
             ready = True
