@@ -16,7 +16,7 @@ class GetMasks:
     '''
 
     def __init__(self, vars_fs, masks = 'all'):
-        self.SUBJECTS_DIR = vars_fs['FS_SUBJECTS_DIR']
+        self.SUBJECTS_DIR = vars_fs['SUBJECTS_DIR']
         self.masks        = masks
         self.all_codes    = self.read_FreeSurferColorLUT()
         self.codes        = self.get_codes()
@@ -97,7 +97,7 @@ def initiate_fs_from_sh(vars_local):
     sh_file = path.join(vars_local["NIMB_PATHS"]["NIMB_tmp"], 'source_fs.sh')
     with open(sh_file, 'w') as f:
         f.write(vars_local["FREESURFER"]["export_FreeSurfer_cmd"]+'\n')
-        f.write("export SUBJECTS_DIR="+vars_local["FREESURFER"]["FS_SUBJECTS_DIR"]+'\n')
+        f.write("export SUBJECTS_DIR="+vars_local["FREESURFER"]["SUBJECTS_DIR"]+'\n')
         f.write(vars_local["FREESURFER"]["source_FreeSurfer_cmd"]+'\n')
     system("chmod +x {}".format(sh_file))
     return ("source {}".format(sh_file))
