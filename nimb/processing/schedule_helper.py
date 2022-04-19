@@ -16,7 +16,11 @@ class Scheduler():
     def __init__(self, vars_local):
         self.vars_local       = vars_local
         self.NIMB_tmp         = self.vars_local["NIMB_PATHS"]['NIMB_tmp']
+        self.fs_subjects_dir  = self.vars_local["FREESURFER"]["SUBJECTS_DIR"]
+        self.export_freesurfer_cmd = self.vars_local["FREESURFER"]["export_FreeSurfer_cmd"]
+        self.source_freesurfer_cmd = self.vars_local["FREESURFER"]["source_FreeSurfer_cmd"]
         self.processing_env   = self.vars_local["PROCESSING"]["processing_env"]
+        self.python_load_cmd       = self.vars_local['PROCESSING']["python3_load_cmd"]
 
 
     def submit_4_processing(self, cmd, name, task, cd_cmd = '',
@@ -27,8 +31,8 @@ class Scheduler():
         self.job_id = '0'
         if self.vars_local["PROCESSING"]["SUBMIT"] == 1:
             if self.processing_env == 'slurm':
-                sh_file = self.make_submit_file(cmd, name, task, cd_cmd)
-                self.submit_2scheduler(sh_file)
+                self.make_submit_file(cmd, name, task, cd_cmd)
+                self.submit_2scheduler()
             elif self.processing_env == 'tmux':
                 self.submit_2tmux(cmd, name, cd_cmd)
             else:
@@ -40,8 +44,9 @@ class Scheduler():
 
     def get_submit_file_names(self, name, task):
         dt = time.strftime("%Y%m%d_%H%M",time.localtime(time.time()))
-        sh_file = '{}_{}_{}.sh'.format(name, task, str(dt))
-        out_file = '{}_{}_{}.out'.format(name, task, str(dt))
+        files_root = f'{name}_{task}_{str(dt)}'
+        sh_file = f'{files_root}.sh'
+        out_file = f'{files_root}.out'
         return sh_file, out_file
 
 
@@ -68,28 +73,33 @@ class Scheduler():
 
     def make_submit_file(self, cmd, name, task, cd_cmd):
         sh_file, out_file = self.get_submit_file_names(name, task)
-        with open(path.join(self.NIMB_tmp, 'usedpbs', sh_file), 'w') as f:
-            for line in self.vars_local['PROCESSING']["text4_scheduler"]:
+        self.sh_f_abspath = path.join(self.NIMB_tmp, 'usedpbs', sh_file)
+        out_file_abspath  = path.join(self.NIMB_tmp, 'usedpbs', out_file)
+        walltime_cmd      = self.vars_local['PROCESSING']["batch_walltime_cmd"]
+        output_cmd        = self.vars_local['PROCESSING']["batch_output_cmd"]
+        scheduler_text    = self.vars_local['PROCESSING']["text4_scheduler"]
+
+        with open(self.sh_f_abspath, 'w') as f:
+            for line in scheduler_text:
                 f.write(line+'\n')
-            f.write(self.vars_local['PROCESSING']["batch_walltime_cmd"]+self.Get_walltime(task)+'\n')
-            f.write(self.vars_local['PROCESSING']["batch_output_cmd"]+path.join(self.NIMB_tmp,'usedpbs',out_file)+'\n')
+            f.write(walltime_cmd+self.Get_walltime(task)+'\n')
+            f.write(output_cmd+out_file_abspath+'\n')
             if self.activate_fs:
-                f.write(self.vars_local['FREESURFER']["export_FreeSurfer_cmd"]+'\n')
-                f.write(self.vars_local['FREESURFER']["source_FreeSurfer_cmd"]+'\n')
-                f.write('export SUBJECTS_DIR='+self.vars_local['FREESURFER']["SUBJECTS_DIR"]+'\n')
+                f.write(self.export_freesurfer_cmd+'\n')
+                f.write(self.source_freesurfer_cmd+'\n')
+                f.write('export SUBJECTS_DIR='+self.fs_subjects_dir+'\n')
             if cd_cmd:
                 f.write(cd_cmd+'\n')
             if self.python_load:
-                f.write(self.vars_local['PROCESSING']["python3_load_cmd"]+'\n')
+                f.write(self.python_load_cmd+'\n')
             f.write(cmd+'\n')
-        return sh_file
 
 
-    def submit_2scheduler(self, sh_file):
-        print('        submitting {}'.format(sh_file))
+    def submit_2scheduler(self):
+        print(f'        submitting {self.sh_f_abspath}')
         time.sleep(1)
         try:
-            resp = subprocess.run(['sbatch',path.join(self.NIMB_tmp,'usedpbs',sh_file)], stdout=subprocess.PIPE).stdout.decode('utf-8')
+            resp = subprocess.run(['sbatch', self.sh_f_abspath], stdout=subprocess.PIPE).stdout.decode('utf-8')
             self.job_id = list(filter(None, resp.split(' ')))[-1].strip('\n')
         except Exception as e:
             print(e)
@@ -97,19 +107,18 @@ class Scheduler():
 
     def submit_2tmux(self, cmd, subjid, cd_cmd):
         dt = time.strftime("%Y%m%d_%H%M",time.localtime(time.time()))
-        self.job_id = 'tmux_'+str(subjid)+"_"+dt
-        print('        submitting to tmux session: {}'.format(self.job_id))
-        system('tmux new -d -s {}'.format(self.job_id))
+        self.job_id = str(f'tmux_{str(subjid)}_{dt}')
+        print(f'        submitting to tmux session: {self.job_id}')
+        system(f'tmux new -d -s {self.job_id}')
         if self.activate_fs:
-            system("tmux send-keys -t '{}' '{}' ENTER".format(str(self.job_id), self.vars_local["FREESURFER"]["export_FreeSurfer_cmd"]))
-            system("tmux send-keys -t '{}' 'export SUBJECTS_DIR=' '{}' ENTER".format(str(self.job_id), self.vars_local["FREESURFER"]["FS_SUBJECTS_DIR"]))
-            system("tmux send-keys -t '{}' '{}' ENTER".format(str(self.job_id), self.vars_local["FREESURFER"]["source_FreeSurfer_cmd"]))
+            system(f"tmux send-keys -t '{self.job_id}' '{self.export_freesurfer_cmd}' ENTER")
+            system(f"tmux send-keys -t '{self.job_id}' 'export SUBJECTS_DIR=' '{self.fs_subjects_dir}' ENTER")
+            system(f"tmux send-keys -t '{self.job_id}' '{self.source_freesurfer_cmd}' ENTER")
         if cd_cmd:
-            system("tmux send-keys -t '{}' '{}' ENTER".format(str(self.job_id), cd_cmd))
+            system(f"tmux send-keys -t '{self.job_id}' '{cd_cmd}' ENTER")
         if self.python_load:
-            system("tmux send-keys -t '{}' '{}' ENTER".format(str(self.job_id),
-                                                              self.vars_local['PROCESSING']["python3_load_cmd"]))
-        system("tmux send-keys -t '{}' '{}' ENTER".format(str(self.job_id), cmd))
+            system(f"tmux send-keys -t '{self.job_id}' '{self.python_load_cmd}' ENTER")
+        system(f"tmux send-keys -t '{self.job_id}' '{cmd}' ENTER")
 
 
     def kill_tmux_session(self, session):
