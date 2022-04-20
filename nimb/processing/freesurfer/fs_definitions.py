@@ -161,7 +161,8 @@ class FSProcesses:
             'recbase'     :'30:00:00',
             'reclong'     :'23:00:00',
             'masks'       :'12:00:00',
-            'archiving'   :'01:00:00',}
+            'archiving'   :'01:00:00',
+            'fs_glm'      :'23:00:00'}
             # 'autorecon1'  :'05:00:00',
             # 'autorecon2'  :'12:00:00',
             # 'autorecon3'  :'12:00:00',
