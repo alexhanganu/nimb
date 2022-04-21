@@ -1,7 +1,8 @@
 '''
-last update: 20201218
+last update: 20220414
 check that all subjects are present in the SUBJECTS_DIR folder
-in order to perform the FreeSurfer glm
+in order to perform the FreeSurfer GLM
+create required files to perform FreeSurfer GLM
 '''
 
 import os
@@ -9,18 +10,18 @@ import sys
 import json
 import shutil
 import linecache
+import itertools
+
 from setup.interminal_setup import get_yes_no
 from stats.db_processing import Table
 from distribution.utilities import save_json
 from distribution.distribution_definitions import DEFAULT
 
 try:
-    import fs_definitions
-    print('    module fs_definitions was read directly')
-except ModuleNotFoundError:
-    print('    EXCEPTION module fs_definitions could not be imported directly')
-    print('        importing fs_definitions from processing.freesurfer')
     from processing.freesurfer import fs_definitions
+except ModuleNotFoundError:
+    import fs_definitions
+    print('    EXCEPTION: module fs_definitions was read directly')
 
 try:
     import pandas as pd
@@ -29,8 +30,9 @@ try:
     from pathlib import Path
 except ImportError as e:
     print('could not import modules: pandas or xlrd or openpyxl.\
-        try to install them using pip, or use the miniconda run with the command located \
-        in credentials_path.py/local.json -> miniconda_python_run')
+            please try to install using pip,\
+            or use miniconda run with the command located \
+            in credentials_path.py/local.json -> miniconda_python_run')
     sys.exit(e)
 
 
@@ -40,7 +42,7 @@ class CheckIfReady4GLM():
         self.proj_vars         = proj_vars
         self.vars_fs           = fs_vars
         self.FS_SUBJECTS_DIR   = fs_vars['SUBJECTS_DIR']
-        self.NIMB_PROCESSED_FS = nimb_vars["NIMB_PROCESSED_FS"]
+        self.NIMB_PROCESSED_FS = fs_vars['NIMB_PROCESSED']
         self.f_ids_processed   = f_ids_processed
         self.f_GLM_group       = f_GLM_group
         self.FS_GLM_dir        = FS_GLM_dir
@@ -50,6 +52,8 @@ class CheckIfReady4GLM():
         self.ids_4fs_glm       = dict()
         self.df                = self.tab.get_df(self.f_GLM_group)
         self.bids_ids          = self.df[self.proj_vars['id_col']].tolist()
+        self.ids_exclude_glm   = os.path.join(self.FS_GLM_dir, 'excluded_from_glm.json')
+
 
     def chk_if_subjects_ready(self):
 
@@ -69,29 +73,42 @@ class CheckIfReady4GLM():
                     self.chk_glm_files(bids_id)
                 elif os.path.exists(os.path.join(self.FS_SUBJECTS_DIR, fs_proc_id)):
                     self.ids_4fs_glm[bids_id] = fs_proc_id
-                    # self.chk_glm_files(fs_proc_id) #!!!!!!!!!!!!!!!!!! UNCOMMENT
+                    self.chk_glm_files(fs_proc_id)
                 else:
                     print(f'id {bids_id} or freesurfer id {fs_proc_id} \
                         are missing from the {self.FS_SUBJECTS_DIR} folder')
                     self.add_to_miss(bids_id, 'id_missing')
             if self.miss.keys():
-                file_abspath2save = os.path.join(self.FS_GLM_dir, 'excluded_from_glm.json')
-                save_json(self.miss, file_abspath2save, print_space = 8)
+                print("    missing files and ids: ", self.miss)
+                save_json(self.miss, self.ids_exclude_glm, print_space = 8)
                 subjs_missing = len(self.miss.keys())
                 subjs_present = len(self.ids_4fs_glm.keys())
                 print(f'    Number of participants ready for FreeSurfer GLM:')
                 print(f'        in the folder: {self.FS_SUBJECTS_DIR}')
                 print(f'        {subjs_present} present')
                 print(f'        {subjs_missing} missing')
-                q = "    EXCEPTION! do you want to do glm analysis with current subjects ? (y/n)\n\
-                    (note: if you answer NO, you will be asked to extract the corresponding\n\
-                    processed folders of subjects to the FREESURFER_SUBJECTS folder for analysis\n\
-                    if those subjects are present in the corresponding FREESURFER_PROCESSED folder)"
-                if get_yes_no(q) == 1:
-                    self.create_fs_glm_df()
-                    return True, list()
-                else:
-                    return False, list(self.miss.keys())
+                not_ready = [i for i in self.miss if "id_missing" not in self.miss[i]]
+                maybe_archived = [i for i in self.miss if i not in not_ready]
+                if maybe_archived:
+                    print("   MAYBE archived: ", maybe_archived)
+                    q = "    EXCEPTION! Some IDs are missing, but they could be archived.\n\
+                    Do you want to do glm analysis with current subjects (y) or try to check the archive (n) ? (y/n)\n\
+                        (note: if you answer NO, you will be asked to unarchive the \n\
+                        processed folders of IDs if they are present in FREESURFER_PROCESSED)"
+                    if get_yes_no(q) == 1:
+                        self.create_fs_glm_df()
+                        return True, list()
+                    else:
+                        return False, maybe_archived
+                if not_ready:
+                    print("    MISSING FILES: these participant CANNOT be included in the GLM analysis: ", not_ready)
+                    q = "    EXCEPTION! Some IDs have missing files and they MUST be excluded from analysis.\n\
+                    Do you want to continue without excluded IDs ? (y/n)"
+                    if get_yes_no(q) == 1:
+                        self.create_fs_glm_df()
+                        return True, list()
+                    else:
+                        return False, not_ready
             else:
                 self.create_fs_glm_df()
                 return True, list()
@@ -100,7 +117,7 @@ class CheckIfReady4GLM():
             return False, list()
 
     def chk_glm_files(self, bids_id):
-        '''it is expected that the BIDS IDs are located in FS_SUBJECTS_DIR
+        '''it is expected that the BIDS IDs are located in FREESURFER -> SUBJECTS_DIR
             script checks if subjects are present
         Args:
             bids_id: ID of the subject to chk
@@ -108,9 +125,11 @@ class CheckIfReady4GLM():
             populates list of missing subjects
             populates dict with ids
         '''
-        files_ok = fs_definitions.ChkFSQcache(self.FS_SUBJECTS_DIR, bids_id, self.vars_fs)
-        if not files_ok:
-            for file in files_ok:
+        files_not_ok = fs_definitions.ChkFSQcache(self.FS_SUBJECTS_DIR,
+                                            bids_id,
+                                            self.vars_fs).miss
+        if files_not_ok:
+            for file in files_not_ok[bids_id]:
                 self.add_to_miss(bids_id, file)
             return False
         else:
@@ -171,6 +190,9 @@ class CheckIfReady4GLM():
         if bids_id not in self.miss:
             self.miss[bids_id] = list()
         self.miss[bids_id].append(file)
+        if bids_id in self.ids_4fs_glm:
+            self.ids_4fs_glm.pop(bids_id, None)
+
 
     def read_json(self, f):
         '''read a json file
@@ -182,22 +204,65 @@ class CheckIfReady4GLM():
 class PrepareForGLM():
 
     #https://surfer.nmr.mgh.harvard.edu/fswiki/FsgdExamples
-    def __init__(self, SUBJECTS_DIR, GLM_dir, GLM_file_group, proj_vars, vars_fs):
-        self.PATH_GLM_dir = GLM_dir
-        self.group_col = proj_vars["group_col"]
-        self.id_col = proj_vars["id_col"]
-        self.PATHfsgd = os.path.join(self.PATH_GLM_dir,'fsgd')
-        self.PATHmtx = os.path.join(self.PATH_GLM_dir,'contrasts')
+    def __init__(self,
+                SUBJECTS_DIR,
+                GLM_dir,
+                GLM_file_group,
+                proj_vars,
+                vars_fs):
+        self.SUBJECTS_DIR = SUBJECTS_DIR
+        self.group_col    = proj_vars["group_col"]
+        self.id_col       = proj_vars["id_col"]
 
-        if not os.path.isdir(self.PATH_GLM_dir): os.makedirs(self.PATH_GLM_dir)
-        if Path(GLM_file_group).name not in os.listdir(self.PATH_GLM_dir):
-            shutil.copy(GLM_file_group, os.path.join(self.PATH_GLM_dir, Path(GLM_file_group).name))
-        if not os.path.isdir(self.PATHfsgd): os.makedirs(self.PATHfsgd)
-        if not os.path.isdir(self.PATHmtx): os.makedirs(self.PATHmtx)
+        self.make_folders(GLM_dir,
+                        GLM_file_group)
+        self.get_groups_and_variables(proj_vars,
+                                    GLM_file_group,
+                                    vars_fs)
+        self.fsgd_run_populate()
+        self.make_contrasts_save_file()
+
+        # print('creating unix version of fsgd files, to convert Windows tabulations to unix')
+        self.fsgd_win_to_unix(GLM_dir)
+        self.make_qdec_fsgd_g2()
+
+
+    def make_folders(self,
+                    GLM_dir,
+                    GLM_file_group):
+        """creating corresponding folders
+        """
+        params        = fs_definitions.FSGLMParams(GLM_dir)
+        self.PATHfsgd = os.path.join(GLM_dir,'fsgd')
+        self.PATHmtx  = os.path.join(GLM_dir,'contrasts')
+        self.PATHqdec = os.path.join(GLM_dir,'qdec')
+        self.file_for_glm = params.files_for_glm
+        self.ids_groups   = params.subjects_per_group
+
+        for _dir in [GLM_dir, self.PATHfsgd, self.PATHmtx, self.PATHqdec]:
+            if not os.path.exists(_dir):
+                os.makedirs(_dir)
+
+        # copying GLM_file_group to folder for GLM
+        glm_file_name = Path(GLM_file_group).name
+        if glm_file_name not in os.listdir(GLM_dir):
+            shutil.copy(GLM_file_group,
+                        os.path.join(GLM_dir, glm_file_name))
+
+
+    def get_groups_and_variables(self,
+                                proj_vars,
+                                GLM_file_group,
+                                vars_fs):
+        """creating working variables and dictionaries
+        """
         cols_2use = proj_vars["variables_for_glm"]+[self.id_col, self.group_col]
         df_groups_clin = Table().get_df_with_columns(GLM_file_group, cols_2use)
 
-        self.ids = self.get_ids_ready4glm(SUBJECTS_DIR, df_groups_clin[self.id_col].tolist(), vars_fs)
+        self.ls_groups = pd.unique(df_groups_clin[self.group_col]).tolist()
+        self.ids = self.get_ids_ready4glm(df_groups_clin[self.id_col].tolist(),
+                                            vars_fs)
+
         d_init = df_groups_clin.to_dict()
         self.d_subjid = {}
         self.ls_vars_stats = [key for key in d_init if key != self.id_col]
@@ -208,48 +273,34 @@ class PrepareForGLM():
                 for var in self.ls_vars_stats:
                     self.d_subjid[_id][var] = d_init[var][rownr]
         self.ls_vars_stats.remove(self.group_col)
-
-        self.contrasts = fs_definitions.GLMcontrasts['contrasts']
-
-        self.files_glm = {}
-        for fsgd_type in self.contrasts:
-            self.files_glm[fsgd_type]={
-                                        'fsgd' : [],
-                                        'mtx' : [],
-                                        'mtx_explanation' : [],
-                                        'gd2mtx' : fs_definitions.GLMcontrasts['dods_doss'][fsgd_type]}
-
-        # print('creating list of subjects')
         self.make_subjects_per_group(df_groups_clin)
-        # print('creating fsgd for g1g2v0')
-        self.make_fsgd_g1g2v0()
-        # print('creating fsgd for g1v1')
-        self.make_fsgd_g1v1()
-        # print('creating fsgd for g1v2')
-        # self.make_fsgd_g1v2()
-        # print('creating fsgd for g2v1')
-        self.make_fsgd_g2v1()
-        # print('creating unix version of fsgd files, to convert Windows tabulations to unix')
-        self.fsgd_win_to_unix()
-        # print('creating contrasts')
-        self.make_contrasts()
-        # print('creating py file with all data')
-        self.make_files_for_glm()
-        # print('creating qdec fsgd files')
-        self.make_qdec_fsgd_g2()
 
-    def get_ids_ready4glm(self, SUBJECTS_DIR, ids, vars_fs):
+
+    def get_ids_ready4glm(self,
+                            ids,
+                            vars_fs):
+        """extract ids that are ready to be included in the GLM analysis
+            specifically, they are being checked that all Qcache files are present
+        """
         miss = {}
         for _id in ids:
-            files_ok = fs_definitions.ChkFSQcache(SUBJECTS_DIR, _id, vars_fs)
+            files_ok = fs_definitions.ChkFSQcache(self.SUBJECTS_DIR,
+                                                    _id,
+                                                    vars_fs)
             if not files_ok:
                 miss.update(files_ok)
         if miss.keys():
-            print('some subjects or files are missing: {}'.format(miss))
+            print('        some subjects or files are missing: {}'.format(miss))
         return [i for i in ids if i not in miss.keys()]
 
+
     def make_subjects_per_group(self, df):
-        self.ls_groups = pd.unique(df[self.group_col]).tolist()
+        """creates a dictionary with all subjects per group
+            saved to a json file
+            for log purposes
+        Args:
+            df = pandas.DataFrame with ids
+        """
         subjects_per_group = dict()
         for group in self.ls_groups:
             subjects_per_group[group] = []
@@ -258,120 +309,189 @@ class PrepareForGLM():
                     subjects_per_group[group].append(df.at[row, self.id_col])
             print('        group: {}, has {} subjects'.format(group, len(subjects_per_group[group])))
 
-        file = 'subjects_per_group.json'
-        with open(os.path.join(self.PATH_GLM_dir, file), 'w') as f:
+        # save file
+        with open(self.ids_groups, 'w') as f:
             json.dump(subjects_per_group, f, indent=4)
 
 
-    def make_fsgd_g1g2v0(self):
-        file = 'g2v0_{}_{}.fsgd'.format(self.ls_groups[0], self.ls_groups[1])
-        open(os.path.join(self.PATHfsgd,file), 'w').close()
-        with open(os.path.join(self.PATHfsgd,file), 'a') as f:
-            f.write('GroupDescriptorFile 1\nClass {} plus blue\nClass {} circle green\n'.format(
-                                                            self.ls_groups[0], self.ls_groups[1]))
-            # f.write('GroupDescriptorFile 1\nClass '+self.ls_groups[0]+' plus blue\nClass '+self.ls_groups[1]+' circle green\n')
+    def fsgd_run_populate(self):
+        """creating fsgd files
+        """
+        self.contrasts = fs_definitions.GLMcontrasts['contrasts']
+        self.files_glm = {}
+        for contrast in self.contrasts:
+            dods_doss = fs_definitions.GLMcontrasts['dods_doss'][contrast]
+            self.files_glm[contrast]={'fsgd' : [],
+                                      'mtx'  : [],
+                                      'mtx_explanation' : [],
+                                      'gd2mtx' : dods_doss}
+            groups_2include = int(contrast[1])
+            vars_2include   = int(contrast[-1])
+            groups_combined = self.combinations_get(self.ls_groups,
+                                                    lvl = groups_2include)
+            vars_combined   = self.combinations_get(self.ls_vars_stats,
+                                                    lvl = vars_2include)
+            for groups in groups_combined:
+                # if len(groups) == groups_2include:
+                group_in_file_name = f'_{"_".join(groups)}'
+                self.fsgd_vars_add(contrast,
+                                    vars_combined,
+                                    group_in_file_name,
+                                    groups)
+
+
+    def fsgd_vars_add(self, contrast, vars_combined, group_in_file_name, groups):
+        vars_2include = int(contrast[-1])
+        var_name = ''
+        vars_zeros = False
+
+        for variables in vars_combined:
+            if variables:
+                var_name = f'_{"_".join(variables)}'
+                if self.check_var_zero(variables, groups):
+                    print(f'        variables {variables} for groups: {groups} are all zeros')
+                    print(f'            will not be added to GLM')
+                    vars_zeros = True
+            if not vars_zeros:
+                file_name = f'{contrast}{group_in_file_name}{var_name}.fsgd'
+                file = os.path.join(self.PATHfsgd, file_name)
+                open(file, 'w').close()
+                self.files_glm[contrast]['fsgd'].append(file)
+                self.fsgd_populate(file, groups, variables)
+
+
+    def fsgd_populate(self, file, groups, variables):
+        with open(file, 'a') as f:
+            f.write('GroupDescriptorFile 1\n')
+            if len(groups) == 1:
+                f.write(f'Class Main\n')
+                group = "Main"
+            else:
+                f.write(f'Class {groups[0]} plus blue\n')
+                f.write(f'Class {groups[1]} circle green\n')
+            if variables:
+                f.write(f'Variables {str(" ".join(variables))}\n')
             for subjid in self.d_subjid:
-                f.write(f'Input {subjid} {self.d_subjid[subjid][self.group_col]}\n')
-        self.files_glm['g2v0']['fsgd'].append(file)
-        # for group in self.ls_groups:
-            # file = 'g1v0'+'_'+group+'.fsgd'
-            # open(os.path.join(self.PATHfsgd,file), 'w').close()
-            # with open(os.path.join(self.PATHfsgd,file), 'a') as f:
-                # f.write('GroupDescriptorFile 1\nClass Main\n')
-                # for subjid in self.d_subjid:
-                    # if self.d_subjid[subjid][self.group_col] == group:
-                        # f.write('Input '+subjid+' Main\n')
-            # self.files_glm['g1v0']['fsgd'].append(file)
-
-    def check_var_zero(self, var, group):
-        ls = []
-        for subjid in self.d_subjid:
-            if self.d_subjid[subjid][self.group_col] == group:
-                ls.append(self.d_subjid[subjid][var])
-        return all(v == 0 for v in ls)
-
-    def make_fsgd_g1v1(self):
-        for group in self.ls_groups:
-            for variable in self.ls_vars_stats:
-                if not self.check_var_zero(variable, group):
-                    file = 'g1v1_{}_{}.fsgd'.format(group, variable)
-                    open(os.path.join(self.PATHfsgd,file), 'w').close()
-                    with open(os.path.join(self.PATHfsgd,file), 'a') as f:
-                        f.write('GroupDescriptorFile 1\nClass Main\nVariables {}\n'.format(variable))
-                        for subjid in self.d_subjid:
-                            if self.d_subjid[subjid][self.group_col] == group:
-                                f.write('Input {} Main {}\n'.format(subjid, str(self.d_subjid[subjid][variable])))
-                    self.files_glm['g1v1']['fsgd'].append(file)
+                vars_2write = " "
+                if variables:
+                    vars_2add = list()
+                    for var in variables:
+                        vars_2add.append(self.d_subjid[subjid][var])
+                    vars_2write = " "+" ".join([str(i) for i in vars_2add])
+                if len(groups) == 1:
+                    if self.d_subjid[subjid][self.group_col] == groups[0]:
+                        f.write(f'Input {subjid} {group}{vars_2write}\n')
+                else:
+                    group = self.d_subjid[subjid][self.group_col]
+                    if group in groups:
+                        f.write(f'Input {subjid} {group}{vars_2write}\n')
+        return file
 
 
-    def make_fsgd_g1v2(self):
-        for group in self.ls_groups:
-            for variable in self.ls_vars_stats[:-1]:
-                if not self.check_var_zero(variable, group):
-                    for variable2 in self.ls_vars_stats[self.ls_vars_stats.index(variable)+1:]:
-                        if not self.check_var_zero(variable2, group):
-                            file = 'g1v2_{}_{}_{}.fsgd'.format(group, str(variable), str(variable2))
-                            open(os.path.join(self.PATHfsgd,file), 'w').close()
-                            with open(os.path.join(self.PATHfsgd,file), 'a') as f:
-                                f.write('GroupDescriptorFile 1\nClass Main\nVariables {} {}\n'.format(
-                                                                    str(variable), str(variable2)))
-                                for subjid in self.d_subjid:
-                                    if self.d_subjid[subjid][self.group_col] == group:
-                                        f.write('Input {} Main {} {}\n'.format(
-                                            subjid, str(self.d_subjid[subjid][variable]), str(self.d_subjid[subjid][variable2])))
-                            self.files_glm['g1v2']['fsgd'].append(file)
-
-    def make_fsgd_g2v1(self):
-        for variable in self.ls_vars_stats:
-            if not self.check_var_zero(variable, self.ls_groups[0]) and not self.check_var_zero(variable, self.ls_groups[1]):
-                file = 'g2v1_{}_{}_{}.fsgd'.format(self.ls_groups[0], self.ls_groups[1], variable)
-                open(os.path.join(self.PATHfsgd,file), 'w').close()
-                with open(os.path.join(self.PATHfsgd,file), 'a') as f:
-                    f.write('GroupDescriptorFile 1\nClass {} plus blue\nClass {} circle green\nVariables '.format(
-                                                            self.ls_groups[0], self.ls_groups[1]))
-                    f.write(variable+'\n')
-                    for subjid in self.d_subjid:
-                        f.write('Input {} {} {}\n'.format(
-                            subjid, self.d_subjid[subjid][self.group_col], str(self.d_subjid[subjid][variable])))
-                self.files_glm['g2v1']['fsgd'].append(file)
-
-    def fsgd_win_to_unix(self):
-        for contrast_type in self.files_glm:
-            for fsgd_file in self.files_glm[contrast_type]['fsgd']:
-                fsgd_f_unix = os.path.join(self.PATH_GLM_dir,'fsgd', '{}_unix.fsgd'.format(fsgd_file.replace('.fsgd','')))
-                if not os.path.isfile(fsgd_f_unix):
-                    os.system('cat {} | sed \'s/\\r/\\n/g\' > {}'.format(
-                        os.path.join(self.PATH_GLM_dir,'fsgd',fsgd_file), fsgd_f_unix))
-
-    def make_qdec_fsgd_g2(self):
-        file = 'qdec_g2.fsgd'
-        open(os.path.join(self.PATH_GLM_dir,file), 'w').close()
-        with open(os.path.join(self.PATH_GLM_dir,file), 'a') as f:
-            f.write('fsid group ')
-            for variable in self.ls_vars_stats:
-                if not self.check_var_zero(variable, self.ls_groups[0]) and not self.check_var_zero(variable, self.ls_groups[1]):
-                    f.write(variable+' ')
-            f.write('\n')
-            for _id in self.d_subjid:
-                f.write('{} {} '.format(_id, self.d_subjid[_id][self.group_col]))
-                for variable in self.ls_vars_stats:
-                    f.write(str(self.d_subjid[_id][variable])+' ')
-                f.write('\n')
-
-
-    def make_contrasts(self):
+    def make_contrasts_save_file(self):
         for fsgd_type in self.contrasts:
             for contrast_mtx in self.contrasts[fsgd_type]:
-                file = '{}_{}'.format(fsgd_type, contrast_mtx)
-                open(os.path.join(self.PATHmtx,file), 'w').close()
+                file = f'{fsgd_type}_{contrast_mtx}'
+                open(os.path.join(self.PATHmtx, file), 'w').close()
                 with open(os.path.join(self.PATHmtx, file), 'a') as f:
                     f.write(self.contrasts[fsgd_type][contrast_mtx][0])
                 self.files_glm[fsgd_type]['mtx'].append(file)
                 self.files_glm[fsgd_type]['mtx_explanation'].append(self.contrasts[fsgd_type][contrast_mtx][1])
 
-
-    def make_files_for_glm(self):
-        file = 'files_for_glm.json'
-        with open(os.path.join(self.PATH_GLM_dir, file), 'w') as f:
+        # saving the file
+        with open(self.file_for_glm, 'w') as f:
             json.dump(self.files_glm, f, indent=4)
 
+
+    def fsgd_win_to_unix(self, GLM_dir):
+        """must transform files that were created in Windows OS
+            to adapt to linux OS
+        """
+        for contrast_type in self.files_glm:
+            for fsgd_file in self.files_glm[contrast_type]['fsgd']:
+                fsgd_file_name = fsgd_file.replace('.fsgd','')
+                fsgd_f_unix = os.path.join(self.PATHfsgd,
+                                            f'{fsgd_file_name}_unix.fsgd')
+                if not os.path.isfile(fsgd_f_unix):
+                    os.system('cat {} | sed \'s/\\r/\\n/g\' > {}'.format(
+                        os.path.join(self.PATHfsgd, fsgd_file), fsgd_f_unix))
+
+
+    def make_qdec_fsgd_g2(self):
+        """creates the corresponding file to be used for QDEC analysis
+        """
+        groups_combined = self.combinations_get(self.ls_groups,
+                                        lvl = 2)
+        vars_2add = list()
+        for groups in groups_combined:
+            # checking variables for zeros, per group
+            for variable in self.ls_vars_stats:
+                vars_zeros = self.check_var_zero((variable,), groups)
+                if not vars_zeros:
+                    vars_2add.append(variable)
+
+            # populating file
+            file_name = f'qdec_g2_{groups[0]}_{groups[1]}.fsgd'
+            file = os.path.join(self.PATHqdec, file_name)
+            open(file, 'w').close()
+            with open(file, 'a') as f:
+                f.write('fsid group ')
+                for variable in vars_2add:
+                    f.write(f'{variable} ')
+                f.write('\n')
+                for _id in self.d_subjid:
+                    group = self.d_subjid[_id][self.group_col]
+                    if group in groups:
+                        f.write(f'{_id} {group} ')
+                        for variable in vars_2add:
+                            value = str(self.d_subjid[_id][variable])
+                            f.write(f'{value} ')
+                        f.write('\n')
+
+
+    def combinations_get(self, ls, lvl = 0):
+        """combining values from ls
+        Args:
+            ls = initial list() with values to be combined
+            lvl = int() of number of values to be combined,
+                    0 = blank tuple,
+                    1 = tuple with 1 value,
+                    2 = tuples of 2 values
+        Return:
+            combined = final list() that containes tuples() with combinations
+        """
+        if lvl == 0:
+            return [tuple()]
+        elif lvl ==1:
+            return [(i,) for i in ls]
+        elif lvl == 2:
+            result = list()
+            combined = list(itertools.product(ls, ls))
+            combined_diff = [i for i in combined if i[0] != i[1]]
+            for i in combined_diff:
+                if i not in result and (i[1], i[0]) not in result:
+                    result.append(i)
+            return result
+        else:
+            print("    requests for combinations higher then 2\
+                cannot be performed because FreeSurfer does not take them")
+
+
+    def check_var_zero(self, variables, groups):
+        """checks if all variables are zeros for a specific group
+        Args:
+            variables = tuple(var1, var2) for var1, var2 to be checked
+            groups    = tuple(group1, group2) for group1, group2 to be checked
+        Return:
+            vars_zeros = Bool. True means all are zeros
+        """
+        values = list()
+        vars_zeros = False
+        for group in groups:
+            for subjid in self.d_subjid:
+                for var in variables:
+                    if self.d_subjid[subjid][self.group_col] == group:
+                        values.append(self.d_subjid[subjid][var])
+        if all(v == 0 for v in values):
+            vars_zeros = True
+        return vars_zeros
