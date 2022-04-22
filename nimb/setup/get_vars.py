@@ -235,15 +235,15 @@ class Get_Vars():
         if path.exists(NIMB_HOME):
             NIMB_tmp = local_vars['NIMB_PATHS']['NIMB_tmp']
             for p in (NIMB_tmp,
-                 path.join(NIMB_tmp, 'mriparams'),
-                 path.join(NIMB_tmp, 'usedpbs'),
-                           local_vars['NIMB_PATHS']['NIMB_NEW_SUBJECTS'],
-                           local_vars['FREESURFER']['NIMB_PROCESSED'],
-                           local_vars['FREESURFER']['NIMB_ERR'],
-                           local_vars['DIPY']['NIMB_PROCESSED'],
-                           local_vars['DIPY']['NIMB_ERR'],
-                           local_vars['NILEARN']['NIMB_PROCESSED'],
-                           local_vars['NILEARN']['NIMB_ERR']):
+                        path.join(NIMB_tmp, 'mriparams'),
+                        path.join(NIMB_tmp, 'usedpbs'),
+                        local_vars['NIMB_PATHS']['NIMB_NEW_SUBJECTS'],
+                        local_vars['FREESURFER']['NIMB_PROCESSED'],
+                        local_vars['FREESURFER']['NIMB_ERR'],
+                        local_vars['DIPY']['NIMB_PROCESSED'],
+                        local_vars['DIPY']['NIMB_ERR'],
+                        local_vars['NILEARN']['NIMB_PROCESSED'],
+                        local_vars['NILEARN']['NIMB_ERR']):
                 if not path.exists(p):
                     print('creating path ',p)
                     makedirs(p)
