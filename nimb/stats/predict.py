@@ -99,41 +99,90 @@ params_lang = {
     },
 
 }
-def get_features_based_on_pca(dir_pca, threshold, X_scaled, ls_cols_X, group, atlas, lang='FR'):
 
-    print('    nr of features to analyze by PCA: {}'.format(len(ls_cols_X)))
-    model = PCA(n_components=threshold)
+
+def get_pca_features(df, threshold):
+    """extract features from df, using PCA, based on provided threshold
+        for percentage of explanation
+    Args:
+        df = pandas.DataFrame with features
+        threshold = percentage threshold used for PCA feature selection
+    Return:
+        expl_variance = list() of explained variance
+        components    = componenets_ of the PCA model
+    """
+    model = PCA(n_components = threshold)
     model.fit_transform(X_scaled)
+    expl_variance = model.explained_variance_ratio_
+    components    = model.components_
+    return expl_variance, components
 
-    # extracting most relevant features
-    ls_expl_variance = model.explained_variance_ratio_
 
+def get_features_from_components(components,
+                                expl_variance,
+                                features):
+    """extract the features per name
+        based on the components of the PCA
+    Args:
+        components = sklearn.decomposition.PCA().fit_transform(df).components_
+        expl_variance = sklearn.decomposition.PCA().fit_transform(df).explained_variance_ratio_
+        features   = list() of features / columns from the df used for the PCA
+    Return:
+        dic_feat_comps = {feature_name: explained_variance}
+    """
     dic_feat_comps = dict()
-    n_components = model.components_.shape[0]
-
+    n_components = components.shape[0]
     for i in range(n_components):
-        idx = np.abs(model.components_[i]).argmax()
-        feat = ls_cols_X[idx]
-        if feat not in dic_feat_comps:
-            dic_feat_comps[feat] = ls_expl_variance[i]
-        else:
-            new_variance = dic_feat_comps[ls_cols_X[idx]]+ls_expl_variance[i]
-            dic_feat_comps[feat] = new_variance
-    df_feat_comps = Table().create_df(dic_feat_comps.values(), index_col = dic_feat_comps.keys(), cols=['explained_variance'])
-
-    print('    PCA chose {} components and {} features '.format(len(ls_expl_variance), len(dic_feat_comps.keys())))
+            idx = np.abs(components[i]).argmax()
+            feat = features[idx]
+            if feat not in dic_feat_comps:
+                dic_feat_comps[feat] = expl_variance[i]
+            else:
+                dic_feat_comps[feat] = dic_feat_comps[features[idx]]+expl_variance[i]
+    return dic_feat_comps
 
 
+def get_features_based_on_pca(dir_pca, threshold, X_scaled, features, group, atlas, lang='FR'):
+
+    print('    nr of features to analyze by PCA: {}'.format(len(features)))
+    expl_variance, components = get_pca_features(X_scaled, threshold)
+    dic_feat_comps = get_features_from_components(components,
+                                                expl_variance,
+                                                features)
+    print('    PCA chose {} components and {} features '.format(len(expl_variance), len(dic_feat_comps.keys())))
+    save_features(dic_feat_comps,
+                  expl_variance,
+                  file2save = path.join(dir_pca, f'features_from_pca_{group}_{atlas}.csv'),
+                  img2save = path.join(dir_pca,f'pca_{group}_{atlas}.png'),
+                  lang = "EN")
     varia.extract_regions(dic_feat_comps, dir_pca, atlas)
-
-    # save results
-    df_feat_comps.to_csv(path.join(dir_pca, f'features_from_pca_{group}_{atlas}.csv'))
-    plotting.plot_simple(vals=np.cumsum(model.explained_variance_ratio_), 
-                    xlabel=params_lang[lang]['nr_components'], ylabel=params_lang[lang]['expl_cum_var'],
-                    path_to_save_file=path.join(dir_pca,f'pca_{group}_{atlas}.png'))
 
     return list(dic_feat_comps.keys())
 
+
+def save_features(dic_feat_comps,
+                  expl_variance,
+                  file2save,
+                  img2save,
+                  lang = "EN"):
+    """features extracted from PCA
+        are being saved to a table
+        and image
+    Args:
+        dic_feat_comps = {feature_name: explained_variance}
+        expl_variance  = PCA explained_variance_
+        file2save      = abspath to the csv file to save the table
+        img2save       = abspath to the image png file to save the table
+        lang           = language used to describe the results
+    """
+    df_feat_comps = Table().create_df(dic_feat_comps.values(),
+                                      index_col = dic_feat_comps.keys(),
+                                      cols = ['explained_variance'])
+    df_feat_comps.to_csv(file2save)
+    plotting.plot_simple(vals = np.cumsum(expl_variance), 
+                    xlabel = params_lang[lang]['nr_components'],
+                    ylabel = params_lang[lang]['expl_cum_var'],
+                    path_to_save_file = img2save)
 
 
 def feature_ranking(X_scaled, y_transform, cols_X):
