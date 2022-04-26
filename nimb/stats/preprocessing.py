@@ -124,22 +124,116 @@ class Preprocess:
         return df, cols
 
 
+def rm_feats_with_zeros(df,
+                        remove = False,
+                        path2log = None):
+    '''script searches for columns that have zeros
+    Args:
+        df = pandas.DataFrame
+    Return:
+        cols_with_zeros = list() of columns that have zeros
+   '''
+    cols_with_zeros = list()
+    for col in df:
+        n = df[col].isin([0]).sum()
+        if n>0:
+            cols_with_zeros.append(col)
+    
+    # removing features with zeros
+    if remove:
+        df.drop(columns = cols_with_zeros, inplace = True)
 
-def scale_X(df):
+    # saving columns with zeros to a log file
+    if path2log == None:
+        path2log = os.path.join(os.getcwd(), "features_with_zeros.txt")
+    with open(path2log, 'w') as f:
+        f.write("INFO: features with zeros are:\n\n")
+        if remove:
+            f.write("INFO: features were removed from the grid\n\n")
+        for feat in cols_with_zeros:
+            f.write(feat+"\n")
+
+    return df, cols_with_zeros
+
+
+def get_missing_nan_values(df, 
+                        features,
+                        id_col = "default",
+                        remove = False,
+                        path2log = None):
+    '''
+        script iterates through ids to extract columns / features with NaN/None
+        populates dictionary with missing values
+    Args:
+        df = pandas.DataFrame
+        features = list(pandas.DataFrame.columns)
+        id_col = feature name (column) with ids, but can be ommited
+    Return:
+        d_nan = {id: [column, column]}
+        ls_cols = list(columns with NaN)
+    '''
+    d_nan = dict()
+    ls_cols_with_nan = list()
+    for col in features:
+        if df[col].isnull().values.any():
+            ls_cols_with_nan.append(col)
+
+    for col in ls_cols_with_nan:
+        ls_nan_trues = df[col].isnull().tolist()
+        for ix in df.index:
+            if id_col != "default":
+                _id = df.at[ix, id_col]
+            value = df.at[ix, col]
+            if ls_nan_trues[ix]:
+                if id_col != "default":
+                    if _id not in d_nan:
+                        d_nan[_id] = list()
+                    d_nan[_id].append(col)
+                else:
+                    if ix not in d_nan:
+                        d_nan[ix] = list()
+                    d_nan[ix].append(col)
+
+    # removing features with NaN/None
+    if remove:
+        df.drop(columns = ls_cols_with_nan, inplace = True)
+
+    # saving columns with NaN/None to a log file
+    if path2log == None:
+        path2log = os.path.join(os.getcwd(), "features_with_nan.txt")
+    with open(path2log, 'w') as f:
+        f.write("INFO: features with NaN/None are:\n\n")
+        if remove:
+            f.write("INFO: features were removed from the grid\n\n")
+        for feat in ls_cols_with_nan:
+            f.write(feat+"\n")
+
+    return df, d_nan, ls_cols_with_nan
+
+
+def scale_X(df, algo = 'power'):
     """
         X_Scaled: normalize x, all features, return as array
         df: x data before transform
         scaler: scaler for x
     """
     '''
-    #scales: StandardScaler(), PowerTransformer(), QuantileTransformer(), RobustScaler()
+    #scales: StandardScaler(),
+            PowerTransformer(),
+            QuantileTransformer(),
+            RobustScaler()
     PowerTransformer is a parametric, monotonic transformation that applies a power transformation to each feature to make the data more Gaussian-like. It finds the optimal scaling factor to stabilize variance and mimimize skewness through maximum likelihood estimation. PowerTransformer uses the Yeo-Johnson transformed, applies zero-mean, unit variance normalization to the transformed output. This is useful for modeling issues related to heteroscedasticity (non-constant variance), or other situations where normality is desired.
     '''
-    from sklearn.preprocessing import PowerTransformer #!! there is an issue with using directly sklearn.preprocessing.PowerTransformer
-    scaler = PowerTransformer()
-    print(scaler.fit(df))
+    if algo == "power":
+        from sklearn.preprocessing import PowerTransformer #!! there is an issue with using directly sklearn.preprocessing.PowerTransformer
+        scaler = PowerTransformer()
+    elif algo == "quantile":
+        from sklearn.preprocessing import QuantileTransformer
+        scaler = QuantileTransformer()
+    print(f'    scaler: {scaler.fit(df)}')
     X_Scaled = scaler.transform(df)
     return X_Scaled
+
 
 def label_y(df, target):
     """
@@ -151,6 +245,26 @@ def label_y(df, target):
     y_labeled = le.transform(df[target])
 
     return y_labeled
+
+
+def preprocessing_data(data, target):
+    """
+    preprocessing
+    :param data: read from excel
+    :return:
+        X_scaled: normalize x, all features
+        y_labeled: y after encoded to 1 and zero using label encoder
+        data_x: x data before transform
+        x_scaler: minmax scaler for x
+    """
+    y_labeled = label_y(data, target)
+
+    # create the X data
+    data_x = data.drop(labels=[target], axis=1)
+    X_scaled = scale_X(data_x, algo = 'quantile')
+
+    return X_scaled, y_labeled, data_x
+
 
 def Z_Scores_create():
     #Alternatively use the scikit feature to create z-values
