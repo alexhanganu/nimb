@@ -31,7 +31,11 @@ from pprint import pprint
 # except ImportError:
 # 	print('mkl is missing')
 
-def get_stats_df(len_df_X, atlas, nr_threads, env_name, time_started):
+def get_stats_df(len_df_X,
+                atlas,
+                nr_threads,
+                env_name,
+                time_started):
     '''
     script to save the parameters that are used for each specific analysis
     '''
@@ -63,30 +67,6 @@ def split_list(alist, wanted_parts):
     return [ alist[i*length // wanted_parts: (i+1)*length // wanted_parts] 
              for i in range(wanted_parts) ]
 
-
-def preprocessing_data(data, target):
-    """
-    preprocessing
-    :param data: read from excel
-    :return:
-        X_scaled: normalize x, all features
-        y_transform: y after encoded to 1 and zero using label encoder
-        data_x: x data before transform
-        le: label encoder for y
-        x_scaler: minmax scaler for x
-    """
-    le = LabelEncoder()
-    le.fit(data[target])
-    y_transform = le.transform(data[target])
-    # create the X data
-    data_x = data.drop(labels=[target], axis=1)
-
-    x_scaler = QuantileTransformer()
-
-    print('    scaler: {}'.format(x_scaler.fit(data_x)))
-
-    X_scaled = x_scaler.transform(data_x)
-    return X_scaled, y_transform, data_x
 
 params_lang = {
     "FR": {
