@@ -92,7 +92,7 @@ def get_pca_features(df, threshold):
         components    = componenets_ of the PCA model
     """
     model = PCA(n_components = threshold)
-    model.fit_transform(X_scaled)
+    model.fit_transform(df)
     expl_variance = model.explained_variance_ratio_
     components    = model.components_
     return expl_variance, components
