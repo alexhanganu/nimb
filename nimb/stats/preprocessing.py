@@ -4,6 +4,7 @@
 
 # script intends to work specifically with sklearn and statistical modules
 
+import os
 
 import sklearn
 import numpy as np
