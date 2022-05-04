@@ -45,6 +45,8 @@ params_ctx = {'GrayVol' :'Vol',
 
 atlas_data = {
     'SubCtx':{'atlas_name' :'Subcortical segmentations',
+            'short_name': 'Subcortical',
+            'group':'subcortical',
             'hemi' : ["".join(hemis)],
             'parameters' : params_vols,
             'header':['Left-Thalamus-Proper', 'Right-Thalamus-Proper', 'Left-Thalamus', 'Right-Thalamus', 'Left-Caudate',
@@ -65,6 +67,8 @@ atlas_data = {
                     'MaskVol', 'MaskVol-to-eTIV', 'eTIV'],
             "fs_stats_f":"aseg.stats",},
     'CtxDK':{'atlas_name' :'Desikan segmentations',
+            'short_name': 'Desikan',
+            'group':'cortical',
             'hemi' : hemis,
             'parameters' : params_ctx,
             'header':['bankssts', 'caudalanteriorcingulate', 'caudalmiddlefrontal', 'cuneus', 'entorhinal', 'fusiform',
@@ -76,6 +80,8 @@ atlas_data = {
                     'Cortex_MeanThickness', 'Cortex_WhiteSurfArea', 'Cortex_CortexVol', 'Cortex_NumVert', 'UnsegmentedWhiteMatter'],
             "fs_stats_f":"lh.aparc.stats",},
     'CtxDKT':{'atlas_name' :'Desikan-Tournoix segmentations',
+            'short_name': 'DesikanTournoix',
+            'group':'cortical',
             'hemi' : hemis,
             'parameters' : params_ctx,
             'header':['caudalanteriorcingulate', 'caudalmiddlefrontal', 'cuneus', 'entorhinal', 'fusiform', 'inferiorparietal',
@@ -87,6 +93,8 @@ atlas_data = {
                     'Cortex_NumVert', 'UnsegmentedWhiteMatter'],
             "fs_stats_f":"lh.aparc.DKTatlas.stats",},
     'CtxDS':{'atlas_name' :'Destrieux segmentations',
+            'short_name': 'Destrieux',
+            'group':'cortical',
             'hemi' : hemis,
             'parameters' : params_ctx,
             'header':['G_and_S_frontomargin', 'G_and_S_occipital_inf', 'G_and_S_paracentral', 'G_and_S_subcentral',
@@ -107,6 +115,8 @@ atlas_data = {
                     'Cortex_MeanThickness', 'Cortex_WhiteSurfArea','Cortex_CortexVol', 'Cortex_NumVert', 'UnsegmentedWhiteMatter'],
             "fs_stats_f":"lh.aparc.a2009s.stats",},
     'WMDK':{'atlas_name' :'White Matter subcortical segmentations based on Desikan atlas',
+            'short_name': 'WhiteMatterDesikan',
+            'group':'cortical',
             'hemi' : ["".join(hemis)],
             'parameters' : params_vols,
             'header':['wm-lh-bankssts', 'wm-lh-caudalanteriorcingulate', 'wm-lh-caudalmiddlefrontal', 'wm-lh-cuneus',
@@ -129,6 +139,8 @@ atlas_data = {
                     'wm-rh-insula', 'Left-UnsegmentedWhiteMatter', 'Right-UnsegmentedWhiteMatter'],
             "fs_stats_f":"wmparc.stats",},
     'BS':{'atlas_name' :'Brainstem segmentations',
+            'short_name': 'Brainstem',
+            'group':'nuclei',
             'hemi' : ["".join(hemis)],
             'parameters' : {'Vol':'Vol'},
             'header':['Medulla','Pons','SCP','Midbrain','Whole_brainstem',],
@@ -139,6 +151,8 @@ atlas_data = {
             "fs_stats_f_inmridir":"brainstemSsVolumes.v12.txt",
             "fs6_stats_f_inmridir":"brainstemSsVolumes.v10",},
     'HIP':{'atlas_name' :'Hippocampus segmentations',
+            'short_name': 'Hippocampus',
+            'group':'nuclei',
             'hemi' : hemis,
             'parameters' : {'Vol':'Vol'},
             'header':['Hippocampal_tail','subiculum', 'subiculum-body', 'subiculum-head', 'CA1',
@@ -152,6 +166,8 @@ atlas_data = {
             "fs_stats_f_inmridir":"lh.hippoSfVolumes-T1.v21.txt",
             "fs6_stats_f_inmridir":"lh.hippoSfVolumes-T1.v10.txt",},
     'AMY':{'atlas_name' :'Amygdala segmentations',
+            'short_name': 'Amygdala',
+            'group':'nuclei',
             'hemi' : hemis,
             'parameters' : {'Vol':'Vol'},
             'header': ['Lateral-nucleus', 'Basal-nucleus', 'Accessory-Basal-nucleus', 'Anterior-amygdaloid-area-AAA',
@@ -160,6 +176,8 @@ atlas_data = {
             "fs_stats_f":"amygdalar-nuclei.lh.T1.v21.stats",
             "fs_stats_f_inmridir":"lh.amygNucVolumes-T1.v21.txt",},
     'THA':{'atlas_name' :'Thalamus segmentations',
+            'short_name': 'Thalamus',
+            'group':'nuclei',
             'hemi' : hemis,
             'parameters' : {'Vol':'Vol'},
             'header': ['AV', 'CeM', 'CL', 'CM', 'LD', 'LGN', 'LP', 'L-Sg', 'MDl', 'MDm', 'MGN', 'MV(Re)', 'Pc', 'Pf', 'Pt',
@@ -167,10 +185,12 @@ atlas_data = {
             "fs_stats_f":"thalamic-nuclei.lh.v12.T1.stats",
             "fs_stats_f_inmridir":"ThalamicNuclei.v12.T1.volumes.txt",},
     'HypoTHA':{'atlas_name' :'HypoThalamus segmentations',
-                'hemi' : hemis,
-                'parameters' : {'Vol':'Vol'},
-                'header': ['SON', 'PVN', 'TMN'],
-                "fs_stats_f":"lh.hypothalamic_subunits_volumes.v1.stats",},}
+            'short_name': 'Hypothalamus',
+            'group':'nuclei',
+            'hemi' : hemis,
+            'parameters' : {'Vol':'Vol'},
+            'header': ['SON', 'PVN', 'TMN'],
+            "fs_stats_f":"lh.hypothalamic_subunits_volumes.v1.stats",},}
 
 
 def params_atlas2nimb(atlas_param):
@@ -192,6 +212,18 @@ def params_atlas2nimb(atlas_param):
                   'GausCurv'  :'CurvGaus',
                   'CurvInd'   :'CurvInd'}
     return parameters[atlas_param]
+
+
+def get_freesurfer_labels():
+    d1 = dict()
+    with open(file_FSLabels, "r") as f:
+        for line in f:
+            if "#" not in line:
+                vals = line.split(" ")
+                vals = [i for i in vals if i]
+                if vals and "\n" not in vals[0]:
+                    d1[vals[1]] = vals[0]
+    return d1
 
 
 def header_atlas2nimb():
@@ -374,6 +406,123 @@ class GetFSStructureMeasurement:
             return measurement, structure, ls_err
 
 
+class cols_per_measure_per_atlas():
+
+    def __init__(self, ls_columns):
+        self.ls_columns = ls_columns
+        self.cols_to_meas_to_atlas = self.get_columns()
+
+    def get_columns(self):
+        result = dict()
+        for atlas in atlas_data['atlases']:
+            result[atlas] = dict()
+            for meas in atlas_data[atlas]['parameters']:
+                result[atlas][meas] = list()
+
+        for col in self.ls_columns:
+            for atlas in atlas_data['atlases']:
+                for meas in atlas_data[atlas]['parameters']:
+                    nimb_meas = atlas_data[atlas]['parameters'][meas]
+                    if nimb_meas in col and atlas in col:
+                        result[atlas][meas].append(self.ls_columns.index(col))
+        return result
+
+
+def atlas_roi_hemi_meas(atlas,
+                        hemi,
+                        meas = "",
+                        meas_add = True,
+                        hemi_underscored = True,
+                        atlas_last = True):
+    """creates the FS_nimb-ROI structure
+    Args:
+        atlas: atlas name as per atlas_data
+        hemi: hemisphere as per atlas_data[atlas]["hemi"]
+        meas: parameters as per atlas_data[atlas]["parameters"]
+        meas_add: True will add the meas in the name
+        hemi_underscored: True will add an underscore before the hemi
+        atlas_last: True will put atlas in the last position, else: hemi is last
+    """
+    _hemi = f"_{hemi}"
+    hemi_atlas = f"{_hemi}_{atlas}"
+    if not meas_add:
+        meas = ""
+    if not hemi_underscored:
+        _hemi = hemi
+    if atlas_last:
+        hemi_atlas = f"_{atlas}{_hemi}"
+    ending = f"{meas}{hemi_atlas}"
+    return ending
+
+
+def get_rois_nuclei(hemi_abbrev = '',
+                    meas_add = True,
+                    hemi_underscored = True,
+                    atlas_last = True,
+                    brainstem_abbrev_new = True,
+                    roi_nimb = True):
+    """extracts the FS-nimb-ROI names of subcortical nuclei
+        as per FreeSurfer-nimb nuclei atlases:
+        an FS-nimb-ROI has the structure:
+            <freesurfer_nuclei_roi>_<atlas_abbreviation><_hemisphere_abbreviation>
+            where:
+            atlas_abbreviation can be: atlas_data from "nuclei" group
+                specifically: brainstem, hippocampus, amygdala, thalamus, hypothalamus
+    Args:
+        hemi: type of hemisphere abbreviation
+            default = lh, rh, as per hemis list()
+            hemi_abbrev = "capital" will change lh to L, rh to R and lhrh to None
+        meas_add: to add or not the measure parameter. False - means it will NOT be added
+        hemi_underscored: if True will add an underscore before the hemi
+        atlas_last: if True will put atlas in the last position, else: hemi is last
+        brainstem_abbrev_new: if True will use the new abbreviation for the Brainstem: BS; False will use "Brainstem"
+        roi_nimb: True will change the ROI names to the nimb abbreviation type
+    Return:
+        feats_nuclei: {nucleus_name: [FS-nimb-ROIs],}
+    """
+    # creating dict() with nuclei atlases and hemisphere
+    # as per parameters requested
+    if hemi_abbrev == "capital":
+        hemi_ending = {"lh":"L", "rh": "R", "lhrh": ""}
+    if roi_nimb:
+        rois_nimb = header_atlas2nimb()
+
+    nuclei = [i for i in atlas_data if atlas_data[i]["group"] == "nuclei"]
+    atlas_nuclei = {}
+    for nucleus in nuclei:
+        hemi_grp = atlas_data[nucleus]['hemi']
+        atlas_nuclei[nucleus] = {"hemis":hemi_grp,
+                                "atlas_end": nucleus}
+        if hemi_abbrev == "capital":
+            ls_hemis_cap = list()
+            for _hemi in atlas_nuclei[nucleus]['hemis']:
+                ls_hemis_cap.append(hemi_ending[_hemi])
+            atlas_nuclei[nucleus]['hemis'] = ls_hemis_cap
+    if not brainstem_abbrev_new:
+        atlas_nuclei["BS"]["atlas_end"] = "Brainstem"
+
+    # populating feats_nuclei with correct feature names
+    feats_nuclei = dict()
+    for nucleus in list(atlas_nuclei.keys()):
+        nucleus_end = nucleus
+        feats_nuclei[nucleus] = list()
+        rois = atlas_data[nucleus]['header']
+        if roi_nimb:
+            rois_nimb_changed = list()
+            for ROI in rois:
+                rois_nimb_changed.append(rois_nimb[ROI])
+            rois = rois_nimb_changed
+        for _hemi in atlas_nuclei[nucleus]["hemis"]:
+            rois_end_hemi = list()
+            ending = atlas_roi_hemi_meas(atlas_nuclei[nucleus]["atlas_end"],
+                                        _hemi,
+                                        meas_add,
+                                        hemi_underscored,
+                                        atlas_last)
+            rois_end_hemi = [f"{roi}{ending}" for roi in rois]
+            feats_nuclei[nucleus] = feats_nuclei[nucleus] + rois_end_hemi
+    return feats_nuclei
+
 
 
 def get_fs_rois_lateralized(atlas, roi = [], meas = None):
@@ -430,7 +579,7 @@ def get_fs_rois_lateralized(atlas, roi = [], meas = None):
         return populate_lateralized(meas, ls_atlases)
 
 
-# moved to get_fs_rois_lateralized
+# moved to upper def: get_fs_rois_lateralized
 class RReplace():
     '''written for NIMB ROIs
         created based on  Desikan/ Destrieux atlases + FreeSurfer measurement (thickness, area, etc.), + Hemisphere
@@ -477,40 +626,6 @@ class RReplace():
     def rreplace(self, s, old, new, occurence):
         li = s.rsplit(old, 1)
         return new.join(li)
-
-
-class cols_per_measure_per_atlas():
-
-    def __init__(self, ls_columns):
-        self.ls_columns = ls_columns
-        self.cols_to_meas_to_atlas = self.get_columns()
-
-    def get_columns(self):
-        result = dict()
-        for atlas in atlas_data['atlases']:
-            result[atlas] = dict()
-            for meas in atlas_data[atlas]['parameters']:
-                result[atlas][meas] = list()
-
-        for col in self.ls_columns:
-            for atlas in atlas_data['atlases']:
-                for meas in atlas_data[atlas]['parameters']:
-                    nimb_meas = atlas_data[atlas]['parameters'][meas]
-                    if nimb_meas in col and atlas in col:
-                        result[atlas][meas].append(self.ls_columns.index(col))
-        return result
-
-
-def get_freesurfer_labels():
-    d1 = dict()
-    with open(file_FSLabels, "r") as f:
-        for line in f:
-            if "#" not in line:
-                vals = line.split(" ")
-                vals = [i for i in vals if i]
-                if vals and "\n" not in vals[0]:
-                    d1[vals[1]] = vals[0]
-    return d1
 
 
 def get():#_dipy_labels:
