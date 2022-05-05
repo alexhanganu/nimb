@@ -1,6 +1,6 @@
 # !/usr/bin/env python
 # coding: utf-8
-# last update: 2020-03-27
+# last update: 2022-03-27
 
 # script intends to work specifically with sklearn and statistical modules
 
@@ -128,7 +128,8 @@ class Preprocess:
 def rm_feats_with_zeros(df,
                         remove = False,
                         path2log = None):
-    '''script searches for columns that have zeros
+    '''script searches for columns that have at least 1 zero
+        for ANOVA and PCA zeros must be removed
     Args:
         df = pandas.DataFrame
     Return:
@@ -139,6 +140,12 @@ def rm_feats_with_zeros(df,
         n = df[col].isin([0]).sum()
         if n>0:
             cols_with_zeros.append(col)
+
+    # alternative code:
+    # show number of value of zeros per column:
+    #(df == 0).astype(int).sum(axis=0)
+    # show number of value of zeros per row:
+    #(df == 0).sum(axis=1)
     
     # removing features with zeros
     if remove:
