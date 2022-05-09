@@ -44,7 +44,7 @@ params_ctx = {'GrayVol' :'Vol',
             'CurvInd' :'CurvInd'}
 
 atlas_data = {
-    'SubCtx':{'atlas_name' :'Subcortical segmentations',
+    'SubCtx':{'atlas_name' :'Subcortical',
             'short_name': 'Subcortical',
             'group':'subcortical',
             'hemi' : ["".join(hemis)],
@@ -66,7 +66,7 @@ atlas_data = {
                     'SupraTentorialVolNotVentVox', 'WM-hypointensities', 'non-WM-hypointensities', 'SurfaceHoles',
                     'MaskVol', 'MaskVol-to-eTIV', 'eTIV'],
             "fs_stats_f":"aseg.stats",},
-    'CtxDK':{'atlas_name' :'Desikan segmentations',
+    'CtxDK':{'atlas_name' :'Desikan',
             'short_name': 'Desikan',
             'group':'cortical',
             'hemi' : hemis,
@@ -79,7 +79,7 @@ atlas_data = {
                     'superiortemporal', 'supramarginal', 'frontalpole', 'temporalpole', 'transversetemporal', 'insula',
                     'Cortex_MeanThickness', 'Cortex_WhiteSurfArea', 'Cortex_CortexVol', 'Cortex_NumVert', 'UnsegmentedWhiteMatter'],
             "fs_stats_f":"lh.aparc.stats",},
-    'CtxDKT':{'atlas_name' :'Desikan-Tournoix segmentations',
+    'CtxDKT':{'atlas_name' :'Desikan-Tournoix',
             'short_name': 'DesikanTournoix',
             'group':'cortical',
             'hemi' : hemis,
@@ -92,7 +92,7 @@ atlas_data = {
                     'transversetemporal', 'insula', 'Cortex_MeanThickness', 'Cortex_WhiteSurfArea', 'Cortex_CortexVol',
                     'Cortex_NumVert', 'UnsegmentedWhiteMatter'],
             "fs_stats_f":"lh.aparc.DKTatlas.stats",},
-    'CtxDS':{'atlas_name' :'Destrieux segmentations',
+    'CtxDS':{'atlas_name' :'Destrieux',
             'short_name': 'Destrieux',
             'group':'cortical',
             'hemi' : hemis,
@@ -114,7 +114,7 @@ atlas_data = {
                     'S_suborbital', 'S_subparietal', 'S_temporal_inf', 'S_temporal_sup', 'S_temporal_transverse',
                     'Cortex_MeanThickness', 'Cortex_WhiteSurfArea','Cortex_CortexVol', 'Cortex_NumVert', 'UnsegmentedWhiteMatter'],
             "fs_stats_f":"lh.aparc.a2009s.stats",},
-    'WMDK':{'atlas_name' :'White Matter subcortical segmentations based on Desikan atlas',
+    'WMDK':{'atlas_name' :'White-Matter-Desikan',
             'short_name': 'WhiteMatterDesikan',
             'group':'cortical',
             'hemi' : ["".join(hemis)],
@@ -138,7 +138,7 @@ atlas_data = {
                     'wm-rh-supramarginal', 'wm-rh-frontalpole', 'wm-rh-temporalpole', 'wm-rh-transversetemporal',
                     'wm-rh-insula', 'Left-UnsegmentedWhiteMatter', 'Right-UnsegmentedWhiteMatter'],
             "fs_stats_f":"wmparc.stats",},
-    'BS':{'atlas_name' :'Brainstem segmentations',
+    'BS':{'atlas_name' :'Brainstem',
             'short_name': 'Brainstem',
             'group':'nuclei',
             'hemi' : ["".join(hemis)],
@@ -150,7 +150,7 @@ atlas_data = {
             "fs6_stats_f":"brainstem.v10.stats",
             "fs_stats_f_inmridir":"brainstemSsVolumes.v12.txt",
             "fs6_stats_f_inmridir":"brainstemSsVolumes.v10",},
-    'HIP':{'atlas_name' :'Hippocampus segmentations',
+    'HIP':{'atlas_name' :'Hippocampus',
             'short_name': 'Hippocampus',
             'group':'nuclei',
             'hemi' : hemis,
@@ -165,7 +165,7 @@ atlas_data = {
             "fs6_stats_f":"hipposubfields.lh.T1.v10.stats",
             "fs_stats_f_inmridir":"lh.hippoSfVolumes-T1.v21.txt",
             "fs6_stats_f_inmridir":"lh.hippoSfVolumes-T1.v10.txt",},
-    'AMY':{'atlas_name' :'Amygdala segmentations',
+    'AMY':{'atlas_name' :'Amygdala',
             'short_name': 'Amygdala',
             'group':'nuclei',
             'hemi' : hemis,
@@ -175,7 +175,7 @@ atlas_data = {
                         'Paralaminar-nucleus', 'Whole_amygdala'],
             "fs_stats_f":"amygdalar-nuclei.lh.T1.v21.stats",
             "fs_stats_f_inmridir":"lh.amygNucVolumes-T1.v21.txt",},
-    'THA':{'atlas_name' :'Thalamus segmentations',
+    'THA':{'atlas_name' :'Thalamus',
             'short_name': 'Thalamus',
             'group':'nuclei',
             'hemi' : hemis,
@@ -184,7 +184,7 @@ atlas_data = {
                         'PuA', 'PuI', 'PuL', 'PuM', 'VA', 'VAmc', 'VLa', 'VLp', 'VM', 'VPL', 'Whole_thalamus'],
             "fs_stats_f":"thalamic-nuclei.lh.v12.T1.stats",
             "fs_stats_f_inmridir":"ThalamicNuclei.v12.T1.volumes.txt",},
-    'HypoTHA':{'atlas_name' :'HypoThalamus segmentations',
+    'HypoTHA':{'atlas_name' :'HypoThalamus',
             'short_name': 'Hypothalamus',
             'group':'nuclei',
             'hemi' : hemis,
@@ -338,8 +338,31 @@ def header_atlas2nimb():
 header_fs2nimb = header_atlas2nimb()
 
 
-def atlas_roi_hemi_meas(atlas, hemi, meas):
-    return f"{meas}_{hemi}_{atlas}"
+def atlas_roi_hemi_meas(atlas,
+                        hemi,
+                        meas = "",
+                        meas_add = True,
+                        hemi_underscored = True,
+                        atlas_last = True):
+    """creates the FS_nimb-ROI structure
+    Args:
+        atlas: atlas name as per atlas_data
+        hemi: hemisphere as per atlas_data[atlas]["hemi"]
+        meas: parameters as per atlas_data[atlas]["parameters"]
+        meas_add: True will add the meas in the name
+        hemi_underscored: True will add an underscore before the hemi
+        atlas_last: True will put atlas in the last position, else: hemi is last
+    """
+    _hemi = f"_{hemi}"
+    hemi_atlas = f"{_hemi}_{atlas}"
+    if not meas_add:
+        meas = ""
+    if not hemi_underscored:
+        _hemi = hemi
+    if atlas_last:
+        hemi_atlas = f"_{atlas}{_hemi}"
+    ending = f"{meas}{hemi_atlas}"
+    return ending
 
 
 def get_names_of_structures(name_type = "nimb"):
@@ -428,38 +451,12 @@ class cols_per_measure_per_atlas():
         return result
 
 
-def atlas_roi_hemi_meas(atlas,
-                        hemi,
-                        meas = "",
-                        meas_add = True,
-                        hemi_underscored = True,
-                        atlas_last = True):
-    """creates the FS_nimb-ROI structure
-    Args:
-        atlas: atlas name as per atlas_data
-        hemi: hemisphere as per atlas_data[atlas]["hemi"]
-        meas: parameters as per atlas_data[atlas]["parameters"]
-        meas_add: True will add the meas in the name
-        hemi_underscored: True will add an underscore before the hemi
-        atlas_last: True will put atlas in the last position, else: hemi is last
-    """
-    _hemi = f"_{hemi}"
-    hemi_atlas = f"{_hemi}_{atlas}"
-    if not meas_add:
-        meas = ""
-    if not hemi_underscored:
-        _hemi = hemi
-    if atlas_last:
-        hemi_atlas = f"_{atlas}{_hemi}"
-    ending = f"{meas}{hemi_atlas}"
-    return ending
-
-
-def get_rois_nuclei(hemi_abbrev = '',
+def get_rois_freesurfer(atlas = '',
+                    atlas_group = '',
+                    hemi_abbrev = '',
                     meas_add = True,
                     hemi_underscored = True,
                     atlas_last = True,
-                    brainstem_abbrev_new = True,
                     roi_nimb = True):
     """extracts the FS-nimb-ROI names of subcortical nuclei
         as per FreeSurfer-nimb nuclei atlases:
@@ -469,58 +466,67 @@ def get_rois_nuclei(hemi_abbrev = '',
             atlas_abbreviation can be: atlas_data from "nuclei" group
                 specifically: brainstem, hippocampus, amygdala, thalamus, hypothalamus
     Args:
+        atlas: name of the atlas to extract ROIs. Can be only 1 name;
+            choices: atlas_data[i]["atlas_name"]
+        atlas_group: type of atlas to be used to extract ROI;
+            choices: "" is for all atlases
+                     "nuclei" (for atlas_data[i]["group"] == "nuclei")
+                    "cortical"  (for atlas_data[i]["group"] == "cortical")
+                    "subcortical"  (for atlas_data[i]["group"] == "subcortical")
         hemi: type of hemisphere abbreviation
             default = lh, rh, as per hemis list()
             hemi_abbrev = "capital" will change lh to L, rh to R and lhrh to None
         meas_add: to add or not the measure parameter. False - means it will NOT be added
         hemi_underscored: if True will add an underscore before the hemi
         atlas_last: if True will put atlas in the last position, else: hemi is last
-        brainstem_abbrev_new: if True will use the new abbreviation for the Brainstem: BS; False will use "Brainstem"
         roi_nimb: True will change the ROI names to the nimb abbreviation type
     Return:
         feats_nuclei: {nucleus_name: [FS-nimb-ROIs],}
     """
-    # creating dict() with nuclei atlases and hemisphere
+    # creating dict() with atlases and hemisphere
     # as per parameters requested
     if hemi_abbrev == "capital":
         hemi_ending = {"lh":"L", "rh": "R", "lhrh": ""}
     if roi_nimb:
         rois_nimb = header_atlas2nimb()
 
-    nuclei = [i for i in atlas_data if atlas_data[i]["group"] == "nuclei"]
-    atlas_nuclei = {}
-    for nucleus in nuclei:
-        hemi_grp = atlas_data[nucleus]['hemi']
-        atlas_nuclei[nucleus] = {"hemis":hemi_grp,
-                                "atlas_end": nucleus}
+    atlases = [i for i in atlas_data if atlas_data[i]]
+    if atlas_group:
+        atlases = [i for i in atlas_data if atlas_data[i]["group"] == atlas_group]
+    if atlas:
+        atlases = [i for i in atlas_data if atlas_data[i]["atlas_name"] == atlas]
+
+    atlases_params = {}
+    for atlas in atlases:
+        hemi_grp = atlas_data[atlas]['hemi']
+        atlases_params[atlas] = {"hemis":hemi_grp,
+                                "atlas_end": atlas}
         if hemi_abbrev == "capital":
             ls_hemis_cap = list()
-            for _hemi in atlas_nuclei[nucleus]['hemis']:
+            for _hemi in atlases_params[atlas]['hemis']:
                 ls_hemis_cap.append(hemi_ending[_hemi])
-            atlas_nuclei[nucleus]['hemis'] = ls_hemis_cap
-    if not brainstem_abbrev_new:
-        atlas_nuclei["BS"]["atlas_end"] = "Brainstem"
+            atlases_params[atlas]['hemis'] = ls_hemis_cap
 
     # populating feats_nuclei with correct feature names
     feats_nuclei = dict()
-    for nucleus in list(atlas_nuclei.keys()):
-        nucleus_end = nucleus
-        feats_nuclei[nucleus] = list()
-        rois = atlas_data[nucleus]['header']
+    for atlas in list(atlases_params.keys()):
+        nucleus_end = atlas
+        feats_nuclei[atlas] = list()
+        rois = atlas_data[atlas]['header']
         if roi_nimb:
             rois_nimb_changed = list()
             for ROI in rois:
                 rois_nimb_changed.append(rois_nimb[ROI])
             rois = rois_nimb_changed
-        for _hemi in atlas_nuclei[nucleus]["hemis"]:
+        for _hemi in atlases_params[atlas]["hemis"]:
             rois_end_hemi = list()
-            ending = atlas_roi_hemi_meas(atlas_nuclei[nucleus]["atlas_end"],
+            ending = atlas_roi_hemi_meas(atlases_params[atlas]["atlas_end"],
                                         _hemi,
                                         meas_add,
                                         hemi_underscored,
                                         atlas_last)
             rois_end_hemi = [f"{roi}{ending}" for roi in rois]
-            feats_nuclei[nucleus] = feats_nuclei[nucleus] + rois_end_hemi
+            feats_nuclei[atlas] = feats_nuclei[atlas] + rois_end_hemi
     return feats_nuclei
 
 
