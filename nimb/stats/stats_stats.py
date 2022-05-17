@@ -24,6 +24,7 @@ class ttest_do():
         self.ls_meas = get_names_of_measurements()
         self.ls_struct = get_names_of_structures()
         self.res_ttest = self.compute_ttest_for_col(p_thresh)
+        self.tab       = Table()
 
     def compute_ttest_for_col(self, p_thresh):
         res_4df = {'features':[], 'ttest':[], 'welch':[]}
@@ -51,7 +52,7 @@ class ttest_do():
         return res
 
     def save_res(self, res_4df):
-        df_result = db_processing.create_df_from_dict(res_4df)
+        df_result = self.tab.create_df_from_dict(res_4df)
         df_result.to_csv(os.path.join(self.path_save_res,'ttest.csv'))
 
 
@@ -98,7 +99,7 @@ def mkstatisticsf(df_4stats,
         Works only on 2 groups
     Args: df_4stats: pandas.DataFrame
         group: list/ tuple of groups as str/int
-        group_col: column name in df_4stats that has the group names from group
+        group_col: str() column name in df_4stats that has the group names from group
         path_2save: abspath to save the descrptive files
         make_with_colors: will create an additional .xlsx file with 
                         colored significant results,
