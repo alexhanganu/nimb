@@ -27,21 +27,21 @@ hemis = ['lh','rh']
 hemis_long = {"Left": "lh",
               "Right": "rh",}
 params_vols = {'Volume_mm3':'Vol',
-              'NVoxels'   :'VolVoxNum',
-              'normMean'  :'VolMeanNorm',
-              'normStdDev':'VolStdNorm',
-              'normMin'   :'VolMinNorm',
-              'normMax'   :'VolMaxNorm',
-              'normRange' :'VolRangeNorm',}
+              'NVoxels'    :'VolVoxNum',
+              'normMean'   :'VolMeanNorm',
+              'normStdDev' :'VolStdNorm',
+              'normMin'    :'VolMinNorm',
+              'normMax'    :'VolMaxNorm',
+              'normRange'  :'VolRangeNorm',}
 params_ctx = {'GrayVol' :'Vol',
-            'ThickAvg':'Thick',
-            'SurfArea':'Area',
-            'NumVert' :'VertexNum',
-            'ThickStd':'ThickStd', 
-            'FoldInd' :'FoldInd',
-            'MeanCurv':'Curv',
-            'GausCurv':'CurvGaus',
-            'CurvInd' :'CurvInd'}
+              'ThickAvg':'Thick',
+              'SurfArea':'Area',
+              'NumVert' :'NumVert',
+              'ThickStd':'ThickStd', 
+              'FoldInd' :'FoldInd',
+              'MeanCurv':'Curv',
+              'GausCurv':'CurvGaus',
+              'CurvInd' :'CurvInd'}
 
 atlas_data = {
     'SubCtx':{'atlas_name' :'Subcortical',
@@ -343,7 +343,7 @@ def atlas_roi_hemi_meas(atlas,
                         meas = "",
                         meas_add = True,
                         hemi_underscored = True,
-                        atlas_last = True):
+                        hemi_last = True):
     """creates the FS_nimb-ROI structure
     Args:
         atlas: atlas name as per atlas_data
@@ -351,17 +351,19 @@ def atlas_roi_hemi_meas(atlas,
         meas: parameters as per atlas_data[atlas]["parameters"]
         meas_add: True will add the meas in the name
         hemi_underscored: True will add an underscore before the hemi
-        atlas_last: True will put atlas in the last position, else: hemi is last
+        hemi_last: True will put hemi in the last position, else: atlas is last
     """
     _hemi = f"_{hemi}"
-    hemi_atlas = f"{_hemi}_{atlas}"
-    if not meas_add:
-        meas = ""
     if not hemi_underscored:
         _hemi = hemi
-    if atlas_last:
-        hemi_atlas = f"_{atlas}{_hemi}"
-    ending = f"{meas}{hemi_atlas}"
+    if not meas_add:
+        meas = ""
+
+    ending = f"{meas}{_hemi}_{atlas}"
+    if hemi_last:
+        ending = f"{meas}_{atlas}{_hemi}"
+    if ending[0] == "_":
+        ending = ending[1:]
     return ending
 
 
@@ -451,13 +453,13 @@ class cols_per_measure_per_atlas():
         return result
 
 
-def get_rois_freesurfer(atlas = '',
-                    atlas_group = '',
-                    hemi_abbrev = '',
-                    meas_add = True,
-                    hemi_underscored = True,
-                    atlas_last = True,
-                    roi_nimb = True):
+def get_rois_freesurfer(atlas_name = '',
+                        atlas_group = '',
+                        meas = "",
+                        hemi_abbrev = '',
+                        hemi_underscored = True,
+                        hemi_last = True,
+                        roi_nimb = True):
     """extracts the FS-nimb-ROI names of subcortical nuclei
         as per FreeSurfer-nimb nuclei atlases:
         an FS-nimb-ROI has the structure:
@@ -466,22 +468,21 @@ def get_rois_freesurfer(atlas = '',
             atlas_abbreviation can be: atlas_data from "nuclei" group
                 specifically: brainstem, hippocampus, amygdala, thalamus, hypothalamus
     Args:
-        atlas: name of the atlas to extract ROIs. Can be only 1 name;
+        atlas_name: name of the atlas to extract ROIs. Can be only 1 name;
             choices: atlas_data[i]["atlas_name"]
         atlas_group: type of atlas to be used to extract ROI;
             choices: "" is for all atlases
                      "nuclei" (for atlas_data[i]["group"] == "nuclei")
-                    "cortical"  (for atlas_data[i]["group"] == "cortical")
-                    "subcortical"  (for atlas_data[i]["group"] == "subcortical")
-        hemi: type of hemisphere abbreviation
-            default = lh, rh, as per hemis list()
-            hemi_abbrev = "capital" will change lh to L, rh to R and lhrh to None
-        meas_add: to add or not the measure parameter. False - means it will NOT be added
+                     "cortical"  (for atlas_data[i]["group"] == "cortical")
+                     "subcortical"  (for atlas_data[i]["group"] == "subcortical")
+        meas: extract for a specified measure. If None - will extract all measures
+            choices: "ThickAvg", "SurfArea", "NumVert", etc (atlas_data[i][parameters])
+        hemi_abbrev: "capital" will change lh to L, rh to R and lhrh to None
         hemi_underscored: if True will add an underscore before the hemi
-        atlas_last: if True will put atlas in the last position, else: hemi is last
+        hemi_last: if True will put hemi in the last position, else: atlas is last
         roi_nimb: True will change the ROI names to the nimb abbreviation type
     Return:
-        feats_nuclei: {nucleus_name: [FS-nimb-ROIs],}
+        feats: {feature_name: [FS-nimb-ROIs],}
     """
     # creating dict() with atlases and hemisphere
     # as per parameters requested
@@ -493,8 +494,8 @@ def get_rois_freesurfer(atlas = '',
     atlases = [i for i in atlas_data if atlas_data[i]]
     if atlas_group:
         atlases = [i for i in atlas_data if atlas_data[i]["group"] == atlas_group]
-    if atlas:
-        atlases = [i for i in atlas_data if atlas_data[i]["atlas_name"] == atlas]
+    if atlas_name:
+        atlases = [i for i in atlas_data if atlas_data[i]["atlas_name"] == atlas_name]
 
     atlases_params = {}
     for atlas in atlases:
@@ -507,12 +508,19 @@ def get_rois_freesurfer(atlas = '',
                 ls_hemis_cap.append(hemi_ending[_hemi])
             atlases_params[atlas]['hemis'] = ls_hemis_cap
 
-    # populating feats_nuclei with correct feature names
-    feats_nuclei = dict()
+    # populating feats with correct feature names
+    feats = dict()
     for atlas in list(atlases_params.keys()):
-        nucleus_end = atlas
-        feats_nuclei[atlas] = list()
+        feats[atlas] = list()
         rois = atlas_data[atlas]['header']
+        if meas:
+            meas_2add = [meas,]
+        else:
+            meas_2add = []
+            for fs_param in atlas_data[atlas]['parameters']:
+                meas = atlas_data[atlas]['parameters'][fs_param]
+                meas_2add.append(meas)
+
         if roi_nimb:
             rois_nimb_changed = list()
             for ROI in rois:
@@ -520,15 +528,15 @@ def get_rois_freesurfer(atlas = '',
             rois = rois_nimb_changed
         for _hemi in atlases_params[atlas]["hemis"]:
             rois_end_hemi = list()
-            ending = atlas_roi_hemi_meas(atlases_params[atlas]["atlas_end"],
-                                        _hemi,
-                                        meas_add,
-                                        hemi_underscored,
-                                        atlas_last)
-            rois_end_hemi = [f"{roi}{ending}" for roi in rois]
-            feats_nuclei[atlas] = feats_nuclei[atlas] + rois_end_hemi
-    return feats_nuclei
-
+            for meas in meas_2add:
+                ending = atlas_roi_hemi_meas(atlases_params[atlas]["atlas_end"],
+                                            _hemi,
+                                            meas = meas,
+                                            hemi_underscored = hemi_underscored,
+                                            hemi_last = hemi_last)
+                rois_end_hemi = [f"{roi}_{ending}" for roi in rois]
+                feats[atlas] = feats[atlas] + rois_end_hemi
+    return feats
 
 
 def get_fs_rois_lateralized(atlas, roi = [], meas = None):
