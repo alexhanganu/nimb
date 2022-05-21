@@ -247,11 +247,11 @@ def header_atlas2nimb():
                    "occipital":["oc-","oc_"],
                    "cingulate":["CC_","cingul"],
                    "insula"   :["Ins_",],}
-    rois      ={"fusifor"     :"fusiform",
-                "WhiteMatter" :"_wm",
+    rois      ={"WhiteMatter" :"_wm",
                 "White-Matter":"_wm",
                 "_wmVol"      :"_Vol_wm",
-                "insular_"    :"insula",}
+                "insular_"    :"insula",
+                "VentralDC"   : "Ventral_dincephalon"} #    "fusifor"     :"fusiform",
     lobes_abbrev = [i for k in lobes_define.values() for i in k]
 
     # roi adjusting start
