@@ -201,6 +201,7 @@ class FSStats2Table:
     def get_fs_stats_2table(self, path_2sub, sub):
         '''Extracting SEGMENTATIONS and PARCELLATIONS'''
         # for atlas  in atlases:
+        header_fs2nimb_dict = atlas_definitions.header_fs2nimb
         for atlas in atlas_definitions.atlas_data:
             name = atlas_definitions.atlas_data[atlas]['atlas_name']
             # name = fs_definitions.all_data["atlas_params"][atlas]['atlas_name']
@@ -217,7 +218,14 @@ class FSStats2Table:
                     f_stats_abspath = path.join(path_2sub, file)
                     logger.info(f'        using old version of {file}')
                 if self.f_exists(f_stats_abspath, file):
-                    content = list(open(f_stats_abspath,'r'))
+                    content = ""
+                    try:
+                        content = list(open(f_stats_abspath,'r'))
+                    except Exception as e:
+                        print(e)
+                    if not content:
+                        print("ERR! file: ", f_stats_abspath, " is empty")
+                        break
                     df, extra_measures = self.get_values(atlas, content, file, sub)
                     parameters = atlas_definitions.atlas_data[atlas]['parameters']
                     if len(parameters) > 1:
@@ -232,12 +240,12 @@ class FSStats2Table:
                             df2.index = df['StructName']
                             df2 = df2.transpose()
                             df2 = self.populate_extra_measures(df2, content, fs_param, extra_measures, atlas)
-                            self.add_sheet_2df(df2, sheetName, atlas_definitions.header_fs2nimb, atlas)
+                            self.add_sheet_2df(df2, sheetName, header_fs2nimb_dict, atlas)
                             # self.add_sheet_2df(df2, sheetName, fs_definitions.all_data["header_fs2nimb"], atlas)
                     else:
                         param = list(parameters.keys())[0]
                         sheetName = f'{atlas}_{param}_{hemisphere}'
-                        self.add_sheet_2df(df, sheetName, atlas_definitions.header_fs2nimb, atlas)
+                        self.add_sheet_2df(df, sheetName, header_fs2nimb_dict, atlas)
                         # self.add_sheet_2df(df, sheetName, fs_definitions.all_data["header_fs2nimb"], atlas)
 
 

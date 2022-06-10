@@ -65,6 +65,7 @@ atlas_data = {
                     'BrainSegVol-to-eTIV', 'CerebralWhiteMatterVol', 'SupraTentorialVol', 'SupraTentorialVolNotVent',
                     'SupraTentorialVolNotVentVox', 'WM-hypointensities', 'non-WM-hypointensities', 'SurfaceHoles',
                     'MaskVol', 'MaskVol-to-eTIV', 'eTIV'],
+            'header_suppl':[],
             "fs_stats_f":"aseg.stats",},
     'CtxDK':{'atlas_name' :'Desikan',
             'short_name': 'Desikan',
@@ -76,8 +77,9 @@ atlas_data = {
                     'lingual', 'medialorbitofrontal', 'middletemporal', 'parahippocampal', 'paracentral', 'parsopercularis',
                     'parsorbitalis', 'parstriangularis', 'pericalcarine', 'postcentral', 'posteriorcingulate', 'precentral',
                     'precuneus', 'rostralanteriorcingulate', 'rostralmiddlefrontal', 'superiorfrontal', 'superiorparietal',
-                    'superiortemporal', 'supramarginal', 'frontalpole', 'temporalpole', 'transversetemporal', 'insula',
-                    'Cortex_MeanThickness', 'Cortex_WhiteSurfArea', 'Cortex_CortexVol', 'Cortex_NumVert', 'UnsegmentedWhiteMatter'],
+                    'superiortemporal', 'supramarginal', 'frontalpole', 'temporalpole', 'transversetemporal', 'insula',],
+            'header_suppl':['Cortex_MeanThickness', 'Cortex_WhiteSurfArea', 'Cortex_CortexVol',
+                    'Cortex_NumVert', 'UnsegmentedWhiteMatter'],
             "fs_stats_f":"lh.aparc.stats",},
     'CtxDKT':{'atlas_name' :'Desikan-Tournoix',
             'short_name': 'DesikanTournoix',
@@ -89,7 +91,8 @@ atlas_data = {
                     'middletemporal', 'parahippocampal', 'paracentral', 'parsopercularis', 'parsorbitalis', 'parstriangularis',
                     'pericalcarine', 'postcentral', 'posteriorcingulate', 'precentral', 'precuneus', 'rostralanteriorcingulate',
                     'rostralmiddlefrontal', 'superiorfrontal', 'superiorparietal', 'superiortemporal', 'supramarginal',
-                    'transversetemporal', 'insula', 'Cortex_MeanThickness', 'Cortex_WhiteSurfArea', 'Cortex_CortexVol',
+                    'transversetemporal', 'insula', ],
+            'header_suppl':['Cortex_MeanThickness', 'Cortex_WhiteSurfArea', 'Cortex_CortexVol',
                     'Cortex_NumVert', 'UnsegmentedWhiteMatter'],
             "fs_stats_f":"lh.aparc.DKTatlas.stats",},
     'CtxDS':{'atlas_name' :'Destrieux',
@@ -111,8 +114,9 @@ atlas_data = {
                     'S_intrapariet_and_P_trans', 'S_oc_middle_and_Lunatus', 'S_oc_sup_and_transversal', 'S_occipital_ant',
                     'S_oc-temp_lat', 'S_oc-temp_med_and_Lingual', 'S_orbital_lateral', 'S_orbital_med-olfact', 'S_orbital-H_Shaped',
                     'S_parieto_occipital', 'S_pericallosal', 'S_postcentral', 'S_precentral-inf-part', 'S_precentral-sup-part',
-                    'S_suborbital', 'S_subparietal', 'S_temporal_inf', 'S_temporal_sup', 'S_temporal_transverse',
-                    'Cortex_MeanThickness', 'Cortex_WhiteSurfArea','Cortex_CortexVol', 'Cortex_NumVert', 'UnsegmentedWhiteMatter'],
+                    'S_suborbital', 'S_subparietal', 'S_temporal_inf', 'S_temporal_sup', 'S_temporal_transverse',],
+            'header_suppl':['Cortex_MeanThickness', 'Cortex_WhiteSurfArea', 'Cortex_CortexVol',
+                    'Cortex_NumVert', 'UnsegmentedWhiteMatter'],
             "fs_stats_f":"lh.aparc.a2009s.stats",},
     'WMDK':{'atlas_name' :'White-Matter-Desikan',
             'short_name': 'WhiteMatterDesikan',
@@ -137,6 +141,7 @@ atlas_data = {
                     'wm-rh-rostralmiddlefrontal', 'wm-rh-superiorfrontal', 'wm-rh-superiorparietal', 'wm-rh-superiortemporal',
                     'wm-rh-supramarginal', 'wm-rh-frontalpole', 'wm-rh-temporalpole', 'wm-rh-transversetemporal',
                     'wm-rh-insula', 'Left-UnsegmentedWhiteMatter', 'Right-UnsegmentedWhiteMatter'],
+            'header_suppl':[],
             "fs_stats_f":"wmparc.stats",},
     'BS':{'atlas_name' :'Brainstem',
             'short_name': 'Brainstem',
@@ -144,6 +149,7 @@ atlas_data = {
             'hemi' : ["".join(hemis)],
             'parameters' : {'Vol':'Vol'},
             'header':['Medulla','Pons','SCP','Midbrain','Whole_brainstem',],
+            'header_suppl':[],
             'fs_stats_files' :{'fs7':'brainstem.v12.stats',
                             'fs6':'brainstem.v10.stats',},
             "fs_stats_f":"brainstem.v12.stats",
@@ -158,9 +164,10 @@ atlas_data = {
             'header':['Hippocampal_tail','subiculum', 'subiculum-body', 'subiculum-head', 'CA1',
                     'CA1-body', 'CA1-head', 'hippocampal-fissure',
                     'presubiculum','presubiculum-body','presubiculum-head','parasubiculum','molecular_layer_HP',
-                    'molecular_layer_HP-head','molecular_layer_HP-body','GC-ML-DG','GC-ML-DG-body', 'GC-ML-DG-head'
+                    'molecular_layer_HP-head','molecular_layer_HP-body','GC-ML-DG','GC-ML-DG-body', 'GC-ML-DG-head',
                     'CA3', 'CA3-body', 'CA3-head', 'CA4', 'CA4-body', 'CA4-head', 'fimbria','HATA','Whole_hippocampus',
                     'Whole_hippocampal_body', 'Whole_hippocampal_head'],
+            'header_suppl':[],
             "fs_stats_f":"hipposubfields.lh.T1.v21.stats",
             "fs6_stats_f":"hipposubfields.lh.T1.v10.stats",
             "fs_stats_f_inmridir":"lh.hippoSfVolumes-T1.v21.txt",
@@ -173,6 +180,7 @@ atlas_data = {
             'header': ['Lateral-nucleus', 'Basal-nucleus', 'Accessory-Basal-nucleus', 'Anterior-amygdaloid-area-AAA',
                         'Central-nucleus', 'Medial-nucleus', 'Cortical-nucleus', 'Corticoamygdaloid-transitio',
                         'Paralaminar-nucleus', 'Whole_amygdala'],
+            'header_suppl':[],
             "fs_stats_f":"amygdalar-nuclei.lh.T1.v21.stats",
             "fs_stats_f_inmridir":"lh.amygNucVolumes-T1.v21.txt",},
     'THA':{'atlas_name' :'Thalamus',
@@ -182,6 +190,7 @@ atlas_data = {
             'parameters' : {'Vol':'Vol'},
             'header': ['AV', 'CeM', 'CL', 'CM', 'LD', 'LGN', 'LP', 'L-Sg', 'MDl', 'MDm', 'MGN', 'MV(Re)', 'Pc', 'Pf', 'Pt',
                         'PuA', 'PuI', 'PuL', 'PuM', 'VA', 'VAmc', 'VLa', 'VLp', 'VM', 'VPL', 'Whole_thalamus'],
+            'header_suppl':[],
             "fs_stats_f":"thalamic-nuclei.lh.v12.T1.stats",
             "fs_stats_f_inmridir":"ThalamicNuclei.v12.T1.volumes.txt",},
     'HypoTHA':{'atlas_name' :'HypoThalamus',
@@ -190,6 +199,7 @@ atlas_data = {
             'hemi' : hemis,
             'parameters' : {'Vol':'Vol'},
             'header': ['SON', 'PVN', 'TMN'],
+            'header_suppl':[],
             "fs_stats_f":"lh.hypothalamic_subunits_volumes.v1.stats",},}
 
 
@@ -258,6 +268,9 @@ def header_atlas2nimb():
     header_nimb = dict()
     for atlas in atlas_data:
         header = atlas_data[atlas]["header"]
+        if "header_suppl" in atlas_data[atlas]:
+            header = header + atlas_data[atlas]["header_suppl"]
+
         for atlas_roi in header:
             nimb_roi = atlas_roi
 
@@ -482,7 +495,7 @@ def get_rois_freesurfer(atlas_name = '',
         hemi_last: if True will put hemi in the last position, else: atlas is last
         roi_nimb: True will change the ROI names to the nimb abbreviation type
     Return:
-        feats: {feature_name: [FS-nimb-ROIs],}
+        feats: {atlas_name: [FS-nimb-ROIs],}
     """
     # creating dict() with atlases and hemisphere
     # as per parameters requested
@@ -507,19 +520,21 @@ def get_rois_freesurfer(atlas_name = '',
             for _hemi in atlases_params[atlas]['hemis']:
                 ls_hemis_cap.append(hemi_ending[_hemi])
             atlases_params[atlas]['hemis'] = ls_hemis_cap
+        meas_2add = []
+        if meas:
+            meas_2add = [meas,]
+        else:
+            for fs_param in atlas_data[atlas]['parameters']:
+                meas = atlas_data[atlas]['parameters'][fs_param]
+                meas_2add.append(meas)
+        atlases_params[atlas]['measurements'] = meas_2add
+
 
     # populating feats with correct feature names
     feats = dict()
     for atlas in list(atlases_params.keys()):
         feats[atlas] = list()
         rois = atlas_data[atlas]['header']
-        if meas:
-            meas_2add = [meas,]
-        else:
-            meas_2add = []
-            for fs_param in atlas_data[atlas]['parameters']:
-                meas = atlas_data[atlas]['parameters'][fs_param]
-                meas_2add.append(meas)
 
         if roi_nimb:
             rois_nimb_changed = list()
@@ -528,7 +543,7 @@ def get_rois_freesurfer(atlas_name = '',
             rois = rois_nimb_changed
         for _hemi in atlases_params[atlas]["hemis"]:
             rois_end_hemi = list()
-            for meas in meas_2add:
+            for meas in atlases_params[atlas]['measurements']:
                 ending = atlas_roi_hemi_meas(atlases_params[atlas]["atlas_end"],
                                             _hemi,
                                             meas = meas,

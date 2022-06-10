@@ -316,7 +316,7 @@ class DistributionHelper():
                 print(f"        trying to create {f_ids_processed}")
                 print(f"            from group file: {group_file}")
                 from distribution.project_helper import ProjectManager
-                return ProjectManager(self.all_vars).f_ids_inmatdir(path_2copy_files)
+                return ProjectManager(self.all_vars).f_ids_inmatdir
             else:
                 print(f'    ERR! Cannot find group file: {group_file}. Cannot continue.')
                 return False
@@ -365,8 +365,10 @@ class DistributionHelper():
         if local:
             fname_groups     = self.proj_vars['fname_groups']
             if self.get_files_for_stats(dir_4stats,
-                                [fname_groups, DEFAULT.f_ids]):
-                subjects = ProjectManager(self.all_vars).get_ids_all()
+                                        [fname_groups, DEFAULT.f_ids]):
+                from distribution.project_helper import ProjectManager
+                subjects = ProjectManager(self.all_vars)._ids_bids
+                print(subjects)
         return self.extract_stats_from_archive(subjects, PROCESSED_FS_DIR)
 
 
