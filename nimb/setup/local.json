@@ -31,7 +31,7 @@
     "SUBJECTS_DIR"            : "~/freesurfer/subjects",
     "export_FreeSurfer_cmd"   : "export FREESURFER_HOME=~/freesurfer",
     "source_FreeSurfer_cmd"   : "source $FREESURFER_HOME/SetUpFreeSurfer.sh",
-    "NIMB_PROCESSED"          : "~/nimb_tmp/freesurfer/nimb_processed_fs",
+    "NIMB_PROCESSED"          : "~/nimb_tmp/freesurfer/nimb_processed",
     "NIMB_ERR"                : "~/nimb_tmp/freesurfer/nimb_err",
     "multiple_T1_entries"     : 0,
     "flair_t2_add"            : 0,

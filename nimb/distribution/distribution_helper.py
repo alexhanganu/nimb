@@ -265,8 +265,14 @@ class DistributionHelper():
         SUBJ_2Classify = ''
         if os.listdir(new_subj):
             SUBJ_2Classify = new_subj
+            if not SUBJ_2Classify:
+                print('Folder with Subjects is missing. Please adjust the file: {}'.format(
+                                                                    os.path.join(self.credentials_home, 'local.json')))
         elif bids_cred[0] == 'local' and os.path.exists(bids_cred[1]) and os.listdir(bids_cred[1]):
             SUBJ_2Classify = bids_cred[1]
+            if not SUBJ_2Classify:
+                print('Folder with Subjects is missing. Please adjust the file: {}'.format(
+                                                                    os.path.join(self.credentials_home, 'projects.json')))
 #        elif bids_cred[0] == 'local' and os.path.exists(bids_cred[1]) and os.listdir(bids_cred[1]):
 #            SUBJ_2Classify = bids_cred[1]
 #        elif source_subj[0] == 'local' and os.path.exists(source_subj[1]) and os.listdir(source_subj[1]):
@@ -275,8 +281,6 @@ class DistributionHelper():
             print('Folder with Subjects to classify is: {}'.format(SUBJ_2Classify))
             return SUBJ_2Classify
         else:
-            print('Could not define the Folder with Subjects to classify. Please adjust the file: {}'.format(
-                                                                os.path.join(self.credentials_home, 'projects.json')))
             return False
 
 

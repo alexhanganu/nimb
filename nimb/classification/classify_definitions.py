@@ -9,7 +9,7 @@ mr_modalities = {'flair' :['flair',],
                  'dwi'   :['hardi','dti','diffus'],
                  'bold'  :['resting_state_fmri','rsfmri','mocoseries', 'rest'],
                  'fmap'  :['field_map','field_mapping','fieldmap'],
-                 't1'    :['t1','spgr','rage'],
+                 't1'    :['t1','spgr','rage','3d_sag'],
                  't2'    :['t2',],
                  'pd'    :['pd',],
                  'swi'   :['swi',]

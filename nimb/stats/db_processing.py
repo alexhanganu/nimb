@@ -139,6 +139,24 @@ class Table:
             df.drop(columns=cols2drop, inplace=True)
         return df
 
+    def get_dict_with_tables_per_param(self, df,
+                                         variables,
+                                        var_col):
+        """extracting data per parameter
+        Args:
+            df = pandas.DataFrame with variables to be extracted
+            variables = list() of variables in str() format, for example groups
+            var_col = str() name of the pandas.DataFrame column that has the variables
+        Return:
+            df_per_vars = {"var1":pandas.DataFrame of var1,
+                            "var2":pandas.DataFrame of var2,}
+        """
+        df_per_vars = {}
+        for var in variables:
+            df_per_vars[var] = dict()
+            df_per_vars[var] = df[df[var_col] == var]
+        return df_per_vars
+
 
     def check_nan(self, df, err_file_abspath):
         d_err = dict()
