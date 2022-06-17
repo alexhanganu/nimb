@@ -46,6 +46,11 @@ class NIMB(object):
             DistributionReady(self.all_vars).check_ready()
 
 
+        if self.process == 'run':
+            from distribution.project_helper import ProjectManager
+            ProjectManager(self.all_vars).run()
+
+
         if self.process == 'classify':
             print('checking if ready to classify')
             if not DistributionReady(self.all_vars).classify_ready():
@@ -64,31 +69,15 @@ class NIMB(object):
                                          flair_t2_add = self.vars_local['FREESURFER']['flair_t2_add']).run()
 
 
-        if self.process == 'run-stats':
-            if not DistributionReady(self.all_vars).chk_if_ready_for_stats():
-                print("NIMB is not ready to run the stats. Please check the configuration files.")
-                sys.exit()
-            else:
-                fname_groups = DistributionHelper(self.all_vars).prep_4stats()
-                if fname_groups:
-                    self.vars_local['PROCESSING']['processing_env']  = "tmux" #probably works with slurm, must be checked
-                    schedule = Scheduler(self.vars_local)
-                    step_stats = self.all_vars.params.step
-                    cd_cmd = f"cd {os.path.join(self.NIMB_HOME, 'stats')}"
-                    cmd = f'{self.py_run_cmd} stats_helper.py -project {self.project} -step {step_stats}'
-                    schedule.submit_4_processing(cmd, 'nimb_stats','run', cd_cmd)
+        if self.process == 'classify-dcm2bids':
+            dir_with_subj_2classify = DistributionHelper(self.all_vars).get_subj_2classify()
+            if dir_with_subj_2classify:
+                print("initiating dcm2bids transformation for project: {}".format(self.project))
+                from classification.dcm2bids_helper import DCM2BIDS_helper
+                return DCM2BIDS_helper(self.project_vars,
+                                    self.project,
+                                    DICOM_DIR = dir_with_subj_2classify).run()
 
-
-        if self.process == 'freesurfer':
-            if not DistributionReady(self.all_vars).fs_ready():
-                print("FreeSurfer is not ready or freesurfer_install is set to 0. Please check the configuration files.")
-                sys.exit()
-            else:
-                cd_cmd = f"cd {os.path.join(self.NIMB_HOME, 'processing', 'freesurfer')}"
-                cmd = f'{self.py_run_cmd} crun.py'
-                self.schedule.submit_4_processing(cmd, 'nimb','run', cd_cmd,
-                                                activate_fs = False,
-                                                python_load = True)
 
         if self.process == 'fs-get-stats':
             if DistributionReady(self.all_vars).chk_if_ready_for_stats():
@@ -144,45 +133,57 @@ class NIMB(object):
                 self.schedule.submit_4_processing(cmd, 'fs_glm','extract_images', cd_cmd)
 
 
-        # Nilearn related codes: "nilearn" - performs preprocessing of rsfMRI data
-        if self.process == 'nilearn':
-            if not DistributionReady(self.all_vars).nilearn_ready():
-                print("Nilearn is not ready.")
+        if self.process == 'run-stats':
+            if not DistributionReady(self.all_vars).chk_if_ready_for_stats():
+                print("NIMB is not ready to run the stats. Please check the configuration files.")
                 sys.exit()
             else:
-                cmd = f'{self.py_run_cmd} crun.py'
-                cd_cmd = f"cd {os.path.join(self.NIMB_HOME, 'processing', 'nilearn')}"
-                self.schedule.submit_4_processing(cmd, 'nilearn','run', cd_cmd,
-                                                activate_fs = False,
-                                                python_load = True)
+                fname_groups = DistributionHelper(self.all_vars).prep_4stats()
+                if fname_groups:
+                    self.vars_local['PROCESSING']['processing_env']  = "tmux" #probably works with slurm, must be checked
+                    schedule = Scheduler(self.vars_local)
+                    step_stats = self.all_vars.params.step
+                    cd_cmd = f"cd {os.path.join(self.NIMB_HOME, 'stats')}"
+                    cmd = f'{self.py_run_cmd} stats_helper.py -project {self.project} -step {step_stats}'
+                    schedule.submit_4_processing(cmd, 'nimb_stats','run', cd_cmd)
 
 
-        # Dipy related codes: "dipy" - performs preprocessing of DWI data
-        if self.process == 'dipy':
-            if not DistributionReady(self.all_vars).dipy_ready():
-                print("Dipy is not ready.")
-                sys.exit()
-            else:
-                cmd = f'{self.py_run_cmd} crun.py'
-                cd_cmd = f"cd {os.path.join(self.NIMB_HOME, 'processing', 'dipy')}"
-                self.schedule.submit_4_processing(cmd, 'dipy','run', cd_cmd,
-                                                activate_fs = False,
-                                                python_load = True)
+        # if self.process == 'freesurfer':
+        #     if not DistributionReady(self.all_vars).fs_ready():
+        #         print("FreeSurfer is not ready or freesurfer_install is set to 0. Please check the configuration files.")
+        #         sys.exit()
+        #     else:
+        #         cd_cmd = f"cd {os.path.join(self.NIMB_HOME, 'processing', 'freesurfer')}"
+        #         cmd = f'{self.py_run_cmd} crun.py'
+        #         self.schedule.submit_4_processing(cmd, 'nimb','run', cd_cmd,
+        #                                         activate_fs = False,
+        #                                         python_load = True)
 
 
-        if self.process == 'classify-dcm2bids':
-            dir_with_subj_2classify = DistributionHelper(self.all_vars).get_subj_2classify()
-            if dir_with_subj_2classify:
-                print("initiating dcm2bids transformation for project: {}".format(self.project))
-                from classification.dcm2bids_helper import DCM2BIDS_helper
-                return DCM2BIDS_helper(self.project_vars,
-                                    self.project,
-                                    DICOM_DIR = dir_with_subj_2classify).run()
+        # # Nilearn related codes: "nilearn" - performs preprocessing of rsfMRI data
+        # if self.process == 'nilearn':
+        #     if not DistributionReady(self.all_vars).nilearn_ready():
+        #         print("Nilearn is not ready.")
+        #         sys.exit()
+        #     else:
+        #         cmd = f'{self.py_run_cmd} crun.py'
+        #         cd_cmd = f"cd {os.path.join(self.NIMB_HOME, 'processing', 'nilearn')}"
+        #         self.schedule.submit_4_processing(cmd, 'nilearn','run', cd_cmd,
+        #                                         activate_fs = False,
+        #                                         python_load = True)
 
 
-        if self.process == 'run':
-            from distribution.project_helper import ProjectManager
-            ProjectManager(self.all_vars).run()
+        # # Dipy related codes: "dipy" - performs preprocessing of DWI data
+        # if self.process == 'dipy':
+        #     if not DistributionReady(self.all_vars).dipy_ready():
+        #         print("Dipy is not ready.")
+        #         sys.exit()
+        #     else:
+        #         cmd = f'{self.py_run_cmd} crun.py'
+        #         cd_cmd = f"cd {os.path.join(self.NIMB_HOME, 'processing', 'dipy')}"
+        #         self.schedule.submit_4_processing(cmd, 'dipy','run', cd_cmd,
+        #                                         activate_fs = False,
+        #                                         python_load = True)
 
 
 def get_parameters(projects):
@@ -199,51 +200,50 @@ def get_parameters(projects):
 
     parser.add_argument(
         "-process", required=False,
-        default='ready',
-        choices = ['ready', 'run',
-                    'freesurfer', 'fs-glm', 'fs-glm-image', 'fs-get-stats',
-                    'run-stats','classify', 'classify-dcm2bids',
-                     'nilearn', 'dipy'],
-        help="ready (verifies that nimb is ready), \
+        default =  'ready',
+        choices = ['ready', 'run', 'classify', 'classify-dcm2bids',
+                    'fs-get-stats', 'fs-glm', 'fs-glm-image', 
+                    'run-stats'],
+        help  ="ready (verifies that nimb is ready), \
                 run (runs a project),\
-                freesurfer (perform processing with FreeSurfer), \
                 fs-glm (perform freesurfer mri_glmfit GLM analsysis), \
                 fs-glm-image (extracts images after FS GLM analysis, using Freeview and TKsurfer. Requires export screen),\
                 fs-get-stats (extract freesurfer stats from subjid/stats/* to an excel file), \
                 run-stats (perform statistical analysis),\
                 classify (classify MRIs), \
+                freesurfer (perform processing with FreeSurfer), \
                 nilearn (NOT READY. performs resting state functional analysis, extract ROI z-Fisher correlational values),\
                 dipy (NOT READY. performs DWI analysis with dipy. extracts ROI HARDI statistics)"
     )
 
     parser.add_argument(
         "-project", required=False,
-        default=projects[:1][0],
+        default = projects[:1][0],
         choices = projects,
-        help="names of projects are located in credentials_path.py/nimb/projects.json -> PROJECTS",
+        help    = "names of projects are located in credentials_path.py/nimb/projects.json -> PROJECTS",
     )
 
     parser.add_argument(
         "-do", required=False,
         choices = ['fs-get-stats', 'fs-get-masks', 'check-new', 'classify', 'classify-dcm2bids'],
-        help="fs-get-masks (NOT READY. extract ROI masks based on FreeSurfer parameters), \
-                fs-get-stats (extract freesurfer stats from subjid/stats/* to an excel file)\
-                check-new (NOT READY. verfies for new subjects if processed)",
+        help    = "fs-get-stats (extract freesurfer stats from subjid/stats/* to an excel file)\
+                   fs-get-masks (NOT READY. extract ROI masks based on FreeSurfer parameters), \
+                   check-new (NOT READY. verfies for new subjects if processed)",
     )
 
     parser.add_argument(
         "-fix-spaces", required=False,
-        action='store_true',
-        help="paths that contain spaces will not be read by FreeSurfer. \
-            This parameter will tell nimb to change spaces to underscores during the classification",
+        action = 'store_true',
+        help   = "paths that contain spaces will not be read by FreeSurfer. \
+                  This parameter will tell nimb to change spaces to underscores during the classification",
     )
 
     parser.add_argument(
         "-step", required=False,
-        default='all',
+        default = 'all',
         choices = ['all', 'groups', 'ttest', 'anova', 'simplinreg',
                     'logreg', 'predskf', 'predloo', 'linregmod', 'laterality'],
-        help="choices for statistical analysis:\
+        help = "choices for statistical analysis:\
                 all        = run all steps; \
                 groups     = make groups; \
                 ttest      = run ttests demographics; \
@@ -258,8 +258,8 @@ def get_parameters(projects):
 
     parser.add_argument(
         "-test", required=False,
-        action='store_true',
-        help="when used, nimb will run only 2 participants",
+        action = 'store_true',
+        help   = "when used, nimb will run only 2 participants",
     )
 
 
