@@ -496,30 +496,33 @@ def make_bids_id(proj_id, session, run = False):
 
 def is_bids_format(_id):
     """
-    check if _id has a BIDS format
+        check if _id has a BIDS format
+        this def is read by AddDBManage and is missing the projects
     if True:
         return True, expected bids folder, session name, run name
     """
-    bids_format = False
-    ses_format  = False
-    sub_format  = False
-    run_loc     = int("-1")
+    is_bids_format = False
+    ses_exist = False
     run_label   = ""
+    ses_label   = ""
+    run_loc = _id.find('run-')
+    ses_loc = _id.find('ses-')
     if '_run-' in _id:
-        run_loc = _id.find('run-')
         run_label = _id[run_loc:]
     if 'ses-' in _id:
-        ses_loc = _id.find('ses-')
-        ses_label = _id[ses_loc:run_loc]
-        ses_format = True
+        ses_exist = True
+        if run_label:
+            ses_label = _id[ses_loc:run_loc]
+        else:
+            ses_label = _id[ses_loc:]
+    sub_label = _id[:ses_loc]
+
+    if ses_label:
         if "_" in ses_label[-1]:
             ses_label = ses_label[:-1]
-    if _id.startswith('sub-'):
-        sub_label = _id[:ses_loc]
-        sub_format = True
-        if "_" in sub_label[-1]:
-            sub_label = sub_label[:-1]
-    if ses_format and sub_format:
-        bids_format = True
-    return bids_format, sub_label, ses_label, run_label
+    if "_" in sub_label[-1]:
+        sub_label = sub_label[:-1]
 
+    if ses_exist and _id.startswith('sub-'):
+        is_bids_format = True
+    return is_bids_format, sub_label, ses_label, run_label

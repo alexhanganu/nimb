@@ -328,7 +328,7 @@ def move_processed_subjects(subject, db_source, new_name):
 
     # copying the processed folder to the temporary nimb storage folder
     log.info('    {} copying from {}'.format(subject, db_source))
-    _dir_store = vars_nimb["NIMB_PROCESSED_FS"]
+    _dir_store = vars_app["NIMB_PROCESSED"]
     cp_src_path = path.join(SUBJECTS_DIR, subject)
     cp_dst_path = path.join(_dir_store, subject)
     shutil.copytree(cp_src_path, cp_dst_path)
@@ -346,8 +346,8 @@ def move_processed_subjects(subject, db_source, new_name):
         # cdb.Update_DB(db, NIMB_tmp)
         shutil.rmtree(cp_src_path)
         if new_name:
-            log.info('        renaming {} to {}, moving to {}'.format(subject, new_name, vars_nimb["NIMB_PROCESSED_FS_error"]))
-            _dir_store = vars_nimb["NIMB_PROCESSED_FS_error"]
+            log.info('        renaming {} to {}, moving to {}'.format(subject, new_name, vars_app["NIMB_ERR"]))
+            _dir_store = vars_app["NIMB_ERR"]
             subject    = new_name
             cp_dst_err = path.join(_dir_store, subject)
             shutil.move(cp_dst_path, cp_dst_err)
@@ -360,7 +360,7 @@ def move_processed_subjects(subject, db_source, new_name):
                                         python_load = False)
     else:
         log.info('        ERROR in moving, not moved correctly {} {}'.format(str(size_src), str(size_dst)))
-        shutil.rmtree(path.join(vars_nimb["NIMB_PROCESSED_FS"], subject))
+        shutil.rmtree(path.join(vars_app["NIMB_PROCESSED"], subject))
 
 
 def loop_run():
@@ -432,7 +432,7 @@ def Update_running(NIMB_tmp, cmd):
 
 def run():
 
-    global dbmain, db, app, Procs, schedule, log, chk2, vars_app, fs_ver, vars_processing, vars_nimb, NIMB_HOME, NIMB_tmp, SUBJECTS_DIR, max_walltime, process_order, processing_env
+    global db_manage, dbmain, db, app, Procs, schedule, log, chk2, vars_app, fs_ver, vars_processing, vars_nimb, NIMB_HOME, NIMB_tmp, SUBJECTS_DIR, max_walltime, process_order, processing_env
     
     vars_app        = vars_local[app.upper()]
     vars_processing = vars_local["PROCESSING"]
