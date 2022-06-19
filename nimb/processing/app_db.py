@@ -22,7 +22,7 @@ class AppDBManage:
                 atlas_definitions):
         self.NIMB_HOME    = vars_local["NIMB_PATHS"]["NIMB_HOME"]
         self.NIMB_tmp     = vars_local["NIMB_PATHS"]["NIMB_tmp"]
-        self.long_abrevs  = vars_local["NIMB_PATHS"]["long_abbrevs"]
+        self.ses_abrevs  = vars_local["NIMB_PATHS"]["long_abbrevs"]
         self.chk          = CHECKER(atlas_definitions)
         self.DEF          = DEFAULT
         self.db_file      = os.path.join(self.NIMB_tmp, "db_app.json")
@@ -89,16 +89,17 @@ class AppDBManage:
         self.app        = app
         self.app_vars   = app_vars
         self.proc_order = app_vars["process_order"]
+        self.base_name  = app_vars["base_name"]
 
         db = self.json_file_chk(db)
-        # db = self.SUBJECTS_DIR_chk(db)
+        db = self.SUBJECTS_DIR_chk(db)
         return db
 
 
     def json_file_chk(self, db):
         self.f_new_subjs  = self.DEF.app_files[self.app]["new_subjects"]
         f_new_subjects = os.path.join(self.NIMB_tmp, self.f_new_subjs)
-        log.info('    new_subjects.json checking ...')
+        log.info('    new_subjects.json checking ...:', f_new_subjects)
 
         if os.path.isfile(f_new_subjects):
             with open(f_new_subjects) as jfile:
@@ -154,24 +155,26 @@ class AppDBManage:
 
 
     def get_id_long(self, subjid, LONG_DIRS):
-        print('    subject id is NOT BIDS format')
+        print(f'    subject id : {subjid} is NOT BIDS format')
         _id = 'none'
         for key in LONG_DIRS:
             if subjid in LONG_DIRS[key]:
                 _id = key
-                longitud = subjid.replace(_id+'_','')
+                ses_label = subjid.replace(_id+'_','')
                 break
         if self.base_name in subjid:
             subjid = subjid.replace(self.base_name,'').split('.',1)[0]
         if _id == 'none':
             _id = subjid
-            longitud = long_name+str(1)
-            for long_name in self.long_abrevs:
-                if long_name in subjid:
-                    longitud = subjid[subjid.find(long_name):]
-                    _id = subjid.replace('_'+longitud,'')
+            ses_label = ''
+            for ses in self.ses_abrevs:
+                if ses in subjid:
+                    ses_label = subjid[subjid.find(ses):]
+                    _id = subjid.replace('_'+ses_label,'')
                     break
-        return _id, longitud
+            if not ses_label:
+                ses_label = self.ses_abrevs[0]+str(1).zfill(2)
+        return _id, ses_label
 
 
     def get_subjs_running(self, db):
@@ -200,42 +203,37 @@ class AppDBManage:
     def SUBJECTS_DIR_chk(self, db):
         log.info('    SUBJECTS_DIR checking ...')
         SUBJECTS_DIR = self.app_vars["SUBJECTS_DIR"]
+        files_2rm = ['bert', 'average', 'README', 
+                                 'sample-00', 'cvs_avg35']
+        subj_2add = [i for i in os.listdir(SUBJECTS_DIR) if i not in files_2rm]
 
-        ls_SUBJECTS = self.get_ls_subjects_in_fs_subj_dir(SUBJECTS_DIR)
-        for subjid in ls_SUBJECTS:
+        for subjid in sorted(subj_2add):
             if subjid not in self.get_ls_subjids_in_long_dirs(db):
-                log.info('    '+subjid+' not in PROCESSED')
-                bids_format, _id, longitud, run_label = is_bids_format(subjid)
+                log.info(f'    {subjid} not in PROCESSED')
+                bids_format, _id, ses, run_label = is_bids_format(subjid)
                 if not bids_format:
-                    _id, longitud = self.get_id_long(subjid, db['LONG_DIRS'])
-                log.info('        adding to database: id: '+_id+', long name: '+longitud)
+                    _id, ses = self.get_id_long(subjid, db['LONG_DIRS'])
+                log.info(f'        adding to database: id: {_id}, long name: {ses}')
                 if _id == subjid:
-                    subjid = _id+'_'+longitud
-                    log.info('   no '+longitud+' in '+_id+' Changing name to: '+subjid)
-                    os.rename(os.path.join(SUBJECTS_DIR, _id), os.path.join(SUBJECTS_DIR, subjid))
+                    subjid = _id+'_'+ses
+                    log.info('   no '+ses+' in '+_id+' Changing name to: '+subjid)
+                    os.rename(os.path.join(SUBJECTS_DIR, _id),
+                              os.path.join(SUBJECTS_DIR, subjid))
                 if _id not in db['LONG_DIRS']:
                     db['LONG_DIRS'][_id] = list()
-                if _id in db['LONG_DIRS']:
-                    if subjid not in db['LONG_DIRS'][_id]:
-                        # log.info('        '+subjid+' to LONG_DIRS[\''+_id+'\']')
-                        db['LONG_DIRS'][_id].append(subjid)
+                if subjid not in db['LONG_DIRS'][_id]:
+                    # log.info('        '+subjid+' to LONG_DIRS[\''+_id+'\']')
+                    db['LONG_DIRS'][_id].append(subjid)
                 if _id not in db['LONG_TPS']:
                     # log.info('    adding '+_id+' to LONG_TPS')
                     db['LONG_TPS'][_id] = list()
-                if _id in db['LONG_TPS']:
-                    if longitud not in db['LONG_TPS'][_id]:
-                        # log.info('    adding '+longitud+' to LONG_TPS[\''+_id+'\']')
-                        db['LONG_TPS'][_id].append(longitud)
+                if ses not in db['LONG_TPS'][_id]:
+                    # log.info('    adding '+ses+' to LONG_TPS[\''+_id+'\']')
+                    db['LONG_TPS'][_id].append(ses)
                 if self.base_name not in subjid:
                     if subjid not in self.get_subjs_running(db):
                         self.add_new_subjid_to_db(subjid)
         return db
-
-
-    def get_ls_subjects_in_fs_subj_dir(self, SUBJECTS_DIR):
-        files_in_SUBJECTS_DIR = ['bert','average','README','sample-00','cvs_avg35']
-        ls = sorted([i for i in os.listdir(SUBJECTS_DIR) if i not in files_in_SUBJECTS_DIR])
-        return ls
 
 
     def check_that_all_files_are_accessible(self, ls):

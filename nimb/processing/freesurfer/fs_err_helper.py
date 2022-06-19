@@ -14,6 +14,11 @@ log = logging.getLogger(__name__)
 
 import fs_checker
 class ErrorCheck():
+    """is probably supposed to be used instead of check_error from crun.py
+        but I forgot what was the purpose
+        must be checked if it's used in other scripts.
+        crun.check_error is more recent
+    """
     def __init__(self, vars_freesurfer):
         self.vars_freesurfer = vars_freesurfer
 
@@ -108,7 +113,6 @@ class ErrorCheck():
 
 
 
-
 def fs_find_error(subjid, SUBJECTS_DIR, NIMB_tmp, process, log_file):
     error = ''
     print('                identifying THE error')
@@ -116,25 +120,37 @@ def fs_find_error(subjid, SUBJECTS_DIR, NIMB_tmp, process, log_file):
         if path.exists(log_file):
             f = open(log_file,'r').readlines()
             for line in reversed(f):
-                if  'ERROR: MultiRegistration::loadMovables: images have different voxel sizes.' in line:
+                if 'error: MRISreadCurvature:' in line:
+                    log.info('                    ERROR: MRISreadCurvature')
+                    error = 'Curvature'
+                    break
+                elif  'ERROR: MultiRegistration::loadMovables: images have different voxel sizes.' in line:
                     log.info('        ERROR: Voxel size is different, Multiregistration is not supported; consider registration with less entries')
                     error = 'voxsizediff'
+                    break
+                elif 'ERROR: input(s) cannot have multiple frames!' in line:
+                    log.info('        ERROR: orig.mgz file has multiple frames. Cannot continue')
+                    error = 'regframes'
                     break
                 elif  'error: mghRead' in line:
                     log.info('        ERROR: orig bad registration, probably due to multiple -i entries, rerun with less entries')
                     error = 'origmgz'
                     break
+                elif 'ERROR: Invalid FreeSurfer license key' in line:
+                    log.info('        ERROR: FreeSurfer license key is missing')
+                    error = 'license'
+                    break
                 elif 'error: ERROR: MRISread: file ../surf/lh.white has many more faces than vertices!' in line:
                     log.info('        ERROR: MRISread: file surf/lh.white has many more faces than vertices')
                     error = 'MRISread'
                     break
-                elif 'error: MRISreadCurvature:' in line:
-                    log.info('                    ERROR: MRISreadCurvature')
-                    error = 'Curvature'
-                    break
                 if 'ERROR: Talairach failed!' in line or 'error: transforms/talairach.m3z' in line:
                     log.info('        ERROR: Manual Talairach alignment may be necessary, or include the -notal-check flag to skip this test')
                     error = 'talfail'
+                    break
+                elif 'error: Numerical result out of range' in line:
+                    log.info('        ERROR: umerical result out of range')
+                    error = 'numrange'
                     break
                 elif 'ERROR: no run data found' in line:
                     log.info('        ERROR: file has no registration')
@@ -143,10 +159,6 @@ def fs_find_error(subjid, SUBJECTS_DIR, NIMB_tmp, process, log_file):
                 elif 'ERROR: inputs have mismatched dimensions!' in line:
                     log.info('        ERROR: files have mismatched dimension, repeat registration will be performed')
                     error = 'regdim'
-                    break
-                elif 'ERROR: input(s) cannot have multiple frames!' in line:
-                    log.info('        ERROR: orig.mgz file has multiple frames. Cannot continue')
-                    error = 'regframes'
                     break
                 elif 'ERROR: cannot find' in line:
                     log.info('        ERROR: cannot find files')
@@ -160,13 +172,13 @@ def fs_find_error(subjid, SUBJECTS_DIR, NIMB_tmp, process, log_file):
                     log.info('        ERROR: Disk quota exceeded')
                     error = 'diskquota'
                     break
-                elif 'ERROR: Invalid FreeSurfer license key' in line:
-                    log.info('        ERROR: FreeSurfer license key is missing')
-                    error = 'license'
-                    break
                 elif 'freesurfer/bin/segmentSubject: error while loading shared libraries:' in line:
                     log.info('        ERROR: MATLAB: shared libraries cannot be opened. Try to reinstall Matlab or search for this error on freesurfer mailing list: https://www.mail-archive.com/freesurfer@nmr.mgh.harvard.edu/')
                     error = 'matlab'
+                    break
+                elif 'Segmentation fault (core dumped)' in line:
+                    log.info('                    ERROR: Segmentation fault (core dumped)')
+                    error = 'SegFault'
                     break
         else:
             log.info('        ERROR: {} not in {}'.format(log_file, path.join(SUBJECTS_DIR, subjid, 'scripts')))
@@ -191,8 +203,12 @@ def solve_error(subjid, error, SUBJECTS_DIR, NIMB_tmp):
                 return 'continue'
         else:
             return 'unsolved'
-    if error == 'voxsizediff' or error == 'origmgz' or error == 'license':
+    if error == 'origmgz' or error == 'license':
         return 'repeat_reg'
+    if error == 'regframes': #based on answer from: https://www.mail-archive.com/freesurfer@nmr.mgh.harvard.edu/msg69007.html
+        return 'run_mri_concat_pass_orig_to_recon_all'
+    if error == 'voxsizediff':
+        return "rm_multi_origmgz"
 
 
 

@@ -1,7 +1,7 @@
 #!/bin/python
 # 2021.11.08
 
-from os import path, system, chdir, environ, rename
+from os import path, system, chdir, environ, rename, remove, listdir
 from pathlib import Path
 import time
 import shutil
@@ -124,14 +124,10 @@ def check_error(scheduler_jobs, process):
                 log.info('    {}'.format(subjid))
                 if subjid not in db["ERROR_QUEUE"] and path.exists(path.join(SUBJECTS_DIR, subjid)): #path.exists was added due to moving the subjects too early; requires adjustment
                     chk2.chk(subjid, app, vars_app, 'isrunning', rm = True)
-                    # chk.IsRunning_chk(subjid, rm = True)
-                    # chk.IsRunning_rm(subjid)
                     log.info('        checking the recon-all-status.log for error for: {}'.format(process))
                     fs_err_helper.chkreconf_if_without_error(NIMB_tmp, subjid, SUBJECTS_DIR)
                     log.info('        checking if all files were created for: {}'.format(process))
                     if not chk2.chk(subjid, app, vars_app, process):
-                    # if not chk.checks_from_runfs(process, subjid):
-                    # if not fs_checker.checks_from_runfs(SUBJECTS_DIR, process, subjid, vars_app["freesurfer_version"], vars_app["masks"]):
                             log.info('            some files were not created and recon-all-status has errors.')
                             log_f = Procs.log(process)
                             fs_error = fs_err_helper.fs_find_error(subjid, SUBJECTS_DIR, NIMB_tmp, process, log_f)
@@ -159,6 +155,23 @@ def check_error(scheduler_jobs, process):
                                     else:
                                         new_name = 'err_noreg_{}'.format(subjid)
                                         log.info('            solved: {} but subjid is missing from db[REGISTRATION]'.format(solve))
+                                elif solve == "run_mri_concat_pass_orig_to_recon_all":
+                                    solved = True
+                                    file_2concat = path.join(SUBJECTS_DIR, subjid, "mri/orig/001.mgz")
+                                    cmd = f"mri_concat {file_2concat} --rms --o {file_2concat}"
+                                    process = "mri_concat"
+                                    job_id = schedule.submit_4_processing(cmd, subjid, process)
+                                    db['RUNNING_JOBS'][subjid] = job_id
+                                    db['PROCESSED']['error_'+process].remove(subjid)
+                                    db['RUNNING']["registration"].append(subjid)
+                                elif solve == "rm_multi_origmgz":
+                                    solved = True
+                                    orig_path = path.join(SUBJECTS_DIR, subjid, "mri/orig")
+                                    files_2rm = [i for i in listdir(orig_path) if i != "001.mgz"]
+                                    for file in files_2rm:
+                                        remove(path.join(orig_path, file))
+                                    db['PROCESSED']['error_'+process].remove(subjid)
+                                    db['DO'][process].append(subjid)
                                 else:
                                     new_name = 'err_{}_{}'.format(fs_error, subjid)
                                     log.info('            not solved')
@@ -167,7 +180,6 @@ def check_error(scheduler_jobs, process):
                             if not solved:
                                 log.info('            Excluding {} from pipeline'.format(subjid))
                                 bids_format, _id, ses, run_label = is_bids_format(subjid)
-                                # _id, _ = cdb.get_id_long(subjid, db['LONG_DIRS'], vars_app["base_name"], vars_app["long_name"])
                                 if _id != 'none':
                                     try:
                                         db['LONG_DIRS'][_id].remove(subjid)
@@ -199,8 +211,6 @@ def check_error(scheduler_jobs, process):
                             db['PROCESSED']['error_'+process].remove(subjid)
                             db['RUNNING'][process].append(subjid)
                         elif not chk2.chk(subjid, app, vars_app, 'isrunning') or db['ERROR_QUEUE'][subjid] < schedule.get_time_end_of_walltime('now'): # str(format(datetime.now(), "%Y%m%d_%H%M")): #2RM                            
-                        # elif not chk.IsRunning_chk(subjid) or db['ERROR_QUEUE'][subjid] < schedule.get_time_end_of_walltime('now'): # str(format(datetime.now(), "%Y%m%d_%H%M")): #2RM
-                        # elif not fs_checker.chkIsRunning(SUBJECTS_DIR, subjid) or db['ERROR_QUEUE'][subjid] < str(format(datetime.now(), "%Y%m%d_%H%M")): #2RM
                             log.info('    removing from ERROR_QUEUE')
                             db['ERROR_QUEUE'].pop(subjid, None)
                     else:
@@ -209,7 +219,6 @@ def check_error(scheduler_jobs, process):
                 db['PROCESSED']['error_'+process].sort()
                 dbmain[app] = db
                 db_manage.update_db(dbmain)
-                # cdb.Update_DB(db, NIMB_tmp)
 
 
 

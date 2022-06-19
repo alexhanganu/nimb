@@ -41,8 +41,8 @@ class FSProcesses:
                         "group": "recon",
                         "run_step":2,
                         "isrun_f":"IsRunning.lh+rh",
-                        "files_2chk":['stats/lh.curv.stats',
-                                      'stats/rh.curv.stats',],
+                        "files_2chk":['surf/lh.white.preaparc.H',
+                                      'surf/rh.white.preaparc.H',],
                         "time_suggested":'12:00:00'},
             "autorecon3":{
                         "group": "recon",
