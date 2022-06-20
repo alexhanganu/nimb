@@ -93,7 +93,7 @@ class FSProcesses:
                         "time_suggested":'03:00:00'},
             "hypotha"   :{
                         "fsver"  :72,
-                        "log"    :"hypothalamic_subunits_volumes.log",
+                        "log"    :"thalamic-nuclei-mainFreeSurferT1.log",
                         "group"  :"atlas",
                         "atlas_2chk": ['HypoTHA'],
                         "cmd"    :"mri_segment_hypothalamic_subunits",

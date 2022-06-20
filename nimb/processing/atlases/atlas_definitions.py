@@ -196,11 +196,17 @@ atlas_data = {
     'HypoTHA':{'atlas_name' :'HypoThalamus',
             'short_name': 'Hypothalamus',
             'group':'nuclei',
-            'hemi' : hemis,
+            'hemi' : ["".join(hemis)],
             'parameters' : {'Vol':'Vol'},
-            'header': ['SON', 'PVN', 'TMN'],
+            'header': ['Left-Anterior-Inferior', 'Left-Anterior-Superior',
+                       'Left-Posterior', 'Left-Tubular-Inferior',
+                       'Left-Tubular-Superior',
+                       'Right-Anterior-Inferior', 'Right-Anterior-Ssuperior',
+                       'Right-Posterior', 'Right-Tubular-Inferior',
+                       'Right-Tubular-Superior',
+                       'Whole-Left', 'Whole-Right'],
             'header_suppl':[],
-            "fs_stats_f":"lh.hypothalamic_subunits_volumes.v1.stats",},}
+            "fs_stats_f":"hypothalamic_subunits_volumes.v1.stats",},}
 
 
 def params_atlas2nimb(atlas_param):

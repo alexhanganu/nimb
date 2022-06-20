@@ -99,7 +99,7 @@ class AppDBManage:
     def json_file_chk(self, db):
         self.f_new_subjs  = self.DEF.app_files[self.app]["new_subjects"]
         f_new_subjects = os.path.join(self.NIMB_tmp, self.f_new_subjs)
-        log.info('    new_subjects.json checking ...:', f_new_subjects)
+        log.info(f'    new_subjects.json checking ...:{f_new_subjects}')
 
         if os.path.isfile(f_new_subjects):
             with open(f_new_subjects) as jfile:
@@ -188,24 +188,29 @@ class AppDBManage:
 
 
 
-    def add_new_subjid_to_db(self, subjid):
-        if not self.chk.IsRunning_chk(subjid):
+    def add_new_subjid_to_db(self, subjid, db):
+        if not self.chk.chk(subjid,  self.app,  self.app_vars, 'isrunning'):
             for process in self.proc_order[1:]:
-                if not self.chk.checks_from_runfs(process, subjid):
+                if not self.chk.chk(subjid, self.app, self.app_vars, process):
                     log.info('        '+subjid+' sent for DO '+process)
                     db['DO'][process].append(subjid)
                     break
         else:
             log.info('            IsRunning file present, adding to RUNNING '+self.proc_order[1])
             db['RUNNING'][self.proc_order[1]].append(subjid)
+        return db
 
 
     def SUBJECTS_DIR_chk(self, db):
         log.info('    SUBJECTS_DIR checking ...')
-        SUBJECTS_DIR = self.app_vars["SUBJECTS_DIR"]
-        files_2rm = ['bert', 'average', 'README', 
-                                 'sample-00', 'cvs_avg35']
-        subj_2add = [i for i in os.listdir(SUBJECTS_DIR) if i not in files_2rm]
+        self.SUBJECTS_DIR = self.app_vars["SUBJECTS_DIR"]
+        files_2rm = ['bert', 'V1_average', 'README',
+                     'fsaverage', 'fsaverage3', 'fsaverage4',
+                     'fsaverage5', 'fsaverage6', 'fsaverage_sym',
+                     'sample-001.mgz', 'sample-002.mgz',
+                     'lh.EC_average', 'rh.EC_average',
+                      'cvs_avg35', 'cvs_avg35_inMNI152']
+        subj_2add = [i for i in os.listdir(self.SUBJECTS_DIR) if i not in files_2rm]
 
         for subjid in sorted(subj_2add):
             if subjid not in self.get_ls_subjids_in_long_dirs(db):
@@ -217,8 +222,8 @@ class AppDBManage:
                 if _id == subjid:
                     subjid = _id+'_'+ses
                     log.info('   no '+ses+' in '+_id+' Changing name to: '+subjid)
-                    os.rename(os.path.join(SUBJECTS_DIR, _id),
-                              os.path.join(SUBJECTS_DIR, subjid))
+                    os.rename(os.path.join(self.SUBJECTS_DIR, _id),
+                              os.path.join(self.SUBJECTS_DIR, subjid))
                 if _id not in db['LONG_DIRS']:
                     db['LONG_DIRS'][_id] = list()
                 if subjid not in db['LONG_DIRS'][_id]:
@@ -232,7 +237,7 @@ class AppDBManage:
                     db['LONG_TPS'][_id].append(ses)
                 if self.base_name not in subjid:
                     if subjid not in self.get_subjs_running(db):
-                        self.add_new_subjid_to_db(subjid)
+                        db = self.add_new_subjid_to_db(subjid, db)
         return db
 
 
