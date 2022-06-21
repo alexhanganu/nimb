@@ -100,7 +100,7 @@ class FSProcesses:
                         "s_param":"--s",
                         "run_step":8,
                         "isrun_f":"IsRunningHypoThalamicNuclei_mainFreeSurferT1",
-                        "time_suggested":'03:00:00'}}
+                        "time_suggested":'01:00:00'}}
 
         self.recons   = [i for i in self.processes if "recon" in self.processes[i]["group"]]
         self.atlas_proc = [i for i in self.processes if "atlas" in self.processes[i]["group"]]

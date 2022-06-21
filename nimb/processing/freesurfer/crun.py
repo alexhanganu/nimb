@@ -153,7 +153,7 @@ def check_error(scheduler_jobs, process):
                                         system('rm -r '+path.join(SUBJECTS_DIR, subjid))
                                         log.info('        moving from error_{} to RUNNING registration'.format(process))
                                     else:
-                                        new_name = 'err_noreg_{}'.format(subjid)
+                                        new_name = f'err_{subjid}_noreg'
                                         log.info('            solved: {} but subjid is missing from db[REGISTRATION]'.format(solve))
                                 elif solve == "run_mri_concat_pass_orig_to_recon_all":
                                     solved = True
@@ -173,10 +173,10 @@ def check_error(scheduler_jobs, process):
                                     db['PROCESSED']['error_'+process].remove(subjid)
                                     db['DO'][process].append(subjid)
                                 else:
-                                    new_name = 'err_{}_{}'.format(fs_error, subjid)
+                                    new_name = f'err_{subjid}_{fs_error}'
                                     log.info('            not solved')
                             else:
-                                new_name = 'err_{}_{}'.format(process, subjid)
+                                new_name = f'err_{subjid}_{process}'
                             if not solved:
                                 log.info('            Excluding {} from pipeline'.format(subjid))
                                 bids_format, _id, ses, run_label = is_bids_format(subjid)
