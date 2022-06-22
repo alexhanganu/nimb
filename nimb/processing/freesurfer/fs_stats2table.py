@@ -133,6 +133,7 @@ class FSStats2Table:
         # Name MUST be similar to atlas in atlas_definitions.atlas_data
         self.criteria_4subcort = ['SubCtx', 'Volume_mm3']
         self.subcort_atlases   = ["BS", "HIP", "AMY", "THA", "HypoTHA"]#('bs', 'hip', 'amy','tha'):
+        self.sheet_subcort     = "SubCtx_Volmm3"
 
         self.define_file_names(new_date)
         self.run()
