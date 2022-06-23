@@ -197,7 +197,7 @@ class ProjectManager:
         if do_task == 'fs-glm-image':
             self.glm_fs_do(image = True)
         if do_task == 'fs-get-stats':
-            self.extract_statistics(app = ["freesurfer",])
+            self.extract_statistics(apps = ["freesurfer",])
         elif do_task == 'fs-get-masks':
             self.get_masks()
         elif do_task == 'check-new':
@@ -212,10 +212,6 @@ class ProjectManager:
         if self.new_subjects:
             print(f'{LogLVL.lvl1}must initiate processing')
             self.send_2processing('process')
-        # else:
-        #     self.extract_statistics(app = ["freesurfer",])
-        #     # self.glm_fs_do()
-        #     # self.glm_fs_do(image = True)
         self.check_new()
 
 
@@ -693,7 +689,7 @@ class ProjectManager:
         return content
 
 
-    def send_2processing(self, task):
+    def send_2processing(self, task, dir_with_data = ""):
         python_run = self.local_vars["PROCESSING"]["python3_run_cmd"]
         NIMB_HOME  = self.local_vars["NIMB_PATHS"]["NIMB_HOME"]
         if task == 'process':
@@ -703,9 +699,13 @@ class ProjectManager:
             if task == 'fs-get-stats':
                 self.local_vars['PROCESSING']['processing_env']  = "tmux" #must be checked if works with slurm
                 dir_4stats   = self.project_vars['STATS_PATHS']["STATS_HOME"]
-                cmd          = f'{python_run} fs_stats2table.py -project {self.project} -stats_dir {dir_4stats}'
+                cmd          = f'{python_run} fs_stats2table.py -project {self.project} -stats_dir {dir_4stats} -dir_fs_stats {dir_with_data}'
                 process_type = 'fs_stats'
                 subproc      = 'get_stats'
+                print(f'        command :     {cmd}')
+                print(f'        process_type: {process_type}')
+                print(f'        subproc:      {subproc}')
+                print(f'        cd_cmd :      {cd_cmd}')
             elif task == 'fs-get-masks':
                 cmd          = f'{python_run} run_masks.py -project {self.project}'
                 process_type = 'fs'
@@ -725,14 +725,14 @@ class ProjectManager:
     =====================================
     '''
     def extract_statistics(self, apps = list()):
-        print(f"{LogLVL.lvl1}extracting statistics; script not ready")
         for app in apps:
             if app == "freesurfer":
+                print('    initiating extraction of statistics for FreeSurfer')
                 if self.distrib_ready.chk_if_ready_for_stats():
                     PROCESSED_FS_DIR = self.distrib_hlp.prep_4fs_stats()
                     if PROCESSED_FS_DIR:
                         print('    ready to extract stats from project helper')
-                #         self.send_2processing('fs-get-stats')
+                        self.send_2processing('fs-get-stats', dir_with_data = PROCESSED_FS_DIR)
 
 
     def glm_fs_do(self, image = False):
