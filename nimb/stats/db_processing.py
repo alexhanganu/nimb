@@ -177,6 +177,15 @@ class Table:
         return d_err, cols_with_nans
 
 
+    def check_str_columns(self, df):
+        """verifies columns for str()
+        """
+        for col in df.columns:
+            for value in df[col].tolist():
+                if value.__str__().isalpha():
+                    print("value: ", value, " is string")
+
+
     def concat_dfs(self, frames, ax=1, sort = True):
         '''
             frames: tuple of DataFrames to concatenate
