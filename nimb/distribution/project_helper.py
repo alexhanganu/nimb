@@ -18,14 +18,29 @@ from distribution.logger import LogLVL
 
 """
 ALGO: (created based on the loni-ppmi dataset)
-Situations:
-    (1) all _ids_bids from grid file were processed with APP:
-    (2) _ids_project are present, but not _ids_bids
-    (3) some _ids_bids must be processed OR
-        all _ids_bids were processed:
-        (3.stats) User wants stats: Do Stats
-        (3.glm) User wants FS-GLM: Do FS-GLM
-    (4) Check for new data in rawdata _dir and sourcedata _dir
+    Goals:
+    1. Populate _ids from:
+        1a: grid file with _ids
+            1a.a: if grid file with _ids_bids is present
+            1a.b: if grid file with _ids_bids is provided
+        1b: rawdata folder
+        1c: derivatives folder
+    2. Get _ids not processed or _ids with missing data
+        2a: chk that all _ids_bids from grid file were processed with APP
+            2a.a: some _ids_bids were processed
+            2a.b: all _ids_bids were processed
+        2b: chk that _ids_project are present, but not _ids_bids
+    3. run DO:
+        3a: do is default:
+            3a.a: check new data in rawdata _dir ->
+                    chk new data in sourcedata _dir ->
+                    run processing ->
+                    fs-get-stats ->
+                    run Stats ->
+                    run FS-GLM
+        3b: do is to run fs-get-stats: run fs-get-stats
+        3c: do is to run Stats: Do Stats
+        3d: do is to run FS-GLM: Do FS-GLM
 
 Grid get or make
 f_ids get or make
@@ -178,6 +193,8 @@ class ProjectManager:
         self.get_df_f_groups()
         self.read_f_ids()
         self.get_ids_nimb_classified()
+        self.processing_chk()
+        self.ids_project_chk()
 
 
     def run(self):
@@ -192,27 +209,37 @@ class ProjectManager:
         """
         print(f'{LogLVL.lvl1}running pipeline for project: {self.project}')
         do_task = self.all_vars.params.do
-        if do_task == 'fs-glm':
-            self.glm_fs_do()
-        if do_task == 'fs-glm-image':
-            self.glm_fs_do(image = True)
-        if do_task == 'fs-get-stats':
-            self.extract_statistics(apps = ["freesurfer",])
-        elif do_task == 'fs-get-masks':
-            self.get_masks()
-        elif do_task == 'check-new':
+        if do_task == 'check-new':
             self.check_new()
         elif do_task == 'classify':
             self.prep_4dcm2bids_classification()
         elif do_task == 'classify-dcm2bids':
             self.classify_with_dcm2bids()
-
-        self.processing_chk()
-        self.ids_project_chk()
-        if self.new_subjects:
-            print(f'{LogLVL.lvl1}must initiate processing')
-            self.send_2processing('process')
-        self.check_new()
+        elif do_task == 'process':
+            if self.new_subjects:
+                print(f'{LogLVL.lvl1}must initiate processing')
+                self.send_2processing('process')
+            else:
+                print(f'{LogLVL.lvl1}all subjects were processed')
+        elif do_task == 'fs-get-masks':
+            self.get_masks()
+        elif do_task == 'fs-get-stats':
+            self.extract_statistics(apps = ["freesurfer",])
+        elif do_task == 'fs-glm':
+            self.glm_fs_do()
+        elif do_task == 'fs-glm-image':
+            self.glm_fs_do(image = True)
+        elif do_task == 'run-stats':
+            print("run-stats not set yet")
+        elif do_task == 'all':
+            self.check_new()
+            if self.new_subjects:
+                print(f'{LogLVL.lvl1}must initiate processing')
+                self.send_2processing('process')
+            self.extract_statistics(apps = ["freesurfer",])
+            self.glm_fs_do()
+            self.glm_fs_do(image = True)
+            print("run-stats not set yet")
 
 
     def processing_chk(self):
@@ -725,6 +752,8 @@ class ProjectManager:
     =====================================
     '''
     def extract_statistics(self, apps = list()):
+        """MUST get _ids from FreeSurfer_processed
+        """
         for app in apps:
             if app == "freesurfer":
                 print('    initiating extraction of statistics for FreeSurfer')

@@ -369,10 +369,10 @@ class DistributionHelper():
         if local:
             fname_groups     = self.proj_vars['fname_groups']
             if self.get_files_for_stats(dir_4stats,
-                                        [fname_groups, DEFAULT.f_ids]):
+                                       [fname_groups, DEFAULT.f_ids]):
                 from distribution.project_helper import ProjectManager
                 subjects = ProjectManager(self.all_vars)._ids_bids
-                print(subjects)
+                print("subjects for stats are: ", subjects)
         return self.extract_stats_from_archive(subjects, PROCESSED_FS_DIR)
 
 
