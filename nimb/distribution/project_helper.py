@@ -192,9 +192,10 @@ class ProjectManager:
                                                 tmp_dir = self.NIMB_tmp)
         self.get_df_f_groups()
         self.read_f_ids()
-        self.get_ids_nimb_classified()
-        self.processing_chk()
         self.ids_project_chk()
+        self.chk_processed_in_f_ids_and_grid()
+        self.processing_chk()
+        self.get_ids_nimb_classified()
 
 
     def run(self):
@@ -242,61 +243,108 @@ class ProjectManager:
             print("run-stats not set yet")
 
 
-    def processing_chk(self):
-        """
-            checks if all ids in self.ids_all were processed
+    '''
+    =====================================
+    GRID related scripts
+    =====================================
+    '''
+    def get_df_f_groups(self):
+        '''reading the user-provided tabular tsv/csv/xlsx file
+            with IDs (id_col, id_proj_col) and potential data (variables_for_glm)
+            ../nimb/projects.json -> self.f_groups
         Args:
             none
         Return:
-            bool
+            pandas.DataFrame: self.df_grid
+            if file is missing:
+                return self.make_default_grid()
+        '''
+        if self.distrib_hlp.get_files_for_stats(self.path_stats_dir,
+                                                [self.f_groups,]):
+            f_grid = os.path.join(self.path_stats_dir, self.f_groups)
+            print(f'    file with groups is present: {f_grid}')
+            self.df_grid    = self.tab.get_df(f_grid)
+        else:
+            self.df_grid    = self.make_default_grid()
+        self.get_ids_from_grid()
+
+
+    def make_default_grid(self):
+        '''creates the file default.csv located in:
+            ../nimb/projects.json -> materials_DIR -> ['local', 'PATH_2_DIR']
+            ../nimb/projects.json -> STATS_PATHS -> STATS_HOME
+            script will update file projects.json
+        '''
+        f_name = DEFAULT.default_tab_name
+        df = self.tab.get_clean_df()
+        df[self._ids_project_col] = ''
+        df[self._ids_bids_col]    = ''
+        print(f'    file with groups is absent; creating default grid file:\
+                    in: {self.path_stats_dir}\
+                    in: {self.materials_dir_pt}')
+        self.save_grid(df, f_name)
+        self.project_vars['fname_groups']    = f_name
+        self.f_groups                        = f_name
+
+        # updating self.all_vars and project.json file
+        from setup.get_credentials_home import _get_credentials_home
+        credentials_home = _get_credentials_home()
+        json_projects    = os.path.join(credentials_home, 'projects.json')
+        print(f'{LogLVL.lvl1}updating project.json at: {json_projects}')
+        self.all_vars.projects[self.project] = self.project_vars
+        save_json(self.all_vars.projects, json_projects)
+        return df
+
+
+    def get_ids_from_grid(self):
         """
+        Args:
+            none
+        Return:
+            list():           self._ids_project
+            list():           self._ids_bids
+        """
+        if self._ids_bids_col not in self.df_grid.columns:
+            print(f'{LogLVL.lvl1}column: {self._ids_bids_col} is missing from grid {self.f_groups}')
+            print(f'{LogLVL.lvl2}adding to grid an empty column: {self._ids_bids_col}')
+            self.df_grid[self._ids_bids_col] = ''
+        if self._ids_project_col not in self.df_grid.columns:
+            print(f'{LogLVL.lvl1}column: {self._ids_project_col} is missing from grid {self.f_groups}')
+            print(f'{LogLVL.lvl2}adding to grid an empty column: {self._ids_project_col}')
+            self.df_grid[self._ids_project_col] = ''
+
+        self._ids_bids    = self.df_grid[self._ids_bids_col].tolist()
         if self._ids_bids:
             not_bids, _, _ = self.verify_ids_are_bids_standard(self._ids_bids, self.BIDS_DIR)
             if not_bids:
                 print(f"{LogLVL.lvl2}some subjects are not of bids format: {not_bids}")
                 self.mv_ids_bids_in_grid(not_bids)
-            apps = list(DEFAULT.app_files.keys())
-            for _id_bids in self._ids_bids:
-                apps2process = self.processing_get_apps(_id_bids)
-                if apps2process:
-                    print(f'{LogLVL.lvl1}sending for processing: {_id_bids}, for apps: {apps2process}')
-                    self.processing_add_id(_id_bids, apps2process)
+
+        self._ids_project = self.df_grid[self._ids_project_col].tolist()
 
 
-    def processing_get_apps(self, _id_bids):
+    def mv_ids_bids_in_grid(self, ls_ids):
+        """moving _ids_bids to _ids_project_col
         """
-        populate f_ids with corresponding APP processed file names.
-        Structure:
-            f_ids.json:{
-                "_id_bids": {
-                    DEFAULT.id_project_key : "ID_in_file_provided_by_user_for_GLM_analysis.tsv",
-                    DEFAULT.id_source_key  : "ID_in_source_dir_or_zip_file",
-                    "freesurfer"           : "ID_after_freesurfer_processing.zip",
-                    "nilearn"              : "ID_after_nilearn_processing.zip",
-                    "dipy"                 : "ID_after_dipy_processing.zip"}}
-        """
-        apps2process = list()
-        rawdata_listdir = self.get_listdir(self.BIDS_DIR)
+        for _id in ls_ids:
+            index = self.tab.get_index_of_val(self.df_grid, self._ids_bids_col, _id)
+            self.tab.change_val(self.df_grid,
+                                index, self._ids_bids_col,
+                                None)
+            self._ids_bids.remove(_id)
 
-        for app in DEFAULT.app_files:
-            self.update_f_ids(_id_bids, app, "")
-            if not self._ids_all[_id_bids][app]:                
-                key_dir_2processed = DEFAULT.app_files[app]["dir_store_proc"]
-                location = self.project_vars[key_dir_2processed][0]
-                abspath_2storage = self.project_vars[key_dir_2processed][1]
-                if location != "local":
-                    print(f"{LogLVL.lvl2}subject {_id_bids} for app: {app} is stored on: {location}")
-                else:
-                    _id_per_app = [i for i in self.get_listdir(abspath_2storage) if _id_bids in i]
-                    if _id_per_app:
-                        self.update_f_ids(_id_bids, app, _id_per_app[0])
-                    if len(_id_per_app) > 1:
-                        print(f"{LogLVL.lvl2}participant: {_id_bids} has multiple ids for app: {app}: {_id_per_app}")
-                        print(f"{LogLVL.lvl3}{_id_per_app}")
-            if not self._ids_all[_id_bids][app]:
-                apps2process.append(app)
-        self.save_f_ids()
-        return apps2process
+            # rm from f_ids
+            if _id in self._ids_all:
+                self.update_f_ids(_id, "", "")
+                self.save_f_ids()
+
+            # adding to the _ids_project_col in the grid
+            if _id not in self._ids_project:
+                self.tab.change_val(self.df_grid, index, self._ids_project_col, _id)
+                self._ids_project.append(_id)
+            else:
+                print(f'{LogLVL.lvl2}id: {_id} is already present in grid  in column: {self._ids_project_col}')
+        self.save_grid(self.df_grid, self.f_groups)
 
 
     def ids_project_chk(self):
@@ -352,6 +400,33 @@ class ProjectManager:
         self.processing_chk()
 
 
+    def add_ids_project_to_bids_in_grid(self, ls_ids):
+        """moving _id_project to _ids_bids_col
+        """
+        for _id_project in ls_ids:
+            index = self.tab.get_index_of_val(self.df_grid, self._ids_project_col, _id_project)
+            if _id_project not in self._ids_bids:
+                _id_bids_probab = self.tab.get_value(self.df_grid, index, self._ids_bids_col)
+                if not _id_bids_probab:
+                    self.tab.change_val(self.df_grid, index, self._ids_bids_col, _id_project)
+                    self.tab.change_val(self.df_grid, index, self._ids_project_col, None)
+                    self._ids_bids.append(_id_project)
+                    self._ids_project.remove(_id_project)
+                else:
+                    print(f'{LogLVL.lvl2}id: {_id_project} has a corresponding bids: {_id_bids_probab}')
+                    print(f'{LogLVL.lvl3}please adjust the names')
+            else:
+                index_inbids = self.tab.get_index_of_val(self.df_grid, self._ids_bids_col, _id_project)
+                if index != index_inbids:
+                    print(f'{LogLVL.lvl2}id: {_id_project} is already present in grid  in column: {self._ids_bids_col}')
+                    print(f'{LogLVL.lvl3}in the position: {index_inbids}')
+                    print(f'{LogLVL.lvl3}ERR: there seem to be 2 participants with the same name and different data!')
+                else:
+                    self.tab.change_val(self.df_grid, index, self._ids_project_col, None)
+                    self._ids_project.remove(_id_project)
+        self.save_grid(self.df_grid, self.f_groups)
+
+
     def f_ids_find_id_bids_4id_project(self, _id_project):
         """
             find the _id_bids from f_ids that corresponds
@@ -369,6 +444,130 @@ class ProjectManager:
                 print(f'{LogLVL.lvl1}there are multiple _id_bids: {_id_bids_ls}\
                         that correspond to id {_id_project}')
         return _id_bids_ls
+
+
+    def chk_processed_in_f_ids_and_grid(self):
+        """
+            check that all processed filed are present
+            in the f_ids file and the grid
+        Args:
+            none
+        Return:
+            update f_ids
+            updates self.df_grid
+        """
+        print("working on this part")
+
+        # for _id_src in yes_bids:
+        #     _id_bids = yes_bids[_id_src]
+        #     self._ids_bids = self._ids_bids + [_id_bids]
+        #     # populating self.f_ids with _id_src
+        #     print("populating f_ids with id_bids:", _id_bids, "for _id_src: ", _id_src)
+        #     self.update_f_ids(_id_bids, DEFAULT.id_source_key, _id_src)
+        # self.save_f_ids()
+        # self.populate_df(self._ids_bids, self._ids_bids_col, self.df_grid)
+
+
+    def populate_df(self, new_vals, col, df):
+        """script aims to add new_id to the corresponding column
+            in the df, which is a pandas.DataFrame
+            it is expected that pandas.DataFrame.index is a range(0, n)
+        Args:
+            new_vals: list() of vals to be added
+            col     : column name in pandas.DataFrame to be populated
+        Return:
+            saves the updated pandas.DataFrame
+        """
+        # list of _ids_bids
+        vals_exist = df[col].tolist()
+
+        # populating the grid, column _ids_bids_col with the new 
+        if len(vals_exist) == 0:
+            df[col] = new_vals
+        else:
+            vals2add = [i for i in new_vals if i not in vals_exist]
+            ix_all = df.index.tolist()
+            ix = len(ix_all) + 1
+            for val in vals2add:
+                df.loc[ix] = None
+                df.at[ix, col] = val
+                ix += 1
+        self.save_grid(df, self.f_groups)
+
+
+    def rm_id_from_grid(self, ls_2rm_from_grid):
+        """removing _id from grid
+        """
+        for _id_project in ls_2rm_from_grid:
+            index = self.tab.get_index_of_val(self.df_grid, self._ids_project_col, _id)
+            self.tab.rm_row(self.df_grid, index)
+            self._ids_project.remove(_id_project)
+        self.save_grid(self.df_grid, self.f_groups)
+
+
+    def save_grid(self, df, f_name):
+        """
+        save grid file in:
+            materials_dir
+            stats_dirs
+        """
+        self.tab.save_df(df,
+            os.path.join(self.path_stats_dir, f_name))
+        self.tab.save_df(df,
+            os.path.join(self.materials_dir_pt, f_name))
+
+
+    def processing_chk(self):
+        """
+            checks if all ids in self.ids_all were processed
+        Args:
+            none
+        Return:
+            bool
+        """
+        if self._ids_bids:
+            apps = list(DEFAULT.app_files.keys())
+            for _id_bids in self._ids_bids:
+                apps2process = self.processing_get_apps(_id_bids)
+                if apps2process:
+                    print(f'{LogLVL.lvl1}sending for processing: {_id_bids}, for apps: {apps2process}')
+                    self.processing_add_id(_id_bids, apps2process)
+
+
+    def processing_get_apps(self, _id_bids):
+        """
+        populate f_ids with corresponding APP processed file names.
+        Structure:
+            f_ids.json:{
+                "_id_bids": {
+                    DEFAULT.id_project_key : "ID_in_file_provided_by_user_for_GLM_analysis.tsv",
+                    DEFAULT.id_source_key  : "ID_in_source_dir_or_zip_file",
+                    "freesurfer"           : "ID_after_freesurfer_processing.zip",
+                    "nilearn"              : "ID_after_nilearn_processing.zip",
+                    "dipy"                 : "ID_after_dipy_processing.zip"}}
+        """
+        apps2process = list()
+        rawdata_listdir = self.get_listdir(self.BIDS_DIR)
+
+        for app in DEFAULT.app_files:
+            self.update_f_ids(_id_bids, app, "")
+            if not self._ids_all[_id_bids][app]:                
+                key_dir_2processed = DEFAULT.app_files[app]["dir_store_proc"]
+                location = self.project_vars[key_dir_2processed][0]
+                abspath_2storage = self.project_vars[key_dir_2processed][1]
+                if location != "local":
+                    print(f"{LogLVL.lvl2}subject {_id_bids} for app: {app} is stored on: {location}")
+                else:
+                    _id_per_app = [i for i in self.get_listdir(abspath_2storage) if _id_bids in i]
+                    if _id_per_app:
+                        self.update_f_ids(_id_bids, app, _id_per_app[0])
+                    if len(_id_per_app) > 1:
+                        print(f"{LogLVL.lvl2}participant: {_id_bids} has multiple ids for app: {app}: {_id_per_app}")
+                        print(f"{LogLVL.lvl3}{_id_per_app}")
+            if not self._ids_all[_id_bids][app]:
+                apps2process.append(app)
+        self.save_f_ids()
+        return apps2process
 
 
     def check_new(self):
@@ -474,6 +673,31 @@ class ProjectManager:
                 else:
                     print(f"{LogLVL.lvl2}{_id_bids} registered in file with ids")
         return unprocessed_d
+
+
+    def add_ids_source_to_bids_in_grid(self, yes_bids):
+        """
+            adding a new id from sourcedata dir
+            to the bids columns
+            in the last position
+        Args:
+            yes_bids = {_id_src: _id_bids}
+        Return:
+            populates self._ids_bids
+            updates self.df_grid
+        """
+        # defining variables
+        self._ids_bids = self.df_grid[self._ids_bids_col].tolist()
+
+        # loop to work with each _id_src
+        for _id_src in yes_bids:
+            _id_bids = yes_bids[_id_src]
+            self._ids_bids = self._ids_bids + [_id_bids]
+            # populating self.f_ids with _id_src
+            print("populating f_ids with id_bids:", _id_bids, "for _id_src: ", _id_src)
+            self.update_f_ids(_id_bids, DEFAULT.id_source_key, _id_src)
+        self.save_f_ids()
+        self.populate_df(self._ids_bids, self._ids_bids_col, self.df_grid)
 
 
     '''
@@ -801,205 +1025,6 @@ class ProjectManager:
                 print(f"ERR! check that you can export your screen")
                 print(f"Please define a computer where the screen can be used for FreeSurfer Freeview and tksurfer")
                 print(f"ERR! Check the variable: export_screen in file credentials_path.py/nimb/local.json")
-
-
-    '''
-    =====================================
-    GRID related scripts
-    =====================================
-    '''
-    def get_df_f_groups(self):
-        '''reading the user-provided tabular tsv/csv/xlsx file
-            with IDs (id_col, id_proj_col) and potential data (variables_for_glm)
-            ../nimb/projects.json -> self.f_groups
-        Args:
-            none
-        Return:
-            pandas.DataFrame: self.df_grid
-            if file is missing:
-                return self.make_default_grid()
-        '''
-        if self.distrib_hlp.get_files_for_stats(self.path_stats_dir,
-                                                [self.f_groups,]):
-            f_grid = os.path.join(self.path_stats_dir, self.f_groups)
-            print(f'    file with groups is present: {f_grid}')
-            self.df_grid    = self.tab.get_df(f_grid)
-        else:
-            self.df_grid    = self.make_default_grid()
-        self.get_ids_from_grid()
-
-
-    def get_ids_from_grid(self):
-        """
-        Args:
-            none
-        Return:
-            list():           self._ids_project
-            list():           self._ids_bids
-        """
-        if self._ids_bids_col not in self.df_grid.columns:
-            print(f'{LogLVL.lvl1}column: {self._ids_bids_col} is missing from grid {self.f_groups}')
-            print(f'{LogLVL.lvl2}adding to grid an empty column: {self._ids_bids_col}')
-            self.df_grid[self._ids_bids_col] = ''
-        if self._ids_project_col not in self.df_grid.columns:
-            print(f'{LogLVL.lvl1}column: {self._ids_project_col} is missing from grid {self.f_groups}')
-            print(f'{LogLVL.lvl2}adding to grid an empty column: {self._ids_project_col}')
-            self.df_grid[self._ids_project_col] = ''
-
-        self._ids_bids    = self.df_grid[self._ids_bids_col].tolist()
-        self._ids_project = self.df_grid[self._ids_project_col].tolist()
-
-
-    def mv_ids_bids_in_grid(self, ls_ids):
-        """moving _ids_bids to _ids_project_col
-        """
-        for _id in ls_ids:
-            index = self.tab.get_index_of_val(self.df_grid, self._ids_bids_col, _id)
-            self.tab.change_val(self.df_grid,
-                                index, self._ids_bids_col,
-                                None)
-            self._ids_bids.remove(_id)
-
-            # rm from f_ids
-            if _id in self._ids_all:
-                self.update_f_ids(_id, "", "")
-                self.save_f_ids()
-
-            # adding to the _ids_project_col in the grid
-            if _id not in self._ids_project:
-                self.tab.change_val(self.df_grid, index, self._ids_project_col, _id)
-                self._ids_project.append(_id)
-            else:
-                print(f'{LogLVL.lvl2}id: {_id} is already present in grid  in column: {self._ids_project_col}')
-        self.save_grid(self.df_grid, self.f_groups)
-
-
-    def add_ids_project_to_bids_in_grid(self, ls_ids):
-        """moving _id_project to _ids_bids_col
-        """
-        for _id_project in ls_ids:
-            index = self.tab.get_index_of_val(self.df_grid, self._ids_project_col, _id_project)
-            if _id_project not in self._ids_bids:
-                _id_bids_probab = self.tab.get_value(self.df_grid, index, self._ids_bids_col)
-                if not _id_bids_probab:
-                    self.tab.change_val(self.df_grid, index, self._ids_bids_col, _id_project)
-                    self.tab.change_val(self.df_grid, index, self._ids_project_col, None)
-                    self._ids_bids.append(_id_project)
-                    self._ids_project.remove(_id_project)
-                else:
-                    print(f'{LogLVL.lvl2}id: {_id_project} has a corresponding bids: {_id_bids_probab}')
-                    print(f'{LogLVL.lvl3}please adjust the names')
-            else:
-                index_inbids = self.tab.get_index_of_val(self.df_grid, self._ids_bids_col, _id_project)
-                if index != index_inbids:
-                    print(f'{LogLVL.lvl2}id: {_id_project} is already present in grid  in column: {self._ids_bids_col}')
-                    print(f'{LogLVL.lvl3}in the position: {index_inbids}')
-                    print(f'{LogLVL.lvl3}ERR: there seem to be 2 participants with the same name and different data!')
-                else:
-                    self.tab.change_val(self.df_grid, index, self._ids_project_col, None)
-                    self._ids_project.remove(_id_project)
-        self.save_grid(self.df_grid, self.f_groups)
-
-
-    def add_ids_source_to_bids_in_grid(self, yes_bids):
-        """
-            adding a new id from sourcedata dir
-            to the bids columns
-            in the last position
-        Args:
-            yes_bids = {_id_src: _id_bids}
-        Return:
-            populates self._ids_bids
-            updates self.df_grid
-        """
-        # defining variables
-        self._ids_bids = self.df_grid[self._ids_bids_col].tolist()
-
-        # loop to work with each _id_src
-        for _id_src in yes_bids:
-            _id_bids = yes_bids[_id_src]
-            self._ids_bids = self._ids_bids + [_id_bids]
-            # populating self.f_ids with _id_src
-            print("populating f_ids with id_bids:", _id_bids, "for _id_src: ", _id_src)
-            self.update_f_ids(_id_bids, DEFAULT.id_source_key, _id_src)
-        self.save_f_ids()
-        self.populate_df(self._ids_bids, self._ids_bids_col, self.df_grid)
-
-
-    def populate_df(self, new_vals, col, df):
-        """script aims to add new_id to the corresponding column
-            in the df, which is a pandas.DataFrame
-            it is expected that pandas.DataFrame.index is a range(0, n)
-        Args:
-            new_vals: list() of vals to be added
-            col     : column name in pandas.DataFrame to be populated
-        Return:
-            saves the updated pandas.DataFrame
-        """
-        # list of _ids_bids
-        vals_exist = df[col].tolist()
-
-        # populating the grid, column _ids_bids_col with the new 
-        if len(vals_exist) == 0:
-            df[col] = new_vals
-        else:
-            vals2add = [i for i in new_vals if i not in vals_exist]
-            ix_all = df.index.tolist()
-            ix = len(ix_all) + 1
-            for val in vals2add:
-                df.loc[ix] = None
-                df.at[ix, col] = val
-                ix += 1
-        self.save_grid(df, self.f_groups)
-
-
-    def rm_id_from_grid(self, ls_2rm_from_grid):
-        """removing _id from grid
-        """
-        for _id_project in ls_2rm_from_grid:
-            index = self.tab.get_index_of_val(self.df_grid, self._ids_project_col, _id)
-            self.tab.rm_row(self.df_grid, index)
-            self._ids_project.remove(_id_project)
-        self.save_grid(self.df_grid, self.f_groups)
-
-
-    def make_default_grid(self):
-        '''creates the file default.csv located in:
-            ../nimb/projects.json -> materials_DIR -> ['local', 'PATH_2_DIR']
-            ../nimb/projects.json -> STATS_PATHS -> STATS_HOME
-            script will update file projects.json
-        '''
-        f_name = DEFAULT.default_tab_name
-        df = self.tab.get_clean_df()
-        df[self._ids_project_col] = ''
-        df[self._ids_bids_col]    = ''
-        print(f'    file with groups is absent; creating default grid file:\
-                    in: {self.path_stats_dir}\
-                    in: {self.materials_dir_pt}')
-        self.save_grid(df, f_name)
-        self.project_vars['fname_groups']    = f_name
-        self.f_groups                        = f_name
-
-        # updating self.all_vars and project.json file
-        from setup.get_credentials_home import _get_credentials_home
-        credentials_home = _get_credentials_home()
-        json_projects    = os.path.join(credentials_home, 'projects.json')
-        print(f'{LogLVL.lvl1}updating project.json at: {json_projects}')
-        self.all_vars.projects[self.project] = self.project_vars
-        save_json(self.all_vars.projects, json_projects)
-        return df
-
-
-    def save_grid(self, df, f_name):
-        """
-        save grid file in:
-            materials_dir
-            stats_dirs
-        """
-        self.tab.save_df(df,
-            os.path.join(self.path_stats_dir, f_name))
-        self.tab.save_df(df,
-            os.path.join(self.materials_dir_pt, f_name))
 
 
     '''
