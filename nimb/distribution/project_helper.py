@@ -455,17 +455,36 @@ class ProjectManager:
         Return:
             update f_ids
             updates self.df_grid
-        """
-        print("working on this part")
 
-        # for _id_src in yes_bids:
-        #     _id_bids = yes_bids[_id_src]
-        #     self._ids_bids = self._ids_bids + [_id_bids]
-        #     # populating self.f_ids with _id_src
-        #     print("populating f_ids with id_bids:", _id_bids, "for _id_src: ", _id_src)
-        #     self.update_f_ids(_id_bids, DEFAULT.id_source_key, _id_src)
-        # self.save_f_ids()
-        # self.populate_df(self._ids_bids, self._ids_bids_col, self.df_grid)
+        populate f_ids with corresponding APP processed file names.
+        Structure:
+            f_ids.json:{
+                "_id_bids": {
+                    DEFAULT.id_project_key : "ID_in_file_provided_by_user_for_GLM_analysis.tsv",
+                    DEFAULT.id_source_key  : "ID_in_source_dir_or_zip_file",
+                    "freesurfer"           : "ID_after_freesurfer_processing.zip",
+                    "nilearn"              : "ID_after_nilearn_processing.zip",
+                    "dipy"                 : "ID_after_dipy_processing.zip"}}
+        """
+        for app in DEFAULT.app_files:
+            archive_format = ".zip"
+            key_dir_2processed = DEFAULT.app_files[app]["dir_store_proc"]
+            location = self.project_vars[key_dir_2processed][0]
+            abspath_2storage = self.project_vars[key_dir_2processed][1]
+            if location == "local":
+                files_processed_per_app = self.get_listdir(abspath_2storage)
+                for file_processed in files_processed_per_app:
+                    _id_bids_2chk = file_processed.replace(archive_format,"")
+                    bids_format, _, _, _ = self.dcm2bids.is_bids_format(_id_bids_2chk)
+                    if bids_format:
+                        _id_bids = _id_bids_2chk
+                        self.update_f_ids(_id_bids, app, file_processed[0])
+                        self.populate_df([_id_bids,], self._ids_bids_col, self.df_grid)
+                    else:
+                        print(f"{LogLVL.lvl3}subject in the processed file: {_id_bids_2chk} name is not of BIDS format")
+            else:
+                print(f"{LogLVL.lvl2}subject {_id_bids} for app: {app} is stored on: {location}")
+        self.save_f_ids()
 
 
     def populate_df(self, new_vals, col, df):
@@ -479,13 +498,13 @@ class ProjectManager:
             saves the updated pandas.DataFrame
         """
         # list of _ids_bids
-        vals_exist = df[col].tolist()
+        vals_in_grid = df[col].tolist()
 
         # populating the grid, column _ids_bids_col with the new 
-        if len(vals_exist) == 0:
+        if len(vals_in_grid) == 0:
             df[col] = new_vals
         else:
-            vals2add = [i for i in new_vals if i not in vals_exist]
+            vals2add = [i for i in new_vals if i not in vals_in_grid]
             ix_all = df.index.tolist()
             ix = len(ix_all) + 1
             for val in vals2add:
