@@ -275,13 +275,21 @@ class ProjectManager:
             ../nimb/projects.json -> STATS_PATHS -> STATS_HOME
             script will update file projects.json
         '''
+        print(f'    file with groups is absent; creating default grid file:\
+                    in: {self.path_stats_dir}\
+                    in: {self.materials_dir_pt}')
         f_name = DEFAULT.default_tab_name
         df = self.tab.get_clean_df()
         df[self._ids_project_col] = ''
         df[self._ids_bids_col]    = ''
-        print(f'    file with groups is absent; creating default grid file:\
-                    in: {self.path_stats_dir}\
-                    in: {self.materials_dir_pt}')
+
+        print("    DEBUG: grid columns are:", self.df_grid.columns)
+        print("    DEBUG: _ids_bids_col is:", self._ids_bids_col)
+        print("    DEBUG: _ids_project_col is:", self._ids_project_col)
+        print("    DEBUG: _ids_project_col in grid columns?", self._ids_project_col in self.df_grid.columns)
+        print("    DEBUG: _ids_bids_col in grid columns?", self._ids_bids_col in self.df_grid.columns)
+        print("    DEBUG: self._ids_bids is:", self.df_grid[self._ids_bids_col].tolist())
+
         self.save_grid(df, f_name)
         self.project_vars['fname_groups']    = f_name
         self.f_groups                        = f_name
@@ -305,11 +313,11 @@ class ProjectManager:
             list():           self._ids_bids
         """
         if self._ids_bids_col not in self.df_grid.columns:
-            print(f'{LogLVL.lvl1}column: {self._ids_bids_col} is missing from grid {self.f_groups}')
+            print(f'{LogLVL.lvl1}column for _ids_bids: {self._ids_bids_col} is missing from grid {self.f_groups}')
             print(f'{LogLVL.lvl2}adding to grid an empty column: {self._ids_bids_col}')
             self.df_grid[self._ids_bids_col] = ''
         if self._ids_project_col not in self.df_grid.columns:
-            print(f'{LogLVL.lvl1}column: {self._ids_project_col} is missing from grid {self.f_groups}')
+            print(f'{LogLVL.lvl1}column for _ids_project: {self._ids_project_col} is missing from grid {self.f_groups}')
             print(f'{LogLVL.lvl2}adding to grid an empty column: {self._ids_project_col}')
             self.df_grid[self._ids_project_col] = ''
 
