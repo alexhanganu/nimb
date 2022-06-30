@@ -158,6 +158,10 @@ class Table:
         return df_per_vars
 
 
+    def val_is_nan(self, val):
+        return pd.isna(val)
+
+
     def check_nan(self, df, err_file_abspath):
         d_err = dict()
         cols_with_nans = list()

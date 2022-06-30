@@ -191,11 +191,8 @@ class ProjectManager:
                                                 DICOM_DIR = self.srcdata_dir,
                                                 tmp_dir = self.NIMB_tmp)
         self.get_df_f_groups()
-        self.read_f_ids()
-        self.ids_project_chk()
         self.chk_processed_in_f_ids_and_grid()
         self.processing_chk()
-        self.get_ids_nimb_classified()
 
 
     def run(self):
@@ -259,6 +256,11 @@ class ProjectManager:
             if file is missing:
                 return self.make_default_grid()
         '''
+        if self._ids_project_col == "default":
+            self._ids_project_col = DEFAULT.id_project_key
+        if self._ids_bids_col == "default":
+            self._ids_bids_col = DEFAULT.id_col
+
         if self.distrib_hlp.get_files_for_stats(self.path_stats_dir,
                                                 [self.f_groups,]):
             f_grid = os.path.join(self.path_stats_dir, self.f_groups)
@@ -267,6 +269,7 @@ class ProjectManager:
         else:
             self.df_grid    = self.make_default_grid()
         self.get_ids_from_grid()
+        self.ids_project_chk()
 
 
     def make_default_grid(self):
@@ -282,13 +285,6 @@ class ProjectManager:
         df = self.tab.get_clean_df()
         df[self._ids_project_col] = ''
         df[self._ids_bids_col]    = ''
-
-        print("    DEBUG: grid columns are:", self.df_grid.columns)
-        print("    DEBUG: _ids_bids_col is:", self._ids_bids_col)
-        print("    DEBUG: _ids_project_col is:", self._ids_project_col)
-        print("    DEBUG: _ids_project_col in grid columns?", self._ids_project_col in self.df_grid.columns)
-        print("    DEBUG: _ids_bids_col in grid columns?", self._ids_bids_col in self.df_grid.columns)
-        print("    DEBUG: self._ids_bids is:", self.df_grid[self._ids_bids_col].tolist())
 
         self.save_grid(df, f_name)
         self.project_vars['fname_groups']    = f_name
@@ -312,6 +308,7 @@ class ProjectManager:
             list():           self._ids_project
             list():           self._ids_bids
         """
+        print(f"{LogLVL.lvl1}columns in grid are: {self.df_grid.columns}")
         if self._ids_bids_col not in self.df_grid.columns:
             print(f'{LogLVL.lvl1}column for _ids_bids: {self._ids_bids_col} is missing from grid {self.f_groups}')
             print(f'{LogLVL.lvl2}adding to grid an empty column: {self._ids_bids_col}')
@@ -322,8 +319,10 @@ class ProjectManager:
             self.df_grid[self._ids_project_col] = ''
 
         self._ids_bids    = self.df_grid[self._ids_bids_col].tolist()
+        self.read_f_ids()
+
         if self._ids_bids:
-            not_bids, _, _ = self.verify_ids_are_bids_standard(self._ids_bids, self.BIDS_DIR)
+            not_bids, _, _, no_rawdata = self.verify_ids_are_bids_standard(self._ids_bids, self.BIDS_DIR)
             if not_bids:
                 print(f"{LogLVL.lvl2}some subjects are not of bids format: {not_bids}")
                 self.mv_ids_bids_in_grid(not_bids)
@@ -363,7 +362,7 @@ class ProjectManager:
         Return:
             bool
         """
-        _, yes_bids, _ = self.verify_ids_are_bids_standard(self._ids_project, self.BIDS_DIR)
+        _, yes_bids, _, no_rawdata = self.verify_ids_are_bids_standard(self._ids_project, self.BIDS_DIR)
         if yes_bids:
             print(f"{LogLVL.lvl2}some subjects are of bids format: {yes_bids}")
             self.add_ids_project_to_bids_in_grid(yes_bids)
@@ -371,6 +370,7 @@ class ProjectManager:
         ls_2rm_from_grid     = list()
         ls_4dcm2bids_classif = list()
         ls_4nimb_classif     = list()
+        self.get_ids_nimb_classified()
         for _id_project in self._ids_project:
             if _id_project in self._ids_nimb_classified:
                 ls_4dcm2bids_classif.append(_id_project)
@@ -653,7 +653,7 @@ class ProjectManager:
         for _id_src in unprocessed_d.keys():
             for session in unprocessed_d[_id_src]:
                 _ids_src_bids_unprocessed[_id_src] = unprocessed_d[_id_src][session]["id_bids"]
-        no_bids, _, yes_bids_d = self.verify_ids_are_bids_standard(
+        no_bids, _, yes_bids_d, no_rawdata = self.verify_ids_are_bids_standard(
                                                     list(_ids_src_bids_unprocessed.values()),
                                                     self.srcdata_dir)
         if yes_bids_d:
@@ -748,25 +748,28 @@ class ProjectManager:
         """
         rawdata_listdir = self.get_listdir(_dir2chk)
         no_bids = list()
+        no_rawdata = list()
         yes_bids = list()
         yes_bids_d = dict()
 
         for _id in ls2chk:
-            bids_format, sub_label, ses_label, _ = self.dcm2bids.is_bids_format(_id)
-            if not bids_format:
-                print(f"{LogLVL.lvl3}subject {_id} name is not of BIDS format")
-                no_bids.append(_id)
-            elif sub_label not in rawdata_listdir:
-                print(f"{LogLVL.lvl3}subject {_id} is missing from: {_dir2chk}")
-                no_bids.append(_id)
+            if not self.tab.val_is_nan(_id):
+                bids_format, sub_label, _, _ = self.dcm2bids.is_bids_format(_id)
+                if not bids_format:
+                    print(f"{LogLVL.lvl3}subject {_id} name is not of BIDS format")
+                    no_bids.append(_id)
+                else:
+                    yes_bids.append(_id)
+                    yes_bids_d[_id] = _id
+                if sub_label not in rawdata_listdir:
+                    print(f"{LogLVL.lvl3}subject {_id} is missing from: {_dir2chk}")
+                    no_rawdata.append(_id)
+                # elif not validate BIDS: !!!!!!!!!!!!!!!!!
+                #     print(f"{LogLVL.lvl2}subject {_id} folder in: {_dir2chk} has not been validated for BIDS")
+                #     no_rawdata.append(_id)
             else:
-                _id_bids, _ = self.dcm2bids.make_bids_id(sub_label, ses_label)
-                yes_bids.append(_id)
-                yes_bids_d[_id] = _id_bids
-            # elif not validate BIDS: !!!!!!!!!!!!!!!!!
-            #     print(f"{LogLVL.lvl2}subject {_id} folder in: {_dir2chk} has not been validated for BIDS")
-            #     no_bids.append(_id)
-        return no_bids, yes_bids, yes_bids_d
+                print(f"{LogLVL.lvl3}subject id: {_id} is NAN")
+        return no_bids, yes_bids, yes_bids_d, no_rawdata
 
 
     def run_classify_2nimb_bids(self, ls_subjects):
@@ -990,9 +993,9 @@ class ProjectManager:
                 subproc      = 'run_masks'
             if not self.test:
                 print(f'    sending to scheduler for task {task}')
-                # from processing.schedule_helper import Scheduler
-                # schedule = Scheduler(self.local_vars)
-                # schedule.submit_4_processing(cmd, process_type, subproc, cd_cmd)
+                from processing.schedule_helper import Scheduler
+                schedule = Scheduler(self.local_vars)
+                schedule.submit_4_processing(cmd, process_type, subproc, cd_cmd)
             else:
                 print(f'    READY to send to scheduler for task {task}. TESTing active')
 
@@ -1008,8 +1011,9 @@ class ProjectManager:
         for app in apps:
             if app == "freesurfer":
                 print('    initiating extraction of statistics for FreeSurfer')
+                print("    ids are:", self._ids_bids)
                 if self.distrib_ready.chk_if_ready_for_stats():
-                    PROCESSED_FS_DIR = self.distrib_hlp.prep_4fs_stats()
+                    PROCESSED_FS_DIR = self.distrib_hlp.prep_4fs_stats(self._ids_bids)
                     if PROCESSED_FS_DIR:
                         print('    ready to extract stats from project helper')
                         self.send_2processing('fs-get-stats', dir_with_data = PROCESSED_FS_DIR)

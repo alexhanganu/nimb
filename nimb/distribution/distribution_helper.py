@@ -284,6 +284,54 @@ class DistributionHelper():
             return False
 
 
+    def prep_4stats(self, fs = False):
+        """create DIRs for stats (as per setup/stats.json)
+           get group file (provided by user)
+           return final stats_grid_file that will be used for statistical analysis
+        """
+        dir_4stats       = makedir_ifnot_exist(self.proj_vars["STATS_PATHS"]["STATS_HOME"])
+        fname_groups     = self.proj_vars['fname_groups']
+        file_other_stats = []
+        file_names = self.proj_vars["STATS_FILES"]
+        for file in ["fname_fs_all_stats", "fname_func_all_stats", "fname_other_stats"]:
+            file_name = self.proj_vars[file]
+            if file_name:
+                if file_name == "default":
+                    file_name = file_names[file]
+                file_name = f'{file_name}.{file_names["file_type"]}'
+                file_other_stats.append(file_name)
+        for file in ["fname_Outcor", "fname_eTIVcor", "fname_NaNcor"]:
+            file_name = f'{file_names[file]}.{file_names["file_type"]}'
+            file_other_stats.append(file_name)
+        if not self.get_files_for_stats(dir_4stats,
+                            [fname_groups,]):
+            sys.exit()
+        self.get_files_for_stats(dir_4stats,
+                            file_other_stats)
+        return fname_groups
+
+
+    def prep_4fs_stats(self, subjects = list()):
+        '''create DIR to store stats files
+            check if processed subjects are on the local computer
+            if yes:
+                copy corresponding stats files to stats DIR
+                return OK to perform stats
+            else:
+                return False
+        '''
+        dir_4stats       = makedir_ifnot_exist(self.proj_vars["STATS_PATHS"]["STATS_HOME"])
+        local, PROCESSED_FS_DIR, _ = self.get_local_remote_dir(self.proj_vars["PROCESSED_FS_DIR"])
+        subjects =  os.listdir(PROCESSED_FS_DIR)
+
+        if local:
+            fname_groups     = self.proj_vars['fname_groups']
+            if self.get_files_for_stats(dir_4stats,
+                                       [fname_groups, DEFAULT.f_ids]):
+                print("subjects for stats are: ", subjects)
+        return self.extract_stats_from_archive(subjects, PROCESSED_FS_DIR)
+
+
     def get_files_for_stats(self, path_2copy_files, list_of_files):
         local, materials_dir_path, location = self.get_local_remote_dir(self.proj_vars["materials_DIR"],
                                                                         _dir = "materials_DIR")
@@ -319,61 +367,12 @@ class DistributionHelper():
             if group_file in list_of_files:
                 print(f"        trying to create {f_ids_processed}")
                 print(f"            from group file: {group_file}")
-                from distribution.project_helper import ProjectManager
-                return ProjectManager(self.all_vars).f_ids_inmatdir
+                materials_dir_pt = self.proj_vars["materials_DIR"][1]
+                f_ids_inmatdir   = os.path.join(materials_dir_pt, DEFAULT.f_ids)
+                return f_ids_inmatdir
             else:
                 print(f'    ERR! Cannot find group file: {group_file}. Cannot continue.')
                 return False
-
-
-    def prep_4stats(self, fs = False):
-        """create DIRs for stats (as per setup/stats.json)
-           get group file (provided by user)
-           return final stats_grid_file that will be used for statistical analysis
-        """
-        dir_4stats       = makedir_ifnot_exist(self.proj_vars["STATS_PATHS"]["STATS_HOME"])
-        fname_groups     = self.proj_vars['fname_groups']
-        file_other_stats = []
-        file_names = self.proj_vars["STATS_FILES"]
-        for file in ["fname_fs_all_stats", "fname_func_all_stats", "fname_other_stats"]:
-            file_name = self.proj_vars[file]
-            if file_name:
-                if file_name == "default":
-                    file_name = file_names[file]
-                file_name = f'{file_name}.{file_names["file_type"]}'
-                file_other_stats.append(file_name)
-        for file in ["fname_Outcor", "fname_eTIVcor", "fname_NaNcor"]:
-            file_name = f'{file_names[file]}.{file_names["file_type"]}'
-            file_other_stats.append(file_name)
-        if not self.get_files_for_stats(dir_4stats,
-                            [fname_groups,]):
-            sys.exit()
-        self.get_files_for_stats(dir_4stats,
-                            file_other_stats)
-        return fname_groups
-
-
-    def prep_4fs_stats(self):
-        '''create DIR to store stats files
-            check if processed subjects are on the local computer
-            if yes:
-                copy corresponding stats files to stats DIR
-                return OK to perform stats
-            else:
-                return False
-        '''
-        dir_4stats       = makedir_ifnot_exist(self.proj_vars["STATS_PATHS"]["STATS_HOME"])
-        local, PROCESSED_FS_DIR, _ = self.get_local_remote_dir(self.proj_vars["PROCESSED_FS_DIR"])
-        subjects =  os.listdir(PROCESSED_FS_DIR)
-
-        if local:
-            fname_groups     = self.proj_vars['fname_groups']
-            if self.get_files_for_stats(dir_4stats,
-                                       [fname_groups, DEFAULT.f_ids]):
-                from distribution.project_helper import ProjectManager
-                subjects = ProjectManager(self.all_vars)._ids_bids
-                print("subjects for stats are: ", subjects)
-        return self.extract_stats_from_archive(subjects, PROCESSED_FS_DIR)
 
 
     def extract_stats_from_archive(self, subjects, PROCESSED_FS_DIR):
