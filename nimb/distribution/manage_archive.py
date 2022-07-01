@@ -2,7 +2,7 @@
 if processed data is stored as zip archived
 script extracts of specific folders
 """
-archive_types = ('.zip', '.gz', '.tar.gz')
+archives_supported = ('.zip', '.gz', '.tar.gz')
 
 import os
 import zipfile
@@ -12,7 +12,7 @@ import shutil
 def is_archive(file):
     archived = False
     archive_type = 'none'
-    for ending in archive_types:
+    for ending in archives_supported:
         if file.endswith(ending):
             archived = True
             archive_type = ending

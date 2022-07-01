@@ -1,5 +1,6 @@
 #!/bin/python
 '''
+version: 20220630
 Extract the stats data for all subjects located in a folder, to 2/3 excel files
 
 Args:
@@ -25,18 +26,6 @@ import time
 import logging
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
-
-archive_types = ('.zip', '.gz', '.tar.gz')
-
-def is_archive(file):
-    archived = False
-    archive_type = 'none'
-    for ending in archive_types:
-        if file.endswith(ending):
-            archived = True
-            archive_type = ending
-            break
-    return archived, archive_type
 
 
 def chk_if_all_stats_present(_SUBJECT, stats_dir_path, miss = dict()):
@@ -213,19 +202,20 @@ class FSStats2Table:
             # for hemisphere in fs_definitions.all_data[stats_param]['hemi']:
                 file = atlas_definitions.stats_f(self.fsver, atlas, 'stats', hemisphere)
                 # file = self.get_file.stats_f(atlas, 'stats', hemisphere)
-                f_stats_abspath = path.join(path_2sub, file)
-                if not self.f_exists(f_stats_abspath, file):
-                    file = atlas_definitions.stats_f(self.fsver, atlas, 'stats_old', hemisphere)
-                    f_stats_abspath = path.join(path_2sub, file)
+                self.f_stats_abspath = path.join(path_2sub, file)
+                if not self.f_exists(self.f_stats_abspath):
+                    file = atlas_definitions.stats_f(self.fsver, atlas,
+                                                    'stats_old', hemisphere)
+                    self.f_stats_abspath = path.join(path_2sub, file)
                     logger.info(f'        using old version of {file}')
-                if self.f_exists(f_stats_abspath, file):
+                if self.f_exists(self.f_stats_abspath):
                     content = ""
                     try:
-                        content = list(open(f_stats_abspath,'r'))
+                        content = list(open(self.f_stats_abspath,'r'))
                     except Exception as e:
                         print(e)
                     if not content:
-                        print("ERR! file: ", f_stats_abspath, " is empty")
+                        print("ERR! file: ", self.f_stats_abspath, " is empty")
                         break
                     df, extra_measures = self.get_values(atlas, content, file, sub)
                     parameters = atlas_definitions.atlas_data[atlas]['parameters']
@@ -250,9 +240,9 @@ class FSStats2Table:
                         # self.add_sheet_2df(df, sheetName, fs_definitions.all_data["header_fs2nimb"], atlas)
 
 
-    def get_values(self, atlas, content, file_stats, sub):
+    def get_values(self, atlas, content, file_name, sub):
         if atlas in self.subcort_atlases:
-            if '.v12' in file_stats or '.v21' in file_stats:
+            if '.v12' in file_name or '.v21' in file_name:
                 new_version = False
                 new_files = ('segmentHA_T1.sh',
                             'segmentThalamicNuclei.sh',
@@ -273,7 +263,7 @@ class FSStats2Table:
                     df=pd.DataFrame(np.repeat('nan',len(index_df)), columns=[sub], index=index_df)
                     df=df.T
             else:
-                df = self.read_BS_HIP_v10(file_stats, sub)
+                df = self.read_BS_HIP_v10(sub)
         else:
             values_raw = content[content.index([x for x in content if 'ColHeaders' in x][0]):]
             if len(atlas_definitions.atlas_data[atlas]["hemi"]) < 2:
@@ -297,11 +287,11 @@ class FSStats2Table:
         return param
 
 
-    def read_BS_HIP_v10(self, file, sub):
+    def read_BS_HIP_v10(self, sub):
         '''to read old version FS 6 and older of the brainstem and hippocampus
         stats file
         '''
-        df=pd.read_table(file)
+        df=pd.read_table(self.f_stats_abspath)
         df.loc[-1]=df.columns.values
         df.index=df.index+1
         df=df.sort_index()
@@ -409,11 +399,11 @@ class FSStats2Table:
         return ending
 
 
-    def f_exists(self, f_abspath, file):
+    def f_exists(self, f_abspath):
         f_exists = True
         if not path.isfile(f_abspath):
             f_exists = False
-            logger.info(f'        ERROR {file} is missing')
+            logger.info(f'        ERROR {f_abspath} is missing')
         return f_exists
 
 
@@ -514,6 +504,19 @@ def get_parameters(projects):
     return params
 
 
+# archives_supported = ('.zip', '.gz', '.tar.gz')
+
+# def is_archive(file):
+#     archived = False
+#     archive_type = 'none'
+#     for ending in archives_supported:
+#         if file.endswith(ending):
+#             archived = True
+#             archive_type = ending
+#             break
+#     return archived, archive_type
+
+
 if __name__ == "__main__":
 
     try:
@@ -529,6 +532,7 @@ if __name__ == "__main__":
     from setup.get_vars import Get_Vars
     from stats.db_processing import Table
     from distribution.distribution_definitions import DEFAULT
+    from distribution.manage_archive import is_archive
     from processing.atlases import atlas_definitions
     import fs_definitions
 
