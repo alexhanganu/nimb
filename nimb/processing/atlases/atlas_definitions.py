@@ -676,7 +676,7 @@ def get():#_dipy_labels:
     return d1
 
 
-def stats_f(fsver, atlas, _dir = "stats", hemi=["".join(hemis)]):
+def stats_f(fsver, atlas, _dir = "stats", hemi="".join(hemis)):
     mri_key = ""
     fs_key = "fs"
     if fsver < "7" and "fs6_stats_f" in atlas_data[atlas]:
