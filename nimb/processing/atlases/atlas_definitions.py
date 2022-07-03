@@ -6,22 +6,12 @@ import os
 file_FSLabels   = "nimb/processing/atlases/FreeSurferColorLUT.txt"
 file_DipyLabels = "nimb/processing/atlases/label_info.txt"
 
-BS_Hip_Tha_stats_f = {
-    'Brainstem':('mri/brainstemSsVolumes.v10.txt','stats/brainstem.v12.stats','stats/aseg.brainstem.volume.stats'),
-    'HIPL'     :('mri/hippoSfVolumes-T1.v10.txt','stats/lh.hipposubfields.T1.v21.stats','stats/aseg.hippo.lh.volume.stats'),
-    'HIPR'     :('mri/hippoSfVolumes-T1.v10.txt','stats/rh.hipposubfields.T1.v21.stats','stats/aseg.hippo.rh.volume.stats'),
-    'AMYL'     :('stats/amygdalar-nuclei.lh.T1.v21.stats',),
-    'AMYR'     :('stats/amygdalar-nuclei.rh.T1.v21.stats',),
-    'THAL'     :('stats/thalamic-nuclei.lh.v12.T1.stats',),
-    'THAR'     :('stats/thalamic-nuclei.rh.v12.T1.stats',)}
 '''this is used in fs_stats2table to add columns to specific sheets'''
 aparc_file_extra_measures = {
     'SurfArea': 'Cortex_WhiteSurfArea',
     'ThickAvg': 'Cortex_MeanThickness',
     'GrayVol' : 'Cortex_CortexVol',
     'NumVert' : 'Cortex_NumVert',}
-parc_DS_f2rd ={'L':'lh.aparc.a2009s.stats','R':'rh.aparc.a2009s.stats'}
-parc_DK_f2rd ={'L':'lh.aparc.stats','R':'rh.aparc.stats'}
 
 hemis = ['lh','rh']
 hemis_long = {"Left": "lh",
@@ -107,14 +97,14 @@ atlas_data = {
                       'G_occipital_middle', 'G_occipital_sup', 'G_oc-temp_lat-fusifor', 'G_oc-temp_med-Lingual', 'G_oc-temp_med-Parahip',
                       'G_orbital', 'G_pariet_inf-Angular', 'G_pariet_inf-Supramar', 'G_parietal_sup', 'G_postcentral', 'G_precentral',
                       'G_precuneus', 'G_rectus', 'G_subcallosal', 'G_temp_sup-G_T_transv', 'G_temp_sup-Lateral', 'G_temp_sup-Plan_polar', 
-                    'G_temp_sup-Plan_tempo', 'G_temporal_inf', 'G_temporal_middle', 'Lat_Fis-ant-Horizont', 'Lat_Fis-ant-Vertical',
-                    'Lat_Fis-post', 'Pole_occipital', 'Pole_temporal', 'S_calcarine', 'S_central', 'S_cingul-Marginalis',
-                    'S_circular_insula_ant', 'S_circular_insula_inf', 'S_circular_insula_sup', 'S_collat_transv_ant',
-                    'S_collat_transv_post', 'S_front_inf', 'S_front_middle', 'S_front_sup', 'S_interm_prim-Jensen',
-                    'S_intrapariet_and_P_trans', 'S_oc_middle_and_Lunatus', 'S_oc_sup_and_transversal', 'S_occipital_ant',
-                    'S_oc-temp_lat', 'S_oc-temp_med_and_Lingual', 'S_orbital_lateral', 'S_orbital_med-olfact', 'S_orbital-H_Shaped',
-                    'S_parieto_occipital', 'S_pericallosal', 'S_postcentral', 'S_precentral-inf-part', 'S_precentral-sup-part',
-                    'S_suborbital', 'S_subparietal', 'S_temporal_inf', 'S_temporal_sup', 'S_temporal_transverse',],
+                      'G_temp_sup-Plan_tempo', 'G_temporal_inf', 'G_temporal_middle', 'Lat_Fis-ant-Horizont', 'Lat_Fis-ant-Vertical',
+                      'Lat_Fis-post', 'Pole_occipital', 'Pole_temporal', 'S_calcarine', 'S_central', 'S_cingul-Marginalis',
+                      'S_circular_insula_ant', 'S_circular_insula_inf', 'S_circular_insula_sup', 'S_collat_transv_ant',
+                      'S_collat_transv_post', 'S_front_inf', 'S_front_middle', 'S_front_sup', 'S_interm_prim-Jensen',
+                      'S_intrapariet_and_P_trans', 'S_oc_middle_and_Lunatus', 'S_oc_sup_and_transversal', 'S_occipital_ant',
+                      'S_oc-temp_lat', 'S_oc-temp_med_and_Lingual', 'S_orbital_lateral', 'S_orbital_med-olfact', 'S_orbital-H_Shaped',
+                      'S_parieto_occipital', 'S_pericallosal', 'S_postcentral', 'S_precentral-inf-part', 'S_precentral-sup-part',
+                      'S_suborbital', 'S_subparietal', 'S_temporal_inf', 'S_temporal_sup', 'S_temporal_transverse',],
             'header_suppl':['Cortex_MeanThickness', 'Cortex_WhiteSurfArea', 'Cortex_CortexVol',
                     'Cortex_NumVert', 'UnsegmentedWhiteMatter'],
             "fs_stats_f":"lh.aparc.a2009s.stats",},
@@ -694,6 +684,43 @@ def stats_f(fsver, atlas, _dir = "stats", hemi="".join(hemis)):
     return os.path.join(_dir, file)
 
 
+def all_stats_files():
+    """extracts all statistical files for each atlas
+    Args:
+        None
+    Return:
+        {atlas: [stats/lh.stats, stats/rh.stats],}
+    """
+    def get_files(atlas, hemi):
+        files = [stats_f("7", atlas, hemi = hemi)]
+        if "fs6_stats_f" in atlas_data[atlas]:
+            files = files + [stats_f("6", atlas, hemi = hemi)]
+        return files
+
+    stats_files = dict()
+    for atlas in atlas_data:
+        stats_files[atlas] = []
+        if len(atlas_data[atlas]["hemi"]) > 1:
+            for hemi in atlas_data[atlas]["hemi"]:
+                files = get_files(atlas, hemi)
+                stats_files[atlas] += files
+        else:
+            files = get_files(atlas, hemi = "".join(hemis))
+            stats_files[atlas] = files
+    return stats_files
+
+
+# # MUST be considered for removal. Currently used in: ?
+# BS_Hip_Tha_stats_f = {
+#     'Brainstem':('mri/brainstemSsVolumes.v10.txt','stats/brainstem.v12.stats','stats/aseg.brainstem.volume.stats'),
+#     'HIPL'     :('mri/hippoSfVolumes-T1.v10.txt','stats/lh.hipposubfields.T1.v21.stats','stats/aseg.hippo.lh.volume.stats'),
+#     'HIPR'     :('mri/hippoSfVolumes-T1.v10.txt','stats/rh.hipposubfields.T1.v21.stats','stats/aseg.hippo.rh.volume.stats'),
+#     'AMYL'     :('stats/amygdalar-nuclei.lh.T1.v21.stats',),
+#     'AMYR'     :('stats/amygdalar-nuclei.rh.T1.v21.stats',),
+#     'THAL'     :('stats/thalamic-nuclei.lh.v12.T1.stats',),
+#     'THAR'     :('stats/thalamic-nuclei.rh.v12.T1.stats',)}
+# parc_DS_f2rd ={'L':'lh.aparc.a2009s.stats','R':'rh.aparc.a2009s.stats'}
+# parc_DK_f2rd ={'L':'lh.aparc.stats','R':'rh.aparc.stats'}
 # hemi3 = {'lh':'lh.', 'rh':'rh.', 'lhrh':''}
 
 

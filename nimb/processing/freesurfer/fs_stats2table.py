@@ -28,67 +28,6 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 
-def chk_if_all_stats_present(_SUBJECT, stats_dir_path, miss = dict()):
-    ''' check if subject has all stats files
-    Args:
-        _SUBJECT: sub to check, str
-        stats_dir_path: path to _SUBJECT + _SUBJECTS
-        miss : dictionary with missing data, to be populated
-    Return:
-        ready: _SUBJECT has all required files and is ready to undergo stats extraction
-        miss: newly populated dictionary with missing _SUBJECT or missing files
-    '''
-    def add_2dict(d, key, val):
-        if key not in d:
-            d[key] = list()
-        if val:
-            d[key].append(val)
-        return d
-
-    ready = True
-
-    archived, _ = is_archive(_SUBJECT)
-    if archived:
-        logger.info(f'subject: {_SUBJECT} is archived. Please run through nimb.py -project PROJECT_NAME -process run -do fs-get-stats')
-        ready = False
-    else:
-        for sheet in atlas_definitions.BS_Hip_Tha_stats_f:
-            try:
-                file_with_stats = [i for i in atlas_definitions.BS_Hip_Tha_stats_f[sheet] if path.exists(path.join(stats_dir_path.replace('/stats',''),i))][0]
-                if not file_with_stats:
-                    logger.info('missing: {}'.format(sheet))
-                    ready = False
-                    miss = add_2dict(miss, _SUBJECT, sheet)
-            except Exception as e:
-                logger.info(e)
-                ready = False
-                miss = add_2dict(miss, _SUBJECT, sheet)
-        if not path.exists(path.join(stats_dir_path, 'aseg.stats')):
-                logger.info('missing: aseg.stats')
-                ready = False
-                miss = add_2dict(miss, _SUBJECT, 'VolSeg')
-        for hemisphere in atlas_definitions.parc_DK_f2rd:
-            file_with_stats = atlas_definitions.parc_DK_f2rd[hemisphere]
-            if not path.isfile(path.join(stats_dir_path,file_with_stats)):
-                logger.info('missing: {}'.format(file_with_stats))
-                ready = False
-                miss = add_2dict(miss, _SUBJECT, file_with_stats)
-        for hemisphere in atlas_definitions.parc_DS_f2rd:
-            file_with_stats = atlas_definitions.parc_DS_f2rd[hemisphere]
-            if not path.isfile(path.join(stats_dir_path,file_with_stats)):
-                logger.info('missing: {}'.format(file_with_stats))
-                ready = False
-                miss = add_2dict(miss, _SUBJECT, file_with_stats)
-        file_with_stats = 'wmparc.stats'
-        if not path.isfile(path.join(stats_dir_path,file_with_stats)):
-                ready = False
-                miss = add_2dict(miss, _SUBJECT, file_with_stats)
-                logger.info('missing: {}'.format(file_with_stats))
-    return ready, miss
-
-
-
-
 class FSStats2Table:
     '''extract stats of subjects to table
     Args:
@@ -115,14 +54,14 @@ class FSStats2Table:
         self.big_file          = big_file
         self.data_only_volumes = data_only_volumes
         self.use_params_nimb   = use_params_nimb
-        self.dir_stats         = 'stats'
         self.miss              = dict()
         self.fsver             = fs_ver#'7.2.0'
         self.atlas_data        = atlas_definitions.atlas_data
+        self.stats_files       = atlas_definitions.all_stats_files()
         # aiming to create independent sheet for subcortical structures;
         # Name MUST be similar to atlas in atlas_definitions.atlas_data
-        self.criteria_4subcort = ['SubCtx', 'Volume_mm3']
         self.nuclei_atlases    = [i for i in self.atlas_data if "nuclei" in self.atlas_data[i]["group"]]
+        self.criteria_4subcort = ['SubCtx', 'Volume_mm3']
         self.sheet_subcort     = "SubCtx_Volmm3"
 
         self.define_file_names(new_date)
@@ -176,8 +115,8 @@ class FSStats2Table:
             subs_left = len(self.ls_subjects[self.ls_subjects.index(sub):])
             logger.info(f'    reading: {sub}; left: {subs_left}')
             path_2sub        = self.get_path(self.PATH2subjects, sub)
-            stats_dir_path   = self.get_path(path_2sub, self.dir_stats)
-            ready, self.miss = chk_if_all_stats_present(sub, stats_dir_path, self.miss)
+            ready           = self.chk_if_all_stats_present(sub,
+                                                            path_2sub)
             if ready:
                 logger.info('    extracting stats for {}'.format(sub))
                 self.get_fs_stats_2table(path_2sub, sub)
@@ -186,6 +125,38 @@ class FSStats2Table:
         self.writer_nimb.save()
         self.save_missing()
         self.make_one_sheet()
+
+
+    def chk_if_all_stats_present(self,
+                                _SUBJECT,
+                                path_2sub):
+        ''' check if subject has all stats files
+        Args:
+            _SUBJECT: sub to check, str
+            path_2sub: path to _SUBJECT
+        Return:
+            ready: _SUBJECT has all required files and is ready to undergo stats extraction
+            populates self.miss with new missing _SUBJECT or missing files
+        '''
+        def add_2dict(_SUBJECT, file):
+            if _SUBJECT not in self.miss:
+                self.miss[_SUBJECT] = list()
+            self.miss[_SUBJECT].append(file)
+
+        ready = True
+        archived, _ = is_archive(_SUBJECT)
+        if archived:
+            logger.info(f'subject: {_SUBJECT} is archived. Please run through nimb.py -project PROJECT_NAME -process run -do fs-get-stats')
+            ready = False
+        else:
+            for atlas in self.stats_files:
+                for file in self.stats_files[atlas]:
+                    if not path.isfile(path.join(path_2sub
+                                                file)):
+                        logger.info(f'missing: {file}')
+                        ready = False
+                        add_2dict(_SUBJECT, file)
+        return ready
 
 
     def get_fs_stats_2table(self, path_2sub, sub):
@@ -298,7 +269,6 @@ class FSStats2Table:
         return df.transpose()
 
 
-
     def get_extra_measures(self, atlas, content):
         '''aparc files have a list of additional parameters in the
         lines that start with the word "Measure"
@@ -405,7 +375,7 @@ class FSStats2Table:
 
     def save_missing(self):
         if self.miss:
-            logger.info('ERROR: some subjects are missing the required files. Check file: {}'.format(self.f_miss))
+            logger.info(f'ERROR: some subjects are missing the required files. Check file: {self.f_miss}')
             self.save_json(self.miss, self.f_miss)
 
 
