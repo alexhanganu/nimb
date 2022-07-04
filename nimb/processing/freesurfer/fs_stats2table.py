@@ -54,15 +54,15 @@ class FSStats2Table:
         self.big_file          = big_file
         self.data_only_volumes = data_only_volumes
         self.use_params_nimb   = use_params_nimb
-        self.miss              = dict()
         self.fsver             = fs_ver#'7.2.0'
         self.atlas_data        = atlas_definitions.atlas_data
-        self.stats_files       = atlas_definitions.all_stats_files()
+        self.stats_files       = atlas_definitions.all_stats_files(self.fsver)
         # aiming to create independent sheet for subcortical structures;
         # Name MUST be similar to atlas in atlas_definitions.atlas_data
         self.nuclei_atlases    = [i for i in self.atlas_data if "nuclei" in self.atlas_data[i]["group"]]
         self.criteria_4subcort = ['SubCtx', 'Volume_mm3']
         self.sheet_subcort     = "SubCtx_Volmm3"
+        self.miss              = dict()
 
         self.define_file_names(new_date)
         self.run()
@@ -84,16 +84,22 @@ class FSStats2Table:
 
         if new_date:
             date = str(time.strftime('%Y%m%d', time.localtime()))
-            file_name_nimb_vars = f"{fname_fs_per_param}_{date}.xlsx"
-            file_name_fs_vars   = f'stats_fs_with_fs_var_names_{date}.xlsx'
+            file_name_fs_vars        = f'stats_fs_with_fs_var_names_{date}.xlsx'
+            file_name_nimb_vars      = f"{fname_fs_per_param}_{date}.xlsx"
+            file_name_fs_vars_miss   = f'stats_fs_with_fs_var_names_missing_data_{date}.xlsx'
+            file_name_nimb_vars_miss = f"{fname_fs_per_param}_missing_data_{date}.xlsx"
         else:
-            file_name_nimb_vars = f"{fname_fs_per_param}.xlsx"
-            file_name_fs_vars   = 'stats_fs_with_fs_var_names.xlsx'
+            file_name_fs_vars        = 'stats_fs_with_fs_var_names.xlsx'
+            file_name_nimb_vars      = f"{fname_fs_per_param}.xlsx"
+            file_name_fs_vars_miss   = 'stats_fs_with_fs_var_names_missing_data.xlsx'
+            file_name_nimb_vars_miss = f"{fname_fs_per_param}_missing_data.xlsx"
 
         self.dataf_fs          = self.get_path(self.stats_DIR, file_name_fs_vars)
         self.dataf_nimb        = self.get_path(self.stats_DIR, file_name_nimb_vars)
         self.f_miss            = self.get_path(self.stats_DIR,
                                             'subjects_with_missing_files.json')
+        self.dataf_fs_miss          = self.get_path(self.stats_DIR, file_name_fs_vars_miss)
+        self.dataf_nimb_miss        = self.get_path(self.stats_DIR, file_name_nimb_vars_miss)
 
 
     def run(self):
@@ -110,7 +116,6 @@ class FSStats2Table:
         self.sheetnames_nimb  = list()
         self.row = 1
 
-
         for sub in self.ls_subjects:
             subs_left = len(self.ls_subjects[self.ls_subjects.index(sub):])
             logger.info(f'    reading: {sub}; left: {subs_left}')
@@ -124,7 +129,27 @@ class FSStats2Table:
         self.writer_fs.save()
         self.writer_nimb.save()
         self.save_missing()
-        self.make_one_sheet()
+        if self.big_file:
+            self.make_one_sheet()
+
+        if self.miss:
+            self.ls_subjects = list(self.miss.keys())
+            self.writer_fs   = pd.ExcelWriter(self.dataf_fs_miss,   engine = 'xlsxwriter')
+            self.writer_nimb = pd.ExcelWriter(self.dataf_nimb_miss, engine = 'xlsxwriter')
+            self.sheetnames_nimb  = list()
+            self.row = 1
+            for sub in self.ls_subjects:
+                subs_left = len(self.ls_subjects[self.ls_subjects.index(sub):])
+                logger.info(f'\n    reading: {sub}; left: {subs_left}')
+                path_2sub        = self.get_path(self.PATH2subjects, sub)
+                logger.info('    extracting stats for {}'.format(sub))
+                self.get_fs_stats_2table(path_2sub, sub)
+                self.row += 1
+
+            self.writer_fs.save()
+            self.writer_nimb.save()
+            if self.big_file:
+                self.make_one_sheet()
 
 
     def chk_if_all_stats_present(self,
@@ -151,7 +176,7 @@ class FSStats2Table:
         else:
             for atlas in self.stats_files:
                 for file in self.stats_files[atlas]:
-                    if not path.isfile(path.join(path_2sub
+                    if not path.isfile(path.join(path_2sub,
                                                 file)):
                         logger.info(f'missing: {file}')
                         ready = False
@@ -380,17 +405,17 @@ class FSStats2Table:
 
 
     def make_one_sheet(self):
-        if self.big_file:
-            from fs_stats_utils import FSStatsUtils
-            fs_utils = FSStatsUtils(self.dataf_nimb,
-                                    self.stats_DIR,
-                                    self.project_vars["id_col"],
-                                    self.sheetnames_nimb,
-                                    self.sheet_subcort,
-                                    Table)
-            fs_utils.create_BIG_data_file(self.fname_fs_all_stats, self.file_type)
-            if self.data_only_volumes:
-                fs_utils.create_file_with_only_subcort_volumes(self.fname_fs_subcort_vol, self.file_type)
+        from fs_stats_utils import FSStatsUtils
+        fs_utils = FSStatsUtils(self.dataf_nimb,
+                                self.stats_DIR,
+                                self.project_vars["id_col"],
+                                self.sheetnames_nimb,
+                                self.sheet_subcort,
+                                Table)
+        fs_utils.create_BIG_data_file(self.fname_fs_all_stats,
+                                    self.file_type)
+        if self.data_only_volumes:
+            fs_utils.create_file_with_only_subcort_volumes(self.fname_fs_subcort_vol, self.file_type)
 
 
     def get_path(self, link1, link2):
@@ -401,44 +426,6 @@ class FSStats2Table:
         with open(f, 'w') as jf:
             json.dump(d, jf, indent=4)
 
-    # OLD SCRIPTS, were adjusted; 
-    # def get_bs_hip_amy_tha(self, stats_dir_path, sub):
-    #     '''Extracting Brainstem,  Hippocampus, Amygdala, Thalamus'''
-    #     logger.info('    Brainstem,  Hippocampus, Amygdala, Thalamus running')
-    #     for atlas_hemi in BS_Hip_Tha_stats_f:
-    #         file_with_stats = [i for i in BS_Hip_Tha_stats_f[atlas_hemi] if path.exists(path.join(stats_dir_path.replace('/stats',''),i))][0]
-    #         if file_with_stats:
-    #             file = path.join(stats_dir_path.replace('/stats',''), file_with_stats)
-    #             if '.v12' in file_with_stats or '.v21' in file_with_stats:
-    #                 df = self.read_BS_HIP_AMY_THA_v12_v21(file, sub)
-    #             else:
-    #                 df = self.read_BS_HIP_v10(file, sub)
-    #         else:
-    #             logger.info('    ERROR, '+atlas_hemi+' stats file is missing\n')
-    #             index_df = brstem_hip_header[atlas_hemi]
-    #             df=pd.DataFrame(np.repeat('nan',len(index_df)), columns=[sub], index=index_df)
-    #             df=df.T
-    #         self.add_sheet_2df(df, atlas_hemi, brstem_hip_header['all'], atlas_hemi)
-
-
-    # def read_BS_HIP_AMY_THA_v12_v21(self, file, sub):
-    #     content=open(file,'r').readlines()
-    #     if 'amygdalar-nuclei' in file or 'thalamic-nuclei' in file:
-    #         d_data = {i.split(' ')[-1].strip('\n'):i.split(' ')[-2] for i in content[1:]}
-    #     else:
-    #         d_data = {i.split(' ')[-2]:i.split(' ')[-1].strip('\n') for i in content}
-    #         if 'by' in d_data:
-    #             d_data.pop('by', None)
-    #         if d_data:
-    #             if list(d_data.keys())[0] not in brstem_hip_header['all']:
-    #                 new_d_data = dict()
-    #                 for key in d_data:
-    #                     new_d_data[d_data[key]] = key
-    #                 d_data = new_d_data
-    #         else:
-    #             logger.info(f'    ERROR: file {file} has NO content')
-    #             d_data = {'nan': 'nan'}
-    #     return pd.DataFrame(d_data, index=[sub])
 
 
 def get_parameters(projects):
@@ -469,24 +456,11 @@ def get_parameters(projects):
     parser.add_argument(
         "-list_of_subjects", required=False,
         default=[],
-        help="list of subjects to be processed, e.g.,: subject1, subject2",
+        help="list of subjects to be processed, e.g.,: \"subject1\", \"subject2\", written between brackets and devided by commma",
     )
 
     params = parser.parse_args()
     return params
-
-
-# archives_supported = ('.zip', '.gz', '.tar.gz')
-
-# def is_archive(file):
-#     archived = False
-#     archive_type = 'none'
-#     for ending in archives_supported:
-#         if file.endswith(ending):
-#             archived = True
-#             archive_type = ending
-#             break
-#     return archived, archive_type
 
 
 if __name__ == "__main__":
@@ -519,9 +493,10 @@ if __name__ == "__main__":
         all_vars.params.stats_dir = project_vars["STATS_PATHS"]["STATS_HOME"]
     if params.dir_fs_stats != 'default':
         project_vars["PROCESSED_FS_DIR"][1] = params.dir_fs_stats
-    ls_subjects_testing = params.list_of_subjects
-    print("list subjects testing is:", ls_subjects_testing)
-    ls_subjects   = []
+    ls_subjects = params.list_of_subjects
+    if ls_subjects:
+        ls_subjects =  ls_subjects.split(",")
+
 
 
     FSStats2Table(ls_subjects,

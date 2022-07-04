@@ -27,7 +27,7 @@ class FSStatsUtils:
 
     def create_file_with_only_subcort_volumes(self, file_name, file_type):
         '''CREATING ONE BIG STATS FILE'''
-        logger.info('CREATING file with Subcortical Volumes')
+        logger.info('Subcortical Volumes file - CREATING')
 
         df_concat = pd.read_excel(self.dataf, engine = 'openpyxl', sheet_name=self.sheetnames[0])
         df_concat = self.change_column_name(df_concat, self.sheetnames[0])
@@ -71,26 +71,35 @@ class FSStatsUtils:
 
     def create_BIG_data_file(self, file_name, file_type):
 
-        logger.info('CREATING One file for all subjects')
-        df_concat = pd.read_excel(self.dataf, engine = 'openpyxl', sheet_name=self.sheetnames[0], index_col = 0)
-        df_concat = self.change_column_name(df_concat, self.sheetnames[0])
+        logger.info('One file for ALL subjects - CREATING')
+        ready = False
+        try:
+            df_concat = pd.read_excel(self.dataf,
+                                      engine = 'openpyxl',
+                                      sheet_name=self.sheetnames[0],
+                                      index_col = 0)
+            ready = True
+        except Exception as e:
+            print(e)
+        if ready:
+            df_concat = self.change_column_name(df_concat, self.sheetnames[0])
 
-        for sheet in self.sheetnames[1:]:
-            df2 = pd.read_excel(self.dataf, engine = 'openpyxl', sheet_name=sheet, index_col = 0)
-            df2 = self.change_column_name(df2, sheet)
-            frames = (df_concat, df2)
-            df_concat = pd.concat(frames, axis=1, sort=True)
+            for sheet in self.sheetnames[1:]:
+                df2 = pd.read_excel(self.dataf, engine = 'openpyxl', sheet_name=sheet, index_col = 0)
+                df2 = self.change_column_name(df2, sheet)
+                frames = (df_concat, df2)
+                df_concat = pd.concat(frames, axis=1, sort=True)
 
-        df_segmentations = pd.read_excel(self.dataf, engine = 'openpyxl', sheet_name=self.subcort, index_col = 0)
-        frame_final = (df_concat, df_segmentations['eTIV'])
-        df_concat = pd.concat(frame_final, axis=1, sort=True)
-        df_concat.index.name = self._id
+            df_segmentations = pd.read_excel(self.dataf, engine = 'openpyxl', sheet_name=self.subcort, index_col = 0)
+            frame_final = (df_concat, df_segmentations['eTIV'])
+            df_concat = pd.concat(frame_final, axis=1, sort=True)
+            df_concat.index.name = self._id
 
-        path_2filename   = self.get_path(self.stats_DIR, f"{file_name}.{file_type}")
-        print(path_2filename)
-        self.tab.save_df(df_concat, path_2filename, sheet_name = 'stats')
-        logger.info('FINISHED creating One file for all subjects')
-        self.check_nan(df_concat)
+            path_2filename   = self.get_path(self.stats_DIR, f"{file_name}.{file_type}")
+            print(path_2filename)
+            self.tab.save_df(df_concat, path_2filename, sheet_name = 'stats')
+            logger.info('FINISHED creating One file for all subjects')
+            self.check_nan(df_concat)
 
 
     def create_HIP_to_cortex_ratio(self,

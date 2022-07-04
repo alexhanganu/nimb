@@ -1,5 +1,5 @@
 #!/bin/python
-# 2021.11.02
+# 2022.07.02
 
 import os
 
@@ -684,7 +684,7 @@ def stats_f(fsver, atlas, _dir = "stats", hemi="".join(hemis)):
     return os.path.join(_dir, file)
 
 
-def all_stats_files():
+def all_stats_files(fsver):
     """extracts all statistical files for each atlas
     Args:
         None
@@ -692,9 +692,10 @@ def all_stats_files():
         {atlas: [stats/lh.stats, stats/rh.stats],}
     """
     def get_files(atlas, hemi):
-        files = [stats_f("7", atlas, hemi = hemi)]
-        if "fs6_stats_f" in atlas_data[atlas]:
+        if fsver < "7" and "fs6_stats_f" in atlas_data[atlas]:
             files = files + [stats_f("6", atlas, hemi = hemi)]
+        else:
+            files = [stats_f("7", atlas, hemi = hemi)]
         return files
 
     stats_files = dict()
@@ -708,20 +709,6 @@ def all_stats_files():
             files = get_files(atlas, hemi = "".join(hemis))
             stats_files[atlas] = files
     return stats_files
-
-
-# # MUST be considered for removal. Currently used in: ?
-# BS_Hip_Tha_stats_f = {
-#     'Brainstem':('mri/brainstemSsVolumes.v10.txt','stats/brainstem.v12.stats','stats/aseg.brainstem.volume.stats'),
-#     'HIPL'     :('mri/hippoSfVolumes-T1.v10.txt','stats/lh.hipposubfields.T1.v21.stats','stats/aseg.hippo.lh.volume.stats'),
-#     'HIPR'     :('mri/hippoSfVolumes-T1.v10.txt','stats/rh.hipposubfields.T1.v21.stats','stats/aseg.hippo.rh.volume.stats'),
-#     'AMYL'     :('stats/amygdalar-nuclei.lh.T1.v21.stats',),
-#     'AMYR'     :('stats/amygdalar-nuclei.rh.T1.v21.stats',),
-#     'THAL'     :('stats/thalamic-nuclei.lh.v12.T1.stats',),
-#     'THAR'     :('stats/thalamic-nuclei.rh.v12.T1.stats',)}
-# parc_DS_f2rd ={'L':'lh.aparc.a2009s.stats','R':'rh.aparc.a2009s.stats'}
-# parc_DK_f2rd ={'L':'lh.aparc.stats','R':'rh.aparc.stats'}
-# hemi3 = {'lh':'lh.', 'rh':'rh.', 'lhrh':''}
 
 
 # header_fs2nimb = {'Medulla':'medulla','Pons':'pons','SCP':'scp','Midbrain':'midbrain',
