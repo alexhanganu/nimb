@@ -57,30 +57,18 @@ class FSStats2Table:
         self.fsver             = fs_ver#'7.2.0'
         self.atlas_data        = atlas_definitions.atlas_data
         self.stats_files       = atlas_definitions.all_stats_files(self.fsver)
-        # aiming to create independent sheet for subcortical structures;
-        # Name MUST be similar to atlas in atlas_definitions.atlas_data
-        self.nuclei_atlases    = [i for i in self.atlas_data if "nuclei" in self.atlas_data[i]["group"]]
-        self.criteria_4subcort = ['SubCtx', 'Volume_mm3']
-        self.sheet_subcort     = "SubCtx_Volmm3"
         self.miss              = dict()
 
         self.define_file_names(new_date)
+        self.define_atlas_criteria()
         self.run()
 
 
     def define_file_names(self, new_date):
-        self.file_type = self.project_vars["STATS_FILES"]["file_type"]
-        if self.file_type == 'default':
-            self.file_type = DEFAULT.file_type
-        self.fname_fs_all_stats = self.project_vars["STATS_FILES"]["fname_fs_all_stats"]
-        if self.fname_fs_all_stats == 'default':
-            self.fname_fs_all_stats = DEFAULT.fname_fs_all_stats
-        self.fname_fs_subcort_vol = self.project_vars["STATS_FILES"]["fname_fs_subcort_vol"]
-        if self.fname_fs_subcort_vol == 'default':
-            self.fname_fs_subcort_vol = DEFAULT.fname_fs_subcort_vol
-        fname_fs_per_param         = self.project_vars["STATS_FILES"]["fname_fs_per_param"]
+        fname_fs_per_param = self.project_vars["STATS_FILES"]["fname_fs_per_param"]
         if fname_fs_per_param == 'default':
             fname_fs_per_param = DEFAULT.fname_fs_per_param
+        f_miss_name = 'subjects_with_missing_files.json'
 
         if new_date:
             date = str(time.strftime('%Y%m%d', time.localtime()))
@@ -94,12 +82,23 @@ class FSStats2Table:
             file_name_fs_vars_miss   = 'stats_fs_with_fs_var_names_missing_data.xlsx'
             file_name_nimb_vars_miss = f"{fname_fs_per_param}_missing_data.xlsx"
 
-        self.dataf_fs          = self.get_path(self.stats_DIR, file_name_fs_vars)
-        self.dataf_nimb        = self.get_path(self.stats_DIR, file_name_nimb_vars)
-        self.f_miss            = self.get_path(self.stats_DIR,
-                                            'subjects_with_missing_files.json')
-        self.dataf_fs_miss          = self.get_path(self.stats_DIR, file_name_fs_vars_miss)
-        self.dataf_nimb_miss        = self.get_path(self.stats_DIR, file_name_nimb_vars_miss)
+        self.dataf_fs        = self.get_path(self.stats_DIR, file_name_fs_vars)
+        self.dataf_nimb      = self.get_path(self.stats_DIR, file_name_nimb_vars)
+        self.f_miss          = self.get_path(self.stats_DIR, f_miss_name)
+        self.dataf_fs_miss   = self.get_path(self.stats_DIR, file_name_fs_vars_miss)
+        self.dataf_nimb_miss = self.get_path(self.stats_DIR, file_name_nimb_vars_miss)
+
+
+    def define_atlas_criteria(self):
+        self.nuclei_atlases    = [i for i in self.atlas_data if "nuclei" in self.atlas_data[i]["group"]]
+        # aiming to create independent sheet for subcortical structures;
+        # Name MUST be similar to atlas in atlas_definitions.atlas_data
+        params = atlas_definitions.params_vols
+        subcort_atlas          = [i for i in self.atlas_data if self.atlas_data[i]["group"] == "subcortical"]
+        # will use only the Vol parameter
+        subcort_param          = [i for i in params if "Vol" in i]
+        self.criteria_4subcort = subcort_atlas + subcort_param
+        self.sheet_subcort     = subcort_atlas[0] + "_"+params[subcort_param[0]]
 
 
     def run(self):
@@ -406,16 +405,26 @@ class FSStats2Table:
 
     def make_one_sheet(self):
         from fs_stats_utils import FSStatsUtils
+        file_type = self.project_vars["STATS_FILES"]["file_type"]
+        if file_type == 'default':
+            file_type = DEFAULT.file_type
+        fname_fs_all_stats = self.project_vars["STATS_FILES"]["fname_fs_all_stats"]
+        if fname_fs_all_stats == 'default':
+            fname_fs_all_stats = DEFAULT.fname_fs_all_stats
+        fname_fs_subcort_vol = self.project_vars["STATS_FILES"]["fname_fs_subcort_vol"]
+        if fname_fs_subcort_vol == 'default':
+            fname_fs_subcort_vol = DEFAULT.fname_fs_subcort_vol
+
         fs_utils = FSStatsUtils(self.dataf_nimb,
                                 self.stats_DIR,
                                 self.project_vars["id_col"],
                                 self.sheetnames_nimb,
                                 self.sheet_subcort,
                                 Table)
-        fs_utils.create_BIG_data_file(self.fname_fs_all_stats,
-                                    self.file_type)
+        fs_utils.create_BIG_data_file(fname_fs_all_stats,
+                                    file_type)
         if self.data_only_volumes:
-            fs_utils.create_file_with_only_subcort_volumes(self.fname_fs_subcort_vol, self.file_type)
+            fs_utils.create_file_with_only_subcort_volumes(fname_fs_subcort_vol, file_type)
 
 
     def get_path(self, link1, link2):
