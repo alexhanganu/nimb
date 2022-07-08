@@ -550,109 +550,6 @@ def get_rois_freesurfer(atlas_name = '',
     return feats
 
 
-def get_fs_rois_lateralized(atlas, roi = [], meas = None):
-    '''
-    create a dictionary with atlas-based FreeSurfer ROIs, with hemisphere based classification
-    available atlas are based on all_data
-    if atlas defined:
-        Return: {roi':('Left-roi', 'Right-roi')}
-    else:
-        Return: {atlas: {measure: {roi':('roi_lh', 'roi_rh')}}}
-    '''
-    def get_measures(meas, atlas):
-        if not meas:
-            return atlas_data[atlas]['parameters'].values()
-        else:
-            return [meas]
-
-    def get_rois(atlas):
-        if atlas != 'SubCtx':
-            return atlas_data[atlas]['header'].values()
-        else:
-            return get_subcort_lat()
-
-    def get_subcort_lat():
-        subcort_twohemi_rois = list()
-        for i in atlas_data['SubCtx']['header'].values():
-            if i.endswith(f'_{hemis[0]}') or i.endswith(f'_{hemis[1]}'):
-                roi = i.strip(f'_{hemis[0]}').strip(f'_{hemis[1]}')
-                if roi not in subcort_twohemi_rois:
-                    subcort_twohemi_rois.append(roi)
-        return subcort_twohemi_rois
-
-
-    def populate_lateralized(meas_user, ls_atlases):
-        lateralized = {atlas:{} for atlas in ls_atlases}
-        for atlas in lateralized:
-            measures = get_measures(meas_user, atlas)
-            headers  = get_rois(atlas)
-            for meas in measures:
-                lateralized[atlas] = {meas:{header: {} for header in headers}}
-                for header in lateralized[atlas][meas]:
-                    lateralized[atlas][meas][header] = (f'{header}_{meas}_{hemis[0]}_{atlas}',
-                                                    f'{header}_{meas}_{hemis[1]}_{atlas}')
-        return lateralized
-
-
-    if atlas == 'SubCtx' or atlas in atlas_data['atlases'] and atlas_data[atlas]['two_hemi']:
-        return populate_lateralized(meas, [atlas])
-    else:
-        ls_atlases = [atlas for atlas in atlas_data['atlases'] if atlas_data[atlas]['two_hemi']] + ['SubCtx']
-        print(f'{atlas}\
-            is ill-defined or not lateralized. Please use one of the following names:\
-            {ls_atlases}. Returning all lateralized atlases')
-        return populate_lateralized(meas, ls_atlases)
-
-
-# moved to upper def: get_fs_rois_lateralized
-class RReplace():
-    '''written for NIMB ROIs
-        created based on  Desikan/ Destrieux atlases + FreeSurfer measurement (thickness, area, etc.), + Hemisphere
-        e.g.: frontal_middle_caudal_ThickL_DK, where DK stands for Desikan and DS stands for Destrieux
-        extracts roi name and measurement
-        combines roi with contralateral roi
-    Args: feature to
-    Return: {'feature_name':('Left-corresponding-feature', 'Right-corresponding-feature')}
-    '''
-
-    def __init__(self, features):
-        self.add_contralateral_features(features)
-        self.contralateral_features = self.lhrh
-
-    def add_contralateral_features(self, features):
-        self.lhrh = {}
-        for feat in features:
-            meas, struct, _ = GetFSStructureMeasurement().get(feat)
-            lr_feature = feat.replace(f'_{meas}','')
-            if lr_feature not in self.lhrh:
-                self.lhrh[lr_feature] = ''
-            if meas != 'VolSeg':
-                new_struct, hemi = self.get_contralateral_meas(meas)
-                contra_feat = f'{struct}_{new_struct}'
-            else:
-                new_struct, hemi = self.get_contralateral_meas(struct)
-                contra_feat = f'{new_struct}_{meas}'
-            if 'none' not in new_struct:
-                if hemi == 'L':
-                    self.lhrh[lr_feature] = (contra_feat, feat)
-                else:
-                    self.lhrh[lr_feature] = (feat, contra_feat)
-        # self.lhrh
-
-    def get_contralateral_meas(self, param):
-        if "L" in param:
-            return self.rreplace(param, "L", "R", 1), "R"
-        elif "R" in param:
-            return self.rreplace(param, "R", "L", 1), "L"
-        else:
-            # print('    no laterality in : {}'.format(param))
-            return 'none', 'none'
-
-    def rreplace(self, s, old, new, occurence):
-        li = s.rsplit(old, 1)
-        return new.join(li)
-
-
 def get():#_dipy_labels:
     d1 = dict()
     with open(file_DipyLabels, "r") as f:
@@ -709,6 +606,141 @@ def all_stats_files(fsver):
             files = get_files(atlas, hemi = "".join(hemis))
             stats_files[atlas] = files
     return stats_files
+
+
+
+def get_fs_rois_lateralized(atlas, roi = [], meas = None):
+    '''
+    create a dictionary with atlas-based FreeSurfer ROIs, with hemisphere based classification
+    available atlas are based on all_data
+    if atlas defined:
+        Return: {roi':('Left-roi', 'Right-roi')}
+    else:
+        Return: {atlas: {measure: {roi':('roi_lh', 'roi_rh')}}}
+    '''
+    def get_measures(meas, atlas):
+        if not meas:
+            return atlas_data[atlas]['parameters'].values()
+        else:
+            return [meas]
+
+    def get_rois(atlas):
+        if atlas != 'SubCtx':
+            return atlas_data[atlas]['header'].values()
+        else:
+            return get_subcort_lat()
+
+    def get_subcort_lat():
+        subcort_twohemi_rois = list()
+        for i in atlas_data['SubCtx']['header'].values():
+            if i.endswith(f'_{hemis[0]}') or i.endswith(f'_{hemis[1]}'):
+                roi = i.strip(f'_{hemis[0]}').strip(f'_{hemis[1]}')
+                if roi not in subcort_twohemi_rois:
+                    subcort_twohemi_rois.append(roi)
+        return subcort_twohemi_rois
+
+
+    def populate_lateralized(meas_user, ls_atlases):
+        lateralized = {atlas:{} for atlas in ls_atlases}
+        for atlas in lateralized:
+            measures = get_measures(meas_user, atlas)
+            headers  = get_rois(atlas)
+            for meas in measures:
+                lateralized[atlas] = {meas:{header: {} for header in headers}}
+                for header in lateralized[atlas][meas]:
+                    lateralized[atlas][meas][header] = (f'{header}_{meas}_{hemis[0]}_{atlas}',
+                                                    f'{header}_{meas}_{hemis[1]}_{atlas}')
+        return lateralized
+
+
+    if atlas == 'SubCtx' or atlas in atlas_data['atlases'] and atlas_data[atlas]['two_hemi']:
+        return populate_lateralized(meas, [atlas])
+    else:
+        ls_atlases = [atlas for atlas in atlas_data['atlases'] if atlas_data[atlas]['two_hemi']] + ['SubCtx']
+        print(f'{atlas}\
+            is ill-defined or not lateralized. Please use one of the following names:\
+            {ls_atlases}. Returning all lateralized atlases')
+        return populate_lateralized(meas, ls_atlases)
+
+
+def get_lateralized_feats_for_freesurfer():
+    '''create dict() with lateralized data for freesurfer atlases
+    Return: {atlas: {measure: {roi: (left_roi, right_roi)}}}
+    '''
+    lateralized = dict()
+    for atlas in atlases_hemi:
+        lateralized[atlas] = dict()
+        for meas in measures[atlas]:
+            lateralized[atlas][meas] = dict()
+
+    for roi_atlas in cols_X:
+        for atlas in atlases_hemi:
+            atlas_hemi = atlases_hemi[atlas]
+            if atlas_hemi in roi_atlas:
+                roi = roi_atlas.replace(f'_{atlas_hemi}','')
+                contralat_atlas_hemi = atlas_hemi.replace("L", 'R')
+                if atlas in subcort_atlases:
+                    meas = measures[atlas][0]
+                    lateralized[atlas][meas][roi] = (roi_atlas, roi_atlas.replace(atlas_hemi, contralat_atlas_hemi))
+                elif atlas_hemi == 'L_VolSeg':
+                    if roi_atlas.endswith(atlas_hemi):
+                        meas = measures[atlas][0]
+                        lateralized[atlas][meas][roi] = (roi_atlas, roi_atlas.replace(atlas_hemi, contralat_atlas_hemi))
+                else:
+                    for meas in measures[atlas]:
+                        if f'{meas}{atlas_hemi}' in roi_atlas:
+                            lateralized[atlas][meas][roi] = (roi_atlas, roi_atlas.replace(atlas_hemi, contralat_atlas_hemi))
+    return lateralized
+
+
+# moved to upper def: get_fs_rois_lateralized
+class RReplace():
+    '''written for NIMB ROIs
+        created based on  Desikan/ Destrieux atlases + FreeSurfer measurement (thickness, area, etc.), + Hemisphere
+        e.g.: frontal_middle_caudal_ThickL_DK, where DK stands for Desikan and DS stands for Destrieux
+        extracts roi name and measurement
+        combines roi with contralateral roi
+    Args: feature to
+    Return: {'feature_name':('Left-corresponding-feature', 'Right-corresponding-feature')}
+    '''
+
+    def __init__(self, features):
+        self.add_contralateral_features(features)
+        self.contralateral_features = self.lhrh
+
+    def add_contralateral_features(self, features):
+        self.lhrh = {}
+        for feat in features:
+            meas, struct, _ = GetFSStructureMeasurement().get(feat)
+            lr_feature = feat.replace(f'_{meas}','')
+            if lr_feature not in self.lhrh:
+                self.lhrh[lr_feature] = ''
+            if meas != 'VolSeg':
+                new_struct, hemi = self.get_contralateral_meas(meas)
+                contra_feat = f'{struct}_{new_struct}'
+            else:
+                new_struct, hemi = self.get_contralateral_meas(struct)
+                contra_feat = f'{new_struct}_{meas}'
+            if 'none' not in new_struct:
+                if hemi == 'L':
+                    self.lhrh[lr_feature] = (contra_feat, feat)
+                else:
+                    self.lhrh[lr_feature] = (feat, contra_feat)
+        # self.lhrh
+
+    def get_contralateral_meas(self, param):
+        if "L" in param:
+            return self.rreplace(param, "L", "R", 1), "R"
+        elif "R" in param:
+            return self.rreplace(param, "R", "L", 1), "L"
+        else:
+            # print('    no laterality in : {}'.format(param))
+            return 'none', 'none'
+
+    def rreplace(self, s, old, new, occurence):
+        li = s.rsplit(old, 1)
+        return new.join(li)
+
 
 
 # header_fs2nimb = {'Medulla':'medulla','Pons':'pons','SCP':'scp','Midbrain':'midbrain',
