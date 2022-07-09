@@ -32,9 +32,10 @@ def LateralityAnalysis(df,
     return df_lat
 
 
-def plot_laterality_per_group(X,
-                              means,
+def plot_laterality_per_group(ls_of_columns,
+                              data_2plot_per_group,
                               path_2save_img,
+                              on_axis = "X",
                               y_axis_label = 'Laterality Index, right < 0 > left',
                               x_axis_label = 'Regions',
                               plot_title = 'Laterality Index by region, by group',
@@ -42,9 +43,11 @@ def plot_laterality_per_group(X,
                               show = False):
     """creates a plot for laterality analysis
         author: 1st version by Andréanne Bernatchez 202205
+                adjusted by Emmanuelle Mazur-Lainé 202207, Alexandru Hanganu
     Args:
-        X = list() of pandas.DataFrame.columns
-        means = {"group_name": numpy.array(values_to_be_plotted)}
+        ls_of_columns = list() of pandas.DataFrame.columns
+        data_2plot_per_group = {"group_name": numpy.array(values_to_be_plotted)}
+        on_axis = axis chosen to plot the data; default is "X", alternative is "Y"
         path_2save_img = absolute path to save the image
         y_axis_label = label for the y axis
         plot_title = title of the plot
@@ -53,17 +56,26 @@ def plot_laterality_per_group(X,
     Return:
         saves plot
     """
-    groups = list(means.keys())
-    X_axis = np.arange(len(X))
+    groups = list(data_2plot_per_group.keys())
+    axis_vals = np.arange(len(ls_of_columns))
 
-    for group in means:
+    for group in data_2plot_per_group:
         ax_distance = 0.1 * groups.index(group)+0.1
-        X_axis = X_axis + ax_distance
-        plt.bar(X_axis, means[group], 0.2, label = group)
-      
-    plt.xticks(X_axis, X, rotation='vertical')
-    plt.xlabel(x_axis_label)
-    plt.ylabel(y_axis_label)
+        axis_vals = axis_vals + ax_distance
+        if on_axis == "X":
+            plt.bar(axis_vals, data_2plot_per_group[group], 0.2, label = group)
+        else:
+            plt.barh(axis_vals, data_2plot_per_group[group], 0.2, label = group)
+
+    if on_axis == "X":
+        plt.xticks(axis_vals, ls_of_columns, rotation='vertical')
+        plt.xlabel(x_axis_label)
+        plt.ylabel(y_axis_label)
+    else:
+        plt.yticks(axis_vals, ls_of_columns)#, rotation='vertical')
+        plt.ylabel(x_axis_label)
+        plt.xlabel(y_axis_label)
+
     plt.title(plot_title)
     plt.grid(True, color = "grey", linewidth = "0.3", linestyle = "-")
     plt.legend()
@@ -141,6 +153,7 @@ def laterality_per_groups(dict_dfs_per_groups,
                           lat_param_left,
                           lat_param_right,
                           path2save,
+                          on_axis = "X",
                           plot_title = 'Laterality Index by region, by group',
                           dpi = 150,
                           file_name = f'Laterality_results_',
@@ -187,6 +200,7 @@ def laterality_per_groups(dict_dfs_per_groups,
     plot_laterality_per_group(X,
                               laterality_calculated["means"],
                               path_2save_img,
+                              on_axis = on_axis,
                               plot_title = plot_title,
                               dpi = dpi,
                               show = show_img)
