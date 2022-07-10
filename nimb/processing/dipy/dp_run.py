@@ -22,7 +22,7 @@ from dipy.tracking.local_tracking import LocalTracking
 from dipy.tracking.streamline import Streamlines
 from dipy.tracking.metrics import length
 from dipy.segment.mask import median_otsu
-
+from dipy.align.reslice import reslice
 
 class RUNProcessingDIPY:
 
@@ -41,7 +41,9 @@ class RUNProcessingDIPY:
 
     def run(self):
         label_fname = get_fnames('stanford_labels')
-        self.labels = load_nifti_data(label_fname)
+        self.labels, labels_affine, labels_voxel_size = load_nifti(label_fname,
+                                                                    return_voxsize = True)
+
         """
         labels are the image aparc-reduced.nii.gz, which is a modified version
         of FreeSurfer label map aparc+aseg.mgz.
@@ -60,7 +62,23 @@ class RUNProcessingDIPY:
             self.get_subjects()
             for self.subj_id in self.db_dp:
                 gtab = self.get_dwi_data()
+                
+                if self.data.shape[:3] != self.labels.shape:
+                    new_voxel_size = self.get_new_voxel_size(labels_voxel_size)
+                    self.labels, self.labels_affine = reslice(self.labels,
+                                                            labels_affine,
+                                                            labels_voxel_size,
+                                                            new_voxel_size)
                 self.run_connectivity_analysis(gtab)
+
+
+    def run_test_subject(self):
+        self.subj_id = "stanford_hardi"
+        hardi_fname, hardi_bval_fname, hardi_bvec_fname = get_fnames('stanford_hardi')
+        self.data, affine, hardi_img = load_nifti(hardi_fname, return_img=True)
+        bvals, bvecs = read_bvals_bvecs(hardi_bval_fname, hardi_bvec_fname)
+        gtab = gradient_table(bvals, bvecs)
+        return gtab
 
 
     def get_subjects(self):
@@ -72,6 +90,36 @@ class RUNProcessingDIPY:
             self.db_dp = new_subj
         else:
             print(f'{LogLVL.lvl1}ERR: file with subjects is MISSING')
+
+
+    def get_dwi_data(self):
+        print(f"{LogLVL.lvl2}subject: {self.subj_id}")
+        self.data, affine, img = load_nifti(self.db_dp[self.subj_id]["dwi"]["dwi"][0],
+                                            return_img=True)
+        bvals, bvecs = read_bvals_bvecs(self.db_dp[self.subj_id]["dwi"]["bval"][0],
+                                        self.db_dp[self.subj_id]["dwi"]["bvec"][0])
+                                        #f_name.bval; f_name.bvec
+        gtab = gradient_table(bvals, bvecs)
+        self.save_plot(self.data[:,:,self.data.shape[2]//2, 0].T,
+                        f"{self.subj_id}_data")
+        return gtab
+
+
+    def get_new_voxel_size(self, labels_voxel_size):
+        """sometimes data.shape is different from labels.shape
+            script adjusts this
+            author: Emmanuelle Mazur-Lainé
+            data: 20220707
+        Args:
+
+        """
+        data = self.data
+        labels = self.labels
+        new_voxel_size = ((labels.shape[0]*labels_voxel_size[0]/data.shape[0]),
+                          (labels.shape[1]*labels_voxel_size[1]/data.shape[1]),
+                          (labels.shape[2]*labels_voxel_size[2]/data.shape[2]))
+
+        return new_voxel_size
 
 
     def run_connectivity_analysis(self, gtab):
@@ -86,28 +134,6 @@ class RUNProcessingDIPY:
             # csd_peaks = self.make_csd()
             # self.make_tensor()
             # self.make_streamlines_random()
-
-
-    def run_test_subject(self):
-        self.subj_id = "stanford_hardi"
-        hardi_fname, hardi_bval_fname, hardi_bvec_fname = get_fnames('stanford_hardi')
-        self.data, affine, hardi_img = load_nifti(hardi_fname, return_img=True)
-        bvals, bvecs = read_bvals_bvecs(hardi_bval_fname, hardi_bvec_fname)
-        gtab = gradient_table(bvals, bvecs)
-        return gtab
-
-
-    def get_dwi_data(self):
-        print(f"{LogLVL.lvl2}subject: {self.subj_id}")
-        self.data, affine, img = load_nifti(self.db_dp[self.subj_id]["dwi"]["dwi"][0],
-                                            return_img=True)
-        bvals, bvecs = read_bvals_bvecs(self.db_dp[self.subj_id]["dwi"]["bval"][0],
-                                        self.db_dp[self.subj_id]["dwi"]["bvec"][0])
-                                        #f_name.bval; f_name.bvec
-        gtab = gradient_table(bvals, bvecs)
-        self.save_plot(self.data[:,:,self.data.shape[2]//2, 0].T,
-                        f"{self.subj_id}_data")
-        return gtab
 
 
     def get_fiber_direction(self, gtab, data):
@@ -128,6 +154,198 @@ class RUNProcessingDIPY:
             print(f"{LogLVL.lvl1}ERR: cannot continue")
             csapeaks = None
         return csapeaks, white_matter
+
+
+    def make_streamlines(self, csapeaks, white_matter):
+        """Create seeds for fiber tracking from a binary mask,
+            evenly distributed in all voxels of mask which are True 
+            seeds : points qui couvrent les coordonnées où il y a white matter
+        """
+        affine = np.eye(4)
+        seeds = utils.seeds_from_mask(white_matter, affine, density=1)
+        stopping_criterion = BinaryStoppingCriterion(white_matter)
+        streamline_generator = LocalTracking(csapeaks, stopping_criterion, seeds,
+                                             affine=affine, step_size=0.5)
+        streamlines = Streamlines(streamline_generator)
+        '''
+        Streamlines : set de streamlines.
+        Chaque streamline est un array de 3xM. 
+        Chaque ligne correspond aux coordonnées xyz d'un point de la streamline. 
+        Et M (nbr de lignes) est le nbr de points qui composent la streamline.
+        '''
+        
+        ###############################   AJOUTS   ###################################
+        
+        # Downsample pcq streamlines doivent toutes avoir le même nbr de points pour average pointwise euclidean
+        
+        '''from dipy.tracking.streamline import set_number_of_points
+        streamlines = set_number_of_points(streamlines, 3)'''
+        '''https://dipy.org/documentation/1.1.0./reference/dipy.tracking/#set-number-of-points'''
+        
+        
+        '''#compresser pour traitement plus rapide ?
+        # Change rien on dirait
+        
+        from dipy.tracking.streamlinespeed import compress_streamlines
+        streamlines_c = compress_streamlines(streamlines, tol_error=0.2)
+        print(len(streamlines_c))'''
+        
+        
+        self.save_metrics(streamlines)
+        #######--------------------------------------------------------#######
+        
+        # Afficher les streamlines. Était pas ici initialement, je l'ai ajouté pour vérifier
+        
+        # from dipy.viz import colormap, window, actor
+        # # Prepare the display objects.
+        # color = colormap.line_colors(streamlines)
+
+        # streamlines_actor = actor.line(streamlines,
+        #                                colormap.line_colors(streamlines))
+
+        # scene = window.Scene()
+        # scene.add(streamlines_actor)
+
+        # window.record(scene, out_path=f"{self.output_loc}{self.subj_id}_tractogram_EuDX.png", size=(800, 800))
+        
+        # interactive = True
+        # if interactive:
+        #     window.show(scene)
+            
+        # AJOUTER LA SOURCE DU CODE
+        
+        #############################################################################
+        
+        
+        '''
+        ##### CONNECTIVITY_MATRIX function to find out which regions of the brain 
+        are connected by these streamlines. This function takes a set of streamlines 
+        and an array of labels as arguments. It returns the number of streamlines that start and end at 
+        each pair of labels and it can return the streamlines grouped by their endpoints. ######
+        '''
+        M, grouping = utils.connectivity_matrix(streamlines, affine,
+                                                self.labels.astype(np.uint8),
+                                                return_mapping=True,
+                                                mapping_as_streamlines=True)
+        self.save_plot(np.log1p(M),
+                    f"{self.subj_id}_connectivity_all_rois")
+
+        """
+        https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3931231/
+        streamlines found to intersect with the yellow mask in the
+        corpus callosum (CC) using target.
+        Then we used these streamlines
+        to investigate which areas of the cortex are connected using a
+        modified aparc+aseg.mgz label map created by FreeSurfer
+        (Fischl, 2012) of 89 regions.
+        https://dipy.org/documentation/1.0.0./examples_built/segment_clustering_metrics/
+        """
+        # # Using streamlines per ROI
+        # # Corpus callosum
+        # cc_slice = self.labels == 2
+        # cc_streamlines    = utils.target(streamlines, affine, cc_slice)
+        # cc_streamlines    = Streamlines(cc_streamlines)
+        # M_cc, grouping_cc = utils.connectivity_matrix(cc_streamlines, affine,
+        #                                             self.labels.astype(np.uint8),
+        #                                             return_mapping=True,
+        #                                             mapping_as_streamlines=True)
+        # self.save_plot(np.log1p(M_cc),
+        #             f"{self.subj_id}_corpuscallosum_connectivity")
+
+        # # Left_Right_SuperiorFrontal
+        # lr_superiorfrontal_track = grouping[11, 54]
+        # shape     = labels.shape
+        # dm        = utils.density_map(lr_superiorfrontal_track, affine, shape)
+        # lr_sf_trk = Streamlines(lr_superiorfrontal_track)
+
+
+    def save_metrics(self, streamlines):
+        """
+        script to extract metrics
+        and save to a tabular file
+        """
+        # lengths of streamlines
+        lengths = [length(s) for s in streamlines]
+        lengths = np.array(lengths)
+
+        # mean and std
+        average_length = lengths.mean()
+        standard_deviation_lengths = lengths.std()
+
+        # mean curvature, mean orientation and spline for spline interpolation
+        ls_mc = []
+        ls_mo = []
+        ls_spl = []
+        ls_k_curv = []
+        ls_torsion = []
+        
+        #i=0
+        for streamline in streamlines:
+            mc = metrics.mean_curvature(streamline)
+            mo = metrics.mean_orientation(streamline)
+            spl = metrics.spline(streamline)    # sais pas quoi faire avec ça après
+            k = metrics.frenet_serret(streamline)[3]
+            t = metrics.frenet_serret(streamline)[4]
+            
+            ls_mc.append(mc)
+            ls_mo.append(mo)
+            ls_spl.append(spl)
+            ls_k_curv.append(k)
+            ls_torsion.append(t)
+            '''i+=1
+            if i > 15:
+                break'''   # Pour tester rapidement le contenu des listes de stats
+        
+
+        """
+        spline for spline interpolation
+        centre_of_mass
+        mean_curvature,
+        mean_orientation
+        the frenet_serret framework for curvature
+        torsion calculations along a streamline.
+        https://dipy.org/documentation/1.4.1./reference/dipy.tracking/
+        https://dipy.org/documentation/1.1.1./reference/dipy.tracking/
+        """
+        # Saving to tabular file
+
+        # df = pd.DataFrame({"Lengths":lengths}).T
+        df = pd.DataFrame({"Lengths":lengths})
+        df["average_length"] = average_length
+        df["std"] = standard_deviation_lengths
+        df["mean_curvature"] = ls_mc
+        df["mean_orientation"] = ls_mo
+        #df["spline"] = ls_spl
+        #df["curvature_scalar"] = ls_k_curv
+        #df["torsion"] = ls_torsion
+
+        name = ''.join(["lengths_", f"{self.subj_id}", ".csv"])
+        df.to_csv(os.path.join(self.output_loc, name))
+        print("saved to csv")                       
+
+        # from dipy.segment.metric import AveragePointwiseEuclideanMetric
+        # from dipy.segment.clustering import QuickBundles
+        # # Create the instance of `AveragePointwiseEuclideanMetric` to use.
+        # metric = AveragePointwiseEuclideanMetric()
+        # qb = QuickBundles(threshold=10., metric=metric)
+        # clusters = qb.cluster(streamlines)
+        """
+        chk:
+        https://nipype.readthedocs.io/en/latest/users/examples/dmri_connectivity_advanced.html
+        """
+
+
+    def save_plot(self, data, f_name):
+        # fig = plt.figure(figsize=(11,10))
+        plt.subplot(1,2,1)
+        plt.pcolor(data, cmap = 'gray') #interpolation='None', cmap='RdYlBu_r'
+        # plt.yticks(range(len(rois_labels)), rois_labels[0:]);
+        # plt.xticks(range(len(rois_labels)), rois_labels[0:], rotation=90);
+        plt.title(f'Title')
+        plt.colorbar();
+        img_name = os.path.join(self.output_loc, f_name)
+        plt.savefig(img_name)
+        plt.close()
 
 
     def create_mask(self):
@@ -203,105 +421,6 @@ class RUNProcessingDIPY:
 
         # check image
         self.save_plot(fa2[:,:,35].T, f"{self.subj_id}tensor")
-
-
-    def make_streamlines(self, csapeaks, white_matter):
-        affine = np.eye(4)
-        seeds = utils.seeds_from_mask(white_matter, affine, density=1)
-        stopping_criterion = BinaryStoppingCriterion(white_matter)
-        streamline_generator = LocalTracking(csapeaks, stopping_criterion, seeds,
-                                             affine=affine, step_size=0.5)
-        streamlines = Streamlines(streamline_generator)
-        M, grouping = utils.connectivity_matrix(streamlines, affine,
-                                                self.labels.astype(np.uint8),
-                                                return_mapping=True,
-                                                mapping_as_streamlines=True)
-        self.save_plot(np.log1p(M),
-                    f"{self.subj_id}_connectivity_all_rois")
-        self.save_metrics(streamlines)
-
-        """
-        https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3931231/
-        streamlines found to intersect with the yellow mask in the
-        corpus callosum (CC) using target.
-        Then we used these streamlines
-        to investigate which areas of the cortex are connected using a
-        modified aparc+aseg.mgz label map created by FreeSurfer
-        (Fischl, 2012) of 89 regions.
-        https://dipy.org/documentation/1.0.0./examples_built/segment_clustering_metrics/
-        """
-        # # Using streamlines per ROI
-        # # Corpus callosum
-        # cc_slice = self.labels == 2
-        # cc_streamlines    = utils.target(streamlines, affine, cc_slice)
-        # cc_streamlines    = Streamlines(cc_streamlines)
-        # M_cc, grouping_cc = utils.connectivity_matrix(cc_streamlines, affine,
-        #                                             self.labels.astype(np.uint8),
-        #                                             return_mapping=True,
-        #                                             mapping_as_streamlines=True)
-        # self.save_plot(np.log1p(M_cc),
-        #             f"{self.subj_id}_corpuscallosum_connectivity")
-
-        # # Left_Right_SuperiorFrontal
-        # lr_superiorfrontal_track = grouping[11, 54]
-        # shape     = labels.shape
-        # dm        = utils.density_map(lr_superiorfrontal_track, affine, shape)
-        # lr_sf_trk = Streamlines(lr_superiorfrontal_track)
-
-
-    def save_metrics(self, streamlines):
-        """
-        script to extract metrics
-        and save to a tabular file
-        """
-        # saving lengths of streamlines
-        lengths = [length(s) for s in streamlines]
-        lengths = np.array(lengths)
-        average_length = lengths.mean()
-        standard_deviation_lengths = lengths.std()
-
-        """
-        spline for spline interpolation
-        centre_of_mass
-        mean_curvature,
-        mean_orientation
-        the frenet_serret framework for curvature
-        torsion calculations along a streamline.
-        https://dipy.org/documentation/1.4.1./reference/dipy.tracking/
-        https://dipy.org/documentation/1.1.1./reference/dipy.tracking/
-        """
-        # Saving to tabular file
-
-        df = pd.DataFrame(lengths).T
-        df["average_length"] = average_length
-        df["std"] = standard_deviation_lengths
-        df.to_csv(os.path.join(self.output_loc, "lengths.csv"))
-
-
-
-        # from dipy.segment.metric import AveragePointwiseEuclideanMetric
-        # from dipy.segment.clustering import QuickBundles
-        # # Create the instance of `AveragePointwiseEuclideanMetric` to use.
-        # metric = AveragePointwiseEuclideanMetric()
-        # qb = QuickBundles(threshold=10., metric=metric)
-        # clusters = qb.cluster(streamlines)
-        """
-        chk:
-        https://nipype.readthedocs.io/en/latest/users/examples/dmri_connectivity_advanced.html
-        """
-
-
-    def save_plot(self, data, f_name):
-        # fig = plt.figure(figsize=(11,10))
-        plt.subplot(1,2,1)
-        plt.pcolor(data, cmap = 'gray') #interpolation='None', cmap='RdYlBu_r'
-        # plt.yticks(range(len(rois_labels)), rois_labels[0:]);
-        # plt.xticks(range(len(rois_labels)), rois_labels[0:], rotation=90);
-        plt.title(f'Title')
-        plt.colorbar();
-        img_name = os.path.join(self.output_loc, f_name)
-        plt.savefig(img_name)
-        plt.close()
 
 
     # def make_streamlines_random(self):
