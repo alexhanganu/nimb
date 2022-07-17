@@ -49,11 +49,8 @@ class RUNProcessingDIPY:
         To see the FreeSurfer region, label and name, represented by each value
         see label_info.txt in ~/.dipy/stanford_hardi.
         """
-        label_fname = get_fnames('stanford_labels')
-        self.labels, labels_affine, labels_voxel_size = load_nifti(label_fname,
-                                                                    return_voxsize = True)
+        self.get_labels()
 
-        csapeaks = None
         if self.test:
             print(f"{LogLVL.lvl1}testing is activated")
             gtab = self.run_test_subject()
@@ -62,14 +59,33 @@ class RUNProcessingDIPY:
             self.get_subjects()
             for self.subj_id in self.db_dp:
                 gtab = self.get_dwi_data()
-                
-                if self.data.shape[:3] != self.labels.shape:
-                    print(data.shape, self.labels.shape)
-                    print("    data shape and labels have different dimensions")
-                    print("        adjusting dimensions of labels")
-                    self.labels, self.labels_affine = self.adjust_labels_dims(labels_affine,
-                                                                            labels_voxel_size)
+                self.labels_2data_chk()
                 self.run_connectivity_analysis(gtab)
+
+
+    def get_labels(self):
+        label_fname = get_fnames('stanford_labels')
+        self.labels, self.labels_affine, self.labels_voxel_size = load_nifti(label_fname,
+                                                                    return_voxsize = True)
+
+
+    def labels_2data_chk(self):
+        """sometimes data.shape is different from labels.shape
+            script adjusts this
+            author: Emmanuelle Mazur-Lainé
+            date: 20220707
+        """
+        if self.data.shape[:3] != self.labels.shape:
+            print(data.shape, self.labels.shape)
+            print("    data shape and labels have different dimensions")
+            print("        adjusting dimensions of labels")
+            new_voxel_size = ((self.labels.shape[0]*self.labels_voxel_size[0]/self.data.shape[0]),
+                              (self.labels.shape[1]*self.labels_voxel_size[1]/self.data.shape[1]),
+                              (self.labels.shape[2]*self.labels_voxel_size[2]/self.data.shape[2]))
+            self.labels, labels_affine = reslice(self.labels,
+                                                self.labels_affine,
+                                                self.labels_voxel_size,
+                                                new_voxel_size)
 
 
     def run_test_subject(self):
@@ -105,44 +121,21 @@ class RUNProcessingDIPY:
         return gtab
 
 
-    def adjust_labels_dims(self, labels_affine, labels_voxel_size):
-        """sometimes data.shape is different from labels.shape
-            script adjusts this
-            author: Emmanuelle Mazur-Lainé
-            data: 20220707
-        Args:
-
-        """
-        data = self.data
-        labels = self.labels
-        new_voxel_size = ((labels.shape[0]*labels_voxel_size[0]/data.shape[0]),
-                          (labels.shape[1]*labels_voxel_size[1]/data.shape[1]),
-                          (labels.shape[2]*labels_voxel_size[2]/data.shape[2]))
-        labels, labels_affine = reslice(labels,
-                                        labels_affine,
-                                        labels_voxel_size,
-                                        new_voxel_size)
-        return labels, labels_affine
-
-
     def run_connectivity_analysis(self, gtab):
         print(f'{LogLVL.lvl1}white matter and peaks are being extracted')
-        # Get the label from standfort atlas
         csapeaks, white_matter  = self.get_fiber_direction(gtab, self.data)
         if csapeaks:
             print("{LogLVL.lvl2}csapeaks - are ok")
-            self.make_streamlines(csapeaks, white_matter)
-            print('connectivity analysis with stanford atlas, is being performed')
+            streamlines, affine = self.make_streamlines(csapeaks, white_matter)
+            print('connectivity analysis with stanford/desikan atlas, is being performed')
             grouping = self.connectivity_matrix_compute(streamlines,
                                                    affine,
-                                                   labels,
                                                    f"{self.subj_id}_connectivity_all_rois")
             self.save_metrics(streamlines, file_name = f"{self.subj_id}_all_streamlines_metrics.csv")
             print('connectivity analysis per ROIs from stanford atlas, is being performed')
             self.connectivity_matrix_per_roi(streamlines,
                                         grouping,
                                         affine,
-                                        labels,
                                         save_csv_data = False)
             # self.create_mask()
             # csapeaks  = self.get_fiber_direction(gtab, self.b0_mask)
@@ -164,8 +157,8 @@ class RUNProcessingDIPY:
                                               mask=white_matter)
         else:
             print(f"{LogLVL.lvl1}ERR: dimensions are different:")
-            print(f"{LogLVL.lvl2} data shape:         {data.shape}")
-            print(f"{LogLVL.lvl2} white matter shape: {white_matter.shape}")
+            print(f"{LogLVL.lvl2}data shape:         {data.shape}")
+            print(f"{LogLVL.lvl2}white matter shape: {white_matter.shape}")
             print(f"{LogLVL.lvl1}ERR: cannot continue")
             csapeaks = None
         return csapeaks, white_matter
@@ -214,7 +207,6 @@ class RUNProcessingDIPY:
     def connectivity_matrix_compute(self,
                                     streamlines,
                                     affine,
-                                    labels,
                                     plot_file_name):
         '''
         CONNECTIVITY_MATRIX function to find out which regions of the brain 
@@ -223,7 +215,7 @@ class RUNProcessingDIPY:
         each pair of labels and it can return the streamlines grouped by their endpoints
         '''
         M, grouping = utils.connectivity_matrix(streamlines, affine,
-                                                labels.astype(np.uint8),
+                                                self.labels.astype(np.uint8),
                                                 return_mapping=True,
                                                 mapping_as_streamlines=True)
         save_plot(np.log1p(M), plot_file_name)
@@ -234,7 +226,6 @@ class RUNProcessingDIPY:
                                     streamlines,
                                     grouping,
                                     affine,
-                                    labels,
                                     save_csv_data = True):
         """
         https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3931231/
@@ -250,12 +241,12 @@ class RUNProcessingDIPY:
         # Corpus callosum
         # corpus callosum est labeled 2 (voir stanford_hardi/label_info.txt)
         roi = "corpus callosum"
-        cc_slice = labels == 2 
-        target_streamlines = utils.target(streamlines, affine, cc_slice) # cc_slice est le target mask.
+        cc_slice = self.labels == 2 # cc_slice est le target mask
+        target_streamlines = utils.target(streamlines, affine, cc_slice)
         roi_streamlines    = Streamlines(target_streamlines)
         self.connectivity_matrix_compute(roi_streamlines,
                                         affine,
-                                        labels,
+                                        self.labels,
                                         f"{self.subj_id}_{roi}_connectivity")
         if save_csv_data:
             self.save_metrics(roi_streamlines,
@@ -263,13 +254,13 @@ class RUNProcessingDIPY:
 
         # Left_Right_SuperiorFrontal
         roi = "frontal_superior_left_right"
-        # shape     = labels.shape
+        # shape     = self.labels.shape
         # dm        = utils.density_map(lr_superiorfrontal_track, affine, shape)
         target_streamlines = grouping[11, 54]
         roi_streamlines    = Streamlines(target_streamlines)
         self.connectivity_matrix_compute(roi_streamlines,
                                         affine,
-                                        labels,
+                                        self.labels,
                                         f"{self.subj_id}_{roi}_connectivity")
         if save_csv_data:
             self.save_metrics(roi_streamlines,
