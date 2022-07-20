@@ -95,7 +95,7 @@ def get_lateralized_feats(feats,
         lat_param_right = str() for right part laterality parameter, e.g., lh or rh
         print_check = if True will print the results of lateralized features
     Return:
-        {atlas: {measure: {roi: (left_roi, right_roi)}}}
+        {roi: (left_roi, right_roi)}
     '''
 
     def laterality_roi_get(feat, lat_param_left):
@@ -146,6 +146,63 @@ def get_lateralized_feats(feats,
         for key in lhrh_feat_d:
             print(key,":", lhrh_feat_d[key])
     return lhrh_feat_d
+
+
+def get_feats_lateralized_per_lobe(hemis,
+                                   lobes,
+                                   lateralized_lhrh):
+    """aims to create a lateralized dict with features classified per lobe
+    Args:
+        hemis = list(hemisphere_abbreviation_left, hemisphere_abbreviation_left)
+                similar to nimb/processing/atlases/atlas_definitions.hemis
+        lobes = list(of all lobes)
+                similar to nimb/processing/atlases/atlas_definitions.lobes.keys()
+        lateralized_lhrh = dict() from get_lateralized_feats()
+    Return:
+        {lobe_hemi: [features,]}
+    """
+    feats_per_lobe = dict()
+    for hemi in hemis:
+        pos = hemis.index(hemi)
+        for feat in lateralized_lhrh:
+            feat_hemi = lateralized_lhrh[feat][pos]
+            feat_ok = False
+            for lobe in lobes:
+                lobe_hemi = f"{lobe}_{hemi}"
+                if lobe_hemi not in feats_per_lobe:
+                    feats_per_lobe[lobe_hemi] = list()
+                if lobe in feat:
+                    feats_per_lobe[lobe_hemi].append(feat_hemi)
+                    feat_ok = True
+                    break
+                else:
+                    feat_ok = False
+            if not feat_ok:
+                print("not feat: ", feat_hemi)
+    return feats_per_lobe
+
+
+def get_df_data_per_lobe_per_group(dict_dfs_per_groups,
+                                    feats_per_lobe):
+    """will take the pandas.DataFrames per group
+        extract the corresponding features per lobes
+        as per features classified with get_feats_lateralized_per_lobe()
+    Args:
+        dict_dfs_per_groups = {group1: pandas.DataFrame,
+                               group2: pandas.DataFrame}
+        feats_per_lobe = dict() received from get_feats_lateralized_per_lobe()
+    Return:
+        dict_dfs_per_groups = {group1: pandas.DataFrame with feats per lobes,
+                               group2: pandas.DataFrame with feats per lobes}
+    """
+    d_dfs_per_group_per_lobe = dict()
+    for group in dict_dfs_per_groups:
+        df = dict_dfs_per_groups[group]
+        for lobe_hemi in feats_per_lobe:
+            cols = feats_per_lobe[lobe_hemi]
+            df[lobe_hemi] = df[cols].mean(axis = 1)
+        d_dfs_per_group_per_lobe[group] = df[list(feats_per_lobe.keys())]
+    return d_dfs_per_group_per_lobe
 
 
 def laterality_per_groups(dict_dfs_per_groups,
