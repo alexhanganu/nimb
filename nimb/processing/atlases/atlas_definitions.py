@@ -219,6 +219,14 @@ def params_atlas2nimb(atlas_param):
                   'CurvInd'   :'CurvInd'}
     return parameters[atlas_param]
 
+lobes =    {"frontal"  :["precentral","paracentral","parsopercularis",
+                         "parsorbitalis","parstriangularis","subcentral",
+                         "orbital","rectus"],
+            "parietal" :["postcentral","precuneus","supramarginal"],
+            "temporal" :["bankssts","entorhinal","parahippocampal"],
+            "occipital":["cuneus","fusiform","lingual","pericalcarine","calcarine"],
+            "cingulate":["subcallosal",],
+            "insula"   :["insular",]}
 
 def get_freesurfer_labels():
     d1 = dict()
@@ -239,14 +247,6 @@ def header_atlas2nimb():
     Return: dict(atlas_roi: nimb_roi)
     """
     # defining lobes, abbreviations and corresponding regions
-    lobes    =    {"frontal"  :["precentral","paracentral","parsopercularis",
-                                  "parsorbitalis","parstriangularis","subcentral",
-                                 "orbital","rectus"],
-                   "parietal" :["postcentral","precuneus","supramarginal"],
-                   "temporal" :["bankssts","entorhinal","parahippocampal"],
-                   "occipital":["cuneus","fusiform","lingual","pericalcarine","calcarine"],
-                   "cingulate":["subcallosal",],
-                   "insula"   :["insular",]}
     lobes_define ={"frontal"  :["fronto","front"],
                    "parietal" :["parieto","pariet",],
                    "temporal" :["temp",],
@@ -606,7 +606,6 @@ def all_stats_files(fsver):
             files = get_files(atlas, hemi = "".join(hemis))
             stats_files[atlas] = files
     return stats_files
-
 
 
 def get_fs_rois_lateralized(atlas, roi = [], meas = None):
