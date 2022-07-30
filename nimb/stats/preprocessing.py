@@ -32,8 +32,8 @@ class Preprocess:
         '''
         groups = []
         for val in groups_list:
-                if val not in groups:
-                    groups.append(val)
+            if val not in groups:
+                groups.append(val)
         return groups
 
 
@@ -299,3 +299,18 @@ def Z_Scores_create():
     dfzvalues = pd.concat(frame_final,axis=1)
     dfzvalues.to_excel(writer)
     writer.save()
+
+def get_features_clean(df, ls_feats_2rm, ls_params_2rm):
+    ls_of_features_2plot = list()
+    for feat in df.columns.tolist():
+        feat_ok = True
+        for feat2rm in ls_feats_2rm:
+            if feat == feat2rm:
+                feat_ok = False
+                break
+        if feat_ok:
+            for var2rm in ls_params_2rm:
+                feat = feat.replace(var2rm,"")
+            if feat not in ls_of_features_2plot:
+                ls_of_features_2plot.append(feat)
+    return ls_of_features_2plot
