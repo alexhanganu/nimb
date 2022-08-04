@@ -139,9 +139,10 @@ class Table:
             df.drop(columns=cols2drop, inplace=True)
         return df
 
-    def get_dict_with_tables_per_param(self, df,
-                                         variables,
-                                        var_col):
+    def get_dict_with_tables_per_param(self,
+                                       df,
+                                       variables,
+                                       var_col):
         """extracting data per parameter
         Args:
             df = pandas.DataFrame with variables to be extracted
@@ -158,8 +159,56 @@ class Table:
         return df_per_vars
 
 
+    def get_df_with_mean_of_feats_combined(self,
+                                           df,
+                                           feats_combined):
+        """in the pandas.DataFrames
+            will create a column with the means of the
+            features from feats_combined
+        Args:
+            df = pandas.DataFrame
+            feats_combined = {feat_name_combined: [feature_1,feature_2,feature_n]}
+        Return:
+            pandas.DataFrame with feats per feat_name_combined
+        """
+        cols_2rm = list()
+        for feature_main in feats_combined:
+            cols = feats_combined[feature_main]
+            cols_2rm = cols_2rm + cols
+            df[feature_main] = df[cols].mean(axis = 1)
+        df = self.rm_cols_from_df(df, cols_2rm)
+        return df
+
+
     def val_is_nan(self, val):
         return pd.isna(val)
+
+
+    def get_feats_per_lobe(self,
+                            ls_features_2combine,
+                            ls_features_all):
+        """creates a dict() with features per ls_features_2combine
+        Args:
+            ls_features_2combine = list() of features to be searched for and based on them combine other features
+            ls_features_all = list() of all features
+        Return:
+            {feature_common: [features,]}
+        """
+        feats_per_common = dict()
+        for feat in ls_features_all:
+            feat_ok = False
+            for feat_combined in ls_features_2combine:
+                if feat_combined not in feats_per_common:
+                    feats_per_common[feat_combined] = list()
+                if feat_combined in feat:
+                    feats_per_common[feat_combined].append(feat)
+                    feat_ok = True
+                    break
+                else:
+                    feat_ok = False
+            if not feat_ok:
+                print("not feat: ", feat_hemi)
+        return feats_per_common
 
 
     def check_nan(self, df, err_file_abspath):
