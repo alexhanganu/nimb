@@ -35,6 +35,7 @@ class RUNProcessingDIPY:
         self.output_loc = vars_local['NIMB_PATHS']['NIMB_PROCESSED_DIPY']
         self.db_dp      = dict()
         self.test       = all_vars.params.test
+        self.atlas      = "stanford"
 
         self.run()
 
@@ -147,7 +148,10 @@ class RUNProcessingDIPY:
     def get_fiber_direction(self, gtab, data):
         # Getting fiber direction
         csamodel     = shm.CsaOdfModel(gtab, 6)
-        white_matter = binary_dilation((self.labels == 1) | (self.labels == 2))
+        if self.atlas == "stanford":
+            white_matter = binary_dilation((self.labels == 1) | (self.labels == 2))
+        elif self.atlas == "desikan":
+            white_matter = binary_dilation((self.labels == 41) | (self.labels == 2))
         if data.shape[:3] == white_matter.shape:
             csapeaks     = peaks.peaks_from_model(model=csamodel,
                                               data=data,
