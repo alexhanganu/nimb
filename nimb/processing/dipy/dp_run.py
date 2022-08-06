@@ -41,15 +41,6 @@ class RUNProcessingDIPY:
 
 
     def run(self):
-        """
-        labels are the image aparc-reduced.nii.gz, which is a modified version
-        of FreeSurfer label map aparc+aseg.mgz.
-        The corpus callosum region is a combination of FreeSurfer labels 251-255
-        Remaining FreeSurfer labels were re-mapped and reduced
-        so that they lie between 0 and 88.
-        To see the FreeSurfer region, label and name, represented by each value
-        see label_info.txt in ~/.dipy/stanford_hardi.
-        """
         self.get_labels()
 
         if self.test:
@@ -65,7 +56,27 @@ class RUNProcessingDIPY:
 
 
     def get_labels(self):
-        label_fname = get_fnames('stanford_labels')
+        """
+        labels are the image aparc-reduced.nii.gz, which is a modified version
+        of FreeSurfer label map aparc+aseg.mgz.
+        The corpus callosum region is a combination of FreeSurfer labels 251-255
+        Remaining FreeSurfer labels were re-mapped and reduced
+        so that they lie between 0 and 88.
+        To see the FreeSurfer region, label and name, represented by each value
+        see label_info.txt in ~/.dipy/stanford_hardi.
+        """
+        abs_path_current_location = os.path.dirname(os.path.abspath(__file__))
+        if self.atlas == "stanford":
+            label_fname = get_fnames('stanford_labels')
+        elif self.atlas == "desikan":
+            # Downloaded Desikan atlas from : https://neurovault.org/images/23262/
+            label_fname = os.path.join(abs_path_current_location,
+                                        "aparcaseg.nii.gz")
+        elif self.atlas == "destrieux":
+            # Downloaded Destrieux atlas from : https://neurovault.org/images/23264/
+            label_fname = os.path.join(abs_path_current_location,
+                                        "aparc.a2009saseg.nii.gz")
+
         self.labels, self.labels_affine, self.labels_voxel_size = load_nifti(label_fname,
                                                                     return_voxsize = True)
 
@@ -154,11 +165,11 @@ class RUNProcessingDIPY:
             white_matter = binary_dilation((self.labels == 41) | (self.labels == 2))
         if data.shape[:3] == white_matter.shape:
             csapeaks     = peaks.peaks_from_model(model=csamodel,
-                                              data=data,
-                                              sphere=peaks.default_sphere,
-                                              relative_peak_threshold=.8,
-                                              min_separation_angle=45,
-                                              mask=white_matter)
+                                                  data=data,
+                                                  sphere=peaks.default_sphere,
+                                                  relative_peak_threshold=.8,
+                                                  min_separation_angle=45,
+                                                  mask=white_matter)
         else:
             print(f"{LogLVL.lvl1}ERR: dimensions are different:")
             print(f"{LogLVL.lvl2}data shape:         {data.shape}")
@@ -181,30 +192,22 @@ class RUNProcessingDIPY:
         '''
         print("extracting streamlines ...")
         affine = np.eye(4)
-        seeds = utils.seeds_from_mask(white_matter, affine, density=1) # Create seeds for fiber tracking from a binary mask,
-                                                                # evenly distributed in all voxels of mask which are True 
-                                                                # seeds : points qui couvrent les coordonnées où il y a white matter
-        stopping_criterion = BinaryStoppingCriterion(white_matter)
-        streamline_generator = LocalTracking(csapeaks, stopping_criterion, seeds,
-                                             affine=affine, step_size=0.5)
+        seeds = utils.seeds_from_mask(white_matter,
+                                    affine,
+                                    density=1) # Create seeds for fiber tracking from a binary mask,
+                                                # evenly distributed in all voxels of mask which are True 
+                                                # seeds : points qui couvrent les coordonnées où il y a white matter
+        stopping_criterion   = BinaryStoppingCriterion(white_matter)
+        # stopping_criterion = ThresholdStoppingCriterion(csapeaks.gfa, .25)
+        streamline_generator = LocalTracking(csapeaks,
+                                            stopping_criterion,
+                                            seeds,
+                                            affine=affine,
+                                            step_size=0.5)
         streamlines = Streamlines(streamline_generator)
-
-        ###############################   AJOUTS   ###################################
-
-        # Downsample pcq streamlines doivent toutes avoir le même nbr de points pour average pointwise euclidean
-
-        '''from dipy.tracking.streamline import set_number_of_points
-        streamlines = set_number_of_points(streamlines, 3)'''
-        '''https://dipy.org/documentation/1.1.0./reference/dipy.tracking/#set-number-of-points'''
-
-
-        '''#compresser pour traitement plus rapide ?
-        # Change rien on dirait
-
-        from dipy.tracking.streamlinespeed import compress_streamlines
-        streamlines_c = compress_streamlines(streamlines, tol_error=0.2)
-        print(len(streamlines_c))'''
-        #######--------------------------------------------------------#######
+        # # compress streamlines
+        # from dipy.tracking.streamlinespeed import compress_streamlines
+        # streamlines = compress_streamlines(streamlines, tol_error=0.2)
         return streamlines, affine
 
 
@@ -218,7 +221,8 @@ class RUNProcessingDIPY:
         and an array of labels as arguments. It returns the number of streamlines that start and end at 
         each pair of labels and it can return the streamlines grouped by their endpoints
         '''
-        M, grouping = utils.connectivity_matrix(streamlines, affine,
+        M, grouping = utils.connectivity_matrix(streamlines,
+                                                affine,
                                                 self.labels.astype(np.uint8),
                                                 return_mapping=True,
                                                 mapping_as_streamlines=True)
