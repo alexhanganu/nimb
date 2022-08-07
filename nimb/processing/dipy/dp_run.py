@@ -65,17 +65,40 @@ class RUNProcessingDIPY:
         To see the FreeSurfer region, label and name, represented by each value
         see label_info.txt in ~/.dipy/stanford_hardi.
         """
-        abs_path_current_location = os.path.dirname(os.path.abspath(__file__))
+        current_location = os.path.dirname(os.path.abspath(__file__))
+        path_atlas_dir = os.sep.join(current_location.split(os.sep)[:-1], "atlases")
         if self.atlas == "stanford":
             label_fname = get_fnames('stanford_labels')
+            label_file = 'label_info.txt'
         elif self.atlas == "desikan":
             # Downloaded Desikan atlas from : https://neurovault.org/images/23262/
-            label_fname = os.path.join(abs_path_current_location,
+            label_fname = os.path.join(path_atlas_dir,
                                         "aparcaseg.nii.gz")
+            label_file = os.path.join(path_atlas_dir,
+                                        "FreeSurferColorLUT.txt")
         elif self.atlas == "destrieux":
             # Downloaded Destrieux atlas from : https://neurovault.org/images/23264/
-            label_fname = os.path.join(abs_path_current_location,
+            label_fname = os.path.join(path_atlas_dir,
                                         "aparc.a2009saseg.nii.gz")
+            label_file = os.path.join(path_atlas_dir,
+                                        "FreeSurferColorLUT.txt")
+
+        # Creating dictionary from label file
+        f = open(label_file, "r")
+        dic = dict()
+        if atlas == "stanford":
+            for line in f:
+                split_line = line.split(",")
+                if split_line[0].isnumeric()==True:
+                    dic[int(split_line[0])] = split_line[2][2:-2]
+                
+        if atlas == "desikan":
+            for line in f:
+                split_line = line.split()
+                if len(split_line)>0:
+                    if split_line[0].isnumeric()==True:
+                        dic[int(split_line[0])] = split_line[1]
+            dic.pop(0, None)
 
         self.labels, self.labels_affine, self.labels_voxel_size = load_nifti(label_fname,
                                                                     return_voxsize = True)
@@ -143,7 +166,7 @@ class RUNProcessingDIPY:
             grouping = self.connectivity_matrix_compute(streamlines,
                                                    affine,
                                                    f"{self.subj_id}_connectivity_all_rois")
-            self.save_metrics(streamlines, file_name = f"{self.subj_id}_all_streamlines_metrics.csv")
+            self.get_metrics_save(streamlines, file_name = f"{self.subj_id}_all_streamlines_metrics.csv")
             print('connectivity analysis per ROIs from stanford atlas, is being performed')
             self.connectivity_matrix_per_roi(streamlines,
                                         grouping,
@@ -230,52 +253,63 @@ class RUNProcessingDIPY:
         return grouping
 
 
-    def connectivity_matrix_per_roi(self,
-                                    streamlines,
-                                    grouping,
-                                    affine,
-                                    save_csv_data = True):
-        """
-        https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3931231/
-        streamlines found to intersect with the yellow mask in the
-        corpus callosum (CC) using target.
-        Then we used these streamlines
-        to investigate which areas of the cortex are connected using a
-        modified aparc+aseg.mgz label map created by FreeSurfer
-        (Fischl, 2012) of 89 regions.
-        https://dipy.org/documentation/1.0.0./examples_built/segment_clustering_metrics/
-        """
-        # Using streamlines per ROI
-        # Corpus callosum
-        # corpus callosum est labeled 2 (voir stanford_hardi/label_info.txt)
-        roi = "corpus callosum"
-        cc_slice = self.labels == 2 # cc_slice est le target mask
-        target_streamlines = utils.target(streamlines, affine, cc_slice)
-        roi_streamlines    = Streamlines(target_streamlines)
-        self.connectivity_matrix_compute(roi_streamlines,
-                                        affine,
-                                        self.labels,
-                                        f"{self.subj_id}_{roi}_connectivity")
-        if save_csv_data:
-            self.save_metrics(roi_streamlines,
-                            file_name = f"{self.subj_id}_{roi}_metrics.csv")
-
-        # Left_Right_SuperiorFrontal
-        roi = "frontal_superior_left_right"
-        # shape     = self.labels.shape
-        # dm        = utils.density_map(lr_superiorfrontal_track, affine, shape)
-        target_streamlines = grouping[11, 54]
-        roi_streamlines    = Streamlines(target_streamlines)
-        self.connectivity_matrix_compute(roi_streamlines,
-                                        affine,
-                                        self.labels,
-                                        f"{self.subj_id}_{roi}_connectivity")
-        if save_csv_data:
-            self.save_metrics(roi_streamlines,
-                            file_name = f"{self.subj_id}_{roi}_metrics.csv")
+    def save_plot(self, data, f_name):
+        # fig = plt.figure(figsize=(11,10))
+        plt.subplot(1,2,1)
+        plt.pcolor(data, cmap = 'gray') #interpolation='None', cmap='RdYlBu_r'
+        # plt.yticks(range(len(rois_labels)), rois_labels[0:]);
+        # plt.xticks(range(len(rois_labels)), rois_labels[0:], rotation=90);
+        plt.title(f'Title')
+        plt.colorbar();
+        img_name = os.path.join(self.output_loc, f_name)
+        plt.savefig(img_name)
+        plt.close()
 
 
-    def save_metrics(self, streamlines, file_name):
+    def combinations_rois(self, dic):
+        ls_comb_roi = list()
+        for roi in dic.keys():
+            ls_labels = list(dic.keys())
+            for roi2 in ls_labels:
+                if [roi, roi2] in ls_comb_roi or roi==roi2:
+                    continue
+                ls_comb_roi.append([roi,roi2])
+                ls_comb_roi.append([roi2, roi])
+        return ls_comb_roi
+
+
+def connectivity_matrix_per_roi(streamlines,
+                                affine,
+                                labels,
+                                subj_id, dic):
+    """
+    https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3931231/
+    streamlines found to intersect with the yellow mask in the
+    corpus callosum (CC) using target.
+    Then we used these streamlines
+    to investigate which areas of the cortex are connected using a
+    modified aparc+aseg.mgz label map created by FreeSurfer
+    (Fischl, 2012) of 89 regions.
+    https://dipy.org/documentation/1.0.0./examples_built/segment_clustering_metrics/
+    """
+    
+    # Using streamlines per ROI
+    
+    for roi in combinations_rois(dic):
+        roi1 = roi[0]
+        roi2 = roi[1]
+        target_streamlines = grouping[roi1, roi2]
+        rois_streamlines    = Streamlines(target_streamlines)
+        if len(rois_streamlines) > 0:
+            connectivity_matrix_compute(rois_streamlines,
+                            affine,
+                            labels,
+                            f"{subj_id}_{dic[roi1]}_{dic[roi2]}_connectivity")
+    # make density map?
+    dm = utils.density_map(target_streamlines, np.eye(4), labels.shape)
+
+
+    def get_metrics_save(self, streamlines, file_name):
         """
         script to extract metrics
         and save to a tabular file
@@ -298,7 +332,7 @@ class RUNProcessingDIPY:
         chk:
         https://nipype.readthedocs.io/en/latest/users/examples/dmri_connectivity_advanced.html
         """
-        print("saving metrics")
+        print("extracting metrics")
 
         # lengths of streamlines
         lengths = [length(s) for s in streamlines]
@@ -341,96 +375,200 @@ class RUNProcessingDIPY:
 
         df.to_csv(os.path.join(self.output_loc, file_name))
         print("saved to csv")
+        return lengths, average_length, standard_deviation_lengths, ls_mc, ls_mo, ls_spl, ls_k_curv, ls_torsion
 
 
-    def save_plot(self, data, f_name):
-        # fig = plt.figure(figsize=(11,10))
-        plt.subplot(1,2,1)
-        plt.pcolor(data, cmap = 'gray') #interpolation='None', cmap='RdYlBu_r'
-        # plt.yticks(range(len(rois_labels)), rois_labels[0:]);
-        # plt.xticks(range(len(rois_labels)), rois_labels[0:], rotation=90);
-        plt.title(f'Title')
-        plt.colorbar();
-        img_name = os.path.join(self.output_loc, f_name)
-        plt.savefig(img_name)
-        plt.close()
+    def save_metrics(self,
+                    streamlines,
+                    affine,
+                    labels,
+                    subj_id):
+        
+        df = pd.DataFrame()
+        ls_metrics = ["1. Lengths", "2. Average length", "3. std", "4. Mean curvature", 
+                  "5. Mean orientation", "6. Spline", "7. Curvature scalar", "8. Torsion"]
+
+        #i=1
+        ls_all_roi = dic.values()
+        ls_dimensions_index = list()
+        for roi in dic.keys():
+            ls_roi = list()
+            #if 5>=i>3:
+            # saving metrics per ROI
+            roi_slice = (labels == roi)
+            target_streamlines = utils.target(streamlines, affine, roi_slice)
+            roi_streamlines    = Streamlines(target_streamlines)
+
+            for metric in ls_metrics:
+                ls_roi.append(dic[roi])
+
+            lengths, average_length, standard_deviation_lengths, mc, mo, spl, k_curv, torsion = get_metrics_save(roi_streamlines)
+            col = [ls_roi, ls_metrics]
+            tuples = list(zip(*col))
+
+            df_values = pd.DataFrame([lengths.tolist(), [average_length], [standard_deviation_lengths], 
+                                   mc, mo, spl, k_curv, torsion]).T
+
+            df_new = pd.DataFrame(df_values.values,
+                                  columns = pd.MultiIndex.from_tuples(tuples, names = ["ROI", "Metrics"]))
+            df = pd.concat([df, df_new], axis = 1)
+
+            ls_dimensions_index.append(len(roi_streamlines))
+
+            #j = 23
+            # Saving metrics per combination of ROIs
+            for comb_rois in combinations_rois(dic):
+                if roi in comb_rois:
+                    #j += 1
+                    ls_rois = list()
+                    for metric in ls_metrics:
+                        ls_rois.append(f"{dic[comb_rois[0]]}, {dic[comb_rois[1]]}")
+                    #if j<26:
+                    target_streamlines = grouping[comb_rois[0], comb_rois[1]]
+                    rois_streamlines    = Streamlines(target_streamlines)
+                    #show_streamlines(rois_streamlines)
+                    if len(rois_streamlines)> 0 :
+                        lengths_, average_length_, standard_deviation_lengths_, mc_, mo_, spl_, k_curv_, torsion_ = make_metrics(rois_streamlines)
+
+                        col = [ls_rois, ls_metrics]
+                        tuples = list(zip(*col))
+                        new_df = pd.DataFrame([lengths_.tolist(), [average_length_], [standard_deviation_lengths_], 
+                                           mc_, mo_, spl_, k_curv_, torsion_]).T
+
+                        df_new = pd.DataFrame(new_df.values,
+                                              columns = pd.MultiIndex.from_tuples(tuples, names = ["ROI", "Metrics"]))
+                        df = pd.concat([df, df_new], axis = 1)
+
+                    ls_dimensions_index.append(len(rois_streamlines))
+
+            #i+=1
+        ls_index = list()
+        for i in range(1, max(ls_dimensions_index)+1):
+            ls_index.append((subj_id, i))
+        
+        index = pd.MultiIndex.from_tuples(ls_index, names=["Subject id", "Streamlines"])
+        df = df.set_index(index)
+        
+        return df
 
 
-
-
-    def create_mask(self):
-        # CREATE MASK
-        # Cropp the mask and image
-        # https://dipy.org/documentation/1.0.0./examples_built/brain_extraction_dwi/
-        # vol_idx: list of volumes will be masked - of axis=3 of a 4D input_volume
-        #b0_mask, mask = median_otsu(data,gtab.b0s_mask,3,1, autocrop=True)
-        self.b0_mask, mask = median_otsu(self.data,
-                                    vol_idx=range(self.data.shape[3]), 
-                                    median_radius=3,
-                                    numpass=1,
-                                    autocrop=True,
-                                    dilate=2)
-        self.save_plot(self.b0_mask[:,:,self.b0_mask.shape[2]//2, 0].T,
-                        f"{self.subj_id}_b0_mask")
-        self.save_plot(mask[:,:,self.b0_mask.shape[2]//2].T,
-                        f"{self.subj_id}_mask")
-
-
-    def make_csd(self):
+    def connectivity_matrix_per_roi_old_version(self,
+                                    streamlines,
+                                    grouping,
+                                    affine,
+                                    save_csv_data = True):
         """
-            CSD
-            https://dipy.org/documentation/0.16.0./examples_built/tracking_quick_start/
-            https://dipy.org/documentation/0.16.0./examples_built/introduction_to_basic_tracking/
-            Another kind of tracking : https://dipy.org/documentation/1.2.0./examples_built/tracking_introduction_eudx/#example-tracking-introduction-eudx
-                https://github.com/dipy/dipy/blob/master/doc/examples/tracking_deterministic.py
+        https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3931231/
+        streamlines found to intersect with the yellow mask in the
+        corpus callosum (CC) using target.
+        Then we used these streamlines
+        to investigate which areas of the cortex are connected using a
+        modified aparc+aseg.mgz label map created by FreeSurfer
+        (Fischl, 2012) of 89 regions.
+        https://dipy.org/documentation/1.0.0./examples_built/segment_clustering_metrics/
         """
+        # Using streamlines per ROI
+        # Corpus callosum
+        # corpus callosum est labeled 2 (voir stanford_hardi/label_info.txt)
+        roi = "corpus callosum"
+        cc_slice = self.labels == 2 # cc_slice est le target mask
+        target_streamlines = utils.target(streamlines, affine, cc_slice)
+        roi_streamlines    = Streamlines(target_streamlines)
+        self.connectivity_matrix_compute(roi_streamlines,
+                                        affine,
+                                        self.labels,
+                                        f"{self.subj_id}_{roi}_connectivity")
+        if save_csv_data:
+            self.get_metrics_save(roi_streamlines,
+                            file_name = f"{self.subj_id}_{roi}_metrics.csv")
+
+        # Left_Right_SuperiorFrontal
+        roi = "frontal_superior_left_right"
+        # shape     = self.labels.shape
+        # dm        = utils.density_map(lr_superiorfrontal_track, affine, shape)
+        target_streamlines = grouping[11, 54]
+        roi_streamlines    = Streamlines(target_streamlines)
+        self.connectivity_matrix_compute(roi_streamlines,
+                                        affine,
+                                        self.labels,
+                                        f"{self.subj_id}_{roi}_connectivity")
+        if save_csv_data:
+            self.get_metrics_save(roi_streamlines,
+                            file_name = f"{self.subj_id}_{roi}_metrics.csv")
+
+    # def create_mask(self):
+    #     # CREATE MASK
+    #     # Cropp the mask and image
+    #     # https://dipy.org/documentation/1.0.0./examples_built/brain_extraction_dwi/
+    #     # vol_idx: list of volumes will be masked - of axis=3 of a 4D input_volume
+    #     #b0_mask, mask = median_otsu(data,gtab.b0s_mask,3,1, autocrop=True)
+    #     self.b0_mask, mask = median_otsu(self.data,
+    #                                 vol_idx=range(self.data.shape[3]), 
+    #                                 median_radius=3,
+    #                                 numpass=1,
+    #                                 autocrop=True,
+    #                                 dilate=2)
+    #     self.save_plot(self.b0_mask[:,:,self.b0_mask.shape[2]//2, 0].T,
+    #                     f"{self.subj_id}_b0_mask")
+    #     self.save_plot(mask[:,:,self.b0_mask.shape[2]//2].T,
+    #                     f"{self.subj_id}_mask")
 
 
-        #For the Constrained Spherical Deconvolution we need to estimate the response function and create a model.
-        response, ratio = auto_response(gtab, self.data, roi_radius=10, fa_thr=0.7)
-        csd_model = ConstrainedSphericalDeconvModel(gtab, response)
-
-        # Using peaks
-        sphere = get_sphere('symmetric724')
-        csd_peaks = peaks.peaks_from_model(model=csd_model,
-                                     data=self.b0_mask,
-                                     sphere=sphere, #peaks.default_sphere,
-                                     mask=mask,
-                                     relative_peak_threshold=.5,
-                                     min_separation_angle=25,
-                                     parallel=True)
-        self.save_plot(csd_peaks.gfa[:,:,35].T, f"{self.subj_id}csd")
-        return csd_peaks
+    # def make_csd(self):
+    #     """
+    #         CSD
+    #         https://dipy.org/documentation/0.16.0./examples_built/tracking_quick_start/
+    #         https://dipy.org/documentation/0.16.0./examples_built/introduction_to_basic_tracking/
+    #         Another kind of tracking : https://dipy.org/documentation/1.2.0./examples_built/tracking_introduction_eudx/#example-tracking-introduction-eudx
+    #             https://github.com/dipy/dipy/blob/master/doc/examples/tracking_deterministic.py
+    #     """
 
 
-    def make_tensor(self):
-        # ==> The GFA values of these FODs don’t classify gray matter and white matter well
+    #     #For the Constrained Spherical Deconvolution we need to estimate the response function and create a model.
+    #     response, ratio = auto_response(gtab, self.data, roi_radius=10, fa_thr=0.7)
+    #     csd_model = ConstrainedSphericalDeconvModel(gtab, response)
 
-        #    View csd_peaks
+    #     # Using peaks
+    #     sphere = get_sphere('symmetric724')
+    #     csd_peaks = peaks.peaks_from_model(model=csd_model,
+    #                                  data=self.b0_mask,
+    #                                  sphere=sphere, #peaks.default_sphere,
+    #                                  mask=mask,
+    #                                  relative_peak_threshold=.5,
+    #                                  min_separation_angle=25,
+    #                                  parallel=True)
+    #     self.save_plot(csd_peaks.gfa[:,:,35].T, f"{self.subj_id}csd")
+    #     return csd_peaks
 
-        # from dipy.viz import window, actor, has_fury, colormap as cmap
 
-        # interactive = True
-        # if has_fury:
-        #     scene = window.Scene()
-        #     scene.add(actor.peak_slicer(csd_peaks.peak_dirs,
-        #                                 csd_peaks.peak_values,
-        #                                 colors=None))
+    # def make_tensor(self):
+    #     # ==> The GFA values of these FODs don’t classify gray matter and white matter well
 
-        #     window.record(scene, out_path='csd_direction_field.png', size=(900, 900))
+    #     #    View csd_peaks
 
-        #     if interactive:
-        #         window.show(scene, size=(800, 800))
-        ##  Restrict the fiber tracking to areas with good directionality information using tensor model
-        # - with cropped data
-        from dipy.reconst.dti import TensorModel
-        tensor_model = TensorModel(gtab)
-        tensor_fit = tensor_model.fit(self.b0_mask)
+    #     # from dipy.viz import window, actor, has_fury, colormap as cmap
 
-        fa = tensor_fit.fa
+    #     # interactive = True
+    #     # if has_fury:
+    #     #     scene = window.Scene()
+    #     #     scene.add(actor.peak_slicer(csd_peaks.peak_dirs,
+    #     #                                 csd_peaks.peak_values,
+    #     #                                 colors=None))
 
-        # check image
-        self.save_plot(fa2[:,:,35].T, f"{self.subj_id}tensor")
+    #     #     window.record(scene, out_path='csd_direction_field.png', size=(900, 900))
+
+    #     #     if interactive:
+    #     #         window.show(scene, size=(800, 800))
+    #     ##  Restrict the fiber tracking to areas with good directionality information using tensor model
+    #     # - with cropped data
+    #     from dipy.reconst.dti import TensorModel
+    #     tensor_model = TensorModel(gtab)
+    #     tensor_fit = tensor_model.fit(self.b0_mask)
+
+    #     fa = tensor_fit.fa
+
+    #     # check image
+    #     self.save_plot(fa2[:,:,35].T, f"{self.subj_id}tensor")
 
 
     # def make_streamlines_random(self):
