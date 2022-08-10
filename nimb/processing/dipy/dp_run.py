@@ -36,7 +36,7 @@ class RUNProcessingDIPY:
         self.db_dp      = dict()
         self.test       = all_vars.params.test
         self.atlas      = "stanford"
-
+        self.id_col     = "Subject id"
         self.run()
 
 
@@ -84,21 +84,21 @@ class RUNProcessingDIPY:
                                         "FreeSurferColorLUT.txt")
 
         # Creating dictionary from label file
-        self.dic = dict()
+        self.labels_all = dict()
 
         f = open(label_file, "r")
         if self.atlas == "stanford":
             for line in f:
                 split_line = line.split(",")
                 if split_line[0].isnumeric()==True:
-                    self.dic[int(split_line[0])] = split_line[2][2:-2]
+                    self.labels_all[int(split_line[0])] = split_line[2][2:-2]
         elif self.atlas == "desikan":
             for line in f:
                 split_line = line.split()
                 if len(split_line)>0:
                     if split_line[0].isnumeric()==True:
-                        self.dic[int(split_line[0])] = split_line[1]
-            self.dic.pop(0, None)
+                        self.labels_all[int(split_line[0])] = split_line[1]
+            self.labels_all.pop(0, None)
 
         self.labels, self.labels_affine, self.labels_voxel_size = load_nifti(label_fname,
                                                                     return_voxsize = True)
@@ -106,8 +106,8 @@ class RUNProcessingDIPY:
 
     def combinations_rois(self):
         ls_comb_roi = list()
-        for roi in self.dic.keys():
-            ls_labels = list(self.dic.keys())
+        for roi in self.labels_all.keys():
+            ls_labels = list(self.labels_all.keys())
             for roi2 in ls_labels:
                 if [roi, roi2] in ls_comb_roi or roi==roi2:
                     continue
@@ -168,30 +168,6 @@ class RUNProcessingDIPY:
         return gtab
 
 
-    def run_connectivity_analysis(self, gtab):
-        print(f'{LogLVL.lvl1}white matter and peaks are being extracted')
-        csapeaks, white_matter  = self.get_fiber_direction(gtab, self.data)
-        if csapeaks:
-            print("{LogLVL.lvl2}csapeaks - are ok")
-            streamlines, affine = self.make_streamlines(csapeaks, white_matter)
-            print('connectivity analysis with stanford/desikan atlas, is being performed')
-            grouping = self.connectivity_matrix_compute(streamlines,
-                                                   affine,
-                                                   f"{self.subj_id}_connectivity_all_rois")
-            self.get_metrics(streamlines,
-                            file_name = f"{self.subj_id}_all_streamlines_metrics.csv")
-            print('connectivity analysis per ROIs from stanford atlas, is being performed')
-            self.connectivity_matrix_per_roi(streamlines,
-                                            grouping,
-                                            affine,
-                                            save_csv_data = False)
-            # self.create_mask()
-            # csapeaks  = self.get_fiber_direction(gtab, self.b0_mask)
-            # csd_peaks = self.make_csd()
-            # self.make_tensor()
-            # self.make_streamlines_random()
-
-
     def get_fiber_direction(self, gtab, data):
         # Getting fiber direction
         csamodel     = shm.CsaOdfModel(gtab, 6)
@@ -215,16 +191,16 @@ class RUNProcessingDIPY:
         return csapeaks, white_matter
 
 
-    def make_streamlines(self,
+    def streamlines_whole_brain_get(self,
                          csapeaks,
                          white_matter):
         '''Create seeds for fiber tracking from a binary mask,
             evenly distributed in all voxels of mask which are True 
             seeds : points qui couvrent les coordonnées où il y a white matter
-        Streamlines : set de streamlines.
-        Chaque streamline est un array de 3xM. 
-        Chaque ligne correspond aux coordonnées xyz d'un point de la streamline. 
-        Et M (nbr de lignes) est le nbr de points qui composent la streamline.
+            Streamlines : set de streamlines.
+            Chaque streamline est un array de 3xM. 
+            Chaque ligne correspond aux coordonnées xyz d'un point de la streamline. 
+            Et M (nbr de lignes) est le nbr de points qui composent la streamline.
         '''
         print("extracting streamlines ...")
         affine = np.eye(4)
@@ -247,6 +223,19 @@ class RUNProcessingDIPY:
         return streamlines, affine
 
 
+    def save_plot(self, data, f_name):
+        # fig = plt.figure(figsize=(11,10))
+        plt.subplot(1,2,1)
+        plt.pcolor(data, cmap = 'gray') #interpolation='None', cmap='RdYlBu_r'
+        # plt.yticks(range(len(rois_labels)), rois_labels[0:]);
+        # plt.xticks(range(len(rois_labels)), rois_labels[0:], rotation=90);
+        plt.title(f'Title')
+        plt.colorbar();
+        img_name = os.path.join(self.output_loc, f_name)
+        plt.savefig(img_name)
+        plt.close()
+
+
     def connectivity_matrix_compute(self,
                                     streamlines,
                                     affine,
@@ -266,138 +255,36 @@ class RUNProcessingDIPY:
         return grouping
 
 
-    def save_plot(self, data, f_name):
-        # fig = plt.figure(figsize=(11,10))
-        plt.subplot(1,2,1)
-        plt.pcolor(data, cmap = 'gray') #interpolation='None', cmap='RdYlBu_r'
-        # plt.yticks(range(len(rois_labels)), rois_labels[0:]);
-        # plt.xticks(range(len(rois_labels)), rois_labels[0:], rotation=90);
-        plt.title(f'Title')
-        plt.colorbar();
-        img_name = os.path.join(self.output_loc, f_name)
-        plt.savefig(img_name)
-        plt.close()
+    def run_connectivity_analysis(self, gtab):
+        print(f'{LogLVL.lvl1}white matter and peaks are being extracted')
+        csapeaks, white_matter  = self.get_fiber_direction(gtab, self.data)
+        if csapeaks:
+            print("{LogLVL.lvl2}csapeaks - are ok")
+            streamlines, affine = self.streamlines_whole_brain_get(csapeaks, white_matter)
+            print('    grouping data for whole brain streamlines, is being computed')
+            grouping = self.connectivity_matrix_compute(streamlines,
+                                                        affine,
+                                                        f"{self.subj_id}_connectivity_all_rois")
+            df = self.metrics_populate(streamlines,
+                                  affine,
+                                  grouping)
+            df.to_csv(os.path.join(self.output_loc, f"{self.subj_id}_all_streamlines_metrics.csv"))
+            print("saved to csv")
+            # self.get_metrics(streamlines,
+            #                 file_name = f"{self.subj_id}_all_streamlines_metrics.csv")
+            # print('connectivity analysis per ROIs from stanford atlas, is being performed')
+            # self.connectivity_matrix_per_roi(streamlines,
+            #                                 grouping,
+            #                                 affine,
+            #                                 save_csv_data = False)
+            # self.create_mask()
+            # csapeaks  = self.get_fiber_direction(gtab, self.b0_mask)
+            # csd_peaks = self.make_csd()
+            # self.make_tensor()
+            # self.make_streamlines_random()
 
 
-    def connectivity_matrix_per_roi(self,
-                                    streamlines,
-                                    grouping,
-                                    affine):
-        """
-        https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3931231/
-        streamlines found to intersect with the yellow mask in the
-        corpus callosum (CC) using target.
-        Then we used these streamlines
-        to investigate which areas of the cortex are connected using a
-        modified aparc+aseg.mgz label map created by FreeSurfer
-        (Fischl, 2012) of 89 regions.
-        https://dipy.org/documentation/1.0.0./examples_built/segment_clustering_metrics/
-        """
-        
-        # Using streamlines per ROI
-        
-        for roi in combinations_rois():
-            roi1 = roi[0]
-            roi2 = roi[1]
-            roi_12 = f"{self.dic[roi1]}_{self.dic[roi2]}"
-            target_streamlines = grouping[roi1, roi2]
-            rois_streamlines    = Streamlines(target_streamlines)
-            if len(rois_streamlines) > 0:
-                connectivity_matrix_compute(rois_streamlines,
-                                affine,
-                                f"{self.subj_id}_{roi_12}_connectivity")
-                if save_csv_data:
-                    self.get_metrics(roi_streamlines,
-                                    file_name = f"{self.subj_id}_{roi_12}_metrics.csv")
-        roi = "corpus callosum"
-        cc_slice = self.labels == 2 # cc_slice est le target mask
-        target_streamlines = utils.target(streamlines, affine, cc_slice)
-        roi_streamlines    = Streamlines(target_streamlines)
-        self.connectivity_matrix_compute(roi_streamlines,
-                                        affine,
-                                        f"{self.subj_id}_{roi}_connectivity")
-        if save_csv_data:
-            self.get_metrics(roi_streamlines,
-                            file_name = f"{self.subj_id}_{roi}_metrics.csv")
-            # make density map?
-            # dm = utils.density_map(target_streamlines, np.eye(4), self.labels.shape)
-            # dm = utils.density_map(target_streamlines, affine, self.labels.shape)
-
-
-    def save_metrics(self,
-                    streamlines,
-                    affine,
-                    subj_id):
-        
-        df = pd.DataFrame()
-        ls_metrics = ["1. Lengths", "2. Average length", "3. std", "4. Mean curvature", 
-                  "5. Mean orientation", "6. Spline", "7. Curvature scalar", "8. Torsion"]
-
-        #i=1
-        ls_all_roi = self.dic.values()
-        ls_dimensions_index = list()
-        for roi in self.dic.keys():
-            ls_roi = list()
-            #if 5>=i>3:
-            # saving metrics per ROI
-            roi_slice = (self.labels == roi)
-            target_streamlines = utils.target(streamlines, affine, roi_slice)
-            roi_streamlines    = Streamlines(target_streamlines)
-
-            for metric in ls_metrics:
-                ls_roi.append(self.dic[roi])
-
-            lengths, average_length, standard_deviation_lengths, mc, mo, spl, k_curv, torsion = get_metrics(roi_streamlines)
-            col = [ls_roi, ls_metrics]
-            tuples = list(zip(*col))
-
-            df_values = pd.DataFrame([lengths.tolist(), [average_length], [standard_deviation_lengths], 
-                                   mc, mo, spl, k_curv, torsion]).T
-
-            df_new = pd.DataFrame(df_values.values,
-                                  columns = pd.MultiIndex.from_tuples(tuples, names = ["ROI", "Metrics"]))
-            df = pd.concat([df, df_new], axis = 1)
-
-            ls_dimensions_index.append(len(roi_streamlines))
-
-            #j = 23
-            # Saving metrics per combination of ROIs
-            for comb_rois in combinations_rois():
-                if roi in comb_rois:
-                    #j += 1
-                    ls_rois = list()
-                    for metric in ls_metrics:
-                        ls_rois.append(f"{self.dic[comb_rois[0]]}, {self.dic[comb_rois[1]]}")
-                    #if j<26:
-                    target_streamlines = grouping[comb_rois[0], comb_rois[1]]
-                    rois_streamlines    = Streamlines(target_streamlines)
-                    #show_streamlines(rois_streamlines)
-                    if len(rois_streamlines)> 0 :
-                        lengths_, average_length_, standard_deviation_lengths_, mc_, mo_, spl_, k_curv_, torsion_ = make_metrics(rois_streamlines)
-
-                        col = [ls_rois, ls_metrics]
-                        tuples = list(zip(*col))
-                        new_df = pd.DataFrame([lengths_.tolist(), [average_length_], [standard_deviation_lengths_], 
-                                           mc_, mo_, spl_, k_curv_, torsion_]).T
-
-                        df_new = pd.DataFrame(new_df.values,
-                                              columns = pd.MultiIndex.from_tuples(tuples, names = ["ROI", "Metrics"]))
-                        df = pd.concat([df, df_new], axis = 1)
-
-                    ls_dimensions_index.append(len(rois_streamlines))
-
-            #i+=1
-        ls_index = list()
-        for i in range(1, max(ls_dimensions_index)+1):
-            ls_index.append((subj_id, i))
-        
-        index = pd.MultiIndex.from_tuples(ls_index, names=["Subject id", "Streamlines"])
-        df = df.set_index(index)
-        
-        return df
-
-
-    def get_metrics(self, streamlines, file_name):
+    def metrics_compute(self, streamlines):
         """
         script to extract metrics
         and save to a tabular file
@@ -422,48 +309,152 @@ class RUNProcessingDIPY:
         """
         print("extracting metrics")
 
+        metrics = {"lengths": list(),
+                   "average_length": list(),
+                   "std": list(),
+                   "mean_curvature": list(),
+                   "mean_orientation": list(),
+                   "spline": list(),
+                   "curvature_scalar": list(),
+                   "torsion": list()}
+
         # lengths of streamlines
         lengths = [length(s) for s in streamlines]
         lengths = np.array(lengths)
 
-        # mean and std
-        average_length = lengths.mean()
-        standard_deviation_lengths = lengths.std()
+        metrics["lengths"] = lengths.tolist()
+        metrics["average_length"] = [lengths.mean(),]
+        metrics["std"] = [lengths.std(),]
 
         # mean curvature, mean orientation and spline for spline interpolation
-        ls_mc = []
-        ls_mo = []
-        ls_spl = []
-        ls_k_curv = []
-        ls_torsion = []
-        
+
         for streamline in streamlines:
             mc = metrics.mean_curvature(streamline)
+            metrics["mean_curvature"].append(mc)
+
             mo = metrics.mean_orientation(streamline)
+            metrics["mean_orientation"].append(mo)
+
             spl = metrics.spline(streamline)
+            metrics["spline"].append(spl)
+
             k = metrics.frenet_serret(streamline)[3]
+            metrics["curvature_scalar"].append(k)
+
             t = metrics.frenet_serret(streamline)[4]
-            
-            ls_mc.append(mc)
-            ls_mo.append(mo)
-            ls_spl.append(spl)
-            ls_k_curv.append(k)
-            ls_torsion.append(t)
+            metrics["torsion"].append(t)
 
-        # Saving to tabular file
-        # df = pd.DataFrame({"Lengths":lengths}).T
-        df = pd.DataFrame({"Lengths":lengths})
-        df["average_length"] = average_length
-        df["std"] = standard_deviation_lengths
-        df["mean_curvature"] = ls_mc
-        df["mean_orientation"] = ls_mo
-        df["spline"] = ls_spl
-        df["curvature_scalar"] = ls_k_curv
-        df["torsion"] = ls_torsion
+        return metrics
 
-        df.to_csv(os.path.join(self.output_loc, file_name))
-        print("saved to csv")
-        # return lengths, average_length, standard_deviation_lengths, ls_mc, ls_mo, ls_spl, ls_k_curv, ls_torsion
+
+    def metrics_populate(self,
+                        streamlines,
+                        affine,
+                        grouping):
+        
+        df = pd.DataFrame()
+
+        ls_all_roi = self.labels_all.values()
+        ls_dimensions_index = list()
+        for roi in self.labels_all.keys():
+            # saving metrics per ROI
+            roi_slice = (self.labels == roi)
+            target_streamlines = utils.target(streamlines, affine, roi_slice)
+            roi_streamlines    = Streamlines(target_streamlines)
+            metrics = metrics_compute(roi_streamlines)
+
+            ls_roi = list()
+            for metric in metrics.keys():
+                ls_roi.append(self.labels_all[roi])
+
+            col = [ls_roi, metrics.keys()]
+            tuples = list(zip(*col))
+
+            df_values = pd.DataFrame(list(metrics.values())).T
+
+            df_new = pd.DataFrame(df_values.values,
+                                  columns = pd.MultiIndex.from_tuples(tuples, names = ["ROI", "Metrics"]))
+            df = pd.concat([df, df_new], axis = 1)
+
+            ls_dimensions_index.append(len(roi_streamlines))
+
+            # Saving metrics per combination of ROIs
+            for comb_rois in combinations_rois():
+                if roi in comb_rois:
+                    roi1 = comb_rois[0]
+                    roi2 = comb_rois[1]
+                    roi_12 = f"{self.labels_all[roi1]}_{self.labels_all[roi2]}"
+                    target_streamlines = grouping[roi1, roi2]
+                    rois_streamlines    = Streamlines(target_streamlines)
+                    #show_streamlines(rois_streamlines)
+                    if len(rois_streamlines) > 0 :
+                        metrics = metrics_compute(rois_streamlines)
+                        ls_rois = list()
+                        for metric in metrics.keys():
+                            ls_rois.append(roi_12)
+
+                        col = [ls_rois, metrics.keys()]
+                        tuples = list(zip(*col))
+                        new_df = pd.DataFrame(list(metrics.values())).T
+
+                        df_new = pd.DataFrame(new_df.values,
+                                              columns = pd.MultiIndex.from_tuples(tuples, names = ["ROI", "Metrics"]))
+                        df = pd.concat([df, df_new], axis = 1)
+
+                    ls_dimensions_index.append(len(rois_streamlines))
+
+        ls_index = list()
+        for i in range(1, max(ls_dimensions_index)+1):
+            ls_index.append((self.subj_id, i))
+        
+        index = pd.MultiIndex.from_tuples(ls_index, names=[self.id_col, "Streamlines"])
+        df = df.set_index(index)
+        return df
+
+
+    # def connectivity_matrix_per_roi(self,
+    #                                 streamlines,
+    #                                 grouping,
+    #                                 affine):
+    #     """
+    #     https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3931231/
+    #     streamlines found to intersect with the yellow mask in the
+    #     corpus callosum (CC) using target.
+    #     Then we used these streamlines
+    #     to investigate which areas of the cortex are connected using a
+    #     modified aparc+aseg.mgz label map created by FreeSurfer
+    #     (Fischl, 2012) of 89 regions.
+    #     https://dipy.org/documentation/1.0.0./examples_built/segment_clustering_metrics/
+    #     """
+        
+    #     # Using streamlines per ROI
+        
+    #     for roi in combinations_rois():
+    #         roi1 = roi[0]
+    #         roi2 = roi[1]
+    #         roi_12 = f"{self.labels_all[roi1]}_{self.labels_all[roi2]}"
+    #         target_streamlines = grouping[roi1, roi2]
+    #         rois_streamlines    = Streamlines(target_streamlines)
+    #         if len(rois_streamlines) > 0:
+    #             connectivity_matrix_compute(rois_streamlines,
+    #                             affine,
+    #                             f"{self.subj_id}_{roi_12}_connectivity")
+    #             if save_csv_data:
+    #                 self.metrics_compute(roi_streamlines,
+    #                                     file_name = f"{self.subj_id}_{roi_12}_metrics.csv")
+    #     roi = "corpus callosum"
+    #     cc_slice = self.labels == 2 # cc_slice est le target mask
+    #     target_streamlines = utils.target(streamlines, affine, cc_slice)
+    #     roi_streamlines    = Streamlines(target_streamlines)
+    #     self.connectivity_matrix_compute(roi_streamlines,
+    #                                     affine,
+    #                                     f"{self.subj_id}_{roi}_connectivity")
+    #     if save_csv_data:
+    #         self.metrics_compute(roi_streamlines,
+    #                             file_name = f"{self.subj_id}_{roi}_metrics.csv")
+    #         # make density map?
+    #         # dm = utils.density_map(target_streamlines, np.eye(4), self.labels.shape)
+    #         # dm = utils.density_map(target_streamlines, affine, self.labels.shape)
 
 
 
