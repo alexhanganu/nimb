@@ -1,7 +1,8 @@
 # %% initiator for dipy pipeline
 '''
-adjusted: Alexandru Hanganu 20211001:
-1st version: Kim Pham Phuong, 20202026
+Emmanuelle Mazur-Laine, 20220810 (roi-based, desikan atlas, saving to csv)
+Kim Pham Phuong, 20202026 (1st version)
+Alexandru Hanganu 20220810 (adjustments)
 '''
 
 import os
