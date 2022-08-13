@@ -613,11 +613,10 @@ if __name__ == "__main__":
     from distribution.utilities import load_json, save_json
     from distribution.distribution_definitions import DEFAULT
     from processing.schedule_helper import Scheduler, get_jobs_status
-    from processing.nilearn import nl_helper
 
     project_ids = Get_Vars().get_projects_ids()
     params      = get_parameters(project_ids)
     project     = params.project
-    all_vars    = Get_Vars(params)
+    all_vars    = Get_Vars()
 
     RUNProcessingDIPY(all_vars)
