@@ -1,8 +1,8 @@
 # %% initiator for dipy pipeline
 '''
 Emmanuelle Mazur-Laine, 20220810 (roi-based, desikan atlas, saving to csv)
-Kim Pham Phuong, 20202026 (1st version)
-Alexandru Hanganu 2022081 (adjustments)
+Kim Pham Phuong, 20202026 (2nd version)
+Alexandru Hanganu 2022081 (1st version, adjustments, automation, inclusion with nimb)
 '''
 
 import os
@@ -31,14 +31,15 @@ class RUNProcessingDIPY:
     def __init__(self, all_vars):
         self.app        = "dipy"
         self.all_vars   = all_vars
-        self.project    = all_vars.params.project
         vars_local      = all_vars.location_vars['local']
         self.NIMB_tmp   = vars_local['NIMB_PATHS']['NIMB_tmp']
         self.output_loc = vars_local['NIMB_PATHS']['NIMB_PROCESSED_DIPY']
-        self.db_dp      = dict()
+        self.project    = all_vars.params.project
+        self.proj_vars  = all_vars.projects[self.project]
         self.test       = all_vars.params.test
         self.atlas      = "stanford"
-        self.id_col     = "Subject id"
+        self.id_col     = "Subject id" #self.proj_vars['id_col']
+        self.db_dp      = dict()
         self.run()
 
 
@@ -597,6 +598,8 @@ def get_parameters(projects):
 
 if __name__ == "__main__":
 
+    app = 'freesurfer'
+
     import argparse
     import sys
     try:
@@ -610,13 +613,18 @@ if __name__ == "__main__":
 
     from setup.get_vars import Get_Vars
     from distribution.logger import Log, LogLVL
-    from distribution.utilities import load_json, save_json
     from distribution.distribution_definitions import DEFAULT
+    from distribution.utilities import load_json, save_json
     from processing.schedule_helper import Scheduler, get_jobs_status
 
-    project_ids = Get_Vars().get_projects_ids()
-    params      = get_parameters(project_ids)
-    project     = params.project
-    all_vars    = Get_Vars()
+    project_ids  = Get_Vars().get_projects_ids()
+    params       = get_parameters(project_ids)
+    all_vars     = Get_Vars(params)
+
+    vars_local = all_vars.location_vars['local']
+    log = Log(vars_local['NIMB_PATHS']['NIMB_tmp'],
+                 vars_local['FREESURFER'][f"{app}_version"]).logger
 
     RUNProcessingDIPY(all_vars)
+
+
