@@ -33,7 +33,7 @@ class RUNProcessingDIPY:
         self.all_vars   = all_vars
         vars_local      = all_vars.location_vars['local']
         self.NIMB_tmp   = vars_local['NIMB_PATHS']['NIMB_tmp']
-        self.output_loc = vars_local['NIMB_PATHS']['NIMB_PROCESSED_DIPY']
+        self.output_loc = vars_local['DIPY']['NIMB_PROCESSED']
         self.project    = all_vars.params.project
         self.proj_vars  = all_vars.projects[self.project]
         self.test       = all_vars.params.test
@@ -274,8 +274,8 @@ class RUNProcessingDIPY:
 
 
     def streamlines_whole_brain_get(self,
-                         csapeaks,
-                         white_matter):
+                                     csapeaks,
+                                     white_matter):
         '''Create seeds for fiber tracking from a binary mask,
             evenly distributed in all voxels of mask which are True 
             seeds : points qui couvrent les coordonnées où il y a white matter
@@ -333,7 +333,7 @@ class RUNProcessingDIPY:
                                                 self.labels.astype(np.uint8),
                                                 return_mapping=True,
                                                 mapping_as_streamlines=True)
-        save_plot(np.log1p(M), plot_file_name)
+        self.save_plot(np.log1p(M), plot_file_name)
         return grouping
 
 
@@ -377,42 +377,42 @@ class RUNProcessingDIPY:
         """
         print("extracting metrics")
 
-        metrics = {"lengths": list(),
-                   "average_length": list(),
-                   "std": list(),
-                   "mean_curvature": list(),
-                   "mean_orientation": list(),
-                   "spline": list(),
-                   "curvature_scalar": list(),
-                   "torsion": list()}
+        metrics_dic = {"lengths": list(),
+                       "average_length": list(),
+                       "std": list(),
+                       "mean_curvature": list(),
+                       "mean_orientation": list(),
+                       "spline": list(),
+                       "curvature_scalar": list(),
+                       "torsion": list()}
 
         # lengths of streamlines
         lengths = [length(s) for s in streamlines]
         lengths = np.array(lengths)
 
-        metrics["lengths"] = lengths.tolist()
-        metrics["average_length"] = [lengths.mean(),]
-        metrics["std"] = [lengths.std(),]
+        metrics_dic["lengths"] = lengths.tolist()
+        metrics_dic["average_length"] = [lengths.mean(),]
+        metrics_dic["std"] = [lengths.std(),]
 
         # mean curvature, mean orientation and spline for spline interpolation
 
         for streamline in streamlines:
-            mc = metrics.mean_curvature(streamline)
-            metrics["mean_curvature"].append(mc)
+            mc = metrics_dic.mean_curvature(streamline)
+            metrics_dic["mean_curvature"].append(mc)
 
-            mo = metrics.mean_orientation(streamline)
-            metrics["mean_orientation"].append(mo)
+            mo = metrics_dic.mean_orientation(streamline)
+            metrics_dic["mean_orientation"].append(mo)
 
-            spl = metrics.spline(streamline)
-            metrics["spline"].append(spl)
+            spl = metrics_dic.spline(streamline)
+            metrics_dic["spline"].append(spl)
 
-            k = metrics.frenet_serret(streamline)[3]
-            metrics["curvature_scalar"].append(k)
+            k = metrics_dic.frenet_serret(streamline)[3]
+            metrics_dic["curvature_scalar"].append(k)
 
-            t = metrics.frenet_serret(streamline)[4]
-            metrics["torsion"].append(t)
+            t = metrics_dic.frenet_serret(streamline)[4]
+            metrics_dic["torsion"].append(t)
 
-        return metrics
+        return metrics_dic
 
 
     def metrics_run_loop_per_roi(self,
@@ -440,20 +440,20 @@ class RUNProcessingDIPY:
             roi_slice = (self.labels == roi)
             target_streamlines = utils.target(streamlines, affine, roi_slice)
             roi_streamlines    = Streamlines(target_streamlines)
-            metrics = metrics_compute(roi_streamlines)
+            metrics_dic = self.metrics_compute(roi_streamlines)
 
             ls_rois = list()
-            for metric in metrics.keys():
+            for metric in metrics_dic.keys():
                 ls_rois.append(self.labels_all[roi])
 
-            df = self.dataframe_populate(df, metrics, ls_rois)
+            df = self.dataframe_populate(df, metrics_dic, ls_rois)
 
             ls_dimensions_index.append(len(roi_streamlines))
             # make density map?
             # dm = utils.density_map(target_streamlines, np.eye(4), self.labels.shape)
 
             # Saving metrics per combination of ROIs
-            for comb_rois in combinations_rois():
+            for comb_rois in self.combinations_rois():
                 if roi in comb_rois:
                     roi1 = comb_rois[0]
                     roi2 = comb_rois[1]
@@ -461,13 +461,13 @@ class RUNProcessingDIPY:
                     target_streamlines = grouping[roi1, roi2]
                     rois_streamlines    = Streamlines(target_streamlines)
                     if len(rois_streamlines) > 0 :
-                        metrics = metrics_compute(rois_streamlines)
+                        metrics_dic = self.metrics_compute(rois_streamlines)
 
                         ls_rois = list()
-                        for metric in metrics.keys():
+                        for metric in metrics_dic.keys():
                             ls_rois.append(roi_12)
 
-                        df = self.dataframe_populate(df, metrics, ls_rois)
+                        df = self.dataframe_populate(df, metrics_dic, ls_rois)
 
                     ls_dimensions_index.append(len(rois_streamlines))
 
@@ -481,13 +481,13 @@ class RUNProcessingDIPY:
         print("saved to csv for subject:", self.subj_id)
 
 
-    def dataframe_populate(self, df, metrics, ls_rois):
+    def dataframe_populate(self, df, metrics_dic, ls_rois):
         """populating the pandas.DataFrame with results
         """
-        col = [ls_rois, metrics.keys()]
+        col = [ls_rois, metrics_dic.keys()]
         tuples = list(zip(*col))
         columns_names_4df = pd.MultiIndex.from_tuples(tuples, names = ["ROI", "Metrics"])
-        df_values = pd.DataFrame(list(metrics.values())).T
+        df_values = pd.DataFrame(list(metrics_dic.values())).T
         df_new = pd.DataFrame(df_values.values, columns = columns_names_4df)
         return pd.concat([df, df_new], axis = 1)
 
