@@ -85,69 +85,59 @@ def plot_laterality_per_group(ls_of_features,
     plt.close()
 
 
-def get_lateralized_feats(feats,
-                         first_lat_param,
-                         lat_param_right,
+def get_lateralized_feats(feats_2lateralize,
+                         lat_param,
+                         contra_lat_param,
                          print_check = False):
     '''create dict() with lateralized data
         it is expected that ROIs have the same name before the hemi_param_left
         e.g.: <roi>_<hemi_param_left> = <roi>_<hemi_param_right>
     Args:
-        feats = list() of all features
-        first_lat_param = str() for left part laterality parameter, e.g., lh or rh
-        lat_param_right = str() for right part laterality parameter, e.g., lh or rh
+        feats_2lateralize = list() of all features
+        lat_param = str() the laterality parameter to be searched for, e.g., lh or rh
+        contra_lat_param = str() the contralateral laterality parameter, e.g., lh or rh
         print_check = if True will print the results of lateralized features
     Return:
         {roi: (left_roi, right_roi)}
     '''
 
-    def laterality_roi_get(feat, first_lat_param):
-        """will search if first_lat_param in feat
-        Args:
-            feat = str()
-            first_lat_param = str()
-        Return:
-            first_lat_feat: str() of feat[:first_lat_param]
-                    or: ""
-        """
-        if first_lat_param in feat:
-            first_lat_feat = feat[:feat.find(first_lat_param)]
-        else:
-            first_lat_feat = ""
-        return first_lat_feat
+    if print_check:
+        print(feats)
 
-    def laterality_find_contra(feats, first_lat_feat):
-        """searches for a potential contralateral feature
-            in the list of all features
-        Args:
-            feats = list() of all feats
-            first_lat_feat = str() of a part of one feature that might be present in feats
-        Return:
-            bool, roi_contra
-        """
-        contra_feat = ""
-        for feat in feats:
-            if first_lat_feat in feat:
-                contra_feat = feat
-        return contra_feat
-
+    # combine two feats based on laterality
     lhrh_feat_d = {}
     contra_feats = list()
-    print(f"features to lateralize are: {feats}")
-    for feat in feats:
-        if feat not in contra_feats:
-            first_lat_feat = laterality_roi_get(feat, first_lat_param)
-            if first_lat_feat:
-                lat_feat_right = laterality_find_contra(feats, first_lat_feat)
-                if lat_feat_right:
-                    lhrh_feat_d[first_lat_feat] = (feat, lat_feat_right)
-                    contra_feats.append(lat_feat_right)
+    for feat in feats_2lateralize:
+        if feat not in contra_feats and lat_param in feat:
+            lat_subfeat = feat[:feat.find(lat_param)]
+            if lat_subfeat:
+                contra_feat = ""
+                feats_left2search = feats_2lateralize[feats_2lateralize.index(feat)+1:]
+                ls_feats_correspond = [i for i in feats_left2search if lat_subfeat in i]
+                for feat_found in ls_feats_correspond:
+                    contra_subfeat = feat_found[:feat_found.find(contra_lat_param)]
+                    if contra_subfeat == lat_subfeat \
+                        and len(feat) == len(feat_found):
+                        contra_feat = feat_found
+                        break
+                    elif contra_subfeat in feat:
+                        contra_feat = feat_found
+                        lat_subfeat = contra_subfeat
+                        break
+                if contra_feat:
+                        contra_feats.append(contra_feat)
+                        lhrh_feat_d[lat_subfeat] = (feat, contra_feat)
+                else:
+                    print("cannot find contralateral feature for: ", feat)
             else:
-                print("lat param: ", first_lat_param, " not in feature: ", feat)
+                print("lat param: ", lat_param, " not in feature: ", feat)
+
     if print_check:
-        print("CHECKING laterality:")
+        print("\n\nCHECKING laterality:")
+        print("    iterated features: ", int(len(feats_2lateralize) / 2))
+        print("    combined features: ", len(lhrh_feat_d.keys()))
         for key in lhrh_feat_d:
-            print(key,":", lhrh_feat_d[key])
+            print("     ",key,":", lhrh_feat_d[key])
     return lhrh_feat_d
 
 
@@ -217,7 +207,7 @@ def laterality_per_groups(dict_dfs_per_groups,
     lateralized_lhrh = get_lateralized_feats(feats,
                                         lat_param_left,
                                         lat_param_right, 
-                                        print_check = False)
+                                        print_check = print_check)
     laterality_calculated = {"means":dict()}
     for group in dict_dfs_per_groups:
         file = f'{file_name}_results_{group}'
