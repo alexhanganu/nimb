@@ -89,8 +89,8 @@ def get_lateralized_feats(feats_2lateralize,
                          lat_param,
                          contra_lat_param,
                          print_check = False):
-    '''create dict() with lateralized data
-        it is expected that ROIs have the same name before the hemi_param_left
+    '''creates dict() with lateralized data
+        it is expected that ROIs have the same name before the hemi_parameter
         e.g.: <roi>_<hemi_param_left> = <roi>_<hemi_param_right>
     Args:
         feats_2lateralize = list() of all features
@@ -98,8 +98,16 @@ def get_lateralized_feats(feats_2lateralize,
         contra_lat_param = str() the contralateral laterality parameter, e.g., lh or rh
         print_check = if True will print the results of lateralized features
     Return:
-        {roi: (left_roi, right_roi)}
+        {feature: (left_feature, right_feature)}
     '''
+    def get_laterality_subfeat(feat, lat_param):
+        """script tries to avoid the situation when lat_param is in position 0
+        """
+        lat_subfeat = feat[:feat.find(lat_param)]
+        if not lat_subfeat:
+            subfeat_2chk = feat[1:]
+            lat_subfeat = feat[0] + subfeat_2chk[:subfeat_2chk.find(lat_param)]
+        return lat_subfeat
 
     if print_check:
         print(feats)
@@ -109,7 +117,7 @@ def get_lateralized_feats(feats_2lateralize,
     contra_feats = list()
     for feat in feats_2lateralize:
         if feat not in contra_feats and lat_param in feat:
-            lat_subfeat = feat[:feat.find(lat_param)]
+            lat_subfeat = get_laterality_subfeat(feat, lat_param)
             if lat_subfeat:
                 contra_feat = ""
                 feats_left2search = feats_2lateralize[feats_2lateralize.index(feat)+1:]
