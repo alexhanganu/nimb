@@ -53,16 +53,15 @@ class RUN_stats():
 
                 # STEP run general stats
                 if step2run == "STEP_stats_ttest":
-                    from stats.stats_stats import ttest_do
+                    from stats.stats_stats import get_stats
 
                     variables = self.params_y+df_X.columns.tolist()
                     dir_2save = varia.get_dir(path.join(self.dir_stats_home, group))
-                    ttest_res = ttest_do(self.tab.join_dfs(df_clin_group, df_X),
-                                            self.group_col,
-                                            variables,
-                                            self.groups,
-                                            dir_2save,
-                                            p_thresh = 0.05).res_ttest
+                    stats_results = get_stats(self.tab.join_dfs(df_clin_group, df_X),
+                                              self.groups,
+                                              self.group_col,
+                                              dir_2save,
+                                              p_thresh = 0.05)
 
                 # STEP run ANOVA and Simple Linear Regression
                 if step2run == "STEP_Anova":
