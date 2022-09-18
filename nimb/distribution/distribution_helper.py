@@ -259,28 +259,29 @@ class DistributionHelper():
 
 
     def get_subj_2classify(self):
-        new_subj    = self.locations["local"]["NIMB_PATHS"]["NIMB_NEW_SUBJECTS"]
-        bids_cred   = self.proj_vars['SOURCE_BIDS_DIR']
-        source_subj = self.proj_vars['SOURCE_SUBJECTS_DIR']
-        SUBJ_2Classify = ''
-        if os.listdir(new_subj):
-            SUBJ_2Classify = new_subj
-            if not SUBJ_2Classify:
-                print('Folder with Subjects is missing. Please adjust the file: {}'.format(
-                                                                    os.path.join(self.credentials_home, 'local.json')))
-        elif bids_cred[0] == 'local' and os.path.exists(bids_cred[1]) and os.listdir(bids_cred[1]):
-            SUBJ_2Classify = bids_cred[1]
-            if not SUBJ_2Classify:
-                print('Folder with Subjects is missing. Please adjust the file: {}'.format(
-                                                                    os.path.join(self.credentials_home, 'projects.json')))
-#        elif bids_cred[0] == 'local' and os.path.exists(bids_cred[1]) and os.listdir(bids_cred[1]):
-#            SUBJ_2Classify = bids_cred[1]
-#        elif source_subj[0] == 'local' and os.path.exists(source_subj[1]) and os.listdir(source_subj[1]):
-#            SUBJ_2Classify = source_subj[1]
-        if SUBJ_2Classify:
-            print('Folder with Subjects to classify is: {}'.format(SUBJ_2Classify))
-            return SUBJ_2Classify
+        dirs_2classify = list()
+        dir_new_subj    = self.locations["local"]["NIMB_PATHS"]["NIMB_NEW_SUBJECTS"]
+        rawdata_location   = self.proj_vars['SOURCE_BIDS_DIR'][0]
+        rawdata_dir   = self.proj_vars['SOURCE_BIDS_DIR'][1]
+        sourcedata_location = self.proj_vars['SOURCE_SUBJECTS_DIR'][0]
+        sourcedata_dir = self.proj_vars['SOURCE_SUBJECTS_DIR'][1]
+        if os.path.exists(dir_new_subj) and os.listdir(dir_new_subj):
+            dirs_2classify.append(dir_new_subj)
+        if rawdata_location == 'local'\
+            and os.path.exists(rawdata_dir)\
+            and os.listdir(rawdata_dir):
+            dirs_2classify.append(rawdata_dir)
+        if sourcedata_location == 'local'\
+            and os.path.exists(sourcedata_dir)\
+            and os.listdir(sourcedata_dir):
+            dirs_2classify.append(sourcedata_dir)
+        if dirs_2classify:
+            print('Folders with Subjects to classify are: {}'.format(dirs_2classify))
+            return dirs_2classify
         else:
+            project_file_abspath = os.path.join(self.credentials_home, 'projects.json')
+            print('There were no folders eligible for classificaiton')
+            print(f"    Please check the file for setting the projects: {project_file_abspath}")
             return False
 
 
