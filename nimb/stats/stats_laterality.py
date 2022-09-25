@@ -1,9 +1,11 @@
 import os
 import argparse
 
-from stats import db_processing
-from matplotlib import pyplot as plt
 import numpy as np
+from matplotlib import pyplot as plt
+
+from stats import db_processing
+from stats.stats_stats import get_stats
 
 
 def LateralityAnalysis(df,
@@ -18,9 +20,10 @@ def LateralityAnalysis(df,
         file_name - name of the file.csv
         PATH_save_results = abspath to save the file.csv
     Return:
-        pandas.DataFrame csv file with results
-        positive values means feature_left > feature_right
-        positive values means feature_right > feature_left
+        pandas.DataFrame
+            saves results to a csv file
+            positive values means feature_left > feature_right
+            positive values means feature_right > feature_left
     '''
 
     df_lat = db_processing.Table().get_clean_df()
@@ -35,6 +38,7 @@ def LateralityAnalysis(df,
 def plot_laterality_per_group(ls_of_features,
                               data_2plot_per_group,
                               path_2save_img,
+                              cols2chk_sig,
                               on_axis = "X",
                               y_axis_label = 'Laterality Index, right < 0 > left',
                               x_axis_label = 'Regions',
@@ -50,6 +54,8 @@ def plot_laterality_per_group(ls_of_features,
         data_2plot_per_group = {"group_name": numpy.array(values_to_be_plotted)}
         on_axis = axis chosen to plot the data; default is "X", alternative is "Y"
         path_2save_img = absolute path to save the image
+        cols2chk_sig  = {statistic test, p:{feature: value,}}; a dictionary
+                    that shows the columns with statistical difference between groups
         y_axis_label = label for the y axis
         plot_title = title of the plot
         dpi = resolution, default is 150
@@ -61,6 +67,18 @@ def plot_laterality_per_group(ls_of_features,
     groups = list(data_2plot_per_group.keys())
     axis_vals = np.arange(len(ls_of_features))
 
+    # getting list of significant features:
+    # only for the ttest
+    ls_feats_sig = dict()
+    for col in cols2chk_sig:
+        if "ttest" in col:
+            for feat_sig in cols2chk_sig[col]:
+                for feat_2chk in ls_of_features:
+                    if feat_2chk in feat_sig:
+                        ls_feats_sig[feat_2chk] = cols2chk_sig[col][feat_sig]
+    print("feats sig to add to plot:")
+    print("    ", ls_feats_sig, "\n")
+
     for group in data_2plot_per_group:
         ax_distance = 0.1 * groups.index(group)+0.1
         axis_vals = axis_vals + ax_distance
@@ -68,7 +86,6 @@ def plot_laterality_per_group(ls_of_features,
             plt.bar(axis_vals, data_2plot_per_group[group], 0.2, label = group)
         else:
             plt.barh(axis_vals, data_2plot_per_group[group], 0.2, label = group)
-
     if on_axis == "X":
         plt.xticks(axis_vals, ls_of_features, rotation='vertical')
         plt.xlabel(x_axis_label)
@@ -115,6 +132,7 @@ def get_lateralized_feats(feats_2lateralize,
     # combine two feats based on laterality
     lhrh_feat_d = {}
     contra_feats = list()
+    miss_feats = list()
     for feat in feats_2lateralize:
         if feat not in contra_feats and lat_param in feat:
             lat_subfeat = get_laterality_subfeat(feat, lat_param)
@@ -137,6 +155,7 @@ def get_lateralized_feats(feats_2lateralize,
                         lhrh_feat_d[lat_subfeat] = (feat, contra_feat)
                 else:
                     print("cannot find contralateral feature for: ", feat)
+                    miss_feats.append(feat)
             else:
                 print("lat param: ", lat_param, " not in feature: ", feat)
 
@@ -146,7 +165,7 @@ def get_lateralized_feats(feats_2lateralize,
         print("    combined features: ", len(lhrh_feat_d.keys()))
         for key in lhrh_feat_d:
             print("     ",key,":", lhrh_feat_d[key])
-    return lhrh_feat_d
+    return lhrh_feat_d, miss_feats
 
 
 def get_all_combined_feats_per_param(feats_per_param,
@@ -164,9 +183,9 @@ def get_all_combined_feats_per_param(feats_per_param,
     combined_feats_per_param = dict()
     for param in feats_per_param:
         feats = feats_per_param[param]
-        lateralized_lhrh = get_lateralized_feats(feats,
-                                                 laterality_param[0],
-                                                 laterality_param[1])
+        lateralized_lhrh, miss_feats = get_lateralized_feats(feats,
+                                                             laterality_param[0],
+                                                             laterality_param[1])
         for hemi in laterality_param:
             pos = laterality_param.index(hemi)
             param_hemi = f"{param}_{hemi}"
@@ -190,7 +209,8 @@ def laterality_per_groups(dict_dfs_per_groups,
                           dpi = 150,
                           file_name = f'Laterality',
                           print_check = False,
-                          show_img = False):
+                          show_img = False,
+                          group_col = "groups"):
     """calculates laterality per multiple groups
         saves the results as csv files
         saves a plot for laterality results
@@ -211,11 +231,10 @@ def laterality_per_groups(dict_dfs_per_groups,
         plot image
         saves csv files with laterality analysis
     """
-    groups = list(dict_dfs_per_groups.keys())
-    lateralized_lhrh = get_lateralized_feats(feats,
-                                        lat_param_left,
-                                        lat_param_right, 
-                                        print_check = print_check)
+    lateralized_lhrh, miss_feats = get_lateralized_feats(feats,
+                                                        lat_param_left,
+                                                        lat_param_right, 
+                                                        print_check = print_check)
     laterality_calculated = {"means":dict()}
     for group in dict_dfs_per_groups:
         file = f'{file_name}_results_{group}'
@@ -227,13 +246,40 @@ def laterality_per_groups(dict_dfs_per_groups,
         laterality_calculated[group] = laterality_results
         laterality_calculated["means"][group] = laterality_calculated[group].mean().to_numpy()
 
+    groups = list(dict_dfs_per_groups.keys())
+    if len(groups) > 1:
+        frames = list()
+        for group in groups:
+            df = laterality_calculated[group]
+            df[group_col] = group
+            if "Unnamed: 0" in df.columns:
+                df.drop(columns = "Unnamed: 0", inplace = True)
+            frames.append(df)
+        df_4stats = db_processing.Table().concat_dfs(frames, ax=0)
+ 
+        stats_dic, cols2chk_sig = get_stats(df_4stats,
+                                            groups,
+                                            group_col,
+                                            path2save,
+                                            sig_thresh = 0.05,
+                                            nr_digits = 6,
+                                            make_with_colors = True,
+                                            filename_stats_json = f'{file_name}_stats_{group}',
+                                            filename_stats      = f'{file_name}_stats_{group}.csv',
+                                            filename_stats_sig  = f'{file_name}_stats_significant_{group}')
 
     if not ls_of_features_2plot:
         ls_of_features_2plot = laterality_calculated[groups[0]].columns.tolist()
-    path_2save_img = os.path.join(path2save, f"{file_name}_{'_'.join(groups)}.png")
+    if miss_feats:
+        for feat in miss_feats:
+            if feat in ls_of_features_2plot:
+                ls_of_features_2plot.remove(feat)
+    file_name_complete = f"{file_name}_{'_'.join(groups)}.png"
+    path_2save_img = os.path.join(path2save, file_name_complete)
     plot_laterality_per_group(ls_of_features_2plot,
                               laterality_calculated["means"],
                               path_2save_img,
+                              cols2chk_sig,
                               on_axis = on_axis,
                               plot_title = plot_title,
                               plot_figure_size = plot_figure_size,
