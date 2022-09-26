@@ -104,7 +104,10 @@ def get_stats(df_4stats,
                 path2save,
                 sig_thresh = 0.05,
                 nr_digits = 6,
-                make_with_colors = True):
+                make_with_colors = True,
+                filename_stats_json = 'stats',
+                filename_stats      = 'stats.csv',
+                filename_stats_sig  = 'stats_significant'):
     '''Creates discriptive statistical file,
         based on provided pandas.DataFrame
         Currently works only with 2 groups
@@ -117,18 +120,11 @@ def get_stats(df_4stats,
         make_with_colors: will create an additional .xlsx file with 
                         colored significant results,
                         provided xlwt is installed
-        make_table2publish: will create an additional file .csv
-                            that is expected to be ready to be published
     Return:
         saves results to a .json file
         saves results to a .csv file
         saves results to an .xlsx file where significant results are colored in red
     '''
-
-    filename_stats_json     = 'stats.json'
-    filename_stats          = 'stats.csv'
-    filename_stats_2publish = 'stats_publishable.csv'
-    filename_stats_sig      = 'stats_significant'
 
     tab = Table()
     groups_df = dict()
@@ -172,7 +168,8 @@ def get_stats(df_4stats,
                 cols2chk_sig[key_significance][val] = val_significance
             stats_dic[key_test_result][val] = f'{results[test][0][0]}'
             stats_dic[key_significance][val] = f'{val_significance}'
-    utilities.save_json(stats_dic, os.path.join(path2save, filename_stats_json))
+    utilities.save_json(stats_dic, os.path.join(path2save,
+                                            f'{filename_stats_json}.json'))
 
     df = tab.create_df_from_dict(stats_dic)
     df = df.astype(float)
@@ -266,8 +263,8 @@ def make_table2publish(df,
                        tests,
                        stats_dic,
                        path2save,
-                       filename_stats_2publish):
-    """aims to create a version of a table
+                       filename_stats_2publish = 'stats_publishable.csv'):
+    """creates a version of a csv table
         with sub-indices, that would be publishable
     author: Emmanuelle Mazur-Lainé 202206
     Args:
@@ -277,6 +274,7 @@ def make_table2publish(df,
     Return:
         saves results to a csv file
     """
+
 
     ls_tests_dup = []
     ls_param = []
