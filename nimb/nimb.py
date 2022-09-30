@@ -71,13 +71,15 @@ class NIMB(object):
 
 
         if self.process == 'classify-dcm2bids':
-            dir_with_subj_2classify = DistributionHelper(self.all_vars).get_subj_2classify()
-            if dir_with_subj_2classify:
-                print("initiating dcm2bids transformation for project: {}".format(self.project))
+            sourcedata_dir = self.proj_vars['SOURCE_SUBJECTS_DIR'][1]
+            if sourcedata_dir:
                 from classification.dcm2bids_helper import DCM2BIDS_helper
+                print(f"initiating dcm2bids transformation for:")
+                print(f"    project: {self.project}")
+                print(f"    folder: {sourcedata_dir}")
                 return DCM2BIDS_helper(self.project_vars,
                                     self.project,
-                                    DICOM_DIR = dir_with_subj_2classify).run()
+                                    DICOM_DIR = sourcedata_dir).run()
 
 
         if self.process == 'fs-get-stats':

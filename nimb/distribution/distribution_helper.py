@@ -261,16 +261,10 @@ class DistributionHelper():
     def get_subj_2classify(self):
         dirs_2classify = list()
         dir_new_subj    = self.locations["local"]["NIMB_PATHS"]["NIMB_NEW_SUBJECTS"]
-        rawdata_location   = self.proj_vars['SOURCE_BIDS_DIR'][0]
-        rawdata_dir   = self.proj_vars['SOURCE_BIDS_DIR'][1]
         sourcedata_location = self.proj_vars['SOURCE_SUBJECTS_DIR'][0]
         sourcedata_dir = self.proj_vars['SOURCE_SUBJECTS_DIR'][1]
         if os.path.exists(dir_new_subj) and os.listdir(dir_new_subj):
             dirs_2classify.append(dir_new_subj)
-        if rawdata_location == 'local'\
-            and os.path.exists(rawdata_dir)\
-            and os.listdir(rawdata_dir):
-            dirs_2classify.append(rawdata_dir)
         if sourcedata_location == 'local'\
             and os.path.exists(sourcedata_dir)\
             and os.listdir(sourcedata_dir):
