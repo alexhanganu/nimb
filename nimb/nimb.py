@@ -71,7 +71,7 @@ class NIMB(object):
 
 
         if self.process == 'classify-dcm2bids':
-            sourcedata_dir = self.proj_vars['SOURCE_SUBJECTS_DIR'][1]
+            sourcedata_dir = self.project_vars['SOURCE_SUBJECTS_DIR'][1]
             if sourcedata_dir:
                 from classification.dcm2bids_helper import DCM2BIDS_helper
                 print(f"initiating dcm2bids transformation for:")

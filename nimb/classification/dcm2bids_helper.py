@@ -59,8 +59,10 @@ class DCM2BIDS_helper():
         self.DICOM_DIR       = DICOM_DIR
         if DICOM_DIR == 'default':
             self.DICOM_DIR   = self.get_SUBJ_DIR()
-        self.tmp_dir         = tmp_dir
         self.OUTPUT_DIR      = makedir_ifnot_exist(self.proj_vars['SOURCE_BIDS_DIR'][1])
+        self.tmp_dir         = tmp_dir
+        if self.tmp_dir == 'none':
+            self.tmp_dir = os.path.dirname(self.OUTPUT_DIR)
         self.archived        = False
 
 
@@ -418,7 +420,7 @@ class DCM2BIDS_helper():
                 if is_archive(path_2archive):
                     print(f'{" " *12}archive located at: {path_2archive}')
                     path_extracted = self.extract_from_archive(path_2archive,
-                                                     path2mr_)
+                                                                path2mr_)
                     paths_2mrdata.append(path_extracted)
                 else:
                     print(f'{" " *12} ile: {path_2archive} does not seem to be an archive')
@@ -429,8 +431,6 @@ class DCM2BIDS_helper():
 
 
     def extract_from_archive(self, archive_abspath, path2mr_):
-        if self.tmp_dir == 'none':
-            self.tmp_dir = os.path.dirname(archive_abspath)
         tmp_dir_xtract = os.path.join(self.tmp_dir, 'tmp_for_classification')
         tmp_dir_err    = os.path.join(self.tmp_dir, 'tmp_for_classification_err')
 #        print(f'            extracting data: {path2mr_}')

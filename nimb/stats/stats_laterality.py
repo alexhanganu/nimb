@@ -236,7 +236,17 @@ def laterality_per_groups(dict_dfs_per_groups,
                                                         lat_param_right, 
                                                         print_check = print_check)
     laterality_calculated = {"means":dict()}
-    for group in dict_dfs_per_groups:
+    groups = list(dict_dfs_per_groups.keys())
+
+    groups_str = list()
+    try:
+        groups_in_filename = '_'.join(groups)
+    except TypeError:
+        for i in groups:
+            groups_str.append(str(i))
+        groups_in_filename = '_'.join(groups_str)
+
+    for group in groups:
         file = f'{file_name}_results_{group}'
         df = dict_dfs_per_groups[group]
         laterality_results = LateralityAnalysis(df, 
@@ -246,14 +256,13 @@ def laterality_per_groups(dict_dfs_per_groups,
         laterality_calculated[group] = laterality_results
         laterality_calculated["means"][group] = laterality_calculated[group].mean().to_numpy()
 
-    groups = list(dict_dfs_per_groups.keys())
     if len(groups) > 1:
         frames = list()
         for group in groups:
             df = laterality_calculated[group]
-            df[group_col] = group
             if "Unnamed: 0" in df.columns:
                 df.drop(columns = "Unnamed: 0", inplace = True)
+            df[group_col] = group
             frames.append(df)
         df_4stats = db_processing.Table().concat_dfs(frames, ax=0)
  
@@ -264,9 +273,9 @@ def laterality_per_groups(dict_dfs_per_groups,
                                             sig_thresh = 0.05,
                                             nr_digits = 6,
                                             make_with_colors = True,
-                                            filename_stats_json = f'{file_name}_stats_{group}',
-                                            filename_stats      = f'{file_name}_stats_{group}.csv',
-                                            filename_stats_sig  = f'{file_name}_stats_significant_{group}')
+                                            filename_stats_json = f'{file_name}_stats_{groups_in_filename}',
+                                            filename_stats      = f'{file_name}_stats_{groups_in_filename}.csv',
+                                            filename_stats_sig  = f'{file_name}_stats_significant_{groups_in_filename}')
 
     if not ls_of_features_2plot:
         ls_of_features_2plot = laterality_calculated[groups[0]].columns.tolist()
@@ -274,7 +283,7 @@ def laterality_per_groups(dict_dfs_per_groups,
         for feat in miss_feats:
             if feat in ls_of_features_2plot:
                 ls_of_features_2plot.remove(feat)
-    file_name_complete = f"{file_name}_{'_'.join(groups)}.png"
+    file_name_complete = f"{file_name}_{groups_in_filename}.png"
     path_2save_img = os.path.join(path2save, file_name_complete)
     plot_laterality_per_group(ls_of_features_2plot,
                               laterality_calculated["means"],
