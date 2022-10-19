@@ -150,7 +150,7 @@ def get_stats(df_4stats,
                 stats_dic[key][val] = f'{results[test]}'
 
     for val in vals2chk:
-        grpcontrast=(groups[0]+' vs '+groups[1])
+        grpcontrast=(f'{str(groups[0])} vs {str(groups[1])}')
         results = get_stats_2samples(groups_df[groups[0]][val],
                                              groups_df[groups[1]][val])
         for test in results:
