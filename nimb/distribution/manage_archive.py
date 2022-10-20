@@ -40,7 +40,7 @@ class ZipArchiveManagement():
             if self.path2xtrct:
                 self.extract_archive()
             else:
-                self.content = self.zip_file_content()
+                print(f'{" " * 12}please provide a path to extract the file {self.zip_f_path}')
 
 
     def chk_if_zipfile(self):
@@ -78,19 +78,19 @@ class ZipArchiveManagement():
 
 
     def pattern_exists(self):
-        ls_patterns = [os.path.join(self.zip_file.replace('.zip',''), i).replace(os.sep,'/') for i in self.dirs2xtrct]
+        ls_patterns = [i.replace(os.sep,'/') for i in self.dirs2xtrct]
         content_paths = list()
-        for abs_path in self.zip_file_content():
+        for content in self.zip_file_content():
             for pattern in ls_patterns:
-                if pattern in abs_path:
-                    content_paths.append(abs_path)
+                if pattern in content:
+                    content_paths.append(content)
         if content_paths:
             print(f'{" " * 12}extracting patterns: {self.dirs2xtrct}')
-            self.extract_pattern(content_paths)
+            self.extract_patterns(content_paths)
         else:
             print(f'{" " * 12}ERR: patterns are missing from archive: {self.dirs2xtrct}')
 
-    def extract_pattern(self, content_paths):
+    def extract_patterns(self, content_paths):
         for content_path in content_paths:
             try:
                 self.zip_file_open.extract(content_path, path=self.path2xtrct)
