@@ -7,6 +7,7 @@ Kim Phuong Pham
 1) uses nimb_classified.json
 2) for each subject, each session: runs unfmontreal/dcm2bids
 3) creates new BIDS folder in the DIR provided per project in proj_vars
+validateBIDS: https://github.com/bids-standard/bids-validator
 """
 
 import os
@@ -203,7 +204,7 @@ class DCM2BIDS_helper():
             print(">" * 80)
             self.config_file = self.get_config_file()
             print(f'{" " * 12}config file is: {self.config_file}')
-            print(f'{" " * 15}archive located at: {abs_path2mr}')
+            print(f'{" " * 15}folder with data located at: {abs_path2mr}')
             return_value = os.system('dcm2bids -d {} -p {} -s {} -c {} -o {}'.format(
                                                                                     abs_path2mr,
                                                                                     self.nimb_id,
