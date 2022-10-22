@@ -24,6 +24,7 @@
     "file_type"              : "default",
     "regression_param"       : ["default"],
     "variables_for_glm"      : ["default", "default2"],
+    "vars_for_correction"    : [],
     "other_params"           : [],
     "dcm2bids_config"        : "default",
     "prediction_target"      : []
