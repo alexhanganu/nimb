@@ -441,7 +441,7 @@ class DistributionHelper():
         from .manage_archive import ZipArchiveManagement
         if self.proj_vars['materials_DIR'][0] == 'local':
             print(f'{LogLVL.lvl2}Extracting folders {dirs2extract} to: {SUBJECTS_DIR}')
-            NIMB_PROCESSED_FS = os.path.join(self.locations["local"]['NIMB_PATHS']['NIMB_PROCESSED_FS'])
+            NIMB_PROCESSED_FS = os.path.join(self.locations["local"]['FREESURFER']['NIMB_PROCESSED'])
             for sub in ls:
                 zip_file_path = os.path.join(NIMB_PROCESSED_FS, '{}.zip'.format(sub))
                 if os.path.exists(zip_file_path):
