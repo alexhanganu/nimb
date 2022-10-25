@@ -114,6 +114,19 @@ class PerformGLM():
 
     def RUN_GLM(self, fsgd_type, files_glm, fsgd_file_name, fsgd_f_unix,
                       hemi, meas, thresh):
+        """do GLM using mri_glmfit
+            can add flags:
+                --skew: to compute skew and p-value for skew
+                --kurtosis: to compute kurtosis and p-value for kurtosis
+                --pca: perform pca/svd analysis on residual
+                --save-yhat: save signal estimate
+            can run mri_glmfit only for ROIs with command:
+                mri_glmfit --label or
+                mri_glmfit --tale (instead of --y)
+                    the table must be created with the first column being subject name
+                    and first row being clustername (Cluter 1, Cluster 2)
+                    col = 1, row = 1 can by dummy string (e.g., "dummy")
+        """
         glm_analysis = '{}.{}.fwhm{}'.format(meas, hemi, str(thresh))
         analysis_name = '{}.{}'.format(fsgd_file_name, glm_analysis)
         glmdir = os.path.join(self.PATHglm_glm, analysis_name)
