@@ -1,5 +1,5 @@
 '''
-last update: 20220414
+last update: 20221028
 check that all subjects are present in the SUBJECTS_DIR folder
 in order to perform the FreeSurfer GLM
 create required files to perform FreeSurfer GLM
@@ -224,7 +224,7 @@ class PrepareForGLM():
 
         # print('creating unix version of fsgd files, to convert Windows tabulations to unix')
         self.fsgd_win_to_unix(GLM_dir)
-        self.make_qdec_fsgd_g2()
+        self.make_qdec_fsgd_g2() #QDEC is deprecated in FreeSurfer version >7.3
 
 
     def make_folders(self,
@@ -232,12 +232,12 @@ class PrepareForGLM():
                     GLM_file_group):
         """creating corresponding folders
         """
-        params        = fs_definitions.FSGLMParams(GLM_dir)
-        self.PATHfsgd = os.path.join(GLM_dir,'fsgd')
-        self.PATHmtx  = os.path.join(GLM_dir,'contrasts')
-        self.PATHqdec = os.path.join(GLM_dir,'qdec')
-        self.file_for_glm = params.files_for_glm
-        self.ids_groups   = params.subjects_per_group
+        params            = fs_definitions.FSGLMParams(GLM_dir)
+        self.PATHfsgd     = os.path.join(GLM_dir,'fsgd')
+        self.PATHmtx      = os.path.join(GLM_dir,'contrasts')
+        self.PATHqdec     = os.path.join(GLM_dir,'qdec')
+        self.file_for_glm = os.path.join(GLM_dir, 'files_for_glm.json')
+        self.ids_groups   = os.path.join(GLM_dir, 'ids_per_group.json')
 
         for _dir in [GLM_dir, self.PATHfsgd, self.PATHmtx, self.PATHqdec]:
             if not os.path.exists(_dir):
@@ -256,23 +256,29 @@ class PrepareForGLM():
                                 vars_fs):
         """creating working variables and dictionaries
         """
-        cols_2use = proj_vars["variables_for_glm"]+[self.id_col, self.group_col]
-        df_groups_clin = Table().get_df_with_columns(GLM_file_group, cols_2use)
+        self.ls_vars_stats = proj_vars["variables_for_glm"]
+        self.ls_vars_correct = proj_vars["vars_for_correction"]
+        self.ls_all_vars = self.ls_vars_stats + self.ls_vars_correct+[self.id_col, self.group_col]
+        df_groups_clin = Table().get_df_with_columns(GLM_file_group, self.ls_all_vars)
+        d_init = df_groups_clin.to_dict()
+
+        if not self.ls_vars_stats:
+            self.ls_vars_stats = [key for key in d_init if key != self.id_col]
+        self.ls_all_vars = self.ls_vars_stats + self.ls_vars_correct+[self.id_col, self.group_col]
 
         self.ls_groups = pd.unique(df_groups_clin[self.group_col]).tolist()
         self.ids = self.get_ids_ready4glm(df_groups_clin[self.id_col].tolist(),
                                             vars_fs)
 
-        d_init = df_groups_clin.to_dict()
         self.d_subjid = {}
-        self.ls_vars_stats = [key for key in d_init if key != self.id_col]
         for rownr in d_init[self.id_col]:
             _id = d_init[self.id_col][rownr]
             if _id in self.ids:
                 self.d_subjid[_id] = {}
-                for var in self.ls_vars_stats:
+                for var in self.ls_all_vars:
                     self.d_subjid[_id][var] = d_init[var][rownr]
-        self.ls_vars_stats.remove(self.group_col)
+        if self.group_col in self.ls_vars_stats:
+            self.ls_vars_stats.remove(self.group_col)
         self.make_subjects_per_group(df_groups_clin)
 
 
@@ -307,8 +313,8 @@ class PrepareForGLM():
             for row in df.index.tolist():
                 if df.at[row, self.group_col] == group and df.at[row, self.id_col] in self.ids:
                     subjects_per_group[group].append(df.at[row, self.id_col])
-            print('        group: {}, has {} subjects'.format(group, len(subjects_per_group[group])))
-
+            print(f'        group: {group}')
+            print(f'            has {len(subjects_per_group[group])} subjects')
         # save file
         with open(self.ids_groups, 'w') as f:
             json.dump(subjects_per_group, f, indent=4)
@@ -325,6 +331,11 @@ class PrepareForGLM():
                                       'mtx'  : [],
                                       'mtx_explanation' : [],
                                       'gd2mtx' : dods_doss}
+            if self.ls_vars_correct:
+                self.files_glm[f"{contrast}_cor"]={'fsgd' : [],
+                                                  'mtx'  : [],
+                                                  'mtx_explanation' : [],
+                                                  'gd2mtx' : dods_doss}
             groups_2include = int(contrast[1])
             vars_2include   = int(contrast[-1])
             groups_combined = self.combinations_get(self.ls_groups,
@@ -332,16 +343,31 @@ class PrepareForGLM():
             vars_combined   = self.combinations_get(self.ls_vars_stats,
                                                     lvl = vars_2include)
             for groups in groups_combined:
-                # if len(groups) == groups_2include:
+                for contrast_name in self.contrasts[contrast]:
+                    contrast_txt = self.contrasts[contrast][contrast_name][0]
+                    contrast_explanation = self.contrasts[contrast][contrast_name][1]
+                    file_contrast = f'{contrast}_{contrast_name}'
+                    self.files_glm[contrast]['mtx'].append(file_contrast)
+                    self.files_glm[contrast]['mtx_explanation'].append(contrast_explanation)
+                    if self.ls_vars_correct:
+                        nr_zeros = len(groups)*len(self.ls_vars_correct)
+                        zeros = [i for i in "".ljust(nr_zeros, "0")]
+                        contrast_txt = contrast_txt + " +" + " +".join(zeros)
+                        file_contrast = f'{contrast}_cor_{contrast_name}'
+                        self.files_glm[f"{contrast}_cor"]['mtx'].append(file_contrast)
+                        self.files_glm[f"{contrast}_cor"]['mtx_explanation'].append(contrast_explanation)
+                    open(os.path.join(self.PATHmtx, file_contrast), 'w').close()
+                    with open(os.path.join(self.PATHmtx, file_contrast), 'a') as f:
+                        f.write(contrast_txt)
+
                 group_in_file_name = f'_{"_".join(groups)}'
                 self.fsgd_vars_add(contrast,
-                                    vars_combined,
-                                    group_in_file_name,
-                                    groups)
+                                   vars_combined,
+                                   group_in_file_name,
+                                   groups)
 
 
     def fsgd_vars_add(self, contrast, vars_combined, group_in_file_name, groups):
-        vars_2include = int(contrast[-1])
         var_name = ''
         vars_zeros = False
 
@@ -359,8 +385,23 @@ class PrepareForGLM():
                 self.files_glm[contrast]['fsgd'].append(file)
                 self.fsgd_populate(file, groups, variables)
 
+                if self.ls_vars_correct:
+                    var_cor_name = f'_{"_".join(self.ls_vars_correct)}'
+                    file_name = f'{contrast}{group_in_file_name}{var_name}_corrected{var_cor_name}.fsgd'
+                    file = os.path.join(self.PATHfsgd, file_name)
+                    open(file, 'w').close()
+                    self.files_glm[f"{contrast}_cor"]['fsgd'].append(file)
+                    self.fsgd_populate(file, groups, variables, corrected = True)
 
-    def fsgd_populate(self, file, groups, variables):
+
+    def fsgd_populate(self, file, groups, variables, corrected = False):
+        all_vars = variables
+        if corrected:
+            vars_correcting_2add = [i for i in self.ls_vars_correct if i not in variables]
+            try:
+                all_vars = [i for i in variables] + vars_correcting_2add
+            except TypeError:
+                all_vars = [variables[0],] + vars_correcting_2add
         with open(file, 'a') as f:
             f.write('GroupDescriptorFile 1\n')
             if len(groups) == 1:
@@ -369,13 +410,13 @@ class PrepareForGLM():
             else:
                 f.write(f'Class {groups[0]} plus blue\n')
                 f.write(f'Class {groups[1]} circle green\n')
-            if variables:
-                f.write(f'Variables {str(" ".join(variables))}\n')
+            if all_vars:
+                    f.write(f'Variables {str(" ".join(all_vars))}\n')
             for subjid in self.d_subjid:
                 vars_2write = " "
-                if variables:
+                if all_vars:
                     vars_2add = list()
-                    for var in variables:
+                    for var in all_vars:
                         vars_2add.append(self.d_subjid[subjid][var])
                     vars_2write = " "+" ".join([str(i) for i in vars_2add])
                 if len(groups) == 1:
@@ -415,38 +456,6 @@ class PrepareForGLM():
                 if not os.path.isfile(fsgd_f_unix):
                     os.system('cat {} | sed \'s/\\r/\\n/g\' > {}'.format(
                         os.path.join(self.PATHfsgd, fsgd_file), fsgd_f_unix))
-
-
-    def make_qdec_fsgd_g2(self):
-        """creates the corresponding file to be used for QDEC analysis
-        """
-        groups_combined = self.combinations_get(self.ls_groups,
-                                        lvl = 2)
-        vars_2add = list()
-        for groups in groups_combined:
-            # checking variables for zeros, per group
-            for variable in self.ls_vars_stats:
-                vars_zeros = self.check_var_zero((variable,), groups)
-                if not vars_zeros:
-                    vars_2add.append(variable)
-
-            # populating file
-            file_name = f'qdec_g2_{groups[0]}_{groups[1]}.fsgd'
-            file = os.path.join(self.PATHqdec, file_name)
-            open(file, 'w').close()
-            with open(file, 'a') as f:
-                f.write('fsid group ')
-                for variable in vars_2add:
-                    f.write(f'{variable} ')
-                f.write('\n')
-                for _id in self.d_subjid:
-                    group = self.d_subjid[_id][self.group_col]
-                    if group in groups:
-                        f.write(f'{_id} {group} ')
-                        for variable in vars_2add:
-                            value = str(self.d_subjid[_id][variable])
-                            f.write(f'{value} ')
-                        f.write('\n')
 
 
     def combinations_get(self, ls, lvl = 0):
@@ -495,3 +504,58 @@ class PrepareForGLM():
         if all(v == 0 for v in values):
             vars_zeros = True
         return vars_zeros
+
+
+    def make_qdec_fsgd_g2(self):
+        """creates the corresponding file to be used for QDEC analysis
+            QDEC is deprecated in new FreeSurfer versions
+        """
+        groups_combined = self.combinations_get(self.ls_groups,
+                                        lvl = 2)
+        vars_2add = list()
+        for groups in groups_combined:
+            # checking variables for zeros, per group
+            for variable in self.ls_vars_stats:
+                vars_zeros = self.check_var_zero((variable,), groups)
+                if not vars_zeros:
+                    vars_2add.append(variable)
+
+            # populating file
+            file_name = f'qdec_g2_{groups[0]}_{groups[1]}.fsgd'
+            file = os.path.join(self.PATHqdec, file_name)
+            open(file, 'w').close()
+            with open(file, 'a') as f:
+                f.write('fsid group ')
+                for variable in vars_2add:
+                    f.write(f'{variable} ')
+                f.write('\n')
+                for _id in self.d_subjid:
+                    group = self.d_subjid[_id][self.group_col]
+                    if group in groups:
+                        f.write(f'{_id} {group} ')
+                        for variable in vars_2add:
+                            value = str(self.d_subjid[_id][variable])
+                            f.write(f'{value} ')
+                        f.write('\n')
+    """
+    FSGD:
+
+    GroupDescriptorFile 1
+    Title Between-group
+    Class int_male
+    Class int_female
+    Class con_male
+    Class con_female
+    Variables age mmse
+    Input 001.MR int_male      30     25
+    Input 002.MR int_female    40     22
+    Input 003.MR con_male      60     29
+    Input 004.MR con_female    60     21
+
+    contrast matrix
+    +0.5 +0.5 -0.5 -0.5 +0 +0 +0 +0 +0 +0 +0 +0
+
+    With the above contrast matrix, our interpretation would be:
+        Intervention > control = positive result
+        Intervention < control = negative result
+    """
