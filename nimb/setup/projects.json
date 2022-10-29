@@ -25,6 +25,8 @@
     "regression_param"       : ["default"],
     "variables_for_glm"      : ["default", "default2"],
     "vars_for_correction"    : [],
+    "fs_glm_correct_4_sex"   : "False",
+    "fs_glm_sex_variable"    : "",
     "other_params"           : [],
     "dcm2bids_config"        : "default",
     "prediction_target"      : []
@@ -54,6 +56,9 @@
     "group_param"            : "name of the column in that is used to classify the groups from the group_col columns; required for predictions; any other columns that are provided - will be used to create new groups",
     "regression_param"       : "list of variables that will be used for the regression statistical analysis",
     "variables_for_glm"      : "list of variables that will be used for the FreeSurfer GLM analysis and general stats",
+    "vars_for_correction"    : "variables to be used to correct the GLM analysis",
+    "fs_glm_correct_4_sex"   : "in FreeSurfer GLM with mri_glmfit, it is suggested to NOT use sex as covariable, instead create groups. Here, please define if sex is used as covariable. True (yes), False (no)",
+    "fs_glm_sex_variable"    : "define the name of the variable that refers to sex of participants",
     "other_params"           : "list of variables that must be excluded from all statistical analysis",
     "prediction_target"      : "list of variables that must will be used as targets to be predicted by the classification algorithms",
     "dcm2bids_config"        : "configuration file to be used with dcm2bids for bids classification",
