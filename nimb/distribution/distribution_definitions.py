@@ -3,7 +3,7 @@ import os
 class DEFAULT(object):
     """ Default values """
 
-    freesurfer_version = "7.2.0"
+    freesurfer_version = "7.3.2"
     centos_version     = '7'
     batch_walltime     = "12:00:00"
     cluster_time_format= "%H:%M:%S"
