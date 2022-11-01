@@ -5,6 +5,30 @@ in order to perform the FreeSurfer GLM
 create required files to perform FreeSurfer GLM
 '''
 
+
+
+"""GLM suggestions from FreeSurfer community:
+* don't use gender as a continuous covariate (Douglas N. Greve)
+* Make sure to normalize your covariates (Douglas N. Greve)
+    FSGD:
+        GroupDescriptorFile 1
+        Title Between-group
+        Class int_male
+        Class int_female
+        Class con_male
+        Class con_female
+        Variables age mmse
+        Input 001.MR int_male      30     25
+        Input 002.MR int_female    40     22
+        Input 003.MR con_male      60     29
+        Input 004.MR con_female    60     21
+    contrast matrix
+        +0.5 +0.5 -0.5 -0.5 +0 +0 +0 +0 +0 +0 +0 +0
+    With the above contrast matrix, our interpretation would be:
+        Intervention > control = positive result
+        Intervention < control = negative result
+
+"""
 import os
 import sys
 import json
@@ -537,25 +561,3 @@ class PrepareForGLM():
                             value = str(self.d_subjid[_id][variable])
                             f.write(f'{value} ')
                         f.write('\n')
-    """
-    FSGD:
-
-    GroupDescriptorFile 1
-    Title Between-group
-    Class int_male
-    Class int_female
-    Class con_male
-    Class con_female
-    Variables age mmse
-    Input 001.MR int_male      30     25
-    Input 002.MR int_female    40     22
-    Input 003.MR con_male      60     29
-    Input 004.MR con_female    60     21
-
-    contrast matrix
-    +0.5 +0.5 -0.5 -0.5 +0 +0 +0 +0 +0 +0 +0 +0
-
-    With the above contrast matrix, our interpretation would be:
-        Intervention > control = positive result
-        Intervention < control = negative result
-    """
