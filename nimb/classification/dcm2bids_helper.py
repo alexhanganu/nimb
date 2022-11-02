@@ -432,31 +432,23 @@ class DCM2BIDS_helper():
 
 
     def extract_from_archive(self, archive_abspath, path2mr_):
-        tmp_dir_xtract = os.path.join(self.tmp_dir, 'tmp_for_classification')
-        tmp_dir_err    = os.path.join(self.tmp_dir, 'tmp_for_classification_err')
+        self.tmp_dir_xtract = os.path.join(self.tmp_dir, 'tmp_for_classification')
+        self.tmp_dir_err    = os.path.join(self.tmp_dir, 'tmp_for_classification_err')
 #        print(f'            extracting data: {path2mr_}')
-        makedir_ifnot_exist(tmp_dir_xtract)
-        makedir_ifnot_exist(tmp_dir_err)
+        makedir_ifnot_exist(self.tmp_dir_xtract)
+        makedir_ifnot_exist(self.tmp_dir_err)
         ZipArchiveManagement(
             archive_abspath,
-            path2xtrct = tmp_dir_xtract,
-            path_err   = tmp_dir_err,
+            path2xtrct = self.tmp_dir_xtract,
+            path_err   = self.tmp_dir_err,
             dirs2xtrct = [path2mr_,])
-        if len(os.listdir(tmp_dir_err)) == 0:
-            shutil.rmtree(tmp_dir_err, ignore_errors=True)
-        return tmp_dir_xtract
+        if len(os.listdir(self.tmp_dir_err)) == 0:
+            shutil.rmtree(self.tmp_dir_err, ignore_errors=True)
+        return self.tmp_dir_xtract
 
 
     def rm_dir(self, DIR):
         os.system('rm -r {}'.format(DIR))
-
-
-    def chk_dir(self, location):
-        """Check if a directory exists. If not, create a directory"""
-        print(f'{" " *12} {location}')
-        if not os.path.exists(location):
-            os.makedirs(location)
-        return location
 
 
     def get_SUBJ_DIR(self):
