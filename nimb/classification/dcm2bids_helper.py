@@ -65,6 +65,8 @@ class DCM2BIDS_helper():
         if self.tmp_dir == 'none':
             self.tmp_dir = os.path.dirname(self.OUTPUT_DIR)
         self.archived        = False
+        self.tmp_dir_xtract  = os.path.join(self.tmp_dir, 'tmp_for_classification')
+        self.tmp_dir_err     = os.path.join(self.tmp_dir, 'tmp_for_classification_err')
 
 
     def run(self,
@@ -241,7 +243,7 @@ class DCM2BIDS_helper():
                 if self.update:
                     print(f'{" " *12}removing folder: {self.sub_SUBJDIR_tmp}')
                     self.repeat_updating += 1
-                    self.rm_dir(self.sub_SUBJDIR_tmp)
+                    os.system('rm -r {}'.format(self.sub_SUBJDIR_tmp))
                     print(f'{" " *12}re-renning dcm2bids')
                     self.run_dcm2bids(abs_path2mr)
                     print(f'{" " *12}looping to another chk_if_processed')
@@ -249,17 +251,6 @@ class DCM2BIDS_helper():
         else:
             self.populate_bids_classifed()
             self.cleaning_after_conversion(abs_path2mr)
-
-
-    def cleaning_after_conversion(self, abs_path2mr):
-        print(f'{" " *15}>>>>DCM2BIDS conversion DONE')
-        if os.path.exists(self.sub_SUBJDIR_tmp):
-            print(f'{" " *15}removing folder: {self.sub_SUBJDIR_tmp}')
-            self.rm_dir(self.sub_SUBJDIR_tmp)
-        if os.path.exists(abs_path2mr):
-            print(f'{" " *15}removing folder: {abs_path2mr}')
-            self.rm_dir(abs_path2mr)
-        print('\n')
 
 
     def update_config(self):
@@ -432,11 +423,9 @@ class DCM2BIDS_helper():
 
 
     def extract_from_archive(self, archive_abspath, path2mr_):
-        self.tmp_dir_xtract = os.path.join(self.tmp_dir, 'tmp_for_classification')
-        self.tmp_dir_err    = os.path.join(self.tmp_dir, 'tmp_for_classification_err')
-#        print(f'            extracting data: {path2mr_}')
         makedir_ifnot_exist(self.tmp_dir_xtract)
         makedir_ifnot_exist(self.tmp_dir_err)
+        print(f'            extracting data: {path2mr_}')
         ZipArchiveManagement(
             archive_abspath,
             path2xtrct = self.tmp_dir_xtract,
@@ -447,8 +436,17 @@ class DCM2BIDS_helper():
         return self.tmp_dir_xtract
 
 
-    def rm_dir(self, DIR):
-        os.system('rm -r {}'.format(DIR))
+    def cleaning_after_conversion(self, abs_path2mr):
+        print(f'{" " *15}>>>>DCM2BIDS conversion DONE')
+        if os.path.exists(self.sub_SUBJDIR_tmp):
+            print(f'{" " *15}removing folder: {self.sub_SUBJDIR_tmp}')
+            os.system('rm -r {}'.format(self.sub_SUBJDIR_tmp))
+        if os.path.exists(abs_path2mr):
+            print(f'{" " *15}removing folder: {abs_path2mr}')
+            os.system('rm -r {}'.format(abs_path2mr))
+        if len(os.listdir(self.tmp_dir_xtract)) == 0:
+            shutil.rmtree(self.tmp_dir_xtract, ignore_errors=True)
+        print('\n')
 
 
     def get_SUBJ_DIR(self):
