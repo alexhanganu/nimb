@@ -112,7 +112,14 @@ class DEFAULT(object):
                             "proj_id_col"    : "ID",
                             "dir_from_source": "",
                             'date_format'    : "%Y-%m-%d_%H_%M_%S.%f",
-                            'link'           : "https://www.adcs.org/data-sharing/",}}
+                            'link'           : "https://www.adcs.org/data-sharing/",},
+                        'loni_ppmi_test':{
+                            "dcm2bids_config": "dcm2bids_config_loni_ppmi.json",
+                            "f_source"       : "Magnetic_Resonance_Imaging.csv",
+                            "proj_id_col"    : "PATNO",
+                            "dir_from_source": "PPMI",
+                            'date_format'    : "%Y-%m-%d_%H_%M_%S.%f",
+                            'link'           : "",}}
 
     default_tab_name = 'default.csv'
     nimb_tmp_dir     = 'nimb_tmp_dir'
