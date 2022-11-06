@@ -432,38 +432,48 @@ class DCM2BIDS_helper():
             path_err   = self.tmp_dir_err,
             dirs2xtrct = [path2mr_,])
         if self.project in DEFAULT.project_ids:
-            dir_src_2rm = DEFAULT.project_ids[self.project]["dir_from_source"]
-            if dir_src_2rm in os.listdir(self.tmp_dir_xtract):
-                _dir_src_2rm_abspath = os.path.join(self.tmp_dir_xtract, dir_src_2rm)
-                print(f'{" " *12}DEFAULT folder {dir_src_2rm} is present in path: {self.tmp_dir_xtract}')
-                for _dir_2mv in [i for i in os.listdir(_dir_src_2rm_abspath)]:
-                    _dir_2mv_abspath = os.path.join(_dir_src_2rm_abspath, _dir_2mv)
-                    dst_2mv = os.path.join(self.tmp_dir_xtract, _dir_2mv)
-                    if not os.path.exists(dst_2mv):
-                        print(f'{" " *12}moving: {_dir_2mv_abspath}')
-                        print(f'{" " *15}to: {self.tmp_dir_xtract}')
-                        os.system(f'mv {_dir_2mv_abspath} {self.tmp_dir_xtract}')
-                        if os.path.exists(dst_2mv):
-                            print(f'{" " *15} moved OK')
-                    else:
-                        for subdir_2mv in [i for i in os.listdir(_dir_2mv_abspath)]:
-                            subdir_2mv_abspath = os.path.join(_dir_2mv_abspath, subdir_2mv)
-                            dst_sub_2mv = os.path.join(self.tmp_dir_xtract, _dir_2mv, subdir_2mv)
-                            if not os.path.exists(dst_sub_2mv):
-                                print(f'{" " *12}moving: {subdir_2mv_abspath}')
-                                print(f'{" " *15}to: {dst_2mv}')
-                                os.system(f'mv {subdir_2mv_abspath} {dst_2mv}')
-                            else:
-                                for sub_subdir_2mv in [i for i in os.listdir(subdir_2mv_abspath)]:
-                                    sub_subdir_2mv_abspath = os.path.join(subdir_2mv_abspath, sub_subdir_2mv)
-                                    print(f'{" " *12}moving: {sub_subdir_2mv_abspath}')
-                                    print(f'{" " *15}to: {dst_sub_2mv}')
-                                    os.system(f'mv {sub_subdir_2mv_abspath} {dst_sub_2mv}')
-                print(f'{" " *12}removing DEFAULT folder: {_dir_src_2rm_abspath}')
-                shutil.rmtree(_dir_src_2rm_abspath, ignore_errors=True)
+            self.default_projects_get_ids()
+
         if len(os.listdir(self.tmp_dir_err)) == 0:
             shutil.rmtree(self.tmp_dir_err, ignore_errors=True)
         return self.tmp_dir_xtract
+
+
+    def default_projects_get_ids(self):
+        """there are projects included in the DEFAULT group that have
+            a main folder in which subjects are located
+            this script aims to extract the subjects from that DEFAULT folder
+            and allow dcm2bids to work directly with those subject
+        """
+        dir_src_2rm = DEFAULT.project_ids[self.project]["dir_from_source"]
+        if dir_src_2rm in os.listdir(self.tmp_dir_xtract):
+            _dir_src_2rm_abspath = os.path.join(self.tmp_dir_xtract, dir_src_2rm)
+            print(f'{" " *12}DEFAULT folder {dir_src_2rm} is present in path: {self.tmp_dir_xtract}')
+            for _dir_2mv in [i for i in os.listdir(_dir_src_2rm_abspath)]:
+                _dir_2mv_abspath = os.path.join(_dir_src_2rm_abspath, _dir_2mv)
+                dst_2mv = os.path.join(self.tmp_dir_xtract, _dir_2mv)
+                if not os.path.exists(dst_2mv):
+                    print(f'{" " *12}moving: {_dir_2mv_abspath}')
+                    print(f'{" " *15}to: {self.tmp_dir_xtract}')
+                    os.system(f'mv {_dir_2mv_abspath} {self.tmp_dir_xtract}')
+                    if os.path.exists(dst_2mv):
+                        print(f'{" " *15} moved OK')
+                else:
+                    for subdir_2mv in [i for i in os.listdir(_dir_2mv_abspath)]:
+                        subdir_2mv_abspath = os.path.join(_dir_2mv_abspath, subdir_2mv)
+                        dst_sub_2mv = os.path.join(self.tmp_dir_xtract, _dir_2mv, subdir_2mv)
+                        if not os.path.exists(dst_sub_2mv):
+                            print(f'{" " *12}moving: {subdir_2mv_abspath}')
+                            print(f'{" " *15}to: {dst_2mv}')
+                            os.system(f'mv {subdir_2mv_abspath} {dst_2mv}')
+                        else:
+                            for sub_subdir_2mv in [i for i in os.listdir(subdir_2mv_abspath)]:
+                                sub_subdir_2mv_abspath = os.path.join(subdir_2mv_abspath, sub_subdir_2mv)
+                                print(f'{" " *12}moving: {sub_subdir_2mv_abspath}')
+                                print(f'{" " *15}to: {dst_sub_2mv}')
+                                os.system(f'mv {sub_subdir_2mv_abspath} {dst_sub_2mv}')
+            print(f'{" " *12}removing DEFAULT folder: {_dir_src_2rm_abspath}')
+            shutil.rmtree(_dir_src_2rm_abspath, ignore_errors=True)
 
 
     def cleaning_after_conversion(self, abs_path2mr):
