@@ -33,6 +33,20 @@
             "dataType": "anat",
             "modalityLabel": "T1w",
             "criteria": {
+                "SeriesDescription": "MPRAGE_GRAPPA"
+            }
+        },
+        {
+            "dataType": "anat",
+            "modalityLabel": "T1w",
+            "criteria": {
+                "SeriesDescription": "MPRAGE_GRAPPA2"
+            }
+        },
+        {
+            "dataType": "anat",
+            "modalityLabel": "T1w",
+            "criteria": {
                 "SeriesDescription": "MPRAGE_GRAPPA_ADNI"
             }
         },
@@ -75,6 +89,20 @@
             },
             "sidecarChanges": {
                 "SeriesDescription": "rsfMRI"
+            }
+        },
+        {
+            "dataType": "func",
+            "modalityLabel": "bold",
+            "criteria": {
+                "SeriesDescription": "ep2d_RESTING_STATE"
+            }
+        },
+        {
+            "dataType": "func",
+            "modalityLabel": "bold",
+            "criteria": {
+                "SeriesDescription": "ep2d_bold_rest"
             }
         },
         {
