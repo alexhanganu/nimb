@@ -55,7 +55,7 @@ def setup_miniconda(conda_home, NIMB_HOME):
     print(cmd)
     print("*"*10)
     system(cmd)
-    system(f'{conda_bin} install -y python=3.7')
+    system(f'{conda_bin} install -y python=3.10')
     system(f'{conda_bin} init')
     system(f'{conda_bin} update -y conda')
     system(f'{conda_bin} config --set report_errors false')
