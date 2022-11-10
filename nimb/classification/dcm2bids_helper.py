@@ -98,6 +98,9 @@ class DCM2BIDS_helper():
         self.id_classified   = nimb_classified_per_id
         self.bids_classified = dict()
         print(f'{" " *8}folder with subjects is: {self.DICOM_DIR}')
+        self.config_file = self.get_config_file()
+        print(f'{" " * 12}config file is: {self.config_file}')
+
         if self.id_classified:
             self.nimb_id = nimb_id
             self.ses     = ses
@@ -204,8 +207,6 @@ class DCM2BIDS_helper():
         print("====RUNNING DCM2BIDS====" * 3)
         if self.run_stt == 0:
             print(">" * 80)
-            self.config_file = self.get_config_file()
-            print(f'{" " * 12}config file is: {self.config_file}')
             print(f'{" " * 15}folder with data located at: {abs_path2mr}')
             return_value = os.system('dcm2bids -d {} -p {} -s {} -c {} -o {}'.format(
                                                                                     abs_path2mr,
@@ -297,14 +298,23 @@ class DCM2BIDS_helper():
         """Get the dcm2bids_config_{project_name}.json.
            If not exist, get dcm2bids_config_default.json
         """
-        config_file = os.path.join(self.OUTPUT_DIR,
-                             f'dcm2bids_config_{self.project}.json')
-        if os.path.exists(config_file):
-            return config_file
-        else:
-            shutil.copy(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dcm2bids','dcm2bids_config_default.json'),
-                        config_file)
-            return config_file
+        config_file_name = f'dcm2bids_config_{self.project}.json'
+        config_file = os.path.join(self.OUTPUT_DIR, config_file_name)
+        if not os.path.exists(config_file):
+            abspath_2nimb_configs = os.path.join(
+                                        os.path.dirname(os.path.abspath(__file__)),
+                                        'dcm2bids')
+            project_config_file = os.path.join(abspath_2nimb_configs,
+                                                config_file_name)
+            default_config_file = os.path.join(abspath_2nimb_configs,
+                                                f'dcm2bids_config_default.json')
+            if os.path.exists(project_config_file):
+                shutil.copy(project_config_file,
+                            config_file)
+            else:
+                shutil.copy(default_config_file,
+                            config_file)
+        return config_file
 
 
     def get_path_2rawdata(self,
