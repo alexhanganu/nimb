@@ -85,10 +85,10 @@ class ZipArchiveManagement():
                 if pattern in content:
                     content_paths.append(content)
         if content_paths:
-            print(f'{" " * 12}extracting patterns: {self.dirs2xtrct}')
+            print(f'{" " * 16}extracting patterns: {self.dirs2xtrct}')
             self.extract_patterns(content_paths)
         else:
-            print(f'{" " * 12}ERR: patterns are missing from archive: {self.dirs2xtrct}')
+            print(f'{" " * 16}ERR: patterns are missing from archive: {self.dirs2xtrct}')
 
     def extract_patterns(self, content_paths):
         for content_path in content_paths:

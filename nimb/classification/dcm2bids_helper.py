@@ -124,7 +124,7 @@ class DCM2BIDS_helper():
 
 
     def start_stepwise_choice(self):
-        print(f'{" " *8}classifying for id: {self.bids_id}')
+        print(f'{" " *4}DCM2BIDS CONVERTING for id: {self.bids_id}')
         if self.id_classified['archived']:
             self.archived = True
         self.sub_SUBJDIR_tmp = os.path.join(self.OUTPUT_DIR, 'tmp_dcm2bids', self.bids_id)
@@ -134,7 +134,8 @@ class DCM2BIDS_helper():
                 for self.modalityLabel_nimb in BIDS_types[self.data_Type]:
                     if self.modalityLabel_nimb in self.id_classified[self.ses][self.data_Type]:
                         self.modalityLabel = mr_modality_nimb_2_dcm2bids[self.modalityLabel_nimb] # changing to dcm2bids type modality_label
-                        print(f'{" " *8}DCM2BIDS CONVERTING: type: {self.data_Type}; label: {self.modalityLabel}')
+                        print(f'{" " *8}TYPE: {self.data_Type}')
+                        print(f'{" " *8}LABEL: {self.modalityLabel}')
                         paths_2mr_data = self.id_classified[self.ses][self.data_Type][self.modalityLabel_nimb]
                         abs_path2mr_all = self.get_path_2mr(paths_2mr_data)
                         abs_path2mr  = abs_path2mr_all[0]
@@ -458,12 +459,12 @@ class DCM2BIDS_helper():
         dir_src_2rm = DEFAULT.project_ids[self.project]["dir_from_source"]
         if dir_src_2rm in os.listdir(self.tmp_dir_xtract):
             _dir_src_2rm_abspath = os.path.join(self.tmp_dir_xtract, dir_src_2rm)
-            print(f'{" " *12}DEFAULT folder {dir_src_2rm} is present in path: {self.tmp_dir_xtract}')
+            print(f'{" " *12}DEFAULT folder: {dir_src_2rm} is present')
             for _dir_2mv in [i for i in os.listdir(_dir_src_2rm_abspath)]:
                 _dir_2mv_abspath = os.path.join(_dir_src_2rm_abspath, _dir_2mv)
                 dst_2mv = os.path.join(self.tmp_dir_xtract, _dir_2mv)
                 if not os.path.exists(dst_2mv):
-                    print(f'{" " *12}moving: {_dir_2mv_abspath}')
+                    print(f'{" " *16}moving: {_dir_2mv_abspath}')
                     print(f'{" " *15}to: {self.tmp_dir_xtract}')
                     os.system(f'mv {_dir_2mv_abspath} {self.tmp_dir_xtract}')
                     if os.path.exists(dst_2mv):
@@ -495,7 +496,11 @@ class DCM2BIDS_helper():
             print(f'{" " *15}removing folder: {abs_path2mr}')
             os.system('rm -r {}'.format(abs_path2mr))
         if os.path.exists(self.tmp_dir_xtract):
-            shutil.rmtree(self.tmp_dir_xtract, ignore_errors=True)
+            if self.nimb_classified:
+                if self.nimb_id == self.nimb_ids[-1]:
+                    shutil.rmtree(self.tmp_dir_xtract, ignore_errors=True)
+            else:
+                shutil.rmtree(self.tmp_dir_xtract, ignore_errors=True)
         print('\n')
 
 
