@@ -54,6 +54,15 @@
             "dataType": "anat",
             "modalityLabel": "T2w",
             "criteria": {
+                "SeriesDescription": "*T2*"
+                "SidecarFilename": "007*",
+                "EchoTime": 0.1
+            }
+        },
+        {
+            "dataType": "anat",
+            "modalityLabel": "T2w",
+            "criteria": {
                 "SidecarFilename": "007*",
                 "EchoTime": 0.1
             }
