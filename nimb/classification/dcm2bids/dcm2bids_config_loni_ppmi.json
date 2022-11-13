@@ -26,13 +26,6 @@
             "dataType": "anat",
             "modalityLabel": "T1w",
             "criteria": {
-                "SeriesDescription": "AX_PD_+_T2"
-            }
-        },
-        {
-            "dataType": "anat",
-            "modalityLabel": "T1w",
-            "criteria": {
                 "SeriesDescription": "MPRAGE_GRAPPA"
             }
         },
@@ -52,11 +45,44 @@
         },
         {
             "dataType": "anat",
+            "modalityLabel": "T1w",
+            "criteria": {
+                "SeriesDescription": "T1"
+            }
+        },
+        {
+            "dataType": "anat",
+            "modalityLabel": "T1w",
+            "criteria": {
+                "SeriesDescription": "T1_REPEAT"
+            }
+        },
+        {
+            "dataType": "anat",
+            "modalityLabel": "T1w",
+            "criteria": {
+                "SeriesDescription": "T1_Repeat"
+            }
+        },
+        {
+            "dataType": "anat",
+            "modalityLabel": "FLAIR",
+            "criteria": {
+                "SeriesDescription": "*FLAIR*"
+            }
+        },
+        {
+            "dataType": "anat",
+            "modalityLabel": "FLAIR",
+            "criteria": {
+                "SeriesDescription": "AX_T2_FLAIR"
+            }
+        },
+        {
+            "dataType": "anat",
             "modalityLabel": "T2w",
             "criteria": {
                 "SeriesDescription": "*T2*"
-                "SidecarFilename": "007*",
-                "EchoTime": 0.1
             }
         },
         {
@@ -71,15 +97,15 @@
             "dataType": "anat",
             "modalityLabel": "PD",
             "criteria": {
-                "SeriesDescription": "*TSE*",
-                "EchoTime": 0.008
+                "SeriesDescription": "AX_PD_+_T2"
             }
         },
         {
             "dataType": "anat",
-            "modalityLabel": "FLAIR",
+            "modalityLabel": "PD",
             "criteria": {
-                "SeriesDescription": "*FLAIR*"
+                "SeriesDescription": "*TSE*",
+                "EchoTime": 0.008
             }
         },
         {

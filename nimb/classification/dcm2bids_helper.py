@@ -268,23 +268,33 @@ class DCM2BIDS_helper():
                 des["modalityLabel"] == self.modalityLabel:
                 list_criteria.append(des)
         if len(list_criteria) > 0:
-            print(f'{" " *12}> there is at least one configuration with dataType: {self.data_Type}')
+            print(f'{" " *12}> there is at least one configuration with:')
+            print(f'{" " *16}dataType: {self.data_Type}')
+            print(f'{" " *16}modalityLabel: {self.modalityLabel}')
             for des in list_criteria[::-1]:
                 if criterion1 in des['criteria']:
                     if des['criteria'][criterion1] == sidecar_crit1:
-                        print(f'{" " *12} sidecar is present in the config file. Add another sidecar criterion in the dcm2bids_helper.py script')
+                        print(f'{" " *12}sidecar :{sidecar_crit1}')
+                        print(f'{" " *16}is present in the config file.')
+                        print(f'{" " *16}please add manually another sidecar criterion')
+                        print(f'{" " *16}in file: {self.config_file}')
                         self.add_criterion = True
                         sys.exit(0)
                     else:
                         list_criteria.remove(des)
         if len(list_criteria) > 0:
-            print(f'{" " *12}> cannot find a correct sidecar location. Please add more parameters.')
+            print(f'{" " *12}> multiple sidecars have been associated: {list_criteria}')
+            print(f'{" " *16}cannot find a correct sidecar location')
+            print(f'{" " *16}please add more parameters in file: {self.config_file}')
         if len(list_criteria) == 0:
-            print (f'{" " *12}> updating config with value: {sidecar_crit1}')
+            print (f'{" " *12}> updating configuration file with sidecar:')
+            print(f'{" " *16}dataType: {self.data_Type}')
+            print(f'{" " *16}modalityLabel: {self.modalityLabel}')
+            print(f'{" " *16}{criterion1}: {sidecar_crit1}')
             new_des = {
                'dataType': self.data_Type,
                'modalityLabel' : self.modalityLabel,
-               'criteria':{criterion1:  sidecar_crit1}}
+               'criteria':{criterion1:  criterion1}}
             self.config['descriptions'].append(new_des)
             self.update = True
 
