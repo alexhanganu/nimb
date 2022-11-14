@@ -154,10 +154,12 @@ class PerformGLM():
                 print('{} not created; ERROR in mris_preproc'.format(mgh_f))
                 self.err_preproc.append(mgh_f)
 
+
     def run_mris_preproc(self, fsgd_file, meas, thresh, hemi, mgh_f):
         f_cache = '{}.fwhm{}.fsaverage'.format(meas, str(thresh))
         cmd_tail = ' --target fsaverage --hemi {} --out {}'.format(hemi, mgh_f)
         os.system('mris_preproc --fsgd {} --cache-in {}{}'.format(fsgd_file, f_cache, cmd_tail))
+
 
     def run_mri_glmfit(self, mgh_f, fsgd_file, gd2mtx, glmdir, hemi, contrast_file):
         cmd_header   = 'mri_glmfit --y {} --fsgd {} {}'.format(mgh_f, fsgd_file, gd2mtx)
@@ -167,6 +169,21 @@ class PerformGLM():
         contrast_cmd = '--C {}'.format(os.path.join(self.PATHglm, 'contrasts', contrast_file))
         cmd          = '{} {} {} {}'.format(cmd_header, glmdir_cmd, surf_label, contrast_cmd)
         os.system(cmd)
+
+
+    def check_maxvox(self, glmdir, fsgd_type_contrast):
+        res = False
+        maxvox = os.path.join(glmdir, fsgd_type_contrast, 'maxvox.dat')
+        if os.path.exists(maxvox):
+            val = [i.strip() for i in open(maxvox).readlines()][0].split()[0]
+            if float(val) > self.sig_fdr_thresh or float(val) < -self.sig_fdr_thresh:
+                res = True
+        return res
+
+
+    def log_contrasts_with_significance(self, analysis_name, fsgd_type_contrast):
+        with open(self.sig_contrasts, 'a') as f:
+            f.write(f'{analysis_name}/{fsgd_type_contrast}\n')
 
 
     def run_mri_surfcluster(self,
@@ -209,6 +226,8 @@ class PerformGLM():
                 cmd_tail   = '--annot aparc --cwpvalthresh 0.05 --surf white'
                 os.system('{} {} {} {}'.format(cmd_header, mask_cmd, cmd_params, cmd_tail))
                 if self.check_mcz_summary(sum_mc_f):
+                    # self.get_cohensd_mean_per_contrast(path_2contrast,
+                    #                                     ocn_mc_f)
                     self.cluster_stats_to_file(analysis_name,
                                                 sum_mc_f,
                                                 contrast,
@@ -233,20 +252,28 @@ class PerformGLM():
                 os.system(f'{cmd_header} {cmd_perm} {cmd_tail}')
 
 
-    def check_maxvox(self, glmdir, fsgd_type_contrast):
-        res = False
-        maxvox = os.path.join(glmdir, fsgd_type_contrast, 'maxvox.dat')
-        if os.path.exists(maxvox):
-            val = [i.strip() for i in open(maxvox).readlines()][0].split()[0]
-            if float(val) > self.sig_fdr_thresh or float(val) < -self.sig_fdr_thresh:
-                res = True
-        return res
-
     def check_mcz_summary(self, file):
         if len(linecache.getline(file, 42).strip('\n')) > 0:
             return True
         else:
             return False
+
+
+    def get_cohensd_mean_per_contrast(self,
+                                    path_2contrast,
+                                    ocn_mc_f):
+        """extract the Mean value per contrast
+            that represents the effect size
+            as per: https://www.mail-archive.com/freesurfer@nmr.mgh.harvard.edu/msg52144.html
+                    https://www.mail-archive.com/freesurfer@nmr.mgh.harvard.edu/msg57316.html
+        """
+        cohensd_sum_filename = "cohensd.sum.dat"
+        os.system(f'cd {path_2contrast}')
+        os.system('fscalc gamma.mgh div ../rstd.mgh -o cohensd.mgh')
+        os.system(f'mri_segstats --i cohensd.mgh --seg {ocn_mc_f} --exclude 0 --o {cohensd_sum_filename}')
+        self.cohensd_sum = os.path.join(path_2contrast, cohensd_sum_filename)
+        # The mean in file sum.dat is the the mean column
+        # Probably: Cohen's D mean
 
 
     def cluster_stats_to_file(self,
@@ -267,9 +294,6 @@ class PerformGLM():
                 f.write(value+'\n')
             f.write('\n')
 
-    def log_contrasts_with_significance(self, analysis_name, fsgd_type_contrast):
-        with open(self.sig_contrasts, 'a') as f:
-            f.write(f'{analysis_name}/{fsgd_type_contrast}\n')
 
     def prepare_for_image_extraction_fdr(self, hemi, glmdir, analysis_name, fsgd_type_contrast):
         '''copying sig.mgh file from the contrasts to the image/contrast folder
