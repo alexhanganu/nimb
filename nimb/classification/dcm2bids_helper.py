@@ -124,7 +124,7 @@ class DCM2BIDS_helper():
 
 
     def start_stepwise_choice(self):
-        print(f'{" " *4}DCM2BIDS CONVERTING for id: {self.bids_id}')
+        print(f'{" " *4}\n\nDCM2BIDS CONVERTING for id: {self.bids_id}')
         if self.id_classified['archived']:
             self.archived = True
         self.sub_SUBJDIR_tmp = os.path.join(self.OUTPUT_DIR, 'tmp_dcm2bids', self.bids_id)
@@ -134,7 +134,7 @@ class DCM2BIDS_helper():
                 for self.modalityLabel_nimb in BIDS_types[self.data_Type]:
                     if self.modalityLabel_nimb in self.id_classified[self.ses][self.data_Type]:
                         self.modalityLabel = mr_modality_nimb_2_dcm2bids[self.modalityLabel_nimb] # changing to dcm2bids type modality_label
-                        print(f'{" " *8}TYPE: {self.data_Type}')
+                        print(f'{" " *8}\nTYPE: {self.data_Type}')
                         print(f'{" " *8}LABEL: {self.modalityLabel}')
                         paths_2mr_data = self.id_classified[self.ses][self.data_Type][self.modalityLabel_nimb]
                         abs_path2mr_all = self.get_path_2mr(paths_2mr_data)
@@ -205,10 +205,9 @@ class DCM2BIDS_helper():
 
 
     def run_dcm2bids(self, abs_path2mr):
-        print("====RUNNING DCM2BIDS====" * 3)
+        print(f'{" " * 15}folder with data located at: {abs_path2mr}')
+        print("====DCM2BIDS RUNNING===="+">" * 60)
         if self.run_stt == 0:
-            print(">" * 80)
-            print(f'{" " * 15}folder with data located at: {abs_path2mr}')
             return_value = os.system('dcm2bids -d {} -p {} -s {} -c {} -o {}'.format(
                                                                                     abs_path2mr,
                                                                                     self.nimb_id,
@@ -294,7 +293,7 @@ class DCM2BIDS_helper():
             new_des = {
                'dataType': self.data_Type,
                'modalityLabel' : self.modalityLabel,
-               'criteria':{criterion1:  criterion1}}
+               'criteria':{criterion1:  sidecar_crit1}}
             self.config['descriptions'].append(new_des)
             self.update = True
 
@@ -436,7 +435,7 @@ class DCM2BIDS_helper():
                                                                 path2mr_)
                     paths_2mrdata.append(path_extracted)
                 else:
-                    print(f'{" " *12} ile: {path_2archive} does not seem to be an archive')
+                    print(f'{" " *12} file: {path_2archive} does not seem to be an archive')
                     paths_2mrdata.append('')
             else:
                 paths_2mrdata.append(path2mr_)
@@ -446,7 +445,7 @@ class DCM2BIDS_helper():
     def extract_from_archive(self, archive_abspath, path2mr_):
         makedir_ifnot_exist(self.tmp_dir_xtract)
         makedir_ifnot_exist(self.tmp_dir_err)
-        print(f'            extracting data: {path2mr_}')
+        print(f'{" " *15}extracting data: {path2mr_}')
         ZipArchiveManagement(
             archive_abspath,
             path2xtrct = self.tmp_dir_xtract,
@@ -474,26 +473,26 @@ class DCM2BIDS_helper():
                 _dir_2mv_abspath = os.path.join(_dir_src_2rm_abspath, _dir_2mv)
                 dst_2mv = os.path.join(self.tmp_dir_xtract, _dir_2mv)
                 if not os.path.exists(dst_2mv):
-                    print(f'{" " *16}moving: {_dir_2mv_abspath}')
-                    print(f'{" " *15}to: {self.tmp_dir_xtract}')
+                    print(f'{" " *16}moving 1st level: {_dir_2mv_abspath}')
+                    print(f'{" " *16}to: {self.tmp_dir_xtract}')
                     os.system(f'mv {_dir_2mv_abspath} {self.tmp_dir_xtract}')
                     if os.path.exists(dst_2mv):
-                        print(f'{" " *15} moved OK')
+                        print(f'{" " *16} moved OK')
                 else:
                     for subdir_2mv in [i for i in os.listdir(_dir_2mv_abspath)]:
                         subdir_2mv_abspath = os.path.join(_dir_2mv_abspath, subdir_2mv)
                         dst_sub_2mv = os.path.join(self.tmp_dir_xtract, _dir_2mv, subdir_2mv)
                         if not os.path.exists(dst_sub_2mv):
-                            print(f'{" " *12}moving: {subdir_2mv_abspath}')
-                            print(f'{" " *15}to: {dst_2mv}')
+                            print(f'{" " *16}moving 2nd level: {subdir_2mv_abspath}')
+                            print(f'{" " *16}to: {dst_2mv}')
                             os.system(f'mv {subdir_2mv_abspath} {dst_2mv}')
                         else:
                             for sub_subdir_2mv in [i for i in os.listdir(subdir_2mv_abspath)]:
                                 sub_subdir_2mv_abspath = os.path.join(subdir_2mv_abspath, sub_subdir_2mv)
-                                print(f'{" " *12}moving: {sub_subdir_2mv_abspath}')
-                                print(f'{" " *15}to: {dst_sub_2mv}')
+                                print(f'{" " *16}moving 3rd level: {sub_subdir_2mv_abspath}')
+                                print(f'{" " *16}to: {dst_sub_2mv}')
                                 os.system(f'mv {sub_subdir_2mv_abspath} {dst_sub_2mv}')
-            print(f'{" " *12}removing DEFAULT folder: {_dir_src_2rm_abspath}')
+            print(f'{" " *16}removing DEFAULT folder: {_dir_src_2rm_abspath}')
             shutil.rmtree(_dir_src_2rm_abspath, ignore_errors=True)
 
 
