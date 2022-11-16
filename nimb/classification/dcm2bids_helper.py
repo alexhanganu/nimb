@@ -505,11 +505,7 @@ class DCM2BIDS_helper():
             print(f'{" " *15}removing folder: {abs_path2mr}')
             os.system('rm -r {}'.format(abs_path2mr))
         if os.path.exists(self.tmp_dir_xtract):
-            if self.nimb_classified:
-                if self.nimb_id == self.nimb_ids[-1]:
-                    shutil.rmtree(self.tmp_dir_xtract, ignore_errors=True)
-            else:
-                shutil.rmtree(self.tmp_dir_xtract, ignore_errors=True)
+            shutil.rmtree(self.tmp_dir_xtract, ignore_errors=True)
         print('\n')
 
 
