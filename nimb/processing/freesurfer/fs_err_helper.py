@@ -168,6 +168,10 @@ def fs_find_error(subjid, SUBJECTS_DIR, NIMB_tmp, process, log_file):
                     log.info('        ERROR: MRIresample error')
                     error = 'MRIresample'
                     break
+                elif 'error: niiRead(): unsupported datatype 128' in line:
+                    log.info('        ERROR: Datatype 128. Freesurfer doesn’t support yet RGB datatype (128)')
+                    error = 'niiRead128'
+                    break
                 elif 'Disk quota exceeded' in line:
                     log.info('        ERROR: Disk quota exceeded')
                     error = 'diskquota'
