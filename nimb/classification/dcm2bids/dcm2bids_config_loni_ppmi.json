@@ -12,6 +12,13 @@
             "dataType": "anat",
             "modalityLabel": "T1w",
             "criteria": {
+                "SeriesDescription": "MPRAGE"
+            }
+        },
+        {
+            "dataType": "anat",
+            "modalityLabel": "T1w",
+            "criteria": {
                 "SeriesDescription": "SAG_T1_3DMPRAGE"
             }
         },

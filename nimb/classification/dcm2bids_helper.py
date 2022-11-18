@@ -17,9 +17,9 @@ import time
 import sys
 
 import logging
-logger = logging.getLogger(__name__)
+log = logging.getLogger(__name__)
 logging.basicConfig(format='%(asctime)s %(module)s %(levelname)s: %(message)s')
-logger.setLevel(logging.INFO)
+log.setLevel(logging.INFO)
 
 from classification.classify_definitions import BIDS_types, mr_modalities, mr_modality_nimb_2_dcm2bids
 from distribution.manage_archive import is_archive, ZipArchiveManagement
@@ -97,6 +97,7 @@ class DCM2BIDS_helper():
         '''
         self.id_classified   = nimb_classified_per_id
         self.bids_classified = dict()
+        log.info(f'{" " *8}folder with subjects is: {self.DICOM_DIR}')
         print(f'{" " *8}folder with subjects is: {self.DICOM_DIR}')
         self.config_file = self.get_config_file()
         print(f'{" " * 12}config file is: {self.config_file}')
