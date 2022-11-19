@@ -5,55 +5,6 @@
             "dataType": "anat",
             "modalityLabel": "T1w",
             "criteria": {
-                "SeriesDescription": "*T1W_3D*"
-            }
-        },
-        {
-            "dataType": "anat",
-            "modalityLabel": "T1w",
-            "criteria": {
-                "SeriesDescription": "MPRAGE"
-            }
-        },
-        {
-            "dataType": "anat",
-            "modalityLabel": "T1w",
-            "criteria": {
-                "SeriesDescription": "SAG_T1_3DMPRAGE"
-            }
-        },
-        {
-            "dataType": "anat",
-            "modalityLabel": "T1w",
-            "criteria": {
-                "SeriesDescription": "SAG_T1_3D_MPRAGE"
-            }
-        },
-        {
-            "dataType": "anat",
-            "modalityLabel": "T1w",
-            "criteria": {
-                "SeriesDescription": "MPRAGE_GRAPPA"
-            }
-        },
-        {
-            "dataType": "anat",
-            "modalityLabel": "T1w",
-            "criteria": {
-                "SeriesDescription": "MPRAGE_GRAPPA2"
-            }
-        },
-        {
-            "dataType": "anat",
-            "modalityLabel": "T1w",
-            "criteria": {
-                "SeriesDescription": "MPRAGE_GRAPPA_ADNI"
-            }
-        },
-        {
-            "dataType": "anat",
-            "modalityLabel": "T1w",
-            "criteria": {
                 "SeriesDescription": "T1"
             }
         },
@@ -61,14 +12,21 @@
             "dataType": "anat",
             "modalityLabel": "T1w",
             "criteria": {
-                "SeriesDescription": "T1_REPEAT"
+                "SeriesDescription": "*T1_*"
             }
         },
         {
             "dataType": "anat",
             "modalityLabel": "T1w",
             "criteria": {
-                "SeriesDescription": "T1_Repeat"
+                "SeriesDescription": "*T1W_3D*"
+            }
+        },
+        {
+            "dataType": "anat",
+            "modalityLabel": "T1w",
+            "criteria": {
+                "SeriesDescription": "*MPRAGE*"
             }
         },
         {
@@ -80,31 +38,9 @@
         },
         {
             "dataType": "anat",
-            "modalityLabel": "FLAIR",
-            "criteria": {
-                "SeriesDescription": "AX_T2_FLAIR"
-            }
-        },
-        {
-            "dataType": "anat",
-            "modalityLabel": "T2w",
-            "criteria": {
-                "SeriesDescription": "*T2*"
-            }
-        },
-        {
-            "dataType": "anat",
-            "modalityLabel": "T2w",
-            "criteria": {
-                "SidecarFilename": "007*",
-                "EchoTime": 0.1
-            }
-        },
-        {
-            "dataType": "anat",
             "modalityLabel": "PD",
             "criteria": {
-                "SeriesDescription": "AX_PD_+_T2"
+                "SeriesDescription": "AX_PD*"
             }
         },
         {
@@ -120,6 +56,14 @@
             "modalityLabel": "SWI",
             "criteria": {
                 "SeriesDescription": "*SWI*"
+            }
+        },
+        {
+            "dataType": "anat",
+            "modalityLabel": "T2w",
+            "criteria": {
+                "SidecarFilename": "007*",
+                "EchoTime": 0.1
             }
         },
         {
@@ -166,7 +110,7 @@
             "dataType": "dwi",
             "modalityLabel": "dwi",
             "criteria": {
-                "SeriesDescription": "DTI_gated"
+                "SeriesDescription": "*DTI*"
             }
         }
     ]
