@@ -10,10 +10,16 @@
         },
         {
             "dataType": "anat",
-            "modalityLabel": "T2w",
+            "modalityLabel": "T1w",
             "criteria": {
-                "SidecarFilename": "007*",
-                "EchoTime": 0.1
+                "SeriesDescription": "*MPRAGE*"
+            }
+        },
+        {
+            "dataType": "anat",
+            "modalityLabel": "FLAIR",
+            "criteria": {
+                "SeriesDescription": "*FLAIR*"
             }
         },
         {
@@ -26,9 +32,17 @@
         },
         {
             "dataType": "anat",
-            "modalityLabel": "FLAIR",
+            "modalityLabel": "T2w",
             "criteria": {
-                "SeriesDescription": "*FLAIR*"
+                "SidecarFilename": "007*",
+                "EchoTime": 0.1
+            }
+        },
+        {
+            "dataType": "anat",
+            "modalityLabel": "SWI",
+            "criteria": {
+                "SeriesDescription": "*SWI*"
             }
         },
         {
@@ -39,10 +53,10 @@
             }
         },
         {
-            "dataType": "anat",
-            "modalityLabel": "SWI",
+            "dataType": "dwi",
+            "modalityLabel": "dwi",
             "criteria": {
-                "SeriesDescription": "*SWI*"
+                "SeriesDescription": "*DTI*"
             }
         },
         {
