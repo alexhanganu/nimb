@@ -45,9 +45,6 @@ class SaveGLMimages():
             self.read_mc_images()
         else:
             print('    folder with glm results is missing at:', self.param.sig_mc_json)
-        # elif path.exists(self.param.files_for_glm):
-        #     print('    reading images after FreeSurfer GLM analysis')
-        #     self.read_glm_subdirs()
 
         # cleaning unnecessary files:
         if path.exists(self.f_with_cmds):
@@ -93,50 +90,6 @@ class SaveGLMimages():
             print(f"    \n\n\n{len(ls_img[ls_img.index(sig):])} images LEFT for extraction")
 
 
-    # def read_glm_subdirs(self):
-    #     files_glm = load_json(self.param.files_for_glm)
-    #     for fsgd_type in files_glm:
-    #         for fsgd_file in files_glm[fsgd_type]['fsgd']:
-    #             fsgd_f_unix = path.join(self.PATHglm, 'fsgd_unix', '{}_unix.fsgd'.format(fsgd_file.replace('.fsgd','')))
-    #             for hemi in hemispheres:
-    #                 for meas in self.measures:
-    #                     mcz_meas = self.param.GLM_MCz_meas_codes[meas]
-    #                     for thresh in self.threshs:
-    #                         analysis_name = '{}.{}.{}.fwhm{}'.format(fsgd_file.replace('.fsgd',''), meas, hemi, str(thresh))
-    #                         glmdir = path.join(self.PATHglm_glm, analysis_name)
-    #                         for contrast_file in files_glm[fsgd_type]['mtx']:
-    #                             fsgd_type_contrast = contrast_file.replace('.mtx','')
-    #                             contrast = fsgd_type_contrast.replace(fsgd_type+'_','')
-    #                             path_2contrast = path.join(glmdir, fsgd_type_contrast)
-    #                             if self.check_maxvox(glmdir, fsgd_type_contrast):
-    #                                 print(f"    Creating image for FDR corrected results")
-    #                                 self.make_images_results_fdr(hemi, glmdir, analysis_name, fsgd_type_contrast)
-    #                             for direction in self.mcz_sim_direction:
-    #                                 mcz_header  = 'mc-z.{}.{}{}'.format(direction, mcz_meas, str(self.mc_cache_thresh))
-    #                                 sum_mc_f    = path.join(path_2contrast,'{}.sig.cluster.summary'.format(mcz_header))
-    #                                 cwsig_mc_f  = path.join(path_2contrast,'{}.sig.cluster.mgh'.format(mcz_header))
-    #                                 oannot_mc_f = path.join(path_2contrast,'{}.sig.ocn.annot'.format(mcz_header))
-    #                                 if self.check_mcz_summary(sum_mc_f):
-    #                                     print(f"    Creating image for Monte-Carlo corrected results")
-    #                                     self.make_images_results_mc(hemi, analysis_name,
-    #                                                                 contrast, direction, 
-    #                                                                 cwsig_mc_f, oannot_mc_f)
-
-
-    # def check_maxvox(self, glmdir, fsgd_type_contrast):
-    #     val = [i.strip() for i in open(path.join(glmdir, fsgd_type_contrast, 'maxvox.dat')).readlines()][0].split()[0]
-    #     if float(val) > 3.0 or float(val) < -3.0:
-    #         return True
-    #     else:
-    #         return False
-
-
-    # def check_mcz_summary(self, file):
-    #     if len(linecache.getline(file, 42).strip('\n')) > 0:
-    #         return True
-    #     else:
-    #         return False
-
     def make_images_results_mc(self, hemi, analysis_name,
                                     contrast, direction,
                                     cwsig_mc_f, oannot_mc_f):
@@ -168,11 +121,6 @@ class SaveGLMimages():
         if not path.isdir(self.PATH_save_fdr):
             makedirs(self.PATH_save_fdr)
 
-#        tksurfer_cmds = ['set colscalebarflag 1', 'set scalebarflag 1', 'save_tiff '+self.PATH_save_fdr+'/'+fsgd_type_contrast+'_'+str(3.0)+'_lat.tiff',
-#         'rotate_brain_y 180', 'redraw', 'save_tiff '+self.PATH_save_fdr+'/'+fsgd_type_contrast+'_'+str(3.0)+'_med.tiff',
-#         'sclv_set_current_threshold_using_fdr 0.05 0', 'redraw', 'save_tiff '+self.PATH_save_fdr+'/'+fsgd_type_contrast+'_fdr_med.tiff',
-#         'rotate_brain_y 180', 'redraw', 'save_tiff '+self.PATH_save_fdr+'/'+fsgd_type_contrast+'_fdr_lat.tiff','exit']
-
         tksurfer_cmds = ['set colscalebarflag 1', 'set scalebarflag 1', 
                                                         'save_tiff '  +path.join(self.PATH_save_fdr, '{}_{}_{}_lat.tiff'.format(
                                                                             analysis_name, fsgd_type_contrast, str(self.fdr_thresh))),
@@ -187,11 +135,7 @@ class SaveGLMimages():
                                                                             analysis_name, fsgd_type_contrast)), 
                          'exit']
         write_txt(self.f_with_cmds, tksurfer_cmds, write_type = 'w')
-        # with open(self.f_with_cmds,'w') as f:
-        #     for line in tksurfer_cmds:
-        #         f.write(line+'\n')
-        # print('    tksurfer fsaverage {} inflated -overlay {} -fthresh {} -tcl {}'.format(
-        #         hemi, path.join(glmdir, fsgd_type_contrast, sig_file), str(self.fdr_thresh), self.f_with_cmds))
+        print('    !!!! Attention, tksurfer is deprecated in FS7.3. Try tksurferfv')
         system('tksurfer fsaverage {} inflated -overlay {} -fthresh {} -tcl {}'.format(
                 hemi, path.join(glmdir, fsgd_type_contrast, sig_file), str(self.fdr_thresh), self.f_with_cmds))
 #        system('tksurfer fsaverage '+hemi+' inflated -overlay '+path.join(glmdir, fsgd_type_contrast, sig_file)+' -fthresh '+str(self.fdr_thresh)+' -tcl '+f_with_tkcmds)
