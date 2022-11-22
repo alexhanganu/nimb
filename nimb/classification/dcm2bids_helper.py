@@ -18,7 +18,7 @@ import sys
 
 import logging
 log = logging.getLogger(__name__)
-logging.basicConfig(format='%(asctime)s: %(message)s')
+logging.basicConfig(format='%(levelname)s:%(asctime)s| %(message)s')
 log.setLevel(logging.INFO)
 
 from classification.classify_definitions import BIDS_types, mr_modalities, mr_modality_nimb_2_dcm2bids
@@ -97,11 +97,9 @@ class DCM2BIDS_helper():
         '''
         self.id_classified   = nimb_classified_per_id
         self.bids_classified = dict()
-        log.info(f'{" " *4}folder with subjects is: {self.DICOM_DIR}')
-        # print(f'{" " *8}folder with subjects is: {self.DICOM_DIR}')
+        log.info(f'{" " *2}folder with subjects is: {self.DICOM_DIR}')
         self.config_file = self.get_config_file()
-        log.info(f'{" " * 4}config file is: {self.config_file}')
-        # print(f'{" " * 12}config file is: {self.config_file}')
+        log.info(f'{" " * 2}config file is: {self.config_file}')
 
         if self.id_classified:
             self.nimb_id = nimb_id
@@ -113,16 +111,15 @@ class DCM2BIDS_helper():
             try:
                 self.nimb_classified = load_json(os.path.join(self.DICOM_DIR, DEFAULT.f_nimb_classified))
             except Exception as e:
-                log.info(f'{" " *12}  could not load the nimb_classified file at: {self.DICOM_DIR}')
-                # print(f'{" " *12}  could not load the nimb_classified file at: {self.DICOM_DIR}')
+                log.info(f'{" " *4}  could not load the nimb_classified file at: {self.DICOM_DIR}')
                 sys.exit(0)
             if self.nimb_classified:
                 self.nimb_ids = list(self.nimb_classified.keys())
-                log.info(f'{" " *8}there are {len(self.nimb_ids)} ids to convert')
+                log.info(f'{" " *2}there are {len(self.nimb_ids)} ids to convert\n')
                 for self.nimb_id in self.nimb_ids:
                     self.id_classified = self.nimb_classified[self.nimb_id]
                     ls_ses_2convert = [i for i in self.id_classified if i not in ('archived',)]
-                    log.info(f'{" " *4}id: {self.nimb_id} had {len(ls_ses_2convert)} sessions to convert: {ls_ses_2convert}')
+                    log.info(f'{" " *2}id: {self.nimb_id} has {len(ls_ses_2convert)} sessions: {ls_ses_2convert}')
                     for self.ses in ls_ses_2convert:
                         self.bids_id, self.bids_id_dir = self.make_bids_id(self.nimb_id, self.ses)
                         self.start_stepwise_choice()
@@ -130,7 +127,7 @@ class DCM2BIDS_helper():
 
 
     def start_stepwise_choice(self):
-        log.info(f'{" " *4}id: {self.bids_id} DCM2BIDS CONVERTING')
+        log.info(f'{" " *4}id: {self.bids_id} CONVERTING with DCM2BIDS')
         # print(f'{" " *4}\n\nDCM2BIDS CONVERTING for id: {self.bids_id}')
         if self.id_classified['archived']:
             self.archived = True
