@@ -211,7 +211,7 @@ class ProjectManager:
             self.check_new()
         elif do_task == 'classify':
             self.prep_4dcm2bids_classification()
-        elif do_task == 'classify-dcm2bids':
+        elif do_task == 'classify2bids':
             self.classify_with_dcm2bids()
         elif do_task == 'process':
             if self.new_subjects:
