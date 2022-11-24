@@ -70,7 +70,7 @@ class NIMB(object):
                                              flair_t2_add = self.vars_local['FREESURFER']['flair_t2_add']).run()
 
 
-        if self.process == 'classify-dcm2bids':
+        if self.process == 'classify2bids':
             sourcedata_dir = self.project_vars['SOURCE_SUBJECTS_DIR'][1]
             if sourcedata_dir:
                 from classification.dcm2bids_helper import DCM2BIDS_helper
@@ -204,13 +204,13 @@ def get_parameters(projects):
     parser.add_argument(
         "-process", required=False,
         default =  'ready',
-        choices = ['ready', 'run', 'classify', 'classify-dcm2bids',
+        choices = ['ready', 'run', 'classify', 'classify2bids',
                     'fs-get-stats', 'fs-glm', 'fs-glm-image', 
                     'run-stats'],
         help  ="ready (verifies that nimb is ready), \
                 run (runs a project, use the -do argument for further commands),\
                 classify (classify MRIs), \
-                classify-dcm2bids (classifies to BIDS format using UNF/DCM2BIDS application)\
+                classify2bids (classifies to BIDS format using UNF/DCM2BIDS application)\
                 fs-get-stats (extract freesurfer stats from subjid/stats/* to an excel file), \
                 fs-glm (perform freesurfer mri_glmfit GLM analsysis), \
                 fs-glm-image (extracts images after FS GLM analysis, using Freeview and TKsurfer. Requires export screen),\
@@ -227,14 +227,14 @@ def get_parameters(projects):
     parser.add_argument(
         "-do", required=False,
         default = 'all',
-        choices = ['all','check-new', 'classify', 'classify-dcm2bids', 'process','fs-get-masks',
+        choices = ['all','check-new', 'classify', 'classify2bids', 'process','fs-get-masks',
                     'fs-get-stats', 'fs-glm', 'fs-glm-image',
                     'run-stats'],
         help    = "-do is used only along with -process run\
                    all (is default, will run: check-new -> process -> fs-get-stats -> fs-glm -> fs-glm-image -> run-stats)\
                    check-new (check if the are new subjects to be processed)\
                    classify (classify MRIs)\
-                   classify-dcm2bids (classifies to BIDS format using UNF/DCM2BIDS application)\
+                   classify2bids (classifies to BIDS format using UNF/DCM2BIDS application)\
                    process (perform FreeSurfer / Nilearn resting state functional analysis, extract ROI z-Fisher correlational values and DiPy processing extracts ROI HARDI statistics)\
                    fs-get-masks (NOT READY. extract ROI masks based on FreeSurfer parameters), \
                    fs-get-stats (extract freesurfer stats from subjid/stats/* to an excel file)\
