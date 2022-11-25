@@ -115,7 +115,8 @@ class DCM2BIDS_helper():
                 sys.exit(0)
             if self.nimb_classified:
                 self.nimb_ids = list(self.nimb_classified.keys())
-                log.info(f'{" " *2}there are {len(self.nimb_ids)} ids to convert\n')
+                log.info(f'{" " *2}there are {len(self.nimb_ids)} ids to convert:')
+                log.info(f'{" " *4}{self.nimb_ids}\n')
                 for self.nimb_id in self.nimb_ids:
                     self.id_classified = self.nimb_classified[self.nimb_id]
                     ls_ses_2convert = [i for i in self.id_classified if i not in ('archived',)]
@@ -220,17 +221,15 @@ class DCM2BIDS_helper():
         # print(f'{" " * 15}folder with data located at: {abs_path2mr}')
         # print("====DCM2BIDS RUNNING===="+">" * 60)
         if self.run_stt == 0:
-            return_value = os.system('dcm2bids -d {} -p {} -s {} -c {} -o {}'.format(
-                                                                                    abs_path2mr,
-                                                                                    self.nimb_id,
-                                                                                    self.ses,
-                                                                                    self.config_file,
-                                                                                    self.OUTPUT_DIR))
+            converted = os.system('dcm2bids -d {} -p {} -s {} -c {} -o {}'.format(abs_path2mr,
+                                                                                  self.nimb_id,
+                                                                                  self.ses,
+                                                                                  self.config_file,
+                                                                                  self.OUTPUT_DIR))
             # Calculate the return value code
-            return_value = int(bin(return_value).replace("0b", "").rjust(16, '0')[:8], 2)
-            if return_value != 0: # failed
+            converted = int(bin(converted).replace("0b", "").rjust(16, '0')[:8], 2)
+            if converted != 0: # failed
                 log.info(f'{" " *12}conversion finished with error')
-                # print(f'{" " *12}conversion finished with error')
                 os.system('dcm2bids -d {} -p {} -s {} -c {} -o {}'.format(abs_path2mr,
                                                                         self.nimb_id,
                                                                         self.ses,
