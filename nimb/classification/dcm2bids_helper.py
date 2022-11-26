@@ -129,7 +129,6 @@ class DCM2BIDS_helper():
 
     def start_stepwise_choice(self):
         log.info(f'{" " *4}id: {self.bids_id} CONVERTING with DCM2BIDS')
-        # print(f'{" " *4}\n\nDCM2BIDS CONVERTING for id: {self.bids_id}')
         if self.id_classified['archived']:
             self.archived = True
         self.sub_SUBJDIR_tmp = os.path.join(self.OUTPUT_DIR, 'tmp_dcm2bids', self.bids_id)
@@ -145,15 +144,12 @@ class DCM2BIDS_helper():
                         # print(f'{" " *8}LABEL: {self.modalityLabel}')
                         paths_2mr_data = self.id_classified[self.ses][self.data_Type][self.modalityLabel_nimb]
                         log.info(f'{" " *12}there are {len(paths_2mr_data)} MR data: {paths_2mr_data}')
-                        # print(f'{" " *12}there are {len(paths_2mr_data)} MR data: {paths_2mr_data}')
                         abs_path2mr = self.get_path_2mr(paths_2mr_data)
                         self.run_dcm2bids(abs_path2mr)
                         if os.path.exists(self.sub_SUBJDIR_tmp) and \
                             len(os.listdir(self.sub_SUBJDIR_tmp)) > 0:
                             log.info(f'{" " *12}> conversion did not find corresponding values in the configuration file')
                             log.info(f'{" " *12}> temporary converted: {self.sub_SUBJDIR_tmp}')
-                            # print(f'{" " *12}> conversion did not find corresponding values in the configuration file')
-                            # print(f'{" " *12}> temporary converted: {self.sub_SUBJDIR_tmp}')
                             self.chk_if_processed(abs_path2mr)
                         else:
                             self.populate_bids_classifed()
@@ -181,7 +177,6 @@ class DCM2BIDS_helper():
             self.bids_classified[self.bids_id][self.data_Type] = modality_content
         else:
             log.info(f'{" " * 12} ERR: modality {self.modalityLabel_nimb} is already present.')
-            # print(f'{" " * 12} ERR: modality {self.modalityLabel_nimb} is already present.')
 
 
     def modality_content_populate(self):
@@ -218,8 +213,6 @@ class DCM2BIDS_helper():
     def run_dcm2bids(self, abs_path2mr):
         log.info(f'{" " * 15}folder with data located at: {abs_path2mr}')
         log.info("====DCM2BIDS RUNNING===="+">" * 60)
-        # print(f'{" " * 15}folder with data located at: {abs_path2mr}')
-        # print("====DCM2BIDS RUNNING===="+">" * 60)
         if self.run_stt == 0:
             converted = os.system('dcm2bids -d {} -p {} -s {} -c {} -o {}'.format(abs_path2mr,
                                                                                   self.nimb_id,
@@ -236,7 +229,6 @@ class DCM2BIDS_helper():
                                                                         self.config_file,
                                                                         self.OUTPUT_DIR))
             log.info("^" * 80)
-            # print("^" * 80)
 
 
     def chk_if_processed(self, abs_path2mr):
@@ -247,7 +239,6 @@ class DCM2BIDS_helper():
         ls_niigz_files = [i for i in os.listdir(self.sub_SUBJDIR_tmp) if '.nii.gz' in i]
         if ls_niigz_files:
             log.info(f'{" " *12}> remaining nii in {self.sub_SUBJDIR_tmp}')
-            # print(f'{" " *12}> remaining nii in {self.sub_SUBJDIR_tmp}')
             if self.repeat_updating < self.repeat_lim:
                 self.update = False
                 for niigz_f in ls_niigz_files:
@@ -257,14 +248,11 @@ class DCM2BIDS_helper():
                     self.update_config()
                 if self.update:
                     log.info(f'{" " *12}removing folder: {self.sub_SUBJDIR_tmp}')
-                    # print(f'{" " *12}removing folder: {self.sub_SUBJDIR_tmp}')
                     self.repeat_updating += 1
                     os.system('rm -r {}'.format(self.sub_SUBJDIR_tmp))
                     log.info(f'{" " *12}re-renning dcm2bids')
-                    # print(f'{" " *12}re-renning dcm2bids')
                     self.run_dcm2bids(abs_path2mr)
                     log.info(f'{" " *12}looping to another chk_if_processed')
-                    # print(f'{" " *12}looping to another chk_if_processed')
                     self.chk_if_processed(abs_path2mr)
         else:
             self.populate_bids_classifed()
@@ -287,9 +275,7 @@ class DCM2BIDS_helper():
             log.info(f'{" " *12}> there is at least one configuration with:')
             log.info(f'{" " *16}dataType: {self.data_Type}')
             log.info(f'{" " *16}modalityLabel: {self.modalityLabel}')
-            # print(f'{" " *12}> there is at least one configuration with:')
-            # print(f'{" " *16}dataType: {self.data_Type}')
-            # print(f'{" " *16}modalityLabel: {self.modalityLabel}')
+
             for des in list_criteria[::-1]:
                 if criterion1 in des['criteria']:
                     if des['criteria'][criterion1] == sidecar_crit1:
@@ -297,10 +283,7 @@ class DCM2BIDS_helper():
                         log.info(f'{" " *16}is present in the config file.')
                         log.info(f'{" " *16}please add manually another sidecar criterion')
                         log.info(f'{" " *16}in file: {self.config_file}')
-                        # print(f'{" " *12}sidecar :{sidecar_crit1}')
-                        # print(f'{" " *16}is present in the config file.')
-                        # print(f'{" " *16}please add manually another sidecar criterion')
-                        # print(f'{" " *16}in file: {self.config_file}')
+
                         self.add_criterion = True
                         sys.exit(0)
                     else:
@@ -309,18 +292,13 @@ class DCM2BIDS_helper():
             log.info(f'{" " *12}> multiple sidecars have been associated: {list_criteria}')
             log.info(f'{" " *16}cannot find a correct sidecar location')
             log.info(f'{" " *16}please add more parameters in file: {self.config_file}')
-            # print(f'{" " *12}> multiple sidecars have been associated: {list_criteria}')
-            # print(f'{" " *16}cannot find a correct sidecar location')
-            # print(f'{" " *16}please add more parameters in file: {self.config_file}')
+
         if len(list_criteria) == 0:
             log.info (f'{" " *12}> updating configuration file with sidecar:')
             log.info(f'{" " *16}dataType: {self.data_Type}')
             log.info(f'{" " *16}modalityLabel: {self.modalityLabel}')
             log.info(f'{" " *16}{criterion1}: {sidecar_crit1}')
-            # print (f'{" " *12}> updating configuration file with sidecar:')
-            # print(f'{" " *16}dataType: {self.data_Type}')
-            # print(f'{" " *16}modalityLabel: {self.modalityLabel}')
-            # print(f'{" " *16}{criterion1}: {sidecar_crit1}')
+
             new_des = {
                'dataType': self.data_Type,
                'modalityLabel' : self.modalityLabel,
@@ -333,7 +311,6 @@ class DCM2BIDS_helper():
             save_json(self.config, self.config_file, print_space = 12)
         else:
            log.info(f'{" " *12}criterion {criterion1} present in config file')
-           # print(f'{" " *12}criterion {criterion1} present in config file')
 
 
     def get_config_file(self):
@@ -371,8 +348,6 @@ class DCM2BIDS_helper():
             sub_ses_bidstype_dir = os.path.join(sub_rawdata_dir, ses_label, BIDS_type)
             if os.path.exists(sub_ses_bidstype_dir):
                 lsdir = os.listdir(sub_ses_bidstype_dir)
-                # print("searching modality:", mr_modality)
-                # print(os.listdir(sub_ses_bidstype_dir))
                 bids_mr_modality = mr_modality_nimb_2_dcm2bids[mr_modality]
                 niigz_f = [i for i in lsdir if '.nii.gz' in i and bids_mr_modality in i]
                 if niigz_f:
@@ -381,9 +356,6 @@ class DCM2BIDS_helper():
                 log.info("something is missing:")
                 log.info(os.listdir(os.path.join(sub_rawdata_dir, ses_label)))
                 log.info(os.listdir(sub_ses_bidstype_dir))
-                # print("something is missing:")
-                # print(os.listdir(os.path.join(sub_rawdata_dir, ses_label)))
-                # print(os.listdir(sub_ses_bidstype_dir))
         return path_2rawdata
 
 
@@ -466,24 +438,19 @@ class DCM2BIDS_helper():
                 path_2archive = self.id_classified['archived']
                 if is_archive(path_2archive):
                     log.info(f'{" " *12}archive located at: {path_2archive}')
-                    # print(f'{" " *12}archive located at: {path_2archive}')
                     path_extracted = self.extract_from_archive(path_2archive,
                                                                 path2mr_)
                     if path_extracted not in paths_2mrdata:
                         paths_2mrdata.append(path_extracted)
                 else:
                     log.info(f'{" " *12} ERROR! file: {path_2archive} does not seem to be an archive')
-                    # print(f'{" " *12} ERROR! file: {path_2archive} does not seem to be an archive')
                     paths_2mrdata.append('')
             else:
                 paths_2mrdata.append(path2mr_)
         log.info(f'{" " *12}paths to MR data: {paths_2mrdata}')
-        # print(f'{" " *12}paths to MR data: {paths_2mrdata}')
         if len(paths_2mrdata) > 1:
             log.info(f'{" " * 12}!ATTENTION: there are multiple paths to MR data: {paths_2mrdata}')
             log.info(f'{" " * 16}continuing with the first one')
-            # print(f'{" " * 12}!ATTENTION: there are multiple paths to MR data: {paths_2mrdata}')
-            # print(f'{" " * 16}continuing with the first one')
         return paths_2mrdata[0]
 
 
@@ -491,7 +458,6 @@ class DCM2BIDS_helper():
         makedir_ifnot_exist(self.tmp_dir_xtract)
         makedir_ifnot_exist(self.tmp_dir_err)
         log.info(f'{" " *16}extracting data: {path2mr_}')
-        # print(f'{" " *16}extracting data: {path2mr_}')
         ZipArchiveManagement(
             archive_abspath,
             path2xtrct = self.tmp_dir_xtract,
@@ -515,19 +481,15 @@ class DCM2BIDS_helper():
         if dir_src_2rm in os.listdir(self.tmp_dir_xtract):
             _dir_src_2rm_abspath = os.path.join(self.tmp_dir_xtract, dir_src_2rm)
             log.info(f'{" " *12}DEFAULT folder: {dir_src_2rm} is present')
-            # print(f'{" " *12}DEFAULT folder: {dir_src_2rm} is present')
             for _dir_2mv in [i for i in os.listdir(_dir_src_2rm_abspath)]:
                 _dir_2mv_abspath = os.path.join(_dir_src_2rm_abspath, _dir_2mv)
                 dst_2mv = os.path.join(self.tmp_dir_xtract, _dir_2mv)
                 if not os.path.exists(dst_2mv):
                     log.info(f'{" " *16}moving 1st level: {_dir_2mv_abspath}')
                     log.info(f'{" " *16}to: {self.tmp_dir_xtract}')
-                    # print(f'{" " *16}moving 1st level: {_dir_2mv_abspath}')
-                    # print(f'{" " *16}to: {self.tmp_dir_xtract}')
                     os.system(f'mv {_dir_2mv_abspath} {self.tmp_dir_xtract}')
                     if os.path.exists(dst_2mv):
                         log.info(f'{" " *16} moved OK')
-                        # print(f'{" " *16} moved OK')
                 else:
                     for subdir_2mv in [i for i in os.listdir(_dir_2mv_abspath)]:
                         subdir_2mv_abspath = os.path.join(_dir_2mv_abspath, subdir_2mv)
@@ -535,35 +497,26 @@ class DCM2BIDS_helper():
                         if not os.path.exists(dst_sub_2mv):
                             log.info(f'{" " *16}moving 2nd level: {subdir_2mv_abspath}')
                             log.info(f'{" " *16}to: {dst_2mv}')
-                            # print(f'{" " *16}moving 2nd level: {subdir_2mv_abspath}')
-                            # print(f'{" " *16}to: {dst_2mv}')
                             os.system(f'mv {subdir_2mv_abspath} {dst_2mv}')
                         else:
                             for sub_subdir_2mv in [i for i in os.listdir(subdir_2mv_abspath)]:
                                 sub_subdir_2mv_abspath = os.path.join(subdir_2mv_abspath, sub_subdir_2mv)
                                 log.info(f'{" " *16}moving 3rd level: {sub_subdir_2mv_abspath}')
                                 log.info(f'{" " *16}to: {dst_sub_2mv}')
-                                # print(f'{" " *16}moving 3rd level: {sub_subdir_2mv_abspath}')
-                                # print(f'{" " *16}to: {dst_sub_2mv}')
                                 os.system(f'mv {sub_subdir_2mv_abspath} {dst_sub_2mv}')
             log.info(f'{" " *16}removing DEFAULT folder: {_dir_src_2rm_abspath}')
-            # print(f'{" " *16}removing DEFAULT folder: {_dir_src_2rm_abspath}')
             shutil.rmtree(_dir_src_2rm_abspath, ignore_errors=True)
 
 
     def cleaning_after_conversion(self, abs_path2mr):
         log.info(f'{" " *15}>>>>DCM2BIDS conversion DONE')
-        # print(f'{" " *15}>>>>DCM2BIDS conversion DONE')
         if os.path.exists(self.sub_SUBJDIR_tmp):
             log.info(f'{" " *15}removing folder: {self.sub_SUBJDIR_tmp}')
-            # print(f'{" " *15}removing folder: {self.sub_SUBJDIR_tmp}')
             os.system('rm -r {}'.format(self.sub_SUBJDIR_tmp))
         if os.path.exists(abs_path2mr):
             log.info(f'{" " *15}removing folder: {abs_path2mr}')
-            # print(f'{" " *15}removing folder: {abs_path2mr}')
             os.system('rm -r {}'.format(abs_path2mr))
         log.info('\n')
-        # print('\n')
 
 
     def get_SUBJ_DIR(self):
@@ -573,7 +526,6 @@ class DCM2BIDS_helper():
             return DICOM_DIR
         else:
             log.info(f'{" " *12} path is invalid: {DICOM_DIR}')
-            # print(f'{" " *12} path is invalid: {DICOM_DIR}')
             return 'PATH_IS_MISSING'
 
 
