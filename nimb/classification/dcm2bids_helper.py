@@ -140,8 +140,6 @@ class DCM2BIDS_helper():
                         self.modalityLabel = mr_modality_nimb_2_dcm2bids[self.modalityLabel_nimb] # changing to dcm2bids type modality_label
                         log.info(f'{" " *8}TYPE: {self.data_Type}')
                         log.info(f'{" " *8}LABEL: {self.modalityLabel}')
-                        # print(f'{" " *8}\nTYPE: {self.data_Type}')
-                        # print(f'{" " *8}LABEL: {self.modalityLabel}')
                         paths_2mr_data = self.id_classified[self.ses][self.data_Type][self.modalityLabel_nimb]
                         log.info(f'{" " *12}there are {len(paths_2mr_data)} MR data: {paths_2mr_data}')
                         abs_path2mr = self.get_path_2mr(paths_2mr_data)
