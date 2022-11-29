@@ -50,7 +50,7 @@ class DCM2BIDS_helper():
                 project,
                 DICOM_DIR    = 'default',
                 tmp_dir      = 'none',
-                repeat_lim = 10):
+                repeat_lim = 3):
 
         self.proj_vars       = proj_vars
         self.project         = project
@@ -124,6 +124,7 @@ class DCM2BIDS_helper():
                     for self.ses in ls_ses_2convert:
                         self.bids_id, self.bids_id_dir = self.make_bids_id(self.nimb_id, self.ses)
                         self.start_stepwise_choice()
+        print(f'{" " *8}bids classified is: {self.bids_classified}')
         return self.bids_classified, self.bids_id
 
 
@@ -144,14 +145,17 @@ class DCM2BIDS_helper():
                         log.info(f'{" " *12}there are {len(paths_2mr_data)} MR data: {paths_2mr_data}')
                         abs_path2mr = self.get_path_2mr(paths_2mr_data)
                         self.run_dcm2bids(abs_path2mr)
-                        if os.path.exists(self.sub_SUBJDIR_tmp) and \
-                            len(os.listdir(self.sub_SUBJDIR_tmp)) > 0:
-                            log.info(f'{" " *12}> conversion did not find corresponding values in the configuration file')
-                            log.info(f'{" " *12}> temporary converted: {self.sub_SUBJDIR_tmp}')
-                            self.chk_if_processed(abs_path2mr)
+                        if os.path.exists(self.sub_SUBJDIR_tmp)
+                            if len(os.listdir(self.sub_SUBJDIR_tmp)) > 0:
+                                log.info(f'{" " *12}> conversion did not find corresponding values in the configuration file')
+                                log.info(f'{" " *12}> temporary converted: {self.sub_SUBJDIR_tmp}')
+                                self.chk_if_processed(abs_path2mr)
+                            else:
+                                log.info(f'{" " *12}> folder converted is exmpty: {self.sub_SUBJDIR_tmp}')
+                                self.populate_bids_classifed()
+                                self.cleaning_after_conversion(abs_path2mr)
                         else:
-                            self.populate_bids_classifed()
-                            self.cleaning_after_conversion(abs_path2mr)
+                            log.info(f'{" " *12}ERROR: folder converted is MISSING: {self.sub_SUBJDIR_tmp}')
 
 
     def populate_bids_classifed(self):
@@ -248,9 +252,10 @@ class DCM2BIDS_helper():
                     log.info(f'{" " *12}removing folder: {self.sub_SUBJDIR_tmp}')
                     self.repeat_updating += 1
                     os.system('rm -r {}'.format(self.sub_SUBJDIR_tmp))
-                    log.info(f'{" " *12}re-renning dcm2bids')
+                    log.info(f'{" " * 12}re-renning dcm2bids')
+                    log.info(f'{" " * 16}loop: {self.repeat_updating} of allowed: {self.repeat_lim}')
                     self.run_dcm2bids(abs_path2mr)
-                    log.info(f'{" " *12}looping to another chk_if_processed')
+                    log.info(f'{" " * 12}looping to another chk_if_processed')
                     self.chk_if_processed(abs_path2mr)
         else:
             self.populate_bids_classifed()
