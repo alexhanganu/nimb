@@ -145,17 +145,31 @@ class DCM2BIDS_helper():
                         log.info(f'{" " *12}there are {len(paths_2mr_data)} MR data: {paths_2mr_data}')
                         abs_path2mr = self.get_path_2mr(paths_2mr_data)
                         self.run_dcm2bids(abs_path2mr)
-                        if os.path.exists(self.sub_SUBJDIR_tmp)
+                        if os.path.exists(self.sub_SUBJDIR_tmp):
                             if len(os.listdir(self.sub_SUBJDIR_tmp)) > 0:
                                 log.info(f'{" " *12}> conversion did not find corresponding values in the configuration file')
                                 log.info(f'{" " *12}> temporary converted: {self.sub_SUBJDIR_tmp}')
                                 self.chk_if_processed(abs_path2mr)
-                            else:
-                                log.info(f'{" " *12}> folder converted is exmpty: {self.sub_SUBJDIR_tmp}')
                                 self.populate_bids_classifed()
                                 self.cleaning_after_conversion(abs_path2mr)
+                            else:
+                                log.info(f'{" " *12}> folder converted is exmpty: {self.sub_SUBJDIR_tmp}')
+                                self.err_dir_populate(abs_path2mr)
                         else:
                             log.info(f'{" " *12}ERROR: folder converted is MISSING: {self.sub_SUBJDIR_tmp}')
+                            self.err_dir_populate(abs_path2mr)
+
+
+    def err_dir_populate(self, abs_path2mr):
+        """populating an ERR folder that would have
+            the subjects that had a dcm2bids conversion error
+            folder also has the sourcedata
+        """
+        # err_dir = makedir_ifnot_exist(os.path.join(self.OUTPUT_DIR, "tmp_dcm2bids_err"))
+        print(f'folder with err data is: {self.OUTPUT_DIR}')
+        print(f'subject dir for converted data: {self.sub_SUBJDIR_tmp}')
+        print(f'sourcedata that was sent to dcm2bids is: {abs_path2mr}')
+
 
 
     def populate_bids_classifed(self):
@@ -216,14 +230,14 @@ class DCM2BIDS_helper():
         log.info(f'{" " * 15}folder with data located at: {abs_path2mr}')
         log.info("====DCM2BIDS RUNNING===="+">" * 60)
         if self.run_stt == 0:
-            converted = os.system('dcm2bids -d {} -p {} -s {} -c {} -o {}'.format(abs_path2mr,
+            self.converted = os.system('dcm2bids -d {} -p {} -s {} -c {} -o {}'.format(abs_path2mr,
                                                                                   self.nimb_id,
                                                                                   self.ses,
                                                                                   self.config_file,
                                                                                   self.OUTPUT_DIR))
             # Calculate the return value code
-            converted = int(bin(converted).replace("0b", "").rjust(16, '0')[:8], 2)
-            if converted != 0: # failed
+            self.converted = int(bin(self.converted).replace("0b", "").rjust(16, '0')[:8], 2)
+            if self.converted != 0: # failed
                 log.info(f'{" " *12}conversion finished with error')
                 os.system('dcm2bids -d {} -p {} -s {} -c {} -o {}'.format(abs_path2mr,
                                                                         self.nimb_id,
