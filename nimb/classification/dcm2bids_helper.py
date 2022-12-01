@@ -166,10 +166,11 @@ class DCM2BIDS_helper():
             folder also has the sourcedata
         """
         # err_dir = makedir_ifnot_exist(os.path.join(self.OUTPUT_DIR, "tmp_dcm2bids_err"))
+        src_data_dirs = [i for i in os.listdir(abs_path2mr)]
         print(f'folder with err data is: {self.OUTPUT_DIR}')
         print(f'subject dir for converted data: {self.sub_SUBJDIR_tmp}')
         print(f'sourcedata that was sent to dcm2bids is: {abs_path2mr}')
-
+        print(f'    sourcedata dirs are: {src_data_dirs}')
 
 
     def populate_bids_classifed(self):
