@@ -165,12 +165,13 @@ class DCM2BIDS_helper():
             the subjects that had a dcm2bids conversion error
             folder also has the sourcedata
         """
-        # err_dir = makedir_ifnot_exist(os.path.join(self.OUTPUT_DIR, "tmp_dcm2bids_err"))
+        err_dir = makedir_ifnot_exist(os.path.join(self.OUTPUT_DIR, "tmp_dcm2bids_err", self.bids_id))
         src_data_dirs = [i for i in os.listdir(abs_path2mr)]
-        print(f'folder with err data is: {self.OUTPUT_DIR}')
-        print(f'subject dir for converted data: {self.sub_SUBJDIR_tmp}')
-        print(f'sourcedata that was sent to dcm2bids is: {abs_path2mr}')
-        print(f'    sourcedata dirs are: {src_data_dirs}')
+        if len(src_data_dirs) > 1:
+            log.info(f'{" " *12}> multiple folders were extracted from the archive {src_data_dirs}')
+        print(f'folder with err data is: {err_dir}')
+        print(f'moving: {self.sub_SUBJDIR_tmp} to: {os.path.join(err_dir, self.bids_id+"_dcm2bids")}')
+        print(f'moving sourcedata: {os.path.join(abs_path2mr, src_data_dirs[0])} to {err_dir}')
 
 
     def populate_bids_classifed(self):
