@@ -23,7 +23,7 @@ log.setLevel(logging.INFO)
 
 from classification.classify_definitions import BIDS_types, mr_modalities, mr_modality_nimb_2_dcm2bids
 from distribution.manage_archive import is_archive, ZipArchiveManagement
-from distribution.utilities import makedir_ifnot_exist, load_json, save_json
+from distribution.utilities import makedir_ifnot_exist, load_json, save_json, copy_rm_dir
 from distribution.distribution_definitions import DEFAULT
 
 
@@ -169,9 +169,19 @@ class DCM2BIDS_helper():
         src_data_dirs = [i for i in os.listdir(abs_path2mr)]
         if len(src_data_dirs) > 1:
             log.info(f'{" " *12}> multiple folders were extracted from the archive {src_data_dirs}')
-        print(f'folder with err data is: {err_dir}')
-        print(f'moving: {self.sub_SUBJDIR_tmp} to: {os.path.join(err_dir, self.bids_id+"_dcm2bids")}')
-        print(f'moving sourcedata: {os.path.join(abs_path2mr, src_data_dirs[0])} to {err_dir}')
+        log.info(f'folder with err data is: {err_dir}')
+        name_err_folder_from_dcm2bids = os.path.join(err_dir, self.bids_id+"_dcm2bids")
+        log.info(f'moving: {self.sub_SUBJDIR_tmp} to: {name_err_folder_from_dcm2bids}')
+        moved_1 = copy_rm_dir(self.sub_SUBJDIR_tmp,
+                            name_err_folder_from_dcm2bids,
+                            rm = True)
+        srcdata_folder_sent2dcm2bids = os.path.join(abs_path2mr, src_data_dirs[0])
+        log.info(f'moving sourcedata: {srcdata_folder_sent2dcm2bids} to {err_dir}')
+        moved_2 = copy_rm_dir(srcdata_folder_sent2dcm2bids,
+                            err_dir,
+                            rm = True)
+        if moved_1 and moved_2:
+            log.info(f'data was moved correctly')
 
 
     def populate_bids_classifed(self):

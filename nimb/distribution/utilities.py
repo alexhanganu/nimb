@@ -14,9 +14,9 @@ import pathlib
 
 from setup import database
 
-logger = logging.getLogger(__name__)
+log = logging.getLogger(__name__)
 logging.basicConfig(format='%(asctime)s %(module)s %(levelname)s: %(message)s')
-logger.setLevel(logging.DEBUG)
+log.setLevel(logging.DEBUG)
 
 
 def load_json_ordered(file_abspath):
@@ -166,24 +166,24 @@ def chk_file_is_writable(file_abspath):
 class ErrorMessages:
     @staticmethod
     def error_classify():
-        logger.fatal("NIMB is not ready to perform the classification. Please check the configuration files.")
+        log.fatal("NIMB is not ready to perform the classification. Please check the configuration files.")
     @staticmethod
     def error_fsready():
-        logger.fatal("NIMB not ready to perform FreeSurfer processing. Please check the configuration files.")
+        log.fatal("NIMB not ready to perform FreeSurfer processing. Please check the configuration files.")
     @staticmethod
     def password():
-        logger.fatal("password for remote cluster is missing")
+        log.fatal("password for remote cluster is missing")
     @staticmethod
     def error_nimb_ready():
-        logger.fatal(" NIMB is not set")
+        log.fatal(" NIMB is not set")
     @staticmethod
     def error_stat_path():
-        logger.fatal("STATS_PATHS or STATS_HOME is missing")
+        log.fatal("STATS_PATHS or STATS_HOME is missing")
     @staticmethod
     def error_bash_command(command):
-        logger.fatal("ERROR: {command} is fail".format(command=command))
+        log.fatal("ERROR: {command} is fail".format(command=command))
     def error_conda():
-        logger.info("conda is missing some modules")
+        log.info("conda is missing some modules")
 
 def copy_rm_dir(source_data,
                 target,
