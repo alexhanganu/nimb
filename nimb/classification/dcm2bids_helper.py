@@ -37,8 +37,8 @@ class DCM2BIDS_helper():
           (4) redo run() up to repeat_lim
 
     ID description:
-    nimb_id   : ID based on provided MR data, 
-                nimb_id name does NOT include the session; 
+    nimb_id   : ID based on provided MR data,
+                nimb_id name does NOT include the session;
                 e.g. ID1 (in PPMI nimb_id = 3378)
     bids_id   : ID after using the dcm2bids conversion;
                 it includes the session;
@@ -79,7 +79,7 @@ class DCM2BIDS_helper():
                 extract from archive specific subject_session
                 start dcm2bids for subject_session
         Return:
-            self.bids_classified = 
+            self.bids_classified =
             {'bids_id':
                 {'anat':
                     {'t1': ['local',
@@ -178,10 +178,12 @@ class DCM2BIDS_helper():
         srcdata_folder_sent2dcm2bids = os.path.join(abs_path2mr, src_data_dirs[0])
         log.info(f'moving sourcedata: {srcdata_folder_sent2dcm2bids} to {err_dir}')
         moved_2 = copy_rm_dir(srcdata_folder_sent2dcm2bids,
-                            err_dir,
+                            os.path.join(err_dir, self.bids_id+"_srcdata"),
                             rm = True)
         if moved_1 and moved_2:
             log.info(f'data was moved correctly')
+        else:
+            log.info(f'an ERR occured during mocing the data.')
 
 
     def populate_bids_classifed(self):
@@ -189,7 +191,7 @@ class DCM2BIDS_helper():
         MUST ADJUST:
         dwi is inside anat, but must be new key
         {'sub-4085_ses-01':
-            {'anat': 
+            {'anat':
                 {'t1': ['local', 'path2.nii.gz']},
                 'dwi': {'dwi': ['local', 'path2.nii.gz'],
                         'bval': ['local', 'path2.bval'],

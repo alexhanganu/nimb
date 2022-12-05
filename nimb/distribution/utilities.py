@@ -214,6 +214,6 @@ def copy_rm_dir(source_data,
             shutil.rmtree(source_data)
         return True
     else:
-        log.info(f'    copying {source_data} to: {target}')
+        log.info(f'    ERR: cannot copy, {target} exists')
         return False
 
