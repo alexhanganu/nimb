@@ -201,7 +201,7 @@ def copy_rm_dir(source_data,
         bool: True = copy performed correctly
     """
     if not os.path.exists(target):
-        log.info(f'    copying {source_data} to: {target}')
+        log.info(f'    copying/moving {source_data} to: {target}')
         shutil.copytree(source_data, target)
 
         # extracting the initial size of the folder to copy, to verify with the copied size
