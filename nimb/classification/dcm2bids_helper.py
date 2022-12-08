@@ -157,7 +157,7 @@ class DCM2BIDS_helper():
                                     self.populate_bids_classifed()
                                     log.info(f'{" " *15}>>>>DCM2BIDS conversion DONE')
                                 else:
-                                    log.info(f'{" " *12}> folder converted is exmpty: {self.sub_SUBJDIR_tmp}')
+                                    log.info(f'{" " *12}> folder converted is empty: {self.sub_SUBJDIR_tmp}')
                                     self.err_dir_populate(abs_path2mr)
                             else:
                                 log.info(f'{" " *12}ERROR: folder converted is MISSING: {self.sub_SUBJDIR_tmp}')
@@ -184,7 +184,7 @@ class DCM2BIDS_helper():
                             name_err_folder_from_dcm2bids,
                             rm = True)
         srcdata_folder_sent2dcm2bids = os.path.join(abs_path2mr, src_data_dirs[0])
-        log.info(f'moving sourcedata: {srcdata_folder_sent2dcm2bids} to {self.err_dir}')
+        log.info(f'moving sourcedata: {srcdata_folder_sent2dcm2bids} to {self.name_err_folder_from_srcdata}')
         moved_2 = copy_rm_dir(srcdata_folder_sent2dcm2bids,
                             self.name_err_folder_from_srcdata,
                             rm = True)
