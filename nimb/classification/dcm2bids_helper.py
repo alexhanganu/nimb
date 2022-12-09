@@ -173,6 +173,7 @@ class DCM2BIDS_helper():
             the subjects that had a dcm2bids conversion error
             folder also has the sourcedata
         """
+        dcm2bids_logs_abspath = os.path.join(self.OUTPUT_DIR, 'logs')
         self.err_dir = makedir_ifnot_exist(self.err_dir)
         src_data_dirs = [i for i in os.listdir(abs_path2mr)]
         if len(src_data_dirs) > 1:
@@ -188,6 +189,12 @@ class DCM2BIDS_helper():
         moved_2 = copy_rm_dir(srcdata_folder_sent2dcm2bids,
                             self.name_err_folder_from_srcdata,
                             rm = True)
+        logs_dcm2bids = [i for i in os.listdir(dcm2bids_logs_abspath) if self.bids_id in i]
+        log.info(f'moving logfiles: {logs_dcm2bids}')
+        for logfile in logs_dcm2bids:
+            moved_3 = copy_rm_dir(os.path.join(dcm2bids_logs_abspath, logfile),
+                                self.err_dir,
+                                rm = True)
         if moved_1 and moved_2:
             log.info(f'data was moved correctly')
         else:
