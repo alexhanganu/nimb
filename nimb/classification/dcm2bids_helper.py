@@ -141,41 +141,42 @@ class DCM2BIDS_helper():
                         self.modalityLabel = mr_modality_nimb_2_dcm2bids[self.modalityLabel_nimb] # changing to dcm2bids type modality_label
                         log.info(f'{" " *8}TYPE: {self.data_Type}')
                         log.info(f'{" " *8}LABEL: {self.modalityLabel}')
+                        self.abs_path2mr = ""
                         self.err_dir = os.path.join(self.OUTPUT_DIR, "tmp_dcm2bids_err", self.bids_id)
                         self.name_err_folder_from_srcdata = os.path.join(self.err_dir,
                                         self.bids_id+"_"+self.data_Type+"_"+self.modalityLabel+"_srcdata")
                         if not os.path.exists(self.err_dir):
                             paths_2mr_data = self.id_classified[self.ses][self.data_Type][self.modalityLabel_nimb]
                             log.info(f'{" " *12}there are {len(paths_2mr_data)} MR data: {paths_2mr_data}')
-                            abs_path2mr = self.get_path_2mr(paths_2mr_data)
-                            self.run_dcm2bids(abs_path2mr)
+                            self.get_path_2mr(paths_2mr_data)
+                            self.run_dcm2bids()
                             if os.path.exists(self.sub_SUBJDIR_tmp):
                                 if len(os.listdir(self.sub_SUBJDIR_tmp)) > 0:
                                     log.info(f'{" " *12}> conversion did not find corresponding values in the configuration file')
                                     log.info(f'{" " *12}> temporary converted: {self.sub_SUBJDIR_tmp}')
-                                    self.chk_if_processed(abs_path2mr)
+                                    self.chk_if_processed()
                                     self.populate_bids_classifed()
                                     log.info(f'{" " *15}>>>>DCM2BIDS conversion DONE')
                                 else:
                                     log.info(f'{" " *12}> folder converted is empty: {self.sub_SUBJDIR_tmp}')
-                                    self.err_dir_populate(abs_path2mr)
+                                    self.err_dir_populate()
                             else:
                                 log.info(f'{" " *12}ERROR: folder converted is MISSING: {self.sub_SUBJDIR_tmp}')
-                                self.err_dir_populate(abs_path2mr)
-                            self.cleaning_after_conversion(abs_path2mr)
+                                self.err_dir_populate()
                         else:
                             log.info(f'{" " * 12}this subject had an ERROR during last conversion')
                             log.info(f'{" " * 15}PLEASE try to convert it manually:{self.name_err_folder_from_srcdata}')
+                        self.cleaning_after_conversion()
 
 
-    def err_dir_populate(self, abs_path2mr):
+    def err_dir_populate(self):
         """populating an ERR folder that would have
             the subjects that had a dcm2bids conversion error
             folder also has the sourcedata
         """
-        dcm2bids_logs_abspath = os.path.join(self.OUTPUT_DIR, 'logs')
+        dcm2bids_logs_abspath = os.path.join(self.OUTPUT_DIR, 'tmp_dcm2bids', 'logs')
         self.err_dir = makedir_ifnot_exist(self.err_dir)
-        src_data_dirs = [i for i in os.listdir(abs_path2mr)]
+        src_data_dirs = [i for i in os.listdir(self.abs_path2mr)]
         if len(src_data_dirs) > 1:
             log.info(f'{" " *12}> multiple folders were extracted from the archive {src_data_dirs}')
         log.info(f'folder with err data is: {self.err_dir}')
@@ -184,7 +185,7 @@ class DCM2BIDS_helper():
         moved_1 = copy_rm_dir(self.sub_SUBJDIR_tmp,
                             name_err_folder_from_dcm2bids,
                             rm = True)
-        srcdata_folder_sent2dcm2bids = os.path.join(abs_path2mr, src_data_dirs[0])
+        srcdata_folder_sent2dcm2bids = os.path.join(self.abs_path2mr, src_data_dirs[0])
         log.info(f'moving sourcedata: {srcdata_folder_sent2dcm2bids} to {self.name_err_folder_from_srcdata}')
         moved_2 = copy_rm_dir(srcdata_folder_sent2dcm2bids,
                             self.name_err_folder_from_srcdata,
@@ -255,11 +256,11 @@ class DCM2BIDS_helper():
         return modalityLabel_content
 
 
-    def run_dcm2bids(self, abs_path2mr):
-        log.info(f'{" " * 15}folder with data located at: {abs_path2mr}')
+    def run_dcm2bids(self):
+        log.info(f'{" " * 15}folder with data located at: {self.abs_path2mr}')
         log.info("====DCM2BIDS RUNNING===="+">" * 60)
         if self.run_stt == 0:
-            self.converted = os.system('dcm2bids -d {} -p {} -s {} -c {} -o {}'.format(abs_path2mr,
+            self.converted = os.system('dcm2bids -d {} -p {} -s {} -c {} -o {}'.format(self.abs_path2mr,
                                                                                   self.nimb_id,
                                                                                   self.ses,
                                                                                   self.config_file,
@@ -268,7 +269,7 @@ class DCM2BIDS_helper():
             self.converted = int(bin(self.converted).replace("0b", "").rjust(16, '0')[:8], 2)
             if self.converted != 0: # failed
                 log.info(f'{" " *12}conversion finished with error')
-                os.system('dcm2bids -d {} -p {} -s {} -c {} -o {}'.format(abs_path2mr,
+                os.system('dcm2bids -d {} -p {} -s {} -c {} -o {}'.format(self.abs_path2mr,
                                                                         self.nimb_id,
                                                                         self.ses,
                                                                         self.config_file,
@@ -276,7 +277,7 @@ class DCM2BIDS_helper():
             log.info("^" * 80)
 
 
-    def chk_if_processed(self, abs_path2mr):
+    def chk_if_processed(self):
         """Check if any unconverted,
           - if not converted, update config file based on sidecar params (update_config())
           - redo run() up to repeat_lim
@@ -297,12 +298,12 @@ class DCM2BIDS_helper():
                     os.system('rm -r {}'.format(self.sub_SUBJDIR_tmp))
                     log.info(f'{" " * 12}re-renning dcm2bids')
                     log.info(f'{" " * 16}loop: {self.repeat_updating} of allowed: {self.repeat_lim}')
-                    self.run_dcm2bids(abs_path2mr)
+                    self.run_dcm2bids()
                     log.info(f'{" " * 12}looping to another chk_if_processed')
-                    self.chk_if_processed(abs_path2mr)
+                    self.chk_if_processed()
         else:
             self.populate_bids_classifed()
-            self.cleaning_after_conversion(abs_path2mr)
+            self.cleaning_after_conversion()
 
 
     def update_config(self):
@@ -497,7 +498,7 @@ class DCM2BIDS_helper():
         if len(paths_2mrdata) > 1:
             log.info(f'{" " * 12}!ATTENTION: there are multiple paths to MR data: {paths_2mrdata}')
             log.info(f'{" " * 16}continuing with the first one')
-        return paths_2mrdata[0]
+        self.abs_path2mr = paths_2mrdata[0]
 
 
     def extract_from_archive(self, archive_abspath, path2mr_):
@@ -554,7 +555,7 @@ class DCM2BIDS_helper():
             shutil.rmtree(_dir_src_2rm_abspath, ignore_errors=True)
 
 
-    def cleaning_after_conversion(self, abs_path2mr):
+    def cleaning_after_conversion(self):
         """script to remove temporary folders
             after conversion was done
         """
@@ -562,9 +563,9 @@ class DCM2BIDS_helper():
         if os.path.exists(self.sub_SUBJDIR_tmp):
             log.info(f'{" " *15}removing folder: {self.sub_SUBJDIR_tmp}')
             os.system('rm -r {}'.format(self.sub_SUBJDIR_tmp))
-        if os.path.exists(abs_path2mr):
-            log.info(f'{" " *15}removing folder: {abs_path2mr}')
-            os.system('rm -r {}'.format(abs_path2mr))
+        if os.path.exists(self.abs_path2mr):
+            log.info(f'{" " *15}removing folder: {self.abs_path2mr}')
+            os.system('rm -r {}'.format(self.abs_path2mr))
         log.info('\n')
 
 
