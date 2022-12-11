@@ -174,7 +174,7 @@ class DCM2BIDS_helper():
             the subjects that had a dcm2bids conversion error
             folder also has the sourcedata
         """
-        dcm2bids_logs_abspath = os.path.join(self.OUTPUT_DIR, 'tmp_dcm2bids', 'logs')
+        dcm2bids_logs_abspath = os.path.join(self.OUTPUT_DIR, 'tmp_dcm2bids', 'log')
         self.err_dir = makedir_ifnot_exist(self.err_dir)
         src_data_dirs = [i for i in os.listdir(self.abs_path2mr)]
         if len(src_data_dirs) > 1:
