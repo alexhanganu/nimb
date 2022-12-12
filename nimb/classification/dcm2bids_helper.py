@@ -193,9 +193,8 @@ class DCM2BIDS_helper():
         logs_dcm2bids = [i for i in os.listdir(dcm2bids_logs_abspath) if self.bids_id in i]
         log.info(f'moving logfiles: {logs_dcm2bids}')
         for logfile in logs_dcm2bids:
-            moved_3 = copy_rm_dir(os.path.join(dcm2bids_logs_abspath, logfile),
-                                self.err_dir,
-                                rm = True)
+            shutil.move(os.path.join(dcm2bids_logs_abspath, logfile),
+                            self.err_dir)
         if moved_1 and moved_2:
             log.info(f'data was moved correctly')
         else:
