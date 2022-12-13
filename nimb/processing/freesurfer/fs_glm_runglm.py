@@ -268,10 +268,13 @@ class PerformGLM():
                     https://www.mail-archive.com/freesurfer@nmr.mgh.harvard.edu/msg57316.html
         """
         cohensd_sum_filename = "cohensd.sum.dat"
+        pcc_r_filename = "pcc.r.dat"
         os.system(f'cd {path_2contrast}')
         os.system('fscalc gamma.mgh div ../rstd.mgh -o cohensd.mgh')
         os.system(f'mri_segstats --i cohensd.mgh --seg {ocn_mc_f} --exclude 0 --o {cohensd_sum_filename}')
         self.cohensd_sum = os.path.join(path_2contrast, cohensd_sum_filename)
+        print(f'    extracting partial correlation coefficient R from pcc.mgh')
+        os.system(f'mri_segstats --i pcc.mgh --seg {ocn_mc_f} --exclude 0 --o {pcc_r_filename}')
         # The mean in file sum.dat is the the mean column
         # Probably: Cohen's D mean
 
