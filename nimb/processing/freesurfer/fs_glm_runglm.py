@@ -266,6 +266,9 @@ class PerformGLM():
             that represents the effect size
             as per: https://www.mail-archive.com/freesurfer@nmr.mgh.harvard.edu/msg52144.html
                     https://www.mail-archive.com/freesurfer@nmr.mgh.harvard.edu/msg57316.html
+                    the Mean is the value needed for extraction
+                    The mean in .dat file is the Cohen's D mean
+                                    or the Mean R Partial Correlation Coefficient (pcc) or effect size
         """
         cohensd_sum_filename = "cohensd.sum.dat"
         pcc_r_filename = "pcc.r.dat"
@@ -275,8 +278,6 @@ class PerformGLM():
         self.cohensd_sum = os.path.join(path_2contrast, cohensd_sum_filename)
         print(f'    extracting partial correlation coefficient R from pcc.mgh')
         os.system(f'mri_segstats --i pcc.mgh --seg {ocn_mc_f} --exclude 0 --o {pcc_r_filename}')
-        # The mean in file sum.dat is the the mean column
-        # Probably: Cohen's D mean
 
 
     def cluster_stats_to_file(self,
