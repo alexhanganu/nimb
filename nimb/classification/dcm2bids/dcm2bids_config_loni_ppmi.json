@@ -5,7 +5,7 @@
             "dataType": "anat",
             "modalityLabel": "T1w",
             "criteria": {
-                "SeriesDescription": "T1"
+                "SeriesDescription": "*T1_*"
             }
         },
         {
@@ -20,6 +20,13 @@
             "modalityLabel": "T1w",
             "criteria": {
                 "SeriesDescription": "*MPRAGE*"
+            }
+        },
+        {
+            "dataType": "anat",
+            "modalityLabel": "T1w",
+            "criteria": {
+                "SeriesDescription": "T1"
             }
         },
         {
@@ -49,6 +56,13 @@
             "modalityLabel": "SWI",
             "criteria": {
                 "SeriesDescription": "*SWI*"
+            }
+        },
+        {
+            "dataType": "anat",
+            "modalityLabel": "T2w",
+            "criteria": {
+                "SeriesDescription": "*AX_T2_*"
             }
         },
         {
