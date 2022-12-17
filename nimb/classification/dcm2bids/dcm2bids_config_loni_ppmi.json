@@ -5,13 +5,6 @@
             "dataType": "anat",
             "modalityLabel": "T1w",
             "criteria": {
-                "SeriesDescription": "*T1_*"
-            }
-        },
-        {
-            "dataType": "anat",
-            "modalityLabel": "T1w",
-            "criteria": {
                 "SeriesDescription": "*T1W_3D*"
             }
         },
