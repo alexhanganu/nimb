@@ -119,6 +119,7 @@ class DCM2BIDS_helper():
                 log.info(f'{" " *4}{self.nimb_ids}\n')
                 for self.nimb_id in self.nimb_ids:
                     self.id_classified = self.nimb_classified[self.nimb_id]
+                    log.info(f'====id: {self.nimb_id} {">" * 60}')
                     ls_ses_2convert = [i for i in self.id_classified if i not in ('archived',)]
                     log.info(f'{" " *2}id: {self.nimb_id} has {len(ls_ses_2convert)} sessions: {ls_ses_2convert}')
                     for self.ses in ls_ses_2convert:
@@ -257,7 +258,7 @@ class DCM2BIDS_helper():
 
     def run_dcm2bids(self):
         log.info(f'{" " * 15}folder with data located at: {self.abs_path2mr}')
-        log.info("====DCM2BIDS RUNNING===="+">" * 60)
+        log.info("====DCM2BIDS RUNNING====")
         if self.run_stt == 0:
             self.converted = os.system('dcm2bids -d {} -p {} -s {} -c {} -o {}'.format(self.abs_path2mr,
                                                                                   self.nimb_id,
@@ -273,7 +274,7 @@ class DCM2BIDS_helper():
                                                                         self.ses,
                                                                         self.config_file,
                                                                         self.OUTPUT_DIR))
-            log.info("^" * 80)
+            log.info("^" * 10)
 
 
     def chk_if_processed(self):
@@ -565,6 +566,7 @@ class DCM2BIDS_helper():
         if os.path.exists(self.abs_path2mr):
             log.info(f'{" " *15}removing folder: {self.abs_path2mr}')
             os.system('rm -r {}'.format(self.abs_path2mr))
+        log.info("^" * 60)
         log.info('\n')
 
 
