@@ -124,6 +124,7 @@ class DCM2BIDS_helper():
                     log.info(f'{" " *2}id: {self.nimb_id} has {len(ls_ses_2convert)} sessions: {ls_ses_2convert}')
                     for self.ses in ls_ses_2convert:
                         self.bids_id, self.bids_id_dir = self.make_bids_id(self.nimb_id, self.ses)
+                        self.abspath_bids_id_dir = os.path.join(self.OUTPUT_DIR, self.bids_id_dir)
                         self.start_stepwise_choice()
         print(f'{" " *8}bids classified is: {self.bids_classified}')
         return self.bids_classified, self.bids_id
@@ -159,8 +160,9 @@ class DCM2BIDS_helper():
                                     self.populate_bids_classifed()
                                     log.info(f'{" " *15}>>>>DCM2BIDS conversion DONE')
                                 else:
-                                    log.info(f'{" " *12}> folder converted is empty: {self.sub_SUBJDIR_tmp}')
-                                    self.err_dir_populate()
+                                    if not os.path.exists(self.abspath_bids_id_dir):
+                                        log.info(f'{" " *12}> folder converted is empty: {self.sub_SUBJDIR_tmp} at: {self.abspath_bids_id_dir}')
+                                        self.err_dir_populate()
                             else:
                                 log.info(f'{" " *12}ERROR: folder converted is MISSING: {self.sub_SUBJDIR_tmp}')
                                 self.err_dir_populate()
