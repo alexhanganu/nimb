@@ -55,7 +55,7 @@
             "dataType": "anat",
             "modalityLabel": "T2w",
             "criteria": {
-                "SeriesDescription": "*AX_T2_*"
+                "SeriesDescription": "*AX_T2_SENSE*"
             }
         },
         {
