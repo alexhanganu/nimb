@@ -5,14 +5,14 @@
             "dataType": "anat",
             "modalityLabel": "T1w",
             "criteria": {
-                "SeriesDescription": "*T1W_3D*"
+                "SeriesDescription": "*MPRAGE*"
             }
         },
         {
             "dataType": "anat",
             "modalityLabel": "T1w",
             "criteria": {
-                "SeriesDescription": "*MPRAGE*"
+                "SeriesDescription": "*T1W_3D*"
             }
         },
         {
