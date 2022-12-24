@@ -152,6 +152,7 @@ class DCM2BIDS_helper():
                             log.info(f'{" " *12}there are {len(paths_2mr_data)} MR data: {paths_2mr_data}')
                             self.get_path_2mr(paths_2mr_data)
                             self.run_dcm2bids()
+                            self.get_log_dcm2bids()
                             if os.path.exists(self.tmpdir_bids_id):
                                 if len(os.listdir(self.tmpdir_bids_id)) > 0:
                                     log.info(f'{" " *12}> conversion did not find corresponding values in the configuration file')
@@ -176,9 +177,15 @@ class DCM2BIDS_helper():
             ready = False
         if os.path.exists(self.err_dir):
             log.info(f'{" " * 12}this subject had an ERROR during last conversion')
-            log.info(f'{" " * 15}PLEASE try to convert it manually:{self.name_err_folder_from_srcdata}')
+            log.info(f'{" " * 12}PLEASE try to convert it manually:{self.name_err_folder_from_srcdata}')
             ready = False
         return ready
+
+
+    def get_log_dcm2bids(self):
+        dcm2bids_logs_abspath = os.path.join(self.OUTPUT_DIR, 'tmp_dcm2bids', 'log')
+        logs_dcm2bids = [i for i in os.listdir(dcm2bids_logs_abspath) if self.bids_id in i]
+        self.logs_dcm2bids = [os.path.join(dcm2bids_logs_abspath, i) for i in logs_dcm2bids]
 
 
     def err_dir_populate(self):
@@ -202,11 +209,9 @@ class DCM2BIDS_helper():
         moved_2 = copy_rm_dir(srcdata_folder_sent2dcm2bids,
                             self.name_err_folder_from_srcdata,
                             rm = True)
-        logs_dcm2bids = [i for i in os.listdir(dcm2bids_logs_abspath) if self.bids_id in i]
-        log.info(f'moving logfiles: {logs_dcm2bids}')
-        for logfile in logs_dcm2bids:
-            shutil.move(os.path.join(dcm2bids_logs_abspath, logfile),
-                            self.err_dir)
+        log.info(f'moving logfiles: {self.logs_dcm2bids}')
+        for logfile in self.logs_dcm2bids:
+            shutil.move(logfile, self.err_dir)
         if moved_1 and moved_2:
             log.info(f'data was moved correctly')
         else:
