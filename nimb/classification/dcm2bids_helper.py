@@ -128,7 +128,7 @@ class DCM2BIDS_helper():
                         self.rawdir_bids_id_dir = os.path.join(self.OUTPUT_DIR, self.bids_id_dir)
                         self.err_dir = os.path.join(self.OUTPUT_DIR, "tmp_dcm2bids_err", self.bids_id)
                         self.start_stepwise_choice()
-        print(f'{" " *8}bids classified is: {self.bids_classified}')
+        log.info(f'{" " *8}bids classified is: {self.bids_classified}')
         return self.bids_classified, self.bids_id
 
 
