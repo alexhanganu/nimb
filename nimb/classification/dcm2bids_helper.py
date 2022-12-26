@@ -184,8 +184,12 @@ class DCM2BIDS_helper():
 
     def get_log_dcm2bids(self):
         dcm2bids_logs_abspath = os.path.join(self.OUTPUT_DIR, 'tmp_dcm2bids', 'log')
-        logs_dcm2bids = [i for i in os.listdir(dcm2bids_logs_abspath) if self.bids_id in i]
-        self.logs_dcm2bids = [os.path.join(dcm2bids_logs_abspath, i) for i in logs_dcm2bids]
+        log_file = sorted([i for i in os.listdir(dcm2bids_logs_abspath) if self.bids_id in i])[-1]
+        self.log_file_dcm2bids = os.path.join(dcm2bids_logs_abspath, log_file)
+        log_dcm2bids_content = open(self.log_file_dcm2bids).readlines()
+        log.info(f'    log file: {log_file}')
+        for line in log_dcm2bids_content:
+            log.info(line)
 
 
     def err_dir_populate(self):
@@ -210,8 +214,7 @@ class DCM2BIDS_helper():
                             self.name_err_folder_from_srcdata,
                             rm = True)
         log.info(f'moving logfiles: {self.logs_dcm2bids}')
-        for logfile in self.logs_dcm2bids:
-            shutil.move(logfile, self.err_dir)
+        shutil.move(self.log_file_dcm2bids, self.err_dir)
         if moved_1 and moved_2:
             log.info(f'data was moved correctly')
         else:
