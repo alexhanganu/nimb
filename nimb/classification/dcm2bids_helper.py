@@ -144,6 +144,7 @@ class DCM2BIDS_helper():
                         self.modalityLabel = mr_modality_nimb_2_dcm2bids[self.modalityLabel_nimb] # changing to dcm2bids type modality_label
                         log.info(f'{" " *6}TYPE: {self.data_Type} /// LABEL: {self.modalityLabel}')
                         self.abs_path2mr = ""
+                        self.abspath_2dir_data_type = os.path.join(self.rawdir_bids_id_dir, self.ses, self.data_Type)
                         self.name_err_folder_from_srcdata = os.path.join(self.err_dir,
                                         self.bids_id+"_"+self.data_Type+"_"+self.modalityLabel+"_srcdata")
                         if self.ready_2convert():
@@ -152,22 +153,24 @@ class DCM2BIDS_helper():
                             self.get_path_2mr(paths_2mr_data)
                             self.run_dcm2bids()
                             self.get_log_dcm2bids()
+                            if os.path.exists(self.abspath_2dir_data_type):
+                                log.info(f'{" " *10}>>>>DCM2BIDS conversion DONE')
+                                self.populate_bids_classifed()
+                            else:
+                                log.info(f'{" " *10}>>>>DCM2BIDS folder ABSENT')
                             if os.path.exists(self.tmpdir_bids_id):
                                 if len(os.listdir(self.tmpdir_bids_id)) > 0:
                                     log.info(f'{" " *8}> conversion did not find corresponding values in the configuration file')
                                     log.info(f'{" " *8}> temporary converted: {self.tmpdir_bids_id}')
                                     self.chk_if_processed()
                                 else:
-                                    if os.path.exists(self.rawdir_bids_id_dir):
-                                        log.info(f'{" " *10}>>>>DCM2BIDS conversion DONE')
-                                    else:
+                                    if not os.path.exists(self.rawdir_bids_id_dir):
                                         log.info(f'{" " *8}> folder converted is empty: {self.tmpdir_bids_id} at: {self.rawdir_bids_id_dir}')
                                         self.err_dir_populate()
                             else:
-                                log.info(f'{" " *8}ERROR: folder converted is MISSING: {self.tmpdir_bids_id}')
+                                log.info(f'{" " *8}ERROR: dcm2bids conversion FAILED: {self.tmpdir_bids_id}')
                                 self.err_dir_populate()
                             self.cleaning_after_conversion()
-                        self.populate_bids_classifed()
 
     def ready_2convert(self):
         ready = True
@@ -190,7 +193,8 @@ class DCM2BIDS_helper():
         log_dcm2bids_content = open(self.log_file_dcm2bids).readlines()
         log.info(f'{" " * 10}log file: {log_file}')
         for line in log_dcm2bids_content:
-            log.info(f'{" " * 10}{line.strip('\n')}')
+            line_print = line.strip("\n")
+            log.info(f'{" " * 10}{line_print}')
 
 
     def err_dir_populate(self):
@@ -246,29 +250,27 @@ class DCM2BIDS_helper():
 
 
     def modality_content_populate(self):
-        abspath_2dir_data_type = os.path.join(self.OUTPUT_DIR, self.bids_id_dir, self.ses, self.data_Type)
-
         # populating nii.gz files
         abspath_nii_files      = list()
-        ls_nii_files           = [i for i in os.listdir(abspath_2dir_data_type) if i.endswith('.nii.gz')]
+        ls_nii_files           = [i for i in os.listdir(self.abspath_2dir_data_type) if i.endswith('.nii.gz')]
         for file in ls_nii_files:
             abspath_nii_files.append(os.path.join(
-                                        abspath_2dir_data_type, file))
+                                        self.abspath_2dir_data_type, file))
 
         # populating dwi bval and bvec files
         modalityLabel_content = {self.modalityLabel_nimb: ['local', abspath_nii_files]}
         if self.modalityLabel_nimb == 'dwi':
             abspath_bval_files = list()
-            bval_files = [i for i in os.listdir(abspath_2dir_data_type) if i.endswith('.bval')]
+            bval_files = [i for i in os.listdir(self.abspath_2dir_data_type) if i.endswith('.bval')]
             for file in bval_files:
                 abspath_bval_files.append(os.path.join(
-                                        abspath_2dir_data_type, file))
+                                        self.abspath_2dir_data_type, file))
 
             abspath_bvec_files = list()
-            bvec_files = [i for i in os.listdir(abspath_2dir_data_type) if i.endswith('.bvec')]
+            bvec_files = [i for i in os.listdir(self.abspath_2dir_data_type) if i.endswith('.bvec')]
             for file in bvec_files:
                 abspath_bvec_files.append(os.path.join(
-                                        abspath_2dir_data_type, file))
+                                        self.abspath_2dir_data_type, file))
 
             modalityLabel_content = {'dwi' : ['local', abspath_nii_files],
                                      'bval': ['local', abspath_bval_files],
