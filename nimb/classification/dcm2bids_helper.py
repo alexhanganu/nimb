@@ -142,59 +142,65 @@ class DCM2BIDS_helper():
                 for self.modalityLabel_nimb in BIDS_types[self.data_Type]:
                     if self.modalityLabel_nimb in self.id_classified[self.ses][self.data_Type]:
                         self.modalityLabel = mr_modality_nimb_2_dcm2bids[self.modalityLabel_nimb] # changing to dcm2bids type modality_label
-                        log.info(f'{" " *6}TYPE: {self.data_Type} /// LABEL: {self.modalityLabel}')
+                        log.info(f'{" " *6}TYPE: {self.data_Type} / LABEL: {self.modalityLabel}')
                         self.abs_path2mr = ""
                         self.abspath_2dir_data_type = os.path.join(self.rawdir_bids_id_dir, self.ses, self.data_Type)
                         self.name_err_folder_from_srcdata = os.path.join(self.err_dir,
                                         self.bids_id+"_"+self.data_Type+"_"+self.modalityLabel+"_srcdata")
                         if self.ready_2convert():
                             paths_2mr_data = self.id_classified[self.ses][self.data_Type][self.modalityLabel_nimb]
-                            log.info(f'{" " *8}there are {len(paths_2mr_data)} MR data: {paths_2mr_data}')
+                            log.info(f'{" " *8}there are {len(paths_2mr_data)} MR data')
+                            log.info(f'{" " *10}{paths_2mr_data}')
                             self.get_path_2mr(paths_2mr_data)
                             self.run_dcm2bids()
                             self.get_log_dcm2bids()
                             if os.path.exists(self.abspath_2dir_data_type):
                                 log.info(f'{" " *10}>>>>DCM2BIDS conversion DONE')
                                 self.populate_bids_classifed()
+                                self.cleaning_after_conversion()
                             else:
                                 log.info(f'{" " *10}>>>>DCM2BIDS folder ABSENT')
-                            if os.path.exists(self.tmpdir_bids_id):
-                                if len(os.listdir(self.tmpdir_bids_id)) > 0:
-                                    log.info(f'{" " *8}> conversion did not find corresponding values in the configuration file')
-                                    log.info(f'{" " *8}> temporary converted: {self.tmpdir_bids_id}')
-                                    self.chk_if_processed()
+                                if os.path.exists(self.tmpdir_bids_id):
+                                    if len(os.listdir(self.tmpdir_bids_id)) > 0:
+                                        log.info(f'{" " *8}> conversion did not find corresponding values in the configuration file')
+                                        log.info(f'{" " *8}> temporary converted: {self.tmpdir_bids_id}')
+                                        self.chk_if_processed()
+                                    else:
+                                        if not os.path.exists(self.rawdir_bids_id_dir):
+                                            log.info(f'{" " *8}> folder converted is empty: {self.tmpdir_bids_id} at: {self.rawdir_bids_id_dir}')
+                                            self.err_dir_populate()
                                 else:
-                                    if not os.path.exists(self.rawdir_bids_id_dir):
-                                        log.info(f'{" " *8}> folder converted is empty: {self.tmpdir_bids_id} at: {self.rawdir_bids_id_dir}')
-                                        self.err_dir_populate()
-                            else:
-                                log.info(f'{" " *8}ERROR: dcm2bids conversion FAILED: {self.tmpdir_bids_id}')
-                                self.err_dir_populate()
-                            self.cleaning_after_conversion()
+                                    log.info(f'{" " *8}ERROR: dcm2bids conversion FAILED: {self.tmpdir_bids_id}')
+                                    self.err_dir_populate()
 
     def ready_2convert(self):
         ready = True
         self.rawdir_bids_id_dir_ses_type = os.path.join(self.rawdir_bids_id_dir, self.ses, self.data_Type)
         if os.path.exists(self.rawdir_bids_id_dir_ses_type):
-            log.info(f'{" " * 8}this subject, data type and data modality has already been converted')
-            log.info(f'{" " * 10}PLEASE chk: {self.rawdir_bids_id_dir_ses_type}')
+            log.info(f'{" " * 8}id has been converted')
+            log.info(f'{" " * 10}{self.rawdir_bids_id_dir_ses_type}')
             ready = False
         if os.path.exists(self.err_dir):
-            log.info(f'{" " * 8}this subject had an ERROR during last conversion')
-            log.info(f'{" " * 8}PLEASE try to convert it manually:{self.name_err_folder_from_srcdata}')
+            log.info(f'{" " * 8}id had an ERROR during last conversion')
+            log.info(f'{" " * 8}TRY to convert manually:{self.name_err_folder_from_srcdata}')
             ready = False
         return ready
 
 
     def get_log_dcm2bids(self):
+        conversion_ok = False
+        text_2chk = "moving acquisitions into BIDS folder"
         dcm2bids_logs_abspath = os.path.join(self.OUTPUT_DIR, 'tmp_dcm2bids', 'log')
         log_file = sorted([i for i in os.listdir(dcm2bids_logs_abspath) if self.bids_id in i])[-1]
         self.log_file_dcm2bids = os.path.join(dcm2bids_logs_abspath, log_file)
         log_dcm2bids_content = open(self.log_file_dcm2bids).readlines()
         log.info(f'{" " * 10}log file: {log_file}')
         for line in log_dcm2bids_content:
+            if text_2chk in line:
+                conversion_ok = True
             line_print = line.strip("\n")
             log.info(f'{" " * 10}{line_print}')
+        log.info(f'{" " * 10}conversion done checking is: {conversion_ok}')
 
 
     def err_dir_populate(self):
@@ -279,7 +285,6 @@ class DCM2BIDS_helper():
 
 
     def run_dcm2bids(self):
-        log.info(f'{" " * 10}folder with data located at: {self.abs_path2mr}')
         log.info(f'{" " * 10}====DCM2BIDS RUNNING====')
         if self.run_stt == 0:
             self.converted = os.system('dcm2bids -d {} -p {} -s {} -c {} -o {}'.format(self.abs_path2mr,
@@ -496,7 +501,6 @@ class DCM2BIDS_helper():
         return is_bids_format, sub_label, ses_label, run_label
 
 
-    # must adapt this and next defs to the ones from distribution_helper
     def get_path_2mr(self, paths_2mr_data):
         """
         Args:
@@ -509,7 +513,8 @@ class DCM2BIDS_helper():
             if self.archived:
                 path_2archive = self.id_classified['archived']
                 if is_archive(path_2archive):
-                    log.info(f'{" " *8}archive located at: {path_2archive}')
+                    log.info(f'{" " *8}archive located at:')
+                    log.info(f'{" " *10}{path_2archive}')
                     path_extracted = self.extract_from_archive(path_2archive,
                                                                 path2mr_)
                     if path_extracted not in paths_2mrdata:
@@ -519,17 +524,19 @@ class DCM2BIDS_helper():
                     paths_2mrdata.append('')
             else:
                 paths_2mrdata.append(path2mr_)
-        log.info(f'{" " *8}paths to MR data: {paths_2mrdata}')
         if len(paths_2mrdata) > 1:
             log.info(f'{" " * 8}!ATTENTION: there are multiple paths to MR data: {paths_2mrdata}')
-            log.info(f'{" " * 16}continuing with the first one')
+            log.info(f'{" " * 10}{paths_2mrdata}')
+            log.info(f'{" " * 10}continuing with the first one')
         self.abs_path2mr = paths_2mrdata[0]
+        log.info(f'{" " * 10}folder with data located at: {self.abs_path2mr}')
 
 
     def extract_from_archive(self, archive_abspath, path2mr_):
         makedir_ifnot_exist(self.tmp_dir_xtract)
         makedir_ifnot_exist(self.tmp_dir_err)
-        log.info(f'{" " *16}extracting data: {path2mr_}')
+        log.info(f'{" " *10}extracting data:')
+        log.info(f'{" " *12}{path2mr_}')
         ZipArchiveManagement(
             archive_abspath,
             path2xtrct = self.tmp_dir_xtract,
@@ -557,26 +564,30 @@ class DCM2BIDS_helper():
                 _dir_2mv_abspath = os.path.join(_dir_src_2rm_abspath, _dir_2mv)
                 dst_2mv = os.path.join(self.tmp_dir_xtract, _dir_2mv)
                 if not os.path.exists(dst_2mv):
-                    log.info(f'{" " *16}moving 1st level: {_dir_2mv_abspath}')
-                    log.info(f'{" " *16}to: {self.tmp_dir_xtract}')
+                    log.info(f'{" " *10}moving 1st level: {_dir_2mv_abspath}')
+                    log.info(f'{" " *10}to: {self.tmp_dir_xtract}')
                     os.system(f'mv {_dir_2mv_abspath} {self.tmp_dir_xtract}')
                     if os.path.exists(dst_2mv):
-                        log.info(f'{" " *16} moved OK')
+                        log.info(f'{" " *10}moved OK')
                 else:
                     for subdir_2mv in [i for i in os.listdir(_dir_2mv_abspath)]:
                         subdir_2mv_abspath = os.path.join(_dir_2mv_abspath, subdir_2mv)
                         dst_sub_2mv = os.path.join(self.tmp_dir_xtract, _dir_2mv, subdir_2mv)
                         if not os.path.exists(dst_sub_2mv):
-                            log.info(f'{" " *16}moving 2nd level: {subdir_2mv_abspath}')
-                            log.info(f'{" " *16}to: {dst_2mv}')
+                            log.info(f'{" " *10}moving 2nd level: {subdir_2mv_abspath}')
+                            log.info(f'{" " *10}to: {dst_2mv}')
                             os.system(f'mv {subdir_2mv_abspath} {dst_2mv}')
+                            if os.path.exists(dst_sub_2mv):
+                                log.info(f'{" " *10}moved OK')
                         else:
                             for sub_subdir_2mv in [i for i in os.listdir(subdir_2mv_abspath)]:
                                 sub_subdir_2mv_abspath = os.path.join(subdir_2mv_abspath, sub_subdir_2mv)
-                                log.info(f'{" " *16}moving 3rd level: {sub_subdir_2mv_abspath}')
-                                log.info(f'{" " *16}to: {dst_sub_2mv}')
+                                log.info(f'{" " *10}moving 3rd level: {sub_subdir_2mv_abspath}')
+                                log.info(f'{" " *10}to: {dst_sub_2mv}')
                                 os.system(f'mv {sub_subdir_2mv_abspath} {dst_sub_2mv}')
-            log.info(f'{" " *16}removing DEFAULT folder: {_dir_src_2rm_abspath}')
+                                if os.path.exists(sub_subdir_2mv_abspath):
+                                    log.info(f'{" " *10}moved OK')
+            log.info(f'{" " *10}removing DEFAULT folder: {_dir_src_2rm_abspath}')
             shutil.rmtree(_dir_src_2rm_abspath, ignore_errors=True)
 
 
@@ -586,10 +597,10 @@ class DCM2BIDS_helper():
         """
         log.info(f'{" " *10}>>>>cleaning after conversion')
         if os.path.exists(self.tmpdir_bids_id):
-            log.info(f'{" " *10}removing folder: {self.tmpdir_bids_id}')
+            log.info(f'{" " *12}removing folder: {self.tmpdir_bids_id}')
             os.system('rm -r {}'.format(self.tmpdir_bids_id))
         if os.path.exists(self.abs_path2mr):
-            log.info(f'{" " *10}removing folder: {self.abs_path2mr}')
+            log.info(f'{" " *12}removing folder: {self.abs_path2mr}')
             os.system('rm -r {}'.format(self.abs_path2mr))
         log.info("^" * 60)
         log.info('\n')
