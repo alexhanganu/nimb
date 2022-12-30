@@ -179,6 +179,7 @@ class DCM2BIDS_helper():
         if os.path.exists(self.rawdir_bids_id_dir_ses_type):
             log.info(f'{" " * 8}id has been converted')
             log.info(f'{" " * 10}{self.rawdir_bids_id_dir_ses_type}')
+            self.populate_bids_classifed()
             ready = False
         if os.path.exists(self.err_dir):
             log.info(f'{" " * 8}id had an ERROR during last conversion')
