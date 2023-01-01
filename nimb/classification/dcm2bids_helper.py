@@ -199,7 +199,7 @@ class DCM2BIDS_helper():
         for line in log_dcm2bids_content:
             if text_2chk in line:
                 conversion_ok = True
-            line_print = line.strip("\n").remove("INFO:dcm2bids.","")
+            line_print = line.strip("\n").replace("INFO:dcm2bids.","")
             log.info(f'{" " * 10}{line_print}')
         log.info(f'{" " * 12}conversion done checking is: {conversion_ok}')
 
