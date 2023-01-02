@@ -154,12 +154,13 @@ class DCM2BIDS_helper():
                             self.get_path_2mr(paths_2mr_data)
                             self.run_dcm2bids()
                             self.get_log_dcm2bids()
+                            log.info(f'{" " * 8}conversion done checking is: {self.conversion_ok}')
                             if os.path.exists(self.abspath_2dir_data_type):
-                                log.info(f'{" " *10}>>>>DCM2BIDS conversion DONE')
+                                log.info(f'{" " *8}>>>>DCM2BIDS conversion DONE')
                                 self.populate_bids_classifed()
                                 self.cleaning_after_conversion()
                             else:
-                                log.info(f'{" " *10}>>>>DCM2BIDS folder ABSENT')
+                                log.info(f'{" " *8}>>>>DCM2BIDS folder ABSENT')
                                 if os.path.exists(self.tmpdir_bids_id):
                                     if len(os.listdir(self.tmpdir_bids_id)) > 0:
                                         log.info(f'{" " *8}> conversion did not find corresponding values in the configuration file')
@@ -189,7 +190,7 @@ class DCM2BIDS_helper():
 
 
     def get_log_dcm2bids(self):
-        conversion_ok = False
+        self.conversion_ok = False
         text_2chk = "moving acquisitions into BIDS folder"
         dcm2bids_logs_abspath = os.path.join(self.OUTPUT_DIR, 'tmp_dcm2bids', 'log')
         log_file = sorted([i for i in os.listdir(dcm2bids_logs_abspath) if self.bids_id in i])[-1]
@@ -198,10 +199,9 @@ class DCM2BIDS_helper():
         log.info(f'{" " * 10}log file: {log_file}')
         for line in log_dcm2bids_content:
             if text_2chk in line:
-                conversion_ok = True
+                self.conversion_ok = True
             line_print = line.strip("\n").replace("INFO:dcm2bids.","")
             log.info(f'{" " * 10}{line_print}')
-        log.info(f'{" " * 12}conversion done checking is: {conversion_ok}')
 
 
     def err_dir_populate(self):
@@ -286,7 +286,7 @@ class DCM2BIDS_helper():
 
 
     def run_dcm2bids(self):
-        log.info(f'{" " * 10}====DCM2BIDS RUNNING====')
+        log.info(f'{" " * 8}====DCM2BIDS RUNNING====')
         if self.run_stt == 0:
             self.converted = os.system('dcm2bids -d {} -p {} -s {} -c {} -o {}'.format(self.abs_path2mr,
                                                                                   self.nimb_id,
@@ -530,7 +530,7 @@ class DCM2BIDS_helper():
             log.info(f'{" " * 10}{paths_2mrdata}')
             log.info(f'{" " * 10}continuing with the first one')
         self.abs_path2mr = paths_2mrdata[0]
-        log.info(f'{" " * 10}folder with data located at: {self.abs_path2mr}')
+        log.info(f'{" " * 8}folder with data located at: {self.abs_path2mr}')
 
 
     def extract_from_archive(self, archive_abspath, path2mr_):
@@ -560,35 +560,35 @@ class DCM2BIDS_helper():
         dir_src_2rm = DEFAULT.project_ids[self.project]["dir_from_source"]
         if dir_src_2rm in os.listdir(self.tmp_dir_xtract):
             _dir_src_2rm_abspath = os.path.join(self.tmp_dir_xtract, dir_src_2rm)
-            log.info(f'{" " *8}DEFAULT folder: {dir_src_2rm} is present')
+            log.info(f'{" " *10}DEFAULT folder: {dir_src_2rm} is present')
             for _dir_2mv in [i for i in os.listdir(_dir_src_2rm_abspath)]:
                 _dir_2mv_abspath = os.path.join(_dir_src_2rm_abspath, _dir_2mv)
                 dst_2mv = os.path.join(self.tmp_dir_xtract, _dir_2mv)
                 if not os.path.exists(dst_2mv):
-                    log.info(f'{" " *10}moving 1st level: {_dir_2mv_abspath}')
-                    log.info(f'{" " *10}to: {self.tmp_dir_xtract}')
+                    log.info(f'{" " *12}moving 1st level: {_dir_2mv_abspath}')
+                    log.info(f'{" " *12}to: {self.tmp_dir_xtract}')
                     os.system(f'mv {_dir_2mv_abspath} {self.tmp_dir_xtract}')
                     if os.path.exists(dst_2mv):
-                        log.info(f'{" " *10}moved OK')
+                        log.info(f'{" " *12}moved OK')
                 else:
                     for subdir_2mv in [i for i in os.listdir(_dir_2mv_abspath)]:
                         subdir_2mv_abspath = os.path.join(_dir_2mv_abspath, subdir_2mv)
                         dst_sub_2mv = os.path.join(self.tmp_dir_xtract, _dir_2mv, subdir_2mv)
                         if not os.path.exists(dst_sub_2mv):
-                            log.info(f'{" " *10}moving 2nd level: {subdir_2mv_abspath}')
-                            log.info(f'{" " *10}to: {dst_2mv}')
+                            log.info(f'{" " *12}moving 2nd level: {subdir_2mv_abspath}')
+                            log.info(f'{" " *12}to: {dst_2mv}')
                             os.system(f'mv {subdir_2mv_abspath} {dst_2mv}')
                             if os.path.exists(dst_sub_2mv):
-                                log.info(f'{" " *10}moved OK')
+                                log.info(f'{" " *12}moved OK')
                         else:
                             for sub_subdir_2mv in [i for i in os.listdir(subdir_2mv_abspath)]:
                                 sub_subdir_2mv_abspath = os.path.join(subdir_2mv_abspath, sub_subdir_2mv)
-                                log.info(f'{" " *10}moving 3rd level: {sub_subdir_2mv_abspath}')
-                                log.info(f'{" " *10}to: {dst_sub_2mv}')
+                                log.info(f'{" " *12}moving 3rd level: {sub_subdir_2mv_abspath}')
+                                log.info(f'{" " *12}to: {dst_sub_2mv}')
                                 os.system(f'mv {sub_subdir_2mv_abspath} {dst_sub_2mv}')
                                 if os.path.exists(sub_subdir_2mv_abspath):
-                                    log.info(f'{" " *10}moved OK')
-            log.info(f'{" " *10}removing DEFAULT folder: {_dir_src_2rm_abspath}')
+                                    log.info(f'{" " *12}moved OK')
+            log.info(f'{" " *12}removing DEFAULT folder: {_dir_src_2rm_abspath}')
             shutil.rmtree(_dir_src_2rm_abspath, ignore_errors=True)
 
 
