@@ -228,6 +228,14 @@ class FSStats2Table:
 
 
     def get_values(self, atlas, content, file_name, sub):
+        # alternatively, code written by nipy/nibabel probably Chris Markiewicz @effigies
+        # with open(file_path, 'r') as f:
+        # -        for line in f:
+        # -            if re.findall(r'ColHeaders .*', line):
+        # -                column_names = line.split()[2:]
+        # -                break
+        # -    f.close()
+        # -    stats = np.loadtxt(file_path, comments='#', dtype=str)
         if atlas in self.nuclei_atlases:
             if '.v12' in file_name or '.v21' in file_name:
                 new_version = False
