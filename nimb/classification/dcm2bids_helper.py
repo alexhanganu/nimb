@@ -119,7 +119,7 @@ class DCM2BIDS_helper():
                 log.info(f'{" " *4}{self.nimb_ids}\n')
                 for self.nimb_id in self.nimb_ids:
                     self.id_classified = self.nimb_classified[self.nimb_id]
-                    log.info(f'====id: {self.nimb_id} {">" * 60}')
+                    log.info(f'\n====id: {self.nimb_id} {">" * 60}')
                     ls_ses_2convert = [i for i in self.id_classified if i not in ('archived',)]
                     log.info(f'{" " *2}id: {self.nimb_id} has {len(ls_ses_2convert)} sessions: {ls_ses_2convert}')
                     for self.ses in ls_ses_2convert:
@@ -133,7 +133,7 @@ class DCM2BIDS_helper():
 
 
     def start_stepwise_choice(self):
-        log.info(f'{" " *4}id: {self.bids_id} CONVERTING with DCM2BIDS')
+        log.info(f'{" " *2}id: {self.bids_id} CONVERTING with DCM2BIDS')
         if self.id_classified['archived']:
             self.archived = True
 
