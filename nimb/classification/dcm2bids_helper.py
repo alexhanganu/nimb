@@ -154,21 +154,22 @@ class DCM2BIDS_helper():
                             self.get_path_2mr(paths_2mr_data)
                             self.run_dcm2bids()
                             self.get_log_dcm2bids()
-                            log.info(f'{" " * 8}conversion done checking is: {self.conversion_ok}')
                             if os.path.exists(self.abspath_2dir_data_type):
                                 log.info(f'{" " *8}>>>>DCM2BIDS conversion DONE')
                                 self.populate_bids_classifed()
                                 self.cleaning_after_conversion()
                             else:
                                 log.info(f'{" " *8}>>>>DCM2BIDS folder ABSENT')
+                                if not self.conversion_ok:
+                                    log.info(f'{" " * 8}ERR: conversion not finished')
                                 if os.path.exists(self.tmpdir_bids_id):
                                     if len(os.listdir(self.tmpdir_bids_id)) > 0:
                                         log.info(f'{" " *8}> conversion did not find corresponding values in the configuration file')
                                         log.info(f'{" " *8}> temporary converted: {self.tmpdir_bids_id}')
                                         self.chk_if_processed()
                                     else:
-                                        if not os.path.exists(self.rawdir_bids_id_dir):
-                                            log.info(f'{" " *8}> folder converted is empty: {self.tmpdir_bids_id} at: {self.rawdir_bids_id_dir}')
+                                        if not os.path.exists(self.abspath_2dir_data_type):
+                                            log.info(f'{" " *8}> folder converted is empty: {self.tmpdir_bids_id} at: {self.abspath_2dir_data_type}')
                                             self.err_dir_populate()
                                 else:
                                     log.info(f'{" " *8}ERROR: dcm2bids conversion FAILED: {self.tmpdir_bids_id}')
