@@ -119,7 +119,8 @@ class DCM2BIDS_helper():
                 log.info(f'{" " *4}{self.nimb_ids}\n')
                 for self.nimb_id in self.nimb_ids:
                     self.id_classified = self.nimb_classified[self.nimb_id]
-                    log.info(f'\n====id: {self.nimb_id} {">" * 60}')
+                    log.info(f'     ')
+                    log.info(f'====id: {self.nimb_id} {">" * 60}')
                     ls_ses_2convert = [i for i in self.id_classified if i not in ('archived',)]
                     log.info(f'{" " *2}id: {self.nimb_id} has {len(ls_ses_2convert)} sessions: {ls_ses_2convert}')
                     for self.ses in ls_ses_2convert:
@@ -142,7 +143,7 @@ class DCM2BIDS_helper():
                 for self.modalityLabel_nimb in BIDS_types[self.data_Type]:
                     if self.modalityLabel_nimb in self.id_classified[self.ses][self.data_Type]:
                         self.modalityLabel = mr_modality_nimb_2_dcm2bids[self.modalityLabel_nimb] # changing to dcm2bids type modality_label
-                        log.info(f'{" " *6}TYPE: {self.data_Type} / LABEL: {self.modalityLabel}')
+                        log.info(f'{" " *6}{self.data_Type} -> {self.modalityLabel} (TYPE / LABEL)')
                         self.abs_path2mr = ""
                         self.abspath_2dir_data_type = os.path.join(self.rawdir_bids_id_dir, self.ses, self.data_Type)
                         self.name_err_folder_from_srcdata = os.path.join(self.err_dir,
@@ -194,9 +195,11 @@ class DCM2BIDS_helper():
         self.conversion_ok = False
         text_2chk = "moving acquisitions into BIDS folder"
         dcm2bids_logs_abspath = os.path.join(self.OUTPUT_DIR, 'tmp_dcm2bids', 'log')
-        log_file = sorted([i for i in os.listdir(dcm2bids_logs_abspath) if self.bids_id in i])[-1]
-        self.log_file_dcm2bids = os.path.join(dcm2bids_logs_abspath, log_file)
-        log_dcm2bids_content = open(self.log_file_dcm2bids).readlines()
+        log_files = sorted([i for i in os.listdir(dcm2bids_logs_abspath) if self.bids_id in i])
+        self.log_files_all = [os.path.join(dcm2bids_logs_abspath, i) for i in log_files]
+
+        log_file = self.log_files_all[-1]
+        log_dcm2bids_content = open(log_file).readlines()
         log.info(f'{" " * 10}log file: {log_file}')
         for line in log_dcm2bids_content:
             if text_2chk in line:
@@ -215,23 +218,24 @@ class DCM2BIDS_helper():
         src_data_dirs = [i for i in os.listdir(self.abs_path2mr)]
         if len(src_data_dirs) > 1:
             log.info(f'{" " *8}> multiple folders were extracted from the archive {src_data_dirs}')
-        log.info(f'folder with err data is: {self.err_dir}')
+        log.info(f'{" " *8}folder with err data is: {self.err_dir}')
         name_err_folder_from_dcm2bids = os.path.join(self.err_dir, self.bids_id+"_dcm2bids")
-        log.info(f'moving: {self.tmpdir_bids_id} to: {name_err_folder_from_dcm2bids}')
+        log.info(f'{" " *8}moving: {self.tmpdir_bids_id} to: {name_err_folder_from_dcm2bids}')
         moved_1 = copy_rm_dir(self.tmpdir_bids_id,
                             name_err_folder_from_dcm2bids,
                             rm = True)
         srcdata_folder_sent2dcm2bids = os.path.join(self.abs_path2mr, src_data_dirs[0])
-        log.info(f'moving sourcedata: {srcdata_folder_sent2dcm2bids} to {self.name_err_folder_from_srcdata}')
+        log.info(f'{" " *8}moving sourcedata: {srcdata_folder_sent2dcm2bids} to {self.name_err_folder_from_srcdata}')
         moved_2 = copy_rm_dir(srcdata_folder_sent2dcm2bids,
                             self.name_err_folder_from_srcdata,
                             rm = True)
-        log.info(f'moving logfiles: {self.logs_dcm2bids}')
-        shutil.move(self.log_file_dcm2bids, self.err_dir)
+        log.info(f'{" " *8}moving logfiles: {self.self.log_files_all}')
+        for log_file in self.log_files_all:
+            shutil.move(log_file, self.err_dir)
         if moved_1 and moved_2:
-            log.info(f'data was moved correctly')
+            log.info(f'{" " *8}data was moved correctly')
         else:
-            log.info(f'an ERR occured during mocing the data.')
+            log.info(f'{" " *8}an ERR occured during mocing the data.')
 
 
     def populate_bids_classifed(self):
