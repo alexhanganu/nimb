@@ -14,7 +14,10 @@ from classification.classify_2nimb_bids import Classify2_NIMB_BIDS
 from classification.dcm2bids_helper import DCM2BIDS_helper
 from setup.interminal_setup import get_userdefined_paths, get_yes_no
 from distribution.logger import LogLVL
-
+import logging
+log = logging.getLogger(__name__)
+logging.basicConfig(format='%(levelname)s:%(asctime)s| %(message)s')
+log.setLevel(logging.INFO)
 
 """
 ALGO: (created based on the loni-ppmi dataset)
@@ -846,6 +849,7 @@ class ProjectManager:
                 print('    nimb_classified file cannot be found at: {self.srcdata_dir}')
 
         if nimb_classified:
+            log.info(f'{" " *2}loading nimb classified: {nimb_classified}')
             if _id_project:
                 ls_ids_2convert_2bids = [_id_project]
             else:
