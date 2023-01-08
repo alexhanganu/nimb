@@ -851,6 +851,7 @@ class ProjectManager:
         if nimb_classified:
             log.info(f'{" " *2}loading nimb classified: {nimb_classified}')
             if _id_project:
+                log.info(f'{" " *2}the id column for project names is: {_id_project}')
                 ls_ids_2convert_2bids = [_id_project]
             else:
                 ls_ids_2convert_2bids = [i for i in nimb_classified]
