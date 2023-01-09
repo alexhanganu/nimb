@@ -208,7 +208,7 @@ class ProjectManager:
             stats
             glm results
         """
-        print(f'{LogLVL.lvl1}running pipeline for project: {self.project}')
+        log.info(f'{LogLVL.lvl1}running pipeline for project: {self.project}')
         do_task = self.all_vars.params.do
         if do_task == 'check-new':
             self.check_new()
@@ -218,10 +218,10 @@ class ProjectManager:
             self.classify_with_dcm2bids()
         elif do_task == 'process':
             if self.new_subjects:
-                print(f'{LogLVL.lvl1}must initiate processing')
+                log.info(f'{LogLVL.lvl1}must initiate processing')
                 self.send_2processing('process')
             else:
-                print(f'{LogLVL.lvl1}all subjects were processed')
+                log.info(f'{LogLVL.lvl1}all subjects were processed')
         elif do_task == 'fs-get-masks':
             self.get_masks()
         elif do_task == 'fs-get-stats':
@@ -231,16 +231,16 @@ class ProjectManager:
         elif do_task == 'fs-glm-image':
             self.glm_fs_do(image = True)
         elif do_task == 'run-stats':
-            print("run-stats not set yet")
+            log.info("run-stats not set yet")
         elif do_task == 'all':
             self.check_new()
             if self.new_subjects:
-                print(f'{LogLVL.lvl1}must initiate processing')
+                log.info(f'{LogLVL.lvl1}must initiate processing')
                 self.send_2processing('process')
             self.extract_statistics(apps = ["freesurfer",])
             self.glm_fs_do()
             self.glm_fs_do(image = True)
-            print("run-stats not set yet")
+            log.info("run-stats not set yet")
 
 
     '''
@@ -267,7 +267,7 @@ class ProjectManager:
         if self.distrib_hlp.get_files_for_stats(self.path_stats_dir,
                                                 [self.f_groups,]):
             f_grid = os.path.join(self.path_stats_dir, self.f_groups)
-            print(f'    file with groups is present: {f_grid}')
+            log.info(f'    file with groups is present: {f_grid}')
             self.df_grid    = self.tab.get_df(f_grid)
         else:
             self.df_grid    = self.make_default_grid()
@@ -281,7 +281,7 @@ class ProjectManager:
             ../nimb/projects.json -> STATS_PATHS -> STATS_HOME
             script will update file projects.json
         '''
-        print(f'    file with groups is absent; creating default grid file:\
+        log.info(f'    file with groups is absent; creating default grid file:\
                     in: {self.path_stats_dir}\
                     in: {self.materials_dir_pt}')
         f_name = DEFAULT.default_tab_name
@@ -297,7 +297,7 @@ class ProjectManager:
         from setup.get_credentials_home import _get_credentials_home
         credentials_home = _get_credentials_home()
         json_projects    = os.path.join(credentials_home, 'projects.json')
-        print(f'{LogLVL.lvl1}updating project.json at: {json_projects}')
+        log.info(f'{LogLVL.lvl1}updating project.json at: {json_projects}')
         self.all_vars.projects[self.project] = self.project_vars
         save_json(self.all_vars.projects, json_projects)
         return df
@@ -311,14 +311,14 @@ class ProjectManager:
             list():           self._ids_project
             list():           self._ids_bids
         """
-        print(f"{LogLVL.lvl1}columns in grid are: {self.df_grid.columns}")
+        log.info(f"{LogLVL.lvl1}columns in grid are: {self.df_grid.columns}")
         if self._ids_bids_col not in self.df_grid.columns:
-            print(f'{LogLVL.lvl1}column for _ids_bids: {self._ids_bids_col} is missing from grid {self.f_groups}')
-            print(f'{LogLVL.lvl2}adding to grid an empty column: {self._ids_bids_col}')
+            log.info(f'{LogLVL.lvl1}column for _ids_bids: {self._ids_bids_col} is missing from grid {self.f_groups}')
+            log.info(f'{LogLVL.lvl2}adding to grid an empty column: {self._ids_bids_col}')
             self.df_grid[self._ids_bids_col] = ''
         if self._ids_project_col not in self.df_grid.columns:
-            print(f'{LogLVL.lvl1}column for _ids_project: {self._ids_project_col} is missing from grid {self.f_groups}')
-            print(f'{LogLVL.lvl2}adding to grid an empty column: {self._ids_project_col}')
+            log.info(f'{LogLVL.lvl1}column for _ids_project: {self._ids_project_col} is missing from grid {self.f_groups}')
+            log.info(f'{LogLVL.lvl2}adding to grid an empty column: {self._ids_project_col}')
             self.df_grid[self._ids_project_col] = ''
 
         self._ids_bids    = self.df_grid[self._ids_bids_col].tolist()
@@ -327,7 +327,7 @@ class ProjectManager:
         if self._ids_bids:
             not_bids, _, _, no_rawdata = self.verify_ids_are_bids_standard(self._ids_bids, self.BIDS_DIR)
             if not_bids:
-                print(f"{LogLVL.lvl2}some subjects are not of bids format: {not_bids}")
+                log.info(f"{LogLVL.lvl2}some subjects are not of bids format: {not_bids}")
                 self.mv_ids_bids_in_grid(not_bids)
 
         self._ids_project = self.df_grid[self._ids_project_col].tolist()
@@ -353,7 +353,7 @@ class ProjectManager:
                 self.tab.change_val(self.df_grid, index, self._ids_project_col, _id)
                 self._ids_project.append(_id)
             else:
-                print(f'{LogLVL.lvl2}id: {_id} is already present in grid  in column: {self._ids_project_col}')
+                log.info(f'{LogLVL.lvl2}id: {_id} is already present in grid  in column: {self._ids_project_col}')
         self.save_grid(self.df_grid, self.f_groups)
 
 
@@ -367,7 +367,7 @@ class ProjectManager:
         """
         _, yes_bids, _, no_rawdata = self.verify_ids_are_bids_standard(self._ids_project, self.BIDS_DIR)
         if yes_bids:
-            print(f"{LogLVL.lvl2}some subjects are of bids format: {yes_bids}")
+            log.info(f"{LogLVL.lvl2}some subjects are of bids format: {yes_bids}")
             self.add_ids_project_to_bids_in_grid(yes_bids)
 
         ls_2rm_from_grid     = list()
@@ -378,14 +378,14 @@ class ProjectManager:
             if _id_project in self._ids_nimb_classified:
                 ls_4dcm2bids_classif.append(_id_project)
             else:
-                print(f'{LogLVL.lvl2}id_project: {_id_project} is missing:')
-                print(f'{LogLVL.lvl3}from file: {DEFAULT.f_nimb_classified} in: {self.srcdata_dir}')
+                log.info(f'{LogLVL.lvl2}id_project: {_id_project} is missing:')
+                log.info(f'{LogLVL.lvl3}from file: {DEFAULT.f_nimb_classified} in: {self.srcdata_dir}')
                 if _id_project in self.get_listdir(self.srcdata_dir):
-                    print(f'{LogLVL.lvl3}must undergo nimb classification')
+                    log.info(f'{LogLVL.lvl3}must undergo nimb classification')
                     ls_4nimb_classif.append(_id_project)
                 else:
-                    print(f'{LogLVL.lvl3}from sourcedata: {self.srcdata_dir}')
-                    print(f'{LogLVL.lvl3}removing id: {_id_project} from grid {f_grid}')
+                    log.info(f'{LogLVL.lvl3}from sourcedata: {self.srcdata_dir}')
+                    log.info(f'{LogLVL.lvl3}removing id: {_id_project} from grid {self.f_groups}')
                     ls_2rm_from_grid.append(_id_project)
 
         # removing _id_project from grid and f_ids
@@ -424,14 +424,14 @@ class ProjectManager:
                     self._ids_bids.append(_id_project)
                     self._ids_project.remove(_id_project)
                 else:
-                    print(f'{LogLVL.lvl2}id: {_id_project} has a corresponding bids: {_id_bids_probab}')
-                    print(f'{LogLVL.lvl3}please adjust the names')
+                    log.info(f'{LogLVL.lvl2}id: {_id_project} has a corresponding bids: {_id_bids_probab}')
+                    log.info(f'{LogLVL.lvl3}please adjust the names')
             else:
                 index_inbids = self.tab.get_index_of_val(self.df_grid, self._ids_bids_col, _id_project)
                 if index != index_inbids:
-                    print(f'{LogLVL.lvl2}id: {_id_project} is already present in grid  in column: {self._ids_bids_col}')
-                    print(f'{LogLVL.lvl3}in the position: {index_inbids}')
-                    print(f'{LogLVL.lvl3}ERR: there seem to be 2 participants with the same name and different data!')
+                    log.info(f'{LogLVL.lvl2}id: {_id_project} is already present in grid  in column: {self._ids_bids_col}')
+                    log.info(f'{LogLVL.lvl3}in the position: {index_inbids}')
+                    log.info(f'{LogLVL.lvl3}ERR: there seem to be 2 participants with the same name and different data!')
                 else:
                     self.tab.change_val(self.df_grid, index, self._ids_project_col, None)
                     self._ids_project.remove(_id_project)
@@ -452,7 +452,7 @@ class ProjectManager:
         if _id_project in [self._ids_all[i][key_id_project] for i in self._ids_all]:
             _id_bids_ls = [i for i in self._ids_all if self._ids_all[i][key_id_project] == _id_project]
             if len(_ids_bids_ls) > 1:
-                print(f'{LogLVL.lvl1}there are multiple _id_bids: {_id_bids_ls}\
+                log.info(f'{LogLVL.lvl1}there are multiple _id_bids: {_id_bids_ls}\
                         that correspond to id {_id_project}')
         return _id_bids_ls
 
@@ -492,9 +492,9 @@ class ProjectManager:
                         self.update_f_ids(_id_bids, app, file_processed[0])
                         self.populate_df([_id_bids,], self._ids_bids_col, self.df_grid)
                     else:
-                        print(f"{LogLVL.lvl3}subject in the processed file: {_id_bids_2chk} name is not of BIDS format")
+                        log.info(f"{LogLVL.lvl3}subject in the processed file: {_id_bids_2chk} name is not of BIDS format")
             else:
-                print(f"{LogLVL.lvl2}subject {_id_bids} for app: {app} is stored on: {location}")
+                log.info(f"{LogLVL.lvl2}subject {_id_bids} for app: {app} is stored on: {location}")
         self.save_f_ids()
 
 
@@ -529,7 +529,7 @@ class ProjectManager:
         """removing _id from grid
         """
         for _id_project in ls_2rm_from_grid:
-            index = self.tab.get_index_of_val(self.df_grid, self._ids_project_col, _id)
+            index = self.tab.get_index_of_val(self.df_grid, self._ids_project_col, _id_project)
             self.tab.rm_row(self.df_grid, index)
             self._ids_project.remove(_id_project)
         self.save_grid(self.df_grid, self.f_groups)
@@ -560,7 +560,7 @@ class ProjectManager:
             for _id_bids in self._ids_bids:
                 apps2process = self.processing_get_apps(_id_bids)
                 if apps2process:
-                    print(f'{LogLVL.lvl1}sending for processing: {_id_bids}, for apps: {apps2process}')
+                    log.info(f'{LogLVL.lvl1}sending for processing: {_id_bids}, for apps: {apps2process}')
                     self.processing_add_id(_id_bids, apps2process)
 
 
@@ -586,14 +586,14 @@ class ProjectManager:
                 location = self.project_vars[key_dir_2processed][0]
                 abspath_2storage = self.project_vars[key_dir_2processed][1]
                 if location != "local":
-                    print(f"{LogLVL.lvl2}subject {_id_bids} for app: {app} is stored on: {location}")
+                    log.info(f"{LogLVL.lvl2}subject {_id_bids} for app: {app} is stored on: {location}")
                 else:
                     _id_per_app = [i for i in self.get_listdir(abspath_2storage) if _id_bids in i]
                     if _id_per_app:
                         self.update_f_ids(_id_bids, app, _id_per_app[0])
                     if len(_id_per_app) > 1:
-                        print(f"{LogLVL.lvl2}participant: {_id_bids} has multiple ids for app: {app}: {_id_per_app}")
-                        print(f"{LogLVL.lvl3}{_id_per_app}")
+                        log.info(f"{LogLVL.lvl2}participant: {_id_bids} has multiple ids for app: {app}: {_id_per_app}")
+                        log.info(f"{LogLVL.lvl3}{_id_per_app}")
             if not self._ids_all[_id_bids][app]:
                 apps2process.append(app)
         self.save_f_ids()
@@ -616,31 +616,31 @@ class ProjectManager:
         # STEP 1
         # checking for new subjects
         # extracting subjects missing from the nimb_classified file
-        print(f'{LogLVL.lvl1}{"=" * 36}')
-        print(f'{LogLVL.lvl1}checking for new subjects in SOURCE_SUBJECTS_DIR:')
-        print(f"{LogLVL.lvl2}{self.srcdata_dir}")
+        log.info(f'{LogLVL.lvl1}{"=" * 36}')
+        log.info(f'{LogLVL.lvl1}checking for new subjects in SOURCE_SUBJECTS_DIR:')
+        log.info(f"{LogLVL.lvl2}{self.srcdata_dir}")
         ls_ids_src     = self.get_listdir(self.srcdata_dir)
         archived = [self._ids_nimb_classified[i]["archived"] for i in self._ids_nimb_classified]
         ls_new_ids_src = [i for i in ls_ids_src if i not in self._ids_nimb_classified]
         for file in ls_new_ids_src[::-1]:
             for archive in archived:
                 if file in archive:
-                    print("file in archive:", archive)
+                    log.info("file in archive:", archive)
                     ls_new_ids_src.remove(file)
                     break
         if DEFAULT.f_nimb_classified in ls_new_ids_src:
             ls_new_ids_src = ls_new_ids_src.remove(DEFAULT.f_nimb_classified)
 
         if ls_new_ids_src:
-            print(f'{LogLVL.lvl2}there are new subjects that were not classified')
-            print(f'{LogLVL.lvl3}initiating nimb classifier, to file: nimb_classified.json')
+            log.info(f'{LogLVL.lvl2}there are new subjects that were not classified')
+            log.info(f'{LogLVL.lvl3}initiating nimb classifier, to file: nimb_classified.json')
             is_classified, _ = self.run_classify_2nimb_bids(ls_new_ids_src)
             if is_classified:
-                print(f'{LogLVL.lvl3}classification to nimb_classified.json DONE')
+                log.info(f'{LogLVL.lvl3}classification to nimb_classified.json DONE')
             else:
-                print(f"{LogLVL.lvl2}ERROR: classification 2nimb-bids had an error")
+                log.info(f"{LogLVL.lvl2}ERROR: classification 2nimb-bids had an error")
         else:
-            print(f'{LogLVL.lvl3}All data in SOURCE_SUBJECTS_DIR were added to file nimb_classified.json')
+            log.info(f'{LogLVL.lvl3}All data in SOURCE_SUBJECTS_DIR were added to file nimb_classified.json')
 
         # STEP 2:
         # get ids from nimb_classified missing from f_ids
@@ -650,8 +650,8 @@ class ProjectManager:
         # STEP 3:
         # extract potential ids that might have bids structure
         # and could be directly moved to the _ids_bids column in the grid
-        print(f'{LogLVL.lvl2}checking BIDS format for folders in:')
-        print(f"{LogLVL.lvl3}SOURCE_SUBJECTS_DIR: {self.srcdata_dir}")
+        log.info(f'{LogLVL.lvl2}checking BIDS format for folders in:')
+        log.info(f"{LogLVL.lvl3}SOURCE_SUBJECTS_DIR: {self.srcdata_dir}")
         _ids_src_bids_unprocessed = dict()
         for _id_src in unprocessed_d.keys():
             for session in unprocessed_d[_id_src]:
@@ -660,7 +660,7 @@ class ProjectManager:
                                                     list(_ids_src_bids_unprocessed.values()),
                                                     self.srcdata_dir)
         if yes_bids_d:
-            print(f"{LogLVL.lvl2}some subjects are of BIDS format: {list(yes_bids_d.keys())}")
+            log.info(f"{LogLVL.lvl2}some subjects are of BIDS format: {list(yes_bids_d.keys())}")
             self.copy_dir(yes_bids)
             self.add_ids_source_to_bids_in_grid(yes_bids_d)
 
@@ -671,15 +671,15 @@ class ProjectManager:
             for _id_src in _ids_src_bids_unprocessed.keys():
                 if _ids_src_bids_unprocessed[_id_src] in no_bids:
                     _ids_src_unprocessed.append(_id_src)
-            print(f'{LogLVL.lvl2}there are {len(_ids_src_unprocessed)} participants')
-            print(f'{LogLVL.lvl3}with MRI data to be processed')
+            log.info(f'{LogLVL.lvl2}there are {len(_ids_src_unprocessed)} participants')
+            log.info(f'{LogLVL.lvl3}with MRI data to be processed')
             for _id_src in _ids_src_unprocessed:
                 _id_bids = self.classify_with_dcm2bids(nimb_classified = self._ids_nimb_classified,
                                                     _id_project = _id_src)
                 self.add_ids_source_to_bids_in_grid({_id_src: _id_bids})
             self.processing_chk()
         else:
-           print(f'{LogLVL.lvl2}ALL participants with MRI data were processed')
+           log.info(f'{LogLVL.lvl2}ALL participants with MRI data were processed')
 
 
 
@@ -687,7 +687,7 @@ class ProjectManager:
         """
             get ids_src from nimb_classified that are missing from f_ids.json
         """
-        # print(f'{LogLVL.lvl1}nimb_classified is: {self._ids_nimb_classified}')
+        # log.info(f'{LogLVL.lvl1}nimb_classified is: {self._ids_nimb_classified}')
         unprocessed_d = dict()
         for _id_src in self._ids_nimb_classified:
             unprocessed_d[_id_src] = {}
@@ -701,7 +701,7 @@ class ProjectManager:
                         archive = self._ids_nimb_classified[_id_src]["archived"]
                         unprocessed_d[_id_src][session]["archived"] = archive
                 else:
-                    print(f"{LogLVL.lvl2}{_id_bids} registered in file with ids")
+                    log.info(f"{LogLVL.lvl2}{_id_bids} registered in file with ids")
         return unprocessed_d
 
 
@@ -724,7 +724,7 @@ class ProjectManager:
             _id_bids = yes_bids[_id_src]
             self._ids_bids = self._ids_bids + [_id_bids]
             # populating self.f_ids with _id_src
-            print("populating f_ids with id_bids:", _id_bids, "for _id_src: ", _id_src)
+            log.info("populating f_ids with id_bids:", _id_bids, "for _id_src: ", _id_src)
             self.update_f_ids(_id_bids, DEFAULT.id_source_key, _id_src)
         self.save_f_ids()
         self.populate_df(self._ids_bids, self._ids_bids_col, self.df_grid)
@@ -759,19 +759,19 @@ class ProjectManager:
             if not self.tab.val_is_nan(_id):
                 bids_format, sub_label, _, _ = self.dcm2bids.is_bids_format(_id)
                 if not bids_format:
-                    print(f"{LogLVL.lvl3}subject {_id} name is not of BIDS format")
+                    log.info(f"{LogLVL.lvl3}subject {_id} name is not of BIDS format")
                     no_bids.append(_id)
                 else:
                     yes_bids.append(_id)
                     yes_bids_d[_id] = _id
                 if sub_label not in rawdata_listdir:
-                    print(f"{LogLVL.lvl3}subject {_id} is missing from: {_dir2chk}")
+                    log.info(f"{LogLVL.lvl3}subject {_id} is missing from: {_dir2chk}")
                     no_rawdata.append(_id)
                 # elif not validate BIDS: !!!!!!!!!!!!!!!!!
-                #     print(f"{LogLVL.lvl2}subject {_id} folder in: {_dir2chk} has not been validated for BIDS")
+                #     log.info(f"{LogLVL.lvl2}subject {_id} folder in: {_dir2chk} has not been validated for BIDS")
                 #     no_rawdata.append(_id)
             else:
-                print(f"{LogLVL.lvl3}subject id: {_id} is NAN")
+                log.info(f"{LogLVL.lvl3}subject id: {_id} is NAN")
         return no_bids, yes_bids, yes_bids_d, no_rawdata
 
 
@@ -783,7 +783,7 @@ class ProjectManager:
             is_classified: bool; True = classification was performed correctly
             nimb_classified: dict() of the nimb_classified.json file
         """
-        print(f'{LogLVL.lvl2}classifying subjects: {ls_subjects}')
+        log.info(f'{LogLVL.lvl2}classifying subjects: {ls_subjects}')
         multi_T1     = self.local_vars['FREESURFER']['multiple_T1_entries']
         add_flair_t2 = self.local_vars['FREESURFER']['flair_t2_add']
         fix_spaces   = self.all_vars.params.fix_spaces
@@ -803,7 +803,7 @@ class ProjectManager:
         if DEFAULT.f_nimb_classified in ls_source_dirs:
             ls_source_dirs = ls_source_dirs.remove(DEFAULT.f_nimb_classified)
 
-        print(f'   there are {len(ls_source_dirs)} files found in {self.srcdata_dir} \
+        log.info(f'   there are {len(ls_source_dirs)} files found in {self.srcdata_dir} \
             expected to contain MRI data for project {self.project}')
         if self.test:
             ls_source_dirs = ls_source_dirs[:self.nr_for_testing]
@@ -818,13 +818,13 @@ class ProjectManager:
                 if is_classified:
                     _id_bids = self.classify_with_dcm2bids(nimb_classified)
         else:
-            print(f'    folder with source subjects {self.srcdata_dir} is empty')
+            log.info(f'    folder with source subjects {self.srcdata_dir} is empty')
 
 
     def prep_dirs(self, ls_dirs):
         ''' define dirs required for BIDS classification
         '''
-        print('    it is expected that SOURCE_SUBJECTS_DIR contains unarchived folders or archived (zip) files with MRI data')
+        log.info('    it is expected that SOURCE_SUBJECTS_DIR contains unarchived folders or archived (zip) files with MRI data')
         for _dir2chk in ls_dirs:
             _dir = self.project_vars[_dir2chk][1]
             if not os.path.exists(_dir):
@@ -845,8 +845,8 @@ class ProjectManager:
                                                     self.srcdata_dir,
                                                     DEFAULT.f_nimb_classified))
             except Exception as e:
-                print(e)
-                print('    nimb_classified file cannot be found at: {self.srcdata_dir}')
+                log.info(e)
+                log.info('    nimb_classified file cannot be found at: {self.srcdata_dir}')
 
         if nimb_classified:
             log.info(f'{" " *2}loading nimb classified: {nimb_classified}')
@@ -856,18 +856,18 @@ class ProjectManager:
             else:
                 ls_ids_2convert_2bids = [i for i in nimb_classified]
                 if self.test:
-                    print(f'        TESTING with {self.nr_for_testing} participants')
+                    log.info(f'        TESTING with {self.nr_for_testing} participants')
                     ls_ids_2convert_2bids = ls_ids_2convert_2bids[:self.nr_for_testing]
             for _id_from_nimb_classified in ls_ids_2convert_2bids:
                 ls_sessions = [i for i in nimb_classified[_id_from_nimb_classified] if i not in ('archived',)]
                 for ses in ls_sessions:
                     ready_2convert_2bids = self.id_is_bids_converted(_id_from_nimb_classified, ses)
                     if ready_2convert_2bids:
-                        print('    ready to convert to BIDS')
+                        log.info('    ready to convert to BIDS')
                         self.bids_classified, _id_bids = self.convert_with_dcm2bids(_id_from_nimb_classified,
                                                             ses,
                                                             nimb_classified[_id_from_nimb_classified])
-                        # print(f'        bids_classified is: {self.bids_classified}')
+                        # log.info(f'        bids_classified is: {self.bids_classified}')
         if _id_project:
             self.update_f_ids(_id_bids, DEFAULT.id_project_key, _id_project)
             # populate grid with _id_bids
@@ -885,12 +885,12 @@ class ProjectManager:
             elif ses not in os.listdir(os.path.join(self.BIDS_DIR, _id_from_nimb_classified)):
                 ready_2convert_2bids = True
         else:
-            print(f'    bids folder located remotely: {bids_dir_location}')
+            log.info(f'    bids folder located remotely: {bids_dir_location}')
         return ready_2convert_2bids
 
 
     def convert_with_dcm2bids(self, _id_from_nimb_classified, ses, nimb_classified_per_id):
-        print(f'    DCM2BIDS STARTING, id: {_id_from_nimb_classified} session: {ses}')
+        log.info(f'    DCM2BIDS STARTING, id: {_id_from_nimb_classified} session: {ses}')
         return self.dcm2bids.run(_id_from_nimb_classified,
                                 ses,
                                 nimb_classified_per_id)
@@ -919,11 +919,11 @@ class ProjectManager:
                 if ask OK to initiate processing is True:
                     send for processing
         """
-        print(f"{LogLVL.lvl2}adding new _id_bids to existing new_subjects.json file")
+        log.info(f"{LogLVL.lvl2}adding new _id_bids to existing new_subjects.json file")
         DEFpaths = DEFAULTpaths(self.NIMB_tmp)
         f_subj2process = DEFpaths.f_subj2process_abspath
         if not os.path.exists(f_subj2process):
-            print(f'{LogLVL.lvl1} file with subjects to process is missing; creating empty dictionary')
+            log.info(f'{LogLVL.lvl1} file with subjects to process is missing; creating empty dictionary')
             self.subs_2process = dict()
         else:
             self.subs_2process = load_json(f_subj2process)
@@ -954,7 +954,7 @@ class ProjectManager:
                     "dwi":
                         "dwi"  :[ABSPATH_TO/sub-label_ses-label_dwi.nii.gz]}
         """
-        print(f'reading dirs: {sub_label} and {ses_label}')
+        log.info(f'reading dirs: {sub_label} and {ses_label}')
         ses_path = os.path.join(self.BIDS_DIR, sub_label, ses_label)
         content = dict()
         dirs = os.listdir(ses_path)
@@ -988,21 +988,21 @@ class ProjectManager:
                 cmd          = f'{python_run} fs_stats2table.py -project {self.project} -stats_dir {dir_4stats} -dir_fs_stats {dir_with_data}'
                 process_type = 'fs_stats'
                 subproc      = 'get_stats'
-                print(f'        command :     {cmd}')
-                print(f'        process_type: {process_type}')
-                print(f'        subproc:      {subproc}')
-                print(f'        cd_cmd :      {cd_cmd}')
+                log.info(f'        command :     {cmd}')
+                log.info(f'        process_type: {process_type}')
+                log.info(f'        subproc:      {subproc}')
+                log.info(f'        cd_cmd :      {cd_cmd}')
             elif task == 'fs-get-masks':
                 cmd          = f'{python_run} run_masks.py -project {self.project}'
                 process_type = 'fs'
                 subproc      = 'run_masks'
             if not self.test:
-                print(f'    sending to scheduler for task {task}')
+                log.info(f'    sending to scheduler for task {task}')
                 from processing.schedule_helper import Scheduler
                 schedule = Scheduler(self.local_vars)
                 schedule.submit_4_processing(cmd, process_type, subproc, cd_cmd)
             else:
-                print(f'    READY to send to scheduler for task {task}. TESTing active')
+                log.info(f'    READY to send to scheduler for task {task}. TESTing active')
 
 
     '''
@@ -1015,12 +1015,12 @@ class ProjectManager:
         """
         for app in apps:
             if app == "freesurfer":
-                print('    initiating extraction of statistics for FreeSurfer')
-                print("    ids are:", self._ids_bids)
+                log.info('    initiating extraction of statistics for FreeSurfer')
+                log.info("    ids are:", self._ids_bids)
                 if self.distrib_ready.chk_if_ready_for_stats():
                     PROCESSED_FS_DIR = self.distrib_hlp.prep_4fs_stats(self._ids_bids)
                     if PROCESSED_FS_DIR:
-                        print('    ready to extract stats from project helper')
+                        log.info('    ready to extract stats from project helper')
                         self.send_2processing('fs-get-stats', dir_with_data = PROCESSED_FS_DIR)
 
 
@@ -1032,7 +1032,7 @@ class ProjectManager:
                     run fs-glm
                     extract fs-glm-image
         """
-        print("{LogLVL.lvl1}peforming glm ...; script not ready")
+        log.info("{LogLVL.lvl1}peforming glm ...; script not ready")
         fs_glm_dir   = self.project_vars['STATS_PATHS']["FS_GLM_dir"]
         if DistributionReady(self.all_vars).chk_if_ready_for_fs_glm():
             GLM_file_path, GLM_dir = DistributionHelper(self.all_vars).prep_4fs_glm(fs_glm_dir,
@@ -1040,7 +1040,7 @@ class ProjectManager:
             FS_SUBJECTS_DIR = self.vars_local['FREESURFER']['FS_SUBJECTS_DIR']
             DistributionReady(self.all_vars).fs_chk_fsaverage_ready(FS_SUBJECTS_DIR)
             if GLM_file_path:
-                print('    GLM file path is:',GLM_file_path)
+                log.info('    GLM file path is:',GLM_file_path)
                 self.vars_local['PROCESSING']['processing_env']  = "tmux"
                 schedule_fsglm = Scheduler(self.vars_local)
                 cd_cmd = 'cd {}'.format(path.join(self.NIMB_HOME, 'processing', 'freesurfer'))
@@ -1050,17 +1050,17 @@ class ProjectManager:
             if "export_screen" in self.vars_local['FREESURFER'] and \
                 self.vars_local['FREESURFER']["export_screen"] == 1:
                 if DistributionReady(self.all_vars).fs_ready():
-                    print('before running the script, remember to source $FREESURFER_HOME')
+                    log.info('before running the script, remember to source $FREESURFER_HOME')
                     cmd = '{} fs_glm_extract_images.py -project {}'.format(self.py_run_cmd, self.project)
                     cd_cmd = 'cd '+path.join(self.NIMB_HOME, 'processing', 'freesurfer')
                     self.schedule.submit_4_processing(cmd, 'fs_glm','extract_images', cd_cmd)
                 else:
-                    print(f"{LogLVL.lvl2}ERR: cannont extract image for GLM analysis: FreeSurfer not ready")
+                    log.info(f"{LogLVL.lvl2}ERR: cannont extract image for GLM analysis: FreeSurfer not ready")
             else:
-                print(f"Current environment is not ready to export screen")
-                print(f"ERR! check that you can export your screen")
-                print(f"Please define a computer where the screen can be used for FreeSurfer Freeview and tksurfer")
-                print(f"ERR! Check the variable: export_screen in file credentials_path.py/nimb/local.json")
+                log.info(f"Current environment is not ready to export screen")
+                log.info(f"ERR! check that you can export your screen")
+                log.info(f"Please define a computer where the screen can be used for FreeSurfer Freeview and tksurfer")
+                log.info(f"ERR! Check the variable: export_screen in file credentials_path.py/nimb/local.json")
 
 
     '''
@@ -1084,15 +1084,15 @@ class ProjectManager:
             if os.path.exists(self.f_ids_instatsdir):
                 _ids_in_stats_dir = load_json(self.f_ids_instatsdir)
                 if _ids_in_matdir != _ids_in_stats_dir:
-                    print(f'{LogLVL.lvl1} ids in {self.f_ids_instatsdir}')
-                    print(f'{LogLVL.lvl1} is DIFFERENT from: {self.f_ids_inmatdir}')
-                    print(f'{LogLVL.lvl2}saving {self.f_ids_inmatdir}')
-                    print(f'{LogLVL.lvl2}to: {self.path_stats_dir}')
+                    log.info(f'{LogLVL.lvl1} ids in {self.f_ids_instatsdir}')
+                    log.info(f'{LogLVL.lvl1} is DIFFERENT from: {self.f_ids_inmatdir}')
+                    log.info(f'{LogLVL.lvl2}saving {self.f_ids_inmatdir}')
+                    log.info(f'{LogLVL.lvl2}to: {self.path_stats_dir}')
                     save_json(_ids_in_matdir, self.f_ids_instatsdir)
         if not bool(self._ids_all):
-            print(f'{LogLVL.lvl2} file with ids is EMPTY')
+            log.info(f'{LogLVL.lvl2} file with ids is EMPTY')
             self.save_f_ids()
-        # print(f'{LogLVL.lvl1} ids all are: {self._ids_all}')
+        # log.info(f'{LogLVL.lvl1} ids all are: {self._ids_all}')
 
 
     def update_f_ids(self, _id_bids, key, val_2update):
@@ -1128,7 +1128,7 @@ class ProjectManager:
         if os.path.exists(f_abspath):
             self._ids_nimb_classified = load_json(f_abspath)
         else:
-            print(f'{LogLVL.lvl1}file {f_abspath} is missing in: {_dir_2chk}')
+            log.info(f'{LogLVL.lvl1}file {f_abspath} is missing in: {_dir_2chk}')
 
 
     def copy_dir(self, yes_bids):
@@ -1142,9 +1142,9 @@ class ProjectManager:
         for _id_src in yes_bids:
             _id_bids = yes_bids[_id_src]
             if self.srcdata_dir != self.BIDS_DIR:
-                print(f"{LogLVL.lvl2}copying {_id_bids}")
-                print(f"{LogLVL.lvl3}from :{self.srcdata_dir}")
-                print(f"{LogLVL.lvl3}to   : {self.BIDS_DIR}")
+                log.info(f"{LogLVL.lvl2}copying {_id_bids}")
+                log.info(f"{LogLVL.lvl3}from :{self.srcdata_dir}")
+                log.info(f"{LogLVL.lvl3}to   : {self.BIDS_DIR}")
                 source_data = os.path.join(self.srcdata_dir, _id_bids)
                 target      = os.path.join(self.BIDS_DIR, _id_bids)
                 copied      = utilities.copy_rm_dir(source_data, target)
@@ -1155,15 +1155,15 @@ class ProjectManager:
 
         # checker to confirm that some _ids_bids were not copied
         if ls_not_copied:
-            print(f"{LogLVL.lvl2}some ids could not be copied:")
-            print(f"{LogLVL.lvl3}{ls_not_copied}")
+            log.info(f"{LogLVL.lvl2}some ids could not be copied:")
+            log.info(f"{LogLVL.lvl3}{ls_not_copied}")
 
         return ls_copied, ls_not_copied
 
 
     def get_masks(self):
         if self.distrib_ready.fs_ready():
-            print('running mask extraction')
+            log.info('running mask extraction')
             # self.send_2processing('fs-get-masks')
 
 
@@ -1191,7 +1191,7 @@ class ProjectManager:
     #         or can contain _id_project, from the grid file
     #     """
     #     ls_2add_2grid = list()
-    #     print(f'{LogLVL.lvl1} ids classified: {self._ids_nimb_classified}')
+    #     log.info(f'{LogLVL.lvl1} ids classified: {self._ids_nimb_classified}')
     #     for _id in self._ids_nimb_classified:
     #         for session in self._ids_nimb_classified[_id]:
     #             _id_bids, _ = self.dcm2bids.make_bids_id(_id, session)
@@ -1217,7 +1217,7 @@ class ProjectManager:
     #             self.df_grid.index = range(len(self.df_grid[self._ids_bids_col]))
     #     # self.tab.save_df(self.df_grid,
     #     #     os.path.join(self.path_stats_dir, self.f_groups))
-    #     print('    NIMB ready to initiate processing of data')
+    #     log.info('    NIMB ready to initiate processing of data')
     #     self.send_2processing('process')
 
 
