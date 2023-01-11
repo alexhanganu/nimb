@@ -257,7 +257,10 @@ class Table:
             if multiple indices are present:
                 only the first is provided
         """
-        return list(df[df[col] == val].index.values)[0]
+        try:
+            return list(df[df[col] == val].index.values)[0]
+        except IndexError:
+            return None
 
 
     def get_nan_from_col(self, df, col):
