@@ -530,8 +530,11 @@ class ProjectManager:
         """
         for _id_project in ls_2rm_from_grid:
             index = self.tab.get_index_of_val(self.df_grid, self._ids_project_col, _id_project)
-            self.tab.rm_row(self.df_grid, index)
-            self._ids_project.remove(_id_project)
+            if index:
+                self.tab.rm_row(self.df_grid, index)
+                self._ids_project.remove(_id_project)
+            else:
+                log.info(f'id for project: {_id_project} not present in the grid')
         self.save_grid(self.df_grid, self.f_groups)
 
 
@@ -839,6 +842,7 @@ class ProjectManager:
 
 
     def classify_with_dcm2bids(self, nimb_classified = False, _id_project = False):
+        log.info(f'{" " *2}initiating classification 2 bids')
         if not nimb_classified:
             try:
                 nimb_classified = load_json(os.path.join(
