@@ -449,7 +449,9 @@ class ProjectManager:
         """
         _id_bids_ls = list()
         key_id_project = DEFAULT.id_project_key
-        if _id_project in [self._ids_all[i][key_id_project] for i in self._ids_all]:
+        ls_of_all_id_project = [self._ids_all[i][key_id_project] for i in self._ids_all]
+        log.info(f'{LogLVL.lvl1}all _id_project are: {ls_of_all_id_project}')
+        if _id_project in ls_of_all_id_project:
             _id_bids_ls = [i for i in self._ids_all if self._ids_all[i][key_id_project] == _id_project]
             if len(_ids_bids_ls) > 1:
                 log.info(f'{LogLVL.lvl1}there are multiple _id_bids: {_id_bids_ls}\
