@@ -481,29 +481,31 @@ class DCM2BIDS_helper():
             return True, expected bids folder, session name, run name
         """
         is_bids_format = False
-        ses_exist = False
-        run_label   = ""
-        ses_label   = ""
-        run_loc = _id.find('run-')
-        ses_loc = _id.find('ses-')
+        sub_label = ""
+        ses_label = ""
+        run_label = ""
         if '_run-' in _id:
+            run_loc = _id.find('run-')
             run_label = _id[run_loc:]
         if 'ses-' in _id:
-            ses_exist = True
+            ses_loc = _id.find('ses-')
             if run_label:
                 ses_label = _id[ses_loc:run_loc]
             else:
                 ses_label = _id[ses_loc:]
-        sub_label = _id[:ses_loc]
+            if _id.startswith('sub-'):
+                is_bids_format = True
 
         if ses_label:
+            sub_label = _id[:ses_loc]
             if "_" in ses_label[-1]:
                 ses_label = ses_label[:-1]
-        if "_" in sub_label[-1]:
-            sub_label = sub_label[:-1]
+        if not sub_label:
+            sub_label = _id
+        if is_bids_format:
+            if "_" in sub_label[-1]:
+                sub_label = sub_label[:-1]
 
-        if ses_exist and _id.startswith('sub-'):
-            is_bids_format = True
         return is_bids_format, sub_label, ses_label, run_label
 
 
