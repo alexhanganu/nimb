@@ -324,6 +324,7 @@ class ProjectManager:
         self._ids_bids    = self.df_grid[self._ids_bids_col].tolist()
         self.read_f_ids()
 
+        self._ids_project = self.df_grid[self._ids_project_col].tolist()
         if self._ids_bids:
             not_bids, _, _, no_rawdata = self.verify_ids_are_bids_standard(self._ids_bids, self.BIDS_DIR)
             if not_bids:
@@ -397,7 +398,7 @@ class ProjectManager:
                 _id_bids_ls = self.f_ids_find_id_bids_4id_project(_id_project)
                 for _id_bids in _id_bids_ls:
                     if _id_bids in self._ids_all:
-                        self.update_f_ids(_id_bids, DEFAULT.id_project_key, "")
+                        self.update_f_ids(_id_bids, self._ids_project_col, "")
             self.save_f_ids()
 
         # removing potential _ids that might undergo double classification
@@ -448,14 +449,16 @@ class ProjectManager:
             list(of all _id_bids that correspond)
         """
         _id_bids_ls = list()
-        key_id_project = DEFAULT.id_project_key
-        ls_of_all_id_project = [self._ids_all[i][key_id_project] for i in self._ids_all]
-        log.info(f'{LogLVL.lvl1}all _id_project are: {ls_of_all_id_project}')
-        if _id_project in ls_of_all_id_project:
-            _id_bids_ls = [i for i in self._ids_all if self._ids_all[i][key_id_project] == _id_project]
-            if len(_ids_bids_ls) > 1:
-                log.info(f'{LogLVL.lvl1}there are multiple _id_bids: {_id_bids_ls}\
-                        that correspond to id {_id_project}')
+        if self._ids_project_col in self._ids_all[list(self._ids_all.keys())[0]]:
+            ls_of_all_id_project = [self._ids_all[i][self._ids_project_col] for i in self._ids_all]
+            log.info(f'{LogLVL.lvl1}all _id_project are: {ls_of_all_id_project}')
+            if _id_project in ls_of_all_id_project:
+                _id_bids_ls = [i for i in self._ids_all if self._ids_all[i][self._ids_project_col] == _id_project]
+                if len(_ids_bids_ls) > 1:
+                    log.info(f'{LogLVL.lvl1}there are multiple _id_bids: {_id_bids_ls}\
+                            that correspond to id {_id_project}')
+        else:
+            log.info(f'{LogLVL.lvl1}column for _ids_project is missing in _ids_all')
         return _id_bids_ls
 
 
@@ -575,7 +578,7 @@ class ProjectManager:
         Structure:
             f_ids.json:{
                 "_id_bids": {
-                    DEFAULT.id_project_key : "ID_in_file_provided_by_user_for_GLM_analysis.tsv",
+                    self._ids_project_col : "ID_in_file_provided_by_user_for_GLM_analysis.tsv",
                     DEFAULT.id_source_key  : "ID_in_source_dir_or_zip_file",
                     "freesurfer"           : "ID_after_freesurfer_processing.zip",
                     "nilearn"              : "ID_after_nilearn_processing.zip",
@@ -875,7 +878,7 @@ class ProjectManager:
                                                             nimb_classified[_id_from_nimb_classified])
                         # log.info(f'        bids_classified is: {self.bids_classified}')
         if _id_project:
-            self.update_f_ids(_id_bids, DEFAULT.id_project_key, _id_project)
+            self.update_f_ids(_id_bids, self._ids_project_col, _id_project)
             # populate grid with _id_bids
             self.save_f_ids()
         return _id_bids

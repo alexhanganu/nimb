@@ -105,6 +105,9 @@ class DCM2BIDS_helper():
             self.nimb_id = nimb_id
             self.ses     = ses
             self.bids_id, self.bids_id_dir = self.make_bids_id(self.nimb_id, self.ses)
+            self.rawdir_bids_id_dir = os.path.join(self.OUTPUT_DIR, self.bids_id_dir)
+            self.tmpdir_bids_id = os.path.join(self.OUTPUT_DIR, 'tmp_dcm2bids', self.bids_id)
+            self.err_dir = os.path.join(self.OUTPUT_DIR, "tmp_dcm2bids_err", self.bids_id)
             self.start_stepwise_choice()
         else:
             self.nimb_classified = dict()
@@ -125,8 +128,8 @@ class DCM2BIDS_helper():
                     log.info(f'{" " *2}id: {self.nimb_id} has {len(ls_ses_2convert)} sessions: {ls_ses_2convert}')
                     for self.ses in ls_ses_2convert:
                         self.bids_id, self.bids_id_dir = self.make_bids_id(self.nimb_id, self.ses)
-                        self.tmpdir_bids_id = os.path.join(self.OUTPUT_DIR, 'tmp_dcm2bids', self.bids_id)
                         self.rawdir_bids_id_dir = os.path.join(self.OUTPUT_DIR, self.bids_id_dir)
+                        self.tmpdir_bids_id = os.path.join(self.OUTPUT_DIR, 'tmp_dcm2bids', self.bids_id)
                         self.err_dir = os.path.join(self.OUTPUT_DIR, "tmp_dcm2bids_err", self.bids_id)
                         self.start_stepwise_choice()
         log.info(f'{" " *6}bids classified is: {self.bids_classified}')
