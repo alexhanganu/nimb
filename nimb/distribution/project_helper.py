@@ -767,13 +767,13 @@ class ProjectManager:
             if not self.tab.val_is_nan(_id):
                 bids_format, sub_label, _, _ = self.dcm2bids.is_bids_format(_id)
                 if not bids_format:
-                    log.info(f"{LogLVL.lvl3}subject {_id} name is not of BIDS format")
+                    log.info(f"{LogLVL.lvl3}id: {_id}, is not of BIDS format")
                     no_bids.append(_id)
                 else:
                     yes_bids.append(_id)
                     yes_bids_d[_id] = _id
                 if sub_label not in rawdata_listdir:
-                    log.info(f"{LogLVL.lvl3}subject {_id} is missing from: {_dir2chk}")
+                    log.info(f"{LogLVL.lvl3}id: {_id}, is missing from path: {_dir2chk}")
                     no_rawdata.append(_id)
                 # elif not validate BIDS: !!!!!!!!!!!!!!!!!
                 #     log.info(f"{LogLVL.lvl2}subject {_id} folder in: {_dir2chk} has not been validated for BIDS")
