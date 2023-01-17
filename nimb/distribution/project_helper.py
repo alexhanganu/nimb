@@ -259,17 +259,22 @@ class ProjectManager:
             if file is missing:
                 return self.make_default_grid()
         '''
+        log.info(f'{LogLVL.lvl1}creating/populating the grid')
         if self._ids_project_col == "default":
             self._ids_project_col = DEFAULT.id_project_key
         if self._ids_bids_col == "default":
             self._ids_bids_col = DEFAULT.id_col
+        log.info(f'{LogLVL.lvl2}ids of project are in column: {self._ids_project_col}')
+        log.info(f'{LogLVL.lvl2}ids on BIDS strucutre are in column: {self._ids_bids_col}')
 
         if self.distrib_hlp.get_files_for_stats(self.path_stats_dir,
                                                 [self.f_groups,]):
             f_grid = os.path.join(self.path_stats_dir, self.f_groups)
-            log.info(f'    file with groups is present: {f_grid}')
+            log.info(f'{LogLVL.lvl2}grid file is present:')
+            log.info(f'{LogLVL.lvl3}{f_grid}')
             self.df_grid    = self.tab.get_df(f_grid)
         else:
+            log.info(f'{LogLVL.lvl2}grid file is absent. Creating default version')
             self.df_grid    = self.make_default_grid()
         self.get_ids_from_grid()
         self.ids_project_chk()
@@ -281,14 +286,13 @@ class ProjectManager:
             ../nimb/projects.json -> STATS_PATHS -> STATS_HOME
             script will update file projects.json
         '''
-        log.info(f'    file with groups is absent; creating default grid file:\
-                    in: {self.path_stats_dir}\
-                    in: {self.materials_dir_pt}')
         f_name = DEFAULT.default_tab_name
         df = self.tab.get_clean_df()
         df[self._ids_project_col] = ''
         df[self._ids_bids_col]    = ''
 
+        log.info(f'{LogLVL.lvl2}at path for stats: {self.path_stats_dir}')
+        f_grid = os.path.join(self.path_stats_dir, f_name)
         self.save_grid(df, f_name)
         self.project_vars['fname_groups']    = f_name
         self.f_groups                        = f_name
@@ -297,8 +301,8 @@ class ProjectManager:
         from setup.get_credentials_home import _get_credentials_home
         credentials_home = _get_credentials_home()
         json_projects    = os.path.join(credentials_home, 'projects.json')
-        log.info(f'{LogLVL.lvl1}updating project.json at: {json_projects}')
         self.all_vars.projects[self.project] = self.project_vars
+        log.info(f'{LogLVL.lvl2}updating project.json at: {json_projects}')
         save_json(self.all_vars.projects, json_projects)
         return df
 
