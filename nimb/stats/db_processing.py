@@ -23,13 +23,29 @@ class Table:
         self.pd_ver = pd.__version__
 
 
-    def get_df(self, path2file, sheetname = 0, cols = None, index = None, rename=False):
+    def get_df(self,
+               path2file,
+               sheetname = 0,
+               cols = None,
+               index = None,
+               rename = False,
+               remove_Unnamed = False):
+        """returns a pandas.DataFrame
+        path2file: absolute path to file to read
+        sheetname = name of a sheet to read
+        cols = list of columns to read
+        index = if provided, the index will be changed to the one provided
+        rename: if True, the name of the file will be changed
+        remove_Unnamed: if True, the default created columns Unnamed will be removed
+        """
         print(f"    reading file: {path2file}\n    sheet: {sheetname}")
         df = self.read_df(path2file, sheetname, cols)
         if index:
             df = df.set_index(index)
         if rename:
             df.rename(columns = rename, inplace=True)
+        if remove_Unnamed:
+            df = self.rm_cols_from_df(df, ["Unnamed: 0",])
         return df
 
 
