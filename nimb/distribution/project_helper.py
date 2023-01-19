@@ -245,6 +245,58 @@ class ProjectManager:
 
     '''
     =====================================
+    F_IDS related scripts
+    =====================================
+    '''
+    def read_f_ids(self):
+        """
+        ALGO:
+            if f_ids is present in the materials dir:
+                ids are loaded
+                if f_ids is present in the stats dir:
+                    if the two files are are different:
+                        save f_ids from materials to stats folder
+        """
+        self._ids_all = dict()
+        if os.path.exists(self.f_ids_inmatdir):
+            _ids_in_matdir = load_json(self.f_ids_inmatdir)
+            self._ids_all = _ids_in_matdir
+            if os.path.exists(self.f_ids_instatsdir):
+                _ids_in_stats_dir = load_json(self.f_ids_instatsdir)
+                if _ids_in_matdir != _ids_in_stats_dir:
+                    log.info(f'{LogLVL.lvl1}ids in {self.f_ids_instatsdir}')
+                    log.info(f'{LogLVL.lvl1}is DIFFERENT from: {self.f_ids_inmatdir}')
+                    log.info(f'{LogLVL.lvl2}saving {self.f_ids_inmatdir}')
+                    log.info(f'{LogLVL.lvl2}to: {self.path_stats_dir}')
+                    save_json(_ids_in_matdir, self.f_ids_instatsdir)
+            log.info(f'{LogLVL.lvl1}file with ids is: {self.f_ids_inmatdir}')
+        if not bool(self._ids_all):
+            log.info(f'{LogLVL.lvl2} file with ids is EMPTY')
+            self.save_f_ids()
+        # log.info(f'{LogLVL.lvl1} ids all are: {self._ids_all}')
+
+
+    def update_f_ids(self, _id_bids, key, val_2update):
+        if not key and _id_bids in self._ids_all:
+            self._ids_all.pop(_id_bids, None)
+        elif _id_bids not in self._ids_all:
+            self._ids_all[_id_bids] = dict()
+        else:
+            self._ids_all[_id_bids][key] = val_2update
+
+
+    def save_f_ids(self):
+        """
+        f_ids is saved in:
+            materials and
+            stats_dirs
+        """
+        save_json(self._ids_all, self.f_ids_inmatdir, print_space = 12)
+        save_json(self._ids_all, self.f_ids_instatsdir, print_space = 12)
+
+
+    '''
+    =====================================
     GRID related scripts
     =====================================
     '''
@@ -264,18 +316,20 @@ class ProjectManager:
             self._ids_project_col = DEFAULT.id_project_key
         if self._ids_bids_col == "default":
             self._ids_bids_col = DEFAULT.id_col
-        log.info(f'{LogLVL.lvl2}ids of project are in column: {self._ids_project_col}')
-        log.info(f'{LogLVL.lvl2}ids on BIDS strucutre are in column: {self._ids_bids_col}')
+        log.info(f'{LogLVL.lvl2}ids of project, provided by user, are in column: {self._ids_project_col}')
+        log.info(f'{LogLVL.lvl2}ids on BIDS type are in column                 : {self._ids_bids_col}')
 
         if self.distrib_hlp.get_files_for_stats(self.path_stats_dir,
                                                 [self.f_groups,]):
             f_grid = os.path.join(self.path_stats_dir, self.f_groups)
             log.info(f'{LogLVL.lvl2}grid file is present:')
             log.info(f'{LogLVL.lvl3}{f_grid}')
-            self.df_grid    = self.tab.get_df(f_grid)
+            self.df_grid    = self.tab.get_df(f_grid, remove_Unnamed = True)
+            log.info(f'{LogLVL.lvl2}grid has columns:{self.df_grid.columns}')
         else:
             log.info(f'{LogLVL.lvl2}grid file is absent. Creating default version')
             self.df_grid    = self.make_default_grid()
+        self.read_f_ids()
         self.get_ids_from_grid()
         self.ids_project_chk()
 
@@ -316,19 +370,19 @@ class ProjectManager:
             list():           self._ids_bids
         """
         log.info(f"{LogLVL.lvl1}columns in grid are: {self.df_grid.columns}")
-        if self._ids_bids_col not in self.df_grid.columns:
-            log.info(f'{LogLVL.lvl1}column for _ids_bids: {self._ids_bids_col} is missing from grid {self.f_groups}')
-            log.info(f'{LogLVL.lvl2}adding to grid an empty column: {self._ids_bids_col}')
-            self.df_grid[self._ids_bids_col] = ''
+
         if self._ids_project_col not in self.df_grid.columns:
             log.info(f'{LogLVL.lvl1}column for _ids_project: {self._ids_project_col} is missing from grid {self.f_groups}')
             log.info(f'{LogLVL.lvl2}adding to grid an empty column: {self._ids_project_col}')
             self.df_grid[self._ids_project_col] = ''
-
-        self._ids_bids    = self.df_grid[self._ids_bids_col].tolist()
-        self.read_f_ids()
-
         self._ids_project = self.df_grid[self._ids_project_col].tolist()
+
+        if self._ids_bids_col not in self.df_grid.columns:
+            log.info(f'{LogLVL.lvl1}column for _ids_bids: {self._ids_bids_col} is missing from grid {self.f_groups}')
+            log.info(f'{LogLVL.lvl2}adding to grid an empty column: {self._ids_bids_col}')
+            self.df_grid[self._ids_bids_col] = ''
+        self._ids_bids    = self.df_grid[self._ids_bids_col].tolist()
+
         if self._ids_bids:
             not_bids, _, _, no_rawdata = self.verify_ids_are_bids_standard(self._ids_bids, self.BIDS_DIR)
             if not_bids:
@@ -1074,59 +1128,6 @@ class ProjectManager:
                 log.info(f"ERR! check that you can export your screen")
                 log.info(f"Please define a computer where the screen can be used for FreeSurfer Freeview and tksurfer")
                 log.info(f"ERR! Check the variable: export_screen in file credentials_path.py/nimb/local.json")
-
-
-    '''
-    =====================================
-    F_IDS related scripts
-    =====================================
-    '''
-    def read_f_ids(self):
-        """
-        ALGO:
-            if f_ids is present in the materials dir:
-                ids are loaded
-                if f_ids is present in the stats dir:
-                    if the two files are are different:
-                        save f_ids from materials to stats folder
-        """
-        self._ids_all = dict()
-        if os.path.exists(self.f_ids_inmatdir):
-            _ids_in_matdir = load_json(self.f_ids_inmatdir)
-            self._ids_all = _ids_in_matdir
-            if os.path.exists(self.f_ids_instatsdir):
-                _ids_in_stats_dir = load_json(self.f_ids_instatsdir)
-                if _ids_in_matdir != _ids_in_stats_dir:
-                    log.info(f'{LogLVL.lvl1} ids in {self.f_ids_instatsdir}')
-                    log.info(f'{LogLVL.lvl1} is DIFFERENT from: {self.f_ids_inmatdir}')
-                    log.info(f'{LogLVL.lvl2}saving {self.f_ids_inmatdir}')
-                    log.info(f'{LogLVL.lvl2}to: {self.path_stats_dir}')
-                    save_json(_ids_in_matdir, self.f_ids_instatsdir)
-        if not bool(self._ids_all):
-            log.info(f'{LogLVL.lvl2} file with ids is EMPTY')
-            self.save_f_ids()
-        # log.info(f'{LogLVL.lvl1} ids all are: {self._ids_all}')
-
-
-    def update_f_ids(self, _id_bids, key, val_2update):
-        if not key and _id_bids in self._ids_all:
-            self._ids_all.pop(_id_bids, None)
-        elif _id_bids not in self._ids_all:
-            self._ids_all[_id_bids] = dict()
-        else:
-            self._ids_all[_id_bids][key] = val_2update
-
-
-    def save_f_ids(self):
-        """
-        f_ids is saved in:
-            materials and
-            stats_dirs
-        """
-        save_json(self._ids_all, self.f_ids_inmatdir, print_space = 12)
-        save_json(self._ids_all, self.f_ids_instatsdir, print_space = 12)
-
-
 
     """
     =====================================
