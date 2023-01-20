@@ -121,7 +121,7 @@ class DEFAULT(object):
                             'date_format'    : "%Y-%m-%d_%H_%M_%S.%f",
                             'link'           : "",}}
 
-    default_tab_name = 'default.csv'
+    default_tab_name = 'grid.csv'
     nimb_tmp_dir     = 'nimb_tmp_dir'
     BIDS_DIR_name    = 'rawdata'
 

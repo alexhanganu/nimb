@@ -17,6 +17,10 @@ except ImportError as e:
     sys.exit(e)
 from distribution.utilities import save_json
 
+import logging
+log = logging.getLogger(__name__)
+logging.basicConfig(format='%(levelname)s:%(asctime)s| %(message)s')
+log.setLevel(logging.INFO)
 
 class Table:
     def __init__(self):
@@ -38,7 +42,7 @@ class Table:
         rename: if True, the name of the file will be changed
         remove_Unnamed: if True, the default created columns Unnamed will be removed
         """
-        print(f"    reading file: {path2file}\n    sheet: {sheetname}")
+        log.info(f"        reading file: {path2file}\n    sheet: {sheetname}")
         df = self.read_df(path2file, sheetname, cols)
         if index:
             df = df.set_index(index)
@@ -60,32 +64,32 @@ class Table:
     def read_df(self, path2file, sheetname, cols):
         '''reads a csv, xls or an xlsx file
         '''
+        df = self.get_clean_df()
         if path2file.endswith('.csv'):
-            print(f"        this a csv file")
+            log.info(f"        this a csv file")
             try:
                 df = pd.read_csv(path2file, sep = '\s+', usecols = cols)
                 if len(df.columns) == 1:
                     try:
                         df = pd.read_csv(path2file, usecols = cols)
                     except Exception as e:
-                        print(e)
-                return df
+                        log.info(e)
             except ValueError as e:
                 try:
                     df = pd.read_csv(path2file, delim_whitespace=True, usecols = cols)
                 except Exception as e:
-                    print(e)
+                    log.info(e)
                     try:
                         df = pd.read_csv(path2file, sep = ",", usecols = cols)
                     except Exception as e:
-                        print(e)
-                        df = self.get_clean_df()
+                        log.info(e)
         if path2file.endswith('.xls'):
-            print(f"        this a xls file")
-            return pd.read_excel(path2file, sheet_name = sheetname, usecols = cols)
+            log.info(f"        this a xls file")
+            df =  pd.read_excel(path2file, sheet_name = sheetname, usecols = cols)
         if path2file.endswith('.xlsx'):
-            print(f"        this a xlsx file")
-            return pd.read_excel(path2file, engine='openpyxl', sheet_name = sheetname, usecols = cols)
+            log.info(f"        this a xlsx file")
+            df =  pd.read_excel(path2file, engine='openpyxl', sheet_name = sheetname, usecols = cols)
+        return df
 
 
     def get_df_index(self, file, index_col='default'):

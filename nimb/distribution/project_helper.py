@@ -325,7 +325,6 @@ class ProjectManager:
             log.info(f'{LogLVL.lvl2}grid file is present:')
             log.info(f'{LogLVL.lvl3}{f_grid}')
             self.df_grid    = self.tab.get_df(f_grid, remove_Unnamed = True)
-            log.info(f'{LogLVL.lvl2}grid has columns:{self.df_grid.columns}')
         else:
             log.info(f'{LogLVL.lvl2}grid file is absent. Creating default version')
             self.df_grid    = self.make_default_grid()
@@ -384,6 +383,7 @@ class ProjectManager:
         self._ids_bids    = self.df_grid[self._ids_bids_col].tolist()
 
         if self._ids_bids:
+            log.info(f"{LogLVL.lvl2}verifying the ids BIDS, if they are of BIDS standard")
             not_bids, _, _, no_rawdata = self.verify_ids_are_bids_standard(self._ids_bids, self.BIDS_DIR)
             if not_bids:
                 log.info(f"{LogLVL.lvl2}some subjects are not of bids format: {not_bids}")
@@ -820,6 +820,9 @@ class ProjectManager:
         no_rawdata = list()
         yes_bids = list()
         yes_bids_d = dict()
+        ls_nan = list()
+
+        log.info(f"{LogLVL.lvl3}verifying {len(ls2chk)} subjects for BIDS standard")
 
         for _id in ls2chk:
             if not self.tab.val_is_nan(_id):
@@ -837,7 +840,9 @@ class ProjectManager:
                 #     log.info(f"{LogLVL.lvl2}subject {_id} folder in: {_dir2chk} has not been validated for BIDS")
                 #     no_rawdata.append(_id)
             else:
-                log.info(f"{LogLVL.lvl3}subject id: {_id} is NAN")
+                ls_nan.append(_id)
+        if ls_nan:
+            log.info(f"{LogLVL.lvl3}there are {len(ls_nan)} subjects NAN")
         return no_bids, yes_bids, yes_bids_d, no_rawdata
 
 
