@@ -193,6 +193,7 @@ class ProjectManager:
                                                 self.project,
                                                 DICOM_DIR = self.srcdata_dir,
                                                 tmp_dir = self.NIMB_tmp)
+        self.read_f_ids()
         self.get_df_f_groups()
         self.chk_processed_in_f_ids_and_grid()
         self.processing_chk()
@@ -291,7 +292,9 @@ class ProjectManager:
             materials and
             stats_dirs
         """
+        log.info(f'{LogLVL.lvl2}saving new file: {self.f_ids_inmatdir}')
         save_json(self._ids_all, self.f_ids_inmatdir, print_space = 12)
+        log.info(f'{LogLVL.lvl2}saving new file: {self.f_ids_instatsdir}')
         save_json(self._ids_all, self.f_ids_instatsdir, print_space = 12)
 
 
@@ -311,13 +314,13 @@ class ProjectManager:
             if file is missing:
                 return self.make_default_grid()
         '''
-        log.info(f'{LogLVL.lvl1}creating/populating the grid')
+        log.info(f'{LogLVL.lvl1}reading / creating the grid')
         if self._ids_project_col == "default":
             self._ids_project_col = DEFAULT.id_project_key
         if self._ids_bids_col == "default":
             self._ids_bids_col = DEFAULT.id_col
-        log.info(f'{LogLVL.lvl2}ids of project, provided by user, are in column: {self._ids_project_col}')
-        log.info(f'{LogLVL.lvl2}ids on BIDS type are in column                 : {self._ids_bids_col}')
+        log.info(f'{LogLVL.lvl2}ids of project, provided by user, are in column : {self._ids_project_col}')
+        log.info(f'{LogLVL.lvl2}ids of BIDS type, per BIDS rules, are in column : {self._ids_bids_col}')
 
         if self.distrib_hlp.get_files_for_stats(self.path_stats_dir,
                                                 [self.f_groups,]):
@@ -328,7 +331,6 @@ class ProjectManager:
         else:
             log.info(f'{LogLVL.lvl2}grid file is absent. Creating default version')
             self.df_grid    = self.make_default_grid()
-        self.read_f_ids()
         self.get_ids_from_grid()
         self.ids_project_chk()
 
@@ -382,9 +384,12 @@ class ProjectManager:
             self.df_grid[self._ids_bids_col] = ''
         self._ids_bids    = self.df_grid[self._ids_bids_col].tolist()
 
+        log.info(f'{LogLVL.lvl1}cleaning rows in grid: {self.f_groups} with NaN in columns: {self._ids_project_col} and {self._ids_bids_col}\n')
+        self.rm_nan_from_grid()
+
         if self._ids_bids:
             log.info(f"{LogLVL.lvl2}verifying the ids BIDS, if they are of BIDS standard")
-            not_bids, _, _, no_rawdata = self.verify_ids_are_bids_standard(self._ids_bids, self.BIDS_DIR)
+            not_bids, _, _, no_rawdata, ls_nan = self.verify_ids_are_bids_standard(self._ids_bids, self.BIDS_DIR)
             if not_bids:
                 log.info(f"{LogLVL.lvl2}some subjects are not of bids format: {not_bids}")
                 self.mv_ids_bids_in_grid(not_bids)
@@ -424,7 +429,8 @@ class ProjectManager:
         Return:
             bool
         """
-        _, yes_bids, _, no_rawdata = self.verify_ids_are_bids_standard(self._ids_project, self.BIDS_DIR)
+        log.info(f"{LogLVL.lvl2}verifying the ids project, if they are of BIDS standard")
+        _, yes_bids, _, no_rawdata, ls_nan = self.verify_ids_are_bids_standard(self._ids_project, self.BIDS_DIR)
         if yes_bids:
             log.info(f"{LogLVL.lvl2}some subjects are of bids format: {yes_bids}")
             self.add_ids_project_to_bids_in_grid(yes_bids)
@@ -433,37 +439,46 @@ class ProjectManager:
         ls_4dcm2bids_classif = list()
         ls_4nimb_classif     = list()
         self.get_ids_nimb_classified()
+        log.info(f'{LogLVL.lvl3}reading file: {DEFAULT.f_nimb_classified}')
+        log.info(f'{LogLVL.lvl3}at: {self.srcdata_dir}')
+        log.info(f'{LogLVL.lvl3}sourcedata dir is: {self.srcdata_dir}')
+
         for _id_project in self._ids_project:
             if _id_project in self._ids_nimb_classified:
                 ls_4dcm2bids_classif.append(_id_project)
             else:
-                log.info(f'{LogLVL.lvl2}id_project: {_id_project} is missing:')
-                log.info(f'{LogLVL.lvl3}from file: {DEFAULT.f_nimb_classified} in: {self.srcdata_dir}')
                 if _id_project in self.get_listdir(self.srcdata_dir):
-                    log.info(f'{LogLVL.lvl3}must undergo nimb classification')
                     ls_4nimb_classif.append(_id_project)
                 else:
-                    log.info(f'{LogLVL.lvl3}from sourcedata: {self.srcdata_dir}')
-                    log.info(f'{LogLVL.lvl3}removing id: {_id_project} from grid {self.f_groups}')
                     ls_2rm_from_grid.append(_id_project)
 
         # removing _id_project from grid and f_ids
         if ls_2rm_from_grid:
+            log.info(f'{LogLVL.lvl3}there are {len(ls_2rm_from_grid)} to remove from grid {self.f_groups} and missing from sourcedata')
             self.rm_id_from_grid(ls_2rm_from_grid)
             missing_file = os.path.join(self.path_stats_dir, "missing.json")
             save_json(ls_2rm_from_grid, missing_file, print_space = 4)
-            for _id_project in ls_2rm_from_grid:
-                _id_bids_ls = self.f_ids_find_id_bids_4id_project(_id_project)
-                for _id_bids in _id_bids_ls:
-                    if _id_bids in self._ids_all:
-                        self.update_f_ids(_id_bids, self._ids_project_col, "")
-            self.save_f_ids()
+            _id_bids_ls = list()
+
+            log.info(f'{LogLVL.lvl3}trying to remove the id_project from f_ids {self.f_ids_instatsdir}')
+            if self._ids_project_col in self._ids_all[list(self._ids_all.keys())[0]]:
+                for _id_project in ls_2rm_from_grid:
+                    _id_bids_ls = self.f_ids_find_id_bids_4id_project(_id_project)
+                if _id_bids_ls:
+                    for _id_bids in _id_bids_ls:
+                        if _id_bids in self._ids_all:
+                            self.update_f_ids(_id_bids, self._ids_project_col, "")
+                    self.save_f_ids()
+            else:
+                log.info(f'{LogLVL.lvl1}column for _ids_project is missing in {self.f_ids_instatsdir}')
+
 
         # removing potential _ids that might undergo double classification
         for _id in ls_4nimb_classif[::-1]:
             if _id in ls_4dcm2bids_classif:
                 ls_4dcm2bids_classif.remove(_id)
         if ls_4nimb_classif:
+            log.info(f'{LogLVL.lvl3}there are {len(ls_4nimb_classif)} that must undergo nimb classification')
             self.run_classify_2nimb(ls_4nimb_classif)
         if ls_4dcm2bids_classif:
             self.run_classify_dcm2bids(ls_4dcm2bids_classif)
@@ -497,7 +512,7 @@ class ProjectManager:
         self.save_grid(self.df_grid, self.f_groups)
 
 
-    def f_ids_find_id_bids_4id_project(self, _id_project):
+    def f_ids_find_id_bids_4id_project(self, _id_project, _id_bids_ls):
         """
             find the _id_bids from f_ids that corresponds
             to provided _id_project
@@ -506,17 +521,12 @@ class ProjectManager:
         Return:
             list(of all _id_bids that correspond)
         """
-        _id_bids_ls = list()
-        if self._ids_project_col in self._ids_all[list(self._ids_all.keys())[0]]:
-            ls_of_all_id_project = [self._ids_all[i][self._ids_project_col] for i in self._ids_all]
-            log.info(f'{LogLVL.lvl1}all _id_project are: {ls_of_all_id_project}')
-            if _id_project in ls_of_all_id_project:
-                _id_bids_ls = [i for i in self._ids_all if self._ids_all[i][self._ids_project_col] == _id_project]
-                if len(_ids_bids_ls) > 1:
-                    log.info(f'{LogLVL.lvl1}there are multiple _id_bids: {_id_bids_ls}\
-                            that correspond to id {_id_project}')
-        else:
-            log.info(f'{LogLVL.lvl1}column for _ids_project is missing in _ids_all')
+        ls_of_all_id_project = [self._ids_all[i][self._ids_project_col] for i in self._ids_all]
+        if _id_project in ls_of_all_id_project:
+            _id_bids_ls = [i for i in self._ids_all if self._ids_all[i][self._ids_project_col] == _id_project]
+            if len(_ids_bids_ls) > 1:
+                log.info(f'{LogLVL.lvl1}there are multiple _id_bids: {_id_bids_ls}\
+                        that correspond to id {_id_project}')
         return _id_bids_ls
 
 
@@ -587,17 +597,34 @@ class ProjectManager:
                 ix += 1
         self.save_grid(df, self.f_groups)
 
+    def rm_nan_from_grid(self):
+        """removes rows in which values in the id_project column and the
+            BIDS column are NaN
+        """
+        ls_nan_proj = self.tab.get_nan_index_of_row_per_col(self.df_grid, self._ids_project_col)
+        ls_nan_bids = self.tab.get_nan_index_of_row_per_col(self.df_grid, self._ids_bids_col)
+        ls_row_rm = [i for i in ls_nan_proj if i in ls_nan_bids]
+        for ix in sorted(ls_row_rm)[::-1]:
+            self.df_grid = self.tab.rm_row(self.df_grid, ix)
+        self.save_grid(self.df_grid, self.f_groups)
+
 
     def rm_id_from_grid(self, ls_2rm_from_grid):
         """removing _id from grid
         """
+        ls_nan = list()
         for _id_project in ls_2rm_from_grid:
-            index = self.tab.get_index_of_val(self.df_grid, self._ids_project_col, _id_project)
-            if index:
-                self.tab.rm_row(self.df_grid, index)
-                self._ids_project.remove(_id_project)
+            if not self.tab.val_is_nan(_id_project):
+                ix = self.tab.get_index_of_val(self.df_grid, self._ids_project_col, _id_project)
+                if ix:
+                    self.tab.rm_row(self.df_grid, ix)
+                    self._ids_project.remove(_id_project)
+                else:
+                    log.info(f'{LogLVL.lvl1}id for project: {_id_project} not present in the grid')
             else:
-                log.info(f'id for project: {_id_project} not present in the grid')
+                ls_nan.append(_id_project)
+        if ls_nan:
+            log.info(f'{LogLVL.lvl3}there are {len(ls_nan)} id that are NaN and cannot be removed from the grid')
         self.save_grid(self.df_grid, self.f_groups)
 
 
@@ -722,7 +749,7 @@ class ProjectManager:
         for _id_src in unprocessed_d.keys():
             for session in unprocessed_d[_id_src]:
                 _ids_src_bids_unprocessed[_id_src] = unprocessed_d[_id_src][session]["id_bids"]
-        no_bids, _, yes_bids_d, no_rawdata = self.verify_ids_are_bids_standard(
+        no_bids, _, yes_bids_d, no_rawdata, ls_nan = self.verify_ids_are_bids_standard(
                                                     list(_ids_src_bids_unprocessed.values()),
                                                     self.srcdata_dir)
         if yes_bids_d:
@@ -834,7 +861,6 @@ class ProjectManager:
                     yes_bids.append(_id)
                     yes_bids_d[_id] = _id
                 if sub_label not in rawdata_listdir:
-                    log.info(f"{LogLVL.lvl3}id: {_id}, is missing from path: {_dir2chk}")
                     no_rawdata.append(_id)
                 # elif not validate BIDS: !!!!!!!!!!!!!!!!!
                 #     log.info(f"{LogLVL.lvl2}subject {_id} folder in: {_dir2chk} has not been validated for BIDS")
@@ -842,8 +868,11 @@ class ProjectManager:
             else:
                 ls_nan.append(_id)
         if ls_nan:
-            log.info(f"{LogLVL.lvl3}there are {len(ls_nan)} subjects NAN")
-        return no_bids, yes_bids, yes_bids_d, no_rawdata
+            log.info(f"{LogLVL.lvl3}there are {len(ls_nan)} subjects NAN\n")
+        if no_rawdata:
+            log.info(f"{LogLVL.lvl3}there are {len(ls_nan)} subjects that are missing from path with BIDS data:")
+            log.info(f"{LogLVL.lvl3}{_dir2chk}\n")
+        return no_bids, yes_bids, yes_bids_d, no_rawdata, ls_nan
 
 
     def run_classify_2nimb_bids(self, ls_subjects):

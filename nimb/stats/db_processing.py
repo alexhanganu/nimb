@@ -267,10 +267,6 @@ class Table:
         return pd.concat(frames, axis=ax, sort=sort)
 
 
-    def get_rows_with_nans(self, df):
-        return list(df.loc[pd.isnull(df).any(1), :].index.values)
-
-
     def get_index_of_val(self, df, col, val):
         """
             get the index of the value
@@ -285,6 +281,17 @@ class Table:
 
     def get_nan_from_col(self, df, col):
         return df[col].isnull().tolist()
+
+
+    def get_rows_with_nans(self, df):
+        return list(df.loc[pd.isnull(df).any(1), :].index.values)
+
+
+    def get_nan_index_of_row_per_col(self, df, col):
+        """get the indices of the rows
+            in which the value in column col is NaN
+        """
+        return df.loc[pd.isnull(df[col])].index.values.tolist()
 
 
     def rm_rows_with_nan(self, df, col2chk=None, reset_index = False):
@@ -313,7 +320,7 @@ class Table:
         return df
 
 
-    def rm_row(self,df, index):
+    def rm_row(self, df, index):
         df.drop(index, axis = 0, inplace = True)
         return df
 
