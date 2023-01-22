@@ -77,6 +77,7 @@ def setup_logging(logLevel, logFile=None):
 
 class LogLVL:
 
+    lvl0 = " " * 1
     lvl1 = " " * 4
     lvl2 = " " * 8
     lvl3 = " " * 12
