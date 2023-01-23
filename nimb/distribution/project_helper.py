@@ -193,6 +193,9 @@ class ProjectManager:
                                                 self.project,
                                                 DICOM_DIR = self.srcdata_dir,
                                                 tmp_dir = self.NIMB_tmp)
+        log.info(f'{LogLVL.lvl0}folder with stats data, $STATS is: {self.path_stats_dir}')
+        log.info(f'{LogLVL.lvl0}folder with materials data, $MATERIALS is: {self.materials_dir_pt}')
+
         self.read_f_ids()
         self.get_df_f_groups()
         self.chk_processed_in_f_ids_and_grid()
@@ -270,7 +273,7 @@ class ProjectManager:
                     log.info(f'{LogLVL.lvl2}saving {self.f_ids_inmatdir}')
                     log.info(f'{LogLVL.lvl2}to: {self.path_stats_dir}')
                     save_json(_ids_in_matdir, self.f_ids_instatsdir)
-            log.info(f'{LogLVL.lvl1}file with ids is: {self.f_ids_inmatdir}')
+            log.info(f'{LogLVL.lvl0}file with ids is: {self.f_ids_inmatdir}')
         if not bool(self._ids_all):
             log.info(f'{LogLVL.lvl2} file with ids is EMPTY')
             self.save_f_ids()
@@ -373,7 +376,7 @@ class ProjectManager:
         log.info(f"{LogLVL.lvl1}columns in grid are: {self.df_grid.columns}")
 
         if self._ids_project_col not in self.df_grid.columns:
-            log.info(f'{LogLVL.lvl1}column for _ids_project: {self._ids_project_col} is missing from grid {self.f_groups}')
+            log.info(f'{LogLVL.lvl3}column for _ids_project: {self._ids_project_col} is missing from grid {self.f_groups}')
             log.info(f'{LogLVL.lvl2}adding to grid an empty column: {self._ids_project_col}')
             self.df_grid[self._ids_project_col] = ''
         self._ids_project = self.df_grid[self._ids_project_col].tolist()
@@ -454,23 +457,20 @@ class ProjectManager:
 
         # removing _id_project from grid and f_ids
         if ls_2rm_from_grid:
-            log.info(f'{LogLVL.lvl3}there are {len(ls_2rm_from_grid)} to remove from grid {self.f_groups} and missing from sourcedata')
+            log.info(f'{LogLVL.lvl3}there are {len(ls_2rm_from_grid)} potentially to remove from grid {self.f_groups} and missing from sourcedata')
             self.rm_id_from_grid(ls_2rm_from_grid)
             missing_file = os.path.join(self.path_stats_dir, "missing.json")
             save_json(ls_2rm_from_grid, missing_file, print_space = 4)
-            _id_bids_ls = list()
 
-            log.info(f'{LogLVL.lvl3}trying to remove the id_project from f_ids {self.f_ids_instatsdir}')
-            if self._ids_project_col in self._ids_all[list(self._ids_all.keys())[0]]:
-                for _id_project in ls_2rm_from_grid:
-                    _id_bids_ls = self.f_ids_find_id_bids_4id_project(_id_project)
-                if _id_bids_ls:
-                    for _id_bids in _id_bids_ls:
-                        if _id_bids in self._ids_all:
-                            self.update_f_ids(_id_bids, self._ids_project_col, "")
-                    self.save_f_ids()
-            else:
-                log.info(f'{LogLVL.lvl1}column for _ids_project is missing in {self.f_ids_instatsdir}')
+            log.info(f'{LogLVL.lvl3}retrieving corresponding id_bids for id_project from f_ids {self.f_ids_instatsdir}')
+            _id_bids_dict = self.f_ids_find_id_bids_4id_project(ls_2rm_from_grid)
+            if _id_bids_dict:
+                log.info(f'{LogLVL.lvl3}removing the id_bids for missing id_project from f_ids {self.f_ids_instatsdir}')
+                for _id_bids in _id_bids_dict:
+                    if _id_bids in self._ids_all:
+                        self.update_f_ids(_id_bids, self._ids_project_col, "")
+                log.info(f'{LogLVL.lvl3}file with ids:f_ids, was changed. saving new version')
+                self.save_f_ids()
 
 
         # removing potential _ids that might undergo double classification
@@ -512,22 +512,33 @@ class ProjectManager:
         self.save_grid(self.df_grid, self.f_groups)
 
 
-    def f_ids_find_id_bids_4id_project(self, _id_project, _id_bids_ls):
+    def f_ids_find_id_bids_4id_project(self,
+                                        ls_2rm_from_grid):
         """
             find the _id_bids from f_ids that corresponds
             to provided _id_project
         Args:
-            _id_project
+            ls_2rm_from_grid: list with _ids to check
         Return:
-            list(of all _id_bids that correspond)
+            _id_bids_dict: dict() {id_bids: id_project1}; dict of all _id_bids that correspond to the ls_2rm_from_grid
+            it is expected that 1 id_project correspond to 1 id_bids
         """
-        ls_of_all_id_project = [self._ids_all[i][self._ids_project_col] for i in self._ids_all]
-        if _id_project in ls_of_all_id_project:
-            _id_bids_ls = [i for i in self._ids_all if self._ids_all[i][self._ids_project_col] == _id_project]
-            if len(_ids_bids_ls) > 1:
-                log.info(f'{LogLVL.lvl1}there are multiple _id_bids: {_id_bids_ls}\
-                        that correspond to id {_id_project}')
-        return _id_bids_ls
+        _id_bids_dict = list()
+        
+        if not self._ids_project_col in self._ids_all[list(self._ids_all.keys())[0]]:
+            log.info(f'{LogLVL.lvl3}column for _ids_project is missing in {self.f_ids_instatsdir}')
+        else:
+            ls_of_all_id_project = [self._ids_all[i][self._ids_project_col] for i in self._ids_all]
+            for _id_project in ls_2rm_from_grid:
+                if _id_project in ls_of_all_id_project:
+                    _ids_bids_ls = [i for i in self._ids_all if self._ids_all[i][self._ids_project_col] == _id_project]
+                    if len(_ids_bids_ls) > 1:
+                        log.info(f'{LogLVL.lvl1}ERROR! there are multiple _id_bids: {_id_bids_ls}\
+                                                that correspond to id {_id_project}')
+                    else:
+                        _id_bids = _ids_bids_ls[0]
+                        _id_bids_dict[_id_bids] = _id_project
+        return _id_bids_dict
 
 
     def chk_processed_in_f_ids_and_grid(self):
@@ -550,6 +561,8 @@ class ProjectManager:
                     "nilearn"              : "ID_after_nilearn_processing.zip",
                     "dipy"                 : "ID_after_dipy_processing.zip"}}
         """
+        log.info("\n\n")
+        log.info(f"{LogLVL.lvl0}CHECKING processed data in f_ids")
         for app in DEFAULT.app_files:
             archive_format = ".zip"
             key_dir_2processed = DEFAULT.app_files[app]["dir_store_proc"]
@@ -648,6 +661,8 @@ class ProjectManager:
         Return:
             bool
         """
+        log.info("\n\n")
+        log.info(f"{LogLVL.lvl0}CHECKING the processed data")
         if self._ids_bids:
             apps = list(DEFAULT.app_files.keys())
             for _id_bids in self._ids_bids:
