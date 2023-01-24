@@ -5,8 +5,7 @@ script uses output data from the freesurfer glm
 uses freeview to create the images
 and saves the images
 '''
-
-from os import system, makedirs, path
+import os
 import linecache, sys
 import argparse
 from fs_definitions import hemi, FSGLMParams
@@ -26,7 +25,7 @@ class SaveGLMimages():
         self.mcz_sim_direction = self.param.mcz_sim_direction
         self.measures          = self.vars_fs["GLM_measurements"]
         self.threshs           = self.vars_fs["GLM_thresholds"]
-        self.f_with_cmds       = path.join(self.PATHglm, 'fv.cmd')
+        self.f_with_cmds       = os.path.join(self.PATHglm, 'fv.cmd')
 
         self.fdr_thresh        = 3.0 #p = 0.001
         self.mc_cache_thresh   = self.vars_fs["GLM_MCz_cache"]
@@ -35,29 +34,29 @@ class SaveGLMimages():
 
 
     def run(self):
-        if path.exists(self.param.sig_fdr_json):
+        if os.path.exists(self.param.sig_fdr_json):
             print('    reading images for FDR significant results')
             self.read_fdr_images()
         else:
             print('    folder with glm results is missing at:', self.param.sig_fdr_json)
-        if path.exists(self.param.sig_mc_json):
+        if os.path.exists(self.param.sig_mc_json):
             print('    reading images with MC-z corrected results')
             self.read_mc_images()
         else:
             print('    folder with glm results is missing at:', self.param.sig_mc_json)
 
         # cleaning unnecessary files:
-        if path.exists(self.f_with_cmds):
-            system('rm {}'.format(self.f_with_cmds))
+        if os.path.exists(self.f_with_cmds):
+            os.system('rm {}'.format(self.f_with_cmds))
         files_2rm = ('surfer.log', '.xdebug_tksurfer')
         for file in files_2rm:
-            if path.exists(file):
-                system(f'rm {file}')
+            if os.path.exists(file):
+                os.system(f'rm {file}')
 
         # checking if file with clusters - transformed to CSV, if not - retrying
-        cluster_stats      = path.join(self.param.PATHglm_results,'cluster_stats.log')
-        cluster_stats_2csv = path.join(self.param.PATHglm_results,'cluster_stats.csv')
-        if path.exists(cluster_stats) and not path.exists(cluster_stats_2csv):
+        cluster_stats      = os.path.join(self.param.PATHglm_results,'cluster_stats.log')
+        cluster_stats_2csv = os.path.join(self.param.PATHglm_results,'cluster_stats.csv')
+        if os.path.exists(cluster_stats) and not os.path.exists(cluster_stats_2csv):
             print(f'\n    transforming file {cluster_stats} to file: {cluster_stats_2csv}')
             from fs_glm_runglm import ClusterFile2CSV
             ClusterFile2CSV(cluster_stats, cluster_stats_2csv)
@@ -68,7 +67,7 @@ class SaveGLMimages():
         ls_img = list(img.keys())
         for sig in img:
             analysis_name = img[sig]['analysis_name']
-            glmdir = path.join(self.param.PATH_img, analysis_name)
+            glmdir = os.path.join(self.param.PATH_img, analysis_name)
             self.make_images_results_fdr(img[sig]['hemi'], glmdir, analysis_name, img[sig]['fsgd_type_contrast'])
             print(f"    \n\n\n{len(ls_img[ls_img.index(sig):])} images LEFT for extraction")
 
@@ -79,8 +78,8 @@ class SaveGLMimages():
         for sig in img:
             analysis_name      = img[sig]['analysis_name']
             contrast           = img[sig]['contrast']
-            cwsig_mc_f = path.join(self.param.PATH_img, img[sig]['cwsig_mc_f'])
-            oannot_mc_f = path.join(self.param.PATH_img, img[sig]['oannot_mc_f'])
+            cwsig_mc_f = os.path.join(self.param.PATH_img, img[sig]['cwsig_mc_f'])
+            oannot_mc_f = os.path.join(self.param.PATH_img, img[sig]['oannot_mc_f'])
             self.make_images_results_mc(img[sig]['hemi'],
                                         analysis_name,
                                         contrast,
@@ -93,12 +92,12 @@ class SaveGLMimages():
     def make_images_results_mc(self, hemi, analysis_name,
                                     contrast, direction,
                                     cwsig_mc_f, oannot_mc_f):
-        self.PATH_save_mc = path.join(self.PATHglm, 'results', 'mc')
-        if not path.isdir(self.PATH_save_mc):
-            makedirs(self.PATH_save_mc)
-        file_lat_mc = path.join(self.PATH_save_mc, '{}_{}_lat_mc_{}{}.tiff'.format(
+        self.PATH_save_mc = os.path.join(self.PATHglm, 'results', 'mc')
+        if not os.path.isdir(self.PATH_save_mc):
+            os.makedirs(self.PATH_save_mc)
+        file_lat_mc = os.path.join(self.PATH_save_mc, '{}_{}_lat_mc_{}{}.tiff'.format(
                                 analysis_name, contrast, direction, str(self.mc_cache_thresh)))
-        file_med_mc = path.join(self.PATH_save_mc, '{}_{}_med_mc_{}{}.tiff'.format(
+        file_med_mc = os.path.join(self.PATH_save_mc, '{}_{}_med_mc_{}{}.tiff'.format(
                                 analysis_name, contrast, direction, str(self.mc_cache_thresh)))
         fv_cmds = ['-ss {} -noquit'.format(file_lat_mc),
                     '-cam Azimuth 180',
@@ -106,39 +105,83 @@ class SaveGLMimages():
                   ]
 
         write_txt(self.f_with_cmds, fv_cmds, write_type = 'w')
-        # f_with_cmds = path.join(self.PATHglm, 'fv.cmd')
+        # f_with_cmds = os.path.join(self.PATHglm, 'fv.cmd')
         # with open(f_with_cmds,'w') as f:
         #     for line in fv_cmds:
         #         f.write(line+'\n')
-        system('freeview -f $SUBJECTS_DIR/fsaverage/surf/{}.inflated:overlay={}:overlay_threshold={},5:annot={} -viewport 3d -layout 1 -cmd {}'.format(
+        os.system('freeview -f $SUBJECTS_DIR/fsaverage/surf/{}.inflated:overlay={}:overlay_threshold={},5:annot={} -viewport 3d -layout 1 -cmd {}'.format(
                                                                                 hemi, cwsig_mc_f, str(self.mc_img_thresh), oannot_mc_f, self.f_with_cmds))
 
 
     def make_images_results_fdr(self, hemi, glmdir, analysis_name, fsgd_type_contrast):
         sig_file   = 'sig.mgh'
         thresh = self.fdr_thresh
-        self.PATH_save_fdr = path.join(self.PATHglm, 'results', 'fdr')
-        if not path.isdir(self.PATH_save_fdr):
-            makedirs(self.PATH_save_fdr)
+        self.PATH_save_fdr = os.path.join(self.PATHglm, 'results', 'fdr')
+        if not os.path.isdir(self.PATH_save_fdr):
+            os.makedirs(self.PATH_save_fdr)
 
         tksurfer_cmds = ['set colscalebarflag 1', 'set scalebarflag 1', 
-                                                        'save_tiff '  +path.join(self.PATH_save_fdr, '{}_{}_{}_lat.tiff'.format(
+                                                        'save_tiff '  +os.path.join(self.PATH_save_fdr, '{}_{}_{}_lat.tiff'.format(
                                                                             analysis_name, fsgd_type_contrast, str(self.fdr_thresh))),
                          'rotate_brain_y 180', 'redraw',
-                                                        'save_tiff '  +path.join(self.PATH_save_fdr, '{}_{}_{}_med.tiff'.format(
+                                                        'save_tiff '  +os.path.join(self.PATH_save_fdr, '{}_{}_{}_med.tiff'.format(
                                                                             analysis_name, fsgd_type_contrast, str(self.fdr_thresh))),
                          'sclv_set_current_threshold_using_fdr 0.05 0', 
-                                               'redraw','save_tiff '  +path.join(self.PATH_save_fdr, '{}_{}_fdr005_med.tiff'.format(
+                                               'redraw','save_tiff '  +os.path.join(self.PATH_save_fdr, '{}_{}_fdr005_med.tiff'.format(
                                                                             analysis_name, fsgd_type_contrast)),
                          'rotate_brain_y 180', 'redraw',
-                                                        'save_tiff '  +path.join(self.PATH_save_fdr, '{}_{}_fdr005_lat.tiff'.format(
+                                                        'save_tiff '  +os.path.join(self.PATH_save_fdr, '{}_{}_fdr005_lat.tiff'.format(
                                                                             analysis_name, fsgd_type_contrast)), 
                          'exit']
         write_txt(self.f_with_cmds, tksurfer_cmds, write_type = 'w')
         print('    !!!! Attention, tksurfer is deprecated in FS7.3. Try tksurferfv')
-        system('tksurfer fsaverage {} inflated -overlay {} -fthresh {} -tcl {}'.format(
-                hemi, path.join(glmdir, fsgd_type_contrast, sig_file), str(self.fdr_thresh), self.f_with_cmds))
-#        system('tksurfer fsaverage '+hemi+' inflated -overlay '+path.join(glmdir, fsgd_type_contrast, sig_file)+' -fthresh '+str(self.fdr_thresh)+' -tcl '+f_with_tkcmds)
+        os.system('tksurfer fsaverage {} inflated -overlay {} -fthresh {} -tcl {}'.format(
+                hemi, os.path.join(glmdir, fsgd_type_contrast, sig_file), str(self.fdr_thresh), self.f_with_cmds))
+#        os.system('tksurfer fsaverage '+hemi+' inflated -overlay '+os.path.join(glmdir, fsgd_type_contrast, sig_file)+' -fthresh '+str(self.fdr_thresh)+' -tcl '+f_with_tkcmds)
+
+
+def make_sig_file_to_extract_images(path_glm_dirs,
+                                    contrast = None):
+    """helping script to create an individualized sig_mc.json file
+        for a specified folder with glm data
+        NOTE: currently works only for the g2v1_cor contrast
+    Args:
+        path_glm_dirs: abspath to dirs with glm
+    Return:
+        a json file in the path_glm_dirs folder
+        this file is used by the SaveGLMimages() class to extract the images
+    """
+    file_sig = "sig_mc.json"
+    ls_contrasts = ["g1g2.var", "group.diff", "group-x-var"]
+    if contrast:
+        ls_contrasts = [cotrast,]
+
+    ls_glm_dirs = [i for i in os.listdir(path_glm_dirs) if os.path.isdir(i)]
+    sig = dict()
+    nr = 1
+    for _dir in ls_glm_dirs:
+        hemi = "lh"
+        if "rh" in _dir:
+            hemi = "rh"
+        for contrast in ls_contrasts:
+            path_2sig = os.path.join(_dir, "g2v1_cor_"+contrast)
+            if os.path.exists(path_2sig) and len(os.listdir(path_2sig)) > 1:
+                cwsig_f = [i for i in os.listdir(path_2sig) if "cluster" in i][0]
+                oannot_f = [i for i in os.listdir(path_2sig) if "annot" in i][0]
+                direction = "neg"
+                if "pos" in oannot_f:
+                    direction = "pos"
+                sig[nr] = {
+                        "analysis_name":_dir,
+                        "hemi":hemi,
+                        "contrast": contrast,
+                        "direction":direction,
+                        "cwsig_mc_f":os.os.path.join(path_2sig, cwsig_f),
+                        "oannot_mc_f":os.path.join(path_2sig, oannot_f)}
+                nr += 1
+ 
+    with open(os.path.joi(path_glm_dirs, file_sig),"w") as f:
+        json.dump(sig, f, indent = 4)
 
 
 
