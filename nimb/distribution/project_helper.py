@@ -1035,15 +1035,15 @@ class ProjectManager:
                 if ask OK to initiate processing is True:
                     send for processing
         """
-        log.info(f"{LogLVL.lvl2}adding new _id_bids to existing new_subjects.json file")
         DEFpaths = DEFAULTpaths(self.NIMB_tmp)
         f_subj2process = DEFpaths.f_subj2process_abspath
         if not os.path.exists(f_subj2process):
-            log.info(f'{LogLVL.lvl1} file with subjects to process is missing; creating empty dictionary')
+            log.info(f'{LogLVL.lvl1}file with subjects to process is missing; creating empty dictionary')
             self.subs_2process = dict()
         else:
             self.subs_2process = load_json(f_subj2process)
 
+        log.info(f"{LogLVL.lvl2}adding new _id_bids to existing new_subjects.json file")
         _, sub_label, ses_label, _ = self.dcm2bids.is_bids_format(_id_bids)
         content = self.processing_get_abspath_rawdata(sub_label, ses_label)
         self.subs_2process[_id_bids] = content
@@ -1070,24 +1070,28 @@ class ProjectManager:
                     "dwi":
                         "dwi"  :[ABSPATH_TO/sub-label_ses-label_dwi.nii.gz]}
         """
-        log.info(f'reading dirs: {sub_label} and {ses_label}')
+        log.info(f'{LogLVL.lvl3}reading dirs: {sub_label} and {ses_label}')
         ses_path = os.path.join(self.BIDS_DIR, sub_label, ses_label)
+        log.info(f'{LogLVL.lvl3}DEBUG: ses_path is: {ses_path}')
         content = dict()
         dirs = os.listdir(ses_path)
+        log.info(f'{LogLVL.lvl3}DEBUG: dirs is: {dirs}')
         for _dir in dirs:
             _dir_content = os.listdir(os.path.join(ses_path, _dir))
-            mri_files = [os.path.abspath(i) for i in _dir_content if i.endswith(".nii.gz")]
+            log.info(f'{LogLVL.lvl3}DEBUG: _dir_content is: {_dir_content}')
+            mri_files = [os.path.join(ses_path, _dir, i) for i in _dir_content if i.endswith(".nii.gz")]
             if _dir == "dwi":
                 content[_dir] = {"dwi":mri_files}
             elif _dir == "func":
-                bold_files = [os.path.abspath(i) for i in mri_files if "bold" in i]
+                bold_files = [os.path.join(ses_path, _dir, i) for i in mri_files if "bold" in i]
                 content[_dir] = {"bold":bold_files}
             elif _dir == "anat":
-                t1_files = [os.path.abspath(i) for i in mri_files if "T1w" in i]
+                t1_files = [os.path.join(ses_path, _dir, i) for i in mri_files if "T1w" in i]
                 content[_dir] = {"t1":t1_files}
-                flair_files = [os.path.abspath(i) for i in mri_files if "Flair" in i]
+                flair_files = [os.path.join(ses_path, _dir, i) for i in mri_files if "Flair" in i]
                 if flair_files:
                     content[_dir]["flair"] = flair_files
+        log.info(f'{LogLVL.lvl3}DEBUG: content: {content}')
         return content
 
 
