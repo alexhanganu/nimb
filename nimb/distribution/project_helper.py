@@ -482,6 +482,7 @@ class ProjectManager:
             self.run_classify_2nimb(ls_4nimb_classif)
         if ls_4dcm2bids_classif:
             self.run_classify_dcm2bids(ls_4dcm2bids_classif)
+        log.info(f'{LogLVL.lvl3}initiating processing check from _ids_project_chk')
         self.processing_chk()
 
 
@@ -1072,13 +1073,10 @@ class ProjectManager:
         """
         log.info(f'{LogLVL.lvl3}reading dirs: {sub_label} and {ses_label}')
         ses_path = os.path.join(self.BIDS_DIR, sub_label, ses_label)
-        log.info(f'{LogLVL.lvl3}DEBUG: ses_path is: {ses_path}')
         content = dict()
         dirs = os.listdir(ses_path)
-        log.info(f'{LogLVL.lvl3}DEBUG: dirs is: {dirs}')
         for _dir in dirs:
             _dir_content = os.listdir(os.path.join(ses_path, _dir))
-            log.info(f'{LogLVL.lvl3}DEBUG: _dir_content is: {_dir_content}')
             mri_files = [os.path.join(ses_path, _dir, i) for i in _dir_content if i.endswith(".nii.gz")]
             if _dir == "dwi":
                 content[_dir] = {"dwi":mri_files}
@@ -1091,7 +1089,6 @@ class ProjectManager:
                 flair_files = [os.path.join(ses_path, _dir, i) for i in mri_files if "Flair" in i]
                 if flair_files:
                     content[_dir]["flair"] = flair_files
-        log.info(f'{LogLVL.lvl3}DEBUG: content: {content}')
         return content
 
 
