@@ -1047,9 +1047,13 @@ class ProjectManager:
         log.info(f"{LogLVL.lvl2}adding new _id_bids to existing new_subjects.json file")
         _, sub_label, ses_label, _ = self.dcm2bids.is_bids_format(_id_bids)
         content = self.processing_get_abspath_rawdata(sub_label, ses_label)
-        self.subs_2process[_id_bids] = content
-        save_json(self.subs_2process, f_subj2process, print_space = 4)
-        self.new_subjects = True
+        if content:
+            self.subs_2process[_id_bids] = content
+            save_json(self.subs_2process, f_subj2process, print_space = 4)
+            self.new_subjects = True
+        else:
+            log.info(f'{LogLVL.lvl3}MISS! subject: {_id_bids} cannot be added to processing because rawdata is missing')
+
 
 
     def processing_get_abspath_rawdata(self, sub_label, ses_label):
@@ -1074,21 +1078,24 @@ class ProjectManager:
         log.info(f'{LogLVL.lvl3}reading dirs: {sub_label} and {ses_label}')
         ses_path = os.path.join(self.BIDS_DIR, sub_label, ses_label)
         content = dict()
-        dirs = os.listdir(ses_path)
-        for _dir in dirs:
-            _dir_content = os.listdir(os.path.join(ses_path, _dir))
-            mri_files = [os.path.join(ses_path, _dir, i) for i in _dir_content if i.endswith(".nii.gz")]
-            if _dir == "dwi":
-                content[_dir] = {"dwi":mri_files}
-            elif _dir == "func":
-                bold_files = [os.path.join(ses_path, _dir, i) for i in mri_files if "bold" in i]
-                content[_dir] = {"bold":bold_files}
-            elif _dir == "anat":
-                t1_files = [os.path.join(ses_path, _dir, i) for i in mri_files if "T1w" in i]
-                content[_dir] = {"t1":t1_files}
-                flair_files = [os.path.join(ses_path, _dir, i) for i in mri_files if "Flair" in i]
-                if flair_files:
-                    content[_dir]["flair"] = flair_files
+        if not os.path.exists(ses_path):
+            log.info(f'{LogLVL.lvl3}MISS! rawdata for subject: {sub_label} is missing at path: {ses_path}')
+        else:
+            dirs = os.listdir(ses_path)
+            for _dir in dirs:
+                _dir_content = os.listdir(os.path.join(ses_path, _dir))
+                mri_files = [os.path.join(ses_path, _dir, i) for i in _dir_content if i.endswith(".nii.gz")]
+                if _dir == "dwi":
+                    content[_dir] = {"dwi":mri_files}
+                elif _dir == "func":
+                    bold_files = [os.path.join(ses_path, _dir, i) for i in mri_files if "bold" in i]
+                    content[_dir] = {"bold":bold_files}
+                elif _dir == "anat":
+                    t1_files = [os.path.join(ses_path, _dir, i) for i in mri_files if "T1w" in i]
+                    content[_dir] = {"t1":t1_files}
+                    flair_files = [os.path.join(ses_path, _dir, i) for i in mri_files if "Flair" in i]
+                    if flair_files:
+                        content[_dir]["flair"] = flair_files
         return content
 
 
