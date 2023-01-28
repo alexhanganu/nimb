@@ -151,7 +151,7 @@ class ProjectManager:
         class to Manage a specific project
         missing stages are being initiated with distribution
     Args:
-        all_vars
+        all_vars (USER_PATH_TO_NIMB_WITH_DATA/nimb/local.json + .../projects.json)
     ALGO:
         - get tsv file to df for project.
             If missing: make default
@@ -239,7 +239,7 @@ class ProjectManager:
         elif do_task == 'all':
             self.check_new()
             if self.new_subjects:
-                log.info(f'{LogLVL.lvl1}must initiate processing')
+                log.info(f'{LogLVL.lvl1}PROCESSING pipeline initiating')
                 self.send_2processing('process')
             self.extract_statistics(apps = ["freesurfer",])
             self.glm_fs_do()
@@ -483,7 +483,6 @@ class ProjectManager:
         if ls_4dcm2bids_classif:
             self.run_classify_dcm2bids(ls_4dcm2bids_classif)
         log.info(f'{LogLVL.lvl3}initiating processing check from _ids_project_chk')
-        self.processing_chk()
 
 
     def add_ids_project_to_bids_in_grid(self, ls_ids):
@@ -565,21 +564,28 @@ class ProjectManager:
         log.info("\n\n")
         log.info(f"{LogLVL.lvl0}CHECKING processed data in f_ids")
         for app in DEFAULT.app_files:
+            log.info(f"{LogLVL.lvl1}for application: {app}")
             archive_format = ".zip"
             key_dir_2processed = DEFAULT.app_files[app]["dir_store_proc"]
             location = self.project_vars[key_dir_2processed][0]
             abspath_2storage = self.project_vars[key_dir_2processed][1]
+            log.info(f"{LogLVL.lvl2}at path: {abspath_2storage}")
             if location == "local":
+                files_added_to_grid = list()
                 files_processed_per_app = self.get_listdir(abspath_2storage)
+                log.info(f"{LogLVL.lvl2}there are: {len(files_processed_per_app)} files to be checked")
                 for file_processed in files_processed_per_app:
                     _id_bids_2chk = file_processed.replace(archive_format,"")
                     bids_format, _, _, _ = self.dcm2bids.is_bids_format(_id_bids_2chk)
                     if bids_format:
                         _id_bids = _id_bids_2chk
+                        files_added_to_grid.append(_id_bids)
                         self.update_f_ids(_id_bids, app, file_processed[0])
                         self.populate_df([_id_bids,], self._ids_bids_col, self.df_grid)
                     else:
                         log.info(f"{LogLVL.lvl3}subject in the processed file: {_id_bids_2chk} name is not of BIDS format")
+                if files_added_to_grid:
+                    log.info(f"{LogLVL.lvl2}{len(files_added_to_grid)} were added to f_ids and to grid")
             else:
                 log.info(f"{LogLVL.lvl2}subject {_id_bids} for app: {app} is stored on: {location}")
         self.save_f_ids()
@@ -663,13 +669,13 @@ class ProjectManager:
             bool
         """
         log.info("\n\n")
-        log.info(f"{LogLVL.lvl0}CHECKING the processed data")
+        log.info(f"{LogLVL.lvl0}CHECKING the f_ids file for each id whether they were processed with all applications")
         if self._ids_bids:
             apps = list(DEFAULT.app_files.keys())
             for _id_bids in self._ids_bids:
                 apps2process = self.processing_get_apps(_id_bids)
                 if apps2process:
-                    log.info(f'{LogLVL.lvl1}sending for processing: {_id_bids}, for apps: {apps2process}')
+                    log.info(f'{LogLVL.lvl1}{_id_bids} id must be processed for apps: {apps2process}')
                     self.processing_add_id(_id_bids, apps2process)
 
 
@@ -726,7 +732,7 @@ class ProjectManager:
         # checking for new subjects
         # extracting subjects missing from the nimb_classified file
         log.info(f'{LogLVL.lvl1}{"=" * 36}')
-        log.info(f'{LogLVL.lvl1}checking for new subjects in SOURCE_SUBJECTS_DIR:')
+        log.info(f'{LogLVL.lvl1}checking for NEW IDs in SOURCE_SUBJECTS_DIR:')
         log.info(f"{LogLVL.lvl2}{self.srcdata_dir}")
         ls_ids_src     = self.get_listdir(self.srcdata_dir)
         archived = [self._ids_nimb_classified[i]["archived"] for i in self._ids_nimb_classified]
@@ -749,32 +755,33 @@ class ProjectManager:
             else:
                 log.info(f"{LogLVL.lvl2}ERROR: classification 2nimb-bids had an error")
         else:
-            log.info(f'{LogLVL.lvl3}All data in SOURCE_SUBJECTS_DIR were added to file nimb_classified.json')
+            log.info(f'{LogLVL.lvl2}All data in SOURCE_SUBJECTS_DIR was added to file nimb_classified.json')
 
         # STEP 2:
         # get ids from nimb_classified missing from f_ids
+        log.info(f"{LogLVL.lvl2}Extracting list of unprocessed IDs")
         self.get_ids_nimb_classified()
-        unprocessed_d = self.get_unprocessed_ids_from_nimb_classified()
+        self.unprocessed_d = self.get_unprocessed_ids_from_nimb_classified()
 
         # STEP 3:
         # extract potential ids that might have bids structure
         # and could be directly moved to the _ids_bids column in the grid
-        log.info(f'{LogLVL.lvl2}checking BIDS format for folders in:')
-        log.info(f"{LogLVL.lvl3}SOURCE_SUBJECTS_DIR: {self.srcdata_dir}")
+        log.info(f'{LogLVL.lvl2}checking BIDS format for folders in SOURCE_SUBJECTS_DIR:')
+        log.info(f'{LogLVL.lvl3}{self.srcdata_dir}')
         _ids_src_bids_unprocessed = dict()
-        for _id_src in unprocessed_d.keys():
-            for session in unprocessed_d[_id_src]:
-                _ids_src_bids_unprocessed[_id_src] = unprocessed_d[_id_src][session]["id_bids"]
+        for _id_src in self.unprocessed_d.keys():
+            for session in self.unprocessed_d[_id_src]:
+                _ids_src_bids_unprocessed[_id_src] = self.unprocessed_d[_id_src][session]["id_bids"]
         no_bids, _, yes_bids_d, no_rawdata, ls_nan = self.verify_ids_are_bids_standard(
                                                     list(_ids_src_bids_unprocessed.values()),
                                                     self.srcdata_dir)
         if yes_bids_d:
-            log.info(f"{LogLVL.lvl2}some subjects are of BIDS format: {list(yes_bids_d.keys())}")
-            self.copy_dir(yes_bids)
+            log.info(f"{LogLVL.lvl2}IDs ready and of BIDS format: {list(yes_bids_d.keys())}")
+            # self.copy_dir(yes_bids_d)
             self.add_ids_source_to_bids_in_grid(yes_bids_d)
 
         # STEP 4:
-        # manage the unprocessed ids
+        # manage the unclassified ids
         if no_bids:
             _ids_src_unprocessed = list()
             for _id_src in _ids_src_bids_unprocessed.keys():
@@ -788,7 +795,7 @@ class ProjectManager:
                 self.add_ids_source_to_bids_in_grid({_id_src: _id_bids})
             self.processing_chk()
         else:
-           log.info(f'{LogLVL.lvl2}ALL participants with MRI data were processed')
+           log.info(f'{LogLVL.lvl2}ALL participants with MRI data from  were calssified with DCM2BIDS')
 
 
 
@@ -1039,20 +1046,20 @@ class ProjectManager:
         DEFpaths = DEFAULTpaths(self.NIMB_tmp)
         f_subj2process = DEFpaths.f_subj2process_abspath
         if not os.path.exists(f_subj2process):
-            log.info(f'{LogLVL.lvl1}file with subjects to process is missing; creating empty dictionary')
+            log.info(f'{LogLVL.lvl2}file with subjects to process is missing; creating empty dictionary')
             self.subs_2process = dict()
         else:
             self.subs_2process = load_json(f_subj2process)
 
-        log.info(f"{LogLVL.lvl2}adding new _id_bids to existing new_subjects.json file")
         _, sub_label, ses_label, _ = self.dcm2bids.is_bids_format(_id_bids)
         content = self.processing_get_abspath_rawdata(sub_label, ses_label)
         if content:
+            log.info(f"{LogLVL.lvl2}{_id_bids} id is being added to new_subjects.json file")
             self.subs_2process[_id_bids] = content
             save_json(self.subs_2process, f_subj2process, print_space = 4)
             self.new_subjects = True
         else:
-            log.info(f'{LogLVL.lvl3}MISS! subject: {_id_bids} cannot be added to processing because rawdata is missing')
+            log.info(f'{LogLVL.lvl3}MISS! {_id_bids} id cannot be added to processing: rawdata is missing')
 
 
 
@@ -1075,7 +1082,7 @@ class ProjectManager:
                     "dwi":
                         "dwi"  :[ABSPATH_TO/sub-label_ses-label_dwi.nii.gz]}
         """
-        log.info(f'{LogLVL.lvl3}reading dirs: {sub_label} and {ses_label}')
+        log.info(f'{LogLVL.lvl2}reading dirs: {sub_label} and {ses_label}')
         ses_path = os.path.join(self.BIDS_DIR, sub_label, ses_label)
         content = dict()
         if not os.path.exists(ses_path):
@@ -1202,34 +1209,34 @@ class ProjectManager:
             log.info(f'{LogLVL.lvl1}file {f_abspath} is missing in: {_dir_2chk}')
 
 
-    def copy_dir(self, yes_bids):
-        """some bids folders might require to be copied
-            to the rawdata folder
-        Args:
-            yes_bids = {_id_src: _id_bids}
-        """
-        ls_copied = list()
-        ls_not_copied = list()
-        for _id_src in yes_bids:
-            _id_bids = yes_bids[_id_src]
-            if self.srcdata_dir != self.BIDS_DIR:
-                log.info(f"{LogLVL.lvl2}copying {_id_bids}")
-                log.info(f"{LogLVL.lvl3}from :{self.srcdata_dir}")
-                log.info(f"{LogLVL.lvl3}to   : {self.BIDS_DIR}")
-                source_data = os.path.join(self.srcdata_dir, _id_bids)
-                target      = os.path.join(self.BIDS_DIR, _id_bids)
-                copied      = utilities.copy_rm_dir(source_data, target)
-                if copied:
-                    ls_copied.append(_id_bids)
-                else:
-                    ls_not_copied.append(_id_bids)
+    # def copy_dir(self, yes_bids_d):
+    #     """some bids folders might require to be copied
+    #         to the rawdata folder
+    #     Args:
+    #         yes_bids_d = {_id_bids: _id_src}
+    #     """
+    #     ls_copied = list()
+    #     ls_not_copied = list()
+    #     for _id_bids in yes_bids_d:
+    #         _id_src = yes_bids_d[_id_bids]
+    #         if self.srcdata_dir != self.BIDS_DIR:
+    #             log.info(f"{LogLVL.lvl2}copying {_id_src}")
+    #             log.info(f"{LogLVL.lvl3}from :{self.srcdata_dir}")
+    #             log.info(f"{LogLVL.lvl3}to   : {self.BIDS_DIR}")
+    #             source_data = os.path.join(self.srcdata_dir, _id_src)
+    #             target      = os.path.join(self.BIDS_DIR, _id_src)
+    #             copied      = utilities.copy_rm_dir(source_data, target)
+    #             if copied:
+    #                 ls_copied.append(_id_src)
+    #             else:
+    #                 ls_not_copied.append(_id_src)
 
-        # checker to confirm that some _ids_bids were not copied
-        if ls_not_copied:
-            log.info(f"{LogLVL.lvl2}some ids could not be copied:")
-            log.info(f"{LogLVL.lvl3}{ls_not_copied}")
+    #     # checker to confirm that some _ids_bids were not copied
+    #     if ls_not_copied:
+    #         log.info(f"{LogLVL.lvl2}some ids could not be copied:")
+    #         log.info(f"{LogLVL.lvl3}{ls_not_copied}")
 
-        return ls_copied, ls_not_copied
+    #     return ls_copied, ls_not_copied
 
 
     def get_masks(self):

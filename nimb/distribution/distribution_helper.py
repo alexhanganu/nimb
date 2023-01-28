@@ -43,7 +43,7 @@ class DistributionHelper():
             if user approves:
                 initiate the processing on local/ remote
         """
-        # print(f'{LogLVL.lvl2}{unprocessed_d}')
+        print(f'{LogLVL.lvl2}{unprocessed_d}')
         self.get_processing_location()
         print(f'{LogLVL.lvl2}locations for processing are: ')
         print(f'{LogLVL.lvl3}{self.locations_4process}')
