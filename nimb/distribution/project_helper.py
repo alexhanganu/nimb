@@ -482,7 +482,6 @@ class ProjectManager:
             self.run_classify_2nimb(ls_4nimb_classif)
         if ls_4dcm2bids_classif:
             self.run_classify_dcm2bids(ls_4dcm2bids_classif)
-        log.info(f'{LogLVL.lvl3}initiating processing check from _ids_project_chk')
 
 
     def add_ids_project_to_bids_in_grid(self, ls_ids):
@@ -564,7 +563,7 @@ class ProjectManager:
         log.info("\n\n")
         log.info(f"{LogLVL.lvl0}CHECKING processed data in f_ids")
         for app in DEFAULT.app_files:
-            log.info(f"{LogLVL.lvl1}for application: {app}")
+            log.info(f"{LogLVL.lvl1}{app} application checking:")
             archive_format = ".zip"
             key_dir_2processed = DEFAULT.app_files[app]["dir_store_proc"]
             location = self.project_vars[key_dir_2processed][0]
@@ -672,11 +671,17 @@ class ProjectManager:
         log.info(f"{LogLVL.lvl0}CHECKING the f_ids file for each id whether they were processed with all applications")
         if self._ids_bids:
             apps = list(DEFAULT.app_files.keys())
+            self.ls_ids_bids_to_process = list()
+            self.ls_ids_bids_miss_rawdata = list()
             for _id_bids in self._ids_bids:
                 apps2process = self.processing_get_apps(_id_bids)
                 if apps2process:
-                    log.info(f'{LogLVL.lvl1}{_id_bids} id must be processed for apps: {apps2process}')
+                    # log.info(f'{LogLVL.lvl1}{_id_bids} id must be processed for apps: {apps2process}')
                     self.processing_add_id(_id_bids, apps2process)
+        if len(self.ls_ids_bids_to_process) > 0:
+            save_json(self.subs_2process, f_subj2process, print_space = 4)
+            log.info(f"{LogLVL.lvl0}{len(self.ls_ids_bids_to_process)} IDs must be processed for apps")
+            log.info(f"{LogLVL.lvl0}{len(self.ls_ids_bids_miss_rawdata)} IDs are missing the rawdata and will not be processed")
 
 
     def processing_get_apps(self, _id_bids):
@@ -776,7 +781,8 @@ class ProjectManager:
                                                     list(_ids_src_bids_unprocessed.values()),
                                                     self.srcdata_dir)
         if yes_bids_d:
-            log.info(f"{LogLVL.lvl2}IDs ready and of BIDS format: {list(yes_bids_d.keys())}")
+            log.info(f"{LogLVL.lvl2}{len(list(yes_bids_d.keys()))} IDs are ready and of BIDS format:")
+            log.info(f"{LogLVL.lvl3}{list(yes_bids_d.keys())}")
             # self.copy_dir(yes_bids_d)
             self.add_ids_source_to_bids_in_grid(yes_bids_d)
 
@@ -795,7 +801,7 @@ class ProjectManager:
                 self.add_ids_source_to_bids_in_grid({_id_src: _id_bids})
             self.processing_chk()
         else:
-           log.info(f'{LogLVL.lvl2}ALL participants with MRI data from  were calssified with DCM2BIDS')
+           log.info(f'{LogLVL.lvl2}ALL participants with MRI data from {self.srcdata_dir} were classified with DCM2BIDS')
 
 
 
@@ -805,6 +811,7 @@ class ProjectManager:
         """
         # log.info(f'{LogLVL.lvl1}nimb_classified is: {self._ids_nimb_classified}')
         unprocessed_d = dict()
+        ls_id_src_in_f_ids = list()
         for _id_src in self._ids_nimb_classified:
             unprocessed_d[_id_src] = {}
             ls_sessions = [i for i in  self._ids_nimb_classified[_id_src] if i not in ('archived',)]
@@ -817,7 +824,8 @@ class ProjectManager:
                         archive = self._ids_nimb_classified[_id_src]["archived"]
                         unprocessed_d[_id_src][session]["archived"] = archive
                 else:
-                    log.info(f"{LogLVL.lvl2}{_id_bids} registered in file with ids")
+                    ls_id_src_in_f_ids.append(_id_bids)
+        log.info(f"{LogLVL.lvl2}{len(ls_id_src_in_f_ids)} are registered in file with ids")
         return unprocessed_d
 
 
@@ -1052,18 +1060,18 @@ class ProjectManager:
             self.subs_2process = load_json(f_subj2process)
 
         _, sub_label, ses_label, _ = self.dcm2bids.is_bids_format(_id_bids)
-        content = self.processing_get_abspath_rawdata(sub_label, ses_label)
+        content = self.processing_get_abspath_rawdata(sub_label, ses_label, _id_bids)
         if content:
-            log.info(f"{LogLVL.lvl2}{_id_bids} id is being added to new_subjects.json file")
+            # log.info(f"{LogLVL.lvl2}{_id_bids} id is being added to new_subjects.json file")
+            self.ls_ids_bids_to_process.append(_id_bids)
             self.subs_2process[_id_bids] = content
-            save_json(self.subs_2process, f_subj2process, print_space = 4)
             self.new_subjects = True
         else:
             log.info(f'{LogLVL.lvl3}MISS! {_id_bids} id cannot be added to processing: rawdata is missing')
 
 
 
-    def processing_get_abspath_rawdata(self, sub_label, ses_label):
+    def processing_get_abspath_rawdata(self, sub_label, ses_label, _id_bids):
         """
             searches for corresponding folders in rawdata
             creates a dict with absolute paths to MRI files
@@ -1082,11 +1090,12 @@ class ProjectManager:
                     "dwi":
                         "dwi"  :[ABSPATH_TO/sub-label_ses-label_dwi.nii.gz]}
         """
-        log.info(f'{LogLVL.lvl2}reading dirs: {sub_label} and {ses_label}')
+        # log.info(f'{LogLVL.lvl2}reading dirs: {sub_label} and {ses_label}')
         ses_path = os.path.join(self.BIDS_DIR, sub_label, ses_label)
         content = dict()
         if not os.path.exists(ses_path):
-            log.info(f'{LogLVL.lvl3}MISS! rawdata for subject: {sub_label} is missing at path: {ses_path}')
+            log.info(f'{LogLVL.lvl3}MISS! rawdata for subject: {_id_bids} is missing at path: {ses_path}')
+            self.ls_ids_bids_miss_rawdata.append(_id_bids)
         else:
             dirs = os.listdir(ses_path)
             for _dir in dirs:
