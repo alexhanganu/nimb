@@ -241,10 +241,10 @@ class ProjectManager:
             if self.new_subjects:
                 log.info(f'{LogLVL.lvl1}PROCESSING pipeline initiating')
                 self.send_2processing('process')
-            self.extract_statistics(apps = ["freesurfer",])
-            self.glm_fs_do()
-            self.glm_fs_do(image = True)
             log.info("run-stats not set yet")
+            # self.extract_statistics(apps = ["freesurfer",])
+            # self.glm_fs_do()
+            # self.glm_fs_do(image = True)
 
 
     '''
@@ -413,7 +413,6 @@ class ProjectManager:
             # rm from f_ids
             if _id in self._ids_all:
                 self.update_f_ids(_id, "", "")
-                self.save_f_ids()
 
             # adding to the _ids_project_col in the grid
             if _id not in self._ids_project:
@@ -421,6 +420,7 @@ class ProjectManager:
                 self._ids_project.append(_id)
             else:
                 log.info(f'{LogLVL.lvl2}id: {_id} is already present in grid  in column: {self._ids_project_col}')
+        self.save_f_ids()
         self.save_grid(self.df_grid, self.f_groups)
 
 
@@ -667,19 +667,25 @@ class ProjectManager:
         Return:
             bool
         """
+        DEFpaths = DEFAULTpaths(self.NIMB_tmp)
+        self.f_subj2process = DEFpaths.f_subj2process_abspath
+
         log.info("\n\n")
         log.info(f"{LogLVL.lvl0}CHECKING the f_ids file for each id whether they were processed with all applications")
+        self.ls_ids_bids_to_process = list()
+        self.ls_ids_bids_miss_rawdata = list()
+
         if self._ids_bids:
             apps = list(DEFAULT.app_files.keys())
-            self.ls_ids_bids_to_process = list()
-            self.ls_ids_bids_miss_rawdata = list()
             for _id_bids in self._ids_bids:
                 apps2process = self.processing_get_apps(_id_bids)
                 if apps2process:
                     # log.info(f'{LogLVL.lvl1}{_id_bids} id must be processed for apps: {apps2process}')
                     self.processing_add_id(_id_bids, apps2process)
+        self.save_f_ids()
+
         if len(self.ls_ids_bids_to_process) > 0:
-            save_json(self.subs_2process, f_subj2process, print_space = 4)
+            save_json(self.subs_2process, self.f_subj2process, print_space = 4)
             log.info(f"{LogLVL.lvl0}{len(self.ls_ids_bids_to_process)} IDs must be processed for apps")
             log.info(f"{LogLVL.lvl0}{len(self.ls_ids_bids_miss_rawdata)} IDs are missing the rawdata and will not be processed")
 
@@ -716,7 +722,6 @@ class ProjectManager:
                         log.info(f"{LogLVL.lvl3}{_id_per_app}")
             if not self._ids_all[_id_bids][app]:
                 apps2process.append(app)
-        self.save_f_ids()
         return apps2process
 
 
@@ -740,21 +745,23 @@ class ProjectManager:
         log.info(f'{LogLVL.lvl1}checking for NEW IDs in SOURCE_SUBJECTS_DIR:')
         log.info(f"{LogLVL.lvl2}{self.srcdata_dir}")
         ls_ids_src     = self.get_listdir(self.srcdata_dir)
+        files_new_ids_src = [i for i in ls_ids_src if i not in self._ids_nimb_classified]
         archived = [self._ids_nimb_classified[i]["archived"] for i in self._ids_nimb_classified]
-        ls_new_ids_src = [i for i in ls_ids_src if i not in self._ids_nimb_classified]
-        for file in ls_new_ids_src[::-1]:
-            for archive in archived:
-                if file in archive:
-                    log.info("file in archive:", archive)
-                    ls_new_ids_src.remove(file)
+        files_present_in_archive = list()
+        for file in files_new_ids_src[::-1]:
+            for archive_abs_path in archived:
+                if file in archive_abs_path:
+                    files_present_in_archive.append(archive_abs_path)
+                    # log.info("file in archive:", archive_abs_path)
+                    files_new_ids_src.remove(file)
                     break
-        if DEFAULT.f_nimb_classified in ls_new_ids_src:
-            ls_new_ids_src = ls_new_ids_src.remove(DEFAULT.f_nimb_classified)
+        if DEFAULT.f_nimb_classified in files_new_ids_src:
+            files_new_ids_src = files_new_ids_src.remove(DEFAULT.f_nimb_classified)
 
-        if ls_new_ids_src:
+        if files_new_ids_src:
             log.info(f'{LogLVL.lvl2}there are new subjects that were not classified')
             log.info(f'{LogLVL.lvl3}initiating nimb classifier, to file: nimb_classified.json')
-            is_classified, _ = self.run_classify_2nimb_bids(ls_new_ids_src)
+            is_classified, _ = self.run_classify_2nimb_bids(files_new_ids_src)
             if is_classified:
                 log.info(f'{LogLVL.lvl3}classification to nimb_classified.json DONE')
             else:
@@ -782,7 +789,7 @@ class ProjectManager:
                                                     self.srcdata_dir)
         if yes_bids_d:
             log.info(f"{LogLVL.lvl2}{len(list(yes_bids_d.keys()))} IDs are ready and of BIDS format:")
-            log.info(f"{LogLVL.lvl3}{list(yes_bids_d.keys())}")
+            # log.info(f"{LogLVL.lvl3}{list(yes_bids_d.keys())}")
             # self.copy_dir(yes_bids_d)
             self.add_ids_source_to_bids_in_grid(yes_bids_d)
 
@@ -844,11 +851,11 @@ class ProjectManager:
         self._ids_bids = self.df_grid[self._ids_bids_col].tolist()
 
         # loop to work with each _id_src
+        log.info(f"populating f_ids with {len(yes_bids)} id_bids for _id_src")
         for _id_src in yes_bids:
             _id_bids = yes_bids[_id_src]
             self._ids_bids = self._ids_bids + [_id_bids]
             # populating self.f_ids with _id_src
-            log.info("populating f_ids with id_bids:", _id_bids, "for _id_src: ", _id_src)
             self.update_f_ids(_id_bids, DEFAULT.id_source_key, _id_src)
         self.save_f_ids()
         self.populate_df(self._ids_bids, self._ids_bids_col, self.df_grid)
@@ -1051,13 +1058,11 @@ class ProjectManager:
                 if ask OK to initiate processing is True:
                     send for processing
         """
-        DEFpaths = DEFAULTpaths(self.NIMB_tmp)
-        f_subj2process = DEFpaths.f_subj2process_abspath
-        if not os.path.exists(f_subj2process):
+        if not os.path.exists(self.f_subj2process):
             log.info(f'{LogLVL.lvl2}file with subjects to process is missing; creating empty dictionary')
             self.subs_2process = dict()
         else:
-            self.subs_2process = load_json(f_subj2process)
+            self.subs_2process = load_json(self.f_subj2process)
 
         _, sub_label, ses_label, _ = self.dcm2bids.is_bids_format(_id_bids)
         content = self.processing_get_abspath_rawdata(sub_label, ses_label, _id_bids)
@@ -1066,9 +1071,6 @@ class ProjectManager:
             self.ls_ids_bids_to_process.append(_id_bids)
             self.subs_2process[_id_bids] = content
             self.new_subjects = True
-        else:
-            log.info(f'{LogLVL.lvl3}MISS! {_id_bids} id cannot be added to processing: rawdata is missing')
-
 
 
     def processing_get_abspath_rawdata(self, sub_label, ses_label, _id_bids):
@@ -1094,7 +1096,7 @@ class ProjectManager:
         ses_path = os.path.join(self.BIDS_DIR, sub_label, ses_label)
         content = dict()
         if not os.path.exists(ses_path):
-            log.info(f'{LogLVL.lvl3}MISS! rawdata for subject: {_id_bids} is missing at path: {ses_path}')
+            # log.info(f'{LogLVL.lvl3}MISS! rawdata for subject: {_id_bids} is missing at path: {ses_path}')
             self.ls_ids_bids_miss_rawdata.append(_id_bids)
         else:
             dirs = os.listdir(ses_path)
