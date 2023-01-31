@@ -222,7 +222,6 @@ class ProjectManager:
             self.classify_with_dcm2bids()
         elif do_task == 'process':
             if self.new_subjects:
-                log.info(f'{LogLVL.lvl1}must initiate processing')
                 self.send_2processing('process')
             else:
                 log.info(f'{LogLVL.lvl1}all subjects were processed')
@@ -239,7 +238,6 @@ class ProjectManager:
         elif do_task == 'all':
             self.check_new()
             if self.new_subjects:
-                log.info(f'{LogLVL.lvl1}PROCESSING pipeline initiating')
                 self.send_2processing('process')
             log.info("run-stats not set yet")
             # self.extract_statistics(apps = ["freesurfer",])
@@ -542,7 +540,7 @@ class ProjectManager:
 
     def chk_processed_in_f_ids_and_grid(self):
         """
-            check that all processed filed are present
+            check that all processed files are present
             in the f_ids file and the grid
         Args:
             none
@@ -561,7 +559,9 @@ class ProjectManager:
                     "dipy"                 : "ID_after_dipy_processing.zip"}}
         """
         log.info("\n\n")
-        log.info(f"{LogLVL.lvl0}CHECKING processed data in f_ids")
+        log.info(f"{LogLVL.lvl0}CHECKING that processed data is present in f_ids and the grid")
+
+        grid_updated = False
         for app in DEFAULT.app_files:
             log.info(f"{LogLVL.lvl1}{app} application checking:")
             archive_format = ".zip"
@@ -579,16 +579,22 @@ class ProjectManager:
                     if bids_format:
                         _id_bids = _id_bids_2chk
                         files_added_to_grid.append(_id_bids)
-                        self.update_f_ids(_id_bids, app, file_processed[0])
+                        log.info(f'DEBUG: adding to grid: _id_bids: {_id_bids}, app: {app}, file: {_id_bids}')
+                        self.update_f_ids(_id_bids, "", "")
+                        self.update_f_ids(_id_bids, app, _id_bids)
                         self.populate_df([_id_bids,], self._ids_bids_col, self.df_grid)
+                        grid_updated = True
                     else:
                         log.info(f"{LogLVL.lvl3}subject in the processed file: {_id_bids_2chk} name is not of BIDS format")
                 if files_added_to_grid:
                     log.info(f"{LogLVL.lvl2}{len(files_added_to_grid)} were added to f_ids and to grid")
             else:
                 log.info(f"{LogLVL.lvl2}subject {_id_bids} for app: {app} is stored on: {location}")
+        if grid_updated:
+            self.get_ids_from_grid()
         self.save_f_ids()
-
+        print('DEBUG: current file with ids is:', len(self._ids_all), self._ids_all)
+        print('DEBUG: current list of ids in the grid is:', len(self._ids_bids))
 
     def populate_df(self, new_vals, col, df):
         """script aims to add new_id to the corresponding column
@@ -688,6 +694,7 @@ class ProjectManager:
             save_json(self.subs_2process, self.f_subj2process, print_space = 4)
             log.info(f"{LogLVL.lvl0}{len(self.ls_ids_bids_to_process)} IDs must be processed for apps")
             log.info(f"{LogLVL.lvl0}{len(self.ls_ids_bids_miss_rawdata)} IDs are missing the rawdata and will not be processed")
+        log.info(f"\n\n")
 
 
     def processing_get_apps(self, _id_bids):
@@ -697,10 +704,10 @@ class ProjectManager:
             f_ids.json:{
                 "_id_bids": {
                     self._ids_project_col : "ID_in_file_provided_by_user_for_GLM_analysis.tsv",
-                    DEFAULT.id_source_key  : "ID_in_source_dir_or_zip_file",
-                    "freesurfer"           : "ID_after_freesurfer_processing.zip",
-                    "nilearn"              : "ID_after_nilearn_processing.zip",
-                    "dipy"                 : "ID_after_dipy_processing.zip"}}
+                    DEFAULT.id_source_key : "ID_in_source_dir_or_zip_file",
+                    "freesurfer"          : "ID_after_freesurfer_processing.zip",
+                    "nilearn"             : "ID_after_nilearn_processing.zip",
+                    "dipy"                : "ID_after_dipy_processing.zip"}}
         """
         apps2process = list()
         rawdata_listdir = self.get_listdir(self.BIDS_DIR)
@@ -744,6 +751,7 @@ class ProjectManager:
         log.info(f'{LogLVL.lvl1}{"=" * 36}')
         log.info(f'{LogLVL.lvl1}checking for NEW IDs in SOURCE_SUBJECTS_DIR:')
         log.info(f"{LogLVL.lvl2}{self.srcdata_dir}")
+
         ls_ids_src     = self.get_listdir(self.srcdata_dir)
         files_new_ids_src = [i for i in ls_ids_src if i not in self._ids_nimb_classified]
         archived = [self._ids_nimb_classified[i]["archived"] for i in self._ids_nimb_classified]
@@ -1120,6 +1128,8 @@ class ProjectManager:
     def send_2processing(self, task, dir_with_data = ""):
         python_run = self.local_vars["PROCESSING"]["python3_run_cmd"]
         NIMB_HOME  = self.local_vars["NIMB_PATHS"]["NIMB_HOME"]
+        log.info(f'{LogLVL.lvl1}PROCESSING pipeline initiating')
+
         if task == 'process':
             self.distrib_hlp.distribute_4_processing(self.unprocessed_d)
         elif task == 'fs-get-stats' or task == 'fs-get-masks':
