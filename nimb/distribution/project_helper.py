@@ -579,7 +579,6 @@ class ProjectManager:
                     if bids_format:
                         _id_bids = _id_bids_2chk
                         files_added_to_grid.append(_id_bids)
-                        log.info(f'DEBUG: adding to grid: _id_bids: {_id_bids}, app: {app}, file: {_id_bids}')
                         self.update_f_ids(_id_bids, "", "")
                         self.update_f_ids(_id_bids, app, _id_bids)
                         self.populate_df([_id_bids,], self._ids_bids_col, self.df_grid)
@@ -593,8 +592,7 @@ class ProjectManager:
         if grid_updated:
             self.get_ids_from_grid()
         self.save_f_ids()
-        print('DEBUG: current file with ids is:', len(self._ids_all), self._ids_all)
-        print('DEBUG: current list of ids in the grid is:', len(self._ids_bids))
+
 
     def populate_df(self, new_vals, col, df):
         """script aims to add new_id to the corresponding column
@@ -817,6 +815,8 @@ class ProjectManager:
             self.processing_chk()
         else:
            log.info(f'{LogLVL.lvl2}ALL participants with MRI data from {self.srcdata_dir} were classified with DCM2BIDS')
+        print('DEBUG: current file with ids is:', len(self._ids_all), self._ids_all)
+        print('DEBUG: current list of ids in the grid is:', len(self._ids_bids))
 
 
 
