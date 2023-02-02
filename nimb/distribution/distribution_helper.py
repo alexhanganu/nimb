@@ -17,6 +17,10 @@ try:
 except ImportError:
     gui_setup = 'term'
 
+import logging
+log = logging.getLogger(__name__)
+logging.basicConfig(format='%(levelname)s:%(asctime)s| %(message)s')
+log.setLevel(logging.INFO)
 
 class DistributionHelper():
 
@@ -43,17 +47,17 @@ class DistributionHelper():
             if user approves:
                 initiate the processing on local/ remote
         """
-        print(f'{LogLVL.lvl2}{unprocessed_d}')
+        log.info(f'{LogLVL.lvl2}{len(list(unprocessed_d.keys()))}')
         self.get_processing_location()
-        print(f'{LogLVL.lvl2}locations for processing are: ')
-        print(f'{LogLVL.lvl3}{self.locations_4process}')
+        log.info(f'{LogLVL.lvl2}locations for processing are: ')
+        log.info(f'{LogLVL.lvl3}{self.locations_4process}')
         # for app in self.locations_4process:
         #     print(f'{LogLVL.lvl2}locations expected for processing: {app}: {self.locations_4process[app]}')
         #     for location in self.locations_4process[app]:
         #         app_storage_dir = self.locations[location][app.upper()][f'{app.upper()}_HOME']
         #         self.get_available_space(location, app_storage_dir)
         # Ask if user wants to include only one machine or all of them
-        print(f'{LogLVL.lvl2}!!!!processing will continue ONLY on local. still TESTING')
+        log.info(f'{LogLVL.lvl2}!!!!processing will continue ONLY on local. still TESTING')
         location = 'local'
         app = 'freesurfer'
         app_storage_dir = self.locations[location][app.upper()]['SUBJECTS_DIR']
@@ -64,14 +68,14 @@ class DistributionHelper():
         if not self.test:
             process_type = 'nimb_processing'
             subproc = 'run'
-            print(f'    sending to scheduler for app {app}')
+            log.info(f'    sending to scheduler for app {app}')
             self.make_f_subjects_2b_processed(location, unprocessed_d)
             python_run   = self.local_vars['PROCESSING']["python3_run_cmd"]
             cmd = f'{python_run} processing_run.py -project {self.project}'
             cd_cmd = f'cd {os.path.join(self.NIMB_HOME, "processing")}'
             Scheduler(self.local_vars).submit_4_processing(cmd, process_type, subproc, cd_cmd)
         else:
-            print(f'    READY to send to scheduler for app {app}. TESTing active')
+            log.info(f'    READY to send to scheduler for app {app}. TESTing active')
 
 
     def make_f_subjects_2b_processed(self, location, unprocessed_d):
