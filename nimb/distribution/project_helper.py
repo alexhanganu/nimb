@@ -815,9 +815,6 @@ class ProjectManager:
             self.processing_chk()
         else:
            log.info(f'{LogLVL.lvl2}ALL participants with MRI data from {self.srcdata_dir} were classified with DCM2BIDS')
-        print('DEBUG: current file with ids is:', len(self._ids_all), self._ids_all)
-        print('DEBUG: current list of ids in the grid is:', len(self._ids_bids))
-
 
 
     def get_unprocessed_ids_from_nimb_classified(self):
