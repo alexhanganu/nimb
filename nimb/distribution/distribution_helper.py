@@ -47,7 +47,7 @@ class DistributionHelper():
             if user approves:
                 initiate the processing on local/ remote
         """
-        log.info(f'{LogLVL.lvl2}{len(list(unprocessed_d.keys()))}')
+        log.info(f'{LogLVL.lvl2}number of unprocessed IDs: {len(list(unprocessed_d.keys()))}')
         self.get_processing_location()
         log.info(f'{LogLVL.lvl2}locations for processing are: ')
         log.info(f'{LogLVL.lvl3}{self.locations_4process}')
@@ -69,7 +69,9 @@ class DistributionHelper():
             process_type = 'nimb_processing'
             subproc = 'run'
             log.info(f'    sending to scheduler for app {app}')
-            self.make_f_subjects_2b_processed(location, unprocessed_d)
+            self.f_subj2process = os.path.join(self.NIMB_tmp, DEFAULT.f_subjects2proc)
+            if not os.path.exists(self.f_subj2process):
+                self.make_f_subjects_2b_processed(location, unprocessed_d)
             python_run   = self.local_vars['PROCESSING']["python3_run_cmd"]
             cmd = f'{python_run} processing_run.py -project {self.project}'
             cd_cmd = f'cd {os.path.join(self.NIMB_HOME, "processing")}'
@@ -79,18 +81,15 @@ class DistributionHelper():
 
 
     def make_f_subjects_2b_processed(self, location, unprocessed_d):
-        NIMB_tmp_loc = self.locations[location]['NIMB_PATHS']['NIMB_tmp']
-        f_abspath = os.path.join(NIMB_tmp_loc, DEFAULT.f_subjects2proc)
-        print(f'{LogLVL.lvl2}creating file: {f_abspath}')
+        print(f'{LogLVL.lvl2}creating file: {self.f_subj2process}')
         # print(unprocessed_d)
         for _id_bids in unprocessed_d:
-            unprocessed_d[_id_bids] = self.adjust_paths_2data(NIMB_tmp_loc,
-                                                    unprocessed_d[_id_bids])
+            unprocessed_d[_id_bids] = self.adjust_paths_2data(unprocessed_d[_id_bids])
             print(unprocessed_d[_id_bids])
-        save_json(unprocessed_d, f_abspath)
+        save_json(unprocessed_d, self.f_subj2process)
 
 
-    def adjust_paths_2data(self, NIMB_tmp_loc, _id_bids_data):
+    def adjust_paths_2data(self, _id_bids_data):
         # print("\n","#" *50)
         # print(_id_bids_data)
         for BIDS_type in _id_bids_data:
