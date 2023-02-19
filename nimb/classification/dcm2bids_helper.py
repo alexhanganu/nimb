@@ -232,7 +232,7 @@ class DCM2BIDS_helper():
         moved_2 = copy_rm_dir(srcdata_folder_sent2dcm2bids,
                             self.name_err_folder_from_srcdata,
                             rm = True)
-        log.info(f'{" " *8}moving logfiles: {self.self.log_files_all}')
+        log.info(f'{" " *8}moving logfiles: {self.log_files_all}')
         for log_file in self.log_files_all:
             shutil.move(log_file, self.err_dir)
         if moved_1 and moved_2:
