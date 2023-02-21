@@ -82,6 +82,12 @@
             "dataType": "anat",
             "modalityLabel": "T1w",
             "criteria": {
+                "SeriesDescription": "IR-SPGR"
+            }
+        },        {
+            "dataType": "anat",
+            "modalityLabel": "T1w",
+            "criteria": {
                 "SeriesDescription": "Sag IR-SPGR"
             }
         },
@@ -89,7 +95,13 @@
             "dataType": "anat",
             "modalityLabel": "T1w",
             "criteria": {
-                "SeriesDescription": "Accelerated Sag IR-FSPGR "
+                "SeriesDescription": "SAG IR-SPGR"
+            }
+        },        {
+            "dataType": "anat",
+            "modalityLabel": "T1w",
+            "criteria": {
+                "SeriesDescription": "Sag IR-FSPGR"
             }
         },
         {
@@ -103,7 +115,40 @@
             "dataType": "anat",
             "modalityLabel": "T1w",
             "criteria": {
-                "SeriesDescription": "Sag IR-FSPGR"
+                "SeriesDescription": "Accelerated Sag IR-FSPGR "
+            }
+        },
+        {
+            "dataType": "anat",
+            "modalityLabel": "T1w",
+            "criteria": {
+                "SeriesDescription": "Accelerated SAG IR-SPGR"
+            }
+        },        {
+            "dataType": "anat",
+            "modalityLabel": "T1w",
+            "criteria": {
+                "SeriesDescription": "Accelerated Sag IR-FSPGR"
+            }
+        },
+        {
+            "dataType": "anat",
+            "modalityLabel": "T1w",
+            "criteria": {
+                "SeriesDescription": "Accelerated Sagittal IR-FSPGR"
+            }
+        },        {
+            "dataType": "anat",
+            "modalityLabel": "T1w",
+            "criteria": {
+                "SeriesDescription": "ORIG Accelerated Sag IR-FSPGR"
+            }
+        },
+        {
+            "dataType": "anat",
+            "modalityLabel": "T1w",
+            "criteria": {
+                "SeriesDescription": "ORIG Accelerated_Sag_IR-FSPGR"
             }
         }
     ]
