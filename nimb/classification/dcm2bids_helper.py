@@ -323,10 +323,7 @@ class DCM2BIDS_helper():
             if self.repeat_updating < self.repeat_lim:
                 self.update = False
                 for niigz_f in ls_niigz_files:
-                    f_name = niigz_f.replace('.nii.gz','')
-                    sidecar = f'{f_name}.json'
-                    self.sidecar_content = load_json(os.path.join(self.tmpdir_bids_id, sidecar))
-                    self.update_config()
+                    self.update_config(niigz_f)
                 if self.update:
                     log.info(f'{" " *8}removing folder: {self.tmpdir_bids_id}')
                     self.repeat_updating += 1
@@ -345,12 +342,11 @@ class DCM2BIDS_helper():
             self.cleaning_after_conversion()
 
 
-    def update_config(self):
+    def update_config(self, niigz_f):
         """....."""
         self.add_criterion = False
         self.config   = load_json(self.config_file)
         criterion1    = 'SeriesDescription'
-        sidecar_crit1 = self.sidecar_content[criterion1]
 
         list_criteria = list()
         for des in self.config['descriptions']:
@@ -361,19 +357,26 @@ class DCM2BIDS_helper():
             log.info(f'{" " *8}> there is at least one configuration with:')
             log.info(f'{" " *16}dataType: {self.data_Type}')
             log.info(f'{" " *16}modalityLabel: {self.modalityLabel}')
+            f_name = niigz_f.replace('.nii.gz','')
+            sidecar = f'{f_name}.json'
+            sidecar_content = load_json(os.path.join(self.tmpdir_bids_id, sidecar))
+            if criterion1 in sidecar_content:
+                sidecar_crit1 = sidecar_content[criterion1]
+                for des in list_criteria[::-1]:
+                    if criterion1 in des['criteria']:
+                        if des['criteria'][criterion1] == sidecar_crit1:
+                            log.info(f'{" " *8}sidecar :{sidecar_crit1}')
+                            log.info(f'{" " *16}is present in the config file.')
+                            log.info(f'{" " *16}please add manually another sidecar criterion')
+                            log.info(f'{" " *16}in file: {self.config_file}')
 
-            for des in list_criteria[::-1]:
-                if criterion1 in des['criteria']:
-                    if des['criteria'][criterion1] == sidecar_crit1:
-                        log.info(f'{" " *8}sidecar :{sidecar_crit1}')
-                        log.info(f'{" " *16}is present in the config file.')
-                        log.info(f'{" " *16}please add manually another sidecar criterion')
-                        log.info(f'{" " *16}in file: {self.config_file}')
+                            self.add_criterion = True
+                            sys.exit(0)
+                        else:
+                            list_criteria.remove(des)
+            else:
+                log.info(f'{" " *8}> criterion: {criterion1} is missing from converted file: {list_criteria}')
 
-                        self.add_criterion = True
-                        sys.exit(0)
-                    else:
-                        list_criteria.remove(des)
         if len(list_criteria) > 0:
             log.info(f'{" " *8}> multiple sidecars have been associated: {list_criteria}')
             log.info(f'{" " *16}cannot find a correct sidecar location')
