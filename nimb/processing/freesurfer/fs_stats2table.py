@@ -503,7 +503,7 @@ if __name__ == "__main__":
     params       = get_parameters(project_ids)
     all_vars     = Get_Vars(params)
     project_vars = all_vars.projects[params.project]
-    fs_ver_long  = all_vars.location_vars['local']["FREESURFER"]["freesurfer_version"]
+    fs_ver_long  = all_vars.location_vars['local']["FREESURFER"]["version"]
     fs_ver       = fs_definitions.FreeSurferVersion(fs_ver_long).fs_ver()
 
     if params.stats_dir == 'home':
