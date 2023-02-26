@@ -13,7 +13,7 @@ class FreeSurferChecker():
     def __init__(self, vars_fs, atlas_definitions):
         self.vars_fs       = vars_fs
         self.SUBJECTS_DIR  = vars_fs['SUBJECTS_DIR']
-        self.fsver         = vars_fs['freesurfer_version']
+        self.fsver         = vars_fs['version']
         self.process_order = vars_fs['process_order']
         self.masks         = vars_fs['masks']
         self.meas          = vars_fs["GLM_measurements"]
