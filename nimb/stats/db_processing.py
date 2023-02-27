@@ -42,14 +42,15 @@ class Table:
         rename: if True, the name of the file will be changed
         remove_Unnamed: if True, the default created columns Unnamed will be removed
         """
+        col2rm = "Unnamed: 0"
         log.info(f"        reading file: {path2file}\n    sheet: {sheetname}")
         df = self.read_df(path2file, sheetname, cols)
         if index:
             df = df.set_index(index)
         if rename:
             df.rename(columns = rename, inplace=True)
-        if remove_Unnamed:
-            df = self.rm_cols_from_df(df, ["Unnamed: 0",])
+        if remove_Unnamed and col2rm in df.columns:
+            df = self.rm_cols_from_df(df, [col2rm,])
         return df
 
 
