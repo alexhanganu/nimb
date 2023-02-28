@@ -147,6 +147,7 @@ class SETUP_FREESURFER():
                 f.write(export_FreeSurfer_cmd+"\n")
                 f.write(source_FreeSurfer_cmd+"\n")
                 f.write("fs_install_mcr R2014b\n")
+                f.write("fs_install_mcr R2019b\n")
             os.system("chmod +x setup_fs_matlab.sh")
             os.system(f"bash /{self.FREESURFER_HOME}/setup_fs_matlab.sh")
         except Exception as e:
@@ -158,6 +159,7 @@ class SETUP_FREESURFER():
                 os.system("export_FreeSurfer_cmd")
                 os.system("source_FreeSurfer_cmd")
                 os.system("fs_install_mcr R2014b")
+                os.system("fs_install_mcr R2019b")
             except Exception as e:
                 print(e)
 
