@@ -33,7 +33,7 @@ class NIMB(object):
         self.vars_local   = self.locations['local']
         self.NIMB_HOME    = self.vars_local['NIMB_PATHS']['NIMB_HOME']
         self.NIMB_tmp     = self.vars_local['NIMB_PATHS']['NIMB_tmp']
-        self.logger       = Log(self.NIMB_tmp, self.vars_local['FREESURFER']['freesurfer_version']).logger
+        self.logger       = Log(self.NIMB_tmp).logger
         self.schedule     = Scheduler(self.vars_local)
         self.py_run_cmd   = self.vars_local['PROCESSING']["python3_run_cmd"]
         # self.stats_vars   = all_vars.stats_vars
@@ -153,7 +153,7 @@ class NIMB(object):
 
         # if self.process == 'freesurfer':
         #     if not DistributionReady(self.all_vars).fs_ready():
-        #         print("FreeSurfer is not ready or freesurfer_install is set to 0. Please check the configuration files.")
+        #         print("FreeSurfer is not ready or freesurfer install is set to 0. Please check the configuration files.")
         #         sys.exit()
         #     else:
         #         cd_cmd = f"cd {os.path.join(self.NIMB_HOME, 'processing', 'freesurfer')}"
