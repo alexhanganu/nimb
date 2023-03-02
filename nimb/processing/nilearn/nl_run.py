@@ -12,8 +12,8 @@ class RUNProcessingNL:
         vars_app        = vars_local[self.app.upper()]
         self.output_loc = vars_app['NIMB_PROCESSED']
         vars_app["process_order"] = ['connectivity',]
-        if f"{self.app}_version" not in vars_app:
-            vars_app[f"{self.app}_version"] = "1"
+        if "version" not in vars_app:
+            vars_app["version"] = "1"
 
         # self.db_nl      = dict()
         self.app_db      = app_db.AppDBManage(vars_local,
@@ -21,7 +21,7 @@ class RUNProcessingNL:
                                             atlas_definitions)
         self.db_nl = self.app_db.get_db(self.app, vars_app)
         print(self.db_nl)
-        # nl_ver = vars_local['FREESURFER']['nilearn_version']
+        # nl_ver = vars_local['NILEARN']['version']
         # logger = Log(self.NIMB_tmp, fs_ver).logger
         self.get_subjects()
         self.run_connectivity_analysis()
