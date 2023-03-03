@@ -14,12 +14,12 @@ if platform != "win32":
 class Scheduler():
 
     def __init__(self, vars_local):
-        self.vars_local       = vars_local
-        self.NIMB_tmp         = self.vars_local["NIMB_PATHS"]['NIMB_tmp']
-        self.fs_subjects_dir  = self.vars_local["FREESURFER"]["SUBJECTS_DIR"]
+        self.vars_local            = vars_local
+        self.NIMB_tmp              = self.vars_local["NIMB_PATHS"]['NIMB_tmp']
+        self.fs_subjects_dir       = self.vars_local["FREESURFER"]["SUBJECTS_DIR"]
         self.export_freesurfer_cmd = self.vars_local["FREESURFER"]["export_FreeSurfer_cmd"]
         self.source_freesurfer_cmd = self.vars_local["FREESURFER"]["source_FreeSurfer_cmd"]
-        self.processing_env   = self.vars_local["PROCESSING"]["processing_env"]
+        self.processing_env        = self.vars_local["PROCESSING"]["processing_env"]
         self.python_load_cmd       = self.vars_local['PROCESSING']["python3_load_cmd"]
 
 

@@ -41,7 +41,7 @@
     "GLM_measurements"        : ["thickness","area","volume"],
     "GLM_thresholds"          : [10],
     "GLM_MCz_cache"           : 13,
-    "freesurfer_version"      : "7.3.2",
+    "version"                 : "7.3.2",
     "freesurfer_license"      : ["email", "00000", " *ABCDEFGHIJKL", " ABCDEFGHIJKLM"],
     "export_screen"           : 0
      },
@@ -50,7 +50,7 @@
     "SUBJECTS_DIR"            : "~/nimb_tmp/dipy/subjects",
     "NIMB_PROCESSED"          : "~/nimb_tmp/dipy/nimb_processed",
     "NIMB_ERR"                : "~/nimb_tmp/dipy/nimb_err",
-    "dipy_version"            : "",
+    "version"                 : "",
     "export_screen"           : 0
      },
 "NILEARN": {
@@ -58,7 +58,7 @@
     "SUBJECTS_DIR"            : "~/nimb_tmp/nilearn/subjects",
     "NIMB_PROCESSED"          : "~/nimb_tmp/nilearn/nimb_processed",
     "NIMB_ERR"                : "~/nimb_tmp/nilearn/nimb_err",
-    "nilearn_version"         : "",
+    "version"                 : "",
     "export_screen"           : 0
      },
 "EXPLANATION": {
