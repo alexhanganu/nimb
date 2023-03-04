@@ -623,7 +623,7 @@ if __name__ == "__main__":
 
     vars_local = all_vars.location_vars['local']
     log = Log(vars_local['NIMB_PATHS']['NIMB_tmp'],
-                 vars_local['FREESURFER'][f"{app}_version"]).logger
+                 vars_local['FREESURFER']["version"]).logger
 
     RUNProcessingDIPY(all_vars)
 
