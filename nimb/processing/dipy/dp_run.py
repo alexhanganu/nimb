@@ -615,7 +615,7 @@ if __name__ == "__main__":
     from distribution.logger import Log, LogLVL
     from distribution.distribution_definitions import DEFAULT
     from distribution.utilities import load_json, save_json
-    from processing.schedule_helper import Scheduler, get_jobs_status
+    from processing.schedule_helper import Scheduler
 
     project_ids  = Get_Vars().get_projects_ids()
     params       = get_parameters(project_ids)

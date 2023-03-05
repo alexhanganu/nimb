@@ -69,7 +69,7 @@ class DistributionHelper():
             process_type = 'nimb_processing'
             subproc = 'run'
             log.info(f'    sending to scheduler for app {app}')
-            self.f_subj2process = os.path.join(self.NIMB_tmp, DEFAULT.f_subjects2proc)
+            self.f_subj2process = os.path.join(self.NIMB_tmp, DEFAULT.app_files[app]["new_subjects"])
             if not os.path.exists(self.f_subj2process):
                 self.make_f_subjects_2b_processed(location, unprocessed_d)
             python_run   = self.local_vars['PROCESSING']["python3_run_cmd"]
