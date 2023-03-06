@@ -316,9 +316,9 @@ class ProjectManager:
                 return self.make_default_grid()
         '''
         log.info(f'{LogLVL.lvl1}reading / creating the grid')
-        if self._ids_project_col == "default":
+        if self._ids_project_col == "default"or not self._ids_project_col:
             self._ids_project_col = DEFAULT.id_project_key
-        if self._ids_bids_col == "default":
+        if self._ids_bids_col == "default" or not self._ids_bids_col:
             self._ids_bids_col = DEFAULT.id_col
         log.info(f'{LogLVL.lvl2}ids of project, provided by user, are in column : {self._ids_project_col}')
         log.info(f'{LogLVL.lvl2}ids of BIDS type, per BIDS rules, are in column : {self._ids_bids_col}')
@@ -671,28 +671,64 @@ class ProjectManager:
         Return:
             bool
         """
-        DEFpaths = DEFAULTpaths(self.NIMB_tmp)
-        self.f_subj2process = DEFpaths.f_subj2process_abspath
-
         log.info("\n\n")
         log.info(f"{LogLVL.lvl0}CHECKING the f_ids file for each id whether they were processed with all applications")
-        self.ls_ids_bids_to_process = list()
-        self.ls_ids_bids_miss_rawdata = list()
 
+        ids_apps_2process = dict()
+        apps = list(DEFAULT.app_files.keys())
         if self._ids_bids:
-            apps = list(DEFAULT.app_files.keys())
             for _id_bids in self._ids_bids:
-                apps2process = self.processing_get_apps(_id_bids)
-                if apps2process:
-                    # log.info(f'{LogLVL.lvl1}{_id_bids} id must be processed for apps: {apps2process}')
-                    self.processing_add_id(_id_bids, apps2process)
+                ids_apps_2process[_id_bids] = self.processing_get_apps(_id_bids)
         self.save_f_ids()
 
-        if len(self.ls_ids_bids_to_process) > 0:
-            save_json(self.subs_2process, self.f_subj2process, print_space = 4)
-            log.info(f"{LogLVL.lvl0}{len(self.ls_ids_bids_to_process)} IDs must be processed for apps")
-            log.info(f"{LogLVL.lvl0}{len(self.ls_ids_bids_miss_rawdata)} IDs are missing the rawdata and will not be processed")
+        if ids_apps_2process:
+            app_2process = dict()
+            for app in apps:
+                app_2process[app] = [i for i in ids_apps_2process.keys() if app in ids_apps_2process[i]]
+            self.processing_add_id(_id_bids, app_2process)
         log.info(f"\n\n")
+
+
+    def processing_add_id(self, _id_bids, app_2process):
+        """
+        Args:
+            _id_bids: id of participant in BIDS format
+            app_2process: dict {apps:[ids, ..]} to be processed
+        Return:
+            bool
+        Algo:
+            add _id_bids to new_subjects.json for processing
+            new_subjects.json = True
+            if new_subjects.json:
+                if ask OK to initiate processing is True:
+                    send for processing
+        """
+        for app in app_2process:
+            self.ls_ids_bids_to_process = list()
+            self.ls_ids_bids_miss_rawdata = list()
+            DEFpaths = DEFAULTpaths(self.NIMB_tmp, app)
+            f_subj2process = DEFpaths.f_subj2process_abspath
+            if not os.path.exists(f_subj2process):
+                log.info(f'{LogLVL.lvl2}file with subjects to process {f_subj2process} is missing; creating empty dictionary')
+                subs_2process = dict()
+            else:
+                subs_2process = load_json(f_subj2process)
+
+            for _id_bids in app_2process[app]:
+                _, sub_label, ses_label, _ = self.dcm2bids.is_bids_format(_id_bids)
+                content = self.processing_get_abspath_rawdata(sub_label, ses_label, _id_bids)
+                if content:
+                    data_type = [i for i in DEFAULT.apps_per_type if app in DEFAULT.apps_per_type[i]][0]
+                    if data_type in content:
+                        self.ls_ids_bids_to_process.append(_id_bids)
+                        subs_2process[_id_bids] = content
+                    else:
+                        log.info(f"{LogLVL.lvl2}{_id_bids} has no files for {app} processing")
+            if len(self.ls_ids_bids_to_process) > 0:
+                save_json(subs_2process, f_subj2process, print_space = 4)
+                log.info(f"{LogLVL.lvl0}{len(self.ls_ids_bids_to_process)} IDs must be processed for apps")
+                log.info(f"{LogLVL.lvl0}{len(self.ls_ids_bids_miss_rawdata)} IDs are missing the rawdata and will not be processed")
+                self.new_subjects = True
 
 
     def processing_get_apps(self, _id_bids):
@@ -738,6 +774,8 @@ class ProjectManager:
                 if file is missing:
                     initiate classify 2 nimb_bids
                     get list of unprocessed from nimb_classified.json
+                    missing ids are checked for BIDS structure and added to f_ids
+                    ids without a BIDS structure are NOT added to f_ids
         Args:
             none
         Return:
@@ -781,7 +819,9 @@ class ProjectManager:
         self.get_ids_nimb_classified()
         self.unprocessed_d = self.get_unprocessed_ids_from_nimb_classified()
 
-        # STEP 3:
+        """get ids that have no BIDS classification
+            initiate DCM2BIDS classification for them
+        """
         # extract potential ids that might have bids structure
         # and could be directly moved to the _ids_bids column in the grid
         log.info(f'{LogLVL.lvl2}checking BIDS format for folders in SOURCE_SUBJECTS_DIR:')
@@ -790,6 +830,7 @@ class ProjectManager:
         for _id_src in self.unprocessed_d.keys():
             for session in self.unprocessed_d[_id_src]:
                 _ids_src_bids_unprocessed[_id_src] = self.unprocessed_d[_id_src][session]["id_bids"]
+
         no_bids, _, yes_bids_d, no_rawdata, ls_nan = self.verify_ids_are_bids_standard(
                                                     list(_ids_src_bids_unprocessed.values()),
                                                     self.srcdata_dir)
@@ -799,7 +840,6 @@ class ProjectManager:
             # self.copy_dir(yes_bids_d)
             self.add_ids_source_to_bids_in_grid(yes_bids_d)
 
-        # STEP 4:
         # manage the unclassified ids
         if no_bids:
             _ids_src_unprocessed = list()
@@ -808,13 +848,14 @@ class ProjectManager:
                     _ids_src_unprocessed.append(_id_src)
             log.info(f'{LogLVL.lvl2}there are {len(_ids_src_unprocessed)} participants')
             log.info(f'{LogLVL.lvl3}with MRI data to be processed')
-            for _id_src in _ids_src_unprocessed:
-                _id_bids = self.classify_with_dcm2bids(nimb_classified = self._ids_nimb_classified,
-                                                    _id_project = _id_src)
-                self.add_ids_source_to_bids_in_grid({_id_src: _id_bids})
-            self.processing_chk()
+            # for _id_src in _ids_src_unprocessed:
+            #     _id_bids = self.classify_with_dcm2bids(nimb_classified = self._ids_nimb_classified,
+            #                                         _id_project = _id_src)
+            #     self.add_ids_source_to_bids_in_grid({_id_src: _id_bids})
         else:
            log.info(f'{LogLVL.lvl2}ALL participants with MRI data from {self.srcdata_dir} were classified with DCM2BIDS')
+
+        self.processing_chk()
 
 
     def get_unprocessed_ids_from_nimb_classified(self):
@@ -1049,35 +1090,6 @@ class ProjectManager:
     PROCESSING related scripts
     =====================================
     '''
-    def processing_add_id(self, _id_bids, apps):
-        """
-        Args:
-            _id_bids: id of participant in BIDS format
-            apps: list of apps to be processed
-        Return:
-            bool
-        Algo:
-            add _id_bids to new_subjects.json for processing
-            new_subjects.json = True
-            if new_subjects.json:
-                if ask OK to initiate processing is True:
-                    send for processing
-        """
-        if not os.path.exists(self.f_subj2process):
-            log.info(f'{LogLVL.lvl2}file with subjects to process is missing; creating empty dictionary')
-            self.subs_2process = dict()
-        else:
-            self.subs_2process = load_json(self.f_subj2process)
-
-        _, sub_label, ses_label, _ = self.dcm2bids.is_bids_format(_id_bids)
-        content = self.processing_get_abspath_rawdata(sub_label, ses_label, _id_bids)
-        if content:
-            # log.info(f"{LogLVL.lvl2}{_id_bids} id is being added to new_subjects.json file")
-            self.ls_ids_bids_to_process.append(_id_bids)
-            self.subs_2process[_id_bids] = content
-            self.new_subjects = True
-
-
     def processing_get_abspath_rawdata(self, sub_label, ses_label, _id_bids):
         """
             searches for corresponding folders in rawdata
@@ -1343,7 +1355,7 @@ class ProjectManager:
     #             if machine_name == 'local': # skip
     #                 continue
     #             # a. check the fs_install == 1
-    #             if machine_config['FREESURFER']['FreeSurfer_install'] == 1:
+    #             if machine_config['FREESURFER']['install'] == 1:
     #                 host_name = self.projects['LOCATION'][machine_name]
     #                 self.setting_up_remote_linux_with_freesurfer(host_name=host_name)
 
