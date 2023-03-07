@@ -140,8 +140,9 @@ atlas_data = {
             'parameters' : {'Vol':'Vol'},
             'header':['Medulla','Pons','SCP','Midbrain','Whole_brainstem',],
             'header_suppl':[],
-            'fs_stats_files' :{'fs7':'brainstem.v12.stats',
-                            'fs6':'brainstem.v10.stats',},
+            'fs_stats_files' :{'7.3.2':'brainstem.v13.stats',
+                               '7.2.0':'brainstem.v12.stats',
+                               '6'    :'brainstem.v10.stats',},
             "fs_stats_f":"brainstem.v12.stats",
             "fs6_stats_f":"brainstem.v10.stats",
             "fs_stats_f_inmridir":"brainstemSsVolumes.v12.txt",
@@ -158,6 +159,9 @@ atlas_data = {
                     'CA3', 'CA3-body', 'CA3-head', 'CA4', 'CA4-body', 'CA4-head', 'fimbria','HATA','Whole_hippocampus',
                     'Whole_hippocampal_body', 'Whole_hippocampal_head'],
             'header_suppl':[],
+            'fs_stats_files' :{'7.3.2':'hipposubfields.lh.T1.v22.stats',
+                               '7.2.0':'hipposubfields.lh.T1.v21.stats',
+                               '6'    :'hipposubfields.lh.T1.v10.stats',},
             "fs_stats_f":"hipposubfields.lh.T1.v21.stats",
             "fs6_stats_f":"hipposubfields.lh.T1.v10.stats",
             "fs_stats_f_inmridir":"lh.hippoSfVolumes-T1.v21.txt",
@@ -171,6 +175,9 @@ atlas_data = {
                         'Central-nucleus', 'Medial-nucleus', 'Cortical-nucleus', 'Corticoamygdaloid-transitio',
                         'Paralaminar-nucleus', 'Whole_amygdala'],
             'header_suppl':[],
+            'fs_stats_files' :{'7.3.2':'amygdalar-nuclei.lh.T1.v22.stats',
+                               '7.2.0':'amygdalar-nuclei.lh.T1.v21.stats',
+                               '6':'',},
             "fs_stats_f":"amygdalar-nuclei.lh.T1.v21.stats",
             "fs_stats_f_inmridir":"lh.amygNucVolumes-T1.v21.txt",},
     'THA':{'atlas_name' :'Thalamus',
@@ -181,6 +188,9 @@ atlas_data = {
             'header': ['AV', 'CeM', 'CL', 'CM', 'LD', 'LGN', 'LP', 'L-Sg', 'MDl', 'MDm', 'MGN', 'MV(Re)', 'Pc', 'Pf', 'Pt',
                         'PuA', 'PuI', 'PuL', 'PuM', 'VA', 'VAmc', 'VLa', 'VLp', 'VM', 'VPL', 'Whole_thalamus'],
             'header_suppl':[],
+            'fs_stats_files' :{'7.3.2':'thalamic-nuclei.lh.v13.T1.stats',
+                               '7.2.0':'thalamic-nuclei.lh.v12.T1.stats',
+                               '6':'',},
             "fs_stats_f":"thalamic-nuclei.lh.v12.T1.stats",
             "fs_stats_f_inmridir":"ThalamicNuclei.v12.T1.volumes.txt",},
     'HypoTHA':{'atlas_name' :'HypoThalamus',
@@ -196,7 +206,31 @@ atlas_data = {
                        'Right-Tubular-Superior',
                        'Whole-Left', 'Whole-Right'],
             'header_suppl':[],
+            'fs_stats_files' :{'7.3.2':'hypothalamic_subunits_volumes.v1.stats',
+                               '7.2.0':'hypothalamic_subunits_volumes.v1.stats',
+                               '6':'',},
             "fs_stats_f":"hypothalamic_subunits_volumes.v1.stats",},}
+
+
+def stats_f(fsver, atlas, _dir = "stats", hemi="".join(hemis)):
+    if fsver == "7.3.2":
+        file = atlas_data[atlas]["fs_stats_files"][fsver]
+    else:
+        mri_key = ""
+        fs_key = "fs"
+        if fsver < "7" and "fs6_stats_f" in atlas_data[atlas]:
+            fs_key = "fs6"
+        if _dir == "mri" and "fs_stats_f_inmridir" in atlas_data[atlas]:
+            mri_key = "_inmridir"
+        key = f"{fs_key}_stats_f{mri_key}"
+        file = atlas_data[atlas][key]
+
+    hemi_dot = ""
+    if hemi in hemis:
+        hemi_dot = f"{hemi}."
+    if f"{hemis[0]}." in file and hemi_dot not in file:
+        file = file.replace(f"{hemis[0]}.", hemi_dot)
+    return os.path.join(_dir, file)
 
 
 def params_atlas2nimb(atlas_param):
@@ -561,24 +595,6 @@ def get():#_dipy_labels:
             if len(vals) > 1:
                 d1[vals[2]] = vals[0]
     return d1
-
-
-def stats_f(fsver, atlas, _dir = "stats", hemi="".join(hemis)):
-    mri_key = ""
-    fs_key = "fs"
-    if fsver < "7" and "fs6_stats_f" in atlas_data[atlas]:
-        fs_key = "fs6"
-    if _dir == "mri" and "fs_stats_f_inmridir" in atlas_data[atlas]:
-        mri_key = "_inmridir"
-    key = f"{fs_key}_stats_f{mri_key}"
-    file = atlas_data[atlas][key]
-
-    hemi_dot = ""
-    if hemi in hemis:
-        hemi_dot = f"{hemi}."
-    if f"{hemis[0]}." in file and hemi_dot not in file:
-        file = file.replace(f"{hemis[0]}.", hemi_dot)
-    return os.path.join(_dir, file)
 
 
 def all_stats_files(fsver):
