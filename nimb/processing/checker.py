@@ -10,16 +10,19 @@ log = logging.getLogger(__name__)
 
 
 class CHECKER():
-    def __init__(self, atlas_definitions):
-        self.stats = atlas_definitions.stats_f
-        self.atlas = atlas_definitions.atlas_data
-
+    def __init__(self,
+                 atlas_definitions,
+                 version = "7.3.2"):
+        self.stats   = atlas_definitions.stats_f
+        self.atlas   = atlas_definitions.atlas_data
+        self.app_ver = version
 
     def chk(self, subjid, app, app_vars, stage, rm = False):
         self.app          = app
         self.app_vars     = app_vars
         self.SUBJECTS_DIR = app_vars['SUBJECTS_DIR']
-        self.app_ver      = app_vars[f"{app}_version"]
+        if app == "freesurfer" and self.app_ver != "7.3.2":
+            self.app_ver      = app_vars["version"]
         self.proc_order   = app_vars["process_order"]
 
         if app == 'freesurfer':
