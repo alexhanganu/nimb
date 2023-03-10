@@ -1,7 +1,11 @@
 #!/bin/python
 # 2020.09.10
 
-# uncomment lines: 93, 118, 174, 252
+# uncomment lines:
+# 93 (searching new subjects)
+# 118 (resending processin_run to scheduler
+# 185 (moving subject to destination)
+# initiating run of processing app: 264 line
 
 import os
 from os import path, system, chdir, environ, rename, listdir
@@ -10,7 +14,6 @@ import shutil
 import json
 import argparse
 import sys
-import logging
 
 environ['TZ'] = 'US/Eastern'
 time.tzset()
@@ -42,7 +45,6 @@ class RUNProcessing:
         self.project_vars  = all_vars.projects[self.project]
         self.vars_local    = all_vars.location_vars['local']
         vars_processing    = self.vars_local["PROCESSING"]
-        self.log           = logger #logging.getLogger(__name__)
 
         # defining files and paths
         self.NIMB_tmp      = self.vars_local['NIMB_PATHS']['NIMB_tmp']
@@ -50,14 +52,15 @@ class RUNProcessing:
         materials_dir_pt   = all_vars.projects[self.project]["materials_DIR"][1]
         self.f_running     = os.path.join(self.NIMB_tmp, DEFAULT.f_running_process)
         self.python_run    = self.vars_local["PROCESSING"]["python3_run_cmd"]
+
+        self.log           = logger
+        self.apps          = list(DEFAULT.app_files.keys())
+        self.vars_apps_populate()
         self.schedule      = Scheduler(self.vars_local)
         self.app_db        = AppDBManage(self.vars_local,
                                         DEFAULT,
                                         atlas_definitions)
-        self.vars_apps_populate()
 
-        fs_version  = self.vars_local['FREESURFER']['freesurfer_version']
-        logger      = Log(self.NIMB_tmp, fs_version).logger
 
         t0           = time.time()
         time_elapsed = 0
@@ -67,7 +70,7 @@ class RUNProcessing:
         self.update_running(1)
 
         self.log.info('    processing database reading')
-        self.DBc = DB(all_vars)
+        self.DBc = DB(all_vars, logger)
         self.db = self.DBc.get_db()
 
         self.log.info('    NEW SUBJECTS searching:')    
@@ -119,24 +122,24 @@ class RUNProcessing:
 
     def vars_apps_populate(self):
         self.vars_apps = dict()
-        for processing_type in DEFAULT.apps_per_type:
-            app = DEFAULT.apps_per_type[processing_type]
+        for app in self.apps:
             self.vars_apps[app] = self.vars_local[app.upper()]
-            app_ver = self.vars_local[app.upper()][f'{app}_version']
+            app_ver = self.vars_local[app.upper()]['version']
+            self.log.info(f"{app} version is: {app_ver}")
             if app == "freesurfer":
                 process_order = ["registration"] + FSProcesses(app_ver).process_order()
-                self.vars_apps["process_order"] = process_order
+                self.vars_apps[app]["process_order"] = process_order
             if app == "nilearn":
-                self.vars_apps["process_order"] = ['connectivity',]
+                self.vars_apps[app]["process_order"] = ['connectivity',]
             if app == "dipy":
-                self.vars_apps["process_order"] = ['connectivity',]
+                self.vars_apps[app]["process_order"] = ['connectivity',]
 
 
     def get_ids_per_app(self, app):
         _ids_in_app_db = list()
         db_per_app = self.app_db.get_db(app, self.vars_apps[app])
         # print(db_per_app)
-        for ls_bids_ids in db_per_app["LONG_DIRS"].values():
+        for ls_bids_ids in db_per_app[app]["LONG_DIRS"].values():
             _ids_in_app_db = _ids_in_app_db + ls_bids_ids
         self.log.info(f"there are: {len(_ids_in_app_db)} participants being processed with {app}")
         return _ids_in_app_db
@@ -145,9 +148,9 @@ class RUNProcessing:
     def loop_run(self):
         self.log.info('    starting the processing loop')
         self.start_app = False
-        for processing_type in DEFAULT.apps_per_type:
-            app = DEFAULT.apps_per_type[processing_type]
-            db_proc_app_key = f'PROCESS_{app}'
+        for app in self.apps:
+            app_abbrev = DEFAULT.app_files[app]["name_abbrev"]
+            db_proc_app_key = f'PROCESS_{app_abbrev}'
             _ids_in_app_db     = self.get_ids_per_app(app)
             _ids_2proc_onlocal = list()
             for _id in list(self.db[db_proc_app_key].keys()):
@@ -209,31 +212,34 @@ class RUNProcessing:
         update = False
         if _ids_2proc_onlocal:
             _ids2process = dict()
-            f_subjects2proc = os.path.join(self.NIMB_tmp, DEFAULT.f_subjects2proc)
+            f_subjects2proc = os.path.join(self.NIMB_tmp, f_new_subjects_app)
             if os.path.exists(f_subjects2proc):
                 _ids2process = load_json(f_subjects2proc)
             else:
-                self.log.info(f'    file with with subjects to process is MISSING in: {self.NIMB_tmp}')
+                self.log.info(f'    file with with subjects to process {f_subjects2proc} is MISSING in: {self.NIMB_tmp}')
 
             if _ids2process:
                 # print(_ids2process)
                 new_subjects = dict()
                 for _id_bids in _ids_2proc_onlocal:
-                    files_per_id = _ids2process[_id_bids]
-                    if self.chk_if_files_exist(files_per_id["anat"]["t1"]):
-                        ok2add = True
-                        if app == "nilearn":
-                            if "func" in files_per_id:
-                                if not self.chk_if_files_exist(files_per_id["func"]["bold"]):
-                                    ok2add = False
-                        elif app == "dipy":
-                            if "dwi" in files_per_id:
-                                if not self.chk_if_files_exist(files_per_id["dwi"]["dwi"]):
-                                    ok2add = False
-                        if ok2add:
-                            new_subjects[_id_bids] = _ids2process[_id_bids]
-                        else:
-                            print(f"!!!ERR: files are missing for app: {app}")
+                    if _id_bids in _ids2process:
+                        files_per_id = _ids2process[_id_bids]
+                        if self.chk_if_files_exist(files_per_id["anat"]["t1"]):
+                            ok2add = True
+                            if app == "nilearn":
+                                if "func" in files_per_id:
+                                    if not self.chk_if_files_exist(files_per_id["func"]["bold"]):
+                                        ok2add = False
+                            elif app == "dipy":
+                                if "dwi" in files_per_id:
+                                    if not self.chk_if_files_exist(files_per_id["dwi"]["dwi"]):
+                                        ok2add = False
+                            if ok2add:
+                                new_subjects[_id_bids] = _ids2process[_id_bids]
+                            else:
+                                self.log.info(f"!!!ERR: files are missing for app: {app}")
+                    else:
+                        self.log.info(f'    ERR!!: {_id_bids} is missing from file: {f_subjects2proc}')
                 save_json(new_subjects, f_new_subjects_app)
                 self.start_app = True
 
@@ -249,28 +255,29 @@ class RUNProcessing:
 
 
     def chk_start_processing_app(self, app):
-        print("starting processing part")
+        self.log.info("starting processing part")
+        running_f = os.path.join(self.NIMB_tmp, f'{DEFAULT.app_files[app]["running"]}0')
+        if not os.path.exists(running_f):
+            open(running_f, "w").close()
+
         if self.start_app:
-            running_f = os.path.join(self.NIMB_tmp, f'{DEFAULT.app_files[app]["running"]}0')
-            if os.path.exists(running_f):
-                path_2cd = os.path.join(self.NIMB_HOME, 'processing', str(app))
-                cd_cmd   = f"cd {path_2cd}"
-                cmd      = f'{self.python_run} {DEFAULT.app_files[app]["run_file"]}'
-                batch_file_name = f"nimb_{app}"
-                self.log.info(f'initiating new run of {app} processing')
-                # self.schedule.submit_4_processing(cmd, batch_file_name,'run', cd_cmd,
-                #                                 activate_fs = False,
-                #                                 python_load = True)
-                self.start_app = False
-            else:
-                self.log.info(f'    file {running_f} is missing')
+            path_2cd = os.path.join(self.NIMB_HOME, 'processing', str(app))
+            cd_cmd   = f"cd {path_2cd}"
+            cmd      = f'{self.python_run} {DEFAULT.app_files[app]["run_file"]}'
+            batch_file_name = f"nimb_{app}"
+            self.log.info(f'initiating new run of {app} processing')
+            self.schedule.submit_4_processing(cmd, batch_file_name,'run', cd_cmd,
+                                            activate_fs = False,
+                                            python_load = True)
+            self.start_app = False
 
 
     def count_timesleep(self):
         time2sleep = 36000 # 600 minutes
         len_all_running = 0
-        for app in DEFAULT.apps_per_type.values():
-            len_app_running = len(list(self.db[f'PROCESS_{app}'].keys()))
+        for app in self.apps:
+            app_abbrev = DEFAULT.app_files[app]["name_abbrev"]
+            len_app_running = len(list(self.db[f'PROCESS_{app_abbrev}'].keys()))
             len_all_running = len_all_running + len_app_running
         self.log.info('    running: '+str(len_all_running))
         return time2sleep, len_all_running
@@ -291,24 +298,21 @@ class RUNProcessing:
 
 class DB:
 
-    def __init__(self, all_vars):
-        try:
-            self.log      = logger #logging.getLogger(__name__)
-        except Exception as e:
-            self.log      = logging.getLogger(__name__)
+    def __init__(self, all_vars, logger):
+        self.log          = logger
         self.project      = all_vars.params.project
         self.project_vars = all_vars.projects[self.project]
         vars_nimb         = all_vars.location_vars['local']['NIMB_PATHS']
         self.NIMB_tmp     = vars_nimb['NIMB_tmp']
         self.db_f         = os.path.join(self.NIMB_tmp, DEFAULT.process_db_name)
-        self.apps         = DEFAULT.apps_per_type.values()
+        self.apps         = list(DEFAULT.app_files.keys())
         self.srcdata_dir  = self.project_vars["SOURCE_SUBJECTS_DIR"][1]
         self.distrib_hlp  = DistributionHelper(all_vars)
         self.dcm2bids     = DCM2BIDS_helper(self.project_vars,
                                         self.project,
                                         DICOM_DIR = self.srcdata_dir,
                                         tmp_dir = self.NIMB_tmp)
-        self.ses      = all_vars.location_vars['local']['FREESURFER']["long_name"]
+        self.ses      = all_vars.location_vars['local']['NIMB_PATHS']["long_abbrevs"]
         # self.db   = self.get_db()
 
 
@@ -331,7 +335,7 @@ class DB:
             db['PROJECTS'] = {}
             db['PROCESSED'] = {"cp2storage": [], "error":[]}
             for app in self.apps:
-                db[f'PROCESS_{app}'] = {}
+                db[f'PROCESS_{DEFAULT.app_files[app]["name_abbrev"]}'] = {}
         return db
 
 
@@ -341,31 +345,25 @@ class DB:
         from the file DEFAULT.f_subjects2process
         '''
         self.db = db
-        self._ids2process  = dict()
-        f_subjects2proc = os.path.join(self.NIMB_tmp, DEFAULT.f_subjects2proc)
-        if os.path.exists(f_subjects2proc):
-            self._ids2process = load_json(f_subjects2proc)
-        else:
-            self.log.info(f'    file with with subjects to process is MISSING in: {self.NIMB_tmp}')
 
         '''populating the database with subjects
         if subjects have the corresponding files for analysis
         '''
         if self.project not in db['PROJECTS']:
             self.db['PROJECTS'][self.project] = list()
-        for _id_bids in self._ids2process:
-            if _id_bids not in self.db["PROJECTS"][self.project]:
-                self.db['PROJECTS'][self.project].append(_id_bids)
-                if 'anat' in self._ids2process[_id_bids]:
-                    if 't1' in self._ids2process[_id_bids]['anat']:
-                        self.db[f'PROCESS_{DEFAULT.apps_per_type["anat"]}'][_id_bids] = 'local'
-                        if 'func' in self._ids2process[_id_bids]:
-                            self.db[f'PROCESS_{DEFAULT.apps_per_type["func"]}'][_id_bids] = 'local'
-                        if 'dwi' in self._ids2process[_id_bids]:
-                            self.db[f'PROCESS_{DEFAULT.apps_per_type["dwi"]}'][_id_bids] = 'local'
-                self.update_db(db)
-        else:
-            self.log.info(f'project: {self.project} is already registered in the database')
+
+        for app in self.apps:
+            app_abbrev = DEFAULT.app_files[app]["name_abbrev"]
+            f_subjects2proc = os.path.join(self.NIMB_tmp, DEFAULT.app_files[app]["new_subjects"])
+            if os.path.exists(f_subjects2proc):
+                content = load_json(f_subjects2proc)
+                for _id_bids in content:
+                    if _id_bids not in self.db["PROJECTS"][self.project]:
+                        self.db['PROJECTS'][self.project].append(_id_bids)
+                        self.db[f'PROCESS_{app_abbrev}'][_id_bids] = 'local'
+                        self.update_db(db)
+            else:
+                self.log.info(f'    no new subjects to process: {DEFAULT.app_files[app]["new_subjects"]}')
         return self.db
 
 
@@ -380,9 +378,10 @@ class DB:
             else:
                 self.log.info(f'    {bids_id} not in db PROCESS_FS')
         for app in self.apps:
-            if bids_id in db[f'PROCESS_{app}']:
+            app_abbrev = DEFAULT.app_files[app]["name_abbrev"]
+            if bids_id in db[f'PROCESS_{app_abbrev}']:
                 rm = False
-                self.log.info(f'    {bids_id} is present in PROCESS_{app}')
+                self.log.info(f'    {bids_id} is present in PROCESS_{app_abbrev}')
                 break
         if rm:
             if bids_id in db['PROJECTS'][self.project]:
@@ -417,6 +416,12 @@ def get_parameters(projects):
         help="names of projects located in credentials_path.py/nimb/projects.json -> PROJECTS",
     )
 
+    parser.add_argument(
+    "-test", required=False,
+    action = 'store_true',
+    help   = "when used, nimb will run only 2 participants",
+    )
+
     params = parser.parse_args()
     return params
 
@@ -445,7 +450,15 @@ if __name__ == "__main__":
     from distribution.distribution_definitions import DEFAULT
     from distribution.utilities import load_json, save_json
     from distribution.project_helper import  ProjectManager
-    from classification.dcm2bids_helper import DCM2BIDS_helper 
-    from distribution.logger import Log
+    from classification.dcm2bids_helper import DCM2BIDS_helper
+    # try:
+    #     from distribution.logger import Log
+    #     logger = Log(all_vars.location_vars['local']['NIMB_PATHS']['NIMB_tmp']).logger
+    # except Exception as e:
+    import logging
+    logger = logging.getLogger(__name__)
+    # logging.basicConfig(format='%(asctime)s| %(message)s')
+    logging.basicConfig(format='{asctime} : {message}')
+    logger.setLevel(logging.INFO)
 
     RUNProcessing(all_vars, logger)
