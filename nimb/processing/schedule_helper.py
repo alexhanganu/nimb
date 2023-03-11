@@ -142,12 +142,3 @@ class Scheduler():
 
     def get_tmux_jobs(self, RUNNING_JOBS):
         return {i:[k, 'tmux'] for k, i in RUNNING_JOBS.items() if type(i) == str and 'tmux' in i}
-
-
-def get_jobs_status(user):
-    scheduler_jobs = dict()
-    queue = list(filter(None,subprocess.run(['squeue','-u',user], stdout=subprocess.PIPE).stdout.decode('utf-8').split('\n')))
-    for line in queue[1:]:
-            vals = list(filter(None,line.split(' ')))
-            scheduler_jobs[vals[0]] = [vals[3], vals[4]]
-    return scheduler_jobs
