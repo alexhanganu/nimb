@@ -7,7 +7,10 @@ create required files to perform FreeSurfer GLM
 
 
 
-"""GLM suggestions from FreeSurfer community:
+"""
+Must check that variables are continuous numbers
+
+GLM suggestions from FreeSurfer community:
 * don't use gender as a continuous covariate (Douglas N. Greve)
 * Make sure to normalize your covariates (Douglas N. Greve)
     FSGD:
@@ -174,7 +177,7 @@ class CheckIfReady4GLM():
         self.tab.save_df(self.df_ids, self.f_GLM_group)
         PrepareForGLM(self.FS_SUBJECTS_DIR,
                     self.FS_GLM_dir,
-                    self.f_GLM_group, 
+                    self.f_GLM_group,
                     self.proj_vars,
                     self.vars_fs)
 
@@ -204,7 +207,7 @@ class CheckIfReady4GLM():
         print('    extracting list of ids that were processed with FreeSurfer')
         print(f'        in the file{self.f_ids_processed}')
         self.ids_bids_proc_all = self.read_json(self.f_ids_processed)
-        return {i: self.ids_bids_proc_all[i][DEFAULT.freesurfer_key] for i in self.ids_bids_proc_all}
+        return {i: self.ids_bids_proc_all[i][DEFAULT.apps_keys["freesurfer"]] for i in self.ids_bids_proc_all}
         # return {i: 'path' for i in self.ids_bids_proc_all if self.ids_bids_proc_all[i]['source'] in ids_src_glm_file} #old version
 
 
@@ -312,6 +315,9 @@ class PrepareForGLM():
         """extract ids that are ready to be included in the GLM analysis
             specifically, they are being checked that all Qcache files are present
         """
+        # removing NaNs from ids
+        ids = [i for i in ids if not(pd.isnull(i))] 
+
         miss = {}
         for _id in ids:
             files_ok = fs_definitions.ChkFSQcache(self.SUBJECTS_DIR,
