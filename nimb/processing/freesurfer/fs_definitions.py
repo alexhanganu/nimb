@@ -64,8 +64,8 @@ class FSProcesses:
                         "log6"   :"brainstem-structures.log",
                         "group"  :"atlas",
                         "atlas_2chk": ['BS'],
-                        "cmd6"   :"brainstem-structures",
                         "cmd"    :"segmentBS.sh",
+                        "cmd6"   :"brainstem-structures",
                         "s_param":"",
                         "run_step":5,
                         "isrun_f":"IsRunningBSsubst",
@@ -75,8 +75,8 @@ class FSProcesses:
                         "log"    :"hippocampal-subfields-T1.log",
                         "group"  :"atlas",
                         "atlas_2chk": ['HIP', 'AMY'],
-                        "cmd6"   :"hippocampal-subfields-T1",
                         "cmd"    :"segmentHA_T1.sh",
+                        "cmd6"   :"hippocampal-subfields-T1",
                         "s_param":"",
                         "run_step":6,
                         "isrun_f":"IsRunningHPsubT1.lh+rh",
@@ -90,17 +90,17 @@ class FSProcesses:
                         "s_param":"",
                         "run_step":7,
                         "isrun_f":"IsRunningThalamicNuclei_mainFreeSurferT1",
-                        "time_suggested":'03:00:00'},
-            "hypotha"   :{
-                        "fsver"  :72,
-                        "log"    :"thalamic-nuclei-mainFreeSurferT1.log",
-                        "group"  :"atlas",
-                        "atlas_2chk": ['HypoTHA'],
-                        "cmd"    :"mri_segment_hypothalamic_subunits",
-                        "s_param":"--s",
-                        "run_step":8,
-                        "isrun_f":"IsRunningHypoThalamicNuclei_mainFreeSurferT1",
-                        "time_suggested":'01:00:00'}}
+                        "time_suggested":'03:00:00'}}#,
+            # "hypotha"   :{
+            #             "fsver"  :72,
+            #             "log"    :"thalamic-nuclei-mainFreeSurferT1.log",
+            #             "group"  :"atlas",
+            #             "atlas_2chk": ['HypoTHA'],
+            #             "cmd"    :"mri_segment_hypothalamic_subunits",
+            #             "s_param":"--s",
+            #             "run_step":8,
+            #             "isrun_f":"IsRunningHypoThalamicNuclei_mainFreeSurferT1",
+            #             "time_suggested":'01:00:00'}}
 
         self.recons   = [i for i in self.processes if "recon" in self.processes[i]["group"]]
         self.atlas_proc = [i for i in self.processes if "atlas" in self.processes[i]["group"]]
@@ -122,7 +122,7 @@ class FSProcesses:
         if self.fs_ver2 < "7":
             fs7_atlases = [i for i in self.atlas_proc if self.processes[i]["fsver"] > 6]
             return [i for i in order_all if i not in fs7_atlases]
-        elif self.fs_ver2 < "72":
+        elif self.fs_ver2.replace(".","") < "72":
             fs72_atlases = [i for i in self.atlas_proc if self.processes[i]["fsver"] == 72]
             return [i for i in order_all if i not in fs72_atlases]
         else:
@@ -139,8 +139,7 @@ class FSProcesses:
         elif self.processes[process]["group"] == 'atlas':
             return self.cmd_atlas(process, _id)
         elif process == 'masks':
-            chdir = os.path.join(NIMB_HOME, 'processing', 'freesurfer')
-            return f"cd {chdir}\npython run_masks.py {_id}"
+            return f"python run_masks.py {_id}"
 
     def cmd_atlas(self, process, _id):
         if self.fs_ver2 < "7":
@@ -156,13 +155,17 @@ class FSProcesses:
 
     def get_suggested_times(self):
         suggested_times = {
-            'registration':'01:00:00',
-            'recon'       :'30:00:00',
-            'recbase'     :'30:00:00',
-            'reclong'     :'23:00:00',
-            'masks'       :'12:00:00',
-            'archiving'   :'01:00:00',
-            'fs_glm'      :'23:00:00'}
+            'registration'  :'01:00:00',
+            'recon'         :'30:00:00',
+            'recbase'       :'30:00:00',
+            'reclong'       :'23:00:00',
+            'masks'         :'12:00:00',
+            'archiving'     :'01:00:00',
+            'fs_glm'        :'23:00:00',
+            'moving'        :'01:00:00',
+            'glm_preproc'   :'01:00:00',
+            'glmfit'        :'01:00:00',
+            'glm_montecarlo':'02:00:00',}
             # 'autorecon1'  :'05:00:00',
             # 'autorecon2'  :'12:00:00',
             # 'autorecon3'  :'12:00:00',
