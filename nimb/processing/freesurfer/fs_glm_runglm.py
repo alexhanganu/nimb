@@ -1,10 +1,15 @@
 #!/bin/python
-# last update: 20201218
+# last update: 20230304
+
+# testing the sending the scheduler method
+send_2scheduler = True
 
 import os
 import sys
 import linecache
 import shutil
+import time
+
 try:
     from processing.freesurfer import fs_definitions
 except ImportError:
@@ -15,22 +20,28 @@ class PerformGLM():
 
     def __init__(self,
                 all_vars,
-                PATHglm,
+                params,
+                Log,
                 sig_fdr_thresh = 3.0):
         '''
         sig_fdr_thresh at 3.0 corresponds to p = 0.001;
         for p=0.05 use value 1.3,
         but it should be used ONLY for visualisation.
         '''
-
-        vars_fs                    = all_vars.location_vars['local']["FREESURFER"]
+        self.vars_local            = all_vars.location_vars['local']
+        vars_fs                    = self.vars_local["FREESURFER"]
         self.FREESURFER_HOME       = vars_fs["FREESURFER_HOME"]
         self.SUBJECTS_DIR          = vars_fs["SUBJECTS_DIR"]
         self.measurements          = vars_fs["GLM_measurements"]
         self.thresholds            = vars_fs["GLM_thresholds"]
         self.mc_cache_thresh       = vars_fs["GLM_MCz_cache"]
-        param                      = fs_definitions.FSGLMParams(PATHglm)
-        self.PATHglm               = PATHglm
+        self.PATHglm               = params.glm_dir
+        self.contrast_choice       = params.contrast
+        self.corrected             = params.corrected
+        param                      = fs_definitions.FSGLMParams(self.PATHglm)
+        self.schedule              = Scheduler(self.vars_local)
+        self.log                   = Log(self.vars_local['NIMB_PATHS']['NIMB_tmp']).logger
+
         self.sig_fdr_thresh        = sig_fdr_thresh
 
         self.PATHglm_glm           = param.PATHglm_glm
@@ -46,45 +57,19 @@ class PerformGLM():
         self.cluster_stats         = param.cluster_stats
         self.cluster_stats_2csv    = param.cluster_stats_2csv
         self.sig_contrasts         = param.sig_contrasts
+        self.db                    = {'RUNNING_JOBS':dict()}
+        self.nr_cmds_2combine      = 10
+        self.pcc_r_filename       = "pcc.r.dat"
+        self.cohensd_sum_filename = "cohensd.sum.dat"
+        self.files_glm, RUN        = self.files_f4glm_get(param)
 
-        RUN = True
-        # get files_glm.
-        try:
-            files_glm = load_json(param.files_for_glm)
-            print(f'    successfully uploaded file: {param.files_for_glm}')
-        except ImportError as e:
-            print(e)
-            print(f'    file {param.files_for_glm} is missing')
-            RUN = False
-
-        # get file with subjects per group
-        try:
-            subjects_per_group = load_json(param.subjects_per_group)
-            print(f'    successfully uploaded file: {param.subjects_per_group}')
-        except Exception as e:
-            print(e)
-            print(f'    file {param.subjects_per_group} is missing')
-            RUN = False
-
-        # checking that all subjects are present
-        print('    subjects are located in: {}'.format(self.SUBJECTS_DIR))
-        for group in subjects_per_group:
-            for subject in subjects_per_group[group]:
-                if subject not in os.listdir(self.SUBJECTS_DIR):
-                    print(f' subject is missing from FreeSurfer Subjects folder: {subject}')
-                    RUN = False
-                    break
-
-        for subdir in (self.PATHglm_glm, self.PATHglm_results, self.PATH_img):
-            if not os.path.isdir(subdir): os.makedirs(subdir)
-        if not os.path.isfile(self.sig_contrasts):
-            open(self.sig_contrasts,'w').close()
 
         if RUN:
-            self.err_preproc  = list()
-            self.sig_fdr_data = dict()
-            self.sig_mc_data  = dict()
-            self.run_loop(files_glm)
+            self.err_preproc   = list()
+            self.sig_fdr_data  = dict()
+            self.sig_mc_data   = dict()
+            self.loop_run()
+
             if self.err_preproc:
                 save_json(self.err_preproc, self.err_mris_preproc_file)
             if self.sig_fdr_data:
@@ -93,27 +78,94 @@ class PerformGLM():
                 save_json(self.sig_mc_data, self.sig_mc_json)
             if os.path.exists(self.cluster_stats):
                 ClusterFile2CSV(self.cluster_stats,
-                                self.cluster_stats_2csv)
-            print('\n\nGLM DONE')
+                                self.cluster_stats_2csv,
+                                self.log)
+            self.log.info('\n\nGLM DONE')
         else:
             sys.exit('some ERRORS were found. Cannot perform FreeSurfer GLM')
 
 
-    def run_loop(self, files_glm):
-        print('    performing GLM analysis using mri_glmfit')
-        for fsgd_type in files_glm:
-            for fsgd_file in files_glm[fsgd_type]['fsgd']:
-                fsgd_file_name = fsgd_file.split("/")[-1].replace('.fsgd','')
-                fsgd_f_unix = os.path.join(self.PATHglm,'fsgd',fsgd_file_name+'_unix.fsgd')
-                for hemi in self.hemispheres:
-                    for meas in self.measurements:
-                        for thresh in self.thresholds:
-                            self.RUN_GLM(fsgd_type, files_glm, fsgd_file_name,
-                                         fsgd_f_unix, hemi, meas, thresh)
+    def loop_run(self):
+        """initiate loop running for GLM analysis
+        """
+        scheduler_jobs = self.schedule.get_jobs_status(self.vars_local["USER"]["user"],
+                                                        self.db['RUNNING_JOBS'])
+        if self.check_active_tasks():
+            self.preproc_run(scheduler_jobs)
+        if self.check_active_tasks():
+            self.glmfit_run(scheduler_jobs)
+        if self.check_active_tasks():
+            self.monte_carlo_correction_run(scheduler_jobs)
+        if self.check_active_tasks():
+            self.results_monte_carlo_get()
 
 
-    def RUN_GLM(self, fsgd_type, files_glm, fsgd_file_name, fsgd_f_unix,
-                      hemi, meas, thresh):
+    def check_active_tasks(self):
+        run = True
+        active_subjects = len(self.db['RUNNING_JOBS'].keys())
+        while active_subjects >0:
+            time_to_sleep = 300 # 5 minutes
+            self.log.info(f'\n                 active subjects: {str(active_subjects)}')
+            self.log.info('\n\nWAITING. \nNext run at: '+str(time.strftime("%H:%M",time.localtime(time.time()+time_to_sleep))))
+            time.sleep(time_to_sleep)
+        return run
+
+
+    def preproc_run(self, scheduler_jobs):
+        """do preprocessing using mris_preproc, before running GLM
+        """
+        self.log.info('\n\n    PREPROCESSING performing using mris_preproc')
+        process = "glm_preproc"
+        self.submit_cmds = dict()
+        dirs_present = list()
+
+        for fsgd_type in self.files_glm:
+            self.files_glm[fsgd_type]["glm"] = dict()
+            for fsgd_file in self.files_glm[fsgd_type]['fsgd']:
+                    fsgd_file_name = fsgd_file.split("/")[-1].replace('.fsgd','')
+                    fsgd_f_unix = os.path.join(self.PATHglm,'fsgd',fsgd_file_name+'_unix.fsgd')
+                    for hemi in self.hemispheres:
+                        for meas in self.measurements:
+                            for thresh in self.thresholds:
+                                glm_analysis = f'{meas}.{hemi}.fwhm{str(thresh)}'
+                                analysis_name = f'{fsgd_file_name}.{glm_analysis}'
+                                submit_key = analysis_name
+                                glmdir   = os.path.join(self.PATHglm_glm, analysis_name)
+                                mgh_f    = os.path.join(glmdir, f'{glm_analysis}.y.mgh')
+                                f_cache  = f'{meas}.fwhm{str(thresh)}.fsaverage'
+                                cmd_tail = f' --target fsaverage --hemi {hemi} --out {mgh_f}'
+                                cmd      = f'mris_preproc --fsgd {fsgd_f_unix} --cache-in {f_cache}{cmd_tail}'
+                                self.files_glm[fsgd_type]["glm"][analysis_name] = {"mgh_f": mgh_f,
+                                                                                   "fsgd_f_unix": fsgd_f_unix,
+                                                                                   "hemi": hemi,
+                                                                                   "meas": meas}
+                                self.db['RUNNING_JOBS'], status, _ = self.get_status_for_subjid_in_queue(self.db['RUNNING_JOBS'],
+                                                                                                        submit_key,
+                                                                                                        scheduler_jobs)
+                                if status == 'none':
+                                    if submit_key in self.db['RUNNING_JOBS']:
+                                        self.db['RUNNING_JOBS'].pop(submit_key, None)
+                                    if not os.path.exists(glmdir) or not os.path.exists(mgh_f):
+                                        self.submit_cmds[submit_key] = cmd
+                                    else:
+                                        dirs_present.append(glmdir)
+        if dirs_present:
+            self.log.info(f"        DONE: {len(dirs_present)} glm folders are present and mgh file was created")
+
+        if self.submit_cmds:
+            self.log.info(f'PREPROC: must create: {len(list(self.submit_cmds.keys()))} folders')
+            tmp_ls_keys =  list(self.submit_cmds.keys())[:self.nr_cmds_2combine]
+            new_data = self.submit_cmds.copy()
+            while len(tmp_ls_keys) > 0:
+                tmp_data = {i:self.submit_cmds[i] for i in tmp_ls_keys}
+                key      = list(tmp_data.keys())[0]
+                cmd      = "\n".join(list(tmp_data.values()))
+                self.schedule_send(key, cmd, process)
+                new_data    = {i:new_data[i] for i in new_data.keys() if i not in tmp_ls_keys}
+                tmp_ls_keys =  list(new_data.keys())[:self.nr_cmds_2combine]
+
+
+    def glmfit_run(self, scheduler_jobs):
         """do GLM using mri_glmfit
             can add flags:
                 --skew: to compute skew and p-value for skew
@@ -127,74 +179,74 @@ class PerformGLM():
                     and first row being clustername (Cluter 1, Cluster 2)
                     col = 1, row = 1 can by dummy string (e.g., "dummy")
         """
-        glm_analysis = '{}.{}.fwhm{}'.format(meas, hemi, str(thresh))
-        analysis_name = '{}.{}'.format(fsgd_file_name, glm_analysis)
-        glmdir = os.path.join(self.PATHglm_glm, analysis_name)
-        mgh_f = os.path.join(glmdir, '{}.y.mgh'.format(glm_analysis))
-        if not os.path.isdir(glmdir):
-            self.run_mris_preproc(fsgd_f_unix, meas, thresh, hemi, mgh_f)
-            if os.path.isfile(mgh_f):
-                for contrast_file in files_glm[fsgd_type]['mtx']:
-                    fsgd_type_contrast = contrast_file.replace('.mtx','')
-                    contrast = fsgd_type_contrast.replace(fsgd_type+'_','')
-                    contrast_f_ix = files_glm[fsgd_type]['mtx'].index(contrast_file)
-                    explanation = files_glm[fsgd_type]['mtx_explanation'][contrast_f_ix]
-                    for gd2mtx in files_glm[fsgd_type]['gd2mtx']:
-                        self.run_mri_glmfit(mgh_f, fsgd_f_unix, gd2mtx, glmdir,
-                                            hemi, contrast_file)
-                        if self.check_maxvox(glmdir, fsgd_type_contrast):
-                            self.log_contrasts_with_significance(analysis_name,
-                                                                fsgd_type_contrast)
-                            self.prepare_for_image_extraction_fdr(hemi, glmdir, analysis_name,
-                                                                  fsgd_type_contrast)
-                        self.run_mri_surfcluster(glmdir, fsgd_type_contrast,
-                                                 hemi, contrast, analysis_name,
-                                                 meas, explanation)
-            else:
-                print('{} not created; ERROR in mris_preproc'.format(mgh_f))
-                self.err_preproc.append(mgh_f)
+        self.log.info('\n\n    GLM analysis performing using mri_glmfit')
+        process = "glmfit"
+        self.submit_cmds = dict()
+        dirs_present = list()
+        dirs_error = list()
+
+        for fsgd_type in self.files_glm:
+            for analysis_name in self.files_glm[fsgd_type]["glm"]:
+                glmdir      = os.path.join(self.PATHglm_glm, analysis_name)
+                mgh_f       = self.files_glm[fsgd_type]["glm"][analysis_name]["mgh_f"]
+                fsgd_f_unix = self.files_glm[fsgd_type]["glm"][analysis_name]["fsgd_f_unix"]
+                hemi        = self.files_glm[fsgd_type]["glm"][analysis_name]["hemi"]
+                self.files_glm[fsgd_type]["glm"][analysis_name]["contrasts"] = dict()
+                if os.path.exists(glmdir) and os.path.exists(mgh_f):
+                    for contrast_file in self.files_glm[fsgd_type]['mtx']:
+                        glm_contrast_dir = contrast_file.replace(".mtx","")
+                        for gd2mtx in self.files_glm[fsgd_type]['gd2mtx']:
+                            submit_key   = analysis_name+"_"+glm_contrast_dir
+                            cmd_header   = f'mri_glmfit --y {mgh_f} --fsgd {fsgd_f_unix} {gd2mtx}'
+                            glmdir_cmd   = f'--glmdir {glmdir}'
+                            path_2label  = os.path.join(self.SUBJECTS_DIR, 'fsaverage', 'label', f'{hemi}.aparc.label')
+                            surf_label   = f'--surf fsaverage {hemi} --label {path_2label}'
+                            contrast_cmd = f'--C {os.path.join(self.PATHglm, "contrasts", contrast_file)}'
+                            cmd          = f'{cmd_header} {glmdir_cmd} {surf_label} {contrast_cmd}'
+                            glm_folder   = os.path.join(glmdir, glm_contrast_dir)
+                            self.files_glm[fsgd_type]["glm"][analysis_name]["contrasts"][glm_contrast_dir] = {"":list()}
+                            if not os.path.exists(glm_folder):
+                                self.db['RUNNING_JOBS'], status, _ = self.get_status_for_subjid_in_queue(self.db['RUNNING_JOBS'],
+                                                                                                        submit_key,
+                                                                                                        scheduler_jobs)
+                                self.log.info(f"        status is: {status}")
+                                if status == 'none':
+                                    if submit_key in self.db['RUNNING_JOBS']:
+                                        self.db['RUNNING_JOBS'].pop(submit_key, None)
+                                    self.submit_cmds[submit_key] = cmd
+                                else:
+                                    self.log.info(f"        !!!!!!!!!!status is not none: {status}")
+                            else:
+                                dirs_present.append(glmdir)
+                                if not os.path.exists(os.path.join(glm_folder, "sig.mgh")):
+                                    self.log.info(f"        ERROR!!!! sig.mgh file is ABSENT for folder: {glm_folder}")
+                                    dirs_error.append(glm_folder)
+                else:
+                    self.log.info(f'ERR: folder {glmdir} is missing or mgh file: {mgh_f} is missing')
+                if not os.path.exists(mgh_f):
+                    self.err_preproc.append(mgh_f)
+
+        if dirs_present:
+            self.log.info(f"        DONE: {len(dirs_present)} glm analysis were done and sig files were created")
+        if dirs_error:
+            self.log.info(f"        ERROR: {len(dirs_present)} glm analysis have missing sig.mgh files")
+
+        if self.submit_cmds:
+            self.log.info(f'GLM commands total: {len(list(self.submit_cmds.keys()))}')
+            tmp_ls_keys =  list(self.submit_cmds.keys())[:self.nr_cmds_2combine]
+            new_data = self.submit_cmds.copy()
+            while len(tmp_ls_keys) > 0:
+                tmp_data = {i:self.submit_cmds[i] for i in tmp_ls_keys}
+                key      = list(tmp_data.keys())[0]
+                cmd      = "\n".join(list(tmp_data.values()))
+                self.schedule_send(key, cmd, process)
+                new_data    = {i:new_data[i] for i in new_data.keys() if i not in tmp_ls_keys}
+                tmp_ls_keys =  list(new_data.keys())[:self.nr_cmds_2combine]
 
 
-    def run_mris_preproc(self, fsgd_file, meas, thresh, hemi, mgh_f):
-        f_cache = '{}.fwhm{}.fsaverage'.format(meas, str(thresh))
-        cmd_tail = ' --target fsaverage --hemi {} --out {}'.format(hemi, mgh_f)
-        os.system('mris_preproc --fsgd {} --cache-in {}{}'.format(fsgd_file, f_cache, cmd_tail))
-
-
-    def run_mri_glmfit(self, mgh_f, fsgd_file, gd2mtx, glmdir, hemi, contrast_file):
-        cmd_header   = 'mri_glmfit --y {} --fsgd {} {}'.format(mgh_f, fsgd_file, gd2mtx)
-        glmdir_cmd   = '--glmdir {}'.format(glmdir)
-        path_2label  = os.path.join(self.SUBJECTS_DIR, 'fsaverage', 'label', hemi+'.aparc.label')
-        surf_label   = '--surf fsaverage {} --label {}'.format(hemi, path_2label)
-        contrast_cmd = '--C {}'.format(os.path.join(self.PATHglm, 'contrasts', contrast_file))
-        cmd          = '{} {} {} {}'.format(cmd_header, glmdir_cmd, surf_label, contrast_cmd)
-        os.system(cmd)
-
-
-    def check_maxvox(self, glmdir, fsgd_type_contrast):
-        res = False
-        maxvox = os.path.join(glmdir, fsgd_type_contrast, 'maxvox.dat')
-        if os.path.exists(maxvox):
-            val = [i.strip() for i in open(maxvox).readlines()][0].split()[0]
-            if float(val) > self.sig_fdr_thresh or float(val) < -self.sig_fdr_thresh:
-                res = True
-        return res
-
-
-    def log_contrasts_with_significance(self, analysis_name, fsgd_type_contrast):
-        with open(self.sig_contrasts, 'a') as f:
-            f.write(f'{analysis_name}/{fsgd_type_contrast}\n')
-
-
-    def run_mri_surfcluster(self,
-                            glmdir,
-                            fsgd_type_contrast,
-                            hemi,
-                            contrast,
-                            analysis_name,
-                            meas,
-                            explanation):
-        '''
+    def monte_carlo_correction_run(self,
+                                   scheduler_jobs):
+        """run Monte-Carlo correction using mri_surfcluster
             https://surfer.nmr.mgh.harvard.edu/fswiki/FsTutorial/MultipleComparisonsV6.0Perm
             --glmdir: Specify the same GLM directory
             --perm: Run a permuation simulation 
@@ -202,54 +254,179 @@ class PerformGLM():
             direction: the sign of analysis ("neg" for negative, "pos" for positive, or "abs" for absolute/unsigned)
             --cwp 0.05 : Keep clusters that have cluster-wise p-values < 0.05. To see all clusters, set to .999
             --2spaces : adjust p-values for two hemispheres
-        '''
-        path_2contrast = os.path.join(glmdir, fsgd_type_contrast)
-        mcz_meas = self.GLM_MCz_meas_codes[meas]
-        for direction in self.mcz_sim_direction:
-            mcz_header  = 'mc-z.{}.{}{}'.format(direction, mcz_meas, str(self.mc_cache_thresh))
-            sig_f       = os.path.join(path_2contrast,'sig.mgh')
-            cwsig_mc_f  = os.path.join(path_2contrast,'{}.sig.cluster.mgh'.format(mcz_header))
-            vwsig_mc_f  = os.path.join(path_2contrast,'{}.sig.vertex.mgh'.format(mcz_header))
-            sum_mc_f    = os.path.join(path_2contrast,'{}.sig.cluster.summary'.format(mcz_header))
-            ocn_mc_f    = os.path.join(path_2contrast,'{}.sig.ocn.mgh'.format(mcz_header))
-            oannot_mc_f = os.path.join(path_2contrast,'{}.sig.ocn.annot'.format(mcz_header))
-            csdpdf_mc_f = os.path.join(path_2contrast,'{}.pdf.dat'.format(mcz_header))
-            if meas != 'curv':
-                path_2fsavg = os.path.join(self.FREESURFER_HOME, 'average', 'mult-comp-cor', 'fsaverage')
-                fwhm = 'fwhm{}'.format(self.GLM_sim_fwhm4csd[meas][hemi])
-                th   = 'th{}'.format(str(self.mc_cache_thresh))
-                csd_mc_f = os.path.join(path_2fsavg, hemi, 'cortex', fwhm, direction, th, 'mc-z.csd')
-                cmd_header = 'mri_surfcluster --in {} --csd {}'.format(sig_f, csd_mc_f)
-                mask_cmd   = '--mask {}'.format(os.path.join(glmdir,'mask.mgh'))
-                cmd_params = '--cwsig {} --vwsig {} --sum {} --ocn {} --oannot {} --csdpdf {}'.format(
-                                cwsig_mc_f, vwsig_mc_f, sum_mc_f, ocn_mc_f, oannot_mc_f, csdpdf_mc_f)
-                cmd_tail   = '--annot aparc --cwpvalthresh 0.05 --surf white'
-                os.system('{} {} {} {}'.format(cmd_header, mask_cmd, cmd_params, cmd_tail))
-                if self.check_mcz_summary(sum_mc_f):
-                    # self.get_cohensd_mean_per_contrast(path_2contrast,
-                    #                                     ocn_mc_f)
-                    self.cluster_stats_to_file(analysis_name,
-                                                sum_mc_f,
-                                                contrast,
-                                                direction,
-                                                explanation)
-                    self.prepare_for_image_extraction_mc(hemi, analysis_name, path_2contrast,
-                                                        fsgd_type_contrast, contrast, direction,
-                                                        cwsig_mc_f, oannot_mc_f)
+        """
+        self.log.info('\n\n    MONTE_CARLO correction performing using mri_surfcluster')
+        process  = "glm_montecarlo"
+        self.submit_cmds = dict()
+        dirs_present = list()
+
+        for fsgd_type in self.files_glm:
+            for analysis_name in self.files_glm[fsgd_type]["glm"]:
+                glmdir   = os.path.join(self.PATHglm_glm, analysis_name)
+                hemi     = self.files_glm[fsgd_type]["glm"][analysis_name]["hemi"]
+                meas     = self.files_glm[fsgd_type]["glm"][analysis_name]["meas"]
+                mcz_meas = self.GLM_MCz_meas_codes[meas]
+                for glm_contrast_dir in self.files_glm[fsgd_type]["glm"][analysis_name]["contrasts"]:
+                    glm_folder   = os.path.join(glmdir, glm_contrast_dir)
+                    sig_f         = os.path.join(glm_folder,'sig.mgh')
+                    maxvox_file   = os.path.join(glm_folder, 'maxvox.dat')
+                    contrast       = glm_contrast_dir.replace(fsgd_type+'_','')
+                    contrast_f_ix  = self.files_glm[fsgd_type]['mtx'].index(glm_contrast_dir + ".mtx")
+                    explanation    = self.files_glm[fsgd_type]['mtx_explanation'][contrast_f_ix]
+                    if os.path.exists(maxvox_file):
+                        if self.check_maxvox(maxvox_file):
+                            # populate log file with significant results
+                            with open(self.sig_contrasts, 'a') as f:
+                                f.write(f'{analysis_name}/{glm_contrast_dir}\n')
+                            self.prepare_for_image_extraction_fdr(hemi, glmdir, analysis_name,
+                                                                  glm_contrast_dir)
+
+                            self.files_glm[fsgd_type]["glm"][analysis_name]["contrasts"][glm_contrast_dir] = {"mcz": list()}
+                            for direction in self.mcz_sim_direction:
+                                submit_key = "mcz_"+analysis_name+"_"+glm_contrast_dir+"_"+direction
+                                cwsig_mc_f, _, sum_mc_f, ocn_mc_f, oannot_mc_f, _, _, _ = self.mcz_files_get(direction, mcz_meas, glm_folder)
+                                if not os.path.exists(sum_mc_f):
+                                    fwhm = f'fwhm{self.GLM_sim_fwhm4csd[meas][hemi]}'
+                                    th   = f'th{str(self.mc_cache_thresh)}'
+                                    path_2fsavg = os.path.join(self.FREESURFER_HOME, 'average', 'mult-comp-cor', 'fsaverage')
+                                    csd_mc_f = os.path.join(path_2fsavg, hemi, 'cortex', fwhm, direction, th, 'mc-z.csd')
+                                    cmd_header = f'mri_surfcluster --in {sig_f} --csd {csd_mc_f}'
+                                    mask_cmd   = f'--mask {os.path.join(glmdir,"mask.mgh")}'
+                                    cmd_params = self.mcz_commands_get(direction, mcz_meas, glm_folder)
+                                    cmd_tail   = '--annot aparc --cwpvalthresh 0.05 --surf white'
+                                    cmd_header_curv = f'mri_glmfit-sim --glmdir {glm_folder}'
+                                    cmd_cache_curv  = f'--cache {str(self.mc_cache_thresh)} {direction}'
+                                    cmd_perm_curv   = f'--perm 1000 1.3 {direction}'
+                                    cmd_tail_curve   = f'--cwp 0.05 --2spaces'
+
+                                    self.files_glm[fsgd_type]["glm"][analysis_name]["contrasts"][glm_contrast_dir]["mcz"].append(direction)
+                                    if meas != 'curv':
+                                        cmd = f'{cmd_header} {mask_cmd} {cmd_params} {cmd_tail}'
+                                    else:
+                                        run_cache  = f'{cmd_header_curv} {cmd_cache_curv} {cmd_tail_curve}'
+                                        run_permut = f'{cmd_header_curv} {cmd_perm_curv} {cmd_tail_curve}'
+                                        ls_cmds = [run_cache, run_permut]
+                                        cmd = "\n".join(ls_cmds)
+                                    self.submit_cmds[submit_key] = cmd
+                                else:
+                                    dirs_present.append(submit_key)
+        if dirs_present:
+            self.log.info(f"        DONE: {len(dirs_present)} folder have all Monte-Carlo correction performed")
+
+        if self.submit_cmds:
+            self.log.info(f'MCZ submitting')
+            self.log.info(f'MCZ commands total: {len(list(self.submit_cmds.keys()))}')
+            tmp_ls_keys =  list(self.submit_cmds.keys())[:self.nr_cmds_2combine]
+            new_data = self.submit_cmds.copy()
+            while len(tmp_ls_keys) > 0:
+                tmp_data = {i:self.submit_cmds[i] for i in tmp_ls_keys}
+                key      = list(tmp_data.keys())[0]
+                cmd      = "\n".join(list(tmp_data.values()))
+                self.schedule_send(key, cmd, process)
+                new_data    = {i:new_data[i] for i in new_data.keys() if i not in tmp_ls_keys}
+                tmp_ls_keys =  list(new_data.keys())[:self.nr_cmds_2combine]
+
+
+    def results_monte_carlo_get(self):
+        """extracting significant results after Monte-Carlo correction
+        """
+        self.log.info('\n\n    RESULTS extracting for Monte-Carlo analysis')
+
+        for fsgd_type in self.files_glm:
+            for analysis_name in self.files_glm[fsgd_type]["glm"]:
+                glmdir   = os.path.join(self.PATHglm_glm, analysis_name)
+                hemi     = self.files_glm[fsgd_type]["glm"][analysis_name]["hemi"]
+                meas     = self.files_glm[fsgd_type]["glm"][analysis_name]["meas"]
+                mcz_meas = self.GLM_MCz_meas_codes[meas]
+                for glm_contrast_dir in self.files_glm[fsgd_type]["glm"][analysis_name]["contrasts"]:
+                    glm_folder   = os.path.join(glmdir, glm_contrast_dir)
+                    contrast       = glm_contrast_dir.replace(fsgd_type+'_','')
+                    contrast_f_ix  = self.files_glm[fsgd_type]['mtx'].index(glm_contrast_dir + ".mtx")
+                    explanation    = self.files_glm[fsgd_type]['mtx_explanation'][contrast_f_ix]
+                    if "mcz" in self.files_glm[fsgd_type]["glm"][analysis_name]["contrasts"][glm_contrast_dir]:
+                        for direction in self.mcz_sim_direction:
+                            cwsig_mc_f, _, sum_mc_f, ocn_mc_f, oannot_mc_f, _, pcc, cohensd_sum = self.mcz_files_get(direction, mcz_meas, glm_folder)
+                            if self.check_mcz_summary(sum_mc_f):
+                                self.pcc_cohensd_get(glm_folder, ocn_mc_f)
+                                self.cluster_stats_to_file(analysis_name,
+                                                            sum_mc_f,
+                                                            pcc,
+                                                            cohensd_sum,
+                                                            contrast,
+                                                            direction,
+                                                            explanation)
+                                self.prepare_for_image_extraction_mc(hemi, analysis_name, glm_folder,
+                                                                    glm_contrast_dir, contrast, direction,
+                                                                    cwsig_mc_f, oannot_mc_f)
+
+
+    def pcc_cohensd_get(self,
+                        glm_folder,
+                        ocn_mc_f):
+        """extract the Mean value per contrast
+            that represents the effect size
+            as per: https://www.mail-archive.com/freesurfer@nmr.mgh.harvard.edu/msg52144.html
+                    https://www.mail-archive.com/freesurfer@nmr.mgh.harvard.edu/msg57316.html
+                    the Mean is the value needed for extraction
+                    The mean in .dat file is the Cohen's D mean
+                                    or the Mean R Partial Correlation Coefficient (pcc) or effect size
+        """
+        os.chdir(glm_folder)
+        self.log.info(f"{'='*20}")
+        if os.path.exists(os.path.join(os.getcwd(), "pcc.mgh")):
+            self.log.info(f'        PCC R: extracting partial correlation coefficient R from pcc.mgh')
+            self.log.info(f"            in folder: {os.getcwd()}")
+            if not os.path.exists(os.path.join(os.getcwd(), self.pcc_r_filename)):
+                os.system(f'mri_segstats --i pcc.mgh --seg {ocn_mc_f} --exclude 0 --o {self.pcc_r_filename}')
             else:
-                glmdir_fsgd_contrast = os.path.join(glmdir, fsgd_type_contrast)
-                cmd_header = f'mri_glmfit-sim --glmdir {glmdir_fsgd_contrast}'
-                cmd_cache  = f'--cache {str(self.mc_cache_thresh)} {direction}'
-                cmd_perm   = f'--perm 1000 1.3 {direction}'
-                cmd_tail   = f'--cwp 0.05 --2spaces'
-                os.system(f'{cmd_header} {cmd_cache} {cmd_tail}')
-                if self.check_mcz_summary(sum_mc_f):
-                    self.cluster_stats_to_file(analysis_name,
-                                                sum_mc_f,
-                                                contrast,
-                                                direction,
-                                                explanation)
-                os.system(f'{cmd_header} {cmd_perm} {cmd_tail}')
+                self.log.info("            results are present")
+        else:
+            self.log.info(f'        PCC R: CANNOT extract partial correlation coefficient R from pcc.mgh, file is MISSING')
+
+        if os.path.exists(os.path.join(os.getcwd(), "gamma.mgh")):
+            self.log.info(f'        COHENSD: extracting cohensd correlation coefficient')
+            self.log.info(f"            in folder: {os.getcwd()}")
+            if not os.path.exists(os.path.join(os.getcwd(), self.cohensd_sum_filename)):
+                os.system('fscalc gamma.mgh div ../rstd.mgh -o cohensd.mgh')
+                os.system(f'mri_segstats --i cohensd.mgh --seg {ocn_mc_f} --exclude 0 --o {self.cohensd_sum_filename}')
+            else:
+                self.log.info("            results are present")
+        else:
+            self.log.info(f'        COHENSD: CANNOT extract cohensd correlation coefficient from gamma.mgh, file is MISSING')
+
+
+    def mcz_files_get(self,
+                      direction,
+                      mcz_meas,
+                      glm_folder):
+        mcz_header  = f'mc-z.{direction}.{mcz_meas}{str(self.mc_cache_thresh)}'
+        cwsig_mc_f  = os.path.join(glm_folder,f'{mcz_header}.sig.cluster.mgh')
+        vwsig_mc_f  = os.path.join(glm_folder,f'{mcz_header}.sig.vertex.mgh')
+        sum_mc_f    = os.path.join(glm_folder,f'{mcz_header}.sig.cluster.summary')
+        ocn_mc_f    = os.path.join(glm_folder,f'{mcz_header}.sig.ocn.mgh')
+        oannot_mc_f = os.path.join(glm_folder,f'{mcz_header}.sig.ocn.annot')
+        csdpdf_mc_f = os.path.join(glm_folder,f'{mcz_header}.pdf.dat')
+        pcc         = os.path.join(glm_folder, self.cohensd_sum_filename)
+        cohensd_sum = os.path.join(glm_folder, self.cohensd_sum_filename)
+        return cwsig_mc_f, vwsig_mc_f, sum_mc_f, ocn_mc_f, oannot_mc_f, csdpdf_mc_f, pcc, cohensd_sum
+
+
+    def mcz_commands_get(self,
+                      direction,
+                      mcz_meas,
+                      glm_folder):
+        cwsig_mc_f, vwsig_mc_f, sum_mc_f, ocn_mc_f, oannot_mc_f, csdpdf_mc_f, _, _ = self.mcz_files_get(direction, mcz_meas, glm_folder)
+        cmd_sig_fs  = f'--cwsig {cwsig_mc_f} --vwsig {vwsig_mc_f}'
+        cmd_params  = f'--sum {sum_mc_f} --ocn {ocn_mc_f} --oannot {oannot_mc_f} --csdpdf {csdpdf_mc_f}'
+        return f'{cmd_sig_fs} {cmd_params}'
+
+
+    def check_maxvox(self, maxvox_file):
+        res = False
+        val = [i.strip() for i in open(maxvox_file).readlines()][0].split()[0]
+        if float(val) > self.sig_fdr_thresh or float(val) < -self.sig_fdr_thresh:
+            res = True
+        return res
 
 
     def check_mcz_summary(self, file):
@@ -259,44 +436,43 @@ class PerformGLM():
             return False
 
 
-    def get_cohensd_mean_per_contrast(self,
-                                    path_2contrast,
-                                    ocn_mc_f):
-        """extract the Mean value per contrast
-            that represents the effect size
-            as per: https://www.mail-archive.com/freesurfer@nmr.mgh.harvard.edu/msg52144.html
-                    https://www.mail-archive.com/freesurfer@nmr.mgh.harvard.edu/msg57316.html
-                    the Mean is the value needed for extraction
-                    The mean in .dat file is the Cohen's D mean
-                                    or the Mean R Partial Correlation Coefficient (pcc) or effect size
-        """
-        cohensd_sum_filename = "cohensd.sum.dat"
-        pcc_r_filename = "pcc.r.dat"
-        os.system(f'cd {path_2contrast}')
-        os.system('fscalc gamma.mgh div ../rstd.mgh -o cohensd.mgh')
-        os.system(f'mri_segstats --i cohensd.mgh --seg {ocn_mc_f} --exclude 0 --o {cohensd_sum_filename}')
-        self.cohensd_sum = os.path.join(path_2contrast, cohensd_sum_filename)
-        print(f'    extracting partial correlation coefficient R from pcc.mgh')
-        os.system(f'mri_segstats --i pcc.mgh --seg {ocn_mc_f} --exclude 0 --o {pcc_r_filename}')
-
-
     def cluster_stats_to_file(self,
-                                analysis_name,
-                                sum_mc_f,
-                                contrast,
-                                direction,
-                                explanation):
+                              analysis_name,
+                              sum_mc_f,
+                              pcc,
+                              cohensd_sum,
+                              contrast,
+                              direction,
+                              explanation):
         if not os.path.isfile(self.cluster_stats):
             open(self.cluster_stats,'w').close()
-        ls = list()
-        for line in list(open(sum_mc_f))[41:sum(1 for line in open(sum_mc_f))]:
-            ls.append(line.rstrip())
+        pcc_cont = list()
+        cohens_cont = list()
+
+        sum_mc_cont = [i.rstrip() for i in open(sum_mc_f).readlines()[41:]]
+        if os.path.exists(pcc):
+            cont = open(pcc, "r").readlines()
+            ix_pcc  = cont.index([i for i in cont if "# ColHeaders" in i][0])
+            pcc_cont = [i.rstrip() for i in cont[ix_pcc:]]
+        if os.path.exists(cohensd_sum):
+            cont = open(cohensd_sum, "r").readlines()
+            ix_cohensd  = cont.index([i for i in cont if "# ColHeaders" in i][0])
+            cohens_cont = [i.rstrip() for i in cont[ix_cohensd:]]
+
         with open(self.cluster_stats, 'a') as f:
             f.write('{}_{}_{}\n'.format(analysis_name, contrast, direction))
             f.write(explanation+'\n')
-            for value in ls:
+            for value in sum_mc_cont:
                 f.write(value+'\n')
             f.write('\n')
+            if pcc_cont:
+                f.write('PCC R:\n')
+                for value in pcc_cont:
+                    f.write(value+'\n')
+            if cohens_cont:
+                f.write('Cohens D:\n')
+                for value in cohens_cont:
+                    f.write(value+'\n')
 
 
     def prepare_for_image_extraction_fdr(self, hemi, glmdir, analysis_name, fsgd_type_contrast):
@@ -326,7 +502,7 @@ class PerformGLM():
                                 'sig_thresh'   : self.sig_fdr_thresh}
 
 
-    def prepare_for_image_extraction_mc(self, hemi, analysis_name, path_2contrast,
+    def prepare_for_image_extraction_mc(self, hemi, analysis_name, glm_folder,
                                             fsgd_type_contrast, contrast, direction,
                                             cwsig_mc_f, oannot_mc_f):
         '''copying MCz significancy files file from the contrasts to the image/analysis_name/fsgd_type_contrast folder
@@ -334,8 +510,8 @@ class PerformGLM():
         Args:
             hemi: hemisphere
             analysis_name: as previous defined
-            path_2contrast: folder where the post FS-GLM files are stores
-            fsgd_type_contrast: specific folder in the path_2contrast
+            glm_folder: folder where the post FS-GLM files are stores
+            fsgd_type_contrast: specific folder in the glm_folder
             contrast: name of the contrast used
             direction: direction of the MCz analysis
             cwsig_mc_f: file with significant MCz results
@@ -350,8 +526,8 @@ class PerformGLM():
             os.makedirs(glm_image_dir)
         shutil.copy(cwsig_mc_f, glm_image_dir)
         shutil.copy(oannot_mc_f, glm_image_dir)
-        cwsig_mc_f_copy  = os.path.join(analysis_name, fsgd_type_contrast, cwsig_mc_f.replace(path_2contrast+'/', ''))
-        oannot_mc_f_copy = os.path.join(analysis_name, fsgd_type_contrast, oannot_mc_f.replace(path_2contrast+'/', ''))
+        cwsig_mc_f_copy  = os.path.join(analysis_name, fsgd_type_contrast, cwsig_mc_f.replace(glm_folder+'/', ''))
+        oannot_mc_f_copy = os.path.join(analysis_name, fsgd_type_contrast, oannot_mc_f.replace(glm_folder+'/', ''))
 
         sig_mc_count = len(self.sig_mc_data.keys())+1
         self.sig_mc_data[sig_mc_count] = {
@@ -363,11 +539,106 @@ class PerformGLM():
                                 'oannot_mc_f'       : oannot_mc_f_copy}
 
 
+    def files_f4glm_get(self,
+                        param):
+        # get files_glm.
+        files_glm = dict()
+        RUN = True
+
+        # get file with subjects per group
+        try:
+            subjects_per_group = load_json(param.subjects_per_group)
+            self.log.info(f'    successfully uploaded file: {param.subjects_per_group}')
+            # checking that all subjects are present
+            self.log.info(f'    subjects are located in: {self.SUBJECTS_DIR}')
+            for group in subjects_per_group:
+                for subject in subjects_per_group[group]:
+                    if subject not in os.listdir(self.SUBJECTS_DIR):
+                        self.log.info(f' subject is missing from FreeSurfer Subjects folder: {subject}')
+                        RUN = False
+                        break
+        except Exception as e:
+            self.log.info(e)
+            self.log.info(f'    file {param.subjects_per_group} is missing')
+            RUN = False
+
+        if RUN:
+            try:
+                files_glm = load_json(param.files_for_glm)
+                self.log.info(f'    successfully uploaded file: {param.files_for_glm}')
+                data = {i: files_glm[i] for i in files_glm.keys() if self.contrast_choice in i}
+                if self.corrected:
+                    data = {i: data[i] for i in data.keys() if "cor" in i}
+                self.log.info(f"list of contrasts is: {list(data.keys())}")
+
+                for subdir in (self.PATHglm_glm, self.PATHglm_results, self.PATH_img):
+                    if not os.path.isdir(subdir): os.makedirs(subdir)
+                if not os.path.isfile(self.sig_contrasts):
+                    open(self.sig_contrasts,'w').close()
+            except ImportError as e:
+                self.log.info(e)
+                self.log.info(f'    file {param.files_for_glm} is missing')
+                RUN = False
+
+        return data, RUN
+
+
+    def schedule_send(self,
+                      key,
+                      cmd,
+                      process):
+        """Send to scheduler
+        Args:
+            cmd: str() to send to scheduler
+        """
+        if send_2scheduler:
+            job_id = '0'
+            self.log.info(f"sending to scheduler command: {cmd}")
+            job_id = self.schedule.submit_4_processing(cmd, key, process,
+                                                       activate_fs = True)
+            try:
+                self.log.info(f'        submited id: {str(job_id)}')
+            except Exception as e:
+                self.log.info(f'        err in do: {str(e)}')
+            self.db['RUNNING_JOBS'][key] = job_id
+        else:
+            self.log.info(f"sending to system for run command: {cmd}")
+            os.system(cmd)
+
+
+    def get_status_for_subjid_in_queue(self, running_jobs, key, scheduler_jobs):
+        if key in running_jobs:
+            job_id = str(running_jobs[key])
+            if job_id in scheduler_jobs:
+               status = scheduler_jobs[job_id][1]
+            else:
+               status = 'none'
+        else:
+            running_jobs, status = self.try_to_infer_jobid(running_jobs, key, scheduler_jobs)
+            job_id = '0'
+        return running_jobs, status, job_id
+
+
+    def try_to_infer_jobid(self, running_jobs, key, scheduler_jobs):
+        probable_jobids = [i for i in scheduler_jobs if scheduler_jobs[i][0] in key]
+        if probable_jobids:
+            self.log.info(f'            job_id for subject {key} inferred, probable jobids: {str(probable_jobids[0])}')
+            if len(probable_jobids)>1:
+                running_jobs[key] = 0
+            else:
+                running_jobs[key] = probable_jobids[0]
+            return running_jobs, 'PD'
+        else:
+            return running_jobs, 'none'
+
+
+
 class ClusterFile2CSV():
 
     def __init__(self,
                 file_abspath,
-                result_abspath):
+                result_abspath,
+                log):
         from stats.db_processing import Table
         self.contrasts = fs_definitions.GLMcontrasts['contrasts']
         self.get_explanations()
@@ -383,24 +654,31 @@ class ClusterFile2CSV():
         self.content = open(file_abspath, 'r').readlines()
         self.result_abspath = result_abspath
         self.tab = Table()
+        self.log = log
         self.ls_vals_2chk = self.contrasts.keys()
         self.run()
 
     def run(self):
+        self.log.info('\n\n    CLUSTER FILE: creating the tabular version of statistical file')
         d = dict()
         i = 0
+        line_length = 15
 
         while i < len(self.content):
             line = self.content[i].replace('\n','')
             if self.chk_if_vals_in_line(line):
                 expl = self.content[i+1].replace('\n','').replace(';','.')
-                d[i] = ['','','','','','','','','','','','','', line, expl,]
+                ls_vide = list(" "*(line_length - 2))
+                d[i] = ls_vide + [line, expl,]
                 i += 2
             else:
                 line = self.clean_nans_from_list(line.split(' '))
                 i += 1
                 if len(line) != 0:
-                    d[i] = line + ['','']
+                    if len(line) < line_length:
+                        ls_vide = list(" " *(line_length - len(line)))
+                        line = line + ls_vide
+                    d[i] = line
         self.save_2table(d)
 
     def save_2table(self, d):
@@ -438,7 +716,6 @@ class ClusterFile2CSV():
                 self.explanations.append(self.contrasts[key][file_name][1])
 
 
-
 def get_parameters(projects, FS_GLM_DIR):
     """get parameters for nimb"""
     parser = argparse.ArgumentParser(
@@ -457,6 +734,20 @@ def get_parameters(projects, FS_GLM_DIR):
         default=FS_GLM_DIR,
         help="path to GLM folder",
     )
+
+    parser.add_argument(
+        "-contrast", required=False,
+        default="g",
+        choices = ["g1v1", 'g2v0', "g2v1"],
+        help="path to GLM folder",
+    )
+
+    parser.add_argument(
+    "-corrected", required=False,
+    action = 'store_true',
+    help   = "when used, will run only the corrected contrasts",
+    )
+
 
     params = parser.parse_args()
     return params
@@ -482,7 +773,7 @@ if __name__ == "__main__":
     try:
         from pathlib import Path
     except ImportError as e:
-        print('please install pathlib')
+        self.log.info('please install pathlib')
         sys.exit(e)
 
     file = Path(__file__).resolve()
@@ -495,6 +786,7 @@ if __name__ == "__main__":
     from setup.get_vars import Get_Vars, SetProject
     from stats.db_processing import Table
     from processing.freesurfer import fs_definitions
+    from processing.schedule_helper import Scheduler
 
     all_vars     = Get_Vars()
     projects     = all_vars.projects
@@ -505,10 +797,9 @@ if __name__ == "__main__":
                                 all_vars.stats_vars,
                                 project_ids[0],
                                 projects).stats
-    FS_GLM_DIR   = stats_vars["STATS_PATHS"]["FS_GLM_dir"]
 
-    params       = get_parameters(project_ids, FS_GLM_DIR)
-    GLM_DIR      = params.glm_dir
+    params       = get_parameters(project_ids,
+                                 stats_vars["STATS_PATHS"]["FS_GLM_dir"])
 
     fs_start_cmd = initiate_fs_from_sh(all_vars.location_vars['local'])
     run_ok = True
@@ -516,9 +807,9 @@ if __name__ == "__main__":
     try:
         subprocess.run(['mri_info'], stdout=subprocess.PIPE).stdout.decode('utf-8')
     except Exception as e:
-        print(e)
-        print(f'ERROR: please initiate freesurfer using the command: \n    {fs_start_cmd}')
+        self.log.info(e)
+        self.log.info(f'ERROR: please initiate freesurfer using the command: \n    {fs_start_cmd}')
         run_ok = False
 
     if run_ok:
-        PerformGLM(all_vars, GLM_DIR, sig_fdr_thresh = 3.0)
+        PerformGLM(all_vars, params, Log, sig_fdr_thresh = 3.0)
