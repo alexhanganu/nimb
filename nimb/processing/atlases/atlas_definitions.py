@@ -212,8 +212,11 @@ atlas_data = {
             "fs_stats_f":"hypothalamic_subunits_volumes.v1.stats",},}
 
 
-def stats_f(fsver, atlas, _dir = "stats", hemi="".join(hemis)):
-    if fsver == "7.3.2":
+def stats_f(fsver,
+            atlas,
+            _dir = "stats",
+            hemi="".join(hemis)):
+    if fsver == "7.3.2" and atlas_data[atlas]["group"] == 'nuclei':
         file = atlas_data[atlas]["fs_stats_files"][fsver]
     else:
         mri_key = ""
@@ -231,6 +234,34 @@ def stats_f(fsver, atlas, _dir = "stats", hemi="".join(hemis)):
     if f"{hemis[0]}." in file and hemi_dot not in file:
         file = file.replace(f"{hemis[0]}.", hemi_dot)
     return os.path.join(_dir, file)
+
+
+def all_stats_files(fsver):
+    """extracts all statistical files for each atlas
+    Args:
+        None
+    Return:
+        {atlas: [stats/lh.stats, stats/rh.stats],}
+    """
+    def get_files(fsver, atlas, hemi):
+        if fsver < "7" and "fs6_stats_f" in atlas_data[atlas]:
+            files = files + [stats_f(fsver, atlas, hemi = hemi)]
+        else:
+            files = [stats_f(fsver, atlas, hemi = hemi)]
+        return files
+
+    stats_files = dict()
+    for atlas in atlas_data:
+        stats_files[atlas] = []
+        if len(atlas_data[atlas]["hemi"]) > 1:
+            for hemi in atlas_data[atlas]["hemi"]:
+                files = get_files(fsver, atlas, hemi)
+                stats_files[atlas] += files
+        else:
+            files = get_files(fsver, atlas, hemi = "".join(hemis))
+            stats_files[atlas] = files
+    print("stats files are:", stats_files)
+    return stats_files
 
 
 def params_atlas2nimb(atlas_param):
@@ -595,33 +626,6 @@ def get():#_dipy_labels:
             if len(vals) > 1:
                 d1[vals[2]] = vals[0]
     return d1
-
-
-def all_stats_files(fsver):
-    """extracts all statistical files for each atlas
-    Args:
-        None
-    Return:
-        {atlas: [stats/lh.stats, stats/rh.stats],}
-    """
-    def get_files(atlas, hemi):
-        if fsver < "7" and "fs6_stats_f" in atlas_data[atlas]:
-            files = files + [stats_f("6", atlas, hemi = hemi)]
-        else:
-            files = [stats_f("7", atlas, hemi = hemi)]
-        return files
-
-    stats_files = dict()
-    for atlas in atlas_data:
-        stats_files[atlas] = []
-        if len(atlas_data[atlas]["hemi"]) > 1:
-            for hemi in atlas_data[atlas]["hemi"]:
-                files = get_files(atlas, hemi)
-                stats_files[atlas] += files
-        else:
-            files = get_files(atlas, hemi = "".join(hemis))
-            stats_files[atlas] = files
-    return stats_files
 
 
 def get_fs_rois_lateralized(atlas, roi = [], meas = None):
