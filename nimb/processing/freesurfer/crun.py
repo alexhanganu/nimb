@@ -8,7 +8,7 @@ import time
 import shutil
 import logging
 import fs_err_helper
-from fs_definitions import FreeSurferVersion, FSProcesses
+from fs_definitions import FreeSurferVersion, FSProcesses, fs_version
 
 environ['TZ'] = 'US/Eastern'
 time.tzset()
@@ -499,24 +499,6 @@ def Update_running(NIMB_tmp, cmd):
             rename('{}1'.format(file), '{}0'.format(file))
 
 
-def version_freesurfef_get(FREESURFER_HOME):
-    """get FreeSurfer version from builld file
-    Args:
-        FREESURFER_HOME: path to FreeSurfer installation
-    Return:
-        version: str() 0.0.0, FreeSurfer version in a 3 valuas format devided by comma
-    """
-    build_file = os.path.join(FREESURFER_HOME, "build-stamp.txt")
-    if os.path.exists(build_file):
-        content = open(build_file, "r").readlines()[0].strip("\n").split("-")
-        opsys, version = content[2], content[3]
-
-    else:
-        version = None
-        opsys = None
-    return version, opsys
-
-
 def time_now():
     time_elapsed = time.time() - t0
     return time.strftime("%H:%M:%S",time.gmtime(time_elapsed))
@@ -543,12 +525,12 @@ def run():
     NIMB_tmp        = vars_nimb["NIMB_tmp"]
     max_walltime    = vars_processing["max_walltime"]
     SUBJECTS_DIR    = vars_app["SUBJECTS_DIR"]
-    version, os     = version_freesurfef_get(vars_app["FREESURFER_HOME"])
-    Procs           = FSProcesses(vars_app["version"])
+    Procs           = FSProcesses(vars_app["FREESURFER_HOME"], vars_app["version"])
     process_order   = ["registration"] + Procs.process_order()
-    print(process_order)
     vars_app['process_order'] = process_order
     chk2            = CHECKER(atlas_definitions)
+
+    version, _, _, _= fs_version(vars_app["FREESURFER_HOME"])
     if version != "7.3.2":
         chk2            = CHECKER(atlas_definitions, version)
     schedule        = Scheduler(vars_local)
