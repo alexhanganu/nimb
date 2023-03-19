@@ -5,25 +5,35 @@ import os
 
 hemi = ['lh','rh']
 
-class FreeSurferVersion:
-    def __init__(self, freesurfer_version):
-        self.version = freesurfer_version
+def fs_version(fs_home,
+               user_fs_version = None):
+    """get FreeSurfer version from builld file
+    Args:
+        fs_home: path to FreeSurfer installation
+    Return:
+        version: str() 0.0.0, FreeSurfer version in a 3 values format devided by comma
+        opsys: str() Operating system used for FreeSurfer as per installation file
+    """
+    build_file = os.path.join(fs_home, "build-stamp.txt")
+    version = None
+    opsys = None
+    user_sys_ver_similar = True
+    if os.path.exists(build_file):
+        content = open(build_file, "r").readlines()[0].strip("\n").split("-")
+        opsys, version = content[2], content[3]
+        version_2numbers = version.replace(".","")[:2]
 
-    def fs_ver(self):
-        if len(str(self.version)) > 1:
-            return str(self.version[0])
-        else:
-            return str(self.version)
+    if user_fs_version:
+        if user_fs_version != version:
+            user_sys_ver_similar = False
 
-    def fs_ver2(self):
-        if len(str(self.version)) > 1:
-            return str(self.version.replace(".","")[:2])
-        else:
-            return str(self.version)
+    return version, opsys, version_2numbers, user_sys_ver_similar
 
 
 class FSProcesses:
-    def __init__(self, freesurfer_version):
+    def __init__(self,
+                 fs_home,
+                 freesurfer_version = None):
         """
         codes in atlas_chk key MUST be the same as atlas names in
         processing/atlases/atlas_definitions.atlas_data
@@ -92,7 +102,7 @@ class FSProcesses:
                         "isrun_f":"IsRunningThalamicNuclei_mainFreeSurferT1",
                         "time_suggested":'03:00:00'}}#,
             # "hypotha"   :{
-            #             "fsver"  :72,
+            #             "fsver"  :73,
             #             "log"    :"thalamic-nuclei-mainFreeSurferT1.log",
             #             "group"  :"atlas",
             #             "atlas_2chk": ['HypoTHA'],
@@ -106,12 +116,13 @@ class FSProcesses:
         self.atlas_proc = [i for i in self.processes if "atlas" in self.processes[i]["group"]]
         self.IsRunning_files = [self.processes[i]["isrun_f"] for i in self.atlas_proc] +\
                                 [self.processes["autorecon1"]["isrun_f"]]
-        self.fs_ver2 = FreeSurferVersion(freesurfer_version).fs_ver2()
+        # self.fs_ver2 = FreeSurferVersion(freesurfer_version).fs_ver2() #!!!! Obsolete
+        version, _, self.fs_ver2nr, _ = fs_version(fs_home, freesurfer_version)
 
     def log(self, process):
         if process in self.recons:
             file = 'recon-all.log'
-        elif self.fs_ver2 == 6 and "log6" in self.processes[process]:
+        elif self.fs_ver2nr == 6 and "log6" in self.processes[process]:
             file = self.processes[process]["log6"]
         else:
             file = self.processes[process]["log"]
@@ -119,10 +130,10 @@ class FSProcesses:
 
     def process_order(self):
         order_all = sorted(self.processes, key=lambda k: self.processes[k]["run_step"])
-        if self.fs_ver2 < "7":
+        if self.fs_ver2nr < "7":
             fs7_atlases = [i for i in self.atlas_proc if self.processes[i]["fsver"] > 6]
             return [i for i in order_all if i not in fs7_atlases]
-        elif self.fs_ver2.replace(".","") < "72":
+        elif self.fs_ver2nr.replace(".","") < "72":
             fs72_atlases = [i for i in self.atlas_proc if self.processes[i]["fsver"] == 72]
             return [i for i in order_all if i not in fs72_atlases]
         else:
@@ -142,7 +153,7 @@ class FSProcesses:
             return f"python run_masks.py {_id}"
 
     def cmd_atlas(self, process, _id):
-        if self.fs_ver2 < "7":
+        if self.fs_ver2nr < "7":
             run_sh = self.processes[process]["cmd6"]
             return f"recon-all -s {_id} -{run_sh}"
         else:
