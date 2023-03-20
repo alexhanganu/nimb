@@ -251,7 +251,7 @@ class PrepareForGLM():
 
         # print('creating unix version of fsgd files, to convert Windows tabulations to unix')
         self.fsgd_win_to_unix(GLM_dir)
-        self.make_qdec_fsgd_g2() #QDEC is deprecated in FreeSurfer version >7.3
+        # self.make_qdec_fsgd_g2() #QDEC is deprecated in FreeSurfer version >7.3
 
 
     def make_folders(self,
@@ -262,11 +262,11 @@ class PrepareForGLM():
         params            = fs_definitions.FSGLMParams(GLM_dir)
         self.PATHfsgd     = os.path.join(GLM_dir,'fsgd')
         self.PATHmtx      = os.path.join(GLM_dir,'contrasts')
-        self.PATHqdec     = os.path.join(GLM_dir,'qdec')
+        # self.PATHqdec     = os.path.join(GLM_dir,'qdec')
         self.file_for_glm = os.path.join(GLM_dir, 'files_for_glm.json')
         self.ids_groups   = os.path.join(GLM_dir, 'ids_per_group.json')
 
-        for _dir in [GLM_dir, self.PATHfsgd, self.PATHmtx, self.PATHqdec]:
+        for _dir in [GLM_dir, self.PATHfsgd, self.PATHmtx]:
             if not os.path.exists(_dir):
                 os.makedirs(_dir)
 
@@ -536,34 +536,34 @@ class PrepareForGLM():
         return vars_zeros
 
 
-    def make_qdec_fsgd_g2(self):
-        """creates the corresponding file to be used for QDEC analysis
-            QDEC is deprecated in new FreeSurfer versions
-        """
-        groups_combined = self.combinations_get(self.ls_groups,
-                                        lvl = 2)
-        vars_2add = list()
-        for groups in groups_combined:
-            # checking variables for zeros, per group
-            for variable in self.ls_vars_stats:
-                vars_zeros = self.check_var_zero((variable,), groups)
-                if not vars_zeros:
-                    vars_2add.append(variable)
+    # def make_qdec_fsgd_g2(self):
+    #     """creates the corresponding file to be used for QDEC analysis
+    #         QDEC is deprecated in new FreeSurfer versions
+    #     """
+    #     groups_combined = self.combinations_get(self.ls_groups,
+    #                                     lvl = 2)
+    #     vars_2add = list()
+    #     for groups in groups_combined:
+    #         # checking variables for zeros, per group
+    #         for variable in self.ls_vars_stats:
+    #             vars_zeros = self.check_var_zero((variable,), groups)
+    #             if not vars_zeros:
+    #                 vars_2add.append(variable)
 
-            # populating file
-            file_name = f'qdec_g2_{groups[0]}_{groups[1]}.fsgd'
-            file = os.path.join(self.PATHqdec, file_name)
-            open(file, 'w').close()
-            with open(file, 'a') as f:
-                f.write('fsid group ')
-                for variable in vars_2add:
-                    f.write(f'{variable} ')
-                f.write('\n')
-                for _id in self.d_subjid:
-                    group = self.d_subjid[_id][self.group_col]
-                    if group in groups:
-                        f.write(f'{_id} {group} ')
-                        for variable in vars_2add:
-                            value = str(self.d_subjid[_id][variable])
-                            f.write(f'{value} ')
-                        f.write('\n')
+    #         # populating file
+    #         file_name = f'qdec_g2_{groups[0]}_{groups[1]}.fsgd'
+    #         file = os.path.join(self.PATHqdec, file_name)
+    #         open(file, 'w').close()
+    #         with open(file, 'a') as f:
+    #             f.write('fsid group ')
+    #             for variable in vars_2add:
+    #                 f.write(f'{variable} ')
+    #             f.write('\n')
+    #             for _id in self.d_subjid:
+    #                 group = self.d_subjid[_id][self.group_col]
+    #                 if group in groups:
+    #                     f.write(f'{_id} {group} ')
+    #                     for variable in vars_2add:
+    #                         value = str(self.d_subjid[_id][variable])
+    #                         f.write(f'{value} ')
+    #                     f.write('\n')
