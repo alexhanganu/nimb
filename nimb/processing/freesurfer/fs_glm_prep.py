@@ -396,6 +396,82 @@ class PrepareForGLM():
                                    group_in_file_name,
                                    groups)
 
+        """
+        add 3 groups:
+        https://surfer.nmr.mgh.harvard.edu/fswiki/Fsgdf3G0V
+        https://www.mail-archive.com/freesurfer@nmr.mgh.harvard.edu/msg42014.html
+        https://www.mail-archive.com/freesurfer@nmr.mgh.harvard.edu/msg42279.html
+
+        GroupDescriptorFile 1
+        Title OSGM
+        Class Normal
+        Class MCI
+        Class AD
+        Input subject1 Normal
+        Input subject2 MCI
+        Input subject3 AD
+
+        The the CAG is a nuisance variable and you are interested in testing for 
+        the differnces in thickness with CAG regressed out, then you should do a 
+        two step procedure. First run with DODS and test for differences between 
+        groups in CAG. This is the contrast you will need:
+        0 0 0 1 -1 0
+        0 0 0 1 0 -1
+
+
+        Put this in a single file. The multiple rows mean that it will be an 
+        F-test. Verify that no regions survive multiple comparisons. Then run 
+        with DOSS with
+        1 -1 0 0
+        1 0 -1 0
+
+        This will also be an Ftest looking for a group effect. If you want to 
+        make univariate tests, you can do that too.
+
+        If the first test above fails, you can still proceed to the 2nd. If you 
+        find areas that are sig in the 2nd that do not overlap the 1st, then you 
+        can report them. Significant areas in the 1st test can not be 
+        interpreted easily in the 2nd test.
+
+        doug
+
+
+        On 07/26/2015 09:20 AM, Dr Sampada Sinha wrote:
+        > Dear freesurfer experts,
+        >
+        > I am trying to  find group difference (thickness) among 3 groups 
+        > (SCA1, SCA2, SCA3) taking in account one covariate (CAG levels). Will 
+        > you please let me know if I need to use DODS or DOSS, though I am more 
+        > interested in using DODS. I read the FSGD examples page 
+        > (https://surfer.nmr.mgh.harvard.edu/fswiki/Fsgdf3G0V) and I made the 
+        > fsgd file (One Factor/Three Levels), one Covariate (please see the 
+        > attached fsgd file). Now, my problem is how to create the contrast 
+        > file. I know with DODS Nregressors will be 6. How do I create the 
+        > contrasts matrix to run the mri_glmfit command?
+        >
+        > I could create only three .mtx file, which are:
+        > 3 classes 1 variable
+        >
+        > contrast 1.mtx - diff SCA1 vs SCA2 1 -1 0 0 0 0
+        > contrast 2.mtx - diff SCA1 vs SCA3 1 0 -1 0 0 0
+        > contrast 3.mtx - diff SCA2 vs SCA3 0 1 -1 0 0 0
+        > Will you please let me know what other three contrasts matrix I should add?I 
+        > did go through the freesurfer forum and found this one query particularly 
+        > related to the same problem I am having 
+        > (http://www.mail-archive.com/freesurfer%40nmr.mgh.harvard.edu/msg33172.html).
+        > Do I go by this contrasts matrix format which Stefania has come up with?
+        >
+        > Forever appreciative of all your efforts and time given to me.
+        >
+        >
+        >
+        >
+        > -- 
+        > ​S
+        > ​ ampada
+        > AIIMS, New Delhi​ 
+        """
+
 
     def fsgd_vars_add(self, contrast, vars_combined, group_in_file_name, groups):
         var_name = ''
