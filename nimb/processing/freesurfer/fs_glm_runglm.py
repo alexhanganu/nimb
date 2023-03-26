@@ -283,7 +283,7 @@ class PerformGLM():
 
                             self.files_glm[fsgd_type]["glm"][analysis_name]["contrasts"][glm_contrast_dir] = {"mcz": list()}
                             for direction in self.mcz_sim_direction:
-                                submit_key = "mcz_"+analysis_name+"_"+glm_contrast_dir+"_"+direction
+                                submit_key = f"mcz_{analysis_name}_{glm_contrast_dir}_{direction}"
                                 cwsig_mc_f, _, sum_mc_f, ocn_mc_f, oannot_mc_f, _, _, _ = self.mcz_files_get(direction, mcz_meas, glm_folder)
                                 if not os.path.exists(sum_mc_f):
                                     fwhm = f'fwhm{self.GLM_sim_fwhm4csd[meas][hemi]}'
