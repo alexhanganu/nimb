@@ -1193,7 +1193,7 @@ class ProjectManager:
                     run fs-glm
                     extract fs-glm-image
         """
-        log.info("{LogLVL.lvl1}peforming glm ...; script not ready")
+        log.info("{LogLVL.lvl1}peforming glm ...; script still being adjusted")
         fs_glm_dir   = self.project_vars['STATS_PATHS']["FS_GLM_dir"]
         if DistributionReady(self.all_vars).chk_if_ready_for_fs_glm():
             GLM_file_path, GLM_dir = DistributionHelper(self.all_vars).prep_4fs_glm(fs_glm_dir,

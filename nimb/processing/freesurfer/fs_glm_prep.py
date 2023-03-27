@@ -437,8 +437,6 @@ class PrepareForGLM():
 
 
         On 07/26/2015 09:20 AM, Dr Sampada Sinha wrote:
-        > Dear freesurfer experts,
-        >
         > I am trying to  find group difference (thickness) among 3 groups 
         > (SCA1, SCA2, SCA3) taking in account one covariate (CAG levels). Will 
         > you please let me know if I need to use DODS or DOSS, though I am more 
@@ -460,16 +458,30 @@ class PrepareForGLM():
         > related to the same problem I am having 
         > (http://www.mail-archive.com/freesurfer%40nmr.mgh.harvard.edu/msg33172.html).
         > Do I go by this contrasts matrix format which Stefania has come up with?
-        >
-        > Forever appreciative of all your efforts and time given to me.
-        >
-        >
-        >
-        >
-        > -- 
-        > ​S
-        > ​ ampada
-        > AIIMS, New Delhi​ 
+
+        3 classes  1 variable
+        contrast 1.mtx - diff A vs B
+        1 -1 0 0 0 0
+        contrast 2.mtx - slope for A and B
+        0 0 0 1 -1 0
+        contrast 3.mtx - diff A vs C
+        1 0 -1 0 0 0
+        contrast 4.mtx - slope for A and C
+        0 0 0 1 0 -1
+        contrast 5.mtx - diff B vs C
+        0 1 -1 0 0 0
+        contrast 6.mtx - slope for B and C
+        0 0 0 0 1 -1
+        groups effect.mtx
+        1 -1 0 0 0 0
+        1 0 -1 0 0 0 
+        groups effect covariate slope.mtx
+        0 0 0 1 -1 0
+        0 0 0 1 0 -1
+        A+B vs C.mtx
+        0.5 0.5 -1 0 0 0
+        A+B vs C covariate slope.mtx
+        0 0 0 0.5 0.5 -1
         """
 
 
@@ -514,8 +526,8 @@ class PrepareForGLM():
                 f.write(f'Class Main\n')
                 group = "Main"
             else:
-                f.write(f'Class {groups[0]} plus blue\n')
-                f.write(f'Class {groups[1]} circle green\n')
+                for value in groups:
+                    f.write(f'Class {value}\n')
             if all_vars:
                     f.write(f'Variables {str(" ".join(all_vars))}\n')
             for subjid in self.d_subjid:
@@ -570,26 +582,14 @@ class PrepareForGLM():
             ls = initial list() with values to be combined
             lvl = int() of number of values to be combined,
                     0 = blank tuple,
-                    1 = tuple with 1 value,
-                    2 = tuples of 2 values
+                    >1 = tuple with lvl values,
         Return:
-            combined = final list() that containes tuples() with combinations
+            combined = tuple() that containes tuples() with combinations
         """
         if lvl == 0:
             return [tuple()]
-        elif lvl ==1:
-            return [(i,) for i in ls]
-        elif lvl == 2:
-            result = list()
-            combined = list(itertools.product(ls, ls))
-            combined_diff = [i for i in combined if i[0] != i[1]]
-            for i in combined_diff:
-                if i not in result and (i[1], i[0]) not in result:
-                    result.append(i)
-            return result
         else:
-            print("    requests for combinations higher then 2\
-                cannot be performed because FreeSurfer does not take them")
+            return tuple(itertools.combinations(ls, lvl))
 
 
     def check_var_zero(self, variables, groups):
