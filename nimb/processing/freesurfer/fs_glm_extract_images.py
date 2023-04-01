@@ -140,49 +140,57 @@ class SaveGLMimages():
 #        os.system('tksurfer fsaverage '+hemi+' inflated -overlay '+os.path.join(glmdir, fsgd_type_contrast, sig_file)+' -fthresh '+str(self.fdr_thresh)+' -tcl '+f_with_tkcmds)
 
 
-def make_sig_file_to_extract_images(path_glm_dirs,
-                                    contrast = None):
+def make_sig_file_to_extract_images(main_dir):
     """helping script to create an individualized sig_mc.json file
         for a specified folder with glm data
-        NOTE: currently works only for the g2v1_cor contrast
     Args:
-        path_glm_dirs: abspath to dirs with glm
+        main_dir: abspath to dirs with glm
     Return:
-        a json file in the path_glm_dirs folder
+        a json file in the main_dir folder
         this file is used by the SaveGLMimages() class to extract the images
     """
+    import os
+    import json
+    import fs_definitions
+    contrasts = fs_definitions.GLMcontrasts["contrasts"]
+    contrasts_all = list()
+    for i in [list(contrasts[i].keys()) for i in contrasts.keys()]:
+        for item in i:
+            cont_name = item.replace(".mtx","")
+            contrasts_all.append(cont_name)
+            contrasts_all.append(f"cor_{cont_name}")
+    contrasts_all = tuple(contrasts_all)
     file_sig = "sig_mc.json"
-    ls_contrasts = ["g1g2.var", "group.diff", "group-x-var"]
-    if contrast:
-        ls_contrasts = [cotrast,]
-
-    ls_glm_dirs = [i for i in os.listdir(path_glm_dirs) if os.path.isdir(i)]
     sig = dict()
     nr = 1
+    ls_glm_dirs = [i for i in os.listdir(main_dir) if os.path.isdir(os.path.join(main_dir, i))]
+    cor = ""
     for _dir in ls_glm_dirs:
-        hemi = "lh"
-        if "rh" in _dir:
-            hemi = "rh"
-        for contrast in ls_contrasts:
-            path_2sig = os.path.join(_dir, "g2v1_cor_"+contrast)
+        _dir_path = os.path.join(main_dir, _dir)
+        hemi = _dir.split(".")[-2]
+        group_contrast = _dir[:_dir.find("_")]
+        ls_contrasts = [i for i in os.listdir(_dir_path) if os.path.isdir(os.path.join(_dir_path, i))]
+        for contrast in contrasts_all:
+            path_2sig = os.path.join(_dir_path, f"{group_contrast}_{contrast}")
             if os.path.exists(path_2sig) and len(os.listdir(path_2sig)) > 1:
-                cwsig_f = [i for i in os.listdir(path_2sig) if "cluster" in i][0]
-                oannot_f = [i for i in os.listdir(path_2sig) if "annot" in i][0]
-                direction = "neg"
-                if "pos" in oannot_f:
-                    direction = "pos"
+                print("reading folder:", path_2sig)
+                ls_files_all = os.listdir(path_2sig)
+                cwsig_f = [i for i in ls_files_all if i.endswith("sig.cluster.mgh")][0]
+                oannot_f = [i for i in ls_files_all if i.endswith("sig.ocn.annot")][0]
+                direction = cwsig_f[5:8]
                 sig[nr] = {
                         "analysis_name":_dir,
                         "hemi":hemi,
                         "contrast": contrast,
                         "direction":direction,
-                        "cwsig_mc_f":os.os.path.join(path_2sig, cwsig_f),
+                        "cwsig_mc_f":os.path.join(path_2sig, cwsig_f),
                         "oannot_mc_f":os.path.join(path_2sig, oannot_f)}
                 nr += 1
- 
-    with open(os.path.joi(path_glm_dirs, file_sig),"w") as f:
+            else:
+                print("folder is empty: ", path_2sig)
+    print(sig)
+    with open(os.path.join(path_glm_dirs, file_sig),"w") as f:
         json.dump(sig, f, indent = 4)
-
 
 
 
