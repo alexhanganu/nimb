@@ -51,7 +51,7 @@ class Scheduler():
 
 
     def Get_walltime(self, process):
-        FSProcs = FSProcesses("7.3.2")
+        FSProcs = FSProcesses(self.vars_local["FREESURFER"]["FREESURFER_HOME"])
         max_walltime = self.vars_local['PROCESSING']["batch_walltime"]
         walltime = max_walltime
         duration = FSProcs.get_suggested_times()
