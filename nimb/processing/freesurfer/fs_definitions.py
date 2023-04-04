@@ -19,9 +19,12 @@ def fs_version(fs_home,
     opsys = None
     user_sys_ver_similar = True
     if os.path.exists(build_file):
+        print("reading build file for FreeSurfer at: ", build_file)
         content = open(build_file, "r").readlines()[0].strip("\n").split("-")
         opsys, version = content[2], content[3]
         version_2numbers = version.replace(".","")[:2]
+    else:
+        print("build file for FreeSurfer is missing at: ", build_file)
 
     if user_fs_version:
         if user_fs_version != version:
@@ -176,6 +179,7 @@ class FSProcesses:
             'moving'        :'01:00:00',
             'glm_preproc'   :'01:00:00',
             'glmfit'        :'01:00:00',
+            'glmfit-sim'    :'10:00:00',
             'glm_montecarlo':'02:00:00',}
             # 'autorecon1'  :'05:00:00',
             # 'autorecon2'  :'12:00:00',
@@ -298,7 +302,9 @@ GLMcontrasts = {
         "dods_doss" : {
             'g1v1':[       'dods',],
             'g2v0':['doss','dods',],
-            'g2v1':[       'dods',],},
+            'g2v1':[       'dods',],
+            'g3v0':['doss','dods',],
+            'g3v1':[       'dods',],},
         "contrasts_not_used" : {
             'g1v0':{'intercept.mtx'     :['1',          't-test with intercept>0 being positive; is the intercept/mean equal to 0?',],},
             'g1v1':{'intercept.mtx'     :['1 0',        't-test with intercept>0 being positive; is the intercept equal to 0? Does the average thickness differ from zero ?',],},
