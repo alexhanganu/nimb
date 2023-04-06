@@ -287,6 +287,7 @@ class PrepareForGLM():
         self.ls_vars_correct = proj_vars["vars_for_correction"]
         self.ls_all_vars = self.ls_vars_stats + self.ls_vars_correct+[self.id_col, self.group_col]
         df_groups_clin = Table().get_df_with_columns(GLM_file_group, self.ls_all_vars)
+        print("    dataset with variables is: ", df_groups_clin.columns)
         d_init = df_groups_clin.to_dict()
 
         if not self.ls_vars_stats:
@@ -353,9 +354,11 @@ class PrepareForGLM():
     def fsgd_run_populate(self):
         """creating fsgd files
         """
+        print(f"    creating the fsgd files")
         self.contrasts = fs_definitions.GLMcontrasts['contrasts']
         self.files_glm = {}
         for contrast in self.contrasts:
+            print(f"        ... for contrast: {contrast}")
             dods_doss = fs_definitions.GLMcontrasts['dods_doss'][contrast]
             self.files_glm[contrast]={'fsgd' : [],
                                       'mtx'  : [],
@@ -548,6 +551,7 @@ class PrepareForGLM():
 
 
     def make_contrasts_save_file(self):
+        print("    creating contrast files")
         for fsgd_type in self.contrasts:
             for contrast_mtx in self.contrasts[fsgd_type]:
                 file = f'{fsgd_type}_{contrast_mtx}'
@@ -566,6 +570,7 @@ class PrepareForGLM():
         """must transform files that were created in Windows OS
             to adapt to linux OS
         """
+        print("    adapting fsgd files to unix version")
         for contrast_type in self.files_glm:
             for fsgd_file in self.files_glm[contrast_type]['fsgd']:
                 fsgd_file_name = fsgd_file.replace('.fsgd','')
