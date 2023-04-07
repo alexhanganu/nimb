@@ -34,10 +34,14 @@ class PerformGLM():
         self.SUBJECTS_DIR          = vars_fs["SUBJECTS_DIR"]
         self.measurements          = vars_fs["GLM_measurements"]
         self.thresholds            = vars_fs["GLM_thresholds"]
-        self.mc_cache_thresh       = vars_fs["GLM_MCz_cache"]
+        self.cache_thresh          = vars_fs["GLM_MCz_cache"]
         self.PATHglm               = params.glm_dir
         self.contrast_choice       = params.contrast
         self.corrected             = params.corrected
+        self.permutations          = params.permutations
+        print("number of permutations is:", params.permutations)
+        self.cluster_thresh        = 0.05
+        self.glm_sim_thresh        = 1.3
         param                      = fs_definitions.FSGLMParams(self.PATHglm)
         self.schedule              = Scheduler(self.vars_local)
         self.log                   = Log(self.vars_local['NIMB_PATHS']['NIMB_tmp']).logger
@@ -88,30 +92,45 @@ class PerformGLM():
     def loop_run(self):
         """initiate loop running for GLM analysis
         """
-        scheduler_jobs = self.schedule.get_jobs_status(self.vars_local["USER"]["user"],
-                                                        self.db['RUNNING_JOBS'])
         if self.check_active_tasks():
-            self.preproc_run(scheduler_jobs)
+            self.preproc_run()
         if self.check_active_tasks():
-            self.glmfit_run(scheduler_jobs)
+            self.glmfit_run()
         if self.check_active_tasks():
-            self.monte_carlo_correction_run(scheduler_jobs)
+            self.monte_carlo_correction_run()
         if self.check_active_tasks():
             self.results_monte_carlo_get()
 
 
+    def db_update(self):
+        """will check status of each job
+            from the list of all running jobs
+        """
+        tup_keys = tuple(self.db['RUNNING_JOBS'].keys())
+        for key in tup_keys:
+            self.db['RUNNING_JOBS'], status, _ = self.get_status_for_subjid_in_queue(self.db['RUNNING_JOBS'],
+                                                                                    key)
+            self.log.info(f"        job: {key} has status: {status}")
+            if status == 'none':
+                self.db['RUNNING_JOBS'].pop(key, None)
+        return len(self.db['RUNNING_JOBS'].keys())
+
+
     def check_active_tasks(self):
+        """will initiate a waiting loop that will wait until all batched are finished
+        """
         run = True
-        active_subjects = len(self.db['RUNNING_JOBS'].keys())
+        active_subjects = self.db_update()
         while active_subjects >0:
             time_to_sleep = 300 # 5 minutes
             self.log.info(f'\n                 active subjects: {str(active_subjects)}')
             self.log.info('\n\nWAITING. \nNext run at: '+str(time.strftime("%H:%M",time.localtime(time.time()+time_to_sleep))))
             time.sleep(time_to_sleep)
+            active_subjects = self.db_update()
         return run
 
 
-    def preproc_run(self, scheduler_jobs):
+    def preproc_run(self):
         """do preprocessing using mris_preproc, before running GLM
         """
         self.log.info('\n\n    PREPROCESSING performing using mris_preproc')
@@ -139,16 +158,10 @@ class PerformGLM():
                                                                                    "fsgd_f_unix": fsgd_f_unix,
                                                                                    "hemi": hemi,
                                                                                    "meas": meas}
-                                self.db['RUNNING_JOBS'], status, _ = self.get_status_for_subjid_in_queue(self.db['RUNNING_JOBS'],
-                                                                                                        submit_key,
-                                                                                                        scheduler_jobs)
-                                if status == 'none':
-                                    if submit_key in self.db['RUNNING_JOBS']:
-                                        self.db['RUNNING_JOBS'].pop(submit_key, None)
-                                    if not os.path.exists(glmdir) or not os.path.exists(mgh_f):
-                                        self.submit_cmds[submit_key] = cmd
-                                    else:
-                                        dirs_present.append(glmdir)
+                                if not os.path.exists(glmdir) or not os.path.exists(mgh_f):
+                                    self.submit_cmds[submit_key] = cmd
+                                else:
+                                    dirs_present.append(glmdir)
         if dirs_present:
             self.log.info(f"        DONE: {len(dirs_present)} glm folders are present and mgh file was created")
 
@@ -165,16 +178,16 @@ class PerformGLM():
                 tmp_ls_keys =  list(new_data.keys())[:self.nr_cmds_2combine]
 
 
-    def glmfit_run(self, scheduler_jobs):
+    def glmfit_run(self):
         """do GLM using mri_glmfit
-            can add flags:
-                --skew: to compute skew and p-value for skew
-                --kurtosis: to compute kurtosis and p-value for kurtosis
-                --pca: perform pca/svd analysis on residual
-                --save-yhat: save signal estimate
-            can run mri_glmfit only for ROIs with command:
+            flags:
+                --skew: to compute skew and p-value for skew, will create files skew.mgh and skew.sig.mgh
+                --kurtosis: to compute kurtosis and p-value for kurtosis, will create files kurtosis mgh and kurtosis.sig.mgh
+                --pca: perform pca/svd analysis on residual, will create folder pca-eres
+                --save-yhat: save signal estimate, will create the file yhat.mgh
+            to run mri_glmfit only for ROIs use command:
                 mri_glmfit --label or
-                mri_glmfit --tale (instead of --y)
+                mri_glmfit --table (instead of --y)
                     the table must be created with the first column being subject name
                     and first row being clustername (Cluter 1, Cluster 2)
                     col = 1, row = 1 can by dummy string (e.g., "dummy")
@@ -202,20 +215,12 @@ class PerformGLM():
                             path_2label  = os.path.join(self.SUBJECTS_DIR, 'fsaverage', 'label', f'{hemi}.aparc.label')
                             surf_label   = f'--surf fsaverage {hemi} --label {path_2label}'
                             contrast_cmd = f'--C {os.path.join(self.PATHglm, "contrasts", contrast_file)}'
-                            cmd          = f'{cmd_header} {glmdir_cmd} {surf_label} {contrast_cmd}'
+                            cmd_tail     = f'--skew --kurtosis --pca --save-yhat'
+                            cmd          = f'{cmd_header} {glmdir_cmd} {surf_label} {contrast_cmd} {cmd_tail}'
                             glm_folder   = os.path.join(glmdir, glm_contrast_dir)
                             self.files_glm[fsgd_type]["glm"][analysis_name]["contrasts"][glm_contrast_dir] = {"":list()}
                             if not os.path.exists(glm_folder):
-                                self.db['RUNNING_JOBS'], status, _ = self.get_status_for_subjid_in_queue(self.db['RUNNING_JOBS'],
-                                                                                                        submit_key,
-                                                                                                        scheduler_jobs)
-                                self.log.info(f"        status is: {status}")
-                                if status == 'none':
-                                    if submit_key in self.db['RUNNING_JOBS']:
-                                        self.db['RUNNING_JOBS'].pop(submit_key, None)
-                                    self.submit_cmds[submit_key] = cmd
-                                else:
-                                    self.log.info(f"        !!!!!!!!!!status is not none: {status}")
+                                self.submit_cmds[submit_key] = cmd
                             else:
                                 dirs_present.append(glmdir)
                                 if not os.path.exists(os.path.join(glm_folder, "sig.mgh")):
@@ -244,16 +249,84 @@ class PerformGLM():
                 tmp_ls_keys =  list(new_data.keys())[:self.nr_cmds_2combine]
 
 
-    def monte_carlo_correction_run(self,
-                                   scheduler_jobs):
-        """run Monte-Carlo correction using mri_surfcluster
+    def simulations_run(self):
+        """run simulations using mri_glmfit-sim
             https://surfer.nmr.mgh.harvard.edu/fswiki/FsTutorial/MultipleComparisonsV6.0Perm
             --glmdir: Specify the same GLM directory
             --perm: Run a permuation simulation 
-            Vertex-wise/cluster-forming threshold of (13 = p < .05, 2 = p < .01).
+            Vertex-wise/cluster-forming threshold of (1.3 = p < .05, 2 = p < .01).
             direction: the sign of analysis ("neg" for negative, "pos" for positive, or "abs" for absolute/unsigned)
             --cwp 0.05 : Keep clusters that have cluster-wise p-values < 0.05. To see all clusters, set to .999
             --2spaces : adjust p-values for two hemispheres
+        """
+        self.log.info('\n\n    SIMULATIONs and permutations performing using mri_glmfit-sim')
+        process  = "glmfit-sim"
+        self.submit_cmds = dict()
+        dirs_present = list()
+
+        for fsgd_type in self.files_glm:
+            for analysis_name in self.files_glm[fsgd_type]["glm"]:
+                glmdir   = os.path.join(self.PATHglm_glm, analysis_name)
+                hemi     = self.files_glm[fsgd_type]["glm"][analysis_name]["hemi"]
+                meas     = self.files_glm[fsgd_type]["glm"][analysis_name]["meas"]
+                mcz_meas = self.GLM_MCz_meas_codes[meas]
+                for glm_contrast_dir in self.files_glm[fsgd_type]["glm"][analysis_name]["contrasts"]:
+                    glm_folder   = os.path.join(glmdir, glm_contrast_dir)
+                    sig_f         = os.path.join(glm_folder,'sig.mgh')
+                    maxvox_file   = os.path.join(glm_folder, 'maxvox.dat')
+                    contrast       = glm_contrast_dir.replace(fsgd_type+'_','')
+                    contrast_f_ix  = self.files_glm[fsgd_type]['mtx'].index(glm_contrast_dir + ".mtx")
+                    explanation    = self.files_glm[fsgd_type]['mtx_explanation'][contrast_f_ix]
+                    if os.path.exists(maxvox_file):
+                        if self.check_maxvox(maxvox_file):
+                            # populate log file with significant results
+                            with open(self.sig_contrasts, 'a') as f:
+                                f.write(f'{analysis_name}/{glm_contrast_dir}\n')
+                            self.prepare_for_image_extraction_fdr(hemi, glmdir, analysis_name,
+                                                                  glm_contrast_dir)
+
+                            self.files_glm[fsgd_type]["glm"][analysis_name]["contrasts"][glm_contrast_dir] = {"csd": list()}
+                            for direction in self.mcz_sim_direction:
+                                submit_key = f"mcz_{analysis_name}_{glm_contrast_dir}_{direction}"
+                                cwsig_mc_f, _, sum_mc_f, ocn_mc_f, oannot_mc_f, _, _, _ = self.mcz_files_get(direction, mcz_meas, glm_folder)
+                                if not os.path.exists(sum_mc_f):
+                                    fwhm = f'fwhm{self.GLM_sim_fwhm4csd[meas][hemi]}'
+                                    th   = f'th{str(self.cache_thresh)}'
+                                    path_2fsavg = os.path.join(self.FREESURFER_HOME, 'average', 'mult-comp-cor', 'fsaverage')
+                                    csd_mc_f = os.path.join(path_2fsavg, hemi, 'cortex', fwhm, direction, th, 'mc-z.csd')
+                                    cmd_header_curv = f'mri_glmfit-sim --glmdir {glm_folder}'
+                                    cmd_perm_curv   = f'--sim perm {self.permutations} {self.glm_sim_thresh} {direction}'
+                                    cmd_tail_curve   = f'--cwp {self.cluster_thresh} --2spaces'
+                                    self.files_glm[fsgd_type]["glm"][analysis_name]["contrasts"][glm_contrast_dir]["csd"].append(direction)
+                                    run_permut = f'{cmd_header_curv} {cmd_perm_curv} {cmd_tail_curve}'
+                                    if meas != "curv":
+                                        cmd = run_permut
+                                    else:
+                                        cmd_cache_curv  = f'--cache {str(self.cache_thresh)} {direction}'
+                                        run_cache  = f'{cmd_header_curv} {cmd_cache_curv} {cmd_tail_curve}'
+                                        cmd = "\n".join([run_cache, run_permut])
+                                    self.submit_cmds[submit_key] = cmd
+                                else:
+                                    dirs_present.append(submit_key)
+        if dirs_present:
+            self.log.info(f"        DONE: {len(dirs_present)} folder has all permutations")
+
+        if self.submit_cmds:
+            self.log.info(f'SIMULATION submitting')
+            self.log.info(f'SIMULATION commands total: {len(list(self.submit_cmds.keys()))}')
+            tmp_ls_keys =  list(self.submit_cmds.keys())[:self.nr_cmds_2combine]
+            new_data = self.submit_cmds.copy()
+            while len(tmp_ls_keys) > 0:
+                tmp_data = {i:self.submit_cmds[i] for i in tmp_ls_keys}
+                key      = list(tmp_data.keys())[0]
+                cmd      = "\n".join(list(tmp_data.values()))
+                self.schedule_send(key, cmd, process)
+                new_data    = {i:new_data[i] for i in new_data.keys() if i not in tmp_ls_keys}
+                tmp_ls_keys =  list(new_data.keys())[:self.nr_cmds_2combine]
+
+
+    def monte_carlo_correction_run(self):
+        """run Monte-Carlo correction using mri_surfcluster
         """
         self.log.info('\n\n    MONTE_CARLO correction performing using mri_surfcluster')
         process  = "glm_montecarlo"
@@ -287,26 +360,15 @@ class PerformGLM():
                                 cwsig_mc_f, _, sum_mc_f, ocn_mc_f, oannot_mc_f, _, _, _ = self.mcz_files_get(direction, mcz_meas, glm_folder)
                                 if not os.path.exists(sum_mc_f):
                                     fwhm = f'fwhm{self.GLM_sim_fwhm4csd[meas][hemi]}'
-                                    th   = f'th{str(self.mc_cache_thresh)}'
+                                    th   = f'th{str(self.cache_thresh)}'
                                     path_2fsavg = os.path.join(self.FREESURFER_HOME, 'average', 'mult-comp-cor', 'fsaverage')
                                     csd_mc_f = os.path.join(path_2fsavg, hemi, 'cortex', fwhm, direction, th, 'mc-z.csd')
-                                    cmd_header = f'mri_surfcluster --in {sig_f} --csd {csd_mc_f}'
+                                    header_cmd = f'mri_surfcluster --in {sig_f} --csd {csd_mc_f}'
                                     mask_cmd   = f'--mask {os.path.join(glmdir,"mask.mgh")}'
-                                    cmd_params = self.mcz_commands_get(direction, mcz_meas, glm_folder)
-                                    cmd_tail   = '--annot aparc --cwpvalthresh 0.05 --surf white'
-                                    cmd_header_curv = f'mri_glmfit-sim --glmdir {glm_folder}'
-                                    cmd_cache_curv  = f'--cache {str(self.mc_cache_thresh)} {direction}'
-                                    cmd_perm_curv   = f'--perm 1000 1.3 {direction}'
-                                    cmd_tail_curve   = f'--cwp 0.05 --2spaces'
-
+                                    params_cmd = self.mcz_commands_get(direction, mcz_meas, glm_folder)
+                                    tail_cmd   = f'--annot aparc --cwpvalthresh {self.cluster_thresh} --surf white'
+                                    cmd        = f'{header_cmd} {mask_cmd} {params_cmd} {tail_cmd}'
                                     self.files_glm[fsgd_type]["glm"][analysis_name]["contrasts"][glm_contrast_dir]["mcz"].append(direction)
-                                    if meas != 'curv':
-                                        cmd = f'{cmd_header} {mask_cmd} {cmd_params} {cmd_tail}'
-                                    else:
-                                        run_cache  = f'{cmd_header_curv} {cmd_cache_curv} {cmd_tail_curve}'
-                                        run_permut = f'{cmd_header_curv} {cmd_perm_curv} {cmd_tail_curve}'
-                                        ls_cmds = [run_cache, run_permut]
-                                        cmd = "\n".join(ls_cmds)
                                     self.submit_cmds[submit_key] = cmd
                                 else:
                                     dirs_present.append(submit_key)
@@ -399,7 +461,7 @@ class PerformGLM():
                       direction,
                       mcz_meas,
                       glm_folder):
-        mcz_header  = f'mc-z.{direction}.{mcz_meas}{str(self.mc_cache_thresh)}'
+        mcz_header  = f'mc-z.{direction}.{mcz_meas}{str(self.cache_thresh)}'
         cwsig_mc_f  = os.path.join(glm_folder,f'{mcz_header}.sig.cluster.mgh')
         vwsig_mc_f  = os.path.join(glm_folder,f'{mcz_header}.sig.vertex.mgh')
         sum_mc_f    = os.path.join(glm_folder,f'{mcz_header}.sig.cluster.summary')
@@ -606,7 +668,9 @@ class PerformGLM():
             os.system(cmd)
 
 
-    def get_status_for_subjid_in_queue(self, running_jobs, key, scheduler_jobs):
+    def get_status_for_subjid_in_queue(self, running_jobs, key):
+        scheduler_jobs = self.schedule.get_jobs_status(self.vars_local["USER"]["user"],
+                                                        self.db['RUNNING_JOBS'])
         if key in running_jobs:
             job_id = str(running_jobs[key])
             if job_id in scheduler_jobs:
@@ -748,6 +812,11 @@ def get_parameters(projects, FS_GLM_DIR):
     help   = "when used, will run only the corrected contrasts",
     )
 
+    parser.add_argument(
+        "-permutations", required=False,
+        default=1000,
+        help="choose number of permutations. default is 1000. usually up to 10000 is chosen. this can increase the computation time up to 10 hours",
+    )
 
     params = parser.parse_args()
     return params
