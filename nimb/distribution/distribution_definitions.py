@@ -137,6 +137,15 @@ class DEFAULT(object):
     file_type            = "csv"
     fname_fs_subcort_vol = "stats_fs_subcortical"
 
+    nimb_dirs      = {
+                    "NIMB_NEW_SUBJECTS" :'nimb_new_subjects',
+                    "NIMB_PROCESSED_FS" :'freesurfer/nimb_processed',
+                    "NIMB_PROCESSED_NL" :'nilearn/nimb_processed',
+                    "NIMB_PROCESSED_DP" :'dipy/nimb_processed',
+                    "NIMB_ERR_FS"       :'freesurfer/nimb_err',
+                    "NIMB_ERR_NL"       :'nilearn/nimb_err',
+                    "NIMB_ERR_DP"       :'dipy/nimb_err'}
+
     stats_dirs      = {
                     "FS_GLM_dir"             :'fs_glm',
                     "STATS_HOME"             :'stats',
