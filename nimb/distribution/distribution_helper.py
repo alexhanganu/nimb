@@ -441,18 +441,30 @@ class DistributionHelper():
 
 
     def prep_4fs_glm_extract_dirs(self, ls, SUBJECTS_DIR, dirs2extract):
+        """
+        script extract corresponding folder from the archived processed data
+        Args:
+            ls = list() of subjects to search for and extract data from archive
+            SUBJECTS_DIR = str(), path to FreeSurfer SUBJECTS_DIR
+            dirs2extract = list(), or folders to extract from archive
+        Return:
+            initiates the ZipArchiveManagement in order to extract folders from archive
+        """
         from .manage_archive import ZipArchiveManagement
         if self.proj_vars['materials_DIR'][0] == 'local':
             print(f'{LogLVL.lvl2}Extracting folders {dirs2extract} to: {SUBJECTS_DIR}')
             NIMB_PROCESSED_FS = os.path.join(self.locations["local"]['FREESURFER']['NIMB_PROCESSED'])
             for sub in ls:
-                zip_file_path = os.path.join(NIMB_PROCESSED_FS, '{}.zip'.format(sub))
+                extract = False
+                path_2file = NIMB_PROCESSED_FS
+                archive_type = ".zip"
+                if self.proj_vars['PROCESSED_FS_DIR'][0] == 'local':
+                    path_2file = self.proj_vars['PROCESSED_FS_DIR'][1]
+                zip_file_path = os.path.join(path_2file, f'{sub}{archive_type}')
+
                 if os.path.exists(zip_file_path):
                     extract = True
-                elif self.proj_vars['PROCESSED_FS_DIR'][0] == 'local':
-                    zip_file_path = os.path.join(self.proj_vars['PROCESSED_FS_DIR'][1], '{}.zip'.format(sub))
-                    if os.path.exists(zip_file_path):
-                        extract = True
+
                 if extract:
                     print(f'    participant: {sub}')
                     ZipArchiveManagement(zip_file_path,
