@@ -28,11 +28,13 @@ class ZipArchiveManagement():
                 path2xtrct = False,
                 path_err = False,
                 dirs2xtrct = list(),
+                files2xtrct = list(),
                 log=True):
         self.zip_f_path = zip_file_path
         self.zip_file   = os.path.split(self.zip_f_path)[-1]
         self.path2xtrct = path2xtrct
         self.dirs2xtrct = dirs2xtrct
+        self.files2xtrct= files2xtrct
         self.path_err   = path_err
         self.log        = log
         if self.chk_if_zipfile():
@@ -78,7 +80,24 @@ class ZipArchiveManagement():
 
 
     def pattern_exists(self):
+        """
+        sometimes the patterns has a WIN-OS os.sep
+        it has to be changed to UNIX version
+        sometimes the os.sep is missing and has to be added
+        script also extracts only the files that correspond to the requested pattern
+        """
+        # add os.sep
         ls_patterns = [i.replace(os.sep,'/') for i in self.dirs2xtrct]
+        for pattern in ls_patterns[::-1]:
+            if "/" not in pattern:
+                ix_pattern = ls_patterns.index(pattern)
+                ls_patterns[ix_pattern] = f"/{pattern}/"
+        if self.files2xtrct:
+            for i in self.files2xtrct:
+                ls_patterns.append(i)
+
+
+        # search for the corresponding patterns in the whole content
         content_paths = list()
         for content in self.zip_file_content():
             for pattern in ls_patterns:
@@ -103,7 +122,7 @@ class ZipArchiveManagement():
         if self.log:
             print(f'{" " * 12}extracting: file {self.zip_f_path}')
             print(f'{" " * 16}to folder {self.path2xtrct}')
-        if self.dirs2xtrct:
+        if self.dirs2xtrct or self.files2xtrct:
                 self.pattern_exists()
         else:
             self.xtrct_all()
