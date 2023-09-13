@@ -108,9 +108,15 @@ class NIMB(object):
                 FS_SUBJECTS_DIR = self.vars_local['FREESURFER']['SUBJECTS_DIR']
                 DistributionReady(self.all_vars).fs_chk_fsaverage_ready(FS_SUBJECTS_DIR)
                 if GLM_file_path and not self.all_vars.params.test:
+                    glmcontrast = params.glmcontrast
+                    glmpermutations = params.glmpermutations
+                    add_correct
+                    glmcorrected = params.glmcorrected
+                    if glmcorrected:
+                        add_correct = f" -corrected {glmcorrected}"
                     schedule_fsglm = Scheduler(self.vars_local)
                     cd_cmd = f"cd {os.path.join(self.NIMB_HOME, 'processing', 'freesurfer')}"
-                    cmd = f'{self.py_run_cmd} fs_glm_runglm.py -project {self.project} -glm_dir {GLM_dir}'
+                    cmd = f'{self.py_run_cmd} fs_glm_runglm.py -project {self.project} -glm_dir {GLM_dir} -contrast {glmcontrast}{add_correct} -permutations {glmpermutations}'
                     schedule_fsglm.submit_4_processing(cmd, 'fs_glm','run_glm', cd_cmd)
                 else:
                     print("    TESTING")
@@ -274,6 +280,24 @@ def get_parameters(projects):
         help   = "when used, nimb will run only 2 participants",
     )
 
+    parser.add_argument(
+        "-glmcontrast", required=False,
+        default="g",
+        choices = ["g1v1", 'g2v0', "g2v1"],
+        help="path to GLM folder",
+    )
+
+    parser.add_argument(
+    "-glmcorrected", required=False,
+    action = 'store_false',
+    help   = "when used, will run only the corrected contrasts",
+    )
+
+    parser.add_argument(
+        "-glmpermutations", required=False,
+        default=1000,
+        help="choose number of permutations. default is 1000. usually up to 10000 is chosen. this can increase the computation time up to 10 hours",
+    )
 
     params = parser.parse_args()
     return params
