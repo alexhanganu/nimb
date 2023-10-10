@@ -842,7 +842,7 @@ if __name__ == "__main__":
     try:
         from pathlib import Path
     except ImportError as e:
-        self.log.info('please install pathlib')
+        print('please install pathlib')
         sys.exit(e)
 
     file = Path(__file__).resolve()
@@ -876,8 +876,8 @@ if __name__ == "__main__":
     try:
         subprocess.run(['mri_info'], stdout=subprocess.PIPE).stdout.decode('utf-8')
     except Exception as e:
-        self.log.info(e)
-        self.log.info(f'ERROR: please initiate freesurfer using the command: \n    {fs_start_cmd}')
+        print(e)
+        print(f'ERROR: please initiate freesurfer using the command: \n    {fs_start_cmd}')
         run_ok = False
 
     if run_ok:
