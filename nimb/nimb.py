@@ -108,15 +108,15 @@ class NIMB(object):
                 FS_SUBJECTS_DIR = self.vars_local['FREESURFER']['SUBJECTS_DIR']
                 DistributionReady(self.all_vars).fs_chk_fsaverage_ready(FS_SUBJECTS_DIR)
                 if GLM_file_path and not self.all_vars.params.test:
-                    glmcontrast = params.glmcontrast
-                    glmpermutations = params.glmpermutations
-                    add_correct
-                    glmcorrected = params.glmcorrected
+                    glmcontrast = self.all_vars.params.glmcontrast
+                    glmpermutations = self.all_vars.params.glmpermutations
+                    add_correct = ""
+                    glmcorrected = self.all_vars.params.glmcorrected
                     if glmcorrected:
-                        add_correct = f" -corrected {glmcorrected}"
+                        add_correct = f" -corrected"
                     schedule_fsglm = Scheduler(self.vars_local)
                     cd_cmd = f"cd {os.path.join(self.NIMB_HOME, 'processing', 'freesurfer')}"
-                    cmd = f'{self.py_run_cmd} fs_glm_runglm.py -project {self.project} -glm_dir {GLM_dir} -contrast {glmcontrast}{add_correct} -permutations {glmpermutations}'
+                    cmd = f'{self.py_run_cmd} fs_glm_runglm.py -project {self.project} -glm_dir {GLM_dir} -contrast {" ".join(glmcontrast)}{add_correct} -permutations {glmpermutations}'
                     schedule_fsglm.submit_4_processing(cmd, 'fs_glm','run_glm', cd_cmd)
                 else:
                     print("    TESTING")
@@ -281,17 +281,17 @@ def get_parameters(projects):
     )
 
     parser.add_argument(
-        "-glmcontrast", required=False,
+        "-glmcontrast", required=False, nargs = "+",
         default="g",
-        choices = ["g1v1", 'g2v0', "g2v1"],
-        help="path to GLM folder",
+        choices = ["g1v0", "g1v1", 'g2v0', "g2v1", 'g3v0', "g3v1"],
+        help="define GLM contrasts to be used",
     )
 
     parser.add_argument(
-    "-glmcorrected", required=False,
-    action = 'store_false',
-    help   = "when used, will run only the corrected contrasts",
-    )
+        "-glmcorrected", required=False,
+        action = 'store_false',
+        help   = "when used, will run ONLY the corrected contrasts",
+        )
 
     parser.add_argument(
         "-glmpermutations", required=False,

@@ -628,7 +628,11 @@ class PerformGLM():
             try:
                 files_glm = load_json(param.files_for_glm)
                 self.log.info(f'    successfully uploaded file: {param.files_for_glm}')
-                data = {i: files_glm[i] for i in files_glm.keys() if self.contrast_choice in i}
+                data = dict()
+                for contrast_chosen in self.contrast_choice:
+                    for i in files_glm.keys():
+                        if contrast_chosen in i:
+                            data[i] = files_glm[i]
                 if self.corrected:
                     data = {i: data[i] for i in data.keys() if "cor" in i}
                 self.log.info(f"list of contrasts is: {list(data.keys())}")
@@ -800,9 +804,9 @@ def get_parameters(projects, FS_GLM_DIR):
     )
 
     parser.add_argument(
-        "-contrast", required=False,
+        "-contrast", required=False, nargs = "+",
         default="g",
-        choices = ["g1v1", 'g2v0', "g2v1"],
+        choices = ["g1v0", "g1v1", 'g2v0', "g2v1", 'g3v0', "g3v1"],
         help="path to GLM folder",
     )
 
