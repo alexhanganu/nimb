@@ -42,7 +42,9 @@ class ZipArchiveManagement():
             if self.path2xtrct:
                 self.extract_archive()
             else:
-                print(f'{" " * 12}please provide a path to extract the file {self.zip_f_path}')
+                print(f'{" " * 12}reading: {self.zip_f_path}')
+                print(f'{" " * 15}extraction is not requested. returning only content')
+                self.zip_file_content()
 
 
     def chk_if_zipfile(self):

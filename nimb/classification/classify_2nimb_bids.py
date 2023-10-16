@@ -54,31 +54,29 @@ class Classify2_NIMB_BIDS():
 
     def run(self):
         self.dir_2classify = self.get_dirs2classify()
+        self.main = self.get_dict_4classification()
         for self._dir in self.dir_2classify:
             self.archived = False
             dir_abspath = os.path.join(self.MAIN_DIR, self._dir)
-            self.main = self.get_dict_4classification(dir_abspath)
             paths_2mris = self._get_MR_paths(dir_abspath)
-
             if paths_2mris:
                 if self.archived:
                     bids_ids = self.get_bids_ids(paths_2mris)
                     for bids_id in bids_ids:
-                        # self.main[bids_id] = dict()
                         paths_2classify    = self.get_content_per_bids_id(paths_2mris, bids_id)
                         BIDS_classifed     = self.classify_2bids(paths_2classify)
                         self.main[bids_id] = BIDS_classifed
                         self.main[bids_id]['archived'] = str(dir_abspath)
                 else:
-                    # self.main[self._dir] = dict()
                     paths_2classify = paths_2mris
                     BIDS_classifed = self.classify_2bids(paths_2classify)
                     self.main[self._dir] = BIDS_classifed
                     self.main[self._dir]['archived'] = ''
-                log.info("    saving classification file")
-                save_json(self.main, self.f_nimb_classified)
             else:
                 log.info(f'    there are no file or folders in the provided path to read: {dir_abspath}')
+
+        log.info("    saving classification file")
+        save_json(self.main, self.f_nimb_classified)
         log.info(f"classification of new subjects is complete, file located at: {self.f_nimb_classified}")
         if self.multiple_T1 == 1:
             from classification.get_mr_params import verify_MRIs_for_similarity
@@ -133,7 +131,6 @@ class Classify2_NIMB_BIDS():
         if os.path.isdir(dir_abspath):
             return self.get_paths2dcm_files(dir_abspath)
         if is_archive(dir_abspath):
-            print('    tmp: this is an archived file')
             self.archived = True
         if self.archived:
             archiver = ZipArchiveManagement(dir_abspath)
@@ -145,14 +142,10 @@ class Classify2_NIMB_BIDS():
             return []
 
 
-    def get_dict_4classification(self, dir_abspath):
+    def get_dict_4classification(self):
         main = dict()
         self.f_nimb_classified = os.path.join(self.MAIN_DIR,
                                             DEFAULT.f_nimb_classified)
-
-        # remove nimb_classified file from list of files in MAIN_DIR
-        if self.f_nimb_classified in self.dir_2classify:
-            self.dir_2classify.remove(self.f_nimb_classified)
 
         # update the existing file ?
         if os.path.exists(self.f_nimb_classified):
@@ -160,6 +153,11 @@ class Classify2_NIMB_BIDS():
                 print('updating file with ids')
                 main = load_json(self.f_nimb_classified)
             os.remove(self.f_nimb_classified)
+
+        # remove nimb_classified file from list of files in MAIN_DIR
+        if self.f_nimb_classified in self.dir_2classify:
+            self.dir_2classify.remove(self.f_nimb_classified)
+
         return main
 
 

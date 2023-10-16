@@ -289,7 +289,7 @@ def get_parameters(projects):
 
     parser.add_argument(
         "-glmcorrected", required=False,
-        action = 'store_false',
+        action = 'store_true',
         help   = "when used, will run ONLY the corrected contrasts",
         )
 
