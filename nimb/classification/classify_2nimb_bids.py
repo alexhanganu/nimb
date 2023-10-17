@@ -59,21 +59,22 @@ class Classify2_NIMB_BIDS():
             self.archived = False
             dir_abspath = os.path.join(self.MAIN_DIR, self._dir)
             paths_2mris = self._get_MR_paths(dir_abspath)
+
             if paths_2mris:
                 if self.archived:
                     bids_ids = self.get_bids_ids(paths_2mris)
                     for bids_id in bids_ids:
                         paths_2classify    = self.get_content_per_bids_id(paths_2mris, bids_id)
-                        BIDS_classifed     = self.classify_2bids(paths_2classify)
-                        self.main[bids_id] = BIDS_classifed
+                        BIDS_classified     = self.classify_2bids(paths_2classify)
+                        self.main[bids_id] = BIDS_classified
                         self.main[bids_id]['archived'] = str(dir_abspath)
                 else:
                     paths_2classify = paths_2mris
-                    BIDS_classifed = self.classify_2bids(paths_2classify)
-                    self.main[self._dir] = BIDS_classifed
+                    BIDS_classified = self.classify_2bids(paths_2classify)
+                    self.main[self._dir] = BIDS_classified
                     self.main[self._dir]['archived'] = ''
             else:
-                log.info(f'    there are no file or folders in the provided path to read: {dir_abspath}')
+                log.info(f'    there are no files or folders in the provided path to read: {dir_abspath}')
 
         log.info("    saving classification file")
         save_json(self.main, self.f_nimb_classified)
@@ -157,7 +158,6 @@ class Classify2_NIMB_BIDS():
         # remove nimb_classified file from list of files in MAIN_DIR
         if self.f_nimb_classified in self.dir_2classify:
             self.dir_2classify.remove(self.f_nimb_classified)
-
         return main
 
 
