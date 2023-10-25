@@ -432,6 +432,9 @@ class PerformGLM():
                     the Mean is the value needed for extraction
                     The mean in .dat file is the Cohen's D mean
                                     or the Mean R Partial Correlation Coefficient (pcc) or effect size
+        extract F-value with:
+            mri_segstats --seg mc-z.pos.ar13.sig.vertex.mgh --i F.mgh --sum Fstats_g1g2_g3.txt
+            os.system(f'mri_seg_stats --i F.mgh --seg {vwsig_mc_f} --sum Fstats.txt')
         """
         os.chdir(glm_folder)
         self.log.info(f"{'='*20}")
