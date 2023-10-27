@@ -283,8 +283,8 @@ def get_parameters(projects):
     parser.add_argument(
         "-glmcontrast", required=False, nargs = "+",
         default="g",
-        choices = ["g1v0", "g1v1", 'g2v0', "g2v1", 'g3v0', "g3v1"],
-        help="define GLM contrasts to be used",
+        choices = ["g", "g1", "g2", "g3", "g1v0", "g1v1", 'g2v0', "g2v1", 'g3v0', "g3v1"],
+        help="define GLM contrasts to be used; g = group, g1 = one group, g2 = 2 groups, g3 = 3 groups; v = variable",
     )
 
     parser.add_argument(
