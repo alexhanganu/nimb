@@ -63,8 +63,6 @@ class PerformGLM():
         self.sig_contrasts         = param.sig_contrasts
         self.db                    = {'RUNNING_JOBS':dict()}
         self.nr_cmds_2combine      = 10
-        self.pcc_r_filename       = "pcc.r.dat"
-        self.cohensd_sum_filename = "cohensd.sum.dat"
         self.files_glm, RUN        = self.files_f4glm_get(param)
 
 
@@ -288,7 +286,7 @@ class PerformGLM():
                             self.files_glm[fsgd_type]["glm"][analysis_name]["contrasts"][glm_contrast_dir] = {"csd": list()}
                             for direction in self.mcz_sim_direction:
                                 submit_key = f"mcz_{analysis_name}_{glm_contrast_dir}_{direction}"
-                                cwsig_mc_f, _, sum_mc_f, ocn_mc_f, oannot_mc_f, _, _, _ = self.mcz_files_get(direction, mcz_meas, glm_folder)
+                                cwsig_mc_f, _, sum_mc_f, ocn_mc_f, oannot_mc_f, _ = self.mcz_files_get(direction, mcz_meas, glm_folder)
                                 if not os.path.exists(sum_mc_f):
                                     fwhm = f'fwhm{self.GLM_sim_fwhm4csd[meas][hemi]}'
                                     th   = f'th{str(self.cache_thresh)}'
@@ -357,7 +355,7 @@ class PerformGLM():
                             self.files_glm[fsgd_type]["glm"][analysis_name]["contrasts"][glm_contrast_dir] = {"mcz": list()}
                             for direction in self.mcz_sim_direction:
                                 submit_key = f"mcz_{analysis_name}_{glm_contrast_dir}_{direction}"
-                                cwsig_mc_f, _, sum_mc_f, ocn_mc_f, oannot_mc_f, _, _, _ = self.mcz_files_get(direction, mcz_meas, glm_folder)
+                                cwsig_mc_f, _, sum_mc_f, ocn_mc_f, oannot_mc_f, _ = self.mcz_files_get(direction, mcz_meas, glm_folder)
                                 if not os.path.exists(sum_mc_f):
                                     fwhm = f'fwhm{self.GLM_sim_fwhm4csd[meas][hemi]}'
                                     th   = f'th{str(self.cache_thresh)}'
@@ -407,13 +405,13 @@ class PerformGLM():
                     explanation    = self.files_glm[fsgd_type]['mtx_explanation'][contrast_f_ix]
                     if "mcz" in self.files_glm[fsgd_type]["glm"][analysis_name]["contrasts"][glm_contrast_dir]:
                         for direction in self.mcz_sim_direction:
-                            cwsig_mc_f, _, sum_mc_f, ocn_mc_f, oannot_mc_f, _, pcc, cohensd_sum = self.mcz_files_get(direction, mcz_meas, glm_folder)
+                            cwsig_mc_f, vwsig_mc_f, sum_mc_f, ocn_mc_f, oannot_mc_f, _ = self.mcz_files_get(direction, mcz_meas, glm_folder)
+                            stats_files = self.stats_files_get(glm_folder, vwsig_mc_f, ocn_mc_f)
                             if self.check_mcz_summary(sum_mc_f):
-                                self.pcc_cohensd_get(glm_folder, ocn_mc_f)
+                                self.pcc_cohensd_get(glm_folder, stats_files)
                                 self.cluster_stats_to_file(analysis_name,
                                                             sum_mc_f,
-                                                            pcc,
-                                                            cohensd_sum,
+                                                            stats_files,
                                                             contrast,
                                                             direction,
                                                             explanation)
@@ -424,7 +422,7 @@ class PerformGLM():
 
     def pcc_cohensd_get(self,
                         glm_folder,
-                        ocn_mc_f):
+                        stats_files):
         """extract the Mean value per contrast
             that represents the effect size
             as per: https://www.mail-archive.com/freesurfer@nmr.mgh.harvard.edu/msg52144.html
@@ -438,26 +436,46 @@ class PerformGLM():
         """
         os.chdir(glm_folder)
         self.log.info(f"{'='*20}")
-        if os.path.exists(os.path.join(os.getcwd(), "pcc.mgh")):
-            self.log.info(f'        PCC R: extracting partial correlation coefficient R from pcc.mgh')
-            self.log.info(f"            in folder: {os.getcwd()}")
-            if not os.path.exists(os.path.join(os.getcwd(), self.pcc_r_filename)):
-                os.system(f'mri_segstats --i pcc.mgh --seg {ocn_mc_f} --exclude 0 --o {self.pcc_r_filename}')
-            else:
-                self.log.info("            results are present")
-        else:
-            self.log.info(f'        PCC R: CANNOT extract partial correlation coefficient R from pcc.mgh, file is MISSING')
+        self.log.info(f"    Extracting stats in folder: {os.getcwd()}")
+        os.system(f'fscalc gamma.mgh div ../rstd.mgh -o {stats_files["cohensd"]["file_mgh"]}')
 
-        if os.path.exists(os.path.join(os.getcwd(), "gamma.mgh")):
-            self.log.info(f'        COHENSD: extracting cohensd correlation coefficient')
-            self.log.info(f"            in folder: {os.getcwd()}")
-            if not os.path.exists(os.path.join(os.getcwd(), self.cohensd_sum_filename)):
-                os.system('fscalc gamma.mgh div ../rstd.mgh -o cohensd.mgh')
-                os.system(f'mri_segstats --i cohensd.mgh --seg {ocn_mc_f} --exclude 0 --o {self.cohensd_sum_filename}')
+        for file_name in stats_files:
+            file_mgh = stats_files[file_name]["file_mgh"]
+            if os.path.exists(os.path.join(os.getcwd(), file_mgh)):
+                self.log.info(f'        stats: extracting from {file_mgh}')
+                file_stats = stats_files[file_name]["file_stats"]
+                seg_file = stats_files[file_name]["seg_file"]
+                if not os.path.exists(os.path.join(os.getcwd(), file_stats)):
+                    if file_name == "F":
+                        os.system(f'mri_segstats --i {file_mgh} --seg {seg_file} --sum {file_stats}')
+                    else:
+                        os.system(f'mri_segstats --i {file_mgh} --seg {seg_file} --exclude 0 --o {file_stats}')
+                else:
+                    self.log.info(f"            results are present for file: {file_mgh}")
             else:
-                self.log.info("            results are present")
-        else:
-            self.log.info(f'        COHENSD: CANNOT extract cohensd correlation coefficient from gamma.mgh, file is MISSING')
+                self.log.info(f'        {file_mgh}: is MISSING')
+
+
+    def stats_files_get(self,
+                        glm_folder,
+                        vwsig_mc_f,
+                        ocn_mc_f):
+        """several stats files have to be created
+            in order to extract stats data from them:
+            F stats, pcc.mgh and cohensd
+        Args:
+            glm_folder: str() path of the current working folder with glm results
+        Return:
+            stats_files = dict() with data for each stats file
+
+        """
+        stats_files = {"F":{"file_mgh": "F.mgh", "file_stats": "Fstats.txt", "seg_file":vwsig_mc_f},
+                       "pcc":{"file_mgh": "pcc.mgh", "file_stats": "pcc.r.dat", "seg_file":ocn_mc_f},
+                       "cohensd":{"file_mgh": "cohensd.mgh", "file_stats": "cohensd.dat", "seg_file":ocn_mc_f},}
+        for file_name in stats_files:
+            f_stats = stats_files[file_name]["file_stats"]
+            stats_files[file_name]["file_stats"] = os.path.join(glm_folder, f_stats)
+        return stats_files
 
 
     def mcz_files_get(self,
@@ -471,16 +489,15 @@ class PerformGLM():
         ocn_mc_f    = os.path.join(glm_folder,f'{mcz_header}.sig.ocn.mgh')
         oannot_mc_f = os.path.join(glm_folder,f'{mcz_header}.sig.ocn.annot')
         csdpdf_mc_f = os.path.join(glm_folder,f'{mcz_header}.pdf.dat')
-        pcc         = os.path.join(glm_folder, self.cohensd_sum_filename)
-        cohensd_sum = os.path.join(glm_folder, self.cohensd_sum_filename)
-        return cwsig_mc_f, vwsig_mc_f, sum_mc_f, ocn_mc_f, oannot_mc_f, csdpdf_mc_f, pcc, cohensd_sum
+
+        return cwsig_mc_f, vwsig_mc_f, sum_mc_f, ocn_mc_f, oannot_mc_f, csdpdf_mc_f,
 
 
     def mcz_commands_get(self,
                       direction,
                       mcz_meas,
                       glm_folder):
-        cwsig_mc_f, vwsig_mc_f, sum_mc_f, ocn_mc_f, oannot_mc_f, csdpdf_mc_f, _, _ = self.mcz_files_get(direction, mcz_meas, glm_folder)
+        cwsig_mc_f, vwsig_mc_f, sum_mc_f, ocn_mc_f, oannot_mc_f, csdpdf_mc_f = self.mcz_files_get(direction, mcz_meas, glm_folder)
         cmd_sig_fs  = f'--cwsig {cwsig_mc_f} --vwsig {vwsig_mc_f}'
         cmd_params  = f'--sum {sum_mc_f} --ocn {ocn_mc_f} --oannot {oannot_mc_f} --csdpdf {csdpdf_mc_f}'
         return f'{cmd_sig_fs} {cmd_params}'
@@ -504,40 +521,38 @@ class PerformGLM():
     def cluster_stats_to_file(self,
                               analysis_name,
                               sum_mc_f,
-                              pcc,
-                              cohensd_sum,
+                              stats_files,
                               contrast,
                               direction,
                               explanation):
+        """prints stats data to the self.cluster_stats log file            
+        """
         if not os.path.isfile(self.cluster_stats):
             open(self.cluster_stats,'w').close()
-        pcc_cont = list()
-        cohens_cont = list()
+
+        contents = dict()
+        for file_name in stats_files:
+            contents[file_name] = list()
+            file_stats = stats_files[file_name]["file_stats"]
+            if os.path.exists(file_stats):
+                cont = open(file_stats, "r").readlines()
+                ix  = cont.index([i for i in cont if "# ColHeaders" in i][0])
+                contents[file_name] = [i.rstrip() for i in cont[ix:]]
 
         sum_mc_cont = [i.rstrip() for i in open(sum_mc_f).readlines()[41:]]
-        if os.path.exists(pcc):
-            cont = open(pcc, "r").readlines()
-            ix_pcc  = cont.index([i for i in cont if "# ColHeaders" in i][0])
-            pcc_cont = [i.rstrip() for i in cont[ix_pcc:]]
-        if os.path.exists(cohensd_sum):
-            cont = open(cohensd_sum, "r").readlines()
-            ix_cohensd  = cont.index([i for i in cont if "# ColHeaders" in i][0])
-            cohens_cont = [i.rstrip() for i in cont[ix_cohensd:]]
 
         with open(self.cluster_stats, 'a') as f:
-            f.write('{}_{}_{}\n'.format(analysis_name, contrast, direction))
+            f.write(f'{analysis_name}_{contrast}_{direction}\n')
             f.write(explanation+'\n')
             for value in sum_mc_cont:
                 f.write(value+'\n')
-            f.write('\n')
-            if pcc_cont:
-                f.write('PCC R:\n')
-                for value in pcc_cont:
-                    f.write(value+'\n')
-            if cohens_cont:
-                f.write('Cohens D:\n')
-                for value in cohens_cont:
-                    f.write(value+'\n')
+            for file_name in contents:
+                content = contents[file_name]
+                if content:
+                    f.write(f'{file_name}:\n')
+                    for value in content:
+                        f.write(value+'\n')
+            f.write('\n\n')
 
 
     def prepare_for_image_extraction_fdr(self, hemi, glmdir, analysis_name, fsgd_type_contrast):
@@ -809,8 +824,8 @@ def get_parameters(projects, FS_GLM_DIR):
     parser.add_argument(
         "-contrast", required=False, nargs = "+",
         default="g",
-        choices = ["g1v0", "g1v1", 'g2v0', "g2v1", 'g3v0', "g3v1"],
-        help="path to GLM folder",
+        choices = ["g", "g1", "g2", "g3", "g1v0", "g1v1", 'g2v0', "g2v1", 'g3v0', "g3v1"],
+        help="define GLM contrasts to be used; g = group, g1 = one group, g2 = 2 groups, g3 = 3 groups; v = variable",
     )
 
     parser.add_argument(
