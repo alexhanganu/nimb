@@ -273,7 +273,7 @@ class ProjectManager:
                     save_json(_ids_in_matdir, self.f_ids_instatsdir)
             log.info(f'{LogLVL.lvl0}file with ids is: {self.f_ids_inmatdir}')
         if not bool(self._ids_all):
-            log.info(f'{LogLVL.lvl2} file with ids is EMPTY')
+            log.info(f'{LogLVL.lvl2}file with ids is EMPTY')
             self.save_f_ids()
         # log.info(f'{LogLVL.lvl1} ids all are: {self._ids_all}')
 
@@ -294,9 +294,9 @@ class ProjectManager:
             stats_dirs
         """
         log.info(f'{LogLVL.lvl2}saving new file: {self.f_ids_inmatdir}')
-        save_json(self._ids_all, self.f_ids_inmatdir, print_space = 12)
+        save_json(self._ids_all, self.f_ids_inmatdir, print_space = 56)
         log.info(f'{LogLVL.lvl2}saving new file: {self.f_ids_instatsdir}')
-        save_json(self._ids_all, self.f_ids_instatsdir, print_space = 12)
+        save_json(self._ids_all, self.f_ids_instatsdir, print_space = 56)
 
 
     '''
@@ -332,6 +332,7 @@ class ProjectManager:
         else:
             log.info(f'{LogLVL.lvl2}grid file is absent. Creating default version')
             self.df_grid    = self.make_default_grid()
+            self.check_new()
         self.get_ids_from_grid()
         self.ids_project_chk()
 
@@ -359,7 +360,7 @@ class ProjectManager:
         json_projects    = os.path.join(credentials_home, 'projects.json')
         self.all_vars.projects[self.project] = self.project_vars
         log.info(f'{LogLVL.lvl2}updating project.json at: {json_projects}')
-        save_json(self.all_vars.projects, json_projects)
+        save_json(self.all_vars.projects, json_projects, print_space = 56)
         return df
 
 
@@ -389,7 +390,7 @@ class ProjectManager:
         self.rm_nan_from_grid()
 
         if self._ids_bids:
-            log.info(f"{LogLVL.lvl2}verifying the ids BIDS, if they are of BIDS standard")
+            log.info(f"{LogLVL.lvl1}verifying the ids BIDS, if they are of BIDS standard")
             not_bids, _, _, no_rawdata, ls_nan = self.verify_ids_are_bids_standard(self._ids_bids, self.BIDS_DIR)
             if not_bids:
                 log.info(f"{LogLVL.lvl2}some subjects are not of bids format: {not_bids}")
@@ -430,7 +431,7 @@ class ProjectManager:
         Return:
             bool
         """
-        log.info(f"{LogLVL.lvl2}verifying the ids project, if they are of BIDS standard")
+        log.info(f"{LogLVL.lvl1}verifying the ids project, if they are of BIDS standard")
         _, yes_bids, _, no_rawdata, ls_nan = self.verify_ids_are_bids_standard(self._ids_project, self.BIDS_DIR)
         if yes_bids:
             log.info(f"{LogLVL.lvl2}some subjects are of bids format: {yes_bids}")
@@ -479,6 +480,7 @@ class ProjectManager:
             log.info(f'{LogLVL.lvl3}there are {len(ls_4nimb_classif)} that must undergo nimb classification')
             self.run_classify_2nimb(ls_4nimb_classif)
         if ls_4dcm2bids_classif:
+            log.info(f'{LogLVL.lvl3}file with ids:f_ids, was changed. saving new version')
             self.run_classify_dcm2bids(ls_4dcm2bids_classif)
 
 
@@ -657,6 +659,7 @@ class ProjectManager:
             materials_dir
             stats_dirs
         """
+        log.info(f"{LogLVL.lvl2}saving new grid file")
         self.tab.save_df(df,
             os.path.join(self.path_stats_dir, f_name))
         self.tab.save_df(df,
@@ -671,7 +674,11 @@ class ProjectManager:
         Return:
             bool
         """
-        log.info("\n\n")
+        log.info("\n")
+
+        ls_participants = [i for i in os.listdir(self.BIDS_DIR) if "sub-" in i]
+        log.info(f"{LogLVL.lvl2}there are: {len(ls_participants)} participants in the rawdata folder")
+
         log.info(f"{LogLVL.lvl0}CHECKING the f_ids file for each id whether they were processed with all applications")
 
         ids_apps_2process = dict()
@@ -788,7 +795,9 @@ class ProjectManager:
         log.info(f'{LogLVL.lvl1}checking for NEW IDs in SOURCE_SUBJECTS_DIR:')
         log.info(f"{LogLVL.lvl2}{self.srcdata_dir}")
 
+        self.get_ids_nimb_classified()
         ls_ids_src     = self.get_listdir(self.srcdata_dir)
+
         files_new_ids_src = [i for i in ls_ids_src if i not in self._ids_nimb_classified]
         archived = [self._ids_nimb_classified[i]["archived"] for i in self._ids_nimb_classified]
         files_present_in_archive = list()
@@ -811,12 +820,11 @@ class ProjectManager:
             else:
                 log.info(f"{LogLVL.lvl2}ERROR: classification 2nimb-bids had an error")
         else:
-            log.info(f'{LogLVL.lvl2}All data in SOURCE_SUBJECTS_DIR was added to file nimb_classified.json')
+            log.info(f'{LogLVL.lvl3}All data in SOURCE_SUBJECTS_DIR was added to file nimb_classified.json')
 
         # STEP 2:
         # get ids from nimb_classified missing from f_ids
-        log.info(f"{LogLVL.lvl2}Extracting list of unprocessed IDs")
-        self.get_ids_nimb_classified()
+        log.info(f"{LogLVL.lvl1}Verifying list of IDs from nimb_classified registered in file with ids")
         self.unprocessed_d = self.get_unprocessed_ids_from_nimb_classified()
 
         """get ids that have no BIDS classification
@@ -824,8 +832,8 @@ class ProjectManager:
         """
         # extract potential ids that might have bids structure
         # and could be directly moved to the _ids_bids column in the grid
-        log.info(f'{LogLVL.lvl2}checking BIDS format for folders in SOURCE_SUBJECTS_DIR:')
-        log.info(f'{LogLVL.lvl3}{self.srcdata_dir}')
+        log.info(f'{LogLVL.lvl1}checking BIDS format for folders in SOURCE_SUBJECTS_DIR:')
+        log.info(f'{LogLVL.lvl2}{self.srcdata_dir}')
         _ids_src_bids_unprocessed = dict()
         for _id_src in self.unprocessed_d.keys():
             for session in self.unprocessed_d[_id_src]:
@@ -835,7 +843,7 @@ class ProjectManager:
                                                     list(_ids_src_bids_unprocessed.values()),
                                                     self.srcdata_dir)
         if yes_bids_d:
-            log.info(f"{LogLVL.lvl2}{len(list(yes_bids_d.keys()))} IDs are ready and of BIDS format:")
+            log.info(f"{LogLVL.lvl3}{len(list(yes_bids_d.keys()))} IDs are ready and of BIDS format:")
             # log.info(f"{LogLVL.lvl3}{list(yes_bids_d.keys())}")
             # self.copy_dir(yes_bids_d)
             self.add_ids_source_to_bids_in_grid(yes_bids_d)
@@ -846,8 +854,8 @@ class ProjectManager:
             for _id_src in _ids_src_bids_unprocessed.keys():
                 if _ids_src_bids_unprocessed[_id_src] in no_bids:
                     _ids_src_unprocessed.append(_id_src)
-            log.info(f'{LogLVL.lvl2}there are {len(_ids_src_unprocessed)} participants')
-            log.info(f'{LogLVL.lvl3}with MRI data to be processed')
+            log.info(f'{LogLVL.lvl3}there are {len(_ids_src_unprocessed)} participants')
+            log.info(f'{LogLVL.lvl4}with MRI data to be processed')
             # for _id_src in _ids_src_unprocessed:
             #     _id_bids = self.classify_with_dcm2bids(nimb_classified = self._ids_nimb_classified,
             #                                         _id_project = _id_src)
@@ -897,7 +905,7 @@ class ProjectManager:
         self._ids_bids = self.df_grid[self._ids_bids_col].tolist()
 
         # loop to work with each _id_src
-        log.info(f"populating f_ids with {len(yes_bids)} id_bids for _id_src")
+        log.info(f"{LogLVL.lvl2}populating f_ids with {len(yes_bids)} id_bids for _id_src")
         for _id_src in yes_bids:
             _id_bids = yes_bids[_id_src]
             self._ids_bids = self._ids_bids + [_id_bids]
@@ -933,7 +941,7 @@ class ProjectManager:
         yes_bids_d = dict()
         ls_nan = list()
 
-        log.info(f"{LogLVL.lvl3}verifying {len(ls2chk)} subjects for BIDS standard")
+        log.info(f"{LogLVL.lvl2}verifying {len(ls2chk)} subjects for BIDS standard")
 
         for _id in ls2chk:
             if not self.tab.val_is_nan(_id):
