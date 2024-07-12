@@ -127,7 +127,8 @@ class RUNProcessing:
             app_ver = self.vars_local[app.upper()]['version']
             self.log.info(f"{app} version is: {app_ver}")
             if app == "freesurfer":
-                process_order = ["registration"] + FSProcesses(app_ver).process_order()
+                app_home = self.vars_local[app.upper()][f'{app.upper()}_HOME']
+                process_order = ["registration"] + FSProcesses(app_home).process_order()
                 self.vars_apps[app]["process_order"] = process_order
             if app == "nilearn":
                 self.vars_apps[app]["process_order"] = ['connectivity',]
@@ -462,3 +463,4 @@ if __name__ == "__main__":
     logger.setLevel(logging.INFO)
 
     RUNProcessing(all_vars, logger)
+

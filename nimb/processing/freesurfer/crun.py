@@ -8,7 +8,7 @@ import time
 import shutil
 import logging
 import fs_err_helper
-from fs_definitions import FreeSurferVersion, FSProcesses, fs_version
+from fs_definitions import FSProcesses, fs_version
 
 environ['TZ'] = 'US/Eastern'
 time.tzset()
@@ -515,7 +515,7 @@ def time_max_running_get(batch_walltime,
 def run():
 
     global db_manage, dbmain, db, app, Procs, schedule, log, chk2, vars_app, vars_processing, vars_nimb, NIMB_HOME, NIMB_tmp, SUBJECTS_DIR, max_walltime, process_order, processing_env, t0, max_batch_running
-    
+
     vars_app        = vars_local[app.upper()]
     vars_processing = vars_local["PROCESSING"]
     vars_nimb       = vars_local["NIMB_PATHS"]

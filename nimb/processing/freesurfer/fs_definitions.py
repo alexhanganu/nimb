@@ -119,7 +119,6 @@ class FSProcesses:
         self.atlas_proc = [i for i in self.processes if "atlas" in self.processes[i]["group"]]
         self.IsRunning_files = [self.processes[i]["isrun_f"] for i in self.atlas_proc] +\
                                 [self.processes["autorecon1"]["isrun_f"]]
-        # self.fs_ver2 = FreeSurferVersion(freesurfer_version).fs_ver2() #!!!! Obsolete
         version, _, self.fs_ver2nr, _ = fs_version(fs_home, freesurfer_version)
 
     def log(self, process):

@@ -735,6 +735,7 @@ class ProjectManager:
                 save_json(subs_2process, f_subj2process, print_space = 4)
                 log.info(f"{LogLVL.lvl0}{len(self.ls_ids_bids_to_process)} IDs must be processed for apps")
                 log.info(f"{LogLVL.lvl0}{len(self.ls_ids_bids_miss_rawdata)} IDs are missing the rawdata and will not be processed")
+                log.info(f"{LogLVL.lvl2}{self.ls_ids_bids_miss_rawdata}")
                 self.new_subjects = True
 
 
