@@ -115,15 +115,15 @@ def running(process, scheduler_jobs):
                 db['RUNNING_JOBS'].pop(subjid, None)
             if vars_app["base_name"] in subjid:
                 log.info(f'    reading {process}, {subjid} is long or base ')
-                if chk2.chk(subjid, app, vars_app, 'isrunning') or not chk2.chk(subjid, app, vars_app, 'recon'):
+                if chk2.chk(subjid, 'isrunning') or not chk2.chk(subjid, 'recon'):
                         log.info(f'    {subjid}, {process} -> ERROR, IsRunning or not all files created')
                         db['ERROR_QUEUE'][subjid] = schedule.get_time_end_of_walltime(process)
                         db['PROCESSED']['error_recon'].append(subjid)
             else:
-                if not chk2.chk(subjid, app, vars_app, 'isrunning') and chk2.chk(subjid, app, vars_app, process):
+                if not chk2.chk(subjid, 'isrunning') and chk2.chk(subjid, process):
                     if process != process_order[-1]:
                         next_process = process_order[process_order.index(process)+1]
-                        if not chk2.chk(subjid, app, vars_app, next_process):
+                        if not chk2.chk(subjid, next_process):
                             db['DO'][next_process].append(subjid)
                             log.info(f'    {subjid}, {ACTION} {process} -> DO {next_process}')
                             if processing_env == 'tmux':
@@ -172,11 +172,11 @@ def check_error(scheduler_jobs, process):
             for subjid in lserr:
                 log.info('    {}'.format(subjid))
                 if subjid not in db["ERROR_QUEUE"] and path.exists(path.join(SUBJECTS_DIR, subjid)): #path.exists was added due to moving the subjects too early; requires adjustment
-                    chk2.chk(subjid, app, vars_app, 'isrunning', rm = True)
+                    chk2.chk(subjid, 'isrunning', rm = True)
                     log.info('        checking the recon-all-status.log for error for: {}'.format(process))
                     fs_err_helper.chkreconf_if_without_error(NIMB_tmp, subjid, SUBJECTS_DIR)
                     log.info('        checking if all files were created for: {}'.format(process))
-                    if not chk2.chk(subjid, app, vars_app, process):
+                    if not chk2.chk(subjid, process):
                             log.info('            some files were not created and recon-all-status has errors.')
                             log_f = Procs.log(process)
                             log_file = os.path.join(SUBJECTS_DIR, subjid, log_f)
@@ -271,7 +271,7 @@ def check_error(scheduler_jobs, process):
                             db['ERROR_QUEUE'].pop(subjid, None)
                             db['PROCESSED']['error_'+process].remove(subjid)
                             db['RUNNING'][process].append(subjid)
-                        elif not chk2.chk(subjid, app, vars_app, 'isrunning') or db['ERROR_QUEUE'][subjid] < schedule.get_time_end_of_walltime('now'):
+                        elif not chk2.chk(subjid, 'isrunning') or db['ERROR_QUEUE'][subjid] < schedule.get_time_end_of_walltime('now'):
                             log.info('    removing from ERROR_QUEUE')
                             db['ERROR_QUEUE'].pop(subjid, None)
                     else:
@@ -289,14 +289,14 @@ def long_check_groups(_id):
     if vars_app["DO_LONG"] == 1 and len(LONG_TPS)>1:
         All_cross_ids_done = list()
         for ses in LONG_TPS:
-            if _id+ses in ls and chk2.chk(_id+ses, app, vars_app, process_order[-1]):
+            if _id+ses in ls and chk2.chk(_id+ses, process_order[-1]):
                 All_cross_ids_done.append(_id+ses)
 
         if len(All_cross_ids_done) == len(LONG_TPS):
             base_f = _id+vars_app["base_name"]
             if base_f in ls:
-                if base_f not in db['RUNNING']['recon'] and base_f not in db['PROCESSED']['error_recon'] and not chk2.chk(base_f, app, vars_app, 'isrunning'):
-                    if chk2.chk(base_f, app, vars_app, "recon"):
+                if base_f not in db['RUNNING']['recon'] and base_f not in db['PROCESSED']['error_recon'] and not chk2.chk(base_f, 'isrunning'):
+                    if chk2.chk(base_f, "recon"):
                         All_long_ids_done = list()
                         for ses in LONG_TPS:
                             long_f = _id+ses+'.long.'+_id+vars_app["base_name"]
@@ -306,8 +306,8 @@ def long_check_groups(_id):
                                 db['RUNNING_JOBS'][long_f] = job_id
                                 db['RUNNING']['recon'].append(long_f)
                                 db['LONG_DIRS'][_id].append(long_f)
-                            elif chk2.chk(long_f, app, vars_app, 'registration'):
-                                if chk2.chk(long_f,app, vars_app, 'recon'):
+                            elif chk2.chk(long_f, 'registration'):
+                                if chk2.chk(long_f, 'recon'):
                                     All_long_ids_done.append(long_f)
                                 else:
                                     log.info(long_f+' moving to error_recon')
@@ -345,12 +345,12 @@ def long_check_groups(_id):
     else:
         for subjid in ls:
             if subjid not in db["RUNNING_JOBS"]:
-                if chk2.chk(subjid, app, vars_app, 'registration'):
-                    if chk2.chk(subjid, app, vars_app, process_order[-1]):
+                if chk2.chk(subjid, 'registration'):
+                    if chk2.chk(subjid, process_order[-1]):
                         log.info(f'    {subjid}: last process done {process_order[-1]}')
                         if subjid in db['RUNNING'][process_order[-1]]:
                             db['RUNNING'][process_order[-1]].remove(subjid)
-                        if chk2.chk(subjid, app, vars_app, 'all_done'):
+                        if chk2.chk(subjid, 'all_done'):
                             log.info('        all processes done, moving to CP2LOCAL')
                             db['PROCESSED']['cp2local'].append(subjid)
                             db['LONG_DIRS'].pop(_id, None)
@@ -516,32 +516,29 @@ def run():
 
     global db_manage, dbmain, db, app, Procs, schedule, log, chk2, vars_app, vars_processing, vars_nimb, NIMB_HOME, NIMB_tmp, SUBJECTS_DIR, max_walltime, process_order, processing_env, t0, max_batch_running
 
-    vars_app        = vars_local[app.upper()]
-    vars_processing = vars_local["PROCESSING"]
     vars_nimb       = vars_local["NIMB_PATHS"]
-    processing_env  = vars_local["PROCESSING"]["processing_env"]
-
     NIMB_HOME       = vars_nimb["NIMB_HOME"]
     NIMB_tmp        = vars_nimb["NIMB_tmp"]
+    vars_processing = vars_local["PROCESSING"]
+    processing_env  = vars_local["PROCESSING"]["processing_env"]
     max_walltime    = vars_processing["max_walltime"]
-    SUBJECTS_DIR    = vars_app["SUBJECTS_DIR"]
-    Procs           = FSProcesses(vars_app["FREESURFER_HOME"], vars_app["version"])
-    process_order   = ["registration"] + Procs.process_order()
-    vars_app['process_order'] = process_order
-    chk2            = CHECKER(atlas_definitions)
-
-    version, _, _, _= fs_version(vars_app["FREESURFER_HOME"])
-    if version != "7.3.2":
-        chk2            = CHECKER(atlas_definitions, version)
     schedule        = Scheduler(vars_local)
 
+    vars_app        = vars_local[app.upper()]
+    SUBJECTS_DIR    = vars_app["SUBJECTS_DIR"]
+
+    _, _, fs_ver2nr, _= fs_version(vars_app["FREESURFER_HOME"])
+    Procs       = FSProcesses(vars_app["FREESURFER_HOME"], fs_ver2nr)
+    chk2        = CHECKER(vars_app, app, atlas_definitions)
+    process_order   = ["registration"] + Procs.process_order()
+    vars_app['process_order'] = process_order
 
     log.info('pipeline started')
     t0           = time.time()
     Update_running(NIMB_tmp, 1)
 
     log.info('reading database')
-    db_manage = AppDBManage(vars_local, DEFAULT, atlas_definitions)
+    db_manage = AppDBManage(vars_local, app, DEFAULT, atlas_definitions)
     dbmain = db_manage.get_db(app, vars_app)
     db = dbmain[app]
 

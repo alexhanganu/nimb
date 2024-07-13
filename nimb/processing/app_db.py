@@ -18,12 +18,14 @@ class AppDBManage:
 
     def __init__(self,
                 vars_local,
+                app,
                 DEFAULT,
                 atlas_definitions):
         self.NIMB_HOME    = vars_local["NIMB_PATHS"]["NIMB_HOME"]
         self.NIMB_tmp     = vars_local["NIMB_PATHS"]["NIMB_tmp"]
-        self.ses_abrevs  = vars_local["NIMB_PATHS"]["long_abbrevs"]
-        self.chk          = CHECKER(atlas_definitions)
+        self.ses_abrevs   = vars_local["NIMB_PATHS"]["long_abbrevs"]
+        self.vars_app     = vars_local[app.upper()]
+        self.chk          = CHECKER(self.vars_app, app, atlas_definitions)
         self.DEF          = DEFAULT
         self.db_file      = os.path.join(self.NIMB_tmp, "db_app.json")
 
@@ -35,7 +37,7 @@ class AppDBManage:
                 db = json.load(db_open)
         else:
             db = dict()
-            proc_order = vars_app["process_order"]
+            proc_order = self.vars_app["process_order"]
             if app not in db:
                 db[app] = {}
             for action in ['DO','RUNNING',]:
@@ -106,7 +108,7 @@ class AppDBManage:
                 new_subjects = json.load(jfile)
             ls_SUBJECTS_in_long_dirs_processed = self.get_ls_subjids_in_long_dirs(db)
             for subjid in new_subjects:
-                if not self.chk.chk(subjid, self.app, self.app_vars, 'registration'):
+                if not self.chk.chk(subjid, 'registration'):
                     if 'anat' in new_subjects[subjid]:
                         if 't1' in new_subjects[subjid]['anat']:
                             if new_subjects[subjid]['anat']['t1']:
@@ -189,9 +191,9 @@ class AppDBManage:
 
 
     def add_new_subjid_to_db(self, subjid, db):
-        if not self.chk.chk(subjid,  self.app,  self.app_vars, 'isrunning'):
+        if not self.chk.chk(subjid,  'isrunning'):
             for process in self.proc_order[1:]:
-                if not self.chk.chk(subjid, self.app, self.app_vars, process):
+                if not self.chk.chk(subjid, process):
                     log.info('        '+subjid+' sent for DO '+process)
                     db['DO'][process].append(subjid)
                     break

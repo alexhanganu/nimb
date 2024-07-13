@@ -11,40 +11,38 @@ log = logging.getLogger(__name__)
 
 class CHECKER():
     def __init__(self,
-                 atlas_definitions,
-                 version = "7.3.2"):
-        self.stats   = atlas_definitions.stats_f
-        self.atlas   = atlas_definitions.atlas_data
-        self.app_ver = version
+                 app_vars = dict(),
+                 app = 'freesurfer',
+                 atlas_definitions = dict()):
+        self.stats    = atlas_definitions.stats_f
+        self.atlas    = atlas_definitions.atlas_data
+        self.app_vars = app_vars
+        self.app      = app
+        app_home      = self.app_vars[f"{app.upper()}_HOME"]
+        self.FSProcs  = fs_definitions.FSProcesses(app_home)
+        self.SUBJECTS_DIR = self.app_vars['SUBJECTS_DIR']
+        self.proc_order   = self.app_vars["process_order"]
 
-    def chk(self, subjid, app, app_vars, stage, rm = False):
-        self.app          = app
-        self.app_vars     = app_vars
-        self.SUBJECTS_DIR = app_vars['SUBJECTS_DIR']
-        if app == "freesurfer" and self.app_ver != "7.3.2":
-            self.app_ver      = app_vars["version"]
-        self.proc_order   = app_vars["process_order"]
-
-        if app == 'freesurfer':
-            FSProcs = fs_definitions.FSProcesses(self.app_ver)
+    def chk(self, subjid, stage, rm = False):
+        if self.app == 'freesurfer':
             if stage == 'isrunning':
-                isrunnings    = FSProcs.IsRunning_files
+                isrunnings    = self.FSProcs.IsRunning_files
                 path_2scripts = os.path.join(self.SUBJECTS_DIR, subjid, 'scripts')
                 return self.IsRunning_chk(subjid, isrunnings, path_2scripts, rm)
             elif stage == 'registration':
                 return os.path.exists(os.path.join(self.SUBJECTS_DIR, subjid))
-            elif stage in FSProcs.recons:
-                files2chk = FSProcs.processes[stage]["files_2chk"]
+            elif stage in self.FSProcs.recons:
+                files2chk = self.FSProcs.processes[stage]["files_2chk"]
                 return self.fs_chk_recon_files(stage, subjid, files2chk)
-            elif stage in FSProcs.atlas_proc:
-                atlas2chk = FSProcs.processes[stage]["atlas_2chk"]
-                log_file  = os.path.join(self.SUBJECTS_DIR, subjid, FSProcs.log(stage))
+            elif stage in self.FSProcs.atlas_proc:
+                atlas2chk = self.FSProcs.processes[stage]["atlas_2chk"]
+                log_file  = os.path.join(self.SUBJECTS_DIR, subjid, self.FSProcs.log(stage))
                 return self.fs_chk_stats_f(subjid, atlas2chk, log_file)
             elif stage == "all_done":
                 return self.all_done_chk(subjid)
-        elif app == 'nilearn':
+        elif self.app == 'nilearn':
             pass
-        elif app == 'dipy':
+        elif self.app == 'dipy':
             pass
         else:
             print("ERR in app defining")

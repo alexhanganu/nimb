@@ -15,16 +15,16 @@ def fs_version(fs_home,
         opsys: str() Operating system used for FreeSurfer as per installation file
     """
     build_file = os.path.join(fs_home, "build-stamp.txt")
+    print(f"reading build file for FreeSurfer at: {build_file}")
     version = None
     opsys = None
     user_sys_ver_similar = True
     if os.path.exists(build_file):
-        print("reading build file for FreeSurfer at: ", build_file)
         content = open(build_file, "r").readlines()[0].strip("\n").split("-")
         opsys, version = content[2], content[3]
         version_2numbers = version.replace(".","")[:2]
     else:
-        print("build file for FreeSurfer is missing at: ", build_file)
+        print(f"ERR!! build file for FreeSurfer is missing at: {build_file}")
 
     if user_fs_version:
         if user_fs_version != version:
@@ -41,6 +41,8 @@ class FSProcesses:
         codes in atlas_chk key MUST be the same as atlas names in
         processing/atlases/atlas_definitions.atlas_data
         """
+        self.fs_ver2nr = freesurfer_version
+        _, _, self.fs_ver2nr, _ = fs_version(fs_home, freesurfer_version)
         self.processes = {
             "autorecon1":{
                         "group": "recon",
@@ -119,7 +121,6 @@ class FSProcesses:
         self.atlas_proc = [i for i in self.processes if "atlas" in self.processes[i]["group"]]
         self.IsRunning_files = [self.processes[i]["isrun_f"] for i in self.atlas_proc] +\
                                 [self.processes["autorecon1"]["isrun_f"]]
-        version, _, self.fs_ver2nr, _ = fs_version(fs_home, freesurfer_version)
 
     def log(self, process):
         if process in self.recons:
