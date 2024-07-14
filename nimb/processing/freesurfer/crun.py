@@ -528,13 +528,13 @@ def run():
     SUBJECTS_DIR    = vars_app["SUBJECTS_DIR"]
 
     _, _, fs_ver2nr, _= fs_version(vars_app["FREESURFER_HOME"])
-    Procs       = FSProcesses(vars_app["FREESURFER_HOME"], fs_ver2nr)
-    chk2        = CHECKER(vars_app, app, atlas_definitions)
+    Procs           = FSProcesses(vars_app["FREESURFER_HOME"], fs_ver2nr)
     process_order   = ["registration"] + Procs.process_order()
     vars_app['process_order'] = process_order
+    chk2            = CHECKER(vars_app, app, atlas_definitions)
 
     log.info('pipeline started')
-    t0           = time.time()
+    t0              = time.time()
     Update_running(NIMB_tmp, 1)
 
     log.info('reading database')
