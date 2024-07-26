@@ -47,6 +47,7 @@
      },
 "DIPY": {
     "install"                 : 1,
+    "DIPY_HOME"               : "~/nimb_tmp/dipy",
     "SUBJECTS_DIR"            : "~/nimb_tmp/dipy/subjects",
     "NIMB_PROCESSED"          : "~/nimb_tmp/dipy/nimb_processed",
     "NIMB_ERR"                : "~/nimb_tmp/dipy/nimb_err",
@@ -55,6 +56,7 @@
      },
 "NILEARN": {
     "install"                 : 1,
+    "NILEARN_HOME"            : "~/nimb_tmp/nilearn",
     "SUBJECTS_DIR"            : "~/nimb_tmp/nilearn/subjects",
     "NIMB_PROCESSED"          : "~/nimb_tmp/nilearn/nimb_processed",
     "NIMB_ERR"                : "~/nimb_tmp/nilearn/nimb_err",

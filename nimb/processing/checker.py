@@ -19,9 +19,11 @@ class CHECKER():
         self.app_vars = app_vars
         self.app      = app
         app_home      = self.app_vars[f"{app.upper()}_HOME"]
-        self.FSProcs  = fs_definitions.FSProcesses(app_home)
+        if app == "freesurfer":
+            self.FSProcs  = fs_definitions.FSProcesses(app_home)
         self.SUBJECTS_DIR = self.app_vars['SUBJECTS_DIR']
         self.proc_order   = self.app_vars["process_order"]
+        self.app_ver  = self.app_vars["version"]
 
     def chk(self, subjid, stage, rm = False):
         if self.app == 'freesurfer':

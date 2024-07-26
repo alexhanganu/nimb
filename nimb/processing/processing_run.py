@@ -57,10 +57,6 @@ class RUNProcessing:
         self.apps          = list(DEFAULT.app_files.keys())
         self.vars_apps_populate()
         self.schedule      = Scheduler(self.vars_local)
-        self.app_db        = AppDBManage(self.vars_local,
-                                        DEFAULT,
-                                        atlas_definitions)
-
 
         t0           = time.time()
         time_elapsed = 0
@@ -138,8 +134,9 @@ class RUNProcessing:
 
     def get_ids_per_app(self, app):
         _ids_in_app_db = list()
+        print("app is: ", app)
+        self.app_db = AppDBManage(self.vars_local, app, DEFAULT, atlas_definitions)
         db_per_app = self.app_db.get_db(app, self.vars_apps[app])
-        # print(db_per_app)
         for ls_bids_ids in db_per_app[app]["LONG_DIRS"].values():
             _ids_in_app_db = _ids_in_app_db + ls_bids_ids
         self.log.info(f"there are: {len(_ids_in_app_db)} participants being processed with {app}")
