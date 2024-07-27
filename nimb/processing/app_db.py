@@ -28,9 +28,11 @@ class AppDBManage:
         self.chk          = CHECKER(self.vars_app, app, atlas_definitions)
         self.DEF          = DEFAULT
         self.db_file      = os.path.join(self.NIMB_tmp, "db_app.json")
+        print("DEBUG!! AppDBManage 1, app is:", app)
 
 
     def get_db(self, app, vars_app):
+        print("DEBUG!! AppDBManage 2, app is:", app)
         log.info(f"        Database file is: {self.db_file}")
         if os.path.isfile(self.db_file):
             with open(self.db_file) as db_open:
