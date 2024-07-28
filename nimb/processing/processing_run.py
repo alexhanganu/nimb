@@ -134,14 +134,10 @@ class RUNProcessing:
 
     def get_ids_per_app(self, app):
         _ids_in_app_db = list()
-        print("DEBUG!! 1, app is:", app)
         self.app_db = AppDBManage(self.vars_local,
                                   app, DEFAULT,
                                   atlas_definitions)
-        print("DEBUG!! 2, app is:", app)
         db_per_app = self.app_db.get_db(app, self.vars_apps[app])
-        print("DEBUG!! 2, app is:", app)
-        print("DEBUG!! 2, db_per_app.keys:", db_per_app.keys())
         for ls_bids_ids in db_per_app[app]["LONG_DIRS"].values():
             _ids_in_app_db = _ids_in_app_db + ls_bids_ids
         self.log.info(f"there are: {len(_ids_in_app_db)} participants being processed with {app}")
