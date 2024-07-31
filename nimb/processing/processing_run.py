@@ -19,17 +19,17 @@ environ['TZ'] = 'US/Eastern'
 time.tzset()
 
 
-#         - after each 2 hours check the local/remote NIMB_PROCESSED_FS and NIMB_PROCESSED_FS_ERROR folders. 
-#             If not empty: mv (or copy/rm) to the path provided in the ~/nimb/projects.json → project → local 
+#         - after each 2 hours check the local/remote NIMB_PROCESSED_FS and NIMB_PROCESSED_FS_ERROR folders.
+#             If not empty: mv (or copy/rm) to the path provided in the ~/nimb/projects.json → project → local
 #                 or remote $PROCESSED_FS_DIR folder
-#         - if SOURCE_BIDS_DIR is provided: moves the processed subjects to 
+#         - if SOURCE_BIDS_DIR is provided: moves the processed subjects to
 #             corresponding SOURCE_BIDS_DIR/subject/session/processed_fs folder
 #     - populating rule:
-#         - continue populating until the volume of subjects + volume of estimated processed subjects 
+#         - continue populating until the volume of subjects + volume of estimated processed subjects
 #             (900Mb per subject) is less then 75% of the available disk space
 #         - populate local.json - NIMB_PATHS - NIMB_NEW_SUBJECTS based on populating rule
 #         - If there are more than one computer ready to perform freesurfer:
-#             - send archived subjects to each of them based on the estimated time required to process 
+#             - send archived subjects to each of them based on the estimated time required to process
 #                 one subject and choose the methods that would deliver the lowest estimated time to process.
 #         - once copied to the NIMB_NEW_SUBJECTS:
 #             - add subject to distrib-DATABSE → LOCATION → remote_name
@@ -69,7 +69,7 @@ class RUNProcessing:
         self.DBc = DB(all_vars, logger)
         self.db = self.DBc.get_db()
 
-        self.log.info('    NEW SUBJECTS searching:')    
+        self.log.info('    NEW SUBJECTS searching:')
         self.db = self.DBc.update_db_new_subjects(self.db)
 
 

@@ -123,7 +123,7 @@ class CHECKER():
 
     def all_done_chk(self, subjid):
         result = True
-        if not self.chk(subjid, self.app, self.app_vars, 'isrunning'):
+        if not self.chk(subjid, 'isrunning'):
             for process in self.proc_order[1:]:
                 if not self.chk(subjid, self.app, self.app_vars, process):
                     log.info('        {} is missing {}'.format(subjid, process))
