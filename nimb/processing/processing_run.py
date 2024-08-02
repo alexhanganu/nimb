@@ -181,10 +181,16 @@ class RUNProcessing:
             subj_processed = _id_bids_2app_proc_d[bids_id]
             src = os.path.join(_dir_processed_nimb_app, subj_processed)
             dst = os.path.join(_dir_store, subj_processed)
-            self.log.info(f'    moving {subj_processed} from {src} to storage folder: {dst}')
-            # shutil.move(src, dst)
+            self.log.info(f'    copying {subj_processed} from {src} to storage folder: {dst}')
+            # shutil.copy(src, dst)
+            # check that files have same volume and number of files
+            # if yes:
+            self.log.info(f'    removing {subj_processed} from {src}')
             self.db = self.DBc.rm_from_db(bids_id, app, self.db)
             self.update_project_data(bids_id, subj_processed, app)
+            # os.rmdir(src)
+            #else:
+            #self.log.info(f"    files were not copied correctly. PLEASE copy manualy")
 
 
     def update_project_data(self, bids_id, subj_processed, app):
