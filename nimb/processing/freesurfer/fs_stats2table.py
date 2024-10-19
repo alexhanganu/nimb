@@ -142,8 +142,13 @@ class FSStats2Table:
                 logger.info(f'subject: {sub} is archived. Please run:')
                 logger.info(f'    cd {self.fs_home}')
                 logger.info(f'    python nimb.py -project {self.project} -process run -do fs-get-stats')
-        self.writer_fs.save()
-        self.writer_nimb.save()
+        try:
+            self.writer_fs.save()
+            self.writer_nimb.save()
+        except Error as e:
+            print(e)
+            self.writer_fs.close()
+            self.writer_nimb.close()
         self.save_missing()
 
         if self.big_file:
