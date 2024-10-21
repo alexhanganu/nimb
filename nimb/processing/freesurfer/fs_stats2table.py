@@ -145,7 +145,7 @@ class FSStats2Table:
         try:
             self.writer_fs.save()
             self.writer_nimb.save()
-        except Error as e:
+        except Exception as e:
             print(e)
             self.writer_fs.close()
             self.writer_nimb.close()
