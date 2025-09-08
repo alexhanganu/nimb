@@ -1,88 +1,67 @@
 #!/bin/bash
-##
-## Declare all the sites that you want to download from into an array.
-##   Error codes:
-##     0 - Everything went fine, no updated files
-##     1 - Everything went fine, at least one updated file
-##
-## The exit status can be used to help other scripts decide if it is time to update 
-## the files in the nimb folder.
-##
+#
+# Name:    updateFiles.sh
+# Purpose: A utility script to download the latest versions of key NIMB files
+#          directly from the official GitHub repository.
+#
+# This helps in applying patches or updates without a full re-installation.
+#
+# Note: This script uses `wget` and ignores SSL certificate checks for simplicity.
+
+# Array of files to check and update.
+# Modify this list to control which files are managed by the script.
 declare -a FILES=(
-    "https://raw.githubusercontent.com/alexhanganu/nimb/docs/1-usage.md"
-    "https://raw.githubusercontent.com/alexhanganu/nimb/setup.py"
-    "https://raw.githubusercontent.com/alexhanganu/nimb/requirements.txt"
-    "https://raw.githubusercontent.com/alexhanganu/nimb/LICENSE"
-    "https://raw.githubusercontent.com/alexhanganu/nimb/nimb/nimb.py"
-    "https://raw.githubusercontent.com/alexhanganu/nimb/nimb/distribution/distribution_helper.py"
-    "https://raw.githubusercontent.com/alexhanganu/nimb/nimb/classification/classify_2nimb_bids.py"
-    "https://raw.githubusercontent.com/alexhanganu/nimb/nimb/processing/processing_run.py"
-    "https://raw.githubusercontent.com/alexhanganu/nimb/nimb/processing/schedule_helper.py"
-    "https://raw.githubusercontent.com/alexhanganu/nimb/nimb/processing/app_db.py.py"
+    "https://raw.githubusercontent.com/alexhanganu/nimb/main/nimb/nimb/nimb.py"
+    "https://raw.githubusercontent.com/alexhanganu/nimb/main/nimb/nimb/setup/config_manager.py"
+    "https://raw.githubusercontent.com/alexhanganu/nimb/main/nimb/nimb/distribution/distribution_manager.py"
+    # Add other key files here as needed
 )
 
 UPDATED=false
+# The root directory of the NIMB installation
+NIMB_ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
-##
-## Enable / Disable debug output.
-##
-DEBUG=true
+echo "Checking for updates..."
 
-##
-## Simple debug function, to help debug if debug is on.
-##   example use:
-##      logIfDebug "Hello world!"
-##
-function logIfDebug(){
-    if [ $DEBUG = true ]
-    then
-	echo "$1"
-    fi
-}
+# Create a temporary directory for downloads
+TEMP_DIR=$(mktemp -d)
+cd "$TEMP_DIR"
 
-##
-## Create teporary download directory
-##
-mkdir -p downloading
+# Loop through each file, download it, and compare with the local version.
+for file_url in "${FILES[@]}"; do
+    filename=$(basename "$file_url")
+    # Determine the relative path within the project structure
+    relative_path=$(echo "$file_url" | sed -n 's|.*nimb/main/\(.*\)|/\1|p')
+    local_file_path="${NIMB_ROOT_DIR}${relative_path}"
 
-##
-## Work from the temp directory
-##
-cd downloading
+    echo -n "Checking ${filename}... "
 
-##
-## For each file, we want to download it, and see if it differs from old one.
-##    If it differs, we assume that it is new, and thus we want to replace the old one.
-##    Unfortunately GitHub is issuing the cert for www.github.com only and not for other
-##    domains which is why we need to ignore cert warnings
-##
-for file in "${FILES[@]}"
-do    
-    logIfDebug "Downloading ${file}..."
-    wget --quiet --no-check-certificate ${file}
-    filename=$(echo ${file} | awk -F/ '{print $NF}')
-    result=$(diff --suppress-common-lines --speed-large-files -y ${filename} ../../../${filename} | wc -l)
-    if [ ${result} -ne 0 ]; then
-	logIfDebug "Updating ${filename} as it differs"
-	mv ${filename} ../../../
-	UPDATED=true
+    # Download the latest version quietly
+    wget --quiet --no-check-certificate "$file_url" -O "$filename.latest"
+
+    if [ ! -f "$local_file_path" ]; then
+        echo "Local file not found. Installing."
+        mv "$filename.latest" "$local_file_path"
+        UPDATED=true
+    # Compare the downloaded file with the local one
+    elif ! diff --quiet "$filename.latest" "$local_file_path"; then
+        echo "Update found. Replacing local file."
+        mv "$filename.latest" "$local_file_path"
+        UPDATED=true
+    else
+        echo "Already up to date."
+        rm "$filename.latest"
     fi
 done
 
-##
-## Remove the temporary directory
-##
+# Cleanup the temporary directory
 cd ..
-rm -rf downloading
+rm -rf "$TEMP_DIR"
 
-##
-## All is well, exit with error code 0.
-##
-if [ $UPDATED = true ]
-then
-    logIfDebug "Returning 1, as at least one file has been updated."
-    exit 1;
+if [ "$UPDATED" = true ]; then
+    echo "Update process finished. Some files were updated."
+    exit 1
 else
-    logIfDebug "Returning 0, as no files have been updated, but script ran successfully"
-    exit 0;
+    echo "All files are up to date."
+    exit 0
 fi

@@ -1,15 +1,22 @@
 """
-if processed data is stored as zip archived
-script extracts of specific folders
+This module handles the archiving and extraction of processed data using zip files.
+It is intended for managing storage and distribution of processed subjects.
 """
-archives_supported = ('.zip', '.gz', '.tar.gz')
 
 import os
 import zipfile
 import shutil
+import logging
+
+log = logging.getLogger(__name__)
+
+archives_supported = ('.zip', '.gz', '.tar.gz')
 
 
 def is_archive(file):
+    """
+    Checks if a given file has a supported archive extension.
+    """
     archived = False
     archive_type = 'none'
     for ending in archives_supported:
@@ -20,116 +27,76 @@ def is_archive(file):
     return archived, archive_type
 
 
+class ZipArchiveManagement:
+    """
+    A class to manage the extraction of specific folders or files from a zip archive.
+    """
 
-class ZipArchiveManagement():
-
-    def __init__(self,
-                zip_file_path,
-                path2xtrct = False,
-                path_err = False,
-                dirs2xtrct = list(),
-                files2xtrct = list(),
-                log=True):
+    def __init__(self, zip_file_path, path2xtrct=None, dirs2xtrct=None, files2xtrct=None):
         self.zip_f_path = zip_file_path
-        self.zip_file   = os.path.split(self.zip_f_path)[-1]
         self.path2xtrct = path2xtrct
-        self.dirs2xtrct = dirs2xtrct
-        self.files2xtrct= files2xtrct
-        self.path_err   = path_err
-        self.log        = log
-        if self.chk_if_zipfile():
-            self.zip_file_open = self.read_zip()
-            if self.path2xtrct:
-                self.extract_archive()
-            else:
-                print(f'{" " * 12}reading: {self.zip_f_path}')
-                print(f'{" " * 15}extraction is not requested. returning only content')
-                self.zip_file_content()
+        self.dirs2xtrct = dirs2xtrct or []
+        self.files2xtrct = files2xtrct or []
+        self.zip_file_open = None
 
-
-    def chk_if_zipfile(self):
         if not zipfile.is_zipfile(self.zip_f_path):
-            print(f'{" " * 12}{self.zip_f_path} not a zip file')
-            if self.path_err:
-                self.move_error()
-            return False
+            log.error(f"File is not a valid zip archive: {self.zip_f_path}")
+            return
+
+        if self.path2xtrct:
+            self.extract_archive()
         else:
-            return True
+            log.info(f"Reading archive content without extraction: {self.zip_f_path}")
 
+    def __enter__(self):
+        """Context manager entry."""
+        self.zip_file_open = zipfile.ZipFile(self.zip_f_path, 'r')
+        return self
 
-    def read_zip(self):
-        return zipfile.ZipFile(self.zip_f_path, 'r')
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Context manager exit."""
+        if self.zip_file_open:
+            self.zip_file_open.close()
 
-
-    def zip_file_content(self):
+    def get_content_list(self):
+        """Returns a list of all file paths within the zip archive."""
+        if not self.zip_file_open:
+            with zipfile.ZipFile(self.zip_f_path, 'r') as zf:
+                return zf.namelist()
         return self.zip_file_open.namelist()
 
+    def extract_archive(self):
+        """Initiates the archive extraction process."""
+        log.info(f"Extracting file: {self.zip_f_path} to folder: {self.path2xtrct}")
+        
+        with self as archive:
+            if self.dirs2xtrct or self.files2xtrct:
+                self._extract_patterns(archive)
+            else:
+                archive.zip_file_open.extractall(self.path2xtrct)
+        log.info("Extraction complete.")
 
-    def xtrct_all(self):
-        print(f'{" " * 12}extracting all content')
-        extracted = False
-        try:
-            self.zip_file_open.extractall(self.path2xtrct)
-            extracted = False
-        except Exception as e:
-            print(f'{" " * 16}{e}')
-        if not extracted:
-            try:
-                print(f'{" " * 12}trying to use system unzip:')
-                os.system(f'unzip -o {self.zip_f_path} -d {self.path2xtrct}')
-            except Exception as e:
-                print(f'{" " * 16}{e}')
-
-
-    def pattern_exists(self):
-        """
-        sometimes the patterns has a WIN-OS os.sep
-        it has to be changed to UNIX version
-        sometimes the os.sep is missing and has to be added
-        script also extracts only the files that correspond to the requested pattern
-        """
-        # add os.sep
-        ls_patterns = [i.replace(os.sep,'/') for i in self.dirs2xtrct]
-        for pattern in ls_patterns[::-1]:
-            if "/" not in pattern:
-                ix_pattern = ls_patterns.index(pattern)
-                ls_patterns[ix_pattern] = f"/{pattern}/"
-        if self.files2xtrct:
-            for i in self.files2xtrct:
-                ls_patterns.append(i)
-
-
-        # search for the corresponding patterns in the whole content
-        content_paths = list()
-        for content in self.zip_file_content():
+    def _extract_patterns(self, archive):
+        """Finds and extracts specific folders or files based on defined patterns."""
+        ls_patterns = self.dirs2xtrct[:]
+        # Ensure directory patterns match correctly
+        for i, pattern in enumerate(ls_patterns):
+            ls_patterns[i] = pattern.strip('/') + '/'
+        
+        ls_patterns.extend(self.files2xtrct)
+        
+        content_paths_to_extract = []
+        for content in archive.get_content_list():
             for pattern in ls_patterns:
                 if pattern in content:
-                    content_paths.append(content)
-        if content_paths:
-            print(f'{" " * 16}extracting patterns: {self.dirs2xtrct}')
-            self.extract_patterns(content_paths)
+                    content_paths_to_extract.append(content)
+
+        if content_paths_to_extract:
+            log.info(f"Extracting patterns: {self.dirs2xtrct} & {self.files2xtrct}")
+            for content_path in set(content_paths_to_extract): # Use set to avoid duplicates
+                try:
+                    archive.zip_file_open.extract(content_path, path=self.path2xtrct)
+                except Exception as e:
+                    log.error(f"Error during extraction of {content_path}: {e}")
         else:
-            print(f'{" " * 16}ERR: patterns are missing from archive: {self.dirs2xtrct}')
-
-    def extract_patterns(self, content_paths):
-        for content_path in content_paths:
-            try:
-                self.zip_file_open.extract(content_path, path=self.path2xtrct)
-            except Exception as e:
-                print(f'{" " * 16}{e}')
-                pass
-
-
-    def extract_archive(self):
-        if self.log:
-            print(f'{" " * 12}extracting: file {self.zip_f_path}')
-            print(f'{" " * 16}to folder {self.path2xtrct}')
-        if self.dirs2xtrct or self.files2xtrct:
-                self.pattern_exists()
-        else:
-            self.xtrct_all()
-
-
-    def move_error(self):
-        shutil.move(self.zip_f_path, self.path_err)
-        shutil.move(os.path.join(self.path_err, self.zip_file), os.path.join(self.path_err, 'errzip_'+self.zip_file))
+            log.warning(f"Patterns not found in the archive: {ls_patterns}")

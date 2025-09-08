@@ -3,7 +3,7 @@
 """This module check for nimb versions"""
 
 # nimb version
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 
 # Source: https://github.com/UNFmontreal/dcm2bids/dcm2bids/version.py
 

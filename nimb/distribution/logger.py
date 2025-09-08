@@ -1,82 +1,80 @@
-
 # -*- coding: utf-8 -*-
 
-"""Setup logging configuration"""
+"""
+This module provides a robust logging utility for the NIMB application.
+It sets up a logger that outputs to both the console and a log file.
+"""
 
 import platform
 import sys
 import os
 import time
-
 import logging
 
-from setup.version import __version__
+try:
+    from setup.version import __version__
+except ImportError:
+    __version__ = "unknown"
 
-os.environ['TZ'] = 'US/Eastern'
-if sys.platform == 'win32':
-    pass
-else:
+# Set time zone for consistent logging
+if sys.platform != 'win32':
+    os.environ['TZ'] = 'US/Eastern'
     time.tzset()
 
 
-class Log():
-
-    def __init__(self,
-                 output_dir):
-
-
+class Log:
+    """
+    A class to set up and manage the application's logging.
+    """
+    def __init__(self, output_dir, logLevel="INFO"):
         self.output_dir = output_dir
-        self.logLevel = "INFO"
+        self.logLevel = logLevel
+        self.logger = self._setup_logger()
 
-        # logging setup
-        self.set_logger()
+        self.logger.info("--- NIMB Logger Initialized ---")
+        self.logger.info(f"OS        : {platform.platform()}")
+        self.logger.info(f"Python    : {sys.version.splitlines()[0]}")
+        self.logger.info(f"NIMB      : {__version__}")
 
-        self.logger.info("--- nimb start ---")
-        self.logger.info("OS        : {}".format(platform.platform()))
-        self.logger.info("python    : {}".format(sys.version.replace("\n", "")))
-        self.logger.info("nimb      : {}".format(__version__))
+    def _setup_logger(self):
+        """Configures and returns a logger instance."""
+        logger = logging.getLogger("NIMB")
+        
+        # Prevent duplicate handlers if already configured
+        if logger.handlers:
+            return logger
+            
+        level = getattr(logging, self.logLevel.upper(), logging.INFO)
+        logger.setLevel(level)
+        
+        # Console handler
+        console_formatter = logging.Formatter('%(levelname)-8s: %(message)s')
+        console_handler = logging.StreamHandler(sys.stdout)
+        console_handler.setFormatter(console_formatter)
+        logger.addHandler(console_handler)
 
-
-    def set_logger(self):
-        """ Set a basic logger"""
-        today = time.strftime("%Y%m%d",time.localtime(time.time()))
-        logFile = os.path.join(
-            self.output_dir,
-            "log_{}.log".format(
-                          today
-                               ),
-                              )
-
-        setup_logging(self.logLevel, logFile)
-        self.logger = logging.getLogger(__name__)
-
-
-def setup_logging(logLevel, logFile=None):
-    """ Setup logging configuration"""
-#    logging.basicConfig(format='%(asctime)s %(module)s %(levelname)s: %(message)s')
-    logging.basicConfig(format='{asctime} : {message}')
-    logger = logging.getLogger()
-
-    # Check level
-    level = getattr(logging, logLevel.upper(), None)
-    if not isinstance(level, int):
-        raise ValueError("Invalid log level: {}".format(logLevel))
-    logger.setLevel(level)
-
-    # Set FileHandler
-    if logFile:
-        formatter = logging.Formatter("%(asctime)s : %(message)s",
-                              "%Y-%m-%d %H:%M:%S")
-        handler = logging.FileHandler(logFile)
-        handler.setFormatter(formatter)
-        handler.setLevel("DEBUG")
-        logger.addHandler(handler)
+        # File handler
+        makedir_if_not_exist(self.output_dir)
+        today = time.strftime("%Y%m%d")
+        log_file = os.path.join(self.output_dir, f"nimb_log_{today}.log")
+        
+        file_formatter = logging.Formatter("%(asctime)s [%(levelname)-8s]: %(message)s", "%Y-%m-%d %H:%M:%S")
+        file_handler = logging.FileHandler(log_file)
+        file_handler.setFormatter(file_formatter)
+        logger.addHandler(file_handler)
+        
+        return logger
 
 
-class LogLVL:
-
-    lvl0 = " " * 1
-    lvl1 = " " * 4
-    lvl2 = " " * 8
-    lvl3 = " " * 12
-    lvl4 = " " * 15
+def makedir_if_not_exist(path_list):
+    """Helper to create a directory if it doesn't exist."""
+    if not isinstance(path_list, list):
+        path_list = [path_list]
+    for p in path_list:
+        if not os.path.exists(p):
+            try:
+                os.makedirs(p)
+            except OSError as e:
+                print(f"Error creating directory {p}: {e}")
+                return False
+    return True
