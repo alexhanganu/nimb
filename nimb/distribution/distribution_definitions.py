@@ -5,9 +5,6 @@ This module defines all static, default values and constants used throughout
 the NIMB distribution and setup processes.
 """
 
-import os
-
-
 class DEFAULT(object):
     """
     A class to hold default values for the application.
@@ -18,31 +15,36 @@ class DEFAULT(object):
     CENTOS_VERSION = '7'
     NIMB_TIME_FORMAT = "%Y%m%d_%H%M"
 
+    # Processing and Scheduling Defaults
+    BATCH_WALLTIME = "12:00:00"
+    CLUSTER_TIME_FORMAT = "%H:%M:%S"
+
     # Naming and Key Conventions
     ID_SOURCE_KEY = "id_source"
     ID_PROJECT_KEY = "id_project"
-    ID_COL = "participant_id" # BIDS compliant default
-    F_IDS = "nimb_ids.json"
-    F_NIMB_CLASSIFIED = "nimb_classified.json"
-    DEFAULT_TAB_NAME = "participants.tsv"
-    
-    # Application specifics
     APPS_PER_TYPE = {
-        "anat": ["freesurfer"],
-        "func": ["nilearn"],
-        "dwi": ["dipy"]
+        "anat": "freesurfer",
+        "func": "nilearn",
+        "dwi": "dipy"
     }
-
+    
+    # Files and Directories
     APP_FILES = {
         "freesurfer": {
             "new_subjects": "new_subjects_fs.json",
-            "running": "IsRunningFS_",
             "db": "db_fs.json",
+            "run_file": "freesurfer_runner.py",
             "dir_store_proc": "PROCESSED_FS_DIR",
-            "fname_stats": "fs_stats",
             "name_abbrev": "fs"
+        },
+        "nilearn": {
+            "new_subjects": "new_subjects_nl.json",
+            "db": "db_nl.json",
+            "run_file": "nilearn_runner.py",
+            "dir_store_proc": "PROCESSED_NILEARN_DIR",
+            "name_abbrev": "nl"
         }
-        # TODO: Add nilearn and dipy specific files here.
+        # TODO: Add dipy specific files here.
     }
     
     STATS_DIRS = {
@@ -54,3 +56,4 @@ class DEFAULT(object):
     GLM_MEASUREMENTS = "thickness,area,volume,curv"
     GLM_THRESHOLDS = "5,10,15,20,25"
     GLM_MCZ_CACHE = "13"
+

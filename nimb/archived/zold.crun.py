@@ -13,54 +13,6 @@ from fs_definitions import FSProcesses, fs_version
 environ['TZ'] = 'US/Eastern'
 time.tzset()
 
-"""For quality control
-Euler numbers to detect outlier datasets for exclusion
-1. Rosen, A. F., Roalf, D. R., Ruparel, K., Blake, J., Seelaus, K., Villa, L. P., ... & Satterthwaite, T. D. (2018). Quantitative assessment of structural image quality. Neuroimage, 169, 407-418.
-2. de Lange, A. M. G., Kaufmann, T., Quintana, D. S., Winterton, A., Andreassen, O. A., Westlye, L. T., & Ebmeier, K. P. (2021). Prominent health problems, socioeconomic deprivation, and higher brain age in lonely and isolated individuals: A population-based study. Behavioural Brain Research, 414, 113510.
-else:
-    run:
-        mri_segstats --qa-stats subject subject.qa.dat
-        It will generate the QA .dat file.
-        This will have 20 numbers in it.
-        Output has 17 items: (1) 
-                subjectname, (2) number of control points, (3) number of WM 
-                voxels erased, (4) number of WM voxels filled, (5) number of 
-                brainmask.mgz voxels erased (relative to brainmask.auto.mgz), 
-                (6) number of brainmask.mgz voxels cloned, (7) number of 
-                aseg.mgz voxels changed, (8) number of holes in lh.orig.nofix,
-                (9) number of holes in rh.orig.nofix, (10) total number of 
-                holes, (11) ratio of number of voxels in brainmask.mgz to the 
-                eTIV, (12) mean norm.mgz in WM voxels, (13) spatial std of 
-                WM,(14) min WM, (15) max WM, (16) range WM, (17) WM SNR (mean/
-                std). The WM statistics are computed from a WM mask in 
-                aparc+aseg.mgz eroded by 3 voxels. The WM statistics are 
-                "robust" meaning that the top and bottom 2% are excluded 
-                before computing the stats. (18) Mean gray/white percent 
-                contrast, (19) Spatial stddev of G/W percent contrast, (20) 
-                CNR = 18/19.
-        Run:
-            mri_segstats --help to see what they are.
-            I usually use #20 (CNR)
-            Run it for all subjects,
-            then sort by CNR,
-            then examine the worse subjects
-to run Local Gyrification index:
-https://surfer.nmr.mgh.harvard.edu/fswiki/LGI
-run:
-    recon-all -s <subj> -localGI
-for this you will need:
-        that the ?h.pial surface files exist in the subject's <subj>/surf directory
-        You will need $FREESURFER_HOME/matlab in your matlab path set up in your ~/matlab/starup.m script. 
-To generate statistics on ROIs, for example:
-mri_segstats --annot <subj> lh aparc --i $SUBJECTS_DIR/<subj>/surf/lh.pial_lgi --sum lh.aparc.pial_lgi.stats
-
-mri_segstats --slabel <subj> lh $SUBJECTS_DIR/subject/label/lh.cortex --i
-
-$SUBJECTS_DIR/<subj>/surf/lh.pial_lgi –excluded 0 --sum lh.aparc.pial_lgi.stats
-
-in the file lh.aparc.pial_lgi.stats, the variable that is reporting the gyrification index is The "Mean" column
-"""
-
 
 def get_cmd(process, _id, id_base = '', ls_tps = []):
     if process == 'registration':
