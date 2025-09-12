@@ -70,7 +70,7 @@
     "NIMB_tmp"                : "Default is NIMB_HOME/tmp path to a temporary folder where all temporary files will be saved. This folder needs to be put in a place that allows quick reading and writing and to delete the files; This folder can get very big. On compute canada it should be put on scratch",
     "NIMB_NEW_SUBJECTS"       : "Default: NIMB_tmp/nimb_new_subjects; path to the folder where the new zipped and unzipped raw MR data is copied in order to be used by the classifyer and the FreeSurfer registration; subjects are removed from the folder once processing is done",
     "conda_home"              : "path to miniconda3 installation",
-    "long_abbrevs"            : "list of abbreviation used to define the longitudinal time points for subjects; default is ses-",
+    "long_abbrevs"            : ["ses-"],
     "time_format"             : "format of the time and date",
     "max_nr_running_batches"  : "the number of batches that can be sent to the scheduler at the same time",
     "processing_env"          : "slurm or tmux or moab is the environment used for processing data",
@@ -99,7 +99,7 @@
     "GLM_measurements"        : "cortical parameters that will be used for FreeSurfer GLM analysis: thickness,area,volume,curv",
     "GLM_thresholds"          : "threshold levels for smoothing in mm, used for FreeSurfer GLM analysis: 5,10,15,20,25",
     "GLM_MCz_cache"           : "level of FreeSurfer GLM MCZ simulation threshold 13 equals to p:0.05",
-    "freesurfer_version"      : "default is 7 (for 7.1.1) but pipeline should also work with versions 6 and 5",
+    "version"                 : "version of the app",
     "freesurfer_license"      : "license of freesurfer",
     "export_screen"           : "can the screen be vewed/ exported ? This is necessary for fs-glm-images in order to extract glm images with freeview and tksurfer; 1= Yes, 0= No"
    }

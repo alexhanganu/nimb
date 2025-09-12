@@ -93,3 +93,4 @@ class ProjectManager:
         except FileNotFoundError as e:
             self.logger.error(f"Directory not found while checking for new subjects: {e}")
 
+

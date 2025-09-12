@@ -43,8 +43,14 @@ class DEFAULT(object):
             "run_file": "nilearn_runner.py",
             "dir_store_proc": "PROCESSED_NILEARN_DIR",
             "name_abbrev": "nl"
+        },
+        "dipy": {
+            "new_subjects": "new_subjects_dp.json",
+            "db": "db_dp.json",
+            "run_file": "dipy_runner.py",
+            "dir_store_proc": "PROCESSED_DIPY_DIR",
+            "name_abbrev": "dp"
         }
-        # TODO: Add dipy specific files here.
     }
     
     STATS_DIRS = {
