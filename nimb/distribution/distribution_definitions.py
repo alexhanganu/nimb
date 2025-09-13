@@ -27,7 +27,7 @@ class DEFAULT(object):
         "func": "nilearn",
         "dwi": "dipy"
     }
-    
+
     # Files and Directories
     APP_FILES = {
         "freesurfer": {
@@ -52,12 +52,12 @@ class DEFAULT(object):
             "name_abbrev": "dp"
         }
     }
-    
+
     STATS_DIRS = {
         "STATS_HOME": "stats",
         "FS_GLM_dir": "fs_glm"
     }
-    
+
     # Statistical and GLM Defaults
     GLM_MEASUREMENTS = "thickness,area,volume,curv"
     GLM_THRESHOLDS = "5,10,15,20,25"

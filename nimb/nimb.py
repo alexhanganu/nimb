@@ -43,9 +43,9 @@ class NIMB:
             'run': self._handle_run,
             'classify': self._handle_classify,
             'classify2bids': self._handle_classify_2_bids,
-            'fs-get-stats': self._handle_fs_get_stats,
             'fs-glm': self._handle_fs_glm,
             'fs-glm-image': self._handle_fs_glm_image,
+            'fs-get-stats': self._handle_fs_get_stats,
             'run-stats': self._handle_run_stats,
         }
 
@@ -66,6 +66,16 @@ class NIMB:
     def _handle_run(self):
         """Runs the main project pipeline."""
         self.proj_manager.run()
+
+    def _handle_process(self):
+        """Submits the main processing daemon to the scheduler."""
+        self.logger.info("Submitting the main processing daemon...")
+        cd_cmd = f"cd {os.path.join(self.NIMB_HOME, 'processing')}"
+        cmd = f'{self.py_run_cmd} processing_run.py -project {self.params.project}'
+        self.scheduler.submit_4_processing(
+            cmd, 'nimb_daemon', 'daemon', cd_cmd, python_load=True
+        )
+        self.logger.info("Processing daemon submitted.")
 
     def _handle_classify(self):
         """
@@ -88,6 +98,33 @@ class NIMB:
         self.logger.info("Initiating conversion to BIDS format...")
         self.classifier.convert_to_bids()
 
+    def _handle_fs_glm(self):
+        """Submits the FreeSurfer GLM runner to the scheduler."""
+        self.logger.info("Submitting the FS-GLM runner...")
+        cd_cmd = f"cd {os.path.join(self.NIMB_HOME, 'processing', 'freesurfer')}"
+        cmd = f'{self.py_run_cmd} fs_glm_runglm.py -project {self.params.project}'
+        self.scheduler.submit_4_processing(
+            cmd, 'fs_glm', 'run_glm', cd_cmd, python_load=True, activate_fs=True
+        )
+        self.logger.info("FS-GLM runner submitted.")
+
+    def _handle_fs_glm_images(self):
+        """Submits the FS-GLM image extraction runner to the scheduler."""
+        self.logger.info("Submitting the FS-GLM image extraction runner...")
+        
+        # Check if screen can be exported, as it's a requirement for Freeview/tksurfer
+        if not self.vars_local['FREESURFER'].get("export_screen"):
+            self.logger.error("Cannot extract GLM images. 'export_screen' is not enabled in local.json.")
+            self.logger.error("Please enable it on a machine with a display environment.")
+            sys.exit(1)
+
+        cd_cmd = f"cd {os.path.join(self.NIMB_HOME, 'processing', 'freesurfer')}"
+        cmd = f'{self.py_run_cmd} freesurfer_get_glm_images_runner.py -project {self.params.project}'
+        self.scheduler.submit_4_processing(
+            cmd, 'fs_glm_images', 'extract', cd_cmd, python_load=True, activate_fs=True
+        )
+        self.logger.info("FS-GLM image extraction runner submitted.")
+
     def _handle_fs_get_stats(self):
         """Handles FreeSurfer stats extraction."""
         if self.dist_manager.is_ready_for_stats():
@@ -99,44 +136,6 @@ class NIMB:
                        f'-stats_dir {dir_4stats} -dir_fs_stats {PROCESSED_FS_DIR}')
                 cd_cmd = f"cd {os.path.join(self.NIMB_HOME, 'processing', 'freesurfer')}"
                 self.scheduler.submit_4_processing(cmd, 'fs_stats', 'get_stats', cd_cmd)
-
-    def _handle_fs_glm(self):
-        """Handles FreeSurfer GLM analysis."""
-        if self.dist_manager.is_ready_for_fs_glm():
-            GLM_file_path, GLM_dir = distrib.prep_4fs_glm(fs_glm_dir,
-                                                            fname_groups)
-            FS_SUBJECTS_DIR = self.vars_local['FREESURFER']['SUBJECTS_DIR']
-            DistributionReady(self.all_vars).fs_chk_fsaverage_ready(FS_SUBJECTS_DIR)
-            if GLM_file_path and not self.all_vars.params.test:
-                glmcontrast = self.all_vars.params.glmcontrast
-                glmpermutations = self.all_vars.params.glmpermutations
-                add_correct = ""
-                glmcorrected = self.all_vars.params.glmcorrected
-                if glmcorrected:
-                    add_correct = f" -corrected"
-                schedule_fsglm = Scheduler(self.vars_local)
-                cd_cmd = f"cd {os.path.join(self.NIMB_HOME, 'processing', 'freesurfer')}"
-                cmd = f'{self.py_run_cmd} fs_glm_runglm.py -project {self.project} -glm_dir {GLM_dir} -contrast {" ".join(glmcontrast)}{add_correct} -permutations {glmpermutations}'
-                schedule_fsglm.submit_4_processing(cmd, 'fs_glm','run_glm', cd_cmd)
-            else:
-                print("    TESTING")
-
-    def _handle_fs_glm_image(self):
-        """Handles extraction of FS-GLM images."""
-        if not "export_screen" in self.vars_local['FREESURFER']:
-            print("PLEASE check that you can export your screen or you can run screen-based applications. \
-                                This is necessary for Freeview and Tksurfer. \
-                                Check the variable: export_screen in file {}".format(
-                                    "credentials_path.py/nimb/local.json"))
-        elif self.vars_local['FREESURFER']["export_screen"] == 0:
-            print("ERROR!: Current environment is not ready to export screen.")
-            print("    Provide a computer where the screen can be used")
-            print("    to run FreeSurfer Freeview and tksurfer")
-        if self.dist_manager.is_ready_for_fs_glm_image():
-            print('before running the script, remember to source $FREESURFER_HOME')
-            cmd = '{} fs_glm_extract_images.py -project {}'.format(self.py_run_cmd, self.project)
-            cd_cmd = f"cd {os.path.join(self.NIMB_HOME, 'processing', 'freesurfer')}"
-            self.schedule.submit_4_processing(cmd, 'fs_glm','extract_images', cd_cmd)
 
     def _handle_run_stats(self):
         """Handles running statistical analysis."""
@@ -165,12 +164,10 @@ def main():
         app = NIMB(all_vars)
         app.run()
     except Exception as e:
-        # A global exception handler
+        # A global exception handler to log any unhandled errors
+        logging.getLogger(__name__).error("A fatal error occurred in the NIMB application.", exc_info=True)
         print(f"FATAL: An unexpected error occurred: {e}", file=sys.stderr)
-        # For debugging, you might want to re-raise the exception
-        # raise
         sys.exit(1)
-
 
 if __name__ == "__main__":
     main()
