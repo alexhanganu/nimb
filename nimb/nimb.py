@@ -2,6 +2,8 @@
 
 """
 NIMB Main Module
+This is the main entry point for the NIMB application. It initializes the
+configuration and dispatches tasks based on user input.
 """
 
 import sys
@@ -10,7 +12,6 @@ from setup.config_manager import ConfigManager
 from distribution.distribution_manager import DistributionManager
 from distribution.project_helper import ProjectManager
 from processing.schedule_helper import Scheduler
-from classification.classifier import ClassificationManager
 from setup.version import __version__
 
 
@@ -27,6 +28,7 @@ class NIMB:
         self.NIMB_HOME = self.vars_local['NIMB_PATHS']['NIMB_HOME']
         self.NIMB_tmp = self.vars_local['NIMB_PATHS']['NIMB_tmp']
         
+        # Initialize logger from the config object
         self.logger = all_vars.logger
         self.logger.info("NIMB application initialized.")
 
@@ -34,18 +36,18 @@ class NIMB:
         self.dist_manager = DistributionManager(all_vars)
         self.proj_manager = ProjectManager(all_vars, self.dist_manager)
         self.scheduler = Scheduler(self.vars_local)
-        self.classifier = ClassificationManager(all_vars) # New classifier
 
         self.py_run_cmd = self.vars_local['PROCESSING']["python3_run_cmd"]
 
+        # A dictionary to map command-line processes to handler methods
         self.process_handlers = {
             'ready': self._handle_ready,
             'run': self._handle_run,
-            'classify': self._handle_classify,
-            'classify2bids': self._handle_classify_2_bids,
+            'process': self._handle_process,
+            'classify-bids': self._handle_classify_bids,
+            'fs-stats-get': self._handle_fs_stats_get,
             'fs-glm': self._handle_fs_glm,
-            'fs-glm-image': self._handle_fs_glm_image,
-            'fs-get-stats': self._handle_fs_get_stats,
+            'fs-glm-images': self._handle_fs_glm_images,
             'run-stats': self._handle_run_stats,
         }
 
@@ -64,7 +66,7 @@ class NIMB:
         self.dist_manager.check_ready()
 
     def _handle_run(self):
-        """Runs the main project pipeline."""
+        """Runs the main project pipeline (finds new subjects, adds to queue)."""
         self.proj_manager.run()
 
     def _handle_process(self):
@@ -77,26 +79,46 @@ class NIMB:
         )
         self.logger.info("Processing daemon submitted.")
 
-    def _handle_classify(self):
-        """
-        Handles the first stage of classification: scanning source directories
-        and creating an intermediate 'nimb_classified.json' file.
-        """
-        self.logger.info("Initiating source directory scan...")
-        if not self.dist_manager.is_classify_ready():
-            self.logger.error("Classification readiness check failed.")
+    def _handle_classify_bids(self):
+        """Initiates the two-stage BIDS classification process."""
+        self.logger.info("Starting BIDS classification process...")
+        # Lazily import to keep startup fast
+        from classification.classifier import ClassificationManager
+        classifier = ClassificationManager(self.all_vars)
+        
+        # Stage 1: Scan and create report
+        success, _ = classifier.generate_scan_report(update=True)
+        if not success:
+            self.logger.error("Stage 1 (scanning) of BIDS classification failed.")
+            return
+            
+        # Stage 2: Convert based on the report
+        classifier.convert_to_bids()
+        self.logger.info("BIDS classification process finished.")
+
+    def _handle_fs_stats_get(self):
+        """Submits the FreeSurfer stats extraction runner to the scheduler."""
+        self.logger.info("Submitting the FS-Stats extraction runner...")
+
+        # Get required paths from project config
+        stats_dir = self.project_vars['STATS_PATHS']['STATS_HOME']
+        processed_fs_dir = self.project_vars['PROCESSED_FS_DIR'][1]
+
+        if not os.path.isdir(processed_fs_dir):
+            self.logger.error(f"Processed FreeSurfer directory does not exist: {processed_fs_dir}")
             return
 
-        # The manager now handles finding subjects internally
-        self.classifier.generate_scan_report(update=True)
-
-    def _handle_classify_2_bids(self):
-        """
-        Handles the second stage: converting scanned data to BIDS format
-        using the 'nimb_classified.json' report.
-        """
-        self.logger.info("Initiating conversion to BIDS format...")
-        self.classifier.convert_to_bids()
+        cd_cmd = f"cd {os.path.join(self.NIMB_HOME, 'processing', 'freesurfer')}"
+        cmd = (
+            f'{self.py_run_cmd} fs_stats_runner.py '
+            f'-project {self.params.project} '
+            f'-stats_dir {stats_dir} '
+            f'-dir_fs_stats {processed_fs_dir}'
+        )
+        self.scheduler.submit_4_processing(
+            cmd, 'fs_stats', 'get_stats', cd_cmd, python_load=True, activate_fs=True
+        )
+        self.logger.info("FS-Stats extraction runner submitted.")
 
     def _handle_fs_glm(self):
         """Submits the FreeSurfer GLM runner to the scheduler."""
@@ -112,10 +134,8 @@ class NIMB:
         """Submits the FS-GLM image extraction runner to the scheduler."""
         self.logger.info("Submitting the FS-GLM image extraction runner...")
         
-        # Check if screen can be exported, as it's a requirement for Freeview/tksurfer
         if not self.vars_local['FREESURFER'].get("export_screen"):
             self.logger.error("Cannot extract GLM images. 'export_screen' is not enabled in local.json.")
-            self.logger.error("Please enable it on a machine with a display environment.")
             sys.exit(1)
 
         cd_cmd = f"cd {os.path.join(self.NIMB_HOME, 'processing', 'freesurfer')}"
@@ -124,18 +144,6 @@ class NIMB:
             cmd, 'fs_glm_images', 'extract', cd_cmd, python_load=True, activate_fs=True
         )
         self.logger.info("FS-GLM image extraction runner submitted.")
-
-    def _handle_fs_get_stats(self):
-        """Handles FreeSurfer stats extraction."""
-        if self.dist_manager.is_ready_for_stats():
-            PROCESSED_FS_DIR = self.dist_manager.prep_4fs_stats()
-            if PROCESSED_FS_DIR:
-                self.vars_local['PROCESSING']['processing_env'] = "tmux"
-                dir_4stats = self.project_vars['STATS_PATHS']["STATS_HOME"]
-                cmd = (f'{self.py_run_cmd} fs_stats2table.py -project {self.params.project} '
-                       f'-stats_dir {dir_4stats} -dir_fs_stats {PROCESSED_FS_DIR}')
-                cd_cmd = f"cd {os.path.join(self.NIMB_HOME, 'processing', 'freesurfer')}"
-                self.scheduler.submit_4_processing(cmd, 'fs_stats', 'get_stats', cd_cmd)
 
     def _handle_run_stats(self):
         """Handles running statistical analysis."""
@@ -148,7 +156,6 @@ class NIMB:
                 cd_cmd = f"cd {os.path.join(self.NIMB_HOME, 'stats')}"
                 cmd = f'{self.py_run_cmd} stats_helper.py -project {self.project} -step {step_stats}'
                 schedule.submit_4_processing(cmd, 'nimb_stats','run', cd_cmd)
-
 
 
 def main():
@@ -164,7 +171,6 @@ def main():
         app = NIMB(all_vars)
         app.run()
     except Exception as e:
-        # A global exception handler to log any unhandled errors
         logging.getLogger(__name__).error("A fatal error occurred in the NIMB application.", exc_info=True)
         print(f"FATAL: An unexpected error occurred: {e}", file=sys.stderr)
         sys.exit(1)
