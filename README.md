@@ -37,22 +37,30 @@ The Daemon (processing_run.py): This is the master orchestrator. You submit this
 * DIPY for diffusion imaging and tractography.
 
 => HPC-Ready: Designed for job schedulers like Slurm or tmux, enabling massive parallel processing on local or remote servers.
+
 => Statistical Analysis: Extracts key statistics from processed data and prepares files for group-level General Linear Model (GLM) analysis with FreeSurfer.
+
 => Flexible Workflow: Supports both a fully automated pipeline for large datasets and a step-by-step workflow for individual research projects.
 
 # Getting Started
 => Prerequisites
+
 => Python 3.6+
+
 => An environment for job scheduling (e.g., Slurm, tmux).
+
 => The core neuroimaging packages should be installed and accessible in the environment where the runners will execute:
+
 => FreeSurfer
+
 => Nilearn
+
 => DIPY
 
 # Installation
 Clone the repository and install the required Python packages:
 ```
-git clone [https://github.com/your-username/nimb.git](https://github.com/your-username/nimb.git)
+git clone https://github.com/alexhanganu/nimb.git
 
 cd nimb
 
@@ -73,7 +81,7 @@ The following is a typical step-by-step workflow for a new project.
 # Step 1: Check Environment Readiness
 Before starting, verify that all paths and dependencies are correctly configured.
 ```
-python3 nimb.py -process ready -project YourProjectName
+python3 nimb.py -project YourProjectName -process ready
 ```
 
 # Step 2: Classify Source Data to BIDS
@@ -104,7 +112,12 @@ Aggregate .stats files from all processed subjects into comprehensive Excel tabl
 python3 nimb.py -project YourProjectName -process fs-stats-get
 ```
 
-# Prepare and Run FreeSurfer GLM Analysis
+# A. Run Statistical analysis
+Run standard statistical analysis on all data.
+
+```python3 nimb.py -project YourProjectName -process run-stats```
+
+# B. Prepare and Run FreeSurfer GLM Analysis
 Prepare the necessary files (.fsgd, .mtx) and then run the GLM analysis.
 
 # 1. Prepare GLM files
@@ -112,19 +125,24 @@ Prepare the necessary files (.fsgd, .mtx) and then run the GLM analysis.
 ```python3 nimb.py -project YourProjectName -process fs-glm-prep```
 
 # 2. Run the GLM analysis
+
 ```python3 nimb.py -project YourProjectName -process fs-glm```
 
 
 # 3. Extract GLM Result Images
 Generate statistical map images (.tiff) from the completed GLM analysis for visualization and publication.
+
 ```python3 nimb.py -project YourProjectName -process fs-glm-images```
 
 
 # Configuration
 NIMB is configured via simple JSON files located in ~/.nimb/.
-local.json: Defines paths and settings for your local machine, including software locations (FREESURFER_HOME), temporary directories, and scheduler settings.
-projects.json: Defines all project-specific information, such as paths to source BIDS and processed derivative data, the name of your subject/group information file, and variables for statistical analysis.
-remoteX.json: (Optional) Defines connection details and paths for remote servers or clusters.
+
+- local.json: Defines paths and settings for your local machine, including software locations (FREESURFER_HOME), temporary directories, and scheduler settings.
+
+- projects.json: Defines all project-specific information, such as paths to source BIDS and processed derivative data, the name of your subject/group information file, and variables for statistical analysis.
+
+- remoteX.json: (Optional) Defines connection details and paths for remote servers or clusters.
 
 # Acknowledgments
 This tool was developed to streamline neuroimaging research. Data used in the development and testing of this app were obtained from public sources, including the Global Alzheimer’s Association Interactive Network (GAAIN), the Parkinson's Progression Markers Initiative (PPMI), and the Alzheimer's Disease Neuroimaging Initiative (ADNI). We thank the teams and participants who have made this data available.
