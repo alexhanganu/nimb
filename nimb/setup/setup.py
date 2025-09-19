@@ -1,175 +1,245 @@
 # -*- coding: utf-8 -*-
 """
 This module handles the first-time interactive setup for the NIMB application.
-It guides the user through creating configuration files, setting essential paths,
-and configuring remote credentials.
+It creates all necessary configuration files (local, projects, remote, stats),
+initializes the database, and sets essential paths through a guided process.
 
-To run the setup, execute this file directly: `python setup.py`
+To run, execute this file directly: python nimb/setup/setup.py
 """
 import os
 import sys
-import getpass
 import shutil
 import json
+import sqlite3
+import getpass
+import pwd
 from os import path
 
-# Assume utilities are in the parent's sibling directory `distribution`
-# This relative import works when nimb is treated as a package
-try:
-    from ..distribution.utilities import save_json, load_json
-except ImportError:
-    # Fallback for running the script directly from the setup folder
-    sys.path.append(path.abspath(path.join(path.dirname(__file__), '..')))
-    from distribution.utilities import save_json, load_json
+# --- Default JSON Templates (for creating new files) ---
+
+DEFAULT_PROJECTS_JSON = {
+    "project1": {
+        "SOURCE_BIDS_DIR": ["local", "/home/user/datasets/project1/bids"],
+        "SOURCE_SUBJECTS_DIR": ["local", "/home/user/datasets/project1/source"],
+        "PROCESSED_FS_DIR": ["remote1", "/home/user/datasets/project1/derivatives/freesurfer"],
+        "materials_DIR": ["local", "/home/user/projects/project1/materials"]
+    },
+    "LOCATION": ["local", "remote1"]
+}
+
+DEFAULT_REMOTE_JSON = {
+    "USER": {"user": "user1"},
+    "NIMB_PATHS": {
+        "NIMB_HOME": "~/nimb",
+        "NIMB_tmp": "~/scratch/nimb_tmp"
+    },
+    "PROCESSING": {"processing_env": "slurm"},
+    "FREESURFER": {"FREESURFER_HOME": "/project/freesurfer"}
+}
+
+DEFAULT_STATS_JSON = {
+    "STATS_PATHS": {
+        "STATS_HOME": "default",
+        "FS_GLM_dir": "default",
+        "features": "default"
+    },
+    "STATS_PARAMS": {},
+    "STATS_FILES": {}
+}
+
+# --- Helper Utilities ---
+
+def _get_credentials_home():
+    """Determines and creates the application's config directory (~/.nimb)."""
+    home_dir = os.environ.get('HOME') or os.environ.get('USERPROFILE')
+    credentials_home = path.join(home_dir, ".nimb")
+    if not path.exists(credentials_home):
+        print(f"Configuration directory not found. Creating it at: {credentials_home}")
+        os.makedirs(credentials_home)
+    return credentials_home
+
+def _get_current_username():
+    """Finds the current user's username."""
+    try:
+        return pwd.getpwuid(os.getuid())[0]
+    except (ImportError, KeyError):
+        return getpass.getuser()
+
+def save_json(data, filepath):
+    """Saves a dictionary to a JSON file with nice formatting."""
+    with open(filepath, 'w') as f:
+        json.dump(data, f, indent=4)
+
+# --- Main Setup Class ---
 
 class SetupManager:
-    """
-    Manages the interactive, one-time setup process for NIMB.
-    """
+    """ Manages the interactive, one-time setup process for NIMB. """
     def __init__(self):
+        self.credentials_home = _get_credentials_home()
         self.home_dir = os.environ.get('HOME') or os.environ.get('USERPROFILE')
-        self.credentials_home = path.join(self.home_dir, ".nimb")
-        self.source_dir = path.dirname(__file__) # The directory this script is in
 
     def run_setup(self):
-        """
-        Executes the full interactive setup process.
-        """
-        print("--- Welcome to NIMB Setup ---")
-        
-        # 1. Create credentials directory
-        self._create_credentials_dir()
+        """ Executes the full interactive setup process. """
+        print("--- Welcome to the NIMB Interactive Setup ---")
+        print("This script will help you configure all necessary files.")
 
-        # 2. Copy template config files
-        self._copy_template_files()
+        # 1. Create/verify essential config files from templates
+        self._create_files_if_not_exist()
 
-        # 3. Interactively configure local.json
+        # 2. Interactively configure all JSON files
         self._configure_local_json()
+        self._configure_projects_json()
+        self._configure_remote_json()
+        self._configure_stats_json()
 
-        print("\n--- NIMB Setup Complete! ---")
+        print("\n✅ --- NIMB Setup Complete! ---")
         print(f"Your configuration files are stored in: {self.credentials_home}")
-        print("You can now run the main 'nimb.py' application.")
+        print("To configure your shell, remember to run: source nimb/setup/setup_env.sh")
 
-    def _create_credentials_dir(self):
-        """Ensures the ~/.nimb configuration directory exists."""
-        print(f"\nChecking for configuration directory at: {self.credentials_home}")
-        if not path.exists(self.credentials_home):
-            print("Configuration directory not found. Creating it.")
-            os.makedirs(self.credentials_home)
-        else:
-            print("Configuration directory already exists.")
-
-    def _copy_template_files(self):
-        """
-        Copies template JSON files from the setup folder to the ~/.nimb directory
-        if they don't already exist.
-        """
+    def _create_files_if_not_exist(self):
+        """Ensures all config files exist, creating them from defaults if needed."""
         print("\nChecking for essential configuration files...")
-        template_files = ['local.json', 'projects.json', 'stats.json', 'remote1.json']
-        for filename in template_files:
-            source_path = path.join(self.source_dir, filename)
+        files_to_check = {
+            "local.json": DEFAULT_REMOTE_JSON, # local and remote have similar structures
+            "projects.json": DEFAULT_PROJECTS_JSON,
+            "remote1.json": DEFAULT_REMOTE_JSON,
+            "stats.json": DEFAULT_STATS_JSON
+        }
+        for filename, default_content in files_to_check.items():
             dest_path = path.join(self.credentials_home, filename)
-
             if not path.exists(dest_path):
-                if path.exists(source_path):
-                    print(f"'{filename}' not found. Copying template...")
-                    shutil.copy(source_path, dest_path)
-                else:
-                    print(f"WARNING: Template file '{filename}' not found in setup directory.")
+                print(f"'{filename}' not found. Creating it with default values.")
+                save_json(default_content, dest_path)
             else:
                 print(f"'{filename}' already exists.")
 
     def _configure_local_json(self):
-        """
-        Walks the user through setting the most important paths in local.json.
-        """
-        print("\n--- Configuring Essential Paths ---")
-        print("Let's set up the main paths for your local machine.")
-        print("You can always edit the JSON files manually later.")
+        """Guides the user through setting paths in local.json."""
+        print("\n--- ⚙️ Configuring Local Machine Settings (local.json) ---")
+        file_path = path.join(self.credentials_home, 'local.json')
+        config = self._load_json(file_path)
 
-        local_json_path = path.join(self.credentials_home, 'local.json')
-        config = load_json(local_json_path)
-
-        if not config:
-            print(f"ERROR: Could not load {local_json_path}. Skipping interactive config.")
-            return
-
-        # Configure NIMB_HOME
-        nimb_paths = config.get("NIMB_PATHS", {})
-        nimb_paths["NIMB_HOME"] = self._ask_for_path(
-            "NIMB Application Home",
-            nimb_paths.get("NIMB_HOME", "~/nimb"),
-            must_exist=True
+        config['NIMB_PATHS'] = self._configure_simple_paths(
+            config.get('NIMB_PATHS', {}),
+            [("NIMB_HOME", "~/nimb"), ("NIMB_tmp", "~/nimb_tmp"), ("conda_home", "~/miniconda3")]
         )
-        nimb_paths["NIMB_tmp"] = self._ask_for_path(
-            "NIMB Temporary Directory",
-            nimb_paths.get("NIMB_tmp", "~/nimb_tmp"),
-            create_if_not_exist=True
+        config['FREESURFER'] = self._configure_simple_paths(
+            config.get('FREESURFER', {}),
+            [("FREESURFER_HOME", "~/freesurfer")]
         )
-        nimb_paths["conda_home"] = self._ask_for_path(
-            "Miniconda/Anaconda Home",
-            nimb_paths.get("conda_home", "~/miniconda3"),
-            must_exist=True
-        )
-        config["NIMB_PATHS"] = nimb_paths
-
-        # Configure FREESURFER_HOME
-        fs_paths = config.get("FREESURFER", {})
-        fs_paths["FREESURFER_HOME"] = self._ask_for_path(
-            "FreeSurfer Home",
-            fs_paths.get("FREESURFER_HOME", "~/freesurfer"),
-            must_exist=True
-        )
-        fs_paths["SUBJECTS_DIR"] = self._ask_for_path(
-            "FreeSurfer SUBJECTS_DIR",
-            fs_paths.get("SUBJECTS_DIR", path.join(fs_paths["FREESURFER_HOME"], "subjects")),
-            create_if_not_exist=True
-        )
-        config["FREESURFER"] = fs_paths
         
-        # Save updated config
-        save_json(config, local_json_path)
-        print(f"\nUpdated configuration saved to {local_json_path}")
+        save_json(config, file_path)
+        print(f"✓ Local settings saved to {file_path}")
 
-    def _ask_for_path(self, name, current_path, must_exist=False, create_if_not_exist=False):
-        """
-        Helper function to prompt the user for a directory path.
-        """
-        print(f"\n[{name}]")
+    def _configure_projects_json(self):
+        """Guides the user through setting paths for a default project."""
+        print("\n--- 📂 Configuring Your First Project (projects.json) ---")
+        file_path = path.join(self.credentials_home, 'projects.json')
+        config = self._load_json(file_path)
         
-        # Expand ~ to the user's home directory for display
-        current_path_expanded = current_path.replace("~", self.home_dir)
+        project_name = list(config.keys())[0] if "LOCATION" not in list(config.keys())[0] else "project1"
+        new_name = input(f"Enter a name for your project [default: {project_name}]: ").strip() or project_name
+        if new_name != project_name:
+            config[new_name] = config.pop(project_name)
+            project_name = new_name
+            
+        project_config = config.get(project_name, {})
+        locations = config.get("LOCATION", ["local", "remote1"])
+
+        paths_to_set = [
+            ("SOURCE_SUBJECTS_DIR", ["local", f"/home/{_get_current_username()}/data/{project_name}/source"]),
+            ("SOURCE_BIDS_DIR", ["local", f"/home/{_get_current_username()}/data/{project_name}/bids"]),
+            ("PROCESSED_FS_DIR", ["remote1", f"/home/{_get_current_username()}/data/{project_name}/derivatives/freesurfer"]),
+            ("materials_DIR", ["local", f"/home/{_get_current_username()}/projects/{project_name}/materials"])
+        ]
+
+        for key, default_val in paths_to_set:
+            project_config[key] = self._ask_for_project_path(key, project_config.get(key, default_val), locations)
         
-        print(f"Current path is: {current_path_expanded}")
-        if self._get_yes_no("Do you want to keep this path?"):
-            return current_path
+        config[project_name] = project_config
+        save_json(config, file_path)
+        print(f"✓ Project '{project_name}' saved to {file_path}")
+
+    def _configure_remote_json(self):
+        """Guides the user through setting remote server paths."""
+        print("\n--- ☁️ Configuring Remote Server Settings (remote1.json) ---")
+        print("NOTE: These are paths on the remote machine.")
+        file_path = path.join(self.credentials_home, 'remote1.json')
+        config = self._load_json(file_path)
+
+        config['NIMB_PATHS'] = self._configure_simple_paths(
+            config.get('NIMB_PATHS', {}),
+            [("NIMB_HOME", "~/nimb"), ("NIMB_tmp", "~/scratch/nimb_tmp")]
+        )
+        config['FREESURFER'] = self._configure_simple_paths(
+            config.get('FREESURFER', {}),
+            [("FREESURFER_HOME", "/project/freesurfer")]
+        )
+        
+        save_json(config, file_path)
+        print(f"✓ Remote settings saved to {file_path}")
+
+    def _configure_stats_json(self):
+        """Guides the user through setting paths for statistics."""
+        print("\n--- 📊 Configuring Statistics Paths (stats.json) ---")
+        file_path = path.join(self.credentials_home, 'stats.json')
+        config = self._load_json(file_path)
+        stats_paths = config.get("STATS_PATHS", {})
+
+        # Set the main stats directory
+        default_stats_home = f"~/nimb_results/stats"
+        stats_paths['STATS_HOME'] = self._ask_for_path("Main Statistics Home", stats_paths.get('STATS_HOME', default_stats_home))
+        stats_home_path = stats_paths['STATS_HOME']
+
+        # Ask to auto-populate other paths
+        print(f"\nYour main stats directory is: {stats_home_path}")
+        if self._get_yes_no("Auto-populate other stats paths as sub-directories? (Recommended)"):
+            for key in stats_paths:
+                if key != "STATS_HOME":
+                    stats_paths[key] = path.join(stats_home_path, key.lower().replace('_dir',''))
+            print("Auto-populating paths...")
+        
+        config['STATS_PATHS'] = stats_paths
+        save_json(config, file_path)
+        print(f"✓ Statistics settings saved to {file_path}")
+
+    # --- Helper methods for user input ---
+
+    def _configure_simple_paths(self, config_section, paths_to_check):
+        for key, default in paths_to_check:
+            config_section[key] = self._ask_for_path(key.replace('_', ' '), config_section.get(key, default))
+        return config_section
+    
+    def _ask_for_path(self, name, current_path):
+        """Prompts user for a simple path string."""
+        expanded_path = current_path.replace("~", self.home_dir)
+        prompt = f"\nPath for [{name}] (current: {expanded_path})\nPress ENTER to keep current, or enter new path: "
+        user_input = input(prompt).strip()
+        return user_input or current_path
+    
+    def _ask_for_project_path(self, name, current_value, locations):
+        """Prompts user for a project path, which includes a location and a path string."""
+        current_loc, current_path = current_value
+        # 1. Get the path string
+        new_path = self._ask_for_path(name, current_path)
+        
+        # 2. Get the location
+        print(f"Where is this path located? (current: {current_loc})")
+        for i, loc in enumerate(locations, 1):
+            print(f"  {i}) {loc}")
         
         while True:
-            new_path_str = input(f"Please provide the full path for '{name}': ").strip()
-            
-            # Allow user to use ~
-            new_path_expanded = new_path_str.replace("~", self.home_dir)
-            
-            if must_exist and not path.isdir(new_path_expanded):
-                print(f"ERROR: Path does not exist or is not a directory: {new_path_expanded}")
-                continue
-
-            if create_if_not_exist and not path.exists(new_path_expanded):
-                 if self._get_yes_no(f"Path does not exist. Create '{new_path_expanded}'?"):
-                    try:
-                        os.makedirs(new_path_expanded)
-                        print("Directory created.")
-                    except OSError as e:
-                        print(f"ERROR: Could not create directory: {e}")
-                        continue
-                 else:
-                    continue
-
-            # Return the path with '~' if it was used, for cleaner JSON files
-            return new_path_str
+            choice = input(f"Choose a location number [1-{len(locations)}]: ").strip()
+            try:
+                new_loc = locations[int(choice) - 1]
+                break
+            except (ValueError, IndexError):
+                print("Invalid choice, please try again.")
+        
+        return [new_loc, new_path]
 
     def _get_yes_no(self, question):
-        """Prompts the user with a yes/no question and returns a boolean."""
+        """Prompts the user with a yes/no question."""
         while True:
             response = input(f"{question} (y/n): ").lower().strip()
             if response in ['y', 'yes']:
@@ -177,8 +247,16 @@ class SetupManager:
             if response in ['n', 'no']:
                 return False
             print("Invalid input. Please enter 'y' or 'n'.")
-
+            
+    def _load_json(self, filepath):
+        """Loads a JSON file, returning an empty dict on failure."""
+        if path.exists(filepath):
+            with open(filepath, 'r') as f:
+                try:
+                    return json.load(f)
+                except json.JSONDecodeError:
+                    return {}
+        return {}
 
 if __name__ == '__main__':
-    setup = SetupManager()
-    setup.run_setup()
+    SetupManager().run_setup()

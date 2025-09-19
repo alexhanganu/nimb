@@ -1,83 +1,100 @@
-from sqlite3 import connect, OperationalError
-from os import listdir, path, remove
-from sys import platform
-
-'''DATABASE ACTIONS
-connecting to DB
-if no table - create it
-provide column names
-'''
-from setup.get_credentials_home import _get_credentials_home
+# -*- coding: utf-8 -*-
+"""
+This module contains all functions for interacting with the
+NIMB credentials database (SQLite).
+"""
+import sqlite3
+from os import path, environ
+import sys
 
 TABLES = {
-        'remotes':('id', 'username', 'host', 'password'),
-        }
+    'remotes': ('id', 'username', 'host', 'password'),
+}
 
-def __connect_db__():
-    conn = connect(path.join(_get_credentials_home(), platform+'.db'), check_same_thread=False)
-    try:
-        conn.execute('select count(*) from Clusters')
-    except OperationalError:
-        __create_table__(conn)
-    return conn
+def _get_db_path():
+    """Returns the platform-specific path to the database file."""
+    home_dir = environ.get('HOME') or environ.get('USERPROFILE')
+    credentials_home = path.join(home_dir, ".nimb")
+    return path.join(credentials_home, f"{sys.platform}.db")
 
+def _connect_db():
+    """Connects to the SQLite database."""
+    return sqlite3.connect(_get_db_path(), check_same_thread=False)
 
-def __create_table__(conn):
-    for TAB in TABLES:
-        conn.execute('''create table if not exists {0} {1}'''.format(TAB, TABLES[TAB]))
-    conn.commit()
-
-
-def _set_Table_Data(Table, data_requested, _id):
-    conn = __connect_db__()
-    if conn.execute('''SELECT count(*) from {0} WHERE id = "{1}" '''.format(Table, _id)).fetchone()[0] != 0:
-        Table_Data = _get_Table_Data(Table,_id)
-        for key in Table_Data[_id]:
-            if data_requested[_id][key] != Table_Data[_id][key]:
-                conn.execute('''UPDATE {0} SET {1} = "{2}" WHERE id = "{3}" '''.format(Table, key, data_requested[_id][key], _id))
-    else:
-        data = [_id]
-        for key in data_requested[_id]:
-            data.append(data_requested[_id][key])
-        question_marks = ", ".join(["?"] * len(data))
-        conn.execute('''INSERT INTO {0} VALUES ({1})'''.format(Table, question_marks), data)
-        _set_Location_json(Table, data_requested, _id)
-    conn.commit()
-    conn.close()
-
-
-def _get_Table_Data(Table, _id):
-    conn = __connect_db__()
+def get_table_data(table_name, entry_id):
+    """
+    Retrieves data for a specific entry or all entries from a table.
+    
+    Args:
+        table_name (str): The name of the table (e.g., 'remotes').
+        entry_id (str): The ID of the entry to fetch, or 'all'.
+        
+    Returns:
+        A dictionary containing the requested data.
+    """
+    conn = _connect_db()
+    cursor = conn.cursor()
     table_data = {}
-    if _id == 'all':
-        data = conn.execute('''SELECT * FROM {}'''.format(Table)).fetchall()
+    
+    query = f"SELECT * FROM {table_name}"
+    if entry_id != 'all':
+        query += f" WHERE id = ?"
+        params = (entry_id,)
     else:
-        data = conn.execute('SELECT * FROM {0} WHERE id = "{1}" '.format(Table, _id)).fetchall()
-    ls_col_names = TABLES[Table][1:]
+        params = ()
 
-    if len(data)>0:
-        for param in data:
-            _id = param[0]
-            ls_params = param[1:]
-            table_data[_id] = {}
-            for col in ls_col_names:
-                table_data[_id][col] = ls_params[ls_col_names.index(col)]
-    else:
-        print('parameters for {} are missing'.format(_id))
-        _id = 'default'
-        table_data[_id] = {}
-        for col in ls_col_names:
-            table_data[_id][col] = ''
-    conn.close()
+    try:
+        data = cursor.execute(query, params).fetchall()
+        col_names = TABLES[table_name]
+        
+        for row in data:
+            row_id = row[0]
+            table_data[row_id] = {col_names[i]: val for i, val in enumerate(row)}
+            
+    except sqlite3.Error as e:
+        print(f"Database error: {e}")
+    finally:
+        conn.close()
+        
     return table_data
 
-def _delete_Table_Data(Table, _id):
-    conn = __connect_db__()
-    conn.execute('DELETE FROM {0} WHERE id = "{1}" '.format(Table, _id)).fetchall()
-    conn.commit()
-    conn.close()
+def set_table_data(table_name, data_dict):
+    """
+    Inserts a new record or updates an existing one in the specified table.
+    
+    Args:
+        table_name (str): The name of the table.
+        data_dict (dict): A dictionary where keys are column names and values are the data.
+                          Must include an 'id' key.
+    """
+    conn = _connect_db()
+    cursor = conn.cursor()
+    
+    entry_id = data_dict.get('id')
+    if not entry_id:
+        print("Error: 'id' key is required in data_dict.")
+        return
 
-def _set_Location_json(Table, data_requested, _id):
-    if Table == 'remotes':
-        from setup.get_vars import SetLocation
-        SetLocation(data_requested, _id)
+    try:
+        # Check if entry exists
+        cursor.execute(f"SELECT count(*) FROM {table_name} WHERE id = ?", (entry_id,))
+        exists = cursor.fetchone()[0] != 0
+        
+        columns = list(data_dict.keys())
+        values = list(data_dict.values())
+        
+        if exists:
+            set_clause = ", ".join([f"{col} = ?" for col in columns if col != 'id'])
+            sql = f"UPDATE {table_name} SET {set_clause} WHERE id = ?"
+            params = [v for k, v in data_dict.items() if k != 'id'] + [entry_id]
+        else:
+            placeholders = ", ".join(["?"] * len(columns))
+            sql = f"INSERT INTO {table_name} ({', '.join(columns)}) VALUES ({placeholders})"
+            params = values
+
+        cursor.execute(sql, params)
+        conn.commit()
+    except sqlite3.Error as e:
+        print(f"Database error: {e}")
+    finally:
+        conn.close()
