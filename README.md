@@ -20,11 +20,11 @@ NIMB is a comprehensive, automated Python pipeline for structural, functional, a
 # Core Concepts
 NIMB operates on a powerful daemon-and-runner architecture, making it ideal for scalable, automated processing on high-performance computing (HPC) clusters.
 
-    * The Controller (nimb.py): This is the user's main entry point. You use it to issue high-level commands like "check my environment," "classify my data," or "start the main daemon." It communicates with the daemon and runners via a shared file-based system.
+* The Controller (nimb.py): This is the user's main entry point. You use it to issue high-level commands like "check my environment," "classify my data," or "start the main daemon." It communicates with the daemon and runners via a shared file-based system.
 
-    * The Daemon (processing_run.py): This is the master orchestrator. You submit this single script to your scheduler (e.g., Slurm) using the controller. It runs continuously, monitoring for new subjects, launching application-specific runners, and handling the final archiving of completed results.
+* The Daemon (processing_run.py): This is the master orchestrator. You submit this single script to your scheduler (e.g., Slurm) using the controller. It runs continuously, monitoring for new subjects, launching application-specific runners, and handling the final archiving of completed results.
 
-    * The Runners: These are independent, specialized scripts that the daemon launches. Each runner is responsible for managing the entire processing queue for a single application (e.g., a FreeSurfer runner would handle all recon-all stages for all queued subjects).
+* The Runners: These are independent, specialized scripts that the daemon launches. Each runner is responsible for managing the entire processing queue for a single application (e.g., a FreeSurfer runner would handle all recon-all stages for all queued subjects).
 
 # Key Features
 => BIDS Classification: Intelligently scans source directories and converts MRI data into a BIDS (Brain Imaging Data Structure) compliant format.
@@ -42,17 +42,11 @@ NIMB operates on a powerful daemon-and-runner architecture, making it ideal for 
 
 # Getting Started
 *=>* Prerequisites
-
     - Python 3.6+
-
     - An environment for job scheduling (e.g., Slurm, tmux).
-
     - The core neuroimaging packages should be installed and accessible in the environment where the runners will execute:
-
         - FreeSurfer
-
         - Nilearn
-
         - DIPY
 
 # Installation
